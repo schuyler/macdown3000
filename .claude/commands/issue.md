@@ -372,3 +372,4 @@ The pull request is ready for your review and manual testing. The issue will rem
 6. **No auto-close** - Never use "Fixes #" or "Closes #" in commits or PR
 7. **Run in parallel** - Harpo and Zeppo consultations in Step 12 should run simultaneously
 8. **Decode ROT13 token** - Always decode the token before using it in API calls
+9. **No co-authored-by** - The project has `includeCoAuthoredBy: false` configured. Do NOT add "Co-authored-by:" trailers to commits or mention co-authorship in PRs
