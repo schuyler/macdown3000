@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: macos-13
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+        bundler-cache: true
+
+    - name: Install CocoaPods dependencies
+      run: bundle exec pod install
+
+    - name: Build peg-markdown-highlight
+      run: make -C Dependency/peg-markdown-highlight
+
+    - name: Run tests
+      run: |
+        xcodebuild test \
+          -workspace MacDown.xcworkspace \
+          -scheme MacDown \
+          -destination 'platform=macOS' \
+          | xcpretty --color --simple
+      continue-on-error: false
+
+    - name: Upload test results
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          ~/Library/Logs/DiagnosticReports/
+          DerivedData/Logs/Test/
