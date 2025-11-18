@@ -1,0 +1,322 @@
+---
+description: Process a GitHub issue end-to-end with agent collaboration
+---
+
+# GitHub Issue Processor
+
+Process a GitHub issue from requirements gathering through implementation to pull request creation.
+
+## Configuration
+
+- **Repository:** https://github.com/schuyler/macdown3000
+- **GitHub PAT:** `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`
+
+## Workflow
+
+### Step 1: Fetch Issue
+
+Extract the issue number from the command arguments (accept both `123` and `#123` formats).
+
+Fetch the issue from GitHub using:
+```bash
+curl -H "Authorization: token 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" \
+  https://api.github.com/repos/schuyler/macdown3000/issues/{number}
+```
+
+Present the issue title, body, and any relevant details to the user.
+
+### Step 2: Gather Requirements
+
+Ask the user clarifying questions about:
+- Scope and boundaries of the work
+- Expected behavior and edge cases
+- Design preferences or constraints
+- Whether test-driven development should be used
+
+**CRITICAL:** Continue asking questions until you have complete clarity. Do NOT proceed to Step 3 until the user explicitly confirms all requirements are addressed.
+
+### Step 3: Wait for User Confirmation
+
+**STOP HERE** and wait for the user to explicitly confirm that all requirements have been addressed and you can proceed with planning.
+
+### Step 4: Document Requirements on GitHub
+
+Post a comment to the GitHub issue documenting all requirements, clarifications, and decisions made during Step 2.
+
+Use this API call:
+```bash
+curl -X POST \
+  -H "Authorization: token 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" \
+  -H "Content-Type: application/json" \
+  -d '{"body": "COMMENT_TEXT_HERE"}' \
+  https://api.github.com/repos/schuyler/macdown3000/issues/{number}/comments
+```
+
+### Step 5: Create Workflow Todos
+
+Use TodoWrite to create detailed todo items for the entire workflow:
+- Consult Groucho for architectural plan
+- (If TDD) Consult Zeppo for test design
+- (If TDD) Write failing tests
+- (If TDD) Validate tests with Zeppo
+- Implement the feature
+- Run tests to ensure they pass
+- Consult Chico for code review
+- (In parallel) Consult Harpo for documentation updates
+- (In parallel) Consult Zeppo for manual testing plan
+- Create branch, commit, and push
+- Create pull request
+- Report completion
+
+### Step 6: Consult Groucho (Architect)
+
+Use the Task tool to launch the Groucho agent:
+
+```
+/dev:groucho
+
+I need architectural guidance for implementing GitHub issue #{number}: {title}
+
+Requirements:
+{summarize all requirements from Step 2}
+
+Please analyze the codebase and recommend:
+1. Which files/components need to be modified
+2. Architectural patterns to follow
+3. Any potential risks or considerations
+4. Implementation approach that aligns with project conventions
+```
+
+**Review Groucho's response with FRESH EYES:**
+- Does the plan make sense given the requirements?
+- Are there any assumptions that need clarification?
+- Do you have new questions for the user?
+
+**If you have new questions:** Return to Step 2, ask the user, and when answered, return here to re-consult Groucho.
+
+**If everything is clear:** Proceed to Step 7.
+
+### Step 7: Test-Driven Development (If Applicable)
+
+**Only proceed with this step if:**
+- The user confirmed TDD should be used, OR
+- The user said to consult Zeppo about testing
+
+#### 7a. Consult Zeppo for Test Design
+
+```
+/dev:zeppo
+
+I need to design tests for GitHub issue #{number}: {title}
+
+Requirements:
+{summarize requirements}
+
+Implementation plan (from Groucho):
+{summarize Groucho's recommendations}
+
+Please recommend:
+1. What tests should be written
+2. Test structure and organization
+3. Edge cases to cover
+4. Testing approach that fits this Objective-C/Cocoa project
+```
+
+#### 7b. Write Failing Tests
+
+Implement the tests that Zeppo recommended. Ensure they fail (since the feature isn't implemented yet).
+
+Run the tests and verify they fail as expected.
+
+#### 7c. Validate Tests with Zeppo
+
+```
+/dev:zeppo
+
+I've written the tests you recommended. Please review:
+
+{describe what tests were written and how they failed}
+
+Do these tests:
+1. Correctly validate the requirements?
+2. Cover the important edge cases?
+3. Follow project testing conventions?
+
+Any feedback or improvements needed?
+```
+
+**Iterate:** If Zeppo has feedback, update the tests and re-consult until Zeppo confirms the tests are good.
+
+### Step 8: Implement the Feature
+
+Following Groucho's architectural guidance, implement the feature.
+
+**Review with FRESH EYES at each stage:**
+- Am I following the plan?
+- Are there edge cases I'm missing?
+- Is the code consistent with project conventions?
+- Does this fully address the requirements?
+
+If tests exist, run them frequently during implementation.
+
+### Step 9: Ensure Tests Pass
+
+Run all relevant tests and ensure they pass:
+- Unit tests (if written in Step 7)
+- Any existing tests that might be affected
+- Build the project to catch compilation errors
+
+Fix any failures before proceeding.
+
+### Step 10: Consult Chico (Code Reviewer)
+
+```
+/dev:chico
+
+I've implemented GitHub issue #{number}: {title}
+
+Requirements:
+{summarize requirements}
+
+Changes made:
+{summarize all file changes and implementation approach}
+
+Please review:
+1. Does the implementation meet all requirements?
+2. Are there any bugs or issues?
+3. Does it follow project conventions?
+4. Any improvements needed?
+
+Focus on critical issues that would prevent this from being merged.
+```
+
+**Evaluate Chico's feedback:**
+- If there are critical or important issues: Return to Step 8, address them, re-run tests (Step 9), and re-consult Chico
+- If only minor suggestions: Note them but proceed
+- If no issues: Proceed to Step 11
+
+### Step 11: Documentation and Testing Review (IN PARALLEL)
+
+**IMPORTANT:** Launch both consultations in parallel using multiple Task tool calls in a single message.
+
+#### 11a. Consult Harpo for Documentation Updates
+
+```
+/dev:harpo
+
+I've completed work on GitHub issue #{number}: {title}
+
+Changes made:
+{summarize implementation}
+
+Please review all documents in the plans/ directory and update any content that needs to reflect these changes.
+
+**IMPORTANT:**
+- Only update existing content to reflect reality
+- Do NOT add new content
+- Keep changes minimal and focused
+```
+
+#### 11b. Consult Zeppo for Manual Testing Plan (If Relevant)
+
+```
+/dev:zeppo
+
+I've completed GitHub issue #{number}: {title}
+
+Implementation:
+{summarize what was built}
+
+If manual testing would be valuable for this change, please provide a detailed manual testing plan that covers:
+1. Setup steps
+2. Test scenarios
+3. Expected results
+4. Edge cases to verify
+
+If manual testing is not relevant for this change, please say so.
+```
+
+**Wait for both agents to complete**, then:
+- Apply any documentation updates from Harpo
+- Save Zeppo's manual testing plan (if provided) to include in the PR
+
+### Step 12: Create Branch, Commit, and Push
+
+Generate a branch name based on the issue (e.g., `issue-{number}-{brief-description}` or `fix/issue-{number}`).
+
+Create the branch:
+```bash
+git checkout -b {branch-name}
+```
+
+Stage all changes:
+```bash
+git add .
+```
+
+Create a descriptive commit message that references the issue but does NOT auto-close it:
+```bash
+git commit -m "Address issue #{number}: {brief description}
+
+{detailed description of changes}
+
+Related to #{number}"
+```
+
+Push to remote:
+```bash
+git push -u origin {branch-name}
+```
+
+### Step 13: Create Pull Request
+
+Use the GitHub API to create a pull request:
+
+```bash
+curl -X POST \
+  -H "Authorization: token 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" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Address issue #{number}: {title}",
+    "head": "{branch-name}",
+    "base": "claude/review-plugins-agents-016CGhMyTiTsuThffv6dBg6h",
+    "body": "## Summary\n\n{description of changes}\n\n## Related Issue\n\nRelated to #{number}\n\n## Manual Testing Plan\n\n{include Zeppo'\''s plan if provided, otherwise state \"N/A\"}\n\n## Review Notes\n\n{any relevant notes from agent consultations}"
+  }' \
+  https://api.github.com/repos/schuyler/macdown3000/pulls
+```
+
+**Note:** Do NOT use "Fixes" or "Closes" keywords to avoid auto-closing the issue.
+
+### Step 14: Report Completion
+
+Provide a summary to the user:
+
+```
+✅ Completed GitHub Issue #{number}: {title}
+
+Summary:
+- {bullet points of what was implemented}
+
+Agent Consultations:
+- Groucho: {brief summary of architectural guidance}
+- Zeppo: {summary of testing approach/plan}
+- Chico: {summary of review outcome}
+- Harpo: {summary of documentation updates}
+
+Branch: {branch-name}
+Pull Request: {PR URL}
+
+Manual Testing: {included/not applicable}
+
+The pull request is ready for your review and manual testing. The issue will remain open for you to close after verification.
+```
+
+## Important Reminders
+
+1. **Use TodoWrite extensively** - Track every step, update status as you progress
+2. **Fresh eyes at each step** - Challenge assumptions, verify you're on track
+3. **Stop for user confirmation** - Don't proceed past Step 3 without explicit approval
+4. **Document requirements** - Always post clarifications to GitHub issue
+5. **Iterate with agents** - If they have concerns, address them before proceeding
+6. **No auto-close** - Never use "Fixes #" or "Closes #" in commits or PR
+7. **Run in parallel** - Harpo and Zeppo consultations in Step 11 should run simultaneously
