@@ -10,6 +10,9 @@ jobs:
   test:
     name: Run Unit Tests
     runs-on: macos-14
+    permissions:
+      contents: read
+      pull-requests: write  # Needed for PR comments
 
     steps:
     - name: Checkout code
@@ -29,13 +32,151 @@ jobs:
     - name: Build peg-markdown-highlight
       run: make -C Dependency/peg-markdown-highlight
 
-    - name: Run tests
+    - name: Run tests with coverage
       run: |
         set -o pipefail
         xcodebuild test \
           -workspace MacDown.xcworkspace \
-          -scheme MacDown
+          -scheme MacDown \
+          -enableCodeCoverage YES \
+          -derivedDataPath DerivedData \
+          -resultBundlePath TestResults.xcresult
       continue-on-error: false
+
+    - name: Generate coverage report
+      if: always()
+      continue-on-error: true
+      run: |
+        if [ -f TestResults.xcresult ]; then
+          # Result bundle exists, try to generate coverage
+          if xcrun xccov view --report --json TestResults.xcresult > coverage.json 2>/dev/null; then
+            xcrun xccov view --report TestResults.xcresult > coverage.txt 2>/dev/null || echo "Coverage unavailable" > coverage.txt
+            echo "=== Coverage Summary ==="
+            cat coverage.txt
+          else
+            # xccov failed, create empty reports
+            echo "Warning: xccov failed to generate coverage report"
+            echo "{}" > coverage.json
+            echo "Coverage unavailable - xccov failed" > coverage.txt
+          fi
+        else
+          # No result bundle, tests didn't complete
+          echo "Warning: TestResults.xcresult not found - tests did not complete"
+          echo "{}" > coverage.json
+          echo "Coverage unavailable - tests did not complete" > coverage.txt
+        fi
+
+    - name: Extract coverage percentage
+      if: always()
+      continue-on-error: true
+      id: coverage
+      run: |
+        COVERAGE=$(python3 << 'EOF'
+        import json
+        import sys
+
+        try:
+            with open('coverage.json', 'r') as f:
+                data = json.load(f)
+
+            total_lines = 0
+            covered_lines = 0
+
+            for target in data.get('targets', []):
+                for file in target.get('files', []):
+                    total_lines += file.get('executableLines', 0)
+                    covered_lines += file.get('coveredLines', 0)
+
+            if total_lines > 0:
+                percentage = (covered_lines / total_lines) * 100
+                print(f'{percentage:.2f}')
+            else:
+                print('0.00')
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            # Coverage data unavailable - don't fail the step
+            print('N/A')
+            sys.stderr.write(f'Warning: Could not parse coverage data: {e}\n')
+        EOF
+        )
+
+        echo "coverage_percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Current coverage: $COVERAGE%"
+
+    - name: Upload coverage artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: |
+          coverage.txt
+          coverage.json
+          TestResults.xcresult
+        retention-days: 30
+
+    - name: Post coverage comment
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const currentCoverage = '${{ steps.coverage.outputs.coverage_percentage }}';
+
+          let coverageText = '';
+          try {
+            coverageText = fs.readFileSync('coverage.txt', 'utf8');
+          } catch (e) {
+            coverageText = 'Coverage report not available';
+          }
+
+          // Handle unavailable coverage data
+          let coverageDisplay;
+          if (currentCoverage === 'N/A' || !currentCoverage) {
+            coverageDisplay = '**Coverage:** Unavailable (tests may have failed)';
+          } else {
+            coverageDisplay = `**Current Coverage:** ${currentCoverage}%`;
+          }
+
+          const body = `## Code Coverage Report
+
+${coverageDisplay}
+
+<details>
+<summary>Coverage Details</summary>
+
+\`\`\`
+${coverageText}
+\`\`\`
+
+</details>
+`;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const coverageComment = comments.find(comment =>
+            comment.user.type === 'Bot' &&
+            comment.body.includes('Code Coverage Report')
+          );
+
+          if (coverageComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: coverageComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }
 
     - name: Upload test results
       if: failure()

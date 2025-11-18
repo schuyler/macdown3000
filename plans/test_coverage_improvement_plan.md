@@ -43,7 +43,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - ✅ XCTest framework configured
 - ✅ GitHub Actions CI pipeline (test.yml)
 - ✅ Runs on macOS-14 runners
-- ❌ No code coverage reporting
+- ✅ Code coverage reporting configured
 - ❌ No integration tests
 - ❌ Minimal UI testing
 
@@ -491,41 +491,31 @@ MacDownTests/
 
 ### Code Coverage Reporting
 
-**Add to GitHub Actions workflow:**
+**Current implementation** (configured in `.github/workflows/test.yml`):
 
-```yaml
-- name: Run tests with coverage
-  run: |
-    set -o pipefail
-    xcodebuild test \
-      -workspace MacDown.xcworkspace \
-      -scheme MacDown \
-      -enableCodeCoverage YES \
-      -derivedDataPath DerivedData
-
-- name: Generate coverage report
-  run: |
-    xcrun xccov view --report DerivedData/Logs/Test/*.xcresult > coverage.txt
-    cat coverage.txt
-
-- name: Upload coverage
-  uses: codecov/codecov-action@v3
-  with:
-    files: ./coverage.txt
-```
+- Tests run with `-enableCodeCoverage YES` flag
+- Coverage reports generated using `xcrun xccov` in both JSON and text formats
+- Coverage percentage extracted using Python script
+- Reports uploaded as workflow artifacts with 30-day retention
+- Coverage summary automatically posted to PR comments
+- Robust error handling for when tests fail or coverage data is unavailable
+- Uses only free GitHub Actions features (no third-party services)
 
 ### Continuous Integration Updates
 
-**Current `.github/workflows/test.yml` is good, consider adding:**
+**Current `.github/workflows/test.yml` includes:**
+
+- ✅ Code coverage reporting (configured)
+- ✅ PR comments with coverage summaries (configured)
+- ✅ Coverage artifacts uploaded for review (configured)
+
+**Future enhancements to consider:**
 
 1. **Coverage threshold enforcement**
    - Fail if coverage drops below X%
 
-2. **Test result reporting**
-   - Comment on PRs with test results
-
-3. **Performance monitoring**
-   - Track test execution time
+2. **Performance monitoring**
+   - Track test execution time trends
 
 ## Success Metrics
 
@@ -544,9 +534,9 @@ MacDownTests/
 
 - ✅ All tests pass in CI
 - ✅ Test suite runs in <5 minutes
-- ✅ Zero flaky tests (100% consistent results)
-- ✅ Code coverage visible in PRs
-- ✅ New features require tests (policy)
+- ⏳ Zero flaky tests (100% consistent results) - to be verified
+- ✅ Code coverage visible in PRs (configured)
+- ⏳ New features require tests (policy) - to be established
 
 ### Long-term Goals
 
@@ -666,5 +656,5 @@ $E = mc^2$
 1. Review and approve this plan
 2. Create test fixtures
 3. Implement Phase 1 (rendering tests)
-4. Set up code coverage reporting
+4. ✅ Set up code coverage reporting (completed)
 5. Iterate through remaining phases
