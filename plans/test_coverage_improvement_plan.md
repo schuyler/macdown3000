@@ -17,7 +17,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 
 ## Current State Assessment
 
-### What We Have (6 test files, ~484 lines)
+### What We Have (7 test files)
 
 | Test File | Coverage Area | Quality | Lines |
 |-----------|--------------|---------|-------|
@@ -27,17 +27,20 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPHTMLTabularizeTests.m | HTML generation | Good | ~58 |
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
+| MPMarkdownPreprocessorTests.m | Markdown preprocessing | Good | TBD |
 
 ### What We're Missing (Critical Gaps)
 
 **Zero Coverage:**
-- Markdown rendering engine (MPRenderer.m)
 - Document management (MPDocument.m)
 - Application controller logic
 - Export functionality
 - Plugin system
 - Most extension categories
 - All UI components
+
+**Partial Coverage:**
+- Markdown rendering engine (MPRenderer.m) - preprocessing tests added (MPMarkdownPreprocessorTests.m)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -78,6 +81,9 @@ GitHub Actions macOS runners are:
 ### Phase 1: Core Rendering (HIGH PRIORITY)
 
 **Goal:** Test the heart of MacDown - markdown to HTML conversion
+
+**Completed:**
+- ✅ `MPMarkdownPreprocessorTests.m` - Markdown preprocessing (list rendering edge cases)
 
 **New Test Files:**
 - `MPMarkdownRenderingTests.m` - Core markdown syntax

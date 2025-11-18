@@ -122,8 +122,11 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ Asset management
 - ✅ String lookups
 
+**Partially Tested:**
+- ⚠️ Markdown rendering - preprocessing tests added (MPMarkdownPreprocessorTests.m)
+
 **What's NOT Tested:**
-- ❌ Markdown rendering (CRITICAL)
+- ❌ Markdown rendering (complete coverage still needed)
 - ❌ File I/O and autosave
 - ❌ Editor functionality
 - ❌ Preview pane rendering
@@ -147,7 +150,8 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 ### Recommendations:
 
 #### CRITICAL PRIORITY
-1. **Add Markdown rendering tests**
+1. **Add Markdown rendering tests** *(In Progress)*
+   - ✅ Preprocessing tests added (MPMarkdownPreprocessorTests.m)
    - Test all syntax variations (GFM, code blocks, tables, etc.)
    - Test edge cases from bug reports
    - Golden file testing (input.md → expected.html)
@@ -505,10 +509,11 @@ Create issues for:
    - Effort: HIGH
    - Impact: Can't release without this
 
-6. **Add comprehensive Markdown rendering tests**
+6. **Add comprehensive Markdown rendering tests** *(In Progress)*
    - Priority: HIGH
    - Effort: MEDIUM
    - Impact: Prevent rendering regressions
+   - Status: Preprocessing tests completed (MPMarkdownPreprocessorTests.m)
 
 7. **Create developer setup script (setup.sh)**
    - Priority: MEDIUM
