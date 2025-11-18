@@ -31,11 +31,14 @@ jobs:
 
     - name: Run tests
       run: |
+        set -o pipefail
         xcodebuild test \
           -workspace MacDown.xcworkspace \
           -scheme MacDown \
           -destination 'platform=macOS' \
-          | xcpretty --color --simple
+          -quiet \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
       continue-on-error: false
 
     - name: Upload test results
