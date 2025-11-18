@@ -64,6 +64,7 @@ Use TodoWrite to create detailed todo items for the entire workflow:
 - Consult Chico for code review
 - (In parallel) Consult Harpo for documentation updates
 - (In parallel) Consult Zeppo for manual testing plan
+- Fetch latest and rebase on main
 - Create branch, commit, and push
 - Create pull request
 - Report completion
@@ -240,7 +241,49 @@ If manual testing is not relevant for this change, please say so.
 - Apply any documentation updates from Harpo
 - Save Zeppo's manual testing plan (if provided) to include in the PR
 
-### Step 12: Create Branch, Commit, and Push
+### Step 12: Fetch Latest and Rebase on Main
+
+Before pushing changes, ensure your branch is up-to-date with the main branch.
+
+#### 12a. Fetch Latest from Remote
+
+```bash
+git fetch origin main
+```
+
+#### 12b. Rebase on Main
+
+```bash
+git rebase origin/main
+```
+
+#### 12c. Handle Conflicts (If Any)
+
+If conflicts occur during rebase:
+
+1. **Attempt to resolve automatically** - Analyze the conflicts and resolve them based on:
+   - The requirements and implementation plan
+   - Groucho's architectural guidance
+   - The nature of the conflicting changes
+
+2. **Only ask the user if:**
+   - The conflicts are too complex to resolve confidently
+   - The resolution requires business logic decisions
+   - You're unsure which changes should take precedence
+
+3. **After resolving conflicts:**
+   - Stage the resolved files: `git add <resolved-files>`
+   - Continue the rebase: `git rebase --continue`
+   - **Return to Step 8** to re-implement or adjust as needed
+   - **Re-run all tests** (Step 9)
+   - **Consult Chico** (Step 10) to review the conflict resolution
+   - **Continue through Steps 11-12** until rebase succeeds without conflicts
+
+4. **Abort if stuck:**
+   - If unable to resolve: `git rebase --abort`
+   - Inform the user and ask for guidance
+
+### Step 13: Create Branch, Commit, and Push
 
 Generate a branch name based on the issue (e.g., `issue-{number}-{brief-description}` or `fix/issue-{number}`).
 
@@ -268,7 +311,7 @@ Push to remote:
 git push -u origin {branch-name}
 ```
 
-### Step 13: Create Pull Request
+### Step 14: Create Pull Request
 
 Use the GitHub API to create a pull request:
 
@@ -287,7 +330,7 @@ curl -X POST \
 
 **Note:** Do NOT use "Fixes" or "Closes" keywords to avoid auto-closing the issue.
 
-### Step 14: Report Completion
+### Step 15: Report Completion
 
 Provide a summary to the user:
 
