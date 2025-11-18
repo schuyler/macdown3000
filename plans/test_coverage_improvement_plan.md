@@ -1,0 +1,670 @@
+# Test Coverage Improvement Plan for MacDown
+
+**Document Version:** 1.0
+**Date:** 2025-11-18
+**Status:** Proposed
+
+## Executive Summary
+
+MacDown currently has minimal test coverage (~7% test-to-code ratio) focused primarily on low-level utility functions. This plan outlines a pragmatic, CI-friendly testing strategy to improve coverage of critical functionality without introducing flaky or hard-to-maintain tests.
+
+**Key Recommendations:**
+- Focus on **markdown rendering tests** (highest ROI)
+- Add **document model logic tests** (core business logic)
+- Implement **export/conversion tests** (critical features)
+- Keep UI tests minimal and focused on smoke testing only
+- All recommended tests are compatible with GitHub Actions macOS runners
+
+## Current State Assessment
+
+### What We Have (6 test files, ~484 lines)
+
+| Test File | Coverage Area | Quality | Lines |
+|-----------|--------------|---------|-------|
+| MPUtilityTests.m | JS/ObjC bridge | Good | ~34 |
+| MPStringLookupTests.m | String parsing | Excellent | ~188 |
+| MPPreferencesTests.m | Preferences | Minimal | ~49 |
+| MPHTMLTabularizeTests.m | HTML generation | Good | ~58 |
+| MPColorTests.m | Color parsing | Good | ~39 |
+| MPAssetTests.m | Asset handling | Good | ~122 |
+
+### What We're Missing (Critical Gaps)
+
+**Zero Coverage:**
+- Markdown rendering engine (MPRenderer.m)
+- Document management (MPDocument.m)
+- Application controller logic
+- Export functionality
+- Plugin system
+- Most extension categories
+- All UI components
+
+**Test Infrastructure:**
+- ✅ XCTest framework configured
+- ✅ GitHub Actions CI pipeline (test.yml)
+- ✅ Runs on macOS-14 runners
+- ❌ No code coverage reporting
+- ❌ No integration tests
+- ❌ Minimal UI testing
+
+## CI-Friendly Testing Strategy
+
+### Why This Matters
+
+GitHub Actions macOS runners are:
+- **Available:** macOS-14 with Xcode pre-installed
+- **Fast enough:** For unit and integration tests
+- **Reliable:** For deterministic tests
+- **Limited:** By compute time (billable)
+
+### What Works Well in CI
+
+✅ **Unit tests** - Fast, deterministic
+✅ **Rendering tests** - Input → Output validation
+✅ **Logic tests** - Business rules without UI
+✅ **File I/O tests** - Filesystem operations
+✅ **Integration tests** - Component interactions
+✅ **Basic UI tests** - Critical path smoke tests
+
+### What to Avoid
+
+❌ Complex UI automation (flaky, slow)
+❌ Visual regression testing (inconsistent)
+❌ Performance benchmarks (variable results)
+❌ Tests requiring human interaction
+
+## Priority Roadmap
+
+### Phase 1: Core Rendering (HIGH PRIORITY)
+
+**Goal:** Test the heart of MacDown - markdown to HTML conversion
+
+**New Test Files:**
+- `MPMarkdownRenderingTests.m` - Core markdown syntax
+- `MPSyntaxHighlightingTests.m` - Code block highlighting
+- `MPMathJaxRenderingTests.m` - Math formula rendering
+
+**Estimated Impact:**
+- Coverage: +5-8%
+- Bug prevention: High
+- Maintenance: Low
+- CI time: +30-60 seconds
+
+**Example Tests:**
+```objective-c
+- (void)testHeaderRendering
+- (void)testListRendering
+- (void)testCodeBlockRendering
+- (void)testTableRendering
+- (void)testInlineFormattingBold
+- (void)testInlineFormattingItalic
+- (void)testInlineFormattingCode
+- (void)testLinkRendering
+- (void)testImageRendering
+- (void)testBlockquoteRendering
+- (void)testHorizontalRuleRendering
+- (void)testGitHubFlavoredMarkdown
+- (void)testNestedListRendering
+- (void)testMalformedMarkdownHandling
+- (void)testSpecialCharacterEscaping
+- (void)testUnicodeSupport
+```
+
+### Phase 2: Document Logic (HIGH PRIORITY)
+
+**Goal:** Test document state management without UI
+
+**New Test Files:**
+- `MPDocumentTests.m` - Document lifecycle
+- `MPDocumentStateTests.m` - Dirty tracking, autosave
+
+**Estimated Impact:**
+- Coverage: +3-5%
+- Bug prevention: High
+- Maintenance: Low
+- CI time: +20-30 seconds
+
+**Example Tests:**
+```objective-c
+// Document Creation & Loading
+- (void)testDocumentInitialization
+- (void)testLoadMarkdownFile
+- (void)testLoadWithDifferentEncodings
+- (void)testLoadEmptyFile
+- (void)testLoadLargeFile
+
+// Document State
+- (void)testDirtyFlagOnEdit
+- (void)testDirtyFlagAfterSave
+- (void)testUndoRedoTracking
+- (void)testDocumentModificationDate
+
+// Document Saving
+- (void)testSaveToFile
+- (void)testSaveWithEncoding
+- (void)testAutosaveNaming
+- (void)testSaveConflictHandling
+
+// Text Operations
+- (void)testTextReplacement
+- (void)testTextInsertion
+- (void)testTextDeletion
+```
+
+### Phase 3: Export Functionality (MEDIUM PRIORITY)
+
+**Goal:** Verify HTML/PDF export works correctly
+
+**New Test Files:**
+- `MPExportTests.m` - Export operations
+- `MPHTMLGenerationTests.m` - Complete HTML document generation
+
+**Estimated Impact:**
+- Coverage: +2-4%
+- Bug prevention: Medium-High
+- Maintenance: Low
+- CI time: +30-45 seconds
+
+**Example Tests:**
+```objective-c
+// HTML Export
+- (void)testHTMLExportBasic
+- (void)testHTMLExportWithCSS
+- (void)testHTMLExportWithJavaScript
+- (void)testHTMLExportEmbeddedAssets
+- (void)testHTMLExportLinkedAssets
+- (void)testHTMLExportWithSyntaxHighlighting
+- (void)testHTMLExportWithMathJax
+
+// PDF Export
+- (void)testPDFGenerationBasic
+- (void)testPDFGenerationWithImages
+- (void)testPDFGenerationWithStyles
+
+// Export Options
+- (void)testExportOptionsApplied
+- (void)testExportFileNaming
+- (void)testExportPathHandling
+```
+
+### Phase 4: Expanded Utility Tests (MEDIUM PRIORITY)
+
+**Goal:** Complete coverage of utility classes
+
+**Extended Test Files:**
+- Expand `MPPreferencesTests.m`
+- Add `MPAssetLoadingTests.m`
+- Add `MPFileIOTests.m`
+
+**Estimated Impact:**
+- Coverage: +2-3%
+- Bug prevention: Medium
+- Maintenance: Low
+- CI time: +15-20 seconds
+
+**Example Tests:**
+```objective-c
+// Preferences
+- (void)testThemePreference
+- (void)testEditorFontPreference
+- (void)testMarkdownExtensionsPreference
+- (void)testPreferenceDefaults
+- (void)testPreferenceMigration
+
+// File I/O
+- (void)testFileEncodingDetection
+- (void)testUTF8FileLoading
+- (void)testUTF16FileLoading
+- (void)testBinaryFileRejection
+- (void)testFilePermissionHandling
+```
+
+### Phase 5: Integration Tests (MEDIUM PRIORITY)
+
+**Goal:** Test component interactions
+
+**New Test Files:**
+- `MPRendererIntegrationTests.m` - Renderer + Preferences + Assets
+- `MPDocumentIntegrationTests.m` - Document + Renderer + Export
+
+**Estimated Impact:**
+- Coverage: +2-3%
+- Bug prevention: Medium
+- Maintenance: Medium
+- CI time: +30-45 seconds
+
+**Example Tests:**
+```objective-c
+// Renderer Integration
+- (void)testRendererRespectsPreferences
+- (void)testRendererLoadsCustomCSS
+- (void)testRendererInjectsPrismAssets
+- (void)testRendererHandlesMathJaxPreference
+
+// Document Integration
+- (void)testDocumentRenderingPipeline
+- (void)testDocumentWithAssetReferences
+- (void)testDocumentExportWithAllOptions
+```
+
+### Phase 6: Smoke Test UI (LOW PRIORITY)
+
+**Goal:** Minimal critical path validation
+
+**New Test Files:**
+- `MPSmokeTests.m` - Basic UI flows (XCUITest)
+
+**Estimated Impact:**
+- Coverage: +1%
+- Bug prevention: Medium
+- Maintenance: High
+- CI time: +60-120 seconds
+
+**Example Tests (limit to 3-5):**
+```objective-c
+- (void)testLaunchAndQuit
+- (void)testOpenFileAndRender
+- (void)testTypingUpdatesPreview
+```
+
+**Note:** Only add if Phases 1-5 complete successfully
+
+## Detailed Test Specifications
+
+### MPMarkdownRenderingTests.m
+
+**Purpose:** Comprehensive validation of markdown→HTML conversion
+
+**Setup Required:**
+```objective-c
+@interface MPMarkdownRenderingTests : XCTestCase
+@property (nonatomic, strong) MPRenderer *renderer;
+@property (nonatomic, strong) MPPreferences *preferences;
+@end
+
+- (void)setUp {
+    [super setUp];
+    self.preferences = [[MPPreferences alloc] init];
+    self.renderer = [[MPRenderer alloc] init];
+    // Set up default rendering preferences
+}
+```
+
+**Critical Test Cases:**
+
+1. **Headers (H1-H6)**
+   ```objective-c
+   - (void)testHeaderRendering {
+       NSString *input = @"# H1\n## H2\n### H3";
+       NSString *output = [self.renderer renderMarkdown:input];
+       XCTAssertTrue([output containsString:@"<h1>H1</h1>"]);
+       XCTAssertTrue([output containsString:@"<h2>H2</h2>"]);
+       XCTAssertTrue([output containsString:@"<h3>H3</h3>"]);
+   }
+   ```
+
+2. **Lists (ordered, unordered, nested)**
+   ```objective-c
+   - (void)testUnorderedList {
+       NSString *input = @"- Item 1\n- Item 2\n  - Nested";
+       NSString *output = [self.renderer renderMarkdown:input];
+       XCTAssertTrue([output containsString:@"<ul>"]);
+       XCTAssertTrue([output containsString:@"<li>Item 1</li>"]);
+   }
+   ```
+
+3. **Code Blocks**
+   ```objective-c
+   - (void)testCodeBlockWithLanguage {
+       NSString *input = @"```javascript\nvar x = 1;\n```";
+       NSString *output = [self.renderer renderMarkdown:input];
+       XCTAssertTrue([output containsString:@"<code"]);
+       XCTAssertTrue([output containsString:@"javascript"]);
+   }
+   ```
+
+4. **Tables**
+   ```objective-c
+   - (void)testTableRendering {
+       NSString *input = @"| Col1 | Col2 |\n|------|------|\n| A | B |";
+       NSString *output = [self.renderer renderMarkdown:input];
+       XCTAssertTrue([output containsString:@"<table>"]);
+       XCTAssertTrue([output containsString:@"<th>Col1</th>"]);
+   }
+   ```
+
+5. **Edge Cases**
+   ```objective-c
+   - (void)testEmptyInput {
+       NSString *output = [self.renderer renderMarkdown:@""];
+       XCTAssertNotNil(output);
+   }
+
+   - (void)testNilInput {
+       NSString *output = [self.renderer renderMarkdown:nil];
+       XCTAssertNotNil(output); // Should handle gracefully
+   }
+
+   - (void)testMalformedMarkdown {
+       NSString *input = @"**unclosed bold\n# incomplete";
+       NSString *output = [self.renderer renderMarkdown:input];
+       XCTAssertNotNil(output); // Should not crash
+   }
+   ```
+
+### MPDocumentTests.m
+
+**Purpose:** Test document lifecycle without UI
+
+**Setup Required:**
+```objective-c
+@interface MPDocumentTests : XCTestCase
+@property (nonatomic, strong) MPDocument *document;
+@property (nonatomic, strong) NSURL *tempFileURL;
+@end
+
+- (void)setUp {
+    [super setUp];
+    self.document = [[MPDocument alloc] init];
+    // Create temporary test file
+    NSString *tempPath = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:@"test.md"];
+    self.tempFileURL = [NSURL fileURLWithPath:tempPath];
+}
+
+- (void)tearDown {
+    [[NSFileManager defaultManager] removeItemAtURL:self.tempFileURL
+                                              error:nil];
+    [super tearDown];
+}
+```
+
+**Critical Test Cases:**
+
+1. **File Loading**
+   ```objective-c
+   - (void)testLoadMarkdownFile {
+       NSString *content = @"# Test Document\n\nContent here.";
+       [content writeToURL:self.tempFileURL
+                atomically:YES
+                  encoding:NSUTF8StringEncoding
+                     error:nil];
+
+       NSError *error;
+       BOOL success = [self.document readFromURL:self.tempFileURL
+                                          ofType:@"md"
+                                           error:&error];
+
+       XCTAssertTrue(success);
+       XCTAssertNil(error);
+       XCTAssertNotNil(self.document.text);
+   }
+   ```
+
+2. **State Management**
+   ```objective-c
+   - (void)testDirtyTracking {
+       XCTAssertFalse(self.document.isDirty);
+
+       // Simulate text change
+       [self.document updateText:@"New content"];
+
+       XCTAssertTrue(self.document.isDirty);
+   }
+   ```
+
+### MPExportTests.m
+
+**Purpose:** Validate export functionality
+
+**Critical Test Cases:**
+
+1. **HTML Export Structure**
+   ```objective-c
+   - (void)testHTMLExportStructure {
+       self.document.text = @"# Title\n\nParagraph.";
+
+       NSString *html = [self.document exportedHTML];
+
+       XCTAssertTrue([html containsString:@"<!DOCTYPE html>"]);
+       XCTAssertTrue([html containsString:@"<html>"]);
+       XCTAssertTrue([html containsString:@"<head>"]);
+       XCTAssertTrue([html containsString:@"<body>"]);
+   }
+   ```
+
+2. **Asset Embedding**
+   ```objective-c
+   - (void)testHTMLExportWithEmbeddedCSS {
+       // Test that CSS is embedded when option selected
+       self.document.exportOptions = MPAssetEmbedded;
+       NSString *html = [self.document exportedHTML];
+
+       XCTAssertTrue([html containsString:@"<style>"]);
+       XCTAssertFalse([html containsString:@"<link rel=\"stylesheet\""]);
+   }
+   ```
+
+## Implementation Guidelines
+
+### Test File Organization
+
+```
+MacDownTests/
+├── Rendering/
+│   ├── MPMarkdownRenderingTests.m
+│   ├── MPSyntaxHighlightingTests.m
+│   └── MPMathJaxRenderingTests.m
+├── Document/
+│   ├── MPDocumentTests.m
+│   ├── MPDocumentStateTests.m
+│   └── MPExportTests.m
+├── Utilities/
+│   ├── MPUtilityTests.m (existing)
+│   ├── MPStringLookupTests.m (existing)
+│   ├── MPColorTests.m (existing)
+│   ├── MPPreferencesTests.m (expand)
+│   ├── MPAssetTests.m (existing)
+│   └── MPFileIOTests.m (new)
+├── Integration/
+│   ├── MPRendererIntegrationTests.m
+│   └── MPDocumentIntegrationTests.m
+├── UI/
+│   └── MPSmokeTests.m (XCUITest)
+└── Resources/
+    └── TestFixtures/
+        ├── sample.md
+        ├── large.md
+        ├── unicode.md
+        └── malformed.md
+```
+
+### Testing Best Practices
+
+1. **Isolation:** Each test should be independent
+2. **Cleanup:** Use setUp/tearDown for test fixtures
+3. **Assertions:** Clear, specific assertion messages
+4. **Coverage:** One test per behavior, not per method
+5. **Performance:** Keep tests fast (<100ms each)
+6. **Determinism:** No randomness, no network calls
+7. **Readability:** Test names describe what they test
+
+### Code Coverage Reporting
+
+**Add to GitHub Actions workflow:**
+
+```yaml
+- name: Run tests with coverage
+  run: |
+    set -o pipefail
+    xcodebuild test \
+      -workspace MacDown.xcworkspace \
+      -scheme MacDown \
+      -enableCodeCoverage YES \
+      -derivedDataPath DerivedData
+
+- name: Generate coverage report
+  run: |
+    xcrun xccov view --report DerivedData/Logs/Test/*.xcresult > coverage.txt
+    cat coverage.txt
+
+- name: Upload coverage
+  uses: codecov/codecov-action@v3
+  with:
+    files: ./coverage.txt
+```
+
+### Continuous Integration Updates
+
+**Current `.github/workflows/test.yml` is good, consider adding:**
+
+1. **Coverage threshold enforcement**
+   - Fail if coverage drops below X%
+
+2. **Test result reporting**
+   - Comment on PRs with test results
+
+3. **Performance monitoring**
+   - Track test execution time
+
+## Success Metrics
+
+### Coverage Targets
+
+| Phase | Target Coverage | Estimated Tests | Time Investment |
+|-------|----------------|-----------------|-----------------|
+| Phase 1 | 15-20% | 30-40 tests | 2-3 days |
+| Phase 2 | 25-30% | 50-60 tests | 3-4 days |
+| Phase 3 | 30-35% | 65-75 tests | 2-3 days |
+| Phase 4 | 35-40% | 80-95 tests | 2-3 days |
+| Phase 5 | 40-45% | 95-110 tests | 2-3 days |
+| Phase 6 | 45-50% | 100-115 tests | 1-2 days |
+
+### Quality Indicators
+
+- ✅ All tests pass in CI
+- ✅ Test suite runs in <5 minutes
+- ✅ Zero flaky tests (100% consistent results)
+- ✅ Code coverage visible in PRs
+- ✅ New features require tests (policy)
+
+### Long-term Goals
+
+1. **Minimum 40% code coverage** for core features
+2. **100% coverage** for critical rendering logic
+3. **Zero regressions** in tested functionality
+4. **Fast feedback** (<5 min CI run)
+5. **Developer confidence** to refactor safely
+
+## Maintenance Strategy
+
+### Ongoing Responsibilities
+
+1. **Add tests with new features** - Make it policy
+2. **Update tests when specs change** - Keep in sync
+3. **Review coverage reports** - Identify gaps
+4. **Prune redundant tests** - Keep suite lean
+5. **Monitor CI performance** - Keep builds fast
+
+### Red Flags to Watch
+
+- Tests taking >10 minutes in CI
+- Flaky tests (intermittent failures)
+- Coverage decreasing over time
+- Tests skipped/disabled
+- Untested bug fixes
+
+## Appendix: Test Fixtures
+
+### Sample Test Files
+
+**tests/Resources/TestFixtures/comprehensive.md**
+```markdown
+# Comprehensive Test Document
+
+## Headers
+### H3
+#### H4
+
+## Lists
+- Unordered item
+- Another item
+  - Nested item
+
+1. Ordered item
+2. Second item
+
+## Code
+Inline `code` here.
+
+```javascript
+function test() {
+    return true;
+}
+```
+
+## Tables
+| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+
+## Formatting
+**bold** *italic* ~~strikethrough~~
+
+## Links
+[Link](https://example.com)
+
+## Images
+![Alt text](image.png)
+
+## Blockquotes
+> Quote here
+> Multiple lines
+
+## Math
+$E = mc^2$
+
+## Horizontal Rule
+---
+```
+
+### Edge Case Files
+
+**tests/Resources/TestFixtures/edge_cases.md**
+```markdown
+# Edge Cases
+
+## Empty code block
+```
+
+```
+
+## Unclosed formatting
+**unclosed bold
+*unclosed italic
+
+## Special characters
+< > & " '
+
+## Unicode
+日本語 🎉 Émojis
+
+## Very long line
+[very long line with many characters that might cause wrapping or performance issues...]
+```
+
+## References
+
+- XCTest Documentation: https://developer.apple.com/documentation/xctest
+- GitHub Actions for macOS: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+- Hoedown Library (MacDown's renderer): https://github.com/hoedown/hoedown
+- Code Coverage in Xcode: https://developer.apple.com/documentation/xcode/code-coverage
+
+---
+
+**Next Steps:**
+1. Review and approve this plan
+2. Create test fixtures
+3. Implement Phase 1 (rendering tests)
+4. Set up code coverage reporting
+5. Iterate through remaining phases
