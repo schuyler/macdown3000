@@ -4,5 +4,11 @@
       "name": "duck-soup",
       "url": "https://github.com/schuyler/duck-soup"
     }
+  ],
+  "plugins": [
+    {
+      "marketplace": "duck-soup",
+      "name": "dev"
+    }
   ]
 }
