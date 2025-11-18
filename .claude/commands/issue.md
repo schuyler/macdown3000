@@ -11,6 +11,8 @@ Process a GitHub issue from requirements gathering through implementation to pul
 - **Repository:** https://github.com/schuyler/macdown3000
 - **Token:** `tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i` (use rot13 to decode)
 
+**IMPORTANT:** The `gh` CLI tool is NOT available in this environment. All GitHub operations must be performed using `curl` with the decoded PAT token as shown in the examples throughout this workflow.
+
 ## Workflow
 
 ### Step 1: Fetch Issue
