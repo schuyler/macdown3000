@@ -1,0 +1,85 @@
+name: Build arm64 Release
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build-arm64:
+    name: Build arm64 Release
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+
+    - name: Install CocoaPods dependencies
+      run: bundle exec pod install
+
+    - name: Build peg-markdown-highlight
+      run: make -C Dependency/peg-markdown-highlight
+
+    - name: Build MacDown for arm64
+      run: |
+        set -o pipefail
+        xcodebuild archive \
+          -workspace MacDown.xcworkspace \
+          -scheme MacDown \
+          -configuration Release \
+          -archivePath build/MacDown.xcarchive \
+          -arch arm64 \
+          ONLY_ACTIVE_ARCH=NO \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+      continue-on-error: false
+
+    - name: Export application bundle
+      run: |
+        # Extract the .app from the archive
+        cp -R build/MacDown.xcarchive/Products/Applications/MacDown.app build/MacDown.app
+
+        # Display build info
+        echo "Build completed successfully"
+        ls -lh build/
+
+        # Get version info
+        /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/MacDown.app/Contents/Info.plist || echo "Version info not available"
+
+    - name: Create distributable archive
+      run: |
+        cd build
+        zip -r MacDown-arm64.zip MacDown.app
+        cd ..
+
+        # Display archive size
+        ls -lh build/MacDown-arm64.zip
+
+    - name: Upload arm64 build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MacDown-arm64
+        path: build/MacDown-arm64.zip
+        retention-days: 30
+
+    - name: Upload to release (if tagged)
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: build/MacDown-arm64.zip
+        draft: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
