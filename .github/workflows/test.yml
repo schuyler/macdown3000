@@ -34,11 +34,7 @@ jobs:
         set -o pipefail
         xcodebuild test \
           -workspace MacDown.xcworkspace \
-          -scheme MacDown \
-          -destination 'platform=macOS' \
-          -quiet \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO
+          -scheme MacDown
       continue-on-error: false
 
     - name: Upload test results
