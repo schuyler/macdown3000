@@ -31,13 +31,15 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 ### What We're Missing (Critical Gaps)
 
 **Zero Coverage:**
-- Markdown rendering engine (MPRenderer.m)
 - Document management (MPDocument.m)
 - Application controller logic
 - Export functionality
 - Plugin system
 - Most extension categories
 - All UI components
+
+**Minimal Coverage:**
+- Markdown rendering engine (MPRenderer.m) - 18 golden file tests added (Issue #89)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -79,16 +81,21 @@ GitHub Actions macOS runners are:
 
 **Goal:** Test the heart of MacDown - markdown to HTML conversion
 
-**New Test Files:**
-- `MPMarkdownRenderingTests.m` - Core markdown syntax
-- `MPSyntaxHighlightingTests.m` - Code block highlighting
-- `MPMathJaxRenderingTests.m` - Math formula rendering
+**Status:** ✅ **PARTIALLY IMPLEMENTED** (Issue #89)
+- ✅ `MPMarkdownRenderingTests.m` - 18 golden file tests for core markdown syntax
+- ⏳ `MPSyntaxHighlightingTests.m` - Code block highlighting (planned)
+- ⏳ `MPMathJaxRenderingTests.m` - Math formula rendering (planned)
 
-**Estimated Impact:**
-- Coverage: +5-8%
-- Bug prevention: High
-- Maintenance: Low
-- CI time: +30-60 seconds
+**Actual Impact (MPMarkdownRenderingTests.m):**
+- Tests added: 18 golden file test cases
+- Fixtures created: 18 input/output pairs in `MacDownTests/Fixtures/`
+- Coverage: TBD (measure after implementation)
+- Maintenance: Low (golden file approach)
+
+**Code Modifications Made:**
+- Modified `MPCreateHTMLRenderer` in `MPRenderer.m` to accept `tocLevel` parameter
+- Prevents unwanted header ID generation when table of contents is disabled
+- Ensures tests can control rendering behavior for consistent output
 
 **Example Tests:**
 ```objective-c
@@ -273,84 +280,36 @@ GitHub Actions macOS runners are:
 
 ### MPMarkdownRenderingTests.m
 
-**Purpose:** Comprehensive validation of markdown→HTML conversion
+**Status:** ✅ **IMPLEMENTED** (Issue #89)
 
-**Setup Required:**
-```objective-c
-@interface MPMarkdownRenderingTests : XCTestCase
-@property (nonatomic, strong) MPRenderer *renderer;
-@property (nonatomic, strong) MPPreferences *preferences;
-@end
+**Purpose:** Comprehensive validation of markdown→HTML conversion using golden file testing
 
-- (void)setUp {
-    [super setUp];
-    self.preferences = [[MPPreferences alloc] init];
-    self.renderer = [[MPRenderer alloc] init];
-    // Set up default rendering preferences
-}
-```
+**Implementation Approach:**
+- **Golden file pattern:** Each test compares rendered output against expected HTML
+- **Fixtures:** 18 test cases in `MacDownTests/Fixtures/` directory
+- **Naming:** `test-name.md` → `test-name.html` pairs
+- **Coverage:** Headers, lists, code blocks, emphasis, links, blockquotes, etc.
 
-**Critical Test Cases:**
+**Example Test Cases Implemented:**
 
-1. **Headers (H1-H6)**
-   ```objective-c
-   - (void)testHeaderRendering {
-       NSString *input = @"# H1\n## H2\n### H3";
-       NSString *output = [self.renderer renderMarkdown:input];
-       XCTAssertTrue([output containsString:@"<h1>H1</h1>"]);
-       XCTAssertTrue([output containsString:@"<h2>H2</h2>"]);
-       XCTAssertTrue([output containsString:@"<h3>H3</h3>"]);
-   }
-   ```
-
-2. **Lists (ordered, unordered, nested)**
-   ```objective-c
-   - (void)testUnorderedList {
-       NSString *input = @"- Item 1\n- Item 2\n  - Nested";
-       NSString *output = [self.renderer renderMarkdown:input];
-       XCTAssertTrue([output containsString:@"<ul>"]);
-       XCTAssertTrue([output containsString:@"<li>Item 1</li>"]);
-   }
-   ```
-
-3. **Code Blocks**
-   ```objective-c
-   - (void)testCodeBlockWithLanguage {
-       NSString *input = @"```javascript\nvar x = 1;\n```";
-       NSString *output = [self.renderer renderMarkdown:input];
-       XCTAssertTrue([output containsString:@"<code"]);
-       XCTAssertTrue([output containsString:@"javascript"]);
-   }
-   ```
-
-4. **Tables**
-   ```objective-c
-   - (void)testTableRendering {
-       NSString *input = @"| Col1 | Col2 |\n|------|------|\n| A | B |";
-       NSString *output = [self.renderer renderMarkdown:input];
-       XCTAssertTrue([output containsString:@"<table>"]);
-       XCTAssertTrue([output containsString:@"<th>Col1</th>"]);
-   }
-   ```
-
-5. **Edge Cases**
-   ```objective-c
-   - (void)testEmptyInput {
-       NSString *output = [self.renderer renderMarkdown:@""];
-       XCTAssertNotNil(output);
-   }
-
-   - (void)testNilInput {
-       NSString *output = [self.renderer renderMarkdown:nil];
-       XCTAssertNotNil(output); // Should handle gracefully
-   }
-
-   - (void)testMalformedMarkdown {
-       NSString *input = @"**unclosed bold\n# incomplete";
-       NSString *output = [self.renderer renderMarkdown:input];
-       XCTAssertNotNil(output); // Should not crash
-   }
-   ```
+1. ✅ **Headers** - `atx-headers.md` tests H1-H6 rendering
+2. ✅ **Emphasis** - `emphasis.md` tests bold, italic, strikethrough
+3. ✅ **Lists** - `unordered-list.md`, `ordered-list.md`, `nested-lists.md`
+4. ✅ **Code Blocks** - `code-blocks.md`, `fenced-code.md`
+5. ✅ **Links** - `links.md` tests inline and reference-style links
+6. ✅ **Blockquotes** - `blockquote.md` tests quote rendering
+7. ✅ **Horizontal Rules** - `horizontal-rule.md`
+8. ✅ **Tables** - `table.md` tests GFM table syntax
+9. ✅ **Inline Code** - `inline-code.md`
+10. ✅ **Images** - `images.md`
+11. ✅ **Autolinks** - `autolinks.md`
+12. ✅ **HTML Blocks** - `html-blocks.md`
+13. ✅ **Setext Headers** - `setext-headers.md`
+14. ✅ **Special Characters** - `backslash-escapes.md`
+15. ✅ **Line Breaks** - `hard-line-breaks.md`
+16. ✅ **Mixed Content** - `mixed-content.md`
+17. ✅ **Paragraphs** - `paragraphs.md`
+18. ✅ **Table of Contents** - `toc.md` (with renderer modification for tocLevel parameter)
 
 ### MPDocumentTests.m
 
@@ -451,32 +410,48 @@ GitHub Actions macOS runners are:
 
 ```
 MacDownTests/
-├── Rendering/
-│   ├── MPMarkdownRenderingTests.m
+├── MPMarkdownRenderingTests.m ✅ (implemented - Issue #89)
+├── Rendering/ (planned)
 │   ├── MPSyntaxHighlightingTests.m
 │   └── MPMathJaxRenderingTests.m
-├── Document/
+├── Document/ (planned)
 │   ├── MPDocumentTests.m
 │   ├── MPDocumentStateTests.m
 │   └── MPExportTests.m
-├── Utilities/
-│   ├── MPUtilityTests.m (existing)
-│   ├── MPStringLookupTests.m (existing)
-│   ├── MPColorTests.m (existing)
-│   ├── MPPreferencesTests.m (expand)
-│   ├── MPAssetTests.m (existing)
-│   └── MPFileIOTests.m (new)
-├── Integration/
+├── Utilities/ (existing)
+│   ├── MPUtilityTests.m
+│   ├── MPStringLookupTests.m
+│   ├── MPColorTests.m
+│   ├── MPPreferencesTests.m
+│   ├── MPAssetTests.m
+│   └── MPFileIOTests.m (new - planned)
+├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m
 │   └── MPDocumentIntegrationTests.m
-├── UI/
+├── UI/ (planned)
 │   └── MPSmokeTests.m (XCUITest)
-└── Resources/
-    └── TestFixtures/
-        ├── sample.md
-        ├── large.md
-        ├── unicode.md
-        └── malformed.md
+└── Fixtures/ ✅ (implemented - Issue #89)
+    ├── atx-headers.md / .html
+    ├── emphasis.md / .html
+    ├── unordered-list.md / .html
+    ├── ordered-list.md / .html
+    ├── nested-lists.md / .html
+    ├── code-blocks.md / .html
+    ├── fenced-code.md / .html
+    ├── links.md / .html
+    ├── blockquote.md / .html
+    ├── horizontal-rule.md / .html
+    ├── table.md / .html
+    ├── inline-code.md / .html
+    ├── images.md / .html
+    ├── autolinks.md / .html
+    ├── html-blocks.md / .html
+    ├── setext-headers.md / .html
+    ├── backslash-escapes.md / .html
+    ├── hard-line-breaks.md / .html
+    ├── mixed-content.md / .html
+    ├── paragraphs.md / .html
+    └── toc.md / .html
 ```
 
 ### Testing Best Practices
