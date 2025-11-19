@@ -39,6 +39,48 @@ nav .container {
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+}
+
+/* Hamburger menu button (hidden on desktop) */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 101;
+    position: absolute;
+    right: 20px;
+}
+
+.hamburger:focus {
+    outline: 2px solid #40bfbf;
+    outline-offset: 4px;
+}
+
+.hamburger-line {
+    width: 30px;
+    height: 3px;
+    background-color: #333;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+.hamburger.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.hamburger.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
 }
 
 .nav-links {
@@ -473,6 +515,50 @@ footer a:hover {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    /* Hamburger menu for mobile */
+    .hamburger {
+        display: flex;
+    }
+
+    nav .container {
+        justify-content: center;
+    }
+
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        max-width: 300px;
+        height: 100vh;
+        background-color: #fff;
+        flex-direction: column;
+        padding: 80px 0 20px;
+        gap: 0;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .nav-links.active {
+        right: 0;
+    }
+
+    .nav-links li {
+        width: 100%;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+    .nav-links a {
+        display: block;
+        padding: 1.25rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .nav-links a:hover {
+        background-color: #f5f5f5;
+    }
+
     .hero-content-wrapper {
         grid-template-columns: 1fr;
         gap: 2rem;
@@ -496,13 +582,6 @@ footer a:hover {
     }
 
     .hero-buttons {
-        justify-content: center;
-    }
-
-    .nav-links {
-        gap: 1rem;
-        font-size: 0.9rem;
-        flex-wrap: wrap;
         justify-content: center;
     }
 
