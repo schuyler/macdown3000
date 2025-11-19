@@ -129,6 +129,16 @@ jobs:
             coverageText = 'Coverage report not available';
           }
 
+          // Truncate coverage text if too long (GitHub comment limit ~65KB)
+          // Extract just the summary (first few lines) to keep comment size manageable
+          const maxLines = 50;
+          const lines = coverageText.split('\n');
+          if (lines.length > maxLines) {
+            coverageText = lines.slice(0, maxLines).join('\n') +
+              `\n\n... (${lines.length - maxLines} more lines truncated)\n\n` +
+              '📊 **Full coverage report available in workflow artifacts**';
+          }
+
           // Handle unavailable coverage data
           let coverageDisplay;
           if (currentCoverage === 'N/A' || !currentCoverage) {
@@ -140,7 +150,7 @@ jobs:
           const body = '## Code Coverage Report\n\n' +
             coverageDisplay + '\n\n' +
             '<details>\n' +
-            '<summary>Coverage Details</summary>\n\n' +
+            '<summary>Coverage Details (Summary)</summary>\n\n' +
             '```\n' +
             coverageText + '\n' +
             '```\n\n' +
