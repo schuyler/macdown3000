@@ -3,8 +3,7 @@ name: Build arm64 Release
 on:
   push:
     branches: [ main, develop, 'claude/**' ]
-    tags:
-      - 'v*'
+    # Note: tag triggers removed to avoid conflict with release.yml workflow
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
@@ -75,11 +74,5 @@ jobs:
         path: build/MacDown-arm64.zip
         retention-days: 30
 
-    - name: Upload to release (if tagged)
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: build/MacDown-arm64.zip
-        draft: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Note: Release creation removed - use release.yml workflow instead
+    # This workflow is for development builds only

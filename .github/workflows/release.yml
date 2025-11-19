@@ -1,0 +1,379 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+
+jobs:
+  release:
+    name: Build, Sign, Notarize, and Release
+    runs-on: macos-14
+
+    steps:
+      # ==================== SETUP ====================
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Validate required secrets
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          MISSING_SECRETS=()
+
+          if [[ -z "$APPLE_TEAM_ID" ]]; then
+            MISSING_SECRETS+=("APPLE_TEAM_ID")
+          fi
+          if [[ -z "$APPLE_CERTIFICATE_BASE64" ]]; then
+            MISSING_SECRETS+=("APPLE_CERTIFICATE_BASE64")
+          fi
+          if [[ -z "$APPLE_CERTIFICATE_PASSWORD" ]]; then
+            MISSING_SECRETS+=("APPLE_CERTIFICATE_PASSWORD")
+          fi
+          if [[ -z "$APPLE_ID" ]]; then
+            MISSING_SECRETS+=("APPLE_ID")
+          fi
+          if [[ -z "$APPLE_APP_PASSWORD" ]]; then
+            MISSING_SECRETS+=("APPLE_APP_PASSWORD")
+          fi
+
+          if [[ ${#MISSING_SECRETS[@]} -gt 0 ]]; then
+            echo "::error::Missing required GitHub secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please configure the following secrets in your GitHub repository settings:"
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "  - $secret"
+            done
+            echo ""
+            echo "See plans/release-process.md for setup instructions."
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+      - name: Extract version from tag or input
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}  # Remove 'v' prefix if present
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "📦 Building version: $VERSION"
+
+      - name: Detect pre-release from version string
+        run: |
+          if [[ "$VERSION" =~ -(beta|alpha|rc) ]]; then
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+            echo "🧪 Detected pre-release version"
+          else
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+            echo "🚀 Detected production release version"
+          fi
+
+      - name: Set build timestamp
+        run: echo "BUILD_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_ENV
+
+      # ==================== DEPENDENCIES ====================
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Install CocoaPods dependencies
+        run: bundle exec pod install
+
+      - name: Build peg-markdown-highlight
+        run: make -C Dependency/peg-markdown-highlight
+
+      - name: Install build tools
+        run: brew install create-dmg jq
+
+      # ==================== CODE SIGNING SETUP ====================
+
+      - name: Setup code signing keychain
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "🔐 Setting up code signing keychain..."
+
+          # Generate random password for temporary keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import Developer ID certificate
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+
+          # Use trap to ensure certificate cleanup even on error
+          trap 'rm -f certificate.p12' EXIT
+
+          security import certificate.p12 \
+            -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/productsign
+
+          # Prevent codesign from prompting for keychain password
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            build.keychain
+
+          # Verify certificate is available
+          echo "📋 Available code signing identities:"
+          security find-identity -v -p codesigning
+
+      # ==================== BUILD ====================
+
+      - name: Build and archive MacDown
+        timeout-minutes: 30
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "🔨 Building MacDown for Release..."
+          set -o pipefail
+
+          xcodebuild archive \
+            -workspace MacDown.xcworkspace \
+            -scheme MacDown \
+            -configuration Release \
+            -archivePath build/MacDown.xcarchive \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            CODE_SIGN_STYLE="Manual" \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            ENABLE_HARDENED_RUNTIME=YES \
+            | tee build.log
+
+          echo "✅ Archive created successfully"
+
+      - name: Extract application bundle
+        run: |
+          echo "📦 Extracting application bundle from archive..."
+
+          # Extract .app from archive
+          cp -R build/MacDown.xcarchive/Products/Applications/MacDown.app build/MacDown.app
+
+          # Display build info
+          echo "Build contents:"
+          ls -lh build/
+
+          # Get and display version info
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/MacDown.app/Contents/Info.plist)
+          echo "📌 App bundle version: $APP_VERSION"
+
+          # Verify code signature
+          echo "🔍 Verifying code signature..."
+          codesign -vvv --deep --strict build/MacDown.app
+          codesign -d -r- build/MacDown.app
+
+          # Verify it's signed with Developer ID
+          SIGNING_IDENTITY=$(codesign -dvv build/MacDown.app 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$SIGNING_IDENTITY" ]]; then
+            echo "::error::App is not signed with Developer ID Application certificate"
+            exit 1
+          fi
+          echo "✅ Verified signature: $SIGNING_IDENTITY"
+
+          echo "✅ Application bundle ready"
+
+      # ==================== CREATE DMG ====================
+
+      - name: Create DMG installer
+        run: |
+          echo "💿 Creating DMG installer..."
+
+          # Try create-dmg first (better UX)
+          if create-dmg \
+            --volname "MacDown" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "MacDown.app" 200 190 \
+            --hide-extension "MacDown.app" \
+            --app-drop-link 600 185 \
+            --no-internet-enable \
+            "build/MacDown-${VERSION}.dmg" \
+            "build/MacDown.app" 2>&1; then
+            echo "✅ DMG created with create-dmg"
+          else
+            echo "⚠️ create-dmg failed, falling back to hdiutil..."
+            hdiutil create -volname "MacDown" \
+              -srcfolder build/MacDown.app \
+              -ov -format UDZO \
+              "build/MacDown-${VERSION}.dmg"
+            echo "✅ DMG created with hdiutil"
+          fi
+
+          # Display DMG info
+          ls -lh "build/MacDown-${VERSION}.dmg"
+          echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
+
+      - name: Generate checksums
+        run: |
+          echo "🔐 Generating SHA256 checksums..."
+
+          cd build
+          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
+
+          echo "Checksum file contents:"
+          cat "MacDown-${VERSION}.dmg.sha256"
+
+          # Save checksum to environment for use in release notes
+          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
+
+          echo "✅ Checksums generated"
+
+      # ==================== NOTARIZATION ====================
+
+      - name: Submit DMG for notarization
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "📤 Submitting DMG for notarization..."
+
+          # Submit for notarization without waiting
+          xcrun notarytool submit "build/MacDown-${VERSION}.dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --no-wait \
+            --output-format json > notarization-response.json
+
+          # Extract submission ID using jq
+          SUBMISSION_ID=$(jq -r '.id' notarization-response.json)
+
+          # Validate submission ID
+          if [[ -z "$SUBMISSION_ID" ]] || [[ "$SUBMISSION_ID" == "null" ]]; then
+            echo "::error::Failed to extract notarization submission ID"
+            echo "Response from Apple:"
+            cat notarization-response.json
+            exit 1
+          fi
+
+          echo "✅ Notarization submitted"
+          echo ""
+          echo "📋 Notarization Details:"
+          echo "  Submission ID: $SUBMISSION_ID"
+          echo ""
+          echo "⏳ Notarization is processing in the background (typically 5-15 minutes)"
+          echo ""
+          echo "To check status, run:"
+          echo "  xcrun notarytool info $SUBMISSION_ID --apple-id <your-apple-id> --password <app-password> --team-id $APPLE_TEAM_ID"
+          echo ""
+          echo "📧 You will receive an email from Apple when notarization completes"
+          echo ""
+          echo "After notarization completes, follow the manual stapling instructions in plans/release-process.md"
+
+          # Save submission ID for reference in release notes
+          echo "NOTARIZATION_ID=$SUBMISSION_ID" >> $GITHUB_ENV
+
+      # ==================== CREATE RELEASE ====================
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          prerelease: ${{ env.PRERELEASE }}
+          tag_name: ${{ github.ref_name || format('v{0}', env.VERSION) }}
+          name: MacDown ${{ env.VERSION }}
+          files: |
+            build/MacDown-${{ env.VERSION }}.dmg
+            build/MacDown-${{ env.VERSION }}.dmg.sha256
+          body: |
+            ## MacDown ${{ env.VERSION }}
+
+            ### Download
+
+            **Platform:** macOS (Universal - Apple Silicon and Intel)
+
+            **⚠️ Important:** This DMG has been submitted for Apple notarization but the ticket is not yet stapled.
+
+            ### Post-Download Steps (Required)
+
+            After notarization completes (you'll receive an email from Apple), the DMG needs to be stapled:
+
+            1. **Check notarization status:**
+               ```bash
+               xcrun notarytool info ${{ env.NOTARIZATION_ID }} \
+                 --apple-id <your-apple-id> \
+                 --password <app-password> \
+                 --team-id ${{ secrets.APPLE_TEAM_ID }}
+               ```
+
+            2. **Once approved, staple the ticket:**
+               ```bash
+               xcrun stapler staple MacDown-${{ env.VERSION }}.dmg
+               xcrun stapler validate MacDown-${{ env.VERSION }}.dmg
+               ```
+
+            3. **Re-upload the stapled DMG to this release**
+
+            4. **Publish the release** (currently in draft mode)
+
+            For complete instructions, see `plans/release-process.md` in the repository.
+
+            ### Verification
+
+            **SHA256 Checksum:**
+            ```
+            ${{ env.CHECKSUM }}
+            ```
+
+            Verify after download:
+            ```bash
+            shasum -a 256 -c MacDown-${{ env.VERSION }}.dmg.sha256
+            ```
+
+            ---
+
+            **Build Information:**
+            - Build Date: ${{ env.BUILD_TIME }}
+            - Commit: ${{ github.sha }}
+            - Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ==================== CLEANUP ====================
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain 2>/dev/null || true
+          echo "🧹 Keychain cleaned up"
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build.log
+            notarization-response.json
+          retention-days: 7

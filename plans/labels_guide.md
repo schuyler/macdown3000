@@ -164,11 +164,11 @@ CI/CD improvements:
 
 ## 📈 Current Project State
 
-### Release Blockers (5 issues)
+### Release Blockers (4 issues)
 1. #32 - Fix Open Recent on macOS Sonoma
 2. #50 - Cut first official release
 3. #51 - Audit and update CocoaPods dependencies
-4. #53 - Add code signing and release automation
+4. ✅ ~~#52 - Add code signing and release automation~~ (COMPLETED)
 5. (+ high-priority rendering bugs)
 
 ### Quick Wins (good-first-issue)
