@@ -67,6 +67,16 @@ nav .container {
     text-align: center;
 }
 
+.hero-logo {
+    margin-bottom: 2rem;
+}
+
+.hero-logo img {
+    height: 150px;
+    width: auto;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
 .hero h1 {
     font-size: 3rem;
     margin-bottom: 1rem;
