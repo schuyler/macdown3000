@@ -13,15 +13,42 @@ Process a GitHub issue from requirements gathering through implementation to pul
 
 **IMPORTANT:** The `gh` CLI tool is NOT available in this environment. All GitHub operations must be performed using `curl` with the decoded PAT token as shown in the examples throughout this workflow.
 
+### Decoding and Caching the Token
+
+**CRITICAL:** Decode and cache the token ONCE at the start of the workflow. Do NOT decode it repeatedly in every API call.
+
+**Recommended approach - Cache to file:**
+```bash
+# Decode and save to temporary file (do this ONCE at the start)
+python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
+
+# Use in all subsequent API calls
+TOKEN=$(cat /tmp/token.txt)
+```
+
+**Alternative - Cache to variable (for simple bash scripts):**
+```bash
+bash << 'EOF'
+TOKEN=$(echo "tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i" | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+# All your API calls go here
+EOF
+```
+
 ## Workflow
 
-### Step 1: Fetch Issue
+### Step 1: Decode Token and Fetch Issue
 
 Extract the issue number from the command arguments (accept both `123` and `#123` formats).
 
-Decode the token using ROT13 first, then fetch the issue from GitHub using:
+**First, decode and cache the token** (do this ONCE):
 ```bash
-curl -H "Authorization: token {decoded_token}" \
+python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
+```
+
+Then fetch the issue from GitHub:
+```bash
+TOKEN=$(cat /tmp/token.txt)
+curl -H "Authorization: token $TOKEN" \
   https://api.github.com/repos/schuyler/macdown3000/issues/{number}
 ```
 

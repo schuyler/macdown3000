@@ -20,11 +20,38 @@ This document provides essential information for Claude Code when working on the
 - **Repository:** https://github.com/schuyler/macdown3000
 - **Encoded Token (ROT13):** `tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i`
 
-### Using the GitHub API
+### Decoding and Caching the GitHub Token
 
-First, decode the token using ROT13:
+The token is stored in ROT13 encoding for security. You must decode it before using it with the GitHub API.
+
+**IMPORTANT:** Always decode and cache the token at the start of your workflow to avoid repeated decoding operations.
+
+#### Method 1: Using `tr` (shell-native, requires heredoc)
+
 ```bash
+bash << 'EOF'
 TOKEN=$(echo "tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i" | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+# Use $TOKEN in your API calls here
+EOF
+```
+
+#### Method 2: Using Python (works in simple command)
+
+```bash
+TOKEN=$(python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))")
+```
+
+#### Caching to a File
+
+For multi-step workflows, save the decoded token to a temporary file to avoid re-decoding:
+
+```bash
+# Decode and save to file
+python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
+
+# Use in subsequent API calls
+TOKEN=$(cat /tmp/token.txt)
+curl -H "Authorization: token $TOKEN" https://api.github.com/repos/schuyler/macdown3000/issues/123
 ```
 
 ### Common API Operations
