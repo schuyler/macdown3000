@@ -235,8 +235,8 @@
     // Parse and render the markdown (this is the core rendering step)
     [self.renderer parseAndRenderNow];
 
-    // Return the rendered HTML
-    return [self.renderer currentHtml];
+    // Return the rendered HTML from the delegate
+    return self.delegate.lastHTML;
 }
 
 /**
