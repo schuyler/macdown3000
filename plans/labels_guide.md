@@ -72,39 +72,6 @@
 
 ---
 
-## 📊 Label Statistics (Applied to 55 Issues)
-
-### By Priority
-- **Critical:** 5 issues (#32, #50, #51, #53)
-- **High:** 15 issues
-- **Medium:** 28 issues
-- **Low:** 7 issues
-
-### By Type
-- **Bug:** 32 issues
-- **Enhancement:** 8 issues
-- **Infrastructure:** 10 issues
-- **Documentation:** 1 issue
-- **Security:** 2 issues
-
-### By Milestone
-- **v0.1:** 27 issues (release-critical)
-- **Backlog:** 1 issue
-- **Unscheduled:** 27 issues
-
-### By Component
-- **Rendering:** 13 issues
-- **Preview:** 5 issues
-- **Editor:** 5 issues
-- **Export:** 5 issues
-- **File I/O:** 4 issues
-- **Diagrams:** 4 issues
-- **UI:** 3 issues
-- **Preferences:** 4 issues
-- **Other:** various
-
----
-
 ## 🎯 Usage Guidelines
 
 ### For Contributors
@@ -164,19 +131,10 @@ CI/CD improvements:
 
 ## 📈 Current Project State
 
-### Release Blockers (4 issues)
-1. #32 - Fix Open Recent on macOS Sonoma
-2. #50 - Cut first official release
-3. #51 - Audit and update CocoaPods dependencies
-4. ✅ ~~#52 - Add code signing and release automation~~ (COMPLETED)
-5. (+ high-priority rendering bugs)
-
-### Quick Wins (good-first-issue)
-- #45 - Add strikethrough support
-- #55 - Create developer setup script
-
-### Help Wanted
-- #54 - Expand test coverage
+Use GitHub's issue filters to view current state:
+- **Release Blockers:** `label:"priority: critical" is:open`
+- **Quick Wins:** `label:"good-first-issue" is:open`
+- **Help Wanted:** `label:"help-wanted" is:open`
 
 ---
 
