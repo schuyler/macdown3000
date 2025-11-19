@@ -398,25 +398,209 @@ Proceed with /issue workflow:
 - Step 16: Create pull request
 - Step 17: Report completion
 
-### If Testing Still Fails
+### User Testing Result: FAILED
 
-Three options:
+**User report:** "yes, it's still flickering like crazy"
 
-**Option A: Debug snapshot overlay further**
-- Add logging to understand timing and view hierarchy
-- Use Xcode view debugger to inspect overlay positioning
-- Verify snapshot capture is working correctly
-- Check if WebView has internal subviews obscuring overlay
+After 4 iterations and 7 bug fixes, the snapshot overlay approach still does not work.
 
-**Option B: Try different approach**
-- Progressive retry strategy (mentioned by Groucho)
-- Conditional rendering (only reload changed portions)
-- Debouncing with smarter diffing
+---
 
-**Option C: Investigate WebView internals**
-- Use runtime introspection to understand WebView's internal behavior
-- Check if WebView creates temporary overlay views during loading
-- Look for WebKit private APIs that might help
+## ROOT CAUSE DIAGNOSIS (Final Consultation with Chico)
+
+### The Fundamental Flaw
+
+**The snapshot is capturing an empty/grey view, not the rendered HTML content.**
+
+**Lines 1137-1139:**
+```objc
+NSBitmapImageRep *bitmap = [self.preview bitmapImageRepForCachingDisplayInRect:self.preview.bounds];
+bitmap.size = self.preview.bounds.size;
+[self.preview cacheDisplayInRect:self.preview.bounds toBitmapImageRep:bitmap];
+```
+
+### Why This Cannot Work
+
+1. **`bitmapImageRepForCachingDisplayInRect:` only captures AppKit layers**
+   - It does not capture WebKit's compositor layer where the actual rendered HTML lives
+
+2. **WebView renders in a separate GPU-accelerated layer**
+   - This layer exists outside the normal AppKit view hierarchy
+   - It's handled by WebKit's internal compositor process
+
+3. **The snapshot is literally grey/empty**
+   - The rendered HTML content never makes it into the bitmap
+   - We're capturing the WebView's backing view, not its rendered content
+
+4. **The overlay mechanism works perfectly**
+   - It's positioned correctly
+   - It displays immediately
+   - It's on top of the WebView
+   - **But it's showing grey-on-grey!**
+
+### Why All 7 Bug Fixes Didn't Help
+
+Every fix addressed the overlay mechanism (positioning, timing, z-order, etc.), but the fundamental problem is **the snapshot content is wrong**:
+
+- ✅ Frame positioning: Correct, but irrelevant - overlay is positioned right, but showing grey
+- ✅ Z-order: Correct, but irrelevant - overlay is on top, but showing grey
+- ✅ Display forcing: Correct, but irrelevant - overlay displays immediately, but it's grey
+- ✅ Layout thrashing eliminated: Correct, but irrelevant - view updates work, but snapshot is grey
+- ✅ Autoresizing fixed: Correct, but irrelevant - frame matches, but content is grey
+- ✅ Scaling fixed: Correct, but irrelevant - pixel-perfect grey
+
+**All fixes were solving the wrong problem.** They assumed the snapshot was valid.
+
+### The Analogy
+
+It's like trying to photograph a TV screen by taking a picture of the frame - you'll capture the bezel and the black screen, but not what's actually playing on the TV. WebKit's compositor is the "TV signal" that never makes it into our photo.
+
+---
+
+## Path Forward: Two Viable Options
+
+### Option 1: DOM Updates (BEST SOLUTION) ⭐
+
+**The code already exists but is commented out!** Lines 1091-1131 show the RIGHT approach:
+
+```objc
+#if 0
+    // Unfortunately this DOM-replacing causes a lot of problems...
+    // 1. MathJax needs to be triggered.
+    // 2. Prism rendering is lost.
+    // 3. Potentially more.
+
+    // If we're working on the same document, try not to reload.
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
+    {
+        // Use the existing tree if available, and replace the content.
+        DOMDocument *doc = self.preview.mainFrame.DOMDocument;
+        DOMNodeList *htmlNodes = [doc getElementsByTagName:@"html"];
+        if (htmlNodes.length >= 1)
+        {
+            // Find things inside the <html> tag.
+            NSRegularExpression *regex = [[NSRegularExpression alloc]
+                initWithPattern:@"<html>(.*)</html>"
+                options:NSRegularExpressionDotMatchesLineSeparators
+                error:NULL];
+            NSTextCheckingResult *result = [regex firstMatchInString:html
+                options:0
+                range:NSMakeRange(0, html.length)];
+            html = [html substringWithRange:[result rangeAtIndex:1]];
+
+            // Replace everything in the old <html> tag.
+            DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
+            htmlNode.innerHTML = html;
+
+            return;
+        }
+    }
+#endif
+```
+
+**Why This Is The Best Solution:**
+
+1. **Eliminates the reload entirely**
+   - No `loadHTMLString:baseURL:` call = no DOM destruction = no flash
+   - The content updates in-place like modern single-page web apps
+
+2. **The JavaScript problems are solvable**
+   - Modern web apps update DOM constantly and re-run JavaScript
+   - MathJax has an API to re-render: `MathJax.Hub.Queue(["Typeset", MathJax.Hub])`
+   - Prism has an API to re-highlight: `Prism.highlightAll()`
+   - Other JavaScript can be triggered via `evaluateWebScript:`
+
+3. **This is how modern web development works**
+   - React, Vue, Angular all update DOM without page reloads
+   - Gmail, Twitter, Facebook all update content in-place
+   - This is the standard approach for dynamic web content
+
+4. **Performance benefits**
+   - No parsing overhead for unchanged HTML structure
+   - No re-layout of unchanged elements
+   - Preserves scroll position naturally
+   - Preserves WebView internal state
+
+**Implementation Plan:**
+
+1. **Re-enable the DOM update code** (remove the `#if 0`)
+
+2. **Add JavaScript re-initialization after DOM update:**
+   ```objc
+   htmlNode.innerHTML = html;
+
+   // Re-run JavaScript libraries
+   if (self.preferences.htmlMathJax) {
+       [webView evaluateWebScript:@"if (window.MathJax) MathJax.Hub.Queue(['Typeset', MathJax.Hub]);"];
+   }
+   if (self.preferences.htmlSyntaxHighlighting) {
+       [webView evaluateWebScript:@"if (window.Prism) Prism.highlightAll();"];
+   }
+   // Add any other JavaScript that needs re-running
+   ```
+
+3. **Handle edge cases:**
+   - First load: Still use `loadHTMLString:baseURL:` (no existing DOM)
+   - Base URL change: Still use `loadHTMLString:baseURL:` (different document)
+   - HTML structure change: Detect major changes and fall back to reload
+
+4. **Test thoroughly:**
+   - MathJax equations render correctly
+   - Syntax highlighting works
+   - Tables of contents update
+   - Links work correctly
+   - Images load properly
+
+**Why This Will Work:**
+
+DOM updates don't destroy the WebView's compositor layer. The rendered content stays visible while we update the DOM tree. The browser then applies incremental updates to the display - no flash, no flicker, just smooth updates.
+
+---
+
+### Option 2: Capture WebView's Document View (LAST ATTEMPT)
+
+Try capturing from the WebView's internal document view instead of the WebView itself:
+
+```objc
+// Instead of:
+NSBitmapImageRep *bitmap = [self.preview bitmapImageRepForCachingDisplayInRect:self.preview.bounds];
+[self.preview cacheDisplayInRect:self.preview.bounds toBitmapImageRep:bitmap];
+
+// Try:
+NSView *documentView = self.preview.mainFrame.frameView.documentView;
+NSBitmapImageRep *bitmap = [documentView bitmapImageRepForCachingDisplayInRect:documentView.bounds];
+[documentView cacheDisplayInRect:documentView.bounds toBitmapImageRep:bitmap];
+```
+
+**Why This Might Work:**
+
+The document view is WebKit's internal scroll view that contains the rendered content. It's one layer closer to the actual rendering.
+
+**Why This Might Fail:**
+
+Chico is skeptical because WebKit's compositor is separate from the view hierarchy. The document view might also be a wrapper around the GPU-accelerated layer, not the layer itself.
+
+**If This Works:**
+
+This would be the simplest fix - just change the capture target. But given WebKit's architecture, this is a long shot.
+
+---
+
+### Why Other Options Are Not Acceptable
+
+**Option 3: Accept the Flash** - REJECTED
+- This is a high-impact, long-standing issue affecting many users (77+ comments on original issue #1104)
+- Modern browsers don't flash during typing in contenteditable or textarea
+- The comparison to browser navigation is false - we're not navigating, we're live-previewing
+- MacDown is a writing tool - flickering disrupts the writing experience
+- This would be giving up on a core quality issue
+
+**Option 4: PDF Snapshot** - NOT WORTH IT
+- Converting PDF to image adds significant overhead
+- PDF generation is synchronous and slow
+- Still has timing issues (when to capture)
+- Complexity doesn't justify marginal benefit over Option 2
+- If we're doing complex workarounds, better to fix the root cause (Option 1)
 
 ---
 
@@ -434,12 +618,14 @@ This flickering issue has a long history:
 
 ## Lessons Learned
 
-1. **WebKit optimization matters** - Hidden views don't render, breaking double-buffering approach
-2. **Timing is everything** - Must wait for compositor, but not too long (sluggish feel)
-3. **View hierarchy is tricky** - bounds vs frame, addSubview behavior, autoresizing conflicts
-4. **Iterative debugging works** - Each consultation with Chico revealed subtle bugs
-5. **Tests don't catch everything** - Visual flickering requires human testing
-6. **Cocoa is powerful but complex** - Small mistakes (wrong coordinate system, repeated addSubview) have big impacts
+1. **Question fundamental assumptions early** - We spent 4 iterations fixing overlay mechanics when the real problem was the snapshot capture itself
+2. **WebKit's architecture is special** - GPU-accelerated compositor layers live outside the normal AppKit view hierarchy
+3. **Understand what you're capturing** - `bitmapImageRepForCachingDisplayInRect:` captures AppKit layers, not WebKit's rendered content
+4. **Sometimes the old approach was right** - The commented-out DOM update code (lines 1091-1131) was actually the correct solution all along
+5. **Tests don't catch everything** - Visual flickering requires human testing; all CI tests passed despite the approach being fundamentally broken
+6. **JavaScript re-initialization is solvable** - Modern web frameworks prove that DOM updates + JavaScript re-running is a standard, reliable pattern
+7. **Iterative debugging has limits** - When 7 fixes don't help, it's time to question the approach, not just the implementation
+8. **Performance optimizations can break assumptions** - WebKit's GPU rendering optimization made double-buffering and snapshot approaches fail
 
 ---
 
