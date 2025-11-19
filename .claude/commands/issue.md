@@ -9,47 +9,30 @@ Process a GitHub issue from requirements gathering through implementation to pul
 ## Configuration
 
 - **Repository:** https://github.com/schuyler/macdown3000
-- **Token:** `tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i` (use rot13 to decode)
 
-**IMPORTANT:** The `gh` CLI tool is NOT available in this environment. All GitHub operations must be performed using `curl` with the decoded PAT token as shown in the examples throughout this workflow.
+### GitHub CLI Setup
 
-### Decoding and Caching the Token
+**IMPORTANT:** The `gh` CLI is automatically installed via SessionStart hook on Linux.
 
-**CRITICAL:** Decode and cache the token ONCE at the start of the workflow. Do NOT decode it repeatedly in every API call.
-
-**Recommended approach - Cache to file:**
-```bash
-# Decode and save to temporary file (do this ONCE at the start)
-python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
-
-# Use in all subsequent API calls
-TOKEN=$(cat /tmp/token.txt)
-```
-
-**Alternative - Cache to variable (for simple bash scripts):**
-```bash
-bash << 'EOF'
-TOKEN=$(echo "tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i" | tr 'A-Za-z' 'N-ZA-Mn-za-m')
-# All your API calls go here
-EOF
-```
+**Authentication:** The `GITHUB_TOKEN` environment variable must be set in Claude Code Web settings (see [CLAUDE.md](../CLAUDE.md#github-api-access) for instructions). The token is automatically available in the session environment.
 
 ## Workflow
 
-### Step 1: Decode Token and Fetch Issue
+### Step 1: Authenticate and Fetch Issue
 
 Extract the issue number from the command arguments (accept both `123` and `#123` formats).
 
-**First, decode and cache the token** (do this ONCE):
+**Authentication:**
+The SessionStart hook automatically authenticates `gh`. If needed, you can authenticate manually:
+
 ```bash
-python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
+# Secure method using printf (avoids token exposure)
+printf "%s" "$GITHUB_TOKEN" | /tmp/gh/bin/gh auth login --with-token
 ```
 
-Then fetch the issue from GitHub:
+Fetch the issue from GitHub:
 ```bash
-TOKEN=$(cat /tmp/token.txt)
-curl -H "Authorization: token $TOKEN" \
-  https://api.github.com/repos/schuyler/macdown3000/issues/{number}
+/tmp/gh/bin/gh issue view {number} --repo schuyler/macdown3000 --json title,body,labels,assignees
 ```
 
 Present the issue title, body, and any relevant details to the user.
@@ -72,13 +55,9 @@ Ask the user clarifying questions about:
 
 Post a comment to the GitHub issue documenting all requirements, clarifications, and decisions made during Step 2.
 
-Use this API call (with decoded token):
+Use the `gh` CLI:
 ```bash
-curl -X POST \
-  -H "Authorization: token {decoded_token}" \
-  -H "Content-Type: application/json" \
-  -d '{"body": "COMMENT_TEXT_HERE"}' \
-  https://api.github.com/repos/schuyler/macdown3000/issues/{number}/comments
+/tmp/gh/bin/gh issue comment {number} --repo schuyler/macdown3000 --body "COMMENT_TEXT_HERE"
 ```
 
 ### Step 5: Create Workflow Todos
@@ -255,91 +234,41 @@ git push -u origin {branch-name}
 
 If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s).
 
-#### 10c. Get Workflow Run ID
+#### 10c. Monitor Workflow Run
 
-Wait 10 seconds for the workflow to start, then fetch the latest workflow run for your branch using the decoded token:
+Wait 10 seconds for the workflow to start, then monitor it using `gh`:
 
 ```bash
-# URL-encode the branch name (required for branches with special characters like /)
-ENCODED_BRANCH=$(python3 -c "import urllib.parse; print(urllib.parse.quote('{branch-name}'))")
+sleep 10
 
-# Get the workflow run ID with error handling
-RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
-  "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
-  | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    runs = data.get('workflow_runs', [])
-    print(runs[0]['id'] if runs else '')
-except Exception as e:
-    print('', file=sys.stderr)
-    sys.exit(0)
-")
-
-if [ -z "$RUN_ID" ]; then
-  echo "Waiting for workflow to start..."
-  sleep 10
-  # Try again
-  RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
-    "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
-    | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    runs = data.get('workflow_runs', [])
-    print(runs[0]['id'] if runs else '')
-except Exception:
-    sys.exit(0)
-")
-fi
-
-if [ -z "$RUN_ID" ]; then
-  echo "ERROR: Could not find workflow run for branch {branch-name}"
-  echo "Check GitHub Actions: https://github.com/schuyler/macdown3000/actions"
-  exit 1
-fi
-
-echo "Workflow Run ID: $RUN_ID"
+# List recent workflow runs for this branch
+/tmp/gh/bin/gh run list --repo schuyler/macdown3000 --branch {branch-name} --limit 1
 ```
 
 #### 10d. Monitor Workflow Status
 
-Poll the workflow status every 30 seconds until it completes. Use the decoded token:
+Use `gh run watch` to monitor the workflow run until completion:
 
 ```bash
-# Show workflow URL to user
-WORKFLOW_URL=$(curl -s -H "Authorization: token {decoded_token}" \
-  "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('html_url', ''))")
+# Watch the workflow run (auto-updates until completion)
+/tmp/gh/bin/gh run watch $RUN_ID --repo schuyler/macdown3000 --exit-status
+```
 
-echo "Monitoring workflow at: $WORKFLOW_URL"
+This command will automatically poll the workflow status and display updates until it completes or fails.
+
+Alternatively, for more control with timeout handling:
+
+```bash
+# View workflow details
+/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000
 
 # Poll until completion with timeout
 ELAPSED=0
 MAX_WAIT=900  # 15 minutes
 
 while [ $ELAPSED -lt $MAX_WAIT ]; do
-  RESPONSE=$(curl -s -H "Authorization: token {decoded_token}" \
-    "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID")
-
-  STATUS=$(echo "$RESPONSE" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    print(data.get('status', 'unknown'))
-except Exception:
-    print('error')
-")
-
-  CONCLUSION=$(echo "$RESPONSE" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    print(data.get('conclusion', 'N/A'))
-except Exception:
-    print('N/A')
-")
+  STATUS=$(/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --json status --jq '.status')
+  CONCLUSION=$(/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --json conclusion --jq '.conclusion // "N/A"')
 
   echo "[$(date +%H:%M:%S)] Status: $STATUS, Conclusion: $CONCLUSION"
 
@@ -353,8 +282,7 @@ done
 
 if [ $ELAPSED -ge $MAX_WAIT ]; then
   echo "WARNING: Workflow still running after 15 minutes"
-  echo "You can continue monitoring at: $WORKFLOW_URL"
-  # Ask user if they want to continue waiting
+  /tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --web
 fi
 ```
 
@@ -369,38 +297,15 @@ Once the workflow completes (status is "completed"), check the conclusion:
 To get detailed job information and logs if tests fail:
 
 ```bash
-# Get the job ID (prefer failed jobs, fallback to first job)
-JOB_ID=$(curl -s -H "Authorization: token {decoded_token}" \
-  "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID/jobs" \
-  | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    jobs = data.get('jobs', [])
-    if not jobs:
-        print('')
-        sys.exit(0)
+# View the run summary
+/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000
 
-    # Prefer failed jobs
-    failed = [j for j in jobs if j.get('conclusion') == 'failure']
-    job = failed[0] if failed else jobs[0]
-    print(job.get('id', ''))
-except Exception:
-    print('')
-")
+# Get the full logs
+/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log
 
-if [ -z "$JOB_ID" ]; then
-  echo "ERROR: Could not find job information"
-  exit 1
-fi
-
-# Get logs for the job (use -L to follow redirects)
-echo "Fetching logs for job $JOB_ID..."
-curl -sL -H "Authorization: token {decoded_token}" \
-  "https://api.github.com/repos/schuyler/macdown3000/actions/jobs/${JOB_ID}/logs"
+# Or view logs for a specific job if there are multiple
+/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log --job {job-id}
 ```
-
-**Important:** The logs endpoint returns a redirect (302) to the actual log file. The `-L` flag makes curl follow redirects.
 
 Analyze the logs to identify which tests failed and why.
 
@@ -555,19 +460,31 @@ If tests fail after rebase, return to Step 9 to fix issues.
 
 ### Step 16: Create Pull Request
 
-Use the GitHub API to create a pull request (with decoded token):
+Use `gh` to create a pull request:
 
 ```bash
-curl -X POST \
-  -H "Authorization: token {decoded_token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Address issue #{number}: {title}",
-    "head": "{branch-name}",
-    "base": "main",
-    "body": "## Summary\n\n{description of changes}\n\n## Related Issue\n\nRelated to #{number}\n\n## Manual Testing Plan\n\n{include Zeppo'\''s plan if provided, otherwise state \"N/A\"}\n\n## Review Notes\n\n{any relevant notes from agent consultations}"
-  }' \
-  https://api.github.com/repos/schuyler/macdown3000/pulls
+/tmp/gh/bin/gh pr create \
+  --repo schuyler/macdown3000 \
+  --title "Address issue #{number}: {title}" \
+  --base main \
+  --body "$(cat <<'EOF'
+## Summary
+
+{description of changes}
+
+## Related Issue
+
+Related to #{number}
+
+## Manual Testing Plan
+
+{include Zeppo's plan if provided, otherwise state "N/A"}
+
+## Review Notes
+
+{any relevant notes from agent consultations}
+EOF
+)"
 ```
 
 **Note:** Do NOT use "Fixes" or "Closes" keywords to avoid auto-closing the issue.
@@ -605,5 +522,5 @@ The pull request is ready for your review and manual testing. The issue will rem
 5. **Iterate with agents** - If they have concerns, address them before proceeding
 6. **No auto-close** - Never use "Fixes #" or "Closes #" in commits or PR
 7. **Run in parallel** - Harpo and Zeppo consultations in Step 12 should run simultaneously
-8. **Decode ROT13 token** - Always decode the token before using it in API calls
+8. **Authenticate `gh` with environment variable** - `GITHUB_TOKEN` must be set in Claude Code Web settings
 9. **No co-authored-by** - The project has `includeCoAuthoredBy: false` configured. Do NOT add "Co-authored-by:" trailers to commits or mention co-authorship in PRs
