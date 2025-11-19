@@ -71,6 +71,9 @@
     XCTAssertTrue(success, @"readFromData:ofType:error: should succeed with valid UTF-8 data");
     XCTAssertNil(error, @"No error should be returned for valid UTF-8 data");
 
+    // Load window controllers to initialize editor
+    [self.document makeWindowControllers];
+
     // Verify document's markdown property contains the correct text
     XCTAssertEqualObjects(self.document.markdown, testMarkdown,
                          @"Document markdown should match the input data");
@@ -98,6 +101,9 @@
 
 - (void)testDataOfType
 {
+    // Load window controllers to initialize editor
+    [self.document makeWindowControllers];
+
     // Set document's markdown property to a test string
     NSString *testMarkdown = @"# Sample Markdown\n\n- Item 1\n- Item 2\n\nSome **bold** text.";
     self.document.markdown = testMarkdown;
