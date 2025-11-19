@@ -18,7 +18,6 @@
 #import "MPUtilities.h"
 #import "MPAsset.h"
 #import "MPPreferences.h"
-#import "MPMarkdownPreprocessor.h"
 
 // Warning: If the version of MathJax is ever updated, please check the status
 // of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
@@ -98,9 +97,6 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
     NSString *text, int flags, BOOL smartypants, NSString *frontMatter,
     hoedown_renderer *htmlRenderer, hoedown_renderer *tocRenderer)
 {
-    // Preprocess markdown to fix list rendering issues (GitHub issue #34)
-    text = [MPMarkdownPreprocessor preprocessForListInterruption:text];
-
     NSData *inputData = [text dataUsingEncoding:NSUTF8StringEncoding];
     hoedown_document *document = hoedown_document_new(
         htmlRenderer, flags, kMPRendererNestingLevel);
