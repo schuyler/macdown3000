@@ -515,9 +515,26 @@ footer a:hover {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    /* Make header transparent and overlay content on mobile */
+    header {
+        background-color: transparent;
+        border-bottom: none;
+        position: absolute;
+        width: 100%;
+    }
+
     /* Hamburger menu for mobile */
     .hamburger {
         display: flex;
+        border: 2px solid white;
+        border-radius: 8px;
+        padding: 8px;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Make hamburger lines white */
+    .hamburger-line {
+        background-color: white;
     }
 
     nav .container {
