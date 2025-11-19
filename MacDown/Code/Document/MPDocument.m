@@ -1153,8 +1153,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                                     relativeTo:self.preview];
         }
 
+        // CRITICAL FIX: Always update frame to match current preview position/size
+        self.snapshotOverlay.frame = self.preview.frame;
+
+        // Ensure overlay is topmost (re-order if needed)
+        [self.preview.superview addSubview:self.snapshotOverlay
+                                positioned:NSWindowAbove
+                                relativeTo:self.preview];
+
         self.snapshotOverlay.image = snapshot;
         self.snapshotOverlay.alphaValue = 1.0;
+
+        // Force immediate display before WebView load
+        [self.snapshotOverlay.superview displayIfNeeded];
     }
 
     // 3. Reload the page (WebView is underneath snapshot overlay)
