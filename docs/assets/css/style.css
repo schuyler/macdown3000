@@ -370,7 +370,7 @@ nav .container {
     transition: transform 0.3s;
     color: #20a0a0;
     flex-shrink: 0;
-    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 .faq-item.active .faq-icon {
@@ -386,7 +386,7 @@ nav .container {
 
 .faq-item.active .faq-answer {
     max-height: 2000px;
-    padding: 0 1.5rem 1.5rem 1.5rem;
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
 }
 
 .faq-answer p {
