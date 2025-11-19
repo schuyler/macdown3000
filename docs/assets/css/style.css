@@ -150,10 +150,64 @@ nav .container {
     color: #333;
 }
 
+.feature-detail {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    align-items: start;
+}
+
+.feature-detail:nth-child(even) {
+    grid-template-columns: 1fr 2fr;
+}
+
+.feature-detail:nth-child(even) .feature-content {
+    order: 2;
+}
+
+.feature-detail:nth-child(even) .feature-image {
+    order: 1;
+}
+
+.feature-content h3 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    color: #667eea;
+}
+
+.feature-content p {
+    color: #555;
+    margin-bottom: 1rem;
+    line-height: 1.8;
+}
+
+.feature-content ul {
+    margin-left: 1.5rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+.feature-content ul li {
+    margin-bottom: 0.5rem;
+}
+
+.feature-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
+    margin-top: 3rem;
 }
 
 .feature {
@@ -215,6 +269,61 @@ nav .container {
 .about .attribution p {
     font-size: 1rem;
     margin-bottom: 0.5rem;
+}
+
+/* FAQ Section */
+.faq {
+    background-color: #fff;
+    padding: 4rem 0;
+}
+
+.faq h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #333;
+}
+
+.faq-section {
+    margin-bottom: 3rem;
+}
+
+.faq-section h3 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: #667eea;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.faq-item {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.faq-item h4 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.faq-item p {
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 0;
+}
+
+.faq-item a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.faq-item a:hover {
+    text-decoration: underline;
 }
 
 /* Download Section */
@@ -294,6 +403,10 @@ footer a:hover {
         font-size: 1rem;
     }
 
+    .hero-logo img {
+        height: 100px;
+    }
+
     .nav-links {
         gap: 1rem;
         font-size: 0.9rem;
@@ -305,7 +418,25 @@ footer a:hover {
         display: block;
     }
 
-    .features h2, .about h2, .download h2 {
+    .feature-detail {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem;
+    }
+
+    .feature-detail:nth-child(even) .feature-content,
+    .feature-detail:nth-child(even) .feature-image {
+        order: 0;
+    }
+
+    .features h2, .about h2, .download h2, .faq h2 {
         font-size: 2rem;
+    }
+
+    .faq-section h3 {
+        font-size: 1.5rem;
+    }
+
+    .faq-item h4 {
+        font-size: 1.1rem;
     }
 }
