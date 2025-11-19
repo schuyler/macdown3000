@@ -59,6 +59,7 @@ curl -X POST \
 Use TodoWrite to create detailed todo items for the entire workflow:
 - Create issue branch
 - Consult Groucho for architectural plan
+- Present implementation plan and get user confirmation
 - (If TDD) Consult Zeppo for test design
 - (If TDD) Write failing tests
 - (If TDD) Validate tests with Zeppo
@@ -112,7 +113,26 @@ Please analyze the codebase and recommend:
 
 **If you have new questions:** Return to Step 2, ask the user, and when answered, return here to re-consult Groucho.
 
-**If everything is clear:** Proceed to Step 8.
+**If everything is clear:** Proceed to Step 7b to present the plan to the user.
+
+### Step 7b: Present Implementation Plan and Request Confirmation
+
+**STOP HERE** and present the implementation plan to the user for approval.
+
+Provide a clear summary including:
+
+1. **Overview:** Brief description of the implementation approach
+2. **Files to be Modified:** List all files that will be changed with a brief description of changes
+3. **Implementation Steps:** High-level outline of what will be done (from Groucho's guidance)
+4. **Testing Approach:** Whether TDD will be used and what will be tested
+5. **Potential Risks:** Any concerns or edge cases identified by Groucho
+
+**Format your summary clearly and ask:**
+> "Does this implementation plan look good to you? Should I proceed with [TDD/implementation]?"
+
+**CRITICAL:** Do NOT proceed until the user explicitly confirms approval. Wait for their response.
+
+**After user confirmation:** Proceed to Step 8.
 
 ### Step 8: Test-Driven Development (If Applicable)
 
