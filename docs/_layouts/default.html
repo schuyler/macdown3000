@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title }} - {{ site.title }}</title>
     <meta name="description" content="{{ site.description }}">
+    <link rel="icon" type="image/png" href="{{ '/assets/images/logo.png' | relative_url }}">
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
 </head>
 <body>
     <header>
         <nav>
             <div class="container">
-                <div class="logo">
-                    <a href="{{ '/' | relative_url }}">
-                        <img src="{{ '/assets/images/logo.png' | relative_url }}" alt="MacDown 3000">
-                    </a>
-                </div>
                 <ul class="nav-links">
                     <li><a href="#about">About</a></li>
                     <li><a href="#features">Features</a></li>

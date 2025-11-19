@@ -28,24 +28,20 @@ header {
 }
 
 nav {
-    padding: 1rem 0;
+    padding: 0.5rem 0;
 }
 
 nav .container {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-}
-
-.logo img {
-    height: 40px;
-    width: auto;
 }
 
 .nav-links {
     display: flex;
     list-style: none;
     gap: 2rem;
+    margin: 0;
 }
 
 .nav-links a {
@@ -56,29 +52,41 @@ nav .container {
 }
 
 .nav-links a:hover {
-    color: #007aff;
+    color: #40bfbf;
 }
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #20a0a0 0%, #40bfbf 50%, #60d0d0 100%);
     color: white;
     padding: 4rem 0;
-    text-align: center;
+}
+
+.hero-content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 3rem;
+    align-items: center;
 }
 
 .hero-logo {
-    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .hero-logo img {
-    height: 150px;
+    height: 200px;
     width: auto;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+}
+
+.hero-text {
+    text-align: left;
 }
 
 .hero h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     margin-bottom: 1rem;
     font-weight: 700;
 }
@@ -89,18 +97,17 @@ nav .container {
     opacity: 0.95;
 }
 
-.hero .subtitle {
-    font-size: 1rem;
-    font-style: italic;
-    opacity: 0.85;
-    margin-bottom: 2rem;
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .btn {
     display: inline-block;
     padding: 0.75rem 2rem;
     background-color: #fff;
-    color: #667eea;
+    color: #20a0a0;
     text-decoration: none;
     border-radius: 5px;
     font-weight: 600;
@@ -111,18 +118,18 @@ nav .container {
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    background-color: #f0f0f0;
 }
 
 .btn-secondary {
     background-color: transparent;
     color: white;
     border: 2px solid white;
-    margin-left: 1rem;
 }
 
 .btn-secondary:hover {
     background-color: white;
-    color: #667eea;
+    color: #20a0a0;
 }
 
 /* Demo Section */
@@ -177,7 +184,7 @@ nav .container {
 .feature-content h3 {
     font-size: 1.75rem;
     margin-bottom: 1rem;
-    color: #667eea;
+    color: #20a0a0;
 }
 
 .feature-content p {
@@ -226,7 +233,7 @@ nav .container {
 .feature h3 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    color: #667eea;
+    color: #20a0a0;
 }
 
 .feature p {
@@ -254,7 +261,7 @@ nav .container {
 
 .about .attribution {
     background-color: #f8f9fa;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #20a0a0;
     padding: 1.5rem;
     margin-top: 2rem;
     border-radius: 5px;
@@ -291,8 +298,8 @@ nav .container {
 .faq-section h3 {
     font-size: 1.75rem;
     margin-bottom: 1.5rem;
-    color: #667eea;
-    border-bottom: 2px solid #667eea;
+    color: #20a0a0;
+    border-bottom: 2px solid #20a0a0;
     padding-bottom: 0.5rem;
 }
 
@@ -301,7 +308,7 @@ nav .container {
     padding: 1.5rem;
     background-color: #f8f9fa;
     border-radius: 8px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #20a0a0;
 }
 
 .faq-item h4 {
@@ -317,7 +324,7 @@ nav .container {
 }
 
 .faq-item a {
-    color: #667eea;
+    color: #20a0a0;
     text-decoration: none;
     font-weight: 500;
 }
@@ -385,7 +392,7 @@ footer {
 }
 
 footer a {
-    color: #667eea;
+    color: #40bfbf;
     text-decoration: none;
 }
 
@@ -395,6 +402,16 @@ footer a:hover {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .hero-content-wrapper {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .hero-text {
+        text-align: center;
+    }
+
     .hero h1 {
         font-size: 2rem;
     }
@@ -404,18 +421,18 @@ footer a:hover {
     }
 
     .hero-logo img {
-        height: 100px;
+        height: 120px;
+    }
+
+    .hero-buttons {
+        justify-content: center;
     }
 
     .nav-links {
         gap: 1rem;
         font-size: 0.9rem;
-    }
-
-    .btn-secondary {
-        margin-left: 0;
-        margin-top: 1rem;
-        display: block;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .feature-detail {
