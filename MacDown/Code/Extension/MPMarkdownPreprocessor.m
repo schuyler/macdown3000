@@ -109,15 +109,9 @@
 
 + (NSArray<NSString *> *)splitLines:(NSString *)text lineEnding:(NSString *)lineEnding
 {
-    NSArray<NSString *> *lines = [text componentsSeparatedByString:lineEnding];
-
-    // If the text ends with a line ending, componentsSeparatedByString will add an empty string at the end
-    // We need to remove it to preserve the original structure
-    if (lines.count > 0 && [lines.lastObject length] == 0 && [text hasSuffix:lineEnding]) {
-        lines = [lines subarrayWithRange:NSMakeRange(0, lines.count - 1)];
-    }
-
-    return lines;
+    // Simply split by line ending - don't remove trailing empty strings
+    // as they represent the structure of the document
+    return [text componentsSeparatedByString:lineEnding];
 }
 
 + (BOOL)isFencedCodeBlockMarker:(NSString *)line
