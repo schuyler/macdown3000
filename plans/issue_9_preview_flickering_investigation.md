@@ -1,8 +1,8 @@
 # Issue #9: Preview Pane Flickering Investigation
 
 **Issue:** https://github.com/schuyler/macdown3000/issues/9
-**Branch:** `claude/resolve-issue-9-01LsRCJ3MUPBTD3NLLLaJRyb`
-**Status:** In Progress - Multiple iterations completed, awaiting user testing of latest fixes
+**Branch:** `claude/fix-preview-flickering-01NVyLcGHX2Fta677PTVckzg`
+**Status:** ✅ RESOLVED - Fixed by removing WebCache disabling code (commit d54c20a)
 
 ---
 
@@ -376,33 +376,32 @@ All commits have passed CI tests on GitHub Actions (macOS runners). However, the
 
 ---
 
-## Next Steps
+## Final Resolution
 
-### Immediate: User Testing Required
+### User Testing Result: FAILED (All Snapshot Approaches)
 
-**User must test commit 07fb1f9** to verify:
-1. ✅ No grey flickering during typing
-2. ✅ Preview pane width remains stable
-3. ✅ Smooth crossfade when new content loads
-4. ✅ Works correctly after window resize
-5. ✅ Works correctly after split view adjustment
-
-### If Testing Succeeds
-
-Proceed with /issue workflow:
-- Step 11: Formal Chico code review
-- Step 12: Harpo documentation updates + Zeppo manual testing plan (in parallel)
-- Step 13: Rebase on main
-- Step 14: Force push if needed
-- Step 15: Re-verify CI tests
-- Step 16: Create pull request
-- Step 17: Report completion
-
-### User Testing Result: FAILED
-
-**User report:** "yes, it's still flickering like crazy"
+**User report after iteration 4:** "yes, it's still flickering like crazy"
 
 After 4 iterations and 7 bug fixes, the snapshot overlay approach still does not work.
+
+### Successful Solution: Remove WebCache Disabling Code
+
+After all sophisticated approaches failed, the actual solution was **removing problematic code** rather than building elaborate workarounds.
+
+**What was removed (commit d54c20a):**
+- 15 lines from `/MacDown/Code/Main Window/MPMainController.m`
+- Lines 170-184: WebCache disabling code that forced resource reloads
+- Based on PR #1288 from original MacDown repository
+
+**User validation:**
+- User tested the fix: **"yes, that fixes the flickering"**
+- All CI tests passed
+- Pull request created: **PR #109**
+
+**What's next:**
+- Issue #747 will track the image caching regression (lower-impact issue)
+- Long-term solution: Migrate from WebView to WKWebView (modern WebKit API)
+- WKWebView has better caching, performance, and no flickering issues
 
 ---
 
@@ -586,6 +585,78 @@ This would be the simplest fix - just change the capture target. But given WebKi
 
 ---
 
+## RESOLUTION: Option 0 Was the Right Answer
+
+### The Real Root Cause
+
+After all sophisticated approaches failed, we discovered that **the flickering was caused by code that disabled WebCache**.
+
+**The problematic code** (MPMainController.m, lines 170-184):
+```objc
+// Disable WebCache to prevent stale image display
+[[NSURLCache sharedURLCache] setMemoryCapacity:0];
+[[NSURLCache sharedURLCache] setDiskCapacity:0];
+[NSURLCache setSharedURLCache:[[NSURLCache alloc] initWithMemoryCapacity:0
+                                                            diskCapacity:0
+                                                                diskPath:nil]];
+```
+
+**Why this caused flickering:**
+1. Disabling WebCache forced WebKit to reload ALL resources on EVERY HTML update
+2. Images, CSS, JavaScript - everything had to be fetched/decoded/rendered from scratch
+3. This meant the WebView was truly blank during reload (not just the DOM, but all resources)
+4. The 10-100ms delay became longer because resources had to be reloaded
+5. **The flickering was WebKit waiting for resources to reload on every keystroke**
+
+### The Simple Fix (Commit d54c20a)
+
+**Removed 15 lines** from `/MacDown/Code/Main Window/MPMainController.m`:
+- Deleted the WebCache disabling code
+- Let WebKit use its normal caching behavior
+- Based on PR #1288 from the original MacDown repository
+
+**Result:**
+- WebKit can now cache images, CSS, and other resources between reloads
+- HTML updates still reload the DOM (via `loadHTMLString:baseURL:`)
+- But cached resources display immediately from memory
+- **No more flickering** - resources appear instantly from cache
+
+**Trade-off:**
+- ✅ **Fixes:** High-impact flickering issue affecting all users during typing
+- ⚠️ **Regresses:** Low-impact image caching issue (issue #747)
+  - If user updates an image file with the same filename, stale cached version may display
+  - Workaround: Reload the document (already available in UI)
+  - Long-term fix: WKWebView migration
+
+### Why All Other Approaches Failed
+
+All previous attempts tried to **hide the symptom** (the flash during reload):
+- **Dual-WebView:** Hide one WebView while the other loads
+- **Snapshot overlay:** Cover the flash with a bitmap
+
+But they all failed because **they addressed the symptom, not the cause**:
+1. The real problem wasn't the reload timing
+2. The real problem was that WebCache disabling made every reload require fresh resource fetches
+3. No amount of clever overlay or buffering could hide a 100+ms delay waiting for resources
+
+**The lesson:** Sometimes the right fix is to **remove problematic code**, not build elaborate workarounds around it.
+
+### User Validation
+
+**User testing:** "yes, that fixes the flickering"
+
+**CI testing:** All tests passed
+
+**Pull request:** PR #109 created and ready for review
+
+### Commit Reference
+
+- **Commit:** d54c20a
+- **PR:** #109
+- **Branch:** `claude/fix-preview-flickering-01NVyLcGHX2Fta677PTVckzg`
+
+---
+
 ### Why Other Options Are Not Acceptable
 
 **Option 3: Accept the Flash** - REJECTED
@@ -626,6 +697,8 @@ This flickering issue has a long history:
 6. **JavaScript re-initialization is solvable** - Modern web frameworks prove that DOM updates + JavaScript re-running is a standard, reliable pattern
 7. **Iterative debugging has limits** - When 7 fixes don't help, it's time to question the approach, not just the implementation
 8. **Performance optimizations can break assumptions** - WebKit's GPU rendering optimization made double-buffering and snapshot approaches fail
+9. **Question whether to fix or remove** - Sometimes removing problematic code is better than building elaborate workarounds. The WebCache disabling code caused more problems than it solved
+10. **Trade-offs are acceptable** - Fixing a high-impact issue (flickering affecting all users during typing) while creating a lower-impact regression (stale image caching in specific scenarios) is often the right choice
 
 ---
 
