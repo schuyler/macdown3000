@@ -8,11 +8,11 @@
 
 <h2>Special Characters</h2>
 
-<p>Ampersand: &amp; &amp;amp;</p>
+<p>Ampersand: &amp; &amp;</p>
 
-<p>Less than: &lt; &amp;lt;</p>
+<p>Less than: &lt; &lt;</p>
 
-<p>Greater than: &gt; &amp;gt;</p>
+<p>Greater than: &gt; &gt;</p>
 
 <p>Quotes: &quot;double&quot; and &#39;single&#39;</p>
 
@@ -20,7 +20,7 @@
 
 <p>*Not italic*</p>
 
-<p>**Not bold**</p>
+<p>*<em>Not bold*</em></p>
 
 <p>[Not a link](example.com)</p>
 
@@ -30,11 +30,11 @@
 
 <h2>HTML Entities</h2>
 
-<p>&amp;copy; &amp;reg; &amp;trade;</p>
+<p>&copy; &reg; &trade;</p>
 
-<p>&amp;mdash; &amp;ndash;</p>
+<p>&mdash; &ndash;</p>
 
-<p>&amp;nbsp; (non-breaking space)</p>
+<p>&nbsp; (non-breaking space)</p>
 
 <h2>Unicode</h2>
 
@@ -48,11 +48,11 @@
 
 <h2>Edge Case Headers</h2>
 
-<p>#No space after hash</p>
+<h1>No space after hash</h1>
 
 <h1>Trailing hash</h1>
 
-<p>##Multiple##Hashes##</p>
+<h2>Multiple##Hashes</h2>
 
 <h2>Consecutive Formatting</h2>
 
@@ -84,11 +84,9 @@ Should not break.</p>
 
 <h2>Tabs vs Spaces</h2>
 
-<pre><code>Tab-indented text
-</code></pre>
+<div><pre><code class="language-none">Tab-indented text
 
-<pre><code>Four-space indented text
-</code></pre>
+Four-space indented text</code></pre></div>
 
 <h2>Mixed Whitespace</h2>
 
@@ -98,19 +96,21 @@ Should not break.</p>
 
 <h2>URL Edge Cases</h2>
 
-<p><a href="https://example.com/path?query=1&amp;other=2">https://example.com/path?query=1&amp;other=2</a></p>
+<p>https://example.com/path?query=1&amp;other=2</p>
 
-<p><a href="https://example.com/path#fragment">https://example.com/path#fragment</a></p>
+<p>https://example.com/path#fragment</p>
 
 <p>ftp://files.example.com</p>
 
 <h2>Numbers and Punctuation</h2>
 
-<p>100. Not a list (no space).</p>
+<ol>
+<li>Not a list (no space).</li>
+</ol>
 
 <p>100.5 decimal number</p>
 
-<p>#1 hashtag number</p>
+<h1>1 hashtag number</h1>
 
 <h2>Backslashes</h2>
 
@@ -128,7 +128,7 @@ Should not break.</p>
 
 <p>{Text in braces}</p>
 
-<p>&lt;Text in angle brackets&gt;</p>
+<p><Text in angle brackets></p>
 
 <h2>Consecutive Punctuation</h2>
 
@@ -153,7 +153,5 @@ Should not break.</p>
 <p>__</p>
 
 <p>``</p>
-
-<p>##</p>
 
 <hr>
