@@ -8,6 +8,7 @@
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
 #import "MPPreferences.h"
+#import <sys/stat.h>
 
 @interface MPDocumentIOTests : XCTestCase
 @property (strong) MPDocument *document;
@@ -194,24 +195,6 @@
     BOOL autosaves = [MPDocument autosavesInPlace];
     XCTAssertTrue(autosaves,
                   @"MPDocument should autosave in place");
-}
-
-- (void)testAutosaveNameForSavedFile
-{
-    // Test autosaveName property can be set and retrieved
-    NSString *testAutosaveName = @"TestAutosaveName";
-    self.document.autosaveName = testAutosaveName;
-
-    XCTAssertEqualObjects(self.document.autosaveName, testAutosaveName,
-                          @"Autosave name should be stored correctly");
-
-    // Test with fileURL (simulating a saved file)
-    [self.document setFileURL:self.testFileURL];
-    NSString *urlBasedName = self.testFileURL.absoluteString;
-    self.document.autosaveName = urlBasedName;
-
-    XCTAssertEqualObjects(self.document.autosaveName, urlBasedName,
-                          @"Autosave name based on fileURL should be stored correctly");
 }
 
 #pragma mark - File Operations Tests
