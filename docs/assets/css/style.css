@@ -384,12 +384,12 @@ nav .container {
 .faq-answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
     padding: 0 1.5rem;
 }
 
 .faq-item.active .faq-answer {
-    max-height: 2000px;
+    max-height: 800px;
     padding: 1rem 1.5rem 1.5rem 1.5rem;
 }
 
