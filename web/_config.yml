@@ -1,0 +1,25 @@
+# Site settings
+title: MacDown 3000
+description: An open source Markdown editor for macOS
+baseurl: "/macdown3000"
+url: "https://schuyler.github.io"
+
+# Build settings
+markdown: kramdown
+theme: minima
+
+# GitHub Pages settings
+repository: schuyler/macdown3000
+
+# Exclude files from the build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+
+# Collections
+collections:
+  pages:
+    output: true
+    permalink: /:name/
