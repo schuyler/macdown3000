@@ -63,13 +63,15 @@ Use TodoWrite to create detailed todo items for the entire workflow:
 - (If TDD) Write failing tests
 - (If TDD) Validate tests with Zeppo
 - Implement the feature
-- Run tests to ensure they pass
+- Commit changes and push to trigger CI
+- Monitor GitHub Actions workflow until completion
+- Verify tests pass in CI
 - Consult Chico for code review
 - (In parallel) Consult Harpo for documentation updates
 - (In parallel) Consult Zeppo for manual testing plan
-- Commit all changes
 - Fetch latest and rebase on main
-- Push to remote
+- Force push after rebase (if needed)
+- Re-verify tests pass after rebase
 - Create pull request
 - Report completion
 
@@ -175,14 +177,197 @@ Following Groucho's architectural guidance, implement the feature.
 
 If tests exist, run them frequently during implementation.
 
-### Step 10: Ensure Tests Pass
+### Step 10: Commit and Verify Tests via GitHub Actions
 
-Run all relevant tests and ensure they pass:
-- Unit tests (if written in Step 8)
-- Any existing tests that might be affected
-- Build the project to catch compilation errors
+Since this is a macOS project and tests can only run on macOS, we'll push to GitHub and let CI run the tests.
 
-Fix any failures before proceeding.
+#### 10a. Commit Changes
+
+Stage all changes:
+```bash
+git add .
+```
+
+Create a descriptive commit message that references the issue but does NOT auto-close it:
+```bash
+git commit -m "Address issue #{number}: {brief description}
+
+{detailed description of changes}
+
+Related to #{number}"
+```
+
+#### 10b. Push to Trigger CI
+
+Push the branch to remote to trigger GitHub Actions:
+```bash
+git push -u origin {branch-name}
+```
+
+**IMPORTANT:** If push fails with 403, verify the branch name starts with `claude/` and ends with the session ID.
+
+If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s).
+
+#### 10c. Get Workflow Run ID
+
+Wait 10 seconds for the workflow to start, then fetch the latest workflow run for your branch using the decoded token:
+
+```bash
+# URL-encode the branch name (required for branches with special characters like /)
+ENCODED_BRANCH=$(python3 -c "import urllib.parse; print(urllib.parse.quote('{branch-name}'))")
+
+# Get the workflow run ID with error handling
+RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
+  "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
+  | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    runs = data.get('workflow_runs', [])
+    print(runs[0]['id'] if runs else '')
+except Exception as e:
+    print('', file=sys.stderr)
+    sys.exit(0)
+")
+
+if [ -z "$RUN_ID" ]; then
+  echo "Waiting for workflow to start..."
+  sleep 10
+  # Try again
+  RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
+    "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
+    | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    runs = data.get('workflow_runs', [])
+    print(runs[0]['id'] if runs else '')
+except Exception:
+    sys.exit(0)
+")
+fi
+
+if [ -z "$RUN_ID" ]; then
+  echo "ERROR: Could not find workflow run for branch {branch-name}"
+  echo "Check GitHub Actions: https://github.com/schuyler/macdown3000/actions"
+  exit 1
+fi
+
+echo "Workflow Run ID: $RUN_ID"
+```
+
+#### 10d. Monitor Workflow Status
+
+Poll the workflow status every 30 seconds until it completes. Use the decoded token:
+
+```bash
+# Show workflow URL to user
+WORKFLOW_URL=$(curl -s -H "Authorization: token {decoded_token}" \
+  "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID" \
+  | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('html_url', ''))")
+
+echo "Monitoring workflow at: $WORKFLOW_URL"
+
+# Poll until completion with timeout
+ELAPSED=0
+MAX_WAIT=900  # 15 minutes
+
+while [ $ELAPSED -lt $MAX_WAIT ]; do
+  RESPONSE=$(curl -s -H "Authorization: token {decoded_token}" \
+    "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID")
+
+  STATUS=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('status', 'unknown'))
+except Exception:
+    print('error')
+")
+
+  CONCLUSION=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('conclusion', 'N/A'))
+except Exception:
+    print('N/A')
+")
+
+  echo "[$(date +%H:%M:%S)] Status: $STATUS, Conclusion: $CONCLUSION"
+
+  if [ "$STATUS" = "completed" ]; then
+    break
+  fi
+
+  sleep 30
+  ELAPSED=$((ELAPSED + 30))
+done
+
+if [ $ELAPSED -ge $MAX_WAIT ]; then
+  echo "WARNING: Workflow still running after 15 minutes"
+  echo "You can continue monitoring at: $WORKFLOW_URL"
+  # Ask user if they want to continue waiting
+fi
+```
+
+#### 10e. Check Results
+
+Once the workflow completes (status is "completed"), check the conclusion:
+
+- **success**: Tests passed! Proceed to Step 11.
+- **failure**: Tests failed. Analyze the logs and fix the issues.
+- **cancelled** or **skipped**: Report to user for guidance.
+
+To get detailed job information and logs if tests fail:
+
+```bash
+# Get the job ID (prefer failed jobs, fallback to first job)
+JOB_ID=$(curl -s -H "Authorization: token {decoded_token}" \
+  "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID/jobs" \
+  | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    jobs = data.get('jobs', [])
+    if not jobs:
+        print('')
+        sys.exit(0)
+
+    # Prefer failed jobs
+    failed = [j for j in jobs if j.get('conclusion') == 'failure']
+    job = failed[0] if failed else jobs[0]
+    print(job.get('id', ''))
+except Exception:
+    print('')
+")
+
+if [ -z "$JOB_ID" ]; then
+  echo "ERROR: Could not find job information"
+  exit 1
+fi
+
+# Get logs for the job (use -L to follow redirects)
+echo "Fetching logs for job $JOB_ID..."
+curl -sL -H "Authorization: token {decoded_token}" \
+  "https://api.github.com/repos/schuyler/macdown3000/actions/jobs/${JOB_ID}/logs"
+```
+
+**Important:** The logs endpoint returns a redirect (302) to the actual log file. The `-L` flag makes curl follow redirects.
+
+Analyze the logs to identify which tests failed and why.
+
+#### 10f. Handle Test Failures
+
+If tests fail:
+1. Review the job logs from the API response
+2. Identify the specific test failures
+3. Return to Step 9 to fix the issues
+4. Commit the fixes
+5. Push again (which triggers a new workflow run)
+6. Return to 10c to monitor the new run
+
+Iterate until all tests pass.
 
 ### Step 11: Consult Chico (Code Reviewer)
 
@@ -256,39 +441,23 @@ If manual testing is not relevant for this change, please say so.
 - Apply any documentation updates from Harpo
 - Save Zeppo's manual testing plan (if provided) to include in the PR
 
-### Step 13: Commit All Changes
+### Step 13: Fetch Latest and Rebase on Main
 
-Stage all changes:
-```bash
-git add .
-```
+Before the final push, ensure your branch is up-to-date with the main branch.
 
-Create a descriptive commit message that references the issue but does NOT auto-close it:
-```bash
-git commit -m "Address issue #{number}: {brief description}
-
-{detailed description of changes}
-
-Related to #{number}"
-```
-
-### Step 14: Fetch Latest and Rebase on Main
-
-Before pushing changes, ensure your branch is up-to-date with the main branch.
-
-#### 14a. Fetch Latest from Remote
+#### 13a. Fetch Latest from Remote
 
 ```bash
 git fetch origin main
 ```
 
-#### 14b. Rebase on Main
+#### 13b. Rebase on Main
 
 ```bash
 git rebase origin/main
 ```
 
-#### 14c. Handle Conflicts (If Any)
+#### 13c. Handle Conflicts (If Any)
 
 If conflicts occur during rebase:
 
@@ -306,20 +475,36 @@ If conflicts occur during rebase:
    - Stage the resolved files: `git add <resolved-files>`
    - Continue the rebase: `git rebase --continue`
    - **Return to Step 9** to re-implement or adjust as needed
-   - **Re-run all tests** (Step 10)
+   - **Re-run all tests** via CI (Step 10)
    - **Consult Chico** (Step 11) to review the conflict resolution
-   - **Continue through Steps 12-14** until rebase succeeds without conflicts
+   - **Continue through Steps 12-13** until rebase succeeds without conflicts
 
 4. **Abort if stuck:**
    - If unable to resolve: `git rebase --abort`
    - Inform the user and ask for guidance
 
-### Step 15: Push to Remote
+### Step 14: Force Push After Rebase
 
-Push the branch to remote:
+If the rebase modified history (you rebased commits that were already pushed), you'll need to force push:
+
 ```bash
-git push -u origin {branch-name}
+git push --force-with-lease origin {branch-name}
 ```
+
+**IMPORTANT:** Only use force push if you rebased already-pushed commits. If this is the first push or you only added new commits, a regular push is sufficient.
+
+If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s).
+
+### Step 15: Re-verify Tests After Rebase
+
+After rebasing and pushing, the CI will run again. Monitor the new workflow run:
+
+1. Wait 10 seconds for the workflow to start
+2. Get the new workflow run ID (same API call as Step 10c)
+3. Monitor status until completion (same as Step 10d)
+4. Verify tests pass (same as Step 10e)
+
+If tests fail after rebase, return to Step 9 to fix issues.
 
 ### Step 16: Create Pull Request
 
