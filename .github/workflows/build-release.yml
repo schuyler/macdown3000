@@ -2,10 +2,12 @@ name: Build arm64 Release
 
 on:
   push:
-    branches: [ main, develop, 'claude/**' ]
-    # Note: tag triggers removed to avoid conflict with release.yml workflow
+    branches: [ main ]
+    # Note: Only builds release artifacts on main branch
+    # Claude branches use test.yml for CI checks only
+    # Tag triggers removed to avoid conflict with release.yml workflow
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
