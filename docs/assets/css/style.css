@@ -15,7 +15,7 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 40px;
 }
 
 /* Header and Navigation */
@@ -500,5 +500,12 @@ footer a:hover {
 
     .faq-question {
         font-size: 1.1rem;
+    }
+}
+
+/* Larger screens - more breathing room */
+@media (min-width: 1024px) {
+    .container {
+        padding: 0 60px;
     }
 }
