@@ -1,0 +1,45 @@
+<h1>Autolink Tests</h1>
+
+<h2>URL Autolinks</h2>
+
+<p><a href="https://example.com">https://example.com</a></p>
+
+<p><a href="http://www.example.org">http://www.example.org</a></p>
+
+<p><a href="https://example.com/path/to/page">https://example.com/path/to/page</a></p>
+
+<p><a href="https://example.com/path?query=param&amp;other=value">https://example.com/path?query=param&amp;other=value</a></p>
+
+<h2>Email Autolinks</h2>
+
+<p><a href="mailto:user@example.com">user@example.com</a></p>
+
+<p><a href="mailto:john.doe@example.org">john.doe@example.org</a></p>
+
+<p><a href="mailto:contact+tag@example.com">contact+tag@example.com</a></p>
+
+<h2>Plain URLs (may or may not auto-link depending on parser)</h2>
+
+<p>Visit <a href="https://example.com">https://example.com</a> for more.</p>
+
+<p>Check out <a href="http://www.example.org">http://www.example.org</a> too.</p>
+
+<h2>Mixed Content</h2>
+
+<p>Email me at <a href="mailto:user@example.com">user@example.com</a> or visit <a href="https://example.com">https://example.com</a>.</p>
+
+<h2>Edge Cases</h2>
+
+<p>Multiple autolinks: <a href="https://first.com">https://first.com</a> and <a href="https://second.com">https://second.com</a>.</p>
+
+<p>Autolink at start: <a href="https://start.com">https://start.com</a></p>
+
+<p>End with autolink: <a href="https://end.com">https://end.com</a></p>
+
+<h2>In Lists</h2>
+
+<ul>
+<li><a href="https://example.com">https://example.com</a></li>
+<li><a href="mailto:user@example.com">user@example.com</a></li>
+<li>Regular text</li>
+</ul>
