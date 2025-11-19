@@ -14,45 +14,77 @@ This document provides essential information for Claude Code when working on the
 
 ## GitHub API Access
 
-**IMPORTANT:** The `gh` CLI tool is **NOT** available in this environment. All GitHub operations must be performed using `curl` with the GitHub REST API.
+**GitHub CLI (`gh`) Availability:**
+- The `gh` CLI tool is **automatically installed** on Linux via SessionStart hook
+- On macOS, `gh` is assumed to be pre-installed (via Homebrew)
+- Location: `/tmp/gh/bin/gh` (Linux) or `gh` (macOS)
+- The SessionStart hook (`.claude/scripts/install-gh.sh`) fetches the latest version from GitHub
+- Alternatively, use `curl` with the GitHub REST API directly
 
 ### Repository Information
 - **Repository:** https://github.com/schuyler/macdown3000
-- **Encoded Token (ROT13):** `tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i`
 
-### Decoding and Caching the GitHub Token
+### Accessing the GitHub Token
 
-The token is stored in ROT13 encoding for security. You must decode it before using it with the GitHub API.
+**The GitHub token is NOT stored in the repository.** Instead, set it as an environment variable in your Claude Code environment.
 
-**IMPORTANT:** Always decode and cache the token at the start of your workflow to avoid repeated decoding operations.
+#### Claude Code Web (Recommended)
 
-#### Method 1: Using `tr` (shell-native, requires heredoc)
+Set the `GITHUB_TOKEN` environment variable in the Claude Code Web UI:
 
-```bash
-bash << 'EOF'
-TOKEN=$(echo "tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i" | tr 'A-Za-z' 'N-ZA-Mn-za-m')
-# Use $TOKEN in your API calls here
-EOF
-```
+1. Go to Settings → Environment Configuration
+2. Add environment variable: `GITHUB_TOKEN=your_github_pat_token_here`
+3. The token will be available in all Claude Code Web sessions
+4. Never committed to Git
 
-#### Method 2: Using Python (works in simple command)
+See [Claude Code Web Environment Configuration](https://code.claude.com/docs/en/claude-code-on-the-web#environment-configuration) for details.
 
-```bash
-TOKEN=$(python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))")
-```
+#### Claude Code CLI
 
-#### Caching to a File
-
-For multi-step workflows, save the decoded token to a temporary file to avoid re-decoding:
+For the CLI, set the environment variable before starting:
 
 ```bash
-# Decode and save to file
-python3 -c "import codecs; print(codecs.decode('tvguho_cng_11NNNBO7N0iSCBnoyoHyE5_KAQlrfJKE2lehsWwNSlGG6OcBtD3hAx8e71mQzCkJn0RB44TJDD9C5o2Y2i', 'rot_13'))" > /tmp/token.txt
-
-# Use in subsequent API calls
-TOKEN=$(cat /tmp/token.txt)
-curl -H "Authorization: token $TOKEN" https://api.github.com/repos/schuyler/macdown3000/issues/123
+export GITHUB_TOKEN=your_github_pat_token_here
+claude-code
 ```
+
+Or add to your shell profile (~/.bashrc, ~/.zshrc, etc.).
+
+#### Using GitHub CLI (`gh`)
+
+The `gh` CLI is automatically installed and authenticated via the SessionStart hook.
+
+**Automatic Authentication:**
+The SessionStart hook automatically authenticates `gh` using the `GITHUB_TOKEN` environment variable. No manual authentication is needed in most cases.
+
+**Manual Authentication (If Needed):**
+If you need to manually authenticate in a new shell session:
+
+```bash
+# Secure method using printf (avoids token exposure in process listings)
+printf "%s" "$GITHUB_TOKEN" | /tmp/gh/bin/gh auth login --with-token
+
+# Check authentication status
+GH_TOKEN="$GITHUB_TOKEN" /tmp/gh/bin/gh auth status
+```
+
+**Using gh Commands:**
+```bash
+# Once authenticated, use gh commands normally
+/tmp/gh/bin/gh issue list --repo schuyler/macdown3000
+/tmp/gh/bin/gh pr create --title "My PR" --body "Description"
+
+# Or use GH_TOKEN for one-off commands (doesn't require auth login)
+GH_TOKEN="$GITHUB_TOKEN" /tmp/gh/bin/gh issue list --repo schuyler/macdown3000
+```
+
+#### Token Rotation
+
+When rotating your GitHub token:
+
+1. Generate new token on GitHub
+2. Update environment variable in Claude Code Web settings
+3. Or update your shell profile if using CLI
 
 ### Common API Operations
 

@@ -11,5 +11,17 @@
   "enabledPlugins": {
     "dev@duck-soup": true
   },
-  "includeCoAuthoredBy": false
+  "includeCoAuthoredBy": false,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/scripts/install-gh.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
