@@ -74,11 +74,14 @@ Comprehensive analysis of all open issues from the MacDownApp/macdown repository
 ### 5. Issue #1344 - Lists After Colons Render as Single Row
 **Created:** April 2025
 **Comments:** 0
-**Status:** ✅ **COMPLETED** (macdown3000 #34)
 
 **Problem:** Lists immediately following colons don't render as multi-line lists. Text becomes concatenated into single lines unless a blank line separates the colon from the list.
 
-**Resolution:** Implemented via `MPMarkdownPreprocessor` class that inserts blank lines before list markers when they follow non-blank lines. Handles edge cases including fenced code blocks, blockquotes, and Windows line endings.
+**Recommendation:** ✅ **CLONE AS ISSUE - MEDIUM-HIGH**
+- Markdown parsing issue
+- Workaround exists but is time-consuming
+- Affects document formatting
+- **Issue Title:** "Fix list rendering after colons (renders as single line)"
 
 ---
 
@@ -343,7 +346,7 @@ Comprehensive analysis of all open issues from the MacDownApp/macdown repository
 **HIGH PRIORITY BUGS (7):**
 3. [Already cloned] Code text wrapping in PDF (#1350)
 4. Fix LaTeX double dollar sign rendering (#1346)
-5. [Completed] Fix list rendering after colons (#1344 → macdown3000 #34)
+5. Fix list rendering after colons (#1344)
 6. Fix Mermaid flowchart rendering (#1343)
 7. Fix code block formatting without blank line (#1333)
 8. Fix code block rendering with square brackets (#1332)
@@ -365,8 +368,7 @@ Comprehensive analysis of all open issues from the MacDownApp/macdown repository
 18. Fix German/localization folders (#1345) - If doing i18n
 
 ### Total Impact:
-- **8 legitimate bugs** to fix (including 2 critical macOS compatibility issues)
-- **1 bug completed** (list rendering after colons)
+- **9 legitimate bugs** to fix (including 2 critical macOS compatibility issues)
 - **5 valuable features** to implement
 - **2 larger features** to consider for later
 
