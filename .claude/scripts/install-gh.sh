@@ -81,9 +81,12 @@ except (json.JSONDecodeError, KeyError) as e:
         exit 1
       fi
 
-      # Download tarball
+      # Construct the expected filename for checksum verification
+      TARBALL_NAME="gh_${VERSION#v}_linux_amd64.tar.gz"
+
+      # Download tarball with proper filename
       echo "Downloading GitHub CLI $VERSION..."
-      if ! curl -sS --fail --tlsv1.2 -L "$LATEST" -o "$TEMP_DIR/gh.tar.gz"; then
+      if ! curl -sS --fail --tlsv1.2 -L "$LATEST" -o "$TEMP_DIR/$TARBALL_NAME"; then
         echo "⚠ Failed to download GitHub CLI"
         exit 1
       fi
@@ -105,7 +108,7 @@ except (json.JSONDecodeError, KeyError) as e:
       fi
 
       # Extract to temp directory
-      if ! tar -xzf "$TEMP_DIR/gh.tar.gz" -C "$TEMP_DIR"; then
+      if ! tar -xzf "$TEMP_DIR/$TARBALL_NAME" -C "$TEMP_DIR"; then
         echo "⚠ Failed to extract GitHub CLI archive"
         exit 1
       fi
