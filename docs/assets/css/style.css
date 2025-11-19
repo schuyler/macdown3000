@@ -195,35 +195,6 @@ nav .container {
     font-weight: bold;
 }
 
-.download-content .donation-section {
-    background-color: #e8f5f5;
-    border: 1px solid #20a0a0;
-    border-radius: 5px;
-    padding: 1.5rem;
-    margin: 2rem 0 0 0;
-}
-
-.download-content .donation-section h4 {
-    color: #20a0a0;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-}
-
-.download-content .donation-section p {
-    color: #555;
-    font-size: 0.95rem;
-}
-
-.download-content .donation-section a:not(.btn) {
-    color: #20a0a0;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.download-content .donation-section a:not(.btn):hover {
-    text-decoration: underline;
-}
-
 /* Features Section */
 .features {
     padding: 4rem 0;
@@ -449,6 +420,37 @@ nav .container {
 }
 
 .faq-answer a:hover {
+    text-decoration: underline;
+}
+
+/* Donate Section */
+.donate {
+    background-color: #f5f5f5;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.donate h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.donate p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #555;
+    max-width: 700px;
+    margin: 0 auto 1rem;
+}
+
+.donate a:not(.btn) {
+    color: #20a0a0;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.donate a:not(.btn):hover {
     text-decoration: underline;
 }
 
