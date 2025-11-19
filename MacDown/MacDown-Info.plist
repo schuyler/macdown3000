@@ -124,6 +124,12 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2014–2020 Tzu-ping Chung.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>MacDown needs access to your Desktop to track recently opened files.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>MacDown needs access to your Documents folder to track recently opened files.</string>
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>MacDown needs access to your Downloads folder to track recently opened files.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
