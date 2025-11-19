@@ -120,7 +120,6 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ String lookups
 
 **What's NOT Tested:**
-- ❌ Markdown rendering (CRITICAL)
 - ❌ File I/O and autosave
 - ❌ Editor functionality
 - ❌ Preview pane rendering
@@ -128,6 +127,9 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ❌ Mermaid diagram rendering
 - ❌ LaTeX math rendering
 - ❌ Most UI components
+
+**Minimal Coverage:**
+- ⚠️ Markdown rendering - 18 golden file tests added (Issue #89), needs expansion
 
 ### Test Infrastructure:
 - Uses **XCTest** framework (standard)
@@ -144,10 +146,11 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 ### Recommendations:
 
 #### CRITICAL PRIORITY
-1. **Add Markdown rendering tests**
-   - Test all syntax variations (GFM, code blocks, tables, etc.)
-   - Test edge cases from bug reports
-   - Golden file testing (input.md → expected.html)
+1. ✅ **Add Markdown rendering tests** (Issue #89 - partially complete)
+   - ✅ 18 golden file tests covering core syntax (headers, lists, code, tables, etc.)
+   - ⏳ Expand coverage for edge cases from bug reports
+   - ⏳ Add syntax highlighting tests (MPSyntaxHighlightingTests.m)
+   - ⏳ Add math rendering tests (MPMathJaxRenderingTests.m)
 
 2. **Add file I/O tests**
    - Test open, save, autosave
@@ -505,9 +508,9 @@ Create issues for:
    - ✅ DMG creation with professional layout
    - ✅ Draft GitHub releases
 
-6. **Add comprehensive Markdown rendering tests**
-   - Priority: HIGH
-   - Effort: MEDIUM
+6. ✅ **Add comprehensive Markdown rendering tests** (Issue #89 - in progress)
+   - Status: 18 golden file tests implemented
+   - Next: Expand coverage for syntax highlighting and math rendering
    - Impact: Prevent rendering regressions
 
 7. **Create developer setup script (setup.sh)**

@@ -1,0 +1,78 @@
+<h1>Task List Tests</h1>
+
+<h2>Basic Task Lists</h2>
+
+<ul>
+<li class="task-list-item"><input type="checkbox"> Unchecked task
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Checked task
+</li>
+<li class="task-list-item"><input type="checkbox"> Another unchecked task
+</li>
+<li>[X] Checked with capital X</li>
+</ul>
+
+<h2>Nested Task Lists</h2>
+
+<ul>
+<li class="task-list-item"><input type="checkbox"> Parent task
+
+<ul>
+<li class="task-list-item"><input type="checkbox" checked> Completed subtask
+</li>
+<li class="task-list-item"><input type="checkbox"> Incomplete subtask
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Another completed subtask
+</li>
+</ul>
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Completed parent
+</li>
+</ul>
+
+<h2>Mixed with Regular Lists</h2>
+
+<ul>
+<li>Regular list item</li>
+<li class="task-list-item"><input type="checkbox"> Task item
+</li>
+<li>Another regular item</li>
+<li class="task-list-item"><input type="checkbox" checked> Completed task
+</li>
+<li>Final regular item</li>
+</ul>
+
+<h2>Tasks with Inline Formatting</h2>
+
+<ul>
+<li class="task-list-item"><input type="checkbox"> Task with <strong>bold text</strong>
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Task with <em>italic text</em>
+</li>
+<li class="task-list-item"><input type="checkbox"> Task with <code>code</code>
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Task with <a href="https://example.com">link</a>
+</li>
+</ul>
+
+<h2>Numbered Task Lists</h2>
+
+<ol>
+<li class="task-list-item"><input type="checkbox"> First task
+</li>
+<li class="task-list-item"><input type="checkbox" checked> Second task (completed)
+</li>
+<li class="task-list-item"><input type="checkbox"> Third task
+</li>
+</ol>
+
+<h2>Edge Cases</h2>
+
+<ul>
+<li>[] Invalid (no space)</li>
+<li class="task-list-item"><input type="checkbox"> Valid unchecked
+-[ ] Invalid (no space after dash)
+</li>
+<li>[x ] Invalid (space before X)</li>
+<li>[ x] Invalid (space after bracket)</li>
+</ul>

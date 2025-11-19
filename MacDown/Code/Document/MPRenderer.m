@@ -304,14 +304,14 @@ NS_INLINE hoedown_buffer *language_addition(
     return mapped;
 }
 
-NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer)
+NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLevel)
 {
     int flags = renderer.rendererFlags;
     hoedown_renderer *htmlRenderer = hoedown_html_renderer_new(
-        flags, kMPRendererTOCLevel);
+        flags, tocLevel);
     htmlRenderer->blockcode = hoedown_patch_render_blockcode;
     htmlRenderer->listitem = hoedown_patch_render_listitem;
-    
+
     hoedown_html_renderer_state_extra *extra =
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
     extra->language_addition = language_addition;
@@ -599,7 +599,8 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         frontMatter = [markdown frontMatter:&offset];
         markdown = [markdown substringFromIndex:offset];
     }
-    hoedown_renderer *htmlRenderer = MPCreateHTMLRenderer(self);
+    int tocLevel = hasTOC ? kMPRendererTOCLevel : 0;
+    hoedown_renderer *htmlRenderer = MPCreateHTMLRenderer(self, tocLevel);
     hoedown_renderer *tocRenderer = NULL;
     if (hasTOC)
     tocRenderer = MPCreateHTMLTOCRenderer();
