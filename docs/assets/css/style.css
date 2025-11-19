@@ -140,9 +140,9 @@ nav .container {
 
 .demo-download-wrapper {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 3rem;
-    align-items: start;
+    align-items: center;
 }
 
 .demo-screenshot img {
@@ -356,7 +356,7 @@ nav .container {
     cursor: pointer;
     user-select: none;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     transition: background-color 0.3s;
 }
