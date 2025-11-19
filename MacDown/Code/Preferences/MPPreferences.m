@@ -283,6 +283,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.editorInsertPrefixInBlock = YES;
     if (![defaults objectForKey:@"htmlTemplateName"])
         self.htmlTemplateName = @"Default";
+    if (![defaults objectForKey:@"extensionStrikethough"])
+        self.extensionStrikethough = YES;
 }
 
 @end
