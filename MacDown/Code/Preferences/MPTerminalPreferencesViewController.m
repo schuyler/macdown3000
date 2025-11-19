@@ -288,6 +288,8 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
             NSString *userLocalPath = [[weakSelf userBinPath] stringByAppendingPathComponent:@"macdown"];
             if ([[NSFileManager defaultManager] fileExistsAtPath:userLocalPath])
                 weakSelf.shellUtilityURL = [NSURL fileURLWithPath:userLocalPath];
+            else
+                weakSelf.shellUtilityURL = nil;  // Utility not found in any location
         }
     });
 }
@@ -337,7 +339,8 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
     // Create symlink
     if ([self createSymlinkAtPath:installPath toDestination:utilityBundlePath error:&error])
     {
-        [self lookForShellUtility];
+        // Directly update UI instead of async lookup
+        self.shellUtilityURL = [NSURL fileURLWithPath:installPath];
 
         // Check if user needs to add to PATH
         NSString *message;
