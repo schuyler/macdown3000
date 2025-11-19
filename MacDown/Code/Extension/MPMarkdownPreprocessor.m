@@ -30,6 +30,7 @@
     BOOL inBlockquote = NO;
     BOOL previousLineWasBlank = YES;  // Start as true (beginning of document)
     BOOL previousLineWasIndentedCode = NO;
+    BOOL previousLineWasListMarker = NO;
 
     for (NSInteger i = 0; i < lines.count; i++) {
         NSString *line = lines[i];
@@ -41,6 +42,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -49,6 +51,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -60,6 +63,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -74,15 +78,16 @@
             [processedLines addObject:line];
             previousLineWasBlank = currentLineIsBlank;
             previousLineWasIndentedCode = currentLineIsIndentedCode;
+            previousLineWasListMarker = NO;
             continue;
         }
 
         // Check if current line starts with a list marker
         BOOL currentLineIsListMarker = [self isListMarker:line];
 
-        // If this line is a list marker and previous line was not blank, insert blank line
+        // If this line is a list marker and previous line was not blank and not a list marker, insert blank line
         BOOL insertedBlankLine = NO;
-        if (currentLineIsListMarker && !previousLineWasBlank && !previousLineWasIndentedCode) {
+        if (currentLineIsListMarker && !previousLineWasBlank && !previousLineWasIndentedCode && !previousLineWasListMarker) {
             [processedLines addObject:@""];  // Insert blank line
             insertedBlankLine = YES;
         }
@@ -93,6 +98,7 @@
         // If we inserted a blank line, the previous line for the next iteration is blank
         previousLineWasBlank = insertedBlankLine || currentLineIsBlank;
         previousLineWasIndentedCode = currentLineIsIndentedCode;
+        previousLineWasListMarker = currentLineIsListMarker;
     }
 
     // Rejoin lines with the original line ending style
