@@ -14,6 +14,11 @@
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
 
+// Category to expose private methods for testing
+@interface MPRenderer (Testing)
+- (void)parseMarkdown:(NSString *)markdown;
+@end
+
 
 #pragma mark - Mock Data Source
 
@@ -219,7 +224,7 @@
 
 /**
  * Render markdown through MPRenderer (MacDown's actual rendering code).
- * This uses the real MPRenderer class and its parseAndRenderNow method.
+ * This calls parseMarkdown directly for synchronous testing.
  */
 - (NSString *)renderMarkdown:(NSString *)markdown
               withExtensions:(int)extFlags
@@ -232,11 +237,11 @@
     // Set the markdown content in the data source
     self.dataSource.markdown = markdown;
 
-    // Parse and render the markdown (this is the core rendering step)
-    [self.renderer parseAndRenderNow];
+    // Parse the markdown synchronously (for testing)
+    [self.renderer parseMarkdown:markdown];
 
-    // Return the rendered HTML from the delegate
-    return self.delegate.lastHTML;
+    // Return the rendered HTML
+    return [self.renderer currentHtml];
 }
 
 /**
