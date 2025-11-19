@@ -81,14 +81,17 @@
         BOOL currentLineIsListMarker = [self isListMarker:line];
 
         // If this line is a list marker and previous line was not blank, insert blank line
+        BOOL insertedBlankLine = NO;
         if (currentLineIsListMarker && !previousLineWasBlank && !previousLineWasIndentedCode) {
             [processedLines addObject:@""];  // Insert blank line
+            insertedBlankLine = YES;
         }
 
         [processedLines addObject:line];
 
         // Update state for next iteration
-        previousLineWasBlank = currentLineIsBlank;
+        // If we inserted a blank line, the previous line for the next iteration is blank
+        previousLineWasBlank = insertedBlankLine || currentLineIsBlank;
         previousLineWasIndentedCode = currentLineIsIndentedCode;
     }
 
