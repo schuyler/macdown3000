@@ -1144,7 +1144,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // 2. Create or update overlay image view
         if (!self.snapshotOverlay)
         {
-            self.snapshotOverlay = [[NSImageView alloc] initWithFrame:self.preview.bounds];
+            self.snapshotOverlay = [[NSImageView alloc] initWithFrame:self.preview.frame];
             self.snapshotOverlay.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
             self.snapshotOverlay.imageScaling = NSImageScaleAxesIndependently;
             self.snapshotOverlay.wantsLayer = YES; // Important for smooth animation
