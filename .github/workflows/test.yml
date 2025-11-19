@@ -47,7 +47,7 @@ jobs:
       if: always()
       continue-on-error: true
       run: |
-        if [ -f TestResults.xcresult ]; then
+        if [ -e TestResults.xcresult ]; then
           # Result bundle exists, try to generate coverage
           if xcrun xccov view --report --json TestResults.xcresult > coverage.json 2>/dev/null; then
             xcrun xccov view --report TestResults.xcresult > coverage.txt 2>/dev/null || echo "Coverage unavailable" > coverage.txt
