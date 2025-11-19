@@ -219,7 +219,7 @@
 
 /**
  * Render markdown through MPRenderer (MacDown's actual rendering code).
- * This uses the real MPRenderer class and its parseMarkdown: method.
+ * This uses the real MPRenderer class and its parseAndRenderNow method.
  */
 - (NSString *)renderMarkdown:(NSString *)markdown
               withExtensions:(int)extFlags
@@ -232,8 +232,8 @@
     // Set the markdown content in the data source
     self.dataSource.markdown = markdown;
 
-    // Parse the markdown (this is the core rendering step)
-    [self.renderer parseMarkdown:markdown];
+    // Parse and render the markdown (this is the core rendering step)
+    [self.renderer parseAndRenderNow];
 
     // Return the rendered HTML
     return [self.renderer currentHtml];
