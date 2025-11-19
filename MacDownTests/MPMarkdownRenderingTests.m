@@ -298,7 +298,7 @@
     int extFlags = 0;  // No extensions needed for basic headers
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"basic_headers"
+    [self verifyGoldenFile:@"basic"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -340,7 +340,7 @@
     int extFlags = 0;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"code_inline"
+    [self verifyGoldenFile:@"code-inline"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -351,7 +351,7 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"code_fenced"
+    [self verifyGoldenFile:@"code-fenced"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -363,7 +363,7 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
 
-    [self verifyGoldenFile:@"code_languages"
+    [self verifyGoldenFile:@"code-languages"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -375,7 +375,7 @@
     int extFlags = 0;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"lists_unordered"
+    [self verifyGoldenFile:@"lists-unordered"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -385,7 +385,7 @@
     int extFlags = 0;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"lists_ordered"
+    [self verifyGoldenFile:@"lists-ordered"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -395,7 +395,7 @@
     int extFlags = 0;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"lists_nested"
+    [self verifyGoldenFile:@"lists-nested"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -419,7 +419,7 @@
     int extFlags = 0;
     int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
 
-    [self verifyGoldenFile:@"task_lists"
+    [self verifyGoldenFile:@"task-lists"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -463,7 +463,7 @@
     int extFlags = 0;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"horizontal_rules"
+    [self verifyGoldenFile:@"horizontal-rules"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -477,7 +477,7 @@
                    HOEDOWN_EXT_STRIKETHROUGH;
     int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
 
-    [self verifyGoldenFile:@"mixed_complex"
+    [self verifyGoldenFile:@"mixed-complex"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
@@ -489,7 +489,7 @@
                    HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = 0;
 
-    [self verifyGoldenFile:@"edge_cases"
+    [self verifyGoldenFile:@"edge-cases"
             withExtensions:extFlags
              rendererFlags:rendFlags];
 }
