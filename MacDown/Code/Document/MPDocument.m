@@ -1141,26 +1141,25 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         NSImage *snapshot = [[NSImage alloc] initWithSize:self.preview.bounds.size];
         [snapshot addRepresentation:bitmap];
 
-        // 2. Create or update overlay image view
+        // 2. Create overlay image view on first use ONLY
         if (!self.snapshotOverlay)
         {
+            // CRITICAL: No autoresizing mask - we manually position it
+            // CRITICAL: NSImageScaleNone - no scaling, pixel-perfect snapshot
             self.snapshotOverlay = [[NSImageView alloc] initWithFrame:self.preview.frame];
-            self.snapshotOverlay.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
-            self.snapshotOverlay.imageScaling = NSImageScaleAxesIndependently;
+            self.snapshotOverlay.autoresizingMask = NSViewNotSizable; // No autoresizing!
+            self.snapshotOverlay.imageScaling = NSImageScaleNone; // Pixel-perfect, no scaling
             self.snapshotOverlay.wantsLayer = YES; // Important for smooth animation
+
+            // Add as subview ONCE - never call addSubview again on this view!
             [self.preview.superview addSubview:self.snapshotOverlay
                                     positioned:NSWindowAbove
                                     relativeTo:self.preview];
         }
 
-        // CRITICAL FIX: Always update frame to match current preview position/size
+        // 3. Update overlay position/size and content
+        // CRITICAL: Only set frame, never call addSubview again
         self.snapshotOverlay.frame = self.preview.frame;
-
-        // Ensure overlay is topmost (re-order if needed)
-        [self.preview.superview addSubview:self.snapshotOverlay
-                                positioned:NSWindowAbove
-                                relativeTo:self.preview];
-
         self.snapshotOverlay.image = snapshot;
         self.snapshotOverlay.alphaValue = 1.0;
 
