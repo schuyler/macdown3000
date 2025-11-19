@@ -213,30 +213,103 @@ If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8
 Wait 10 seconds for the workflow to start, then fetch the latest workflow run for your branch using the decoded token:
 
 ```bash
-# Get the workflow run ID
+# URL-encode the branch name (required for branches with special characters like /)
+ENCODED_BRANCH=$(python3 -c "import urllib.parse; print(urllib.parse.quote('{branch-name}'))")
+
+# Get the workflow run ID with error handling
 RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
-  "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch={branch-name}&event=push&per_page=1" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['workflow_runs'][0]['id'] if data['workflow_runs'] else '')")
+  "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
+  | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    runs = data.get('workflow_runs', [])
+    print(runs[0]['id'] if runs else '')
+except Exception as e:
+    print('', file=sys.stderr)
+    sys.exit(0)
+")
+
+if [ -z "$RUN_ID" ]; then
+  echo "Waiting for workflow to start..."
+  sleep 10
+  # Try again
+  RUN_ID=$(curl -s -H "Authorization: token {decoded_token}" \
+    "https://api.github.com/repos/schuyler/macdown3000/actions/runs?branch=${ENCODED_BRANCH}&event=push&per_page=1" \
+    | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    runs = data.get('workflow_runs', [])
+    print(runs[0]['id'] if runs else '')
+except Exception:
+    sys.exit(0)
+")
+fi
+
+if [ -z "$RUN_ID" ]; then
+  echo "ERROR: Could not find workflow run for branch {branch-name}"
+  echo "Check GitHub Actions: https://github.com/schuyler/macdown3000/actions"
+  exit 1
+fi
 
 echo "Workflow Run ID: $RUN_ID"
 ```
-
-If no run ID is found, wait another 10 seconds and try again (the workflow may still be starting).
 
 #### 10d. Monitor Workflow Status
 
 Poll the workflow status every 30 seconds until it completes. Use the decoded token:
 
 ```bash
-# Check workflow status
-curl -s -H "Authorization: token {decoded_token}" \
+# Show workflow URL to user
+WORKFLOW_URL=$(curl -s -H "Authorization: token {decoded_token}" \
   "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"Status: {data['status']}, Conclusion: {data.get('conclusion', 'N/A')}\"); print(f\"URL: {data['html_url']}\")"
+  | python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('html_url', ''))")
+
+echo "Monitoring workflow at: $WORKFLOW_URL"
+
+# Poll until completion with timeout
+ELAPSED=0
+MAX_WAIT=900  # 15 minutes
+
+while [ $ELAPSED -lt $MAX_WAIT ]; do
+  RESPONSE=$(curl -s -H "Authorization: token {decoded_token}" \
+    "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID")
+
+  STATUS=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('status', 'unknown'))
+except Exception:
+    print('error')
+")
+
+  CONCLUSION=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    print(data.get('conclusion', 'N/A'))
+except Exception:
+    print('N/A')
+")
+
+  echo "[$(date +%H:%M:%S)] Status: $STATUS, Conclusion: $CONCLUSION"
+
+  if [ "$STATUS" = "completed" ]; then
+    break
+  fi
+
+  sleep 30
+  ELAPSED=$((ELAPSED + 30))
+done
+
+if [ $ELAPSED -ge $MAX_WAIT ]; then
+  echo "WARNING: Workflow still running after 15 minutes"
+  echo "You can continue monitoring at: $WORKFLOW_URL"
+  # Ask user if they want to continue waiting
+fi
 ```
-
-Continue polling while status is "queued" or "in_progress". Inform the user of the workflow URL so they can monitor it themselves.
-
-**Important:** Give the workflow reasonable time to complete (typically 5-10 minutes). If it takes longer than 15 minutes, inform the user and ask if they want to continue waiting.
 
 #### 10e. Check Results
 
@@ -249,15 +322,38 @@ Once the workflow completes (status is "completed"), check the conclusion:
 To get detailed job information and logs if tests fail:
 
 ```bash
-# Get job details
-JOB_URL=$(curl -s -H "Authorization: token {decoded_token}" \
+# Get the job ID (prefer failed jobs, fallback to first job)
+JOB_ID=$(curl -s -H "Authorization: token {decoded_token}" \
   "https://api.github.com/repos/schuyler/macdown3000/actions/runs/$RUN_ID/jobs" \
-  | python3 -c "import sys, json; data=json.load(sys.stdin); jobs=data['jobs']; failed=[j for j in jobs if j['conclusion']=='failure']; print(failed[0]['url'] if failed else jobs[0]['url'] if jobs else '')")
+  | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    jobs = data.get('jobs', [])
+    if not jobs:
+        print('')
+        sys.exit(0)
 
-# Get logs for the failed job
-curl -s -H "Authorization: token {decoded_token}" \
-  "${JOB_URL}/logs"
+    # Prefer failed jobs
+    failed = [j for j in jobs if j.get('conclusion') == 'failure']
+    job = failed[0] if failed else jobs[0]
+    print(job.get('id', ''))
+except Exception:
+    print('')
+")
+
+if [ -z "$JOB_ID" ]; then
+  echo "ERROR: Could not find job information"
+  exit 1
+fi
+
+# Get logs for the job (use -L to follow redirects)
+echo "Fetching logs for job $JOB_ID..."
+curl -sL -H "Authorization: token {decoded_token}" \
+  "https://api.github.com/repos/schuyler/macdown3000/actions/jobs/${JOB_ID}/logs"
 ```
+
+**Important:** The logs endpoint returns a redirect (302) to the actual log file. The `-L` flag makes curl follow redirects.
 
 Analyze the logs to identify which tests failed and why.
 
