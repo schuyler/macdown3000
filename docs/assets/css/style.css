@@ -378,7 +378,7 @@ nav .container {
 }
 
 .faq-item.active .faq-icon {
-    transform: rotate(180deg);
+    transform: rotate(90deg);
 }
 
 .faq-answer {
