@@ -27,7 +27,7 @@ The site is automatically deployed to GitHub Pages when changes are pushed to th
 1. Go to repository Settings → Pages
 2. Set Source to: Deploy from a branch
 3. Set Branch to: `main` or your preferred branch
-4. Set Folder to: `/web`
+4. Set Folder to: `/docs`
 5. Save
 
 The site will be available at https://schuyler.github.io/macdown3000
@@ -35,7 +35,7 @@ The site will be available at https://schuyler.github.io/macdown3000
 ## Structure
 
 ```
-web/
+docs/
 ├── _config.yml          # Jekyll configuration
 ├── _layouts/            # Page layouts
 │   └── default.html     # Main layout template
