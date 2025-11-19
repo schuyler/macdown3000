@@ -8,6 +8,7 @@
 
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
+#import <QuartzCore/QuartzCore.h>
 #import <JJPluralForm/JJPluralForm.h>
 #import <hoedown/html.h>
 #import "hoedown_html_patch.h"
@@ -189,6 +190,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (unsafe_unretained) IBOutlet MPEditorView *editor;
 @property (weak) IBOutlet NSLayoutConstraint *editorPaddingBottom;
 @property (weak) IBOutlet WebView *preview;
+@property (strong) NSImageView *snapshotOverlay;
 @property (weak) IBOutlet NSPopUpButton *wordCountWidget;
 @property (strong) IBOutlet MPToolbarController *toolbarController;
 @property (copy, nonatomic) NSString *autosaveName;
@@ -884,7 +886,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Update word count
     if (self.preferences.editorShowWordCount)
         [self updateWordCount];
-    
+
+    // SNAPSHOT OVERLAY: Crossfade out the overlay to reveal new content
+    if (frame == sender.mainFrame && self.snapshotOverlay)
+    {
+        // Small delay (10ms) to ensure WebKit compositor has painted
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)),
+                       dispatch_get_main_queue(), ^{
+            [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
+                context.duration = 0.075;  // 75ms for snappy feel
+                context.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
+                self.snapshotOverlay.animator.alphaValue = 0.0;
+            } completionHandler:^{
+                [self.snapshotOverlay removeFromSuperview];
+                self.snapshotOverlay = nil;
+            }];
+        });
+    }
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)
@@ -1111,7 +1130,34 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 #endif
 
-    // Reload the page if there's not valid tree to work with.
+    // SNAPSHOT OVERLAY: Capture current preview to hide white flash during reload
+    if (self.isPreviewReady)
+    {
+        // 1. Capture snapshot at correct scale for Retina
+        NSBitmapImageRep *bitmap = [self.preview bitmapImageRepForCachingDisplayInRect:self.preview.bounds];
+        bitmap.size = self.preview.bounds.size; // Ensure correct logical size
+        [self.preview cacheDisplayInRect:self.preview.bounds toBitmapImageRep:bitmap];
+
+        NSImage *snapshot = [[NSImage alloc] initWithSize:self.preview.bounds.size];
+        [snapshot addRepresentation:bitmap];
+
+        // 2. Create or update overlay image view
+        if (!self.snapshotOverlay)
+        {
+            self.snapshotOverlay = [[NSImageView alloc] initWithFrame:self.preview.bounds];
+            self.snapshotOverlay.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+            self.snapshotOverlay.imageScaling = NSImageScaleAxesIndependently;
+            self.snapshotOverlay.wantsLayer = YES; // Important for smooth animation
+            [self.preview.superview addSubview:self.snapshotOverlay
+                                    positioned:NSWindowAbove
+                                    relativeTo:self.preview];
+        }
+
+        self.snapshotOverlay.image = snapshot;
+        self.snapshotOverlay.alphaValue = 1.0;
+    }
+
+    // 3. Reload the page (WebView is underneath snapshot overlay)
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
