@@ -34,5 +34,22 @@
             <small>Copyright © 2025 Schuyler Erle</small>
         </div>
     </footer>
+
+    <script>
+        // FAQ Accordion functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqQuestions = document.querySelectorAll('.faq-question');
+
+            faqQuestions.forEach(function(question) {
+                question.addEventListener('click', function() {
+                    const faqItem = this.parentElement;
+                    const isActive = faqItem.classList.contains('active');
+
+                    // Toggle active class
+                    faqItem.classList.toggle('active');
+                });
+            });
+        });
+    </script>
 </body>
 </html>

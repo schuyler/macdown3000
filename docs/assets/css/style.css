@@ -341,32 +341,67 @@ nav .container {
 }
 
 .faq-item {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
+    margin-bottom: 1rem;
     background-color: #f8f9fa;
     border-radius: 8px;
     border-left: 4px solid #20a0a0;
+    overflow: hidden;
 }
 
-.faq-item h4 {
+.faq-question {
     font-size: 1.25rem;
-    margin-bottom: 1rem;
+    margin: 0;
+    padding: 1.5rem;
     color: #333;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s;
 }
 
-.faq-item p {
+.faq-question:hover {
+    background-color: #e9ecef;
+}
+
+.faq-icon {
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+    color: #20a0a0;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.faq-item.active .faq-icon {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    padding: 0 1.5rem;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 500px;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+}
+
+.faq-answer p {
     color: #555;
     line-height: 1.8;
-    margin-bottom: 0;
+    margin: 0;
 }
 
-.faq-item a {
+.faq-answer a {
     color: #20a0a0;
     text-decoration: none;
     font-weight: 500;
 }
 
-.faq-item a:hover {
+.faq-answer a:hover {
     text-decoration: underline;
 }
 
@@ -449,7 +484,7 @@ footer a:hover {
         font-size: 1.5rem;
     }
 
-    .faq-item h4 {
+    .faq-question {
         font-size: 1.1rem;
     }
 }
