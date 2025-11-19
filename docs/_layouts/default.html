@@ -12,6 +12,11 @@
     <header>
         <nav>
             <div class="container">
+                <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
                 <ul class="nav-links">
                     <li><a href="#download">Download</a></li>
                     <li><a href="#about">About</a></li>
@@ -37,8 +42,49 @@
     </footer>
 
     <script>
-        // FAQ Accordion functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Hamburger menu functionality
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            const navItems = document.querySelectorAll('.nav-links a');
+
+            hamburger.addEventListener('click', function() {
+                // Toggle menu
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+
+                // Update aria-expanded for accessibility
+                const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+                hamburger.setAttribute('aria-expanded', !isExpanded);
+
+                // Prevent body scroll when menu is open
+                document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+            });
+
+            // Close menu when clicking nav links
+            navItems.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                    document.body.style.overflow = '';
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const isClickInsideNav = navLinks.contains(event.target);
+                const isClickOnHamburger = hamburger.contains(event.target);
+
+                if (!isClickInsideNav && !isClickOnHamburger && navLinks.classList.contains('active')) {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    hamburger.setAttribute('aria-expanded', 'false');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // FAQ Accordion functionality
             const faqQuestions = document.querySelectorAll('.faq-question');
 
             faqQuestions.forEach(function(question) {
