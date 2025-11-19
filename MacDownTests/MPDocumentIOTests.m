@@ -168,7 +168,6 @@
                  @"Markdown should be nil when editor is not loaded");
 
     // Test that setter doesn't crash (messaging nil is safe in Objective-C)
-    self.document.markdown = @"# Test";
     XCTAssertNoThrow(self.document.markdown = @"# Test",
                      @"Setting markdown should not throw");
 
