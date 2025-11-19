@@ -17,7 +17,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 
 ## Current State Assessment
 
-### What We Have (6 test files, ~484 lines)
+### What We Have (7 test files, ~822 lines)
 
 | Test File | Coverage Area | Quality | Lines |
 |-----------|--------------|---------|-------|
@@ -27,19 +27,20 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPHTMLTabularizeTests.m | HTML generation | Good | ~58 |
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
+| MPDocumentIOTests.m | File I/O, document state | Good | ~340 |
 
 ### What We're Missing (Critical Gaps)
 
 **Zero Coverage:**
-- Document management (MPDocument.m)
 - Application controller logic
 - Export functionality
 - Plugin system
 - Most extension categories
 - All UI components
 
-**Minimal Coverage:**
+**Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests added (Issue #89)
+- Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -117,13 +118,13 @@ GitHub Actions macOS runners are:
 - (void)testUnicodeSupport
 ```
 
-### Phase 2: Document Logic (HIGH PRIORITY)
+### Phase 2: Document Logic (HIGH PRIORITY) - PARTIALLY COMPLETED
 
 **Goal:** Test document state management without UI
 
-**New Test Files:**
-- `MPDocumentTests.m` - Document lifecycle
-- `MPDocumentStateTests.m` - Dirty tracking, autosave
+**Test Files:**
+- `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave)
+- Additional tests needed for complete document lifecycle coverage
 
 **Estimated Impact:**
 - Coverage: +3-5%
@@ -311,66 +312,21 @@ GitHub Actions macOS runners are:
 17. ✅ **Paragraphs** - `paragraphs.md`
 18. ✅ **Table of Contents** - `toc.md` (with renderer modification for tocLevel parameter)
 
-### MPDocumentTests.m
+### MPDocumentIOTests.m - ✅ IMPLEMENTED
 
-**Purpose:** Test document lifecycle without UI
+**Purpose:** Test document file I/O and state management without UI
 
-**Setup Required:**
-```objective-c
-@interface MPDocumentTests : XCTestCase
-@property (nonatomic, strong) MPDocument *document;
-@property (nonatomic, strong) NSURL *tempFileURL;
-@end
+**Status:** Completed with 12 test cases covering:
+- API-level I/O operations (readFromData, dataOfType, writableTypes)
+- Document state management (isDocumentEdited, markdown property, autosave)
+- File operations (writeToURL with newline handling, read-only detection, save panel preparation)
 
-- (void)setUp {
-    [super setUp];
-    self.document = [[MPDocument alloc] init];
-    // Create temporary test file
-    NSString *tempPath = [NSTemporaryDirectory()
-        stringByAppendingPathComponent:@"test.md"];
-    self.tempFileURL = [NSURL fileURLWithPath:tempPath];
-}
+**Implementation Reference:** See `/home/user/macdown3000/MacDownTests/MPDocumentIOTests.m`
 
-- (void)tearDown {
-    [[NSFileManager defaultManager] removeItemAtURL:self.tempFileURL
-                                              error:nil];
-    [super tearDown];
-}
-```
-
-**Critical Test Cases:**
-
-1. **File Loading**
-   ```objective-c
-   - (void)testLoadMarkdownFile {
-       NSString *content = @"# Test Document\n\nContent here.";
-       [content writeToURL:self.tempFileURL
-                atomically:YES
-                  encoding:NSUTF8StringEncoding
-                     error:nil];
-
-       NSError *error;
-       BOOL success = [self.document readFromURL:self.tempFileURL
-                                          ofType:@"md"
-                                           error:&error];
-
-       XCTAssertTrue(success);
-       XCTAssertNil(error);
-       XCTAssertNotNil(self.document.text);
-   }
-   ```
-
-2. **State Management**
-   ```objective-c
-   - (void)testDirtyTracking {
-       XCTAssertFalse(self.document.isDirty);
-
-       // Simulate text change
-       [self.document updateText:@"New content"];
-
-       XCTAssertTrue(self.document.isDirty);
-   }
-   ```
+**Future Expansion Opportunities:**
+- Additional document lifecycle edge cases
+- More complex file encoding scenarios
+- Document versioning and conflict handling
 
 ### MPExportTests.m
 
@@ -414,10 +370,9 @@ MacDownTests/
 ├── Rendering/ (planned)
 │   ├── MPSyntaxHighlightingTests.m
 │   └── MPMathJaxRenderingTests.m
-├── Document/ (planned)
-│   ├── MPDocumentTests.m
-│   ├── MPDocumentStateTests.m
-│   └── MPExportTests.m
+├── Document/
+│   ├── MPDocumentIOTests.m (✅ implemented - Issue #90 - file I/O and state)
+│   └── MPExportTests.m (planned)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m
 │   ├── MPStringLookupTests.m
