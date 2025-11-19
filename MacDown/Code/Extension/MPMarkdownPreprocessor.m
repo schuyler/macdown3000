@@ -30,6 +30,7 @@
     BOOL inBlockquote = NO;
     BOOL previousLineWasBlank = YES;  // Start as true (beginning of document)
     BOOL previousLineWasIndentedCode = NO;
+    BOOL previousLineWasListMarker = NO;
 
     for (NSInteger i = 0; i < lines.count; i++) {
         NSString *line = lines[i];
@@ -41,6 +42,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -49,6 +51,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -60,6 +63,7 @@
             [processedLines addObject:line];
             previousLineWasBlank = NO;
             previousLineWasIndentedCode = NO;
+            previousLineWasListMarker = NO;
             continue;
         }
 
@@ -74,22 +78,27 @@
             [processedLines addObject:line];
             previousLineWasBlank = currentLineIsBlank;
             previousLineWasIndentedCode = currentLineIsIndentedCode;
+            previousLineWasListMarker = NO;
             continue;
         }
 
         // Check if current line starts with a list marker
         BOOL currentLineIsListMarker = [self isListMarker:line];
 
-        // If this line is a list marker and previous line was not blank, insert blank line
-        if (currentLineIsListMarker && !previousLineWasBlank && !previousLineWasIndentedCode) {
+        // If this line is a list marker and previous line was not blank and not a list marker, insert blank line
+        BOOL insertedBlankLine = NO;
+        if (currentLineIsListMarker && !previousLineWasBlank && !previousLineWasIndentedCode && !previousLineWasListMarker) {
             [processedLines addObject:@""];  // Insert blank line
+            insertedBlankLine = YES;
         }
 
         [processedLines addObject:line];
 
         // Update state for next iteration
-        previousLineWasBlank = currentLineIsBlank;
+        // If we inserted a blank line, the previous line for the next iteration is blank
+        previousLineWasBlank = insertedBlankLine || currentLineIsBlank;
         previousLineWasIndentedCode = currentLineIsIndentedCode;
+        previousLineWasListMarker = currentLineIsListMarker;
     }
 
     // Rejoin lines with the original line ending style
@@ -100,15 +109,9 @@
 
 + (NSArray<NSString *> *)splitLines:(NSString *)text lineEnding:(NSString *)lineEnding
 {
-    NSArray<NSString *> *lines = [text componentsSeparatedByString:lineEnding];
-
-    // If the text ends with a line ending, componentsSeparatedByString will add an empty string at the end
-    // We need to remove it to preserve the original structure
-    if (lines.count > 0 && [lines.lastObject length] == 0 && [text hasSuffix:lineEnding]) {
-        lines = [lines subarrayWithRange:NSMakeRange(0, lines.count - 1)];
-    }
-
-    return lines;
+    // Simply split by line ending - don't remove trailing empty strings
+    // as they represent the structure of the document
+    return [text componentsSeparatedByString:lineEnding];
 }
 
 + (BOOL)isFencedCodeBlockMarker:(NSString *)line

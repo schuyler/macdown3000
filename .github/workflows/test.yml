@@ -137,19 +137,14 @@ jobs:
             coverageDisplay = `**Current Coverage:** ${currentCoverage}%`;
           }
 
-          const body = `## Code Coverage Report
-
-${coverageDisplay}
-
-<details>
-<summary>Coverage Details</summary>
-
-\`\`\`
-${coverageText}
-\`\`\`
-
-</details>
-`;
+          const body = '## Code Coverage Report\n\n' +
+            coverageDisplay + '\n\n' +
+            '<details>\n' +
+            '<summary>Coverage Details</summary>\n\n' +
+            '```\n' +
+            coverageText + '\n' +
+            '```\n\n' +
+            '</details>\n';
 
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
