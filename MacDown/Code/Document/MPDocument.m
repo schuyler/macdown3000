@@ -1719,14 +1719,53 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat offset = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
-    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:@"var arr = Array.prototype.slice.call(document.querySelectorAll(\"h1, h2, h3, h4, h5, h6, img:only-child\")); arr.map(function(n){ return n.getBoundingClientRect().top })"] toArray];
-    
+    // Build a more robust reference point list by selecting headers and filtering images
+    // to match the editor's detection (standalone images only)
+    NSString *script = @"(function() {"
+        "var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
+        "var images = document.querySelectorAll('img');"
+        "var arr = Array.prototype.slice.call(headers);"
+        ""
+        "for (var i = 0; i < images.length; i++) {"
+        "    var img = images[i];"
+        "    var p = img.parentElement;"
+        "    if (p && p.tagName === 'P') {"
+        "        var children = p.children;"
+        "        if (children.length === 1 && children[0] === img) {"
+        "            arr.push(img);"
+        "        }"
+        "    }"
+        "}"
+        ""
+        "arr.sort(function(a, b) {"
+        "    var posA = 0, posB = 0;"
+        "    var node = a;"
+        "    while (node) { posA++; node = node.previousSibling; }"
+        "    node = b;"
+        "    while (node) { posB++; node = node.previousSibling; }"
+        "    var parentA = a.parentElement, parentB = b.parentElement;"
+        "    while (parentA && parentB && parentA !== parentB) {"
+        "        node = parentA;"
+        "        while (node) { posA += 1000; node = node.previousSibling; }"
+        "        node = parentB;"
+        "        while (node) { posB += 1000; node = node.previousSibling; }"
+        "        parentA = parentA.parentElement;"
+        "        parentB = parentB.parentElement;"
+        "    }"
+        "    return posA - posB;"
+        "});"
+        ""
+        "return arr.map(function(n) { return n.getBoundingClientRect().top; });"
+        "})()";
+
+    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
     {
         [locations addObject:@([location floatValue] + offset)];
     }
-    
+
     _webViewHeaderLocations = [locations copy];
     
 
