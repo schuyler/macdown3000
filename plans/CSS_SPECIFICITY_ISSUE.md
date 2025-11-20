@@ -109,3 +109,19 @@ Add this to EVERY `@media print` section in all 6 CSS files:
 4. `/home/user/macdown3000/MacDown/Resources/Styles/GitHub2.css`
 5. `/home/user/macdown3000/MacDown/Resources/Styles/Solarized (Light).css`
 6. `/home/user/macdown3000/MacDown/Resources/Styles/Solarized (Dark).css`
+
+---
+
+## Update: Alternative Implementation (2025-11-20)
+
+The specificity analysis in this document is **correct**, but the implementation approach changed.
+
+**Instead of modifying 6 individual theme files**, a universal solution was implemented:
+
+- **Created:** `MacDown/Resources/Extensions/print.css` (single file for all themes)
+- **Modified:** `MPRenderer.m` to load print.css LAST in stylesheet cascade
+- **Result:** Universal fix without per-theme modifications
+
+This provides the same specificity override (`pre code` = 0-0-2 + `!important`) but through a single maintainable file instead of 6 separate modifications.
+
+See `ISSUE_28_INVESTIGATION.md` for complete resolution details.

@@ -1,0 +1,72 @@
+/* PDF Export - Code Block Overflow Handling
+ *
+ * This stylesheet provides universal print styles for code blocks in PDF exports.
+ * It loads after all theme CSS files to ensure proper cascade override.
+ *
+ * Issue: #28
+ * Based on: PR #1349 from MacDownApp/macdown by @falkorichter
+ */
+
+@media print {
+    /* Page breaks - prevent code blocks from splitting across pages */
+    table, pre {
+        page-break-inside: avoid;
+    }
+
+    /* Table layout - force wrapping ONLY in tables with code
+     * Uses :has() selector to surgically target only tables containing code.
+     * Regular data tables keep natural column sizing (table-layout: auto).
+     * Tables with code use fixed-width columns to prevent overflow.
+     * Note: :has() is CSS4 - if not supported, this degrades gracefully
+     * (code in tables may overflow, but regular tables remain unaffected). */
+    table:has(code), table:has(tt) {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+
+    /* Table cells - enable wrapping ONLY in tables with code
+     * HACK: max-width: 0 with table-layout: fixed forces content wrapping.
+     * This counterintuitive technique tricks the browser into wrapping
+     * content instead of expanding cells. The actual rendered width is
+     * determined by the table-layout: fixed algorithm (equal distribution).
+     * Only applies when table contains code elements. */
+    table:has(code) td, table:has(code) th,
+    table:has(tt) td, table:has(tt) th {
+        max-width: 0 !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Code blocks - override theme specificity */
+    pre {
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+        overflow: visible !important;  /* Override overflow: auto from themes */
+    }
+
+    /* Code inside pre - CRITICAL for specificity (0-0-2 matches theme CSS) */
+    pre code, pre tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Inline code - handle long URLs, function names, etc. */
+    code, tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Code in specific contexts - ensure wrapping in all scenarios */
+    p code, p tt,
+    li code, li tt,
+    td code, td tt,
+    th code, th tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Body margins - consistent across all themes */
+    body {
+        padding: 2cm;
+    }
+}
