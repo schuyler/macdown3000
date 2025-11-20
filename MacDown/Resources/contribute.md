@@ -16,7 +16,7 @@ Here you can get the source code, read through the issues and start contributing
 
 Contribution is not limited to software developers, since there are other ways you can help. For example, contributing towards documentation, translation and support. Join the room on Gitter to see how you can help (see below).
 
-If you want to help translate, then you can look at our project page on [Transifex](https://www.transifex.com/macdown/macdown/) and see whether to add a new languages or complete the work of an existing language.
+If you want to help translate, please open an issue on GitHub to discuss adding or updating translations for your language.
 
 ## Joining the Conversation
 
