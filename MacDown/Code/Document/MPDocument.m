@@ -232,48 +232,31 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         WebView *webView = weakObj.preview;
         NSWindow *window = webView.window;
 
-        NSLog(@"Completion handler: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
-
         // Set initial scroll position BEFORE scaling to prevent flash to top
         NSClipView *contentView = webView.enclosingScrollView.contentView;
         NSRect bounds = contentView.bounds;
-        CGFloat originalY = bounds.origin.y;
         bounds.origin.y = weakObj.lastPreviewScrollTop;
         contentView.bounds = bounds;
-        NSLog(@"Completion handler: Set initial position from %.0f to %.0f (lastPreviewScrollTop=%.0f)", originalY, bounds.origin.y, weakObj.lastPreviewScrollTop);
 
         [weakObj scaleWebview];
-
-        // Check if scaleWebview changed the scroll position
-        CGFloat afterScaleY = NSMinY(contentView.bounds);
-        NSLog(@"Completion handler: After scaleWebview, position is %.0f", afterScaleY);
 
         // If sync scrolling is enabled, refine position based on current editor scroll
         if (weakObj.preferences.editorSyncScrolling)
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
-            CGFloat afterSyncY = NSMinY(contentView.bounds);
-            NSLog(@"Completion handler: After syncScrollers, position is %.0f", afterSyncY);
         }
 
         // Force display update before enabling window flushing to ensure scroll position is applied
         [contentView displayIfNeeded];
-        NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
 
         // Enable window flushing AFTER scroll position is set and displayed
         @synchronized(window) {
             if (window.isFlushWindowDisabled)
             {
                 [window enableFlushWindow];
-                NSLog(@"Completion handler: Enabled window flushing");
                 // Force immediate flush to show the correct state
                 [window flushWindow];
-                NSLog(@"Completion handler: Flushed window");
-            }
-            else
-            {
-                NSLog(@"Completion handler: WARNING - window flushing was NOT disabled!");
             }
         }
     };
@@ -880,17 +863,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame
 {
     NSWindow *window = sender.window;
-    NSLog(@"didCommitLoadForFrame: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
 
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
         {
             [window disableFlushWindow];
-            NSLog(@"didCommitLoadForFrame: Disabled window flushing");
-        }
-        else
-        {
-            NSLog(@"didCommitLoadForFrame: Window flushing already disabled");
         }
     }
 
@@ -1151,19 +1128,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     scrollBefore];
 
                 [context evaluateScript:updateScript];
-                NSLog(@"DOM replacement: body-only update at scroll %.0f", scrollBefore);
 
                 // Mark rendering as complete so next edit will be processed
                 self.alreadyRenderingInWeb = NO;
 
-                NSLog(@"DOM replacement: complete");
                 return;
             }
         }
     }
 
     // Fall back to full reload
-    NSLog(@"Using full reload (will flash to top)");
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
@@ -1766,73 +1740,38 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 #endif
 }
 
+/**
+ * Updates cached positions of reference points (headers, standalone images) in both
+ * editor and preview for scroll synchronization.
+ *
+ * Uses JavaScript to detect standalone images in the preview, matching the logic
+ * in the editor's Markdown parsing. Images must be:
+ * - Alone in a paragraph, OR
+ * - Wrapped in a link that's alone in a paragraph, OR
+ * - The only child of their parent element
+ *
+ * Called during live scrolling and when content changes.
+ */
 -(void) updateHeaderLocations
 {
     CGFloat offset = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
-    // Build a more robust reference point list by selecting headers and filtering images
-    // to match the editor's detection (standalone images only)
-    NSString *script = @"(function() {"
-        "try {"
-        "    if (!document.body) return [];"
-        "    var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
-        "    var images = document.querySelectorAll('img');"
-        "    var result = [];"
-        "    "
-        "    for (var i = 0; i < headers.length; i++) {"
-        "        result.push({node: headers[i], type: 'header'});"
-        "    }"
-        "    "
-        "    for (var i = 0; i < images.length; i++) {"
-        "        var img = images[i];"
-        "        var parent = img.parentElement;"
-        "        var isStandalone = false;"
-        "        "
-        "        if (!parent) {"
-        "            isStandalone = false;"
-        "        } else if (parent.tagName === 'P') {"
-        "            var imgCount = 0;"
-        "            for (var j = 0; j < parent.children.length; j++) {"
-        "                if (parent.children[j].tagName === 'IMG') imgCount++;"
-        "            }"
-        "            isStandalone = (imgCount === 1);"
-        "        } else if (parent.children.length === 1) {"
-        "            isStandalone = true;"
-        "        } else if (parent.tagName === 'A' && parent.children.length === 1) {"
-        "            var grandparent = parent.parentElement;"
-        "            if (grandparent && grandparent.tagName === 'P') {"
-        "                var imgCount = 0;"
-        "                for (var j = 0; j < grandparent.children.length; j++) {"
-        "                    if (grandparent.children[j].tagName === 'IMG' || grandparent.children[j].tagName === 'A') {"
-        "                        var node = grandparent.children[j];"
-        "                        if (node.tagName === 'IMG' || (node.children.length === 1 && node.children[0].tagName === 'IMG')) {"
-        "                            imgCount++;"
-        "                        }"
-        "                    }"
-        "                }"
-        "                isStandalone = (imgCount === 1);"
-        "            } else if (grandparent && grandparent.children.length === 1) {"
-        "                isStandalone = true;"
-        "            }"
-        "        }"
-        "        "
-        "        if (isStandalone) {"
-        "            result.push({node: img, type: 'image'});"
-        "        }"
-        "    }"
-        "    "
-        "    result.sort(function(a, b) {"
-        "        return a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;"
-        "    });"
-        "    "
-        "    return result.map(function(item) { return item.node.getBoundingClientRect().top; });"
-        "} catch (e) {"
-        "    return [];"
-        "}"
-        "})()";
+    // Load JavaScript from resource file for better maintainability
+    static NSString *script = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *scriptPath = [[NSBundle mainBundle] pathForResource:@"updateHeaderLocations" ofType:@"js"];
+        if (scriptPath) {
+            script = [NSString stringWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:NULL];
+        }
+    });
 
-    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+    if (script) {
+        _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+    } else {
+        _webViewHeaderLocations = @[];
+    }
 
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
@@ -1849,12 +1788,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
     [locations removeAllObjects];
 
-    // These are the patterns for markdown headers and images respectively. we're only going to
-    // handle images that are not inline with other text/images
-    NSRegularExpression *dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:nil];
-    NSRegularExpression *headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:nil];
-    NSRegularExpression *imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:nil];
-    NSRegularExpression *hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-*_]\\s*){3,}$" options:0 error:nil];
+    // Cache regex patterns for markdown headers and images.
+    // Only handle images that are not inline with other text/images.
+    static NSRegularExpression *dashRegex = nil;
+    static NSRegularExpression *headerRegex = nil;
+    static NSRegularExpression *imgRegex = nil;
+    static NSRegularExpression *imgRefRegex = nil;
+    static NSRegularExpression *hrRegex = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
+        headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
+        // Match basic inline image syntax: ![alt](url)
+        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
+        // Match reference-style image syntax: ![alt][ref]
+        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
+        // Match horizontal rules (three or more same characters: ---, ***, ___)
+        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^(([-]\\s*){3,}|([*]\\s*){3,}|([_]\\s*){3,})$" options:0 error:NULL];
+    });
     BOOL previousLineHadContent = NO;
     
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -1869,9 +1820,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
         BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] && !isHorizontalRule;
 
-        if (isDashHeader ||
-            [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
-            [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])])
+        BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0 ||
+                        [imgRefRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0);
+        BOOL isHeader = [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
+
+        if (isDashHeader || isImage || isHeader)
         {
             // Calculate where this header/image appears vertically in the editor
             NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(characterCount, [line length]) actualCharacterRange:nil];
@@ -1891,6 +1844,20 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _editorHeaderLocations = [locations copy];
 }
 
+/**
+ * Synchronizes preview pane scroll position with editor pane position.
+ *
+ * Algorithm:
+ * 1. Find reference points (headers/images) before and after current editor position
+ * 2. Calculate percentage scrolled between those reference points
+ * 3. Apply same percentage between corresponding preview reference points
+ * 4. Use "tapering" at document edges to center-align content mid-document but
+ *    align to top/bottom at document boundaries
+ *
+ * The tapering ensures smooth transitions: when scrolling near the top or bottom of
+ * the document, the adjustment factor gradually reduces to zero, preventing the
+ * preview from being artificially centered when viewing document boundaries.
+ */
 - (void)syncScrollers
 {
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -1902,9 +1869,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat minY = 0;
     CGFloat maxY = 0;
     
-    // align the documents at the middle of the screen, except at top/bottom of document
+    // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
+    // Taper values: 0 at document edges, 1.0 in the middle of the document.
     CGFloat topTaper = MAX(0, MIN(1.0, currY / editorVisibleHeight));
     CGFloat bottomTaper = 1.0 - MAX(0, MIN(1.0, (currY - editorContentHeight + 2 * editorVisibleHeight) / editorVisibleHeight));
+    // Divide by 2 to center-align: shifts reference points by half the visible height
     CGFloat adjustmentForScroll = topTaper * bottomTaper * editorVisibleHeight / 2;
 
     // We start by splitting our document into lines, and then searching

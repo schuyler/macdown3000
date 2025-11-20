@@ -38,6 +38,7 @@
 		1F3619E61F36DA0F00EDA15A /* MPTerminalPreferencesViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1F3619E81F36DA0F00EDA15A /* MPTerminalPreferencesViewController.xib */; };
 		1F396E6619B0EA17000D3EFC /* MPEditorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F396E6519B0EA17000D3EFC /* MPEditorView.m */; };
 		1F3A47521953E84700293259 /* help.md in Resources */ = {isa = PBXBuildFile; fileRef = 1F3A47511953E84700293259 /* help.md */; };
+		1F3A47531953E84700293260 /* updateHeaderLocations.js in Resources */ = {isa = PBXBuildFile; fileRef = 1F3A47521953E84700293260 /* updateHeaderLocations.js */; };
 		1F3FC87C1C854E1C000965E1 /* NSPasteboard+Types.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F3FC87B1C854E1C000965E1 /* NSPasteboard+Types.m */; };
 		1F3FC8AA1C85AE9F000965E1 /* MacDown.sdef in Resources */ = {isa = PBXBuildFile; fileRef = 1F3FC8A91C85AE9F000965E1 /* MacDown.sdef */; };
 		1F41FF7B1C8EEE9200FD9886 /* Templates in Resources */ = {isa = PBXBuildFile; fileRef = 1F41FF7A1C8EEE9200FD9886 /* Templates */; };
@@ -267,6 +268,7 @@
 		1F396E6419B0EA17000D3EFC /* MPEditorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPEditorView.h; sourceTree = "<group>"; };
 		1F396E6519B0EA17000D3EFC /* MPEditorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPEditorView.m; sourceTree = "<group>"; };
 		1F3A47511953E84700293259 /* help.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = help.md; path = Resources/help.md; sourceTree = "<group>"; };
+		1F3A47521953E84700293260 /* updateHeaderLocations.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; name = updateHeaderLocations.js; path = Resources/updateHeaderLocations.js; sourceTree = "<group>"; };
 		1F3FC87A1C854E1C000965E1 /* NSPasteboard+Types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSPasteboard+Types.h"; sourceTree = "<group>"; };
 		1F3FC87B1C854E1C000965E1 /* NSPasteboard+Types.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSPasteboard+Types.m"; sourceTree = "<group>"; };
 		1F3FC8A91C85AE9F000965E1 /* MacDown.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = MacDown.sdef; path = Resources/MacDown.sdef; sourceTree = "<group>"; };
@@ -683,6 +685,7 @@
 				1F0D9DA6194AC8CB008E1856 /* Credits.rtf */,
 				1FA6CDB81952D2CD008D5CA0 /* dsa_pub.pem */,
 				1F3A47511953E84700293259 /* help.md */,
+				1F3A47521953E84700293260 /* updateHeaderLocations.js */,
 				1F59491A1AB57C78007394CB /* syntax_highlighting.json */,
 				1F3FC8A91C85AE9F000965E1 /* MacDown.sdef */,
 			);
@@ -1055,6 +1058,7 @@
 				1F0D9DB2194AC9EE008E1856 /* MPHtmlPreferencesViewController.xib in Resources */,
 				1F0D9DB3194AC9EE008E1856 /* MPMarkdownPreferencesViewController.xib in Resources */,
 				1F3A47521953E84700293259 /* help.md in Resources */,
+				1F3A47531953E84700293260 /* updateHeaderLocations.js in Resources */,
 				1F0D9DB4194AC9EE008E1856 /* MainMenu.xib in Resources */,
 				1FBDFE9C196170FE00BEEA70 /* Extensions in Resources */,
 				1F41FF7B1C8EEE9200FD9886 /* Templates in Resources */,
