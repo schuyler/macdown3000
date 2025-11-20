@@ -246,9 +246,9 @@ NS_INLINE void treat()
 }
 
 
+#if 0  // Temporarily disabled - will upgrade Sparkle to 2.8.1 later
 #pragma mark - SUUpdaterDelegate
 
-#if 0  // Temporarily disabled - will upgrade Sparkle to 2.8.1 later
 - (NSString *)feedURLStringForUpdater:(SUUpdater *)updater
 {
     if (self.preferences.updateIncludesPreReleases)
