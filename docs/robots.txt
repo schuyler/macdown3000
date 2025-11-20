@@ -1,0 +1,8 @@
+# MacDown 3000 robots.txt
+# Allow all search engines to crawl the entire site
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://macdown.app/sitemap.xml
