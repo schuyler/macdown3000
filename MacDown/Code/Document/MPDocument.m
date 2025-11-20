@@ -1141,15 +1141,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 }
 
                 CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                NSLog(@"DOM replacement: scroll position after = %.0f", scrollAfter);
+                NSLog(@"DOM replacement: scroll position after = %.0f (preserved naturally)", scrollAfter);
 
-                // Update reference points and sync scroll position
+                // Update reference points for future scroll syncing
+                // Don't call syncScrollers - DOM replacement already preserved scroll position
+                // Calling syncScrollers would recalculate based on header positions which may
+                // differ by a pixel or two due to rendering variations, causing shudder
                 if (self.preferences.editorSyncScrolling)
                 {
                     [self updateHeaderLocations];
-                    [self syncScrollers];
-                    CGFloat scrollFinal = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                    NSLog(@"DOM replacement: synced to position %.0f", scrollFinal);
+                    NSLog(@"DOM replacement: updated header locations for next scroll sync");
                 }
 
                 // Don't force repaint - let WebView render naturally after DOM changes
