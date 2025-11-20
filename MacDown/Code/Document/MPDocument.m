@@ -257,12 +257,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSLog(@"Completion handler: After syncScrollers, position is %.0f", afterSyncY);
         }
 
-        // Enable window flushing AFTER scroll position is set
+        // Force display update before enabling window flushing to ensure scroll position is applied
+        [contentView displayIfNeeded];
+        NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
+
+        // Enable window flushing AFTER scroll position is set and displayed
         @synchronized(window) {
             if (window.isFlushWindowDisabled)
             {
                 [window enableFlushWindow];
                 NSLog(@"Completion handler: Enabled window flushing");
+                // Force immediate flush to show the correct state
+                [window flushWindow];
+                NSLog(@"Completion handler: Flushed window");
             }
             else
             {
