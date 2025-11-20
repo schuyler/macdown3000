@@ -1793,16 +1793,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
     CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
 
-    // Add offset to all numbers AND filter out last screen to maintain array correspondence with editor
+    // Filter out last screen to maintain array correspondence with editor, then add offset
     // This ensures both _webViewHeaderLocations and _editorHeaderLocations have matching elements
     // at matching indices, which is required by the sync algorithm (lines 1906-1914)
     for (NSNumber *location in _webViewHeaderLocations)
     {
-        CGFloat adjustedLocation = [location floatValue] + offset;
+        CGFloat locationFromTop = [location floatValue];
 
         // Apply same "last screen exclusion" as editor (line 1832) to maintain index alignment
-        if (adjustedLocation <= previewContentHeight - previewVisibleHeight) {
-            [locations addObject:@(adjustedLocation)];
+        // Filter based on position from document top (before adding scroll offset)
+        if (locationFromTop <= previewContentHeight - previewVisibleHeight) {
+            [locations addObject:@(locationFromTop + offset)];
         }
     }
 
