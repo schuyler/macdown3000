@@ -42,6 +42,8 @@
 			<integer>0</integer>
 			<key>NSDocumentClass</key>
 			<string>MPDocument</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
 		</dict>
 		<dict>
 			<key>CFBundleTypeExtensions</key>
