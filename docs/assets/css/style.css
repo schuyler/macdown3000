@@ -72,7 +72,7 @@ nav .container {
 }
 
 .hamburger.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
+    transform: rotate(45deg) translate(8px, 8px);
 }
 
 .hamburger.active .hamburger-line:nth-child(2) {
@@ -80,7 +80,7 @@ nav .container {
 }
 
 .hamburger.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
+    transform: rotate(-45deg) translate(8px, -8px);
 }
 
 .nav-links {
