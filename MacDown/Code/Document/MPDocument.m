@@ -384,6 +384,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.renderer.dataSource = self;
     self.renderer.delegate = self;
 
+    // Set document directory for image dimension resolution
+    if (self.fileURL) {
+        self.renderer.documentDirectoryPath = [self.fileURL.path stringByDeletingLastPathComponent];
+    }
+
     for (NSString *key in MPEditorPreferencesToObserve())
     {
         [defaults addObserver:self forKeyPath:key
@@ -517,6 +522,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!self.presentedItemURL && !self.editor.string.length)
         return NO;
     return [super isDocumentEdited];
+}
+
+- (void)setFileURL:(NSURL *)fileURL
+{
+    [super setFileURL:fileURL];
+
+    // Update document directory for image dimension resolution
+    if (fileURL && self.renderer) {
+        self.renderer.documentDirectoryPath = [fileURL.path stringByDeletingLastPathComponent];
+    }
 }
 
 - (BOOL)writeToURL:(NSURL *)url ofType:(NSString *)typeName
@@ -857,26 +872,66 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             [window disableFlushWindow];
     }
 
-    // If MathJax is off, the on-completion callback will be invoked directly
-    // when loading is done (in -webView:didFinishLoadForFrame:).
+    // Chain async operations: MathJax → Image Load → Scroll Sync
+    // Create image load listener that will execute the final completion handler
+    MPMathJaxListener *imageListener = [[MPMathJaxListener alloc] init];
+    __weak MPDocument *weakSelf = self;
+
+    [imageListener addCallback:^{
+        id callback = MPGetPreviewLoadingCompletionHandler(weakSelf);
+        NSOperationQueue *queue = [NSOperationQueue mainQueue];
+        [queue addOperationWithBlock:callback];
+    } forKey:@"Complete"];
+
+    [sender.windowScriptObject setValue:imageListener forKey:@"ImageLoadListener"];
+
+    // Load image detection script
+    NSString *scriptPath = [[NSBundle mainBundle] pathForResource:@"imageload.init"
+                                                            ofType:@"js"
+                                                       inDirectory:@"Extensions"];
+    NSString *scriptContent = [NSString stringWithContentsOfFile:scriptPath
+                                                        encoding:NSUTF8StringEncoding
+                                                           error:NULL];
+
+    // If MathJax is on, chain: MathJax → Image Load → Scroll Sync
+    // If MathJax is off, chain: Image Load → Scroll Sync (executed in didFinishLoadForFrame)
     if (self.preferences.htmlMathJax)
     {
-        MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
-        [listener addCallback:MPGetPreviewLoadingCompletionHandler(self)
-                       forKey:@"End"];
-        [sender.windowScriptObject setValue:listener forKey:@"MathJaxListener"];
+        MPMathJaxListener *mathListener = [[MPMathJaxListener alloc] init];
+        [mathListener addCallback:^{
+            // After MathJax completes, run image load detection
+            if (scriptContent) {
+                [sender.windowScriptObject evaluateWebScript:scriptContent];
+            } else {
+                // If script failed to load, skip to completion
+                imageListener.invokeCallbackForKey_(@"Complete");
+            }
+        } forKey:@"End"];
+        [sender.windowScriptObject setValue:mathListener forKey:@"MathJaxListener"];
+    }
+    else
+    {
+        // No MathJax - will run image detection in didFinishLoadForFrame
+        [sender.windowScriptObject setValue:scriptContent forKey:@"__imageLoadScript"];
     }
 }
 
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
 {
-    // If MathJax is on, the on-completion callback will be invoked by the
-    // JavaScript handler injected in -webView:didCommitLoadForFrame:.
+    // If MathJax is off, run image load detection now
+    // The chain: Image Load → Scroll Sync
+    // (If MathJax is on, the chain was: MathJax → Image Load → Scroll Sync)
     if (!self.preferences.htmlMathJax)
     {
-        id callback = MPGetPreviewLoadingCompletionHandler(self);
-        NSOperationQueue *queue = [NSOperationQueue mainQueue];
-        [queue addOperationWithBlock:callback];
+        NSString *scriptContent = [sender.windowScriptObject valueForKey:@"__imageLoadScript"];
+        if (scriptContent && [scriptContent isKindOfClass:[NSString class]]) {
+            [sender.windowScriptObject evaluateWebScript:scriptContent];
+        } else {
+            // If script failed to load, execute completion handler directly
+            id callback = MPGetPreviewLoadingCompletionHandler(self);
+            NSOperationQueue *queue = [NSOperationQueue mainQueue];
+            [queue addOperationWithBlock:callback];
+        }
     }
 
     self.isPreviewReady = YES;
@@ -884,7 +939,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Update word count
     if (self.preferences.editorShowWordCount)
         [self updateWordCount];
-    
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)

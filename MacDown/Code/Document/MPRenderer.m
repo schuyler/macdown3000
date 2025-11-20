@@ -11,6 +11,7 @@
 #import <hoedown/html.h>
 #import <hoedown/document.h>
 #import <HBHandlebars/HBHandlebars.h>
+#import <ImageIO/ImageIO.h>
 #import "hoedown_html_patch.h"
 #import "NSJSONSerialization+File.h"
 #import "NSObject+HTMLTabularize.h"
@@ -203,6 +204,8 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 @interface MPRenderer ()
 
 @property (strong) NSMutableArray *currentLanguages;
+@property (strong) NSMutableDictionary *imageDimensionCache;
+@property (copy) NSString *documentDirectoryPath;
 @property (readonly) NSArray *baseStylesheets;
 @property (readonly) NSArray *prismStylesheets;
 @property (readonly) NSArray *prismScripts;
@@ -300,8 +303,83 @@ NS_INLINE hoedown_buffer *language_addition(
 
     // Walk dependencies to include all required scripts.
     add_to_languages(lang, renderer.currentLanguages, languageMap);
-    
+
     return mapped;
+}
+
+// Callback function to get image dimensions for dimension injection
+NS_INLINE CGSize image_dimensions(const hoedown_buffer *link, void *owner)
+{
+    MPRenderer *renderer = (__bridge MPRenderer *)owner;
+
+    if (!link || !link->data || link->size == 0)
+        return CGSizeZero;
+
+    // Convert buffer to NSString
+    NSString *linkStr = [[NSString alloc] initWithBytes:link->data
+                                                  length:link->size
+                                                encoding:NSUTF8StringEncoding];
+    if (!linkStr)
+        return CGSizeZero;
+
+    // Skip remote URLs and data URLs (can't easily get dimensions)
+    if ([linkStr hasPrefix:@"http://"] || [linkStr hasPrefix:@"https://"] ||
+        [linkStr hasPrefix:@"data:"]) {
+        return CGSizeZero;
+    }
+
+    // Resolve path (handle relative paths)
+    NSString *fullPath = linkStr;
+    if (![linkStr isAbsolutePath]) {
+        if (!renderer.documentDirectoryPath) {
+            return CGSizeZero;
+        }
+        fullPath = [renderer.documentDirectoryPath stringByAppendingPathComponent:linkStr];
+    }
+
+    // Check cache (keyed by path + modification time)
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSDictionary *fileAttrs = [fileManager attributesOfItemAtPath:fullPath error:NULL];
+    if (!fileAttrs) {
+        return CGSizeZero;  // File doesn't exist
+    }
+
+    NSDate *modDate = fileAttrs[NSFileModificationDate];
+    NSString *cacheKey = [NSString stringWithFormat:@"%@|%@", fullPath, modDate];
+
+    NSValue *cached = renderer.imageDimensionCache[cacheKey];
+    if (cached) {
+        return [cached CGSizeValue];
+    }
+
+    // Read dimensions from file using ImageIO (fast - only reads metadata)
+    NSURL *url = [NSURL fileURLWithPath:fullPath];
+    CGImageSourceRef source = CGImageSourceCreateWithURL((__bridge CFURLRef)url, NULL);
+    if (!source) {
+        return CGSizeZero;
+    }
+
+    NSDictionary *props = CFBridgingRelease(
+        CGImageSourceCopyPropertiesAtIndex(source, 0, NULL));
+    CFRelease(source);
+
+    if (!props) {
+        return CGSizeZero;
+    }
+
+    CGFloat width = [props[(__bridge NSString *)kCGImagePropertyPixelWidth] doubleValue];
+    CGFloat height = [props[(__bridge NSString *)kCGImagePropertyPixelHeight] doubleValue];
+
+    if (width <= 0 || height <= 0) {
+        return CGSizeZero;
+    }
+
+    CGSize size = CGSizeMake(width, height);
+
+    // Cache result
+    renderer.imageDimensionCache[cacheKey] = [NSValue valueWithCGSize:size];
+
+    return size;
 }
 
 NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLevel)
@@ -311,10 +389,12 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
         flags, tocLevel);
     htmlRenderer->blockcode = hoedown_patch_render_blockcode;
     htmlRenderer->listitem = hoedown_patch_render_listitem;
+    htmlRenderer->image = hoedown_patch_render_image;
 
     hoedown_html_renderer_state_extra *extra =
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
     extra->language_addition = language_addition;
+    extra->image_dimensions = image_dimensions;
     extra->owner = (__bridge void *)renderer;
 
     ((hoedown_html_renderer_state *)htmlRenderer->opaque)->opaque = extra;
@@ -349,6 +429,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 
     self.currentHtml = @"";
     self.currentLanguages = [NSMutableArray array];
+    self.imageDimensionCache = [NSMutableDictionary dictionary];
     self.parseQueue = [[NSOperationQueue alloc] init];
     self.parseQueue.maxConcurrentOperationCount = 1; // Serial queue
 

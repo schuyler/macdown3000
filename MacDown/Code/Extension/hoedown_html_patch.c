@@ -144,6 +144,45 @@ void hoedown_patch_render_listitem(
 	HOEDOWN_BUFPUTSL(ob, "</li>\n");
 }
 
+// Custom image renderer that injects width and height attributes for local images.
+void hoedown_patch_render_image(
+    hoedown_buffer *ob, const hoedown_buffer *link, const hoedown_buffer *title,
+    const hoedown_buffer *alt, const hoedown_renderer_data *data)
+{
+    hoedown_html_renderer_state *state = data->opaque;
+    hoedown_html_renderer_state_extra *extra = state->opaque;
+
+    // Get image dimensions from callback if available
+    CGSize dimensions = CGSizeZero;
+    if (link && extra && extra->image_dimensions) {
+        dimensions = extra->image_dimensions(link, extra->owner);
+    }
+
+    // Render <img> tag
+    HOEDOWN_BUFPUTSL(ob, "<img src=\"");
+    if (link)
+        hoedown_escape_href(ob, link->data, link->size);
+    HOEDOWN_BUFPUTSL(ob, "\" alt=\"");
+    if (alt)
+        hoedown_escape_html(ob, alt->data, alt->size, 0);
+    HOEDOWN_BUFPUTSL(ob, "\"");
+
+    // Add dimensions if available
+    if (dimensions.width > 0 && dimensions.height > 0) {
+        hoedown_buffer_printf(ob, " width=\"%.0f\" height=\"%.0f\"",
+                            dimensions.width, dimensions.height);
+    }
+
+    // Add title if available
+    if (title && title->size) {
+        HOEDOWN_BUFPUTSL(ob, " title=\"");
+        hoedown_escape_html(ob, title->data, title->size, 0);
+        HOEDOWN_BUFPUTSL(ob, "\"");
+    }
+
+    hoedown_buffer_puts(ob, USE_XHTML(state) ? " />" : ">");
+}
+
 // Adds a "toc" class to the outmost UL element to support TOC styling.
 void hoedown_patch_render_toc_header(
     hoedown_buffer *ob, const hoedown_buffer *content, int level,
