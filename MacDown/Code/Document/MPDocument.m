@@ -904,7 +904,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 [sender.windowScriptObject evaluateWebScript:scriptContent];
             } else {
                 // If script failed to load, skip to completion
-                imageListener.invokeCallbackForKey_(@"Complete");
+                [imageListener invokeCallbackForKey:@"Complete"];
             }
         } forKey:@"End"];
         [sender.windowScriptObject setValue:mathListener forKey:@"MathJaxListener"];

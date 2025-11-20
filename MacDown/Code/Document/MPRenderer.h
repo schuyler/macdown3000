@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 @property (nonatomic) int rendererFlags;
 @property (weak) id<MPRendererDataSource> dataSource;
 @property (weak) id<MPRendererDelegate> delegate;
+@property (copy) NSString *documentDirectoryPath;
 
 - (void)parseAndRenderNow;
 - (void)parseAndRenderLater;

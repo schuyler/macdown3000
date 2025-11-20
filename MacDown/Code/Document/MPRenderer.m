@@ -205,7 +205,6 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 
 @property (strong) NSMutableArray *currentLanguages;
 @property (strong) NSMutableDictionary *imageDimensionCache;
-@property (copy) NSString *documentDirectoryPath;
 @property (readonly) NSArray *baseStylesheets;
 @property (readonly) NSArray *prismStylesheets;
 @property (readonly) NSArray *prismScripts;
