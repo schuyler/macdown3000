@@ -1801,7 +1801,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 8CDC5EA0050D2F722FB1AADD /* Pods-MacDownTests.debug.xcconfig */;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MacDown.app/Contents/MacOS/MacDown";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/$(PRODUCT_NAME).app/Contents/MacOS/$(EXECUTABLE_NAME)";
 				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1831,7 +1831,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 0D0EC0DE9FEA22F962083921 /* Pods-MacDownTests.release.xcconfig */;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MacDown.app/Contents/MacOS/MacDown";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/$(PRODUCT_NAME).app/Contents/MacOS/$(EXECUTABLE_NAME)";
 				CLANG_ENABLE_MODULES = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = (
