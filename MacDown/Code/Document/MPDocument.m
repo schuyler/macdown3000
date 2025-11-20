@@ -215,7 +215,6 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) BOOL inLiveScroll;
-@property (strong) NSView *previewOverlay;
 
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
@@ -261,14 +260,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Force display update before enabling window flushing to ensure scroll position is applied
         [contentView displayIfNeeded];
         NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
-
-        // Remove the overlay now that scroll position is correct
-        if (weakObj.previewOverlay)
-        {
-            [weakObj.previewOverlay removeFromSuperview];
-            weakObj.previewOverlay = nil;
-            NSLog(@"Completion handler: Removed overlay");
-        }
 
         // Enable window flushing AFTER scroll position is set and displayed
         @synchronized(window) {
@@ -1115,20 +1106,45 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
-    // Create an overlay to hide the flash to top during reload
-    if (self.isPreviewReady && !self.previewOverlay)
+    // Try DOM replacement to preserve scroll position
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
     {
-        // Create a view with the current background color
-        NSView *overlay = [[NSView alloc] initWithFrame:self.preview.bounds];
-        overlay.wantsLayer = YES;
-        overlay.layer.backgroundColor = [[NSColor whiteColor] CGColor];
-        overlay.layer.opacity = 1.0;
-        [self.preview addSubview:overlay positioned:NSWindowAbove relativeTo:nil];
-        self.previewOverlay = overlay;
-        NSLog(@"Created preview overlay to hide flash");
+        DOMDocument *doc = self.preview.mainFrame.DOMDocument;
+        DOMNodeList *htmlNodes = [doc getElementsByTagName:@"html"];
+        if (htmlNodes.length >= 1)
+        {
+            static NSString *pattern = @"<html>(.*)</html>";
+            static int opts = NSRegularExpressionDotMatchesLineSeparators;
+
+            NSRegularExpression *regex =
+                [[NSRegularExpression alloc] initWithPattern:pattern
+                                                     options:opts error:NULL];
+            NSTextCheckingResult *result =
+                [regex firstMatchInString:html options:0
+                                    range:NSMakeRange(0, html.length)];
+            if (result && [result rangeAtIndex:1].location != NSNotFound)
+            {
+                html = [html substringWithRange:[result rangeAtIndex:1]];
+                DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
+                htmlNode.innerHTML = html;
+
+                NSLog(@"Used DOM replacement to preserve scroll position");
+
+                // Re-trigger JavaScript rendering
+                JSContext *context = self.preview.mainFrame.javaScriptContext;
+                [context evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
+                if (self.preferences.htmlMathJax)
+                {
+                    [context evaluateScript:@"if(window.MathJax&&MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
+                }
+
+                return;
+            }
+        }
     }
 
-    // Reload the page
+    // Fall back to full reload
+    NSLog(@"Using full reload (will flash to top)");
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
