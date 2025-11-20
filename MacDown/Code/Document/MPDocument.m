@@ -1721,41 +1721,34 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Build a more robust reference point list by selecting headers and filtering images
     // to match the editor's detection (standalone images only)
+    // Walk the DOM in document order rather than using querySelectorAll + sort
     NSString *script = @"(function() {"
-        "var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
-        "var images = document.querySelectorAll('img');"
-        "var arr = Array.prototype.slice.call(headers);"
-        ""
-        "for (var i = 0; i < images.length; i++) {"
-        "    var img = images[i];"
-        "    var parent = img.parentElement;"
-        "    if (parent && parent.children.length === 1 && parent.children[0] === img) {"
-        "        arr.push(img);"
+        "var result = [];"
+        "var debug = [];"
+        "var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);"
+        "var node;"
+        "while (node = walker.nextNode()) {"
+        "    var tagName = node.tagName;"
+        "    if (tagName === 'H1' || tagName === 'H2' || tagName === 'H3' || "
+        "        tagName === 'H4' || tagName === 'H5' || tagName === 'H6') {"
+        "        result.push(node);"
+        "        debug.push(tagName + ': ' + (node.textContent || '').substring(0, 30));"
+        "    } else if (tagName === 'IMG') {"
+        "        var parent = node.parentElement;"
+        "        if (parent && parent.children.length === 1) {"
+        "            result.push(node);"
+        "            debug.push('IMG: ' + (node.alt || node.src || '').substring(0, 30));"
+        "        }"
         "    }"
         "}"
-        ""
-        "arr.sort(function(a, b) {"
-        "    var posA = 0, posB = 0;"
-        "    var node = a;"
-        "    while (node) { posA++; node = node.previousSibling; }"
-        "    node = b;"
-        "    while (node) { posB++; node = node.previousSibling; }"
-        "    var parentA = a.parentElement, parentB = b.parentElement;"
-        "    while (parentA && parentB && parentA !== parentB) {"
-        "        node = parentA;"
-        "        while (node) { posA += 1000; node = node.previousSibling; }"
-        "        node = parentB;"
-        "        while (node) { posB += 1000; node = node.previousSibling; }"
-        "        parentA = parentA.parentElement;"
-        "        parentB = parentB.parentElement;"
-        "    }"
-        "    return posA - posB;"
-        "});"
-        ""
-        "return arr.map(function(n) { return n.getBoundingClientRect().top; });"
+        "console.log('Preview reference points: ' + debug.join(', '));"
+        "return result.map(function(n) { return n.getBoundingClientRect().top; });"
         "})()";
 
     _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+
+    // Debug: Log what we found in the preview
+    NSLog(@"Preview found %lu reference points", (unsigned long)_webViewHeaderLocations.count);
 
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
@@ -1799,15 +1792,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
             if(headerY <= editorContentHeight - editorVisibleHeight){
                 [locations addObject:@(headerY)];
+                // Debug logging
+                NSString *preview = [line length] > 30 ? [[line substringToIndex:30] stringByAppendingString:@"..."] : line;
+                NSLog(@"Editor ref point %lu: %@", (unsigned long)locations.count, preview);
             }
         }
-        
+
         previousLineHadContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-        
+
         characterCount += [line length] + 1;
     }
 
     _editorHeaderLocations = [locations copy];
+    NSLog(@"Editor found %lu reference points", (unsigned long)_editorHeaderLocations.count);
 }
 
 - (void)syncScrollers
