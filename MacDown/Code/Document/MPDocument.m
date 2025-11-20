@@ -231,22 +231,33 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return ^{
         WebView *webView = weakObj.preview;
         NSWindow *window = webView.window;
-        @synchronized(window) {
-            if (window.isFlushWindowDisabled)
-                [window enableFlushWindow];
-        }
+
+        // Set initial scroll position BEFORE scaling to prevent flash to top
+        NSClipView *contentView = webView.enclosingScrollView.contentView;
+        NSRect bounds = contentView.bounds;
+        bounds.origin.y = weakObj.lastPreviewScrollTop;
+        contentView.bounds = bounds;
+
         [weakObj scaleWebview];
+
+        // If sync scrolling is enabled, refine position based on current editor scroll
         if (weakObj.preferences.editorSyncScrolling)
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
         }
-        else
-        {
-            NSClipView *contentView = webView.enclosingScrollView.contentView;
-            NSRect bounds = contentView.bounds;
-            bounds.origin.y = weakObj.lastPreviewScrollTop;
-            contentView.bounds = bounds;
+
+        // Force display update before enabling window flushing to ensure scroll position is applied
+        [contentView displayIfNeeded];
+
+        // Enable window flushing AFTER scroll position is set and displayed
+        @synchronized(window) {
+            if (window.isFlushWindowDisabled)
+            {
+                [window enableFlushWindow];
+                // Force immediate flush to show the correct state
+                [window flushWindow];
+            }
         }
     };
 }
@@ -852,9 +863,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame
 {
     NSWindow *window = sender.window;
+
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
+        {
             [window disableFlushWindow];
+        }
     }
 
     // If MathJax is off, the on-completion callback will be invoked directly
@@ -1069,49 +1083,63 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
-#if 0
-    // Unfortunately this DOM-replacing causes a lot of problems...
-    // 1. MathJax needs to be triggered.
-    // 2. Prism rendering is lost.
-    // 3. Potentially more.
-    // Essentially all JavaScript needs to be run again after we replace
-    // the DOM. I have no idea how many more problems there are, so we'll have
-    // to back off from the path for now... :(
-
-    // If we're working on the same document, try not to reload.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
+    // Try DOM replacement to preserve scroll position.
+    // Avoid DOM replacement when MathJax is enabled to prevent race conditions with
+    // async MathJax rendering. Full reload has proper completion handlers.
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !self.preferences.htmlMathJax)
     {
-        // HACK: Ideally we should only inject the parts that changed, and only
-        // get the parts we need. For now we only get a complete HTML codument,
-        // and rely on regex to get the parts we want in the DOM.
-
-        // Use the existing tree if available, and replace the content.
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
-        DOMNodeList *htmlNodes = [doc getElementsByTagName:@"html"];
-        if (htmlNodes.length >= 1)
+        DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
+        if (bodyNodes.length >= 1)
         {
-            static NSString *pattern = @"<html>(.*)</html>";
+            // Extract just the body content, not head or html tags
+            static NSString *pattern = @"<body[^>]*>(.*)</body>";
             static int opts = NSRegularExpressionDotMatchesLineSeparators;
 
-            // Find things inside the <html> tag.
             NSRegularExpression *regex =
                 [[NSRegularExpression alloc] initWithPattern:pattern
                                                      options:opts error:NULL];
             NSTextCheckingResult *result =
                 [regex firstMatchInString:html options:0
                                     range:NSMakeRange(0, html.length)];
-            html = [html substringWithRange:[result rangeAtIndex:1]];
+            if (result && [result rangeAtIndex:1].location != NSNotFound)
+            {
+                NSString *bodyContent = [html substringWithRange:[result rangeAtIndex:1]];
 
-            // Replace everything in the old <html> tag.
-            DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
-            htmlNode.innerHTML = html;
+                CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 
-            return;
+                // Only replace body content, preserving head (CSS, scripts)
+                JSContext *context = self.preview.mainFrame.javaScriptContext;
+                context[@"window"][@"__macdownTempHtml"] = bodyContent;
+
+                NSString *updateScript = [NSString stringWithFormat:
+                    @"(function(){"
+                    @"  var scrollY = %.0f;"
+                    @"  var html = window.__macdownTempHtml;"
+                    @"  delete window.__macdownTempHtml;"
+                    @"  var body = document.body;"
+                    @"  body.innerHTML = html;"
+                    @"  if(window.Prism){Prism.highlightAll();}"
+                    @"  if(window.MathJax&&MathJax.Hub){"
+                    @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
+                    @"    MathJax.Hub.Queue(function(){window.scrollTo(0,scrollY);});"
+                    @"  } else {"
+                    @"    window.scrollTo(0,scrollY);"
+                    @"  }"
+                    @"})();",
+                    scrollBefore];
+
+                [context evaluateScript:updateScript];
+
+                // Mark rendering as complete so next edit will be processed
+                self.alreadyRenderingInWeb = NO;
+
+                return;
+            }
         }
     }
-#endif
 
-    // Reload the page if there's not valid tree to work with.
+    // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
@@ -1714,19 +1742,45 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 #endif
 }
 
+/**
+ * Updates cached positions of reference points (headers, standalone images) in both
+ * editor and preview for scroll synchronization.
+ *
+ * Uses JavaScript to detect standalone images in the preview, matching the logic
+ * in the editor's Markdown parsing. Images must be:
+ * - Alone in a paragraph, OR
+ * - Wrapped in a link that's alone in a paragraph, OR
+ * - The only child of their parent element
+ *
+ * Called during live scrolling and when content changes.
+ */
 -(void) updateHeaderLocations
 {
     CGFloat offset = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
-    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:@"var arr = Array.prototype.slice.call(document.querySelectorAll(\"h1, h2, h3, h4, h5, h6, img:only-child\")); arr.map(function(n){ return n.getBoundingClientRect().top })"] toArray];
-    
+    // Load JavaScript from resource file for better maintainability
+    static NSString *script = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSString *scriptPath = [[NSBundle mainBundle] pathForResource:@"updateHeaderLocations" ofType:@"js"];
+        if (scriptPath) {
+            script = [NSString stringWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:NULL];
+        }
+    });
+
+    if (script) {
+        _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+    } else {
+        _webViewHeaderLocations = @[];
+    }
+
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
     {
         [locations addObject:@([location floatValue] + offset)];
     }
-    
+
     _webViewHeaderLocations = [locations copy];
     
 
@@ -1736,11 +1790,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
     [locations removeAllObjects];
 
-    // These are the patterns for markdown headers and images respectively. we're only going to
-    // handle images that are not inline with other text/images
-    NSRegularExpression *dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:nil];
-    NSRegularExpression *headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:nil];
-    NSRegularExpression *imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:nil];
+    // Cache regex patterns for markdown headers and images.
+    // Only handle images that are not inline with other text/images.
+    static NSRegularExpression *dashRegex = nil;
+    static NSRegularExpression *headerRegex = nil;
+    static NSRegularExpression *imgRegex = nil;
+    static NSRegularExpression *imgRefRegex = nil;
+    static NSRegularExpression *hrRegex = nil;
+    static dispatch_once_t regexOnceToken;
+    dispatch_once(&regexOnceToken, ^{
+        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
+        headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
+        // Match basic inline image syntax: ![alt](url)
+        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
+        // Match reference-style image syntax: ![alt][ref]
+        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
+        // Match horizontal rules (three or more same characters: ---, ***, ___)
+        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^(([-]\\s*){3,}|([*]\\s*){3,}|([_]\\s*){3,})$" options:0 error:NULL];
+    });
     BOOL previousLineHadContent = NO;
     
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -1752,9 +1819,14 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         NSString *line = documentLines[lineNumber];
         
-        if ((previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) ||
-            [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
-            [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])])
+        BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
+        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] && !isHorizontalRule;
+
+        BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0 ||
+                        [imgRefRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0);
+        BOOL isHeader = [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
+
+        if (isDashHeader || isImage || isHeader)
         {
             // Calculate where this header/image appears vertically in the editor
             NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(characterCount, [line length]) actualCharacterRange:nil];
@@ -1765,15 +1837,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 [locations addObject:@(headerY)];
             }
         }
-        
+
         previousLineHadContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-        
+
         characterCount += [line length] + 1;
     }
 
     _editorHeaderLocations = [locations copy];
 }
 
+/**
+ * Synchronizes preview pane scroll position with editor pane position.
+ *
+ * Algorithm:
+ * 1. Find reference points (headers/images) before and after current editor position
+ * 2. Calculate percentage scrolled between those reference points
+ * 3. Apply same percentage between corresponding preview reference points
+ * 4. Use "tapering" at document edges to center-align content mid-document but
+ *    align to top/bottom at document boundaries
+ *
+ * The tapering ensures smooth transitions: when scrolling near the top or bottom of
+ * the document, the adjustment factor gradually reduces to zero, preventing the
+ * preview from being artificially centered when viewing document boundaries.
+ */
 - (void)syncScrollers
 {
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -1785,9 +1871,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat minY = 0;
     CGFloat maxY = 0;
     
-    // align the documents at the middle of the screen, except at top/bottom of document
+    // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
+    // Taper values: 0 at document edges, 1.0 in the middle of the document.
     CGFloat topTaper = MAX(0, MIN(1.0, currY / editorVisibleHeight));
     CGFloat bottomTaper = 1.0 - MAX(0, MIN(1.0, (currY - editorContentHeight + 2 * editorVisibleHeight) / editorVisibleHeight));
+    // Divide by 2 to center-align: shifts reference points by half the visible height
     CGFloat adjustmentForScroll = topTaper * bottomTaper * editorVisibleHeight / 2;
 
     // We start by splitting our document into lines, and then searching
@@ -1850,6 +1938,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
     contentBounds.origin.y = previewY;
     self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+
+    // Save this scroll position so it persists across preview refreshes
+    self.lastPreviewScrollTop = previewY;
 }
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio
