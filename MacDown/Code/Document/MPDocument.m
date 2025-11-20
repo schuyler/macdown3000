@@ -1140,21 +1140,23 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     [context evaluateScript:@"if(window.MathJax&&MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
                 }
 
+                // Check if scroll position changed during DOM manipulation
                 CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                NSLog(@"DOM replacement: scroll position after = %.0f (preserved naturally)", scrollAfter);
-
-                // Update reference points for future scroll syncing
-                // Don't call syncScrollers - DOM replacement already preserved scroll position
-                // Calling syncScrollers would recalculate based on header positions which may
-                // differ by a pixel or two due to rendering variations, causing shudder
-                if (self.preferences.editorSyncScrolling)
+                if (fabs(scrollAfter - scrollBefore) > 0.5)
                 {
-                    [self updateHeaderLocations];
-                    NSLog(@"DOM replacement: updated header locations for next scroll sync");
+                    NSLog(@"DOM replacement: scroll changed from %.0f to %.0f, restoring", scrollBefore, scrollAfter);
+                    NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
+                    bounds.origin.y = scrollBefore;
+                    self.preview.enclosingScrollView.contentView.bounds = bounds;
+                }
+                else
+                {
+                    NSLog(@"DOM replacement: scroll preserved at %.0f", scrollAfter);
                 }
 
-                // Don't force repaint - let WebView render naturally after DOM changes
-                // This avoids multiple paints that would cause flickering
+                // Don't update header locations here - it runs JavaScript that might cause reflow
+                // Header locations will be updated naturally next time user scrolls editor
+                // (via editorBoundsDidChange → updateHeaderLocations)
 
                 // Mark rendering as complete so next edit will be processed
                 self.alreadyRenderingInWeb = NO;
