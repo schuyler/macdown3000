@@ -1773,7 +1773,7 @@
 				INFOPLIST_FILE = "MacDown/MacDown-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.macdown.macdown3000-debug";
-				PRODUCT_NAME = MacDown;
+				PRODUCT_NAME = "MacDown 3000";
 				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
@@ -1791,7 +1791,7 @@
 				INFOPLIST_FILE = "MacDown/MacDown-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "app.macdown.macdown3000";
-				PRODUCT_NAME = MacDown;
+				PRODUCT_NAME = "MacDown 3000";
 				SDKROOT = macosx;
 				WRAPPER_EXTENSION = app;
 			};
