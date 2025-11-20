@@ -138,12 +138,14 @@
 	<string>NSApplication</string>
 	<key>OSAScriptingDefinition</key>
 	<string>MacDown.sdef</string>
+	<!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later
 	<key>SUBetaFeedURL</key>
 	<string>https://macdown.app/sparkle/macdown3000/testing/appcast.xml</string>
 	<key>SUFeedURL</key>
 	<string>https://macdown.app/sparkle/macdown3000/stable/appcast.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
+	-->
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

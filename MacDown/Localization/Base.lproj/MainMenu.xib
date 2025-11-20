@@ -25,11 +25,9 @@
                                     <action selector="orderFrontStandardAboutPanel:" target="-1" id="Exp-CZ-Vem"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check for Updates…" id="8xL-1V-VPX">
+                            <!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later -->
+                            <menuItem enabled="NO" title="Check for Updates… (unavailable)" id="8xL-1V-VPX">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="checkForUpdates:" target="Zfp-OK-9bN" id="MbB-qH-jvR"/>
-                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
@@ -624,11 +622,13 @@ DQ
             </items>
         </menu>
         <customObject id="eq0-c4-vgQ" customClass="MPMainController"/>
+        <!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later
         <customObject id="Zfp-OK-9bN" customClass="SUUpdater">
             <connections>
                 <outlet property="delegate" destination="eq0-c4-vgQ" id="UJV-6a-eCL"/>
             </connections>
         </customObject>
+        -->
         <customObject id="LEY-zf-22t" customClass="NSDocumentController"/>
         <customObject id="N0l-eA-KkD" customClass="MPPlugInController">
             <connections>

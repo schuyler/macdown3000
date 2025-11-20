@@ -24,12 +24,12 @@
                         <rect key="frame" x="1" y="1" width="317" height="38"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button translatesAutoresizingMaskIntoConstraints="NO" id="jet-bG-trd">
+                            <button enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jet-bG-trd">
                                 <rect key="frame" x="16" y="12" width="285" height="18"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="14" id="Prd-FU-8Gz"/>
                                 </constraints>
-                                <buttonCell key="cell" type="check" title="Include pre-releases" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
+                                <buttonCell key="cell" type="check" title="Include pre-releases (unavailable)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>

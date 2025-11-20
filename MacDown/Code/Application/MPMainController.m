@@ -8,7 +8,8 @@
 
 #import "MPMainController.h"
 #import <MASPreferences/MASPreferencesWindowController.h>
-#import <Sparkle/SUUpdater.h>
+// Temporarily disabled - will upgrade Sparkle to 2.8.1 later
+// #import <Sparkle/SUUpdater.h>
 #import "MPGlobals.h"
 #import "MPUtilities.h"
 #import "NSDocumentController+Document.h"
@@ -245,6 +246,7 @@ NS_INLINE void treat()
 }
 
 
+#if 0  // Temporarily disabled - will upgrade Sparkle to 2.8.1 later
 #pragma mark - SUUpdaterDelegate
 
 - (NSString *)feedURLStringForUpdater:(SUUpdater *)updater
@@ -253,6 +255,7 @@ NS_INLINE void treat()
         return [NSBundle mainBundle].infoDictionary[@"SUBetaFeedURL"];
     return [NSBundle mainBundle].infoDictionary[@"SUFeedURL"];
 }
+#endif
 
 
 #pragma mark - Private
