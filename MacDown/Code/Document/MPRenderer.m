@@ -499,6 +499,11 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         NSURL *url = MPExtensionURL(@"show-information", @"css");
         [stylesheets addObject:[MPStyleSheet CSSWithURL:url]];
     }
+
+    // Load print.css last to ensure it overrides theme defaults for PDF export
+    NSURL *printURL = MPExtensionURL(@"print", @"css");
+    [stylesheets addObject:[MPStyleSheet CSSWithURL:printURL]];
+
     return stylesheets;
 }
 

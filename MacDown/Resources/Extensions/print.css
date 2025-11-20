@@ -1,0 +1,49 @@
+/* PDF Export - Code Block Overflow Handling
+ *
+ * This stylesheet provides universal print styles for code blocks in PDF exports.
+ * It loads after all theme CSS files to ensure proper cascade override.
+ *
+ * Issue: #28
+ * Based on: PR #1349 from MacDownApp/macdown by @falkorichter
+ */
+
+@media print {
+    /* Page breaks - prevent code blocks from splitting across pages */
+    table, pre {
+        page-break-inside: avoid;
+    }
+
+    /* Code blocks - override theme specificity */
+    pre {
+        word-wrap: break-word !important;
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+        overflow: visible !important;  /* Override overflow: auto from themes */
+    }
+
+    /* Code inside pre - CRITICAL for specificity (0-0-2 matches theme CSS) */
+    pre code, pre tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Inline code - handle long URLs, function names, etc. */
+    code, tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Code in specific contexts - ensure wrapping in all scenarios */
+    p code, p tt,
+    li code, li tt,
+    td code, td tt,
+    th code, th tt {
+        white-space: pre-wrap !important;
+        overflow-wrap: break-word !important;
+    }
+
+    /* Body margins - consistent across all themes */
+    body {
+        padding: 2cm;
+    }
+}
