@@ -1132,9 +1132,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
                 htmlNode.innerHTML = html;
 
-                // Re-trigger JavaScript rendering
+                // Re-trigger JavaScript rendering - Prism is synchronous, might cause reflow
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
                 [context evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
+
+                // Check if Prism caused scroll shift
+                CGFloat scrollAfterPrism = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                if (fabs(scrollAfterPrism - scrollBefore) > 0.5)
+                {
+                    NSLog(@"DOM replacement: Prism shifted scroll from %.0f to %.0f, restoring", scrollBefore, scrollAfterPrism);
+                    NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
+                    bounds.origin.y = scrollBefore;
+                    self.preview.enclosingScrollView.contentView.bounds = bounds;
+                }
 
                 // MathJax is asynchronous - need to restore scroll AFTER it completes
                 if (self.preferences.htmlMathJax)
