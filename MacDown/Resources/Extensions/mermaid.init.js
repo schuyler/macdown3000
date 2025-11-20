@@ -2,8 +2,11 @@
 
 (function () {
 
+  // Use 'forest' theme via API instead of external CSS to fix gantt rendering
+  // issues (GitHub issue #18). Mermaid 8.0+ requires theme-based configuration.
   mermaid.initialize({
     startOnLoad:false,
+    theme: 'forest',
     flowchart:{
       htmlLabels: false,
       useMaxWidth: true
