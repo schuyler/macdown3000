@@ -7,6 +7,17 @@ Hello there! I’m **MacDown**, the open source Markdown editor for OS X.
 Let me introduce myself.
 
 
+## Making MacDown Your Default Markdown Editor
+
+MacDown is now available to open your Markdown files! To make me your default editor for `.md` files:
+
+1. In Finder, right-click any `.md` file
+2. Choose **Get Info** (or press ⌘I)
+3. Under **"Open with:"**, select MacDown
+4. Click **"Change All..."**
+
+You can also find me in the **"Open With"** menu whenever you right-click a `.md` file.
+
 
 ## Markdown and I
 
