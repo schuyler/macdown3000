@@ -543,6 +543,11 @@ footer a:hover {
         background-color: white;
     }
 
+    /* Change hamburger lines to dark when menu is active */
+    .hamburger.active .hamburger-line {
+        background-color: #333;
+    }
+
     nav .container {
         justify-content: center;
     }
