@@ -1135,23 +1135,35 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 // Re-trigger JavaScript rendering
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
                 [context evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
+
+                // MathJax is asynchronous - need to restore scroll AFTER it completes
                 if (self.preferences.htmlMathJax)
                 {
-                    [context evaluateScript:@"if(window.MathJax&&MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
-                }
-
-                // Check if scroll position changed during DOM manipulation
-                CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                if (fabs(scrollAfter - scrollBefore) > 0.5)
-                {
-                    NSLog(@"DOM replacement: scroll changed from %.0f to %.0f, restoring", scrollBefore, scrollAfter);
-                    NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
-                    bounds.origin.y = scrollBefore;
-                    self.preview.enclosingScrollView.contentView.bounds = bounds;
+                    NSString *mathjaxScript = [NSString stringWithFormat:
+                        @"if(window.MathJax&&MathJax.Hub){"
+                        @"  MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
+                        @"  MathJax.Hub.Queue(function(){"
+                        @"    window.scrollTo(0,%.0f);"
+                        @"  });"
+                        @"}", scrollBefore];
+                    [context evaluateScript:mathjaxScript];
+                    NSLog(@"DOM replacement: queued scroll restoration after MathJax");
                 }
                 else
                 {
-                    NSLog(@"DOM replacement: scroll preserved at %.0f", scrollAfter);
+                    // No MathJax - check scroll now
+                    CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                    if (fabs(scrollAfter - scrollBefore) > 0.5)
+                    {
+                        NSLog(@"DOM replacement: scroll changed from %.0f to %.0f, restoring", scrollBefore, scrollAfter);
+                        NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
+                        bounds.origin.y = scrollBefore;
+                        self.preview.enclosingScrollView.contentView.bounds = bounds;
+                    }
+                    else
+                    {
+                        NSLog(@"DOM replacement: scroll preserved at %.0f", scrollAfter);
+                    }
                 }
 
                 // Don't update header locations here - it runs JavaScript that might cause reflow
