@@ -494,4 +494,81 @@
              rendererFlags:rendFlags];
 }
 
+#pragma mark - Regression Tests for Known Hoedown Limitations
+
+/**
+ * Regression test for Issue #34: Lists after colons
+ *
+ * NOTE: This issue is NOT currently fixed. Hoedown requires blank lines
+ * before lists that follow paragraphs. This test documents the current
+ * (non-ideal) behavior. Will be resolved by parser modernization (#77).
+ *
+ * Current behavior: Lists immediately following text with colons render
+ * as paragraph text instead of proper <ul> or <ol> elements.
+ *
+ * Related: Issue #34, PR #70 (reverted)
+ */
+- (void)testRegressionIssue34_ListsAfterColons
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    // This currently produces broken output (lists don't render correctly)
+    // The golden file documents the current behavior, not the desired behavior
+    [self verifyGoldenFile:@"regression-issue34"
+            withExtensions:extFlags
+             rendererFlags:rendFlags];
+}
+
+/**
+ * Regression test for Issue #36: Code blocks without blank lines
+ *
+ * NOTE: This issue is NOT currently fixed. Hoedown requires blank lines
+ * before fenced code blocks. This test documents the current (non-ideal)
+ * behavior. Will be resolved by parser modernization (#77).
+ *
+ * Current behavior: Fenced code blocks immediately following text without
+ * blank lines render as inline code or malformed blocks instead of proper
+ * <pre><code> elements.
+ *
+ * Related: Issue #36
+ */
+- (void)testRegressionIssue36_CodeBlocksWithoutBlankLines
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int rendFlags = 0;
+
+    // This currently produces broken output (code blocks don't render correctly)
+    // The golden file documents the current behavior, not the desired behavior
+    [self verifyGoldenFile:@"regression-issue36"
+            withExtensions:extFlags
+             rendererFlags:rendFlags];
+}
+
+/**
+ * Regression test for Issue #37: Square brackets in code blocks
+ *
+ * NOTE: This issue is NOT currently fixed. Hoedown's is_ref() function
+ * runs before code blocks are identified, matching patterns like [text]:
+ * and removing them. This test documents the current (broken) behavior.
+ * Will be resolved by parser modernization (#77).
+ *
+ * Current behavior: Lines containing [identifier: type] patterns inside
+ * fenced code blocks get incorrectly interpreted as reference links and
+ * disappear from the rendered output.
+ *
+ * Related: Issue #37
+ */
+- (void)testRegressionIssue37_SquareBracketsInCode
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+
+    // This currently produces broken output (square bracket patterns vanish)
+    // The golden file documents the current behavior, not the desired behavior
+    [self verifyGoldenFile:@"regression-issue37"
+            withExtensions:extFlags
+             rendererFlags:rendFlags];
+}
+
 @end

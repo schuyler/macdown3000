@@ -1,0 +1,41 @@
+<h1>Square Brackets in Code (Issue #37)</h1>
+
+<h2>Test Case 1: TypeScript index signature</h2>
+
+<pre><code class="language-typescript">interface MyType {
+  any;
+}
+</code></pre>
+
+<h2>Test Case 2: JavaScript array access</h2>
+
+<pre><code class="language-javascript">const value = array[index];
+const obj = {
+  [computed]: 'value'
+};
+</code></pre>
+
+<h2>Test Case 3: Multiple bracket patterns</h2>
+
+<pre><code class="language-typescript">type Dict = {
+  string;
+}
+
+interface Config {
+  {
+    boolean;
+  };
+}
+</code></pre>
+
+<h2>Test Case 4: Inline code with brackets</h2>
+
+<p>Here's an example: <code>array[0]</code> and <code>obj[key]</code> should work.</p>
+
+<h2>Test Case 5: Python dictionary syntax</h2>
+
+<pre><code class="language-python">my_dict = {
+    &quot;key&quot;: &quot;value&quot;
+}
+result = my_dict[&quot;key&quot;]
+</code></pre>

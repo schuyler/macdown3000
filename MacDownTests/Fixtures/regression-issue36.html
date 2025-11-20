@@ -1,0 +1,43 @@
+<h1>Code Blocks Without Blank Lines (Issue #36)</h1>
+
+<h2>Test Case 1: Fenced code block immediately after text</h2>
+
+<p>Here is some code:
+<code>
+function test() {
+  return true;
+}
+</code></p>
+
+<h2>Test Case 2: Multiple code blocks in sequence</h2>
+
+<p>First block:
+<code>javascript
+const x = 42;
+</code>
+Second block:
+<code>python
+y = 100
+</code></p>
+
+<h2>Test Case 3: Code block with proper blank line (works correctly)</h2>
+
+<p>This should work:</p>
+
+<pre><code>function working() {
+  return 'yes';
+}
+</code></pre>
+
+<h2>Test Case 4: Code block in list without blank line</h2>
+
+<p>Steps to follow:</p>
+
+<ul>
+<li>First step</li>
+<li>Run this code:
+<code>
+npm install
+</code></li>
+<li>Last step</li>
+</ul>
