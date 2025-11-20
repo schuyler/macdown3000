@@ -1,6 +1,6 @@
 # MacDown 3000
 
-![MacDown 3000 logo](https://macdown.app/static/images/logo-160.png)
+![MacDown 3000 logo](https://macdown.app/assets/images/logo-160.png)
 
 Hello there! I'm **MacDown 3000**, the open source Markdown editor for macOS.
 
