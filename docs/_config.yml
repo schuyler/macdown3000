@@ -1,6 +1,6 @@
 # Site settings
 title: MacDown 3000
-description: A Free Software Markdown editor for macOS
+description: A free, lightweight Markdown editor for macOS with live preview, syntax highlighting, and GitHub Flavored Markdown support. Optimized for Apple Silicon. Free Software under MIT License.
 baseurl: ""
 url: "https://macdown.app"
 
