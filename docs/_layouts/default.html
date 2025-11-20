@@ -3,10 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.title }} - {{ site.title }}</title>
-    <meta name="description" content="{{ site.description }}">
+    <title>{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }} - {{ site.description }}{% endif %}</title>
+    <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    <meta name="keywords" content="Markdown, macOS, editor, Markdown editor, Apple Silicon, free software, open source, MacDown, live preview, syntax highlighting, GitHub Flavored Markdown, CommonMark">
+    <meta name="author" content="Schuyler Erle">
+    <link rel="canonical" href="{{ page.url | absolute_url }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ page.url | absolute_url }}">
+    <meta property="og:title" content="{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}">
+    <meta property="og:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    <meta property="og:image" content="{{ '/assets/images/screenshot.png' | absolute_url }}">
+    <meta property="og:site_name" content="{{ site.title }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ page.url | absolute_url }}">
+    <meta name="twitter:title" content="{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}">
+    <meta name="twitter:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    <meta name="twitter:image" content="{{ '/assets/images/screenshot.png' | absolute_url }}">
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ '/assets/images/logo.png' | relative_url }}">
+    <link rel="apple-touch-icon" href="{{ '/assets/images/logo-160.png' | relative_url }}">
+
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "MacDown 3000",
+      "operatingSystem": "macOS 11.0 or later",
+      "applicationCategory": "DeveloperApplication",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "A free, lightweight Markdown editor for macOS with live preview, syntax highlighting, and GitHub Flavored Markdown support. Optimized for Apple Silicon Macs.",
+      "softwareVersion": "3000.0.0",
+      "author": {
+        "@type": "Person",
+        "name": "Schuyler Erle"
+      },
+      "url": "{{ site.url }}",
+      "downloadUrl": "https://github.com/schuyler/macdown3000/releases",
+      "screenshot": "{{ '/assets/images/screenshot.png' | absolute_url }}",
+      "featureList": [
+        "Live Markdown Preview",
+        "Syntax Highlighting with Prism",
+        "GitHub Flavored Markdown Support",
+        "Apple Silicon Optimized",
+        "Export to HTML and PDF",
+        "Math Notation Support",
+        "Auto-completion",
+        "Customizable Rendering"
+      ],
+      "license": "https://opensource.org/licenses/MIT"
+    }
+    </script>
 </head>
 <body>
     <header>
