@@ -1126,9 +1126,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             {
                 html = [html substringWithRange:[result rangeAtIndex:1]];
                 DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
-                htmlNode.innerHTML = html;
 
-                NSLog(@"Used DOM replacement to preserve scroll position");
+                CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                NSLog(@"DOM replacement: scroll position before = %.0f", scrollBefore);
+
+                htmlNode.innerHTML = html;
 
                 // Re-trigger JavaScript rendering
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
@@ -1138,6 +1140,22 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     [context evaluateScript:@"if(window.MathJax&&MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
                 }
 
+                CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                NSLog(@"DOM replacement: scroll position after = %.0f", scrollAfter);
+
+                // Update reference points and sync scroll position
+                if (self.preferences.editorSyncScrolling)
+                {
+                    [self updateHeaderLocations];
+                    [self syncScrollers];
+                    NSLog(@"DOM replacement: updated header locations and synced scrollers");
+                }
+
+                // Force WebView to repaint
+                [self.preview setNeedsDisplay:YES];
+                [self.preview.window flushWindow];
+
+                NSLog(@"DOM replacement: complete");
                 return;
             }
         }
