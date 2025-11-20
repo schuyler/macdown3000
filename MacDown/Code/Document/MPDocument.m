@@ -1780,8 +1780,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        return a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;"
         "    });"
         "    "
+        "    var sequence = result.map(function(item, idx) {"
+        "        var label = item.type === 'header' ? item.node.tagName : 'IMG';"
+        "        if (item.type === 'header') {"
+        "            label += ':' + (item.node.textContent || '').substring(0, 20).replace(/\\s+/g, ' ');"
+        "        } else {"
+        "            label += ':' + (item.node.alt || 'noalt').substring(0, 15);"
+        "        }"
+        "        return idx + '=' + label;"
+        "    });"
         "    var msg = 'Images: ' + images.length + ' total, ' + includedImages.length + ' included [' + includedImages.join('; ') + '], ' + skippedImages.length + ' skipped [' + skippedImages.join('; ') + ']';"
-        "    return {positions: result.map(function(item) { return item.node.getBoundingClientRect().top; }), debug: msg};"
+        "    return {positions: result.map(function(item) { return item.node.getBoundingClientRect().top; }), debug: msg, sequence: sequence};"
         "} catch (e) {"
         "    return {positions: [], debug: 'Error: ' + e.message};"
         "}"
@@ -1790,11 +1799,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     JSValue *jsResult = [self.preview.mainFrame.javaScriptContext evaluateScript:script];
     NSArray *positions = [[jsResult valueForProperty:@"positions"] toArray];
     NSString *debugMsg = [[jsResult valueForProperty:@"debug"] toString];
+    NSArray *sequence = [[jsResult valueForProperty:@"sequence"] toArray];
 
     _webViewHeaderLocations = positions;
 
     // Debug: Log what we found in the preview
     NSLog(@"Preview found %lu reference points. %@", (unsigned long)_webViewHeaderLocations.count, debugMsg);
+
+    // Log first 10 items in sequence
+    if (sequence.count > 0) {
+        NSArray *firstTen = [sequence subarrayWithRange:NSMakeRange(0, MIN(10, sequence.count))];
+        NSLog(@"Preview sequence (first 10): %@", [firstTen componentsJoinedByString:@", "]);
+    }
 
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
@@ -1838,9 +1854,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
             if(headerY <= editorContentHeight - editorVisibleHeight){
                 [locations addObject:@(headerY)];
-                // Debug logging
-                NSString *preview = [line length] > 30 ? [[line substringToIndex:30] stringByAppendingString:@"..."] : line;
-                NSLog(@"Editor ref point %lu: %@", (unsigned long)locations.count, preview);
             }
         }
 
@@ -1851,6 +1864,25 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     _editorHeaderLocations = [locations copy];
     NSLog(@"Editor found %lu reference points", (unsigned long)_editorHeaderLocations.count);
+
+    // Log first 10 items for comparison with preview
+    if (documentLines.count > 0) {
+        NSMutableArray *editorSequence = [NSMutableArray array];
+        BOOL prevLineContent = NO;
+        NSInteger refIndex = 0;
+        for (NSInteger lineNumber = 0; lineNumber < MIN(100, documentLines.count) && refIndex < 10; lineNumber++) {
+            NSString *line = documentLines[lineNumber];
+            if ((prevLineContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) ||
+                [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
+                [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) {
+                NSString *label = [line length] > 20 ? [[line substringToIndex:20] stringByAppendingString:@"..."] : line;
+                [editorSequence addObject:[NSString stringWithFormat:@"%ld=%@", (long)refIndex, label]];
+                refIndex++;
+            }
+            prevLineContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
+        }
+        NSLog(@"Editor sequence (first 10): %@", [editorSequence componentsJoinedByString:@", "]);
+    }
 }
 
 - (void)syncScrollers
