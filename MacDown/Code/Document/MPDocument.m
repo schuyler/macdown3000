@@ -1806,10 +1806,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Debug: Log what we found in the preview
     NSLog(@"Preview found %lu reference points. %@", (unsigned long)_webViewHeaderLocations.count, debugMsg);
 
-    // Log first 10 items in sequence
-    if (sequence.count > 0) {
-        NSArray *firstTen = [sequence subarrayWithRange:NSMakeRange(0, MIN(10, sequence.count))];
-        NSLog(@"Preview sequence (first 10): %@", [firstTen componentsJoinedByString:@", "]);
+    // Log sequence around where the problem occurs (items 30-43)
+    if (sequence.count > 30) {
+        NSInteger start = 30;
+        NSInteger length = MIN(sequence.count - start, 13);
+        NSArray *lastItems = [sequence subarrayWithRange:NSMakeRange(start, length)];
+        NSLog(@"Preview sequence (30-end): %@", [lastItems componentsJoinedByString:@", "]);
     }
 
     // add offset to all numbers
@@ -1865,23 +1867,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _editorHeaderLocations = [locations copy];
     NSLog(@"Editor found %lu reference points", (unsigned long)_editorHeaderLocations.count);
 
-    // Log first 10 items for comparison with preview
+    // Log sequence around where the problem occurs (items 30-43)
     if (documentLines.count > 0) {
         NSMutableArray *editorSequence = [NSMutableArray array];
         BOOL prevLineContent = NO;
         NSInteger refIndex = 0;
-        for (NSInteger lineNumber = 0; lineNumber < MIN(100, documentLines.count) && refIndex < 10; lineNumber++) {
+        for (NSInteger lineNumber = 0; lineNumber < documentLines.count; lineNumber++) {
             NSString *line = documentLines[lineNumber];
             if ((prevLineContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) ||
                 [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
                 [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) {
-                NSString *label = [line length] > 20 ? [[line substringToIndex:20] stringByAppendingString:@"..."] : line;
-                [editorSequence addObject:[NSString stringWithFormat:@"%ld=%@", (long)refIndex, label]];
+                if (refIndex >= 30) {
+                    NSString *label = [line length] > 20 ? [[line substringToIndex:20] stringByAppendingString:@"..."] : line;
+                    [editorSequence addObject:[NSString stringWithFormat:@"%ld=%@", (long)refIndex, label]];
+                }
                 refIndex++;
             }
             prevLineContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
         }
-        NSLog(@"Editor sequence (first 10): %@", [editorSequence componentsJoinedByString:@", "]);
+        if (editorSequence.count > 0) {
+            NSLog(@"Editor sequence (30-end): %@", [editorSequence componentsJoinedByString:@", "]);
+        }
     }
 }
 
