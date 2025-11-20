@@ -7,11 +7,11 @@ function get_build_version() {
 }
 
 # Use the latest tag for short version (expected tag format "vn[.n[.n]]")
-# or read from version.txt (CURRENT_VERSION) if in development or between releases
+# or read from version.txt (CURRENT_VERSION or NEXT_VERSION_PLANNED) in development
 function get_short_version() {
     LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null) || LATEST_TAG="HEAD"
     if [ $LATEST_TAG = "HEAD" ]; then
-        # No tags exist, read from version.txt
+        # No tags exist yet, read CURRENT_VERSION from version.txt (initial development)
         local tools_dir=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")
         local version_file="$tools_dir/version.txt"
         if [ -f "$version_file" ]; then
@@ -29,7 +29,9 @@ function get_short_version() {
             # At a release tag, use that version
             SHORT_VERSION="$LATEST_TAG"
         else
-            # Between releases, read next version from version.txt
+            # Between releases (commits after a tag): use NEXT_VERSION_PLANNED as development target
+            # This shows development builds progress toward the final target release
+            # Example: After v3000.0.0-beta.1 tag, builds show 3000.0.0d5 (5 commits toward final 3000.0.0)
             local tools_dir=$(dirname "${BASH_SOURCE[0]:-${(%):-%x}}")
             local version_file="$tools_dir/version.txt"
             if [ -f "$version_file" ]; then

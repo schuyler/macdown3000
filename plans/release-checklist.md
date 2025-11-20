@@ -54,14 +54,13 @@ This checklist ensures nothing is missed during a release. Use it alongside the 
   - Valid formats: `0.9.0-alpha.1`, `0.9.0-beta.2`, `0.9.0-rc.1`
   - Use lowercase: `alpha`, `beta`, `rc` (not `Alpha`, `BETA`, etc.)
 
-- [ ] **Version updated in `Tools/version.txt`**
-  ```bash
-  # Before release, update the file:
-  # - CURRENT_VERSION=0.8.0 → CURRENT_VERSION=0.9.0
-  # - VERSION_STATUS=development → VERSION_STATUS=released
-  # - PREVIOUS_VERSION=0.7.5 → PREVIOUS_VERSION=0.8.0
-  # - RELEASE_DATE=old → RELEASE_DATE=current date
-  ```
+- [ ] **Version in `Tools/version.txt` is correct and committed**
+  - CURRENT_VERSION should already match the version you're about to release
+  - Example: If releasing 0.9.0, CURRENT_VERSION should be 0.9.0
+  - VERSION_STATUS should reflect the release type (development, beta, alpha, rc)
+  - These should have been set in the previous development cycle
+  - Verify version.txt is committed to git before proceeding
+  - **Note:** Do NOT update version.txt right before release. It gets updated AFTER release for the next cycle (see Phase 4)
 
 - [ ] **Understand how version flows through system**
   - `Tools/version.txt` (CURRENT_VERSION) → source of truth
