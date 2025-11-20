@@ -1110,8 +1110,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
-        DOMElement *bodyNode = (DOMElement *)[doc getElementsByTagName:@"body"].item(0);
-        if (bodyNode)
+        DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
+        if (bodyNodes.length >= 1)
         {
             // Extract just the body content, not head or html tags
             static NSString *pattern = @"<body[^>]*>(.*)</body>";
