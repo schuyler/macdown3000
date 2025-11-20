@@ -14,7 +14,41 @@ The test implementation for issue #58 includes placeholder golden HTML files. Th
 - Xcode installed
 - Repository cloned locally
 
-## Step-by-Step Instructions
+## Quick Start (Automated)
+
+**Recommended method using the automated script:**
+
+```bash
+# 1. Check out the branch
+git fetch origin
+git checkout claude/resolve-issue-58-015pvzomykZejWB2WZYkUWpQ
+
+# 2. Run the regeneration script
+./scripts/regenerate-golden-files.sh
+
+# The script will automatically:
+# - Enable regeneration mode
+# - Run tests to generate files
+# - Copy files from DerivedData to source
+# - Disable regeneration mode
+# - Verify tests pass
+# - Show git status
+
+# 3. Review and commit the changes
+git diff MacDownTests/Fixtures/
+git add MacDownTests/Fixtures/*.html
+git commit -m "Regenerate golden HTML files with actual renderer output"
+git push origin claude/resolve-issue-58-015pvzomykZejWB2WZYkUWpQ
+```
+
+**Note:** If you need to specify a custom scheme name, pass it as an argument:
+```bash
+./scripts/regenerate-golden-files.sh "YourSchemeName"
+```
+
+## Step-by-Step Instructions (Manual Method)
+
+If you prefer to do it manually or the script doesn't work for your setup:
 
 ### 1. Check Out the Branch
 
@@ -163,6 +197,21 @@ rm -rf ~/Library/Developer/Xcode/DerivedData/MacDown*
 grep -n "REGENERATE_GOLDEN_FILES" MacDownTests/MP*.m
 ```
 
+### Golden files not in source directory (Manual method)
+
+**Important:** When using the manual method, golden files are written to DerivedData, not the source directory. You must copy them back:
+
+```bash
+# Find the generated files in DerivedData
+find ~/Library/Developer/Xcode/DerivedData -name "*.html" -path "*/MacDownTests.xctest/Contents/Resources/Fixtures/*" -mmin -10
+
+# Copy them to source (adjust path as needed)
+cp ~/Library/Developer/Xcode/DerivedData/MacDown_3000-*/Build/Products/Debug/MacDown\ 3000.app/Contents/PlugIns/MacDownTests.xctest/Contents/Resources/Fixtures/*.html \
+   MacDownTests/Fixtures/
+```
+
+**This is handled automatically by the script.**
+
 ### Some golden files not updated
 
 **Check that tests actually ran:**
@@ -177,5 +226,5 @@ After successful verification, this checklist can remain in the repository as do
 
 ---
 
-**Status:** ⏳ Pending regeneration
+**Status:** ✅ Completed (2025-11-20)
 **Last Updated:** 2025-11-20
