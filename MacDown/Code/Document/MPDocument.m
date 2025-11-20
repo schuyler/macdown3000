@@ -1788,13 +1788,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
     _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:@"var arr = Array.prototype.slice.call(document.querySelectorAll(\"h1, h2, h3, h4, h5, h6, img:only-child\")); arr.map(function(n){ return n.getBoundingClientRect().top })"] toArray];
-    
-    // add offset to all numbers
+
+    // Get preview dimensions for filtering (matching editor logic)
+    CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
+    CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
+
+    // Add offset to all numbers AND filter out last screen to maintain array correspondence with editor
+    // This ensures both _webViewHeaderLocations and _editorHeaderLocations have matching elements
+    // at matching indices, which is required by the sync algorithm (lines 1906-1914)
     for (NSNumber *location in _webViewHeaderLocations)
     {
-        [locations addObject:@([location floatValue] + offset)];
+        CGFloat adjustedLocation = [location floatValue] + offset;
+
+        // Apply same "last screen exclusion" as editor (line 1832) to maintain index alignment
+        if (adjustedLocation <= previewContentHeight - previewVisibleHeight) {
+            [locations addObject:@(adjustedLocation)];
+        }
     }
-    
+
     _webViewHeaderLocations = [locations copy];
     
 
