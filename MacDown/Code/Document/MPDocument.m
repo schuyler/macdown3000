@@ -1128,53 +1128,36 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
 
                 CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                NSLog(@"DOM replacement: scroll position before = %.0f", scrollBefore);
 
-                htmlNode.innerHTML = html;
-
-                // Re-trigger JavaScript rendering - Prism is synchronous, might cause reflow
+                // Use JavaScript to batch all DOM updates into a single paint cycle
+                // This prevents visual artifacts from innerHTML + Prism + MathJax running separately
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
-                [context evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
 
-                // Check if Prism caused scroll shift
-                CGFloat scrollAfterPrism = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                if (fabs(scrollAfterPrism - scrollBefore) > 0.5)
-                {
-                    NSLog(@"DOM replacement: Prism shifted scroll from %.0f to %.0f, restoring", scrollBefore, scrollAfterPrism);
-                    NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
-                    bounds.origin.y = scrollBefore;
-                    self.preview.enclosingScrollView.contentView.bounds = bounds;
-                }
+                // Set HTML as window property (JSContext handles escaping automatically)
+                context[@"window"][@"__macdownTempHtml"] = html;
 
-                // MathJax is asynchronous - need to restore scroll AFTER it completes
-                if (self.preferences.htmlMathJax)
-                {
-                    NSString *mathjaxScript = [NSString stringWithFormat:
-                        @"if(window.MathJax&&MathJax.Hub){"
-                        @"  MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
-                        @"  MathJax.Hub.Queue(function(){"
-                        @"    window.scrollTo(0,%.0f);"
-                        @"  });"
-                        @"}", scrollBefore];
-                    [context evaluateScript:mathjaxScript];
-                    NSLog(@"DOM replacement: queued scroll restoration after MathJax");
-                }
-                else
-                {
-                    // No MathJax - check scroll now
-                    CGFloat scrollAfter = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                    if (fabs(scrollAfter - scrollBefore) > 0.5)
-                    {
-                        NSLog(@"DOM replacement: scroll changed from %.0f to %.0f, restoring", scrollBefore, scrollAfter);
-                        NSRect bounds = self.preview.enclosingScrollView.contentView.bounds;
-                        bounds.origin.y = scrollBefore;
-                        self.preview.enclosingScrollView.contentView.bounds = bounds;
-                    }
-                    else
-                    {
-                        NSLog(@"DOM replacement: scroll preserved at %.0f", scrollAfter);
-                    }
-                }
+                // Now run the update script that references the temp property
+                NSString *updateScript = [NSString stringWithFormat:
+                    @"(function(){"
+                    @"  var scrollY = %.0f;"
+                    @"  var html = window.__macdownTempHtml;"
+                    @"  delete window.__macdownTempHtml;"
+                    @"  requestAnimationFrame(function(){"
+                    @"    var htmlEl = document.querySelector('html');"
+                    @"    htmlEl.innerHTML = html;"
+                    @"    if(window.Prism){Prism.highlightAll();}"
+                    @"    if(window.MathJax&&MathJax.Hub){"
+                    @"      MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
+                    @"      MathJax.Hub.Queue(function(){window.scrollTo(0,scrollY);});"
+                    @"    } else {"
+                    @"      window.scrollTo(0,scrollY);"
+                    @"    }"
+                    @"  });"
+                    @"})();",
+                    scrollBefore];
+
+                [context evaluateScript:updateScript];
+                NSLog(@"DOM replacement: batched update with requestAnimationFrame at scroll %.0f", scrollBefore);
 
                 // Don't update header locations here - it runs JavaScript that might cause reflow
                 // Header locations will be updated naturally next time user scrolls editor
