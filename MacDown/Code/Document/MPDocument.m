@@ -1148,12 +1148,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 {
                     [self updateHeaderLocations];
                     [self syncScrollers];
-                    NSLog(@"DOM replacement: updated header locations and synced scrollers");
+                    CGFloat scrollFinal = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                    NSLog(@"DOM replacement: synced to position %.0f", scrollFinal);
                 }
 
-                // Force WebView to repaint
-                [self.preview setNeedsDisplay:YES];
-                [self.preview.window flushWindow];
+                // Don't force repaint - let WebView render naturally after DOM changes
+                // This avoids multiple paints that would cause flickering
 
                 NSLog(@"DOM replacement: complete");
                 return;
