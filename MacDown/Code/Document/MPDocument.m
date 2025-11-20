@@ -883,6 +883,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [queue addOperationWithBlock:callback];
     } forKey:@"Complete"];
 
+    // Handle late image loads (images that load after initial timeout)
+    // This handles WebKit lazy loading and slow network conditions
+    [imageListener addCallback:^{
+        MPDocument *strongSelf = weakSelf;
+        if (!strongSelf) return;
+
+        // Only re-sync if scroll sync is enabled
+        if (strongSelf.preferences.editorSyncScrolling) {
+            [strongSelf updateHeaderLocations];
+            [strongSelf syncScrollers];
+        }
+    } forKey:@"LateImageLoad"];
+
     [sender.windowScriptObject setValue:imageListener forKey:@"ImageLoadListener"];
 
     // Load image detection script

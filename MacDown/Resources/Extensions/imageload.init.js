@@ -57,6 +57,51 @@
         if (!completed) {
             console.warn('MacDown: Image load timeout after 5s, syncing scroll position anyway');
             notifyComplete();
+
+            // After initial timeout, continue monitoring for late image loads
+            // This handles lazy-loaded images that load after the timeout
+            setupLateImageMonitoring();
         }
     }, 5000);
+
+    // Monitor for images that load after the initial timeout
+    // This handles WebKit lazy loading and slow network conditions
+    var lateLoadCount = 0;
+    var maxLateLoads = 5;  // Prevent infinite re-syncs
+    var debounceTimer = null;
+
+    function setupLateImageMonitoring() {
+        function onLateImageLoad() {
+            // Debounce: wait 250ms for additional images to load together
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                if (lateLoadCount >= maxLateLoads) {
+                    console.log('MacDown: Reached max late image load re-syncs (' + maxLateLoads + ')');
+                    return;
+                }
+                lateLoadCount++;
+                console.log('MacDown: Late image loaded, re-syncing scroll position (' + lateLoadCount + '/' + maxLateLoads + ')');
+
+                // Notify Objective-C to re-sync scroll positions
+                ImageLoadListener.invokeCallbackForKey_('LateImageLoad');
+            }, 250);
+        }
+
+        // Attach persistent listeners to images that haven't loaded yet
+        for (var i = 0; i < images.length; i++) {
+            var img = images[i];
+            if (!img.complete) {
+                img.addEventListener('load', onLateImageLoad);
+                img.addEventListener('error', onLateImageLoad);
+            }
+        }
+
+        // Cleanup on page unload to prevent memory leaks
+        window.addEventListener('unload', function() {
+            for (var i = 0; i < images.length; i++) {
+                images[i].removeEventListener('load', onLateImageLoad);
+                images[i].removeEventListener('error', onLateImageLoad);
+            }
+        });
+    }
 })();
