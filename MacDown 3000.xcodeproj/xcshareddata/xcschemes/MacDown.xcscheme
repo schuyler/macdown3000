@@ -17,7 +17,7 @@
                BlueprintIdentifier = "1FA6DE201941CC9E000409FB"
                BuildableName = "MacDown.app"
                BlueprintName = "MacDown"
-               ReferencedContainer = "container:MacDown.xcodeproj">
+               ReferencedContainer = "container:MacDown 3000.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,7 +35,7 @@
                BlueprintIdentifier = "1FA6DE441941CC9E000409FB"
                BuildableName = "MacDownTests.xctest"
                BlueprintName = "MacDownTests"
-               ReferencedContainer = "container:MacDown.xcodeproj">
+               ReferencedContainer = "container:MacDown 3000.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
