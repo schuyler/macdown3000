@@ -257,6 +257,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSLog(@"Completion handler: After syncScrollers, position is %.0f", afterSyncY);
         }
 
+        // Show the WebView now that scroll position is set
+        webView.hidden = NO;
+        NSLog(@"Completion handler: Showed WebView at correct scroll position");
+
         // Force display update before enabling window flushing to ensure scroll position is applied
         [contentView displayIfNeeded];
         NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
@@ -881,6 +885,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     NSWindow *window = sender.window;
     NSLog(@"didCommitLoadForFrame: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
+
+    // Hide the WebView during reload to prevent flash to top
+    // It will be shown again in the completion handler after scroll position is set
+    sender.hidden = YES;
+    NSLog(@"didCommitLoadForFrame: Hidden WebView to prevent flash");
+
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
         {
