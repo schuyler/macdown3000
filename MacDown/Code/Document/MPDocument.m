@@ -232,25 +232,42 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         WebView *webView = weakObj.preview;
         NSWindow *window = webView.window;
 
-        [weakObj scaleWebview];
+        NSLog(@"Completion handler: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
 
-        // Set initial scroll position to prevent flash to top
+        // Set initial scroll position BEFORE scaling to prevent flash to top
         NSClipView *contentView = webView.enclosingScrollView.contentView;
         NSRect bounds = contentView.bounds;
+        CGFloat originalY = bounds.origin.y;
         bounds.origin.y = weakObj.lastPreviewScrollTop;
         contentView.bounds = bounds;
+        NSLog(@"Completion handler: Set initial position from %.0f to %.0f (lastPreviewScrollTop=%.0f)", originalY, bounds.origin.y, weakObj.lastPreviewScrollTop);
+
+        [weakObj scaleWebview];
+
+        // Check if scaleWebview changed the scroll position
+        CGFloat afterScaleY = NSMinY(contentView.bounds);
+        NSLog(@"Completion handler: After scaleWebview, position is %.0f", afterScaleY);
 
         // If sync scrolling is enabled, refine position based on current editor scroll
         if (weakObj.preferences.editorSyncScrolling)
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
+            CGFloat afterSyncY = NSMinY(contentView.bounds);
+            NSLog(@"Completion handler: After syncScrollers, position is %.0f", afterSyncY);
         }
 
         // Enable window flushing AFTER scroll position is set
         @synchronized(window) {
             if (window.isFlushWindowDisabled)
+            {
                 [window enableFlushWindow];
+                NSLog(@"Completion handler: Enabled window flushing");
+            }
+            else
+            {
+                NSLog(@"Completion handler: WARNING - window flushing was NOT disabled!");
+            }
         }
     };
 }
@@ -856,9 +873,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame
 {
     NSWindow *window = sender.window;
+    NSLog(@"didCommitLoadForFrame: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
+        {
             [window disableFlushWindow];
+            NSLog(@"didCommitLoadForFrame: Disabled window flushing");
+        }
+        else
+        {
+            NSLog(@"didCommitLoadForFrame: Window flushing already disabled");
+        }
     }
 
     // If MathJax is off, the on-completion callback will be invoked directly
