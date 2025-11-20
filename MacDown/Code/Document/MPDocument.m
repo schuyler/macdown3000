@@ -1155,6 +1155,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 // Don't force repaint - let WebView render naturally after DOM changes
                 // This avoids multiple paints that would cause flickering
 
+                // Mark rendering as complete so next edit will be processed
+                self.alreadyRenderingInWeb = NO;
+
                 NSLog(@"DOM replacement: complete");
                 return;
             }
