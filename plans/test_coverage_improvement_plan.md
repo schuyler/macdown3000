@@ -39,7 +39,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - All UI components
 
 **Partial Coverage:**
-- Markdown rendering engine (MPRenderer.m) - 18 golden file tests added (Issue #89)
+- Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
 
 **Test Infrastructure:**
@@ -82,14 +82,15 @@ GitHub Actions macOS runners are:
 
 **Goal:** Test the heart of MacDown - markdown to HTML conversion
 
-**Status:** ✅ **PARTIALLY IMPLEMENTED** (Issue #89)
-- ✅ `MPMarkdownRenderingTests.m` - 18 golden file tests for core markdown syntax
+**Status:** ✅ **PARTIALLY IMPLEMENTED** (Issue #89, Issue #81)
+- ✅ `MPMarkdownRenderingTests.m` - 18 golden file tests for core markdown syntax (Issue #89)
+- ✅ `MPMarkdownRenderingTests.m` - 3 regression tests for known hoedown bugs (Issue #81)
 - ⏳ `MPSyntaxHighlightingTests.m` - Code block highlighting (planned)
 - ⏳ `MPMathJaxRenderingTests.m` - Math formula rendering (planned)
 
 **Actual Impact (MPMarkdownRenderingTests.m):**
-- Tests added: 18 golden file test cases
-- Fixtures created: 18 input/output pairs in `MacDownTests/Fixtures/`
+- Tests added: 18 golden file test cases (Issue #89) + 3 regression tests (Issue #81)
+- Fixtures created: 18 input/output pairs for core syntax + 6 files (3 pairs) for regression tests
 - Coverage: TBD (measure after implementation)
 - Maintenance: Low (golden file approach)
 
@@ -281,7 +282,7 @@ GitHub Actions macOS runners are:
 
 ### MPMarkdownRenderingTests.m
 
-**Status:** ✅ **IMPLEMENTED** (Issue #89)
+**Status:** ✅ **IMPLEMENTED** (Issue #89, Issue #81)
 
 **Purpose:** Comprehensive validation of markdown→HTML conversion using golden file testing
 
@@ -290,6 +291,7 @@ GitHub Actions macOS runners are:
 - **Fixtures:** 18 test cases in `MacDownTests/Fixtures/` directory
 - **Naming:** `test-name.md` → `test-name.html` pairs
 - **Coverage:** Headers, lists, code blocks, emphasis, links, blockquotes, etc.
+- **Regression tests:** 3 tests documenting known hoedown parser bugs (Issue #81)
 
 **Example Test Cases Implemented:**
 
@@ -311,6 +313,16 @@ GitHub Actions macOS runners are:
 16. ✅ **Mixed Content** - `mixed-content.md`
 17. ✅ **Paragraphs** - `paragraphs.md`
 18. ✅ **Table of Contents** - `toc.md` (with renderer modification for tocLevel parameter)
+
+**Regression Tests (Issue #81):**
+
+Three regression tests document known hoedown parser limitations that will be fixed in parser modernization (#77):
+
+1. ✅ **Issue #34** - `regression-issue34.md/.html` - Lists after colons (requires blank lines)
+2. ✅ **Issue #36** - `regression-issue36.md/.html` - Code blocks without blank lines
+3. ✅ **Issue #37** - `regression-issue37.md/.html` - Square brackets in code blocks (is_ref() false positive)
+
+These tests capture the current broken behavior to prevent regressions and validate fixes when the parser is modernized.
 
 ### MPDocumentIOTests.m - ✅ IMPLEMENTED
 
@@ -366,7 +378,7 @@ GitHub Actions macOS runners are:
 
 ```
 MacDownTests/
-├── MPMarkdownRenderingTests.m ✅ (implemented - Issue #89)
+├── MPMarkdownRenderingTests.m ✅ (implemented - Issue #89, Issue #81)
 ├── Rendering/ (planned)
 │   ├── MPSyntaxHighlightingTests.m
 │   └── MPMathJaxRenderingTests.m
@@ -385,7 +397,7 @@ MacDownTests/
 │   └── MPDocumentIntegrationTests.m
 ├── UI/ (planned)
 │   └── MPSmokeTests.m (XCUITest)
-└── Fixtures/ ✅ (implemented - Issue #89)
+└── Fixtures/ ✅ (implemented - Issue #89, Issue #81)
     ├── atx-headers.md / .html
     ├── emphasis.md / .html
     ├── unordered-list.md / .html
@@ -406,7 +418,10 @@ MacDownTests/
     ├── hard-line-breaks.md / .html
     ├── mixed-content.md / .html
     ├── paragraphs.md / .html
-    └── toc.md / .html
+    ├── toc.md / .html
+    ├── regression-issue34.md / .html  ✅ (Issue #81)
+    ├── regression-issue36.md / .html  ✅ (Issue #81)
+    └── regression-issue37.md / .html  ✅ (Issue #81)
 ```
 
 ### Testing Best Practices

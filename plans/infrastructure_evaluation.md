@@ -129,7 +129,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ❌ Most UI components
 
 **Minimal Coverage:**
-- ⚠️ Markdown rendering - 18 golden file tests added (Issue #89), needs expansion
+- ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), needs expansion
 
 ### Test Infrastructure:
 - Uses **XCTest** framework (standard)
@@ -146,8 +146,9 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 ### Recommendations:
 
 #### CRITICAL PRIORITY
-1. ✅ **Add Markdown rendering tests** (Issue #89 - partially complete)
+1. ✅ **Add Markdown rendering tests** (Issue #89, Issue #81 - partially complete)
    - ✅ 18 golden file tests covering core syntax (headers, lists, code, tables, etc.)
+   - ✅ 3 regression tests for known hoedown parser bugs (#34, #36, #37)
    - ⏳ Expand coverage for edge cases from bug reports
    - ⏳ Add syntax highlighting tests (MPSyntaxHighlightingTests.m)
    - ⏳ Add math rendering tests (MPMathJaxRenderingTests.m)
@@ -508,8 +509,9 @@ Create issues for:
    - ✅ DMG creation with professional layout
    - ✅ Draft GitHub releases
 
-6. ✅ **Add comprehensive Markdown rendering tests** (Issue #89 - in progress)
-   - Status: 18 golden file tests implemented
+6. ✅ **Add comprehensive Markdown rendering tests** (Issue #89, Issue #81 - in progress)
+   - Status: 18 golden file tests + 3 regression tests implemented
+   - Regression tests document known hoedown parser bugs (#34, #36, #37)
    - Next: Expand coverage for syntax highlighting and math rendering
    - Impact: Prevent rendering regressions
 
