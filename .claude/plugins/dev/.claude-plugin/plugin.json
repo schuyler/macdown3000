@@ -1,0 +1,10 @@
+{
+  "name": "dev",
+  "description": "Comprehensive development workflow with quality gates and specialized agents (Groucho, Chico, Zeppo, Harpo). Prevents reinventing solutions, shipping broken code, and creating undocumented features through disciplined phase-by-phase development.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Schuyler Erle",
+    "email": "schuyler@nocat.net"
+  },
+  "license": "BSD-3-Clause"
+}
