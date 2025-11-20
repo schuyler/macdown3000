@@ -534,6 +534,8 @@ footer a:hover {
         height: auto;
         gap: 5px;
         justify-content: center;
+        top: 20px;
+        right: 20px;
     }
 
     /* Make hamburger lines white */
