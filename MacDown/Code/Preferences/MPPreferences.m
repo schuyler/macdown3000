@@ -44,6 +44,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         return nil;
 
     [self cleanupObsoleteAutosaveValues];
+    [self migratePreferencesFromLegacyBundleIdentifierIfNeeded];
 
     NSString *version =
         [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
@@ -67,6 +68,54 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     return self;
 }
 
+- (void)migratePreferencesFromLegacyBundleIdentifierIfNeeded
+{
+    static NSString * const kMPLegacyBundleIdentifier = @"com.uranusjr.macdown";
+    static NSString * const kMPMigrationCompletedKey = @"MPDidMigrateFromLegacyBundleIdentifier";
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Check if we've already migrated
+    if ([defaults boolForKey:kMPMigrationCompletedKey])
+        return;
+
+    // Get all preferences from the legacy bundle identifier
+    NSDictionary *legacyPrefs = [[NSUserDefaults alloc]
+        initWithSuiteNamed:kMPLegacyBundleIdentifier].dictionaryRepresentation;
+
+    // If there are no legacy preferences, nothing to migrate
+    if (!legacyPrefs || legacyPrefs.count == 0)
+    {
+        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
+        [defaults synchronize];
+        return;
+    }
+
+    // Copy all preferences from the legacy suite to the current suite
+    NSUserDefaults *currentSuite =
+        [[NSUserDefaults alloc] initWithSuiteNamed:kMPApplicationSuiteName];
+
+    for (NSString *key in legacyPrefs)
+    {
+        // Skip system-generated keys
+        if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
+            continue;
+
+        id value = legacyPrefs[key];
+        [currentSuite setObject:value
+                         forKey:key
+                   inSuiteNamed:kMPApplicationSuiteName];
+    }
+
+    [currentSuite synchronize];
+
+    // Mark migration as complete
+    [defaults setBool:YES forKey:kMPMigrationCompletedKey];
+    [defaults synchronize];
+
+    NSLog(@"Migrated %lu preferences from legacy bundle identifier %@",
+          (unsigned long)legacyPrefs.count, kMPLegacyBundleIdentifier);
+}
 
 #pragma mark - Accessors
 

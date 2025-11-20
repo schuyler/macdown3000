@@ -113,7 +113,7 @@
 				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
-			<key>uranusjr.com</key>
+			<key>macdown.app</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
 				<true/>
@@ -139,9 +139,9 @@
 	<key>OSAScriptingDefinition</key>
 	<string>MacDown.sdef</string>
 	<key>SUBetaFeedURL</key>
-	<string>https://macdown.uranusjr.com/sparkle/macdown/testing/appcast.xml</string>
+	<string>https://macdown.app/sparkle/macdown3000/testing/appcast.xml</string>
 	<key>SUFeedURL</key>
-	<string>https://macdown.uranusjr.com/sparkle/macdown/stable/appcast.xml</string>
+	<string>https://macdown.app/sparkle/macdown3000/stable/appcast.xml</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>UTExportedTypeDeclarations</key>

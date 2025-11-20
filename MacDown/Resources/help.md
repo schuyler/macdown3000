@@ -343,7 +343,7 @@ I offer auto-completion and other functions to ease your editing experience. If 
 You can see the HTML behind a preview by enabling the OS X built-in WebKit developer tools for MacDown in a terminal window:
 
 ```
-defaults write com.uranusjr.macdown WebKitDeveloperExtras -bool true
+defaults write app.macdown.macdown3000 WebKitDeveloperExtras -bool true
 ```
 
 Then select “Inspect Element” in the right-click context menu inside the preview pane.
