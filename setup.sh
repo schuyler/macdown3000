@@ -11,8 +11,8 @@ echo "======================================"
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "MacDown.xcodeproj/project.pbxproj" ]; then
-    echo "Error: This script must be run from the MacDown project root directory"
+if [ ! -f "MacDown 3000.xcodeproj/project.pbxproj" ]; then
+    echo "Error: This script must be run from the MacDown 3000 project root directory"
     exit 1
 fi
 
@@ -49,10 +49,10 @@ echo "✓ Setup complete!"
 echo "======================================"
 echo ""
 echo "Next steps:"
-echo "  1. Open MacDown.xcworkspace in Xcode"
+echo "  1. Open \"MacDown 3000.xcworkspace\" in Xcode"
 echo "  2. Select the MacDown scheme"
 echo "  3. Build and run (Cmd+R)"
 echo ""
 echo "To run tests:"
-echo "  xcodebuild test -workspace MacDown.xcworkspace -scheme MacDown"
+echo "  xcodebuild test -workspace \"MacDown 3000.xcworkspace\" -scheme MacDown"
 echo ""

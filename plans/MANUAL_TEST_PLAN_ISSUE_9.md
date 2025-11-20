@@ -10,7 +10,7 @@
 ## Pre-Testing Setup
 
 ### Build and Launch
-1. Open `MacDown.xcworkspace` in Xcode
+1. Open `MacDown 3000.xcworkspace` in Xcode
 2. Build the project (Cmd+B)
 3. Run the application (Cmd+R)
 4. Verify the application launches without errors

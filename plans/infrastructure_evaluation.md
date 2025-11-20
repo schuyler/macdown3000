@@ -432,7 +432,7 @@ source 'https://github.com/MacDownApp/cocoapods-specs.git'
    bundle install
    bundle exec pod install
    make -C Dependency/peg-markdown-highlight
-   echo "✅ Setup complete! Open MacDown.xcworkspace in Xcode."
+   echo "✅ Setup complete! Open MacDown 3000.xcworkspace in Xcode."
    ```
 
 2. **Add pre-commit hooks:**

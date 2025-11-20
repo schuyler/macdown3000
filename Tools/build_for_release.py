@@ -71,7 +71,7 @@ def main(argv):
     if not os.path.exists(BUILD_DIR):
         os.mkdir(BUILD_DIR)
     execute(
-        XCODEBUILD, 'clean', '-workspace', 'MacDown.xcworkspace',
+        XCODEBUILD, 'clean', '-workspace', 'MacDown 3000.xcworkspace',
         '-scheme', 'MacDown',
     )
 
@@ -82,7 +82,7 @@ def main(argv):
     print('Building application archive...')
     os.chdir(BUILD_DIR)
     output = execute(
-        XCODEBUILD, 'archive', '-workspace', '../MacDown.xcworkspace',
+        XCODEBUILD, 'archive', '-workspace', '../MacDown 3000.xcworkspace',
         '-scheme', 'MacDown',
     )
     if isinstance(output, bytes):
