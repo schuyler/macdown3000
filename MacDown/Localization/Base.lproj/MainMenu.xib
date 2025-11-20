@@ -25,11 +25,9 @@
                                     <action selector="orderFrontStandardAboutPanel:" target="-1" id="Exp-CZ-Vem"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check for Updates…" id="8xL-1V-VPX">
+                            <!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later -->
+                            <menuItem enabled="NO" title="Check for Updates… (unavailable)" id="8xL-1V-VPX">
                                 <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="checkForUpdates:" target="Zfp-OK-9bN" id="MbB-qH-jvR"/>
-                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
