@@ -1083,8 +1083,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
-    // Try DOM replacement to preserve scroll position
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
+    // Try DOM replacement to preserve scroll position.
+    // Avoid DOM replacement when MathJax is enabled to prevent race conditions with
+    // async MathJax rendering. Full reload has proper completion handlers.
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !self.preferences.htmlMathJax)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -1795,8 +1797,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     static NSRegularExpression *imgRegex = nil;
     static NSRegularExpression *imgRefRegex = nil;
     static NSRegularExpression *hrRegex = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
+    static dispatch_once_t regexOnceToken;
+    dispatch_once(&regexOnceToken, ^{
         dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
         headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
         // Match basic inline image syntax: ![alt](url)
