@@ -257,10 +257,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSLog(@"Completion handler: After syncScrollers, position is %.0f", afterSyncY);
         }
 
-        // Show the WebView now that scroll position is set
-        webView.hidden = NO;
-        NSLog(@"Completion handler: Showed WebView at correct scroll position");
-
         // Force display update before enabling window flushing to ensure scroll position is applied
         [contentView displayIfNeeded];
         NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
@@ -886,11 +882,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSWindow *window = sender.window;
     NSLog(@"didCommitLoadForFrame: window=%p, flushDisabled=%d", window, window.isFlushWindowDisabled);
 
-    // Hide the WebView during reload to prevent flash to top
-    // It will be shown again in the completion handler after scroll position is set
-    sender.hidden = YES;
-    NSLog(@"didCommitLoadForFrame: Hidden WebView to prevent flash");
-
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
         {
@@ -1115,21 +1106,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
-#if 0
-    // Unfortunately this DOM-replacing causes a lot of problems...
-    // 1. MathJax needs to be triggered.
-    // 2. Prism rendering is lost.
-    // 3. Potentially more.
-    // Essentially all JavaScript needs to be run again after we replace
-    // the DOM. I have no idea how many more problems there are, so we'll have
-    // to back off from the path for now... :(
-
-    // If we're working on the same document, try not to reload.
+    // Try to preserve scroll position by replacing DOM content instead of full reload
+    // This avoids the flash to top that occurs when loadHTMLString resets scroll
     if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
     {
-        // HACK: Ideally we should only inject the parts that changed, and only
-        // get the parts we need. For now we only get a complete HTML codument,
-        // and rely on regex to get the parts we want in the DOM.
+        // Save current scroll position - it should be preserved through DOM replacement
+        CGFloat currentScroll = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+        NSLog(@"DOM replacement: Saving scroll position %.0f", currentScroll);
 
         // Use the existing tree if available, and replace the content.
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
@@ -1146,18 +1129,45 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSTextCheckingResult *result =
                 [regex firstMatchInString:html options:0
                                     range:NSMakeRange(0, html.length)];
-            html = [html substringWithRange:[result rangeAtIndex:1]];
+            if (result && [result rangeAtIndex:1].location != NSNotFound)
+            {
+                html = [html substringWithRange:[result rangeAtIndex:1]];
 
-            // Replace everything in the old <html> tag.
-            DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
-            htmlNode.innerHTML = html;
+                // Replace everything in the old <html> tag.
+                DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
+                htmlNode.innerHTML = html;
 
-            return;
+                NSLog(@"DOM replacement: Replaced innerHTML, scroll is now %.0f",
+                      NSMinY(self.preview.enclosingScrollView.contentView.bounds));
+
+                // Re-trigger syntax highlighting (Prism)
+                [self.preview.mainFrame.javaScriptContext evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
+
+                // Re-trigger MathJax if enabled
+                if (self.preferences.htmlMathJax)
+                {
+                    [self.preview.mainFrame.javaScriptContext evaluateScript:
+                        @"if(window.MathJax && window.MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
+                }
+
+                NSLog(@"DOM replacement: Re-triggered Prism and MathJax");
+
+                // Scroll position should be preserved, but verify and restore if needed
+                CGFloat afterScroll = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+                if (fabs(afterScroll - currentScroll) > 1.0)
+                {
+                    NSLog(@"DOM replacement: Scroll changed to %.0f, restoring to %.0f", afterScroll, currentScroll);
+                    NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
+                    contentBounds.origin.y = currentScroll;
+                    self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+                }
+
+                return;
+            }
         }
     }
-#endif
 
-    // Reload the page if there's not valid tree to work with.
+    // Reload the page if there's no valid tree to work with.
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
