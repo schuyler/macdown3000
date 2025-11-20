@@ -308,18 +308,8 @@ kbd {
 	}
 	pre {
 		word-wrap: break-word;
-		white-space: pre-wrap !important;
-		overflow-wrap: break-word;
-	}
-	pre code, pre tt {
-		white-space: pre-wrap !important;
-		overflow-wrap: break-word;
-	}
-	code, tt {
-		white-space: pre-wrap !important;
-		overflow-wrap: break-word;
 	}
   body {
-    padding: 2cm;
+    padding: 2cm; 
   }
 }
