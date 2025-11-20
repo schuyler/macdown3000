@@ -2,7 +2,7 @@
 //  MPMarkdownRenderingTests.m
 //  MacDown 3000
 //
-//  Created for Issue #89
+//  Created for Issue #58 (expanded from original Issue #89)
 //  Copyright (c) 2025 Tzu-ping Chung. All rights reserved.
 //
 
