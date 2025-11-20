@@ -215,6 +215,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) BOOL inLiveScroll;
+@property (strong) NSView *previewOverlay;
 
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
@@ -260,6 +261,14 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Force display update before enabling window flushing to ensure scroll position is applied
         [contentView displayIfNeeded];
         NSLog(@"Completion handler: Forced display update, position is now %.0f", NSMinY(contentView.bounds));
+
+        // Remove the overlay now that scroll position is correct
+        if (weakObj.previewOverlay)
+        {
+            [weakObj.previewOverlay removeFromSuperview];
+            weakObj.previewOverlay = nil;
+            NSLog(@"Completion handler: Removed overlay");
+        }
 
         // Enable window flushing AFTER scroll position is set and displayed
         @synchronized(window) {
@@ -1106,68 +1115,20 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
-    // Try to preserve scroll position by replacing DOM content instead of full reload
-    // This avoids the flash to top that occurs when loadHTMLString resets scroll
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
+    // Create an overlay to hide the flash to top during reload
+    if (self.isPreviewReady && !self.previewOverlay)
     {
-        // Save current scroll position - it should be preserved through DOM replacement
-        CGFloat currentScroll = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-        NSLog(@"DOM replacement: Saving scroll position %.0f", currentScroll);
-
-        // Use the existing tree if available, and replace the content.
-        DOMDocument *doc = self.preview.mainFrame.DOMDocument;
-        DOMNodeList *htmlNodes = [doc getElementsByTagName:@"html"];
-        if (htmlNodes.length >= 1)
-        {
-            static NSString *pattern = @"<html>(.*)</html>";
-            static int opts = NSRegularExpressionDotMatchesLineSeparators;
-
-            // Find things inside the <html> tag.
-            NSRegularExpression *regex =
-                [[NSRegularExpression alloc] initWithPattern:pattern
-                                                     options:opts error:NULL];
-            NSTextCheckingResult *result =
-                [regex firstMatchInString:html options:0
-                                    range:NSMakeRange(0, html.length)];
-            if (result && [result rangeAtIndex:1].location != NSNotFound)
-            {
-                html = [html substringWithRange:[result rangeAtIndex:1]];
-
-                // Replace everything in the old <html> tag.
-                DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
-                htmlNode.innerHTML = html;
-
-                NSLog(@"DOM replacement: Replaced innerHTML, scroll is now %.0f",
-                      NSMinY(self.preview.enclosingScrollView.contentView.bounds));
-
-                // Re-trigger syntax highlighting (Prism)
-                [self.preview.mainFrame.javaScriptContext evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
-
-                // Re-trigger MathJax if enabled
-                if (self.preferences.htmlMathJax)
-                {
-                    [self.preview.mainFrame.javaScriptContext evaluateScript:
-                        @"if(window.MathJax && window.MathJax.Hub){MathJax.Hub.Queue(['Typeset',MathJax.Hub]);}"];
-                }
-
-                NSLog(@"DOM replacement: Re-triggered Prism and MathJax");
-
-                // Scroll position should be preserved, but verify and restore if needed
-                CGFloat afterScroll = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-                if (fabs(afterScroll - currentScroll) > 1.0)
-                {
-                    NSLog(@"DOM replacement: Scroll changed to %.0f, restoring to %.0f", afterScroll, currentScroll);
-                    NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
-                    contentBounds.origin.y = currentScroll;
-                    self.preview.enclosingScrollView.contentView.bounds = contentBounds;
-                }
-
-                return;
-            }
-        }
+        // Create a view with the current background color
+        NSView *overlay = [[NSView alloc] initWithFrame:self.preview.bounds];
+        overlay.wantsLayer = YES;
+        overlay.layer.backgroundColor = [[NSColor whiteColor] CGColor];
+        overlay.layer.opacity = 1.0;
+        [self.preview addSubview:overlay positioned:NSWindowAbove relativeTo:nil];
+        self.previewOverlay = overlay;
+        NSLog(@"Created preview overlay to hide flash");
     }
 
-    // Reload the page if there's no valid tree to work with.
+    // Reload the page
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
 }
