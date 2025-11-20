@@ -1834,6 +1834,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSRegularExpression *dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:nil];
     NSRegularExpression *headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:nil];
     NSRegularExpression *imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:nil];
+    NSRegularExpression *hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-*_]\\s*){3,}$" options:0 error:nil];
     BOOL previousLineHadContent = NO;
     
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -1845,7 +1846,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         NSString *line = documentLines[lineNumber];
         
-        if ((previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) ||
+        BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
+        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] && !isHorizontalRule;
+
+        if (isDashHeader ||
             [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
             [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])])
         {
