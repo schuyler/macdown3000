@@ -1727,8 +1727,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "    var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
         "    var images = document.querySelectorAll('img');"
         "    var result = [];"
-        "    var includedImages = [];"
-        "    var skippedImages = [];"
         "    "
         "    for (var i = 0; i < headers.length; i++) {"
         "        result.push({node: headers[i], type: 'header'});"
@@ -1738,7 +1736,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        var img = images[i];"
         "        var parent = img.parentElement;"
         "        var isStandalone = false;"
-        "        var alt = img.alt || img.src || 'unknown';"
         "        "
         "        if (!parent) {"
         "            isStandalone = false;"
@@ -1770,9 +1767,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        "
         "        if (isStandalone) {"
         "            result.push({node: img, type: 'image'});"
-        "            includedImages.push(alt.substring(0,20));"
-        "        } else {"
-        "            skippedImages.push(alt.substring(0,20) + '(p:' + (parent?parent.tagName:'?') + ',ch:' + (parent?parent.children.length:'?') + ')');"
         "        }"
         "    }"
         "    "
@@ -1780,39 +1774,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        return a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;"
         "    });"
         "    "
-        "    var sequence = result.map(function(item, idx) {"
-        "        var label = item.type === 'header' ? item.node.tagName : 'IMG';"
-        "        if (item.type === 'header') {"
-        "            label += ':' + (item.node.textContent || '').substring(0, 20).replace(/\\s+/g, ' ');"
-        "        } else {"
-        "            label += ':' + (item.node.alt || 'noalt').substring(0, 15);"
-        "        }"
-        "        return idx + '=' + label;"
-        "    });"
-        "    var msg = 'Images: ' + images.length + ' total, ' + includedImages.length + ' included [' + includedImages.join('; ') + '], ' + skippedImages.length + ' skipped [' + skippedImages.join('; ') + ']';"
-        "    return {positions: result.map(function(item) { return item.node.getBoundingClientRect().top; }), debug: msg, sequence: sequence};"
+        "    return result.map(function(item) { return item.node.getBoundingClientRect().top; });"
         "} catch (e) {"
-        "    return {positions: [], debug: 'Error: ' + e.message};"
+        "    return [];"
         "}"
         "})()";
 
-    JSValue *jsResult = [self.preview.mainFrame.javaScriptContext evaluateScript:script];
-    NSArray *positions = [[jsResult valueForProperty:@"positions"] toArray];
-    NSString *debugMsg = [[jsResult valueForProperty:@"debug"] toString];
-    NSArray *sequence = [[jsResult valueForProperty:@"sequence"] toArray];
-
-    _webViewHeaderLocations = positions;
-
-    // Debug: Log what we found in the preview
-    NSLog(@"Preview found %lu reference points. %@", (unsigned long)_webViewHeaderLocations.count, debugMsg);
-
-    // Log sequence around where the problem occurs (items 30-43)
-    if (sequence.count > 30) {
-        NSInteger start = 30;
-        NSInteger length = MIN(sequence.count - start, 13);
-        NSArray *lastItems = [sequence subarrayWithRange:NSMakeRange(start, length)];
-        NSLog(@"Preview sequence (30-end): %@", [lastItems componentsJoinedByString:@", "]);
-    }
+    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
 
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
@@ -1869,30 +1837,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     _editorHeaderLocations = [locations copy];
-    NSLog(@"Editor found %lu reference points", (unsigned long)_editorHeaderLocations.count);
-
-    // Log sequence around where the problem occurs (items 30-43)
-    if (documentLines.count > 0) {
-        NSMutableArray *editorSequence = [NSMutableArray array];
-        BOOL prevLineContent = NO;
-        NSInteger refIndex = 0;
-        for (NSInteger lineNumber = 0; lineNumber < documentLines.count; lineNumber++) {
-            NSString *line = documentLines[lineNumber];
-            if ((prevLineContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) ||
-                [imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] ||
-                [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])]) {
-                if (refIndex >= 30) {
-                    NSString *label = [line length] > 20 ? [[line substringToIndex:20] stringByAppendingString:@"..."] : line;
-                    [editorSequence addObject:[NSString stringWithFormat:@"%ld=%@", (long)refIndex, label]];
-                }
-                refIndex++;
-            }
-            prevLineContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-        }
-        if (editorSequence.count > 0) {
-            NSLog(@"Editor sequence (30-end): %@", [editorSequence componentsJoinedByString:@", "]);
-        }
-    }
 }
 
 - (void)syncScrollers
