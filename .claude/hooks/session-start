@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# SessionStart hook: Setup development environment
+# - Installs and configures GitHub CLI
+# - Installs Duck Soup development workflow plugin
+#
+# Only runs on initial session startup (not resume/clear/compact)
+
+# Read JSON input from stdin to check the source
+INPUT=$(cat)
+SOURCE=$(python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    source = data.get('source', 'unknown')
+    # Validate source is one of expected values
+    if source not in ['startup', 'resume', 'clear', 'compact', 'unknown']:
+        print('unknown')
+        sys.exit(1)
+    print(source)
+except (json.JSONDecodeError, KeyError):
+    print('unknown')
+    sys.exit(1)
+" <<< "$INPUT")
+
+# Only run on startup, skip silently on resume/clear/compact
+if [ "$SOURCE" != "startup" ]; then
+  exit 0
+fi
+
+# Navigate to project root (hooks run from project root, but be defensive)
+cd "$(dirname "$0")/../.." || exit 1
+
+# Run GitHub CLI setup
+if [ -x .claude/scripts/install-gh.sh ]; then
+  .claude/scripts/install-gh.sh <<< "$INPUT"
+else
+  echo "⚠ GitHub CLI setup script not found"
+fi
+
+echo ""
+
+# Run Duck Soup plugin setup
+if [ -x .claude/scripts/install-duck-soup.sh ]; then
+  .claude/scripts/install-duck-soup.sh
+else
+  echo "⚠ Duck Soup plugin setup script not found"
+fi
