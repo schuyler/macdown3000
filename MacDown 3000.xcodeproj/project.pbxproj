@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */; };
+		B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */; };
 		1F002A23195B3DAE008B8D93 /* MPRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F002A22195B3DAE008B8D93 /* MPRenderer.m */; };
 		1F0D9D65194AC7CF008E1856 /* NSString+Lookup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F0D9D5F194AC7CF008E1856 /* NSString+Lookup.m */; };
 		1F0D9D66194AC7CF008E1856 /* NSTextView+Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F0D9D61194AC7CF008E1856 /* NSTextView+Autocomplete.m */; };
@@ -495,6 +496,7 @@
 		263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-macdown-cmd.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3028039D1FD84EAB0055B0DA /* contribute.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = contribute.md; path = Resources/contribute.md; sourceTree = "<group>"; };
 		35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentIOTests.m; sourceTree = "<group>"; };
+		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
 		39EFCAE04F60154F0C8C5469 /* Pods-MacDown.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDown.release.xcconfig"; path = "Pods/Target Support Files/Pods-MacDown/Pods-MacDown.release.xcconfig"; sourceTree = "<group>"; };
 		3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MacDownTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D175F0F1974282400A5EFE8 /* WebView+WebViewPrivateHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "WebView+WebViewPrivateHeaders.h"; sourceTree = "<group>"; };
@@ -856,6 +858,7 @@
 				1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */,
 				1FFEB31819729F7C00B2254F /* MPAssetTests.m */,
 				35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */,
+				C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */,
 				1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */,
 				1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
@@ -1263,6 +1266,7 @@
 			files = (
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
+				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
 				1F51C9A5194565050015A96F /* MPPreferencesTests.m in Sources */,
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
 				1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */,
