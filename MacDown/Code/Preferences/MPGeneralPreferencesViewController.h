@@ -1,6 +1,6 @@
 //
 //  MPGeneralPreferencesViewController.h
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Tzu-ping Chung  on 01/7.
 //  Copyright (c) 2014 Tzu-ping Chung . All rights reserved.

@@ -6,9 +6,9 @@ If you are reading this, then you are probably curious or want to contribute in 
 
 ## Getting the Source Code
 
-MacDown is hosted on GitHub:
+MacDown 3000 is hosted on GitHub:
 
-https://github.com/MacDownApp/macdown
+https://github.com/schuyler/macdown3000
 
 Here you can get the source code, read through the issues and start contributing.
 
