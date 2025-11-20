@@ -236,17 +236,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 [window enableFlushWindow];
         }
         [weakObj scaleWebview];
+
+        // Set initial scroll position to prevent flash to top
+        NSClipView *contentView = webView.enclosingScrollView.contentView;
+        NSRect bounds = contentView.bounds;
+        bounds.origin.y = weakObj.lastPreviewScrollTop;
+        contentView.bounds = bounds;
+
+        // If sync scrolling is enabled, refine position based on current editor scroll
         if (weakObj.preferences.editorSyncScrolling)
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
-        }
-        else
-        {
-            NSClipView *contentView = webView.enclosingScrollView.contentView;
-            NSRect bounds = contentView.bounds;
-            bounds.origin.y = weakObj.lastPreviewScrollTop;
-            contentView.bounds = bounds;
         }
     };
 }
