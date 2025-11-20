@@ -87,6 +87,8 @@
 		1FFEB32B19737D6E00B2254F /* YAMLSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32A19737D6E00B2254F /* YAMLSerialization.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc -Wno-unused-variable"; }; };
 		1FFEB32C19ABCD1200B2254F /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB32E19ABCD1400B2254F /* Fixtures */; };
 		1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */; };
+		F2759D1CBCC24C268730DAB7 /* MPSyntaxHighlightingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 06C88D00164F744A163D8AFB /* MPSyntaxHighlightingTests.m */; };
+		FA925836DF60362FD801F88A /* MPMathJaxRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = F422E19E45A8FEE09241E61D /* MPMathJaxRenderingTests.m */; };
 		1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */; };
 		3028039E1FD84EAC0055B0DA /* contribute.md in Resources */ = {isa = PBXBuildFile; fileRef = 3028039D1FD84EAB0055B0DA /* contribute.md */; };
 		770BB49E962A302D0715A6A5 /* libPods-MacDown.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */; };
@@ -492,6 +494,8 @@
 		1FFEB32A19737D6E00B2254F /* YAMLSerialization.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YAMLSerialization.m; sourceTree = "<group>"; };
 		1FFEB32E19ABCD1400B2254F /* Fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Fixtures; path = Fixtures; sourceTree = "<group>"; };
 		1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMarkdownRenderingTests.m; sourceTree = "<group>"; };
+		06C88D00164F744A163D8AFB /* MPSyntaxHighlightingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSyntaxHighlightingTests.m; sourceTree = "<group>"; };
+		F422E19E45A8FEE09241E61D /* MPMathJaxRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMathJaxRenderingTests.m; sourceTree = "<group>"; };
 		1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPStringLookupTests.m; sourceTree = "<group>"; };
 		263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-macdown-cmd.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3028039D1FD84EAB0055B0DA /* contribute.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = contribute.md; path = Resources/contribute.md; sourceTree = "<group>"; };
@@ -861,6 +865,8 @@
 				C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */,
 				1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */,
 				1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */,
+				06C88D00164F744A163D8AFB /* MPSyntaxHighlightingTests.m */,
+				F422E19E45A8FEE09241E61D /* MPMathJaxRenderingTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 			);
 			path = MacDownTests;
@@ -1271,6 +1277,8 @@
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
 				1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */,
 				1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */,
+				F2759D1CBCC24C268730DAB7 /* MPSyntaxHighlightingTests.m in Sources */,
+				FA925836DF60362FD801F88A /* MPMathJaxRenderingTests.m in Sources */,
 				1F25E1C31A50F4F10029371D /* MPColorTests.m in Sources */,
 				1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */,
 			);

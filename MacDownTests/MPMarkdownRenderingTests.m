@@ -571,4 +571,126 @@
              rendererFlags:rendFlags];
 }
 
+#pragma mark - Edge Case Tests
+
+/**
+ * Test that nil input is handled gracefully without crashing.
+ */
+- (void)testNilInput
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    NSString *html = [self renderMarkdown:nil
+                           withExtensions:extFlags
+                            rendererFlags:rendFlags];
+
+    // Should return empty string or nil, but not crash
+    XCTAssertTrue(html == nil || [html length] == 0,
+                  @"Nil input should produce empty output");
+}
+
+/**
+ * Test that empty string input is handled correctly.
+ */
+- (void)testEmptyInput
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    NSString *html = [self renderMarkdown:@""
+                           withExtensions:extFlags
+                            rendererFlags:rendFlags];
+
+    // Should return empty string, not crash
+    XCTAssertNotNil(html, @"Empty input should produce non-nil output");
+    XCTAssertTrue([html length] == 0,
+                  @"Empty input should produce empty output");
+}
+
+/**
+ * Test that whitespace-only input is handled correctly.
+ */
+- (void)testWhitespaceOnlyInput
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    NSString *html = [self renderMarkdown:@"   \n\n   \t\t\n"
+                           withExtensions:extFlags
+                            rendererFlags:rendFlags];
+
+    XCTAssertNotNil(html, @"Whitespace input should produce non-nil output");
+    // Whitespace may be preserved or collapsed, but should not crash
+}
+
+/**
+ * Test comprehensive unicode support with golden file.
+ */
+- (void)testUnicodeComprehensive
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int rendFlags = 0;
+
+    [self verifyGoldenFile:@"unicode"
+            withExtensions:extFlags
+             rendererFlags:rendFlags];
+}
+
+/**
+ * Test that malformed markdown doesn't crash the renderer.
+ */
+- (void)testMalformedMarkdown
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int rendFlags = 0;
+
+    // Unclosed code block
+    NSString *markdown1 = @"# Header\n```python\ncode without closing fence";
+    NSString *html1 = [self renderMarkdown:markdown1
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+    XCTAssertNotNil(html1, @"Unclosed code block should not crash");
+
+    // Malformed table
+    NSString *markdown2 = @"| Header |\n| No separator\n| Cell |";
+    NSString *html2 = [self renderMarkdown:markdown2
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+    XCTAssertNotNil(html2, @"Malformed table should not crash");
+
+    // Unclosed emphasis
+    NSString *markdown3 = @"**Bold without closing";
+    NSString *html3 = [self renderMarkdown:markdown3
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+    XCTAssertNotNil(html3, @"Unclosed emphasis should not crash");
+}
+
+/**
+ * Test very large document performance.
+ * This is a basic sanity check to ensure large inputs don't cause issues.
+ */
+- (void)testVeryLargeDocument
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int rendFlags = 0;
+
+    // Generate a large markdown document (10,000 lines)
+    NSMutableString *largeMarkdown = [NSMutableString string];
+    for (int i = 0; i < 10000; i++) {
+        [largeMarkdown appendFormat:@"Line %d with some text\n", i];
+    }
+
+    NSDate *start = [NSDate date];
+    NSString *html = [self renderMarkdown:largeMarkdown
+                           withExtensions:extFlags
+                            rendererFlags:rendFlags];
+    NSTimeInterval elapsed = -[start timeIntervalSinceNow];
+
+    XCTAssertNotNil(html, @"Large document should render successfully");
+    XCTAssertTrue(elapsed < 10.0,
+                  @"Large document should render in reasonable time (<%f seconds)", elapsed);
+}
+
 @end
