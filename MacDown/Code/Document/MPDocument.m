@@ -1971,6 +1971,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
     contentBounds.origin.y = previewY;
     self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+
+    // Save this scroll position so it persists across preview refreshes
+    self.lastPreviewScrollTop = previewY;
 }
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio
