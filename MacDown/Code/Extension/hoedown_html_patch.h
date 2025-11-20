@@ -38,7 +38,7 @@ void hoedown_patch_render_listitem(
     hoedown_buffer *ob, const hoedown_buffer *text, hoedown_list_flags flags,
     const hoedown_renderer_data *data);
 
-void hoedown_patch_render_image(
+int hoedown_patch_render_image(
     hoedown_buffer *ob, const hoedown_buffer *link, const hoedown_buffer *title,
     const hoedown_buffer *alt, const hoedown_renderer_data *data);
 

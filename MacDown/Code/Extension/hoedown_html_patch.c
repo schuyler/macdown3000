@@ -145,7 +145,7 @@ void hoedown_patch_render_listitem(
 }
 
 // Custom image renderer that injects width and height attributes for local images.
-void hoedown_patch_render_image(
+int hoedown_patch_render_image(
     hoedown_buffer *ob, const hoedown_buffer *link, const hoedown_buffer *title,
     const hoedown_buffer *alt, const hoedown_renderer_data *data)
 {
@@ -181,6 +181,7 @@ void hoedown_patch_render_image(
     }
 
     hoedown_buffer_puts(ob, USE_XHTML(state) ? " />" : ">");
+    return 1;
 }
 
 // Adds a "toc" class to the outmost UL element to support TOC styling.

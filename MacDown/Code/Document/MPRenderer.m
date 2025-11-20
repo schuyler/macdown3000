@@ -347,9 +347,9 @@ NS_INLINE CGSize image_dimensions(const hoedown_buffer *link, void *owner)
     NSDate *modDate = fileAttrs[NSFileModificationDate];
     NSString *cacheKey = [NSString stringWithFormat:@"%@|%@", fullPath, modDate];
 
-    NSValue *cached = renderer.imageDimensionCache[cacheKey];
+    NSString *cached = renderer.imageDimensionCache[cacheKey];
     if (cached) {
-        return [cached CGSizeValue];
+        return NSSizeFromString(cached);
     }
 
     // Read dimensions from file using ImageIO (fast - only reads metadata)
@@ -376,8 +376,8 @@ NS_INLINE CGSize image_dimensions(const hoedown_buffer *link, void *owner)
 
     CGSize size = CGSizeMake(width, height);
 
-    // Cache result
-    renderer.imageDimensionCache[cacheKey] = [NSValue valueWithCGSize:size];
+    // Cache result (using NSStringFromSize for macOS compatibility)
+    renderer.imageDimensionCache[cacheKey] = NSStringFromSize(size);
 
     return size;
 }
