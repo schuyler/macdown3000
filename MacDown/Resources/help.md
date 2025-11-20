@@ -1,19 +1,19 @@
-# MacDown
+# MacDown 3000
 
-![MacDown logo](https://macdown.uranusjr.com/static/images/logo-160.png)
+![MacDown 3000 logo](https://macdown.app/static/images/logo-160.png)
 
-Hello there! I’m **MacDown**, the open source Markdown editor for OS X.
+Hello there! I'm **MacDown 3000**, the open source Markdown editor for macOS.
 
 Let me introduce myself.
 
 
-## Making MacDown Your Default Markdown Editor
+## Making MacDown 3000 Your Default Markdown Editor
 
-MacDown is now available to open your Markdown files! To make me your default editor for `.md` files:
+MacDown 3000 is now available to open your Markdown files! To make me your default editor for `.md` files:
 
 1. In Finder, right-click any `.md` file
 2. Choose **Get Info** (or press ⌘I)
-3. Under **"Open with:"**, select MacDown
+3. Under **"Open with:"**, select MacDown 3000
 4. Click **"Change All..."**
 
 You can also find me in the **"Open With"** menu whenever you right-click a `.md` file.
@@ -23,7 +23,7 @@ You can also find me in the **"Open With"** menu whenever you right-click a `.md
 
 **Markdown** is a plain text formatting syntax created by John Gruber, aiming to provide a easy-to-read and feasible markup. The original Markdown syntax specification can be found [here](https://daringfireball.net/projects/markdown/syntax).
 
-**MacDown** is created as a simple-to-use editor for Markdown documents. I render your Markdown contents real-time into HTML, and display them in a preview panel.
+**MacDown 3000** is created as a simple-to-use editor for Markdown documents. I render your Markdown contents real-time into HTML, and display them in a preview panel.
 
 ![MacDown Screenshot](https://d.pr/i/10UGP+)
 
@@ -83,27 +83,27 @@ or
 
 ### Links and Email
 #### Inline
-Just put angle brackets around an email and it becomes clickable: <uranusjr@gmail.com>  
-`<uranusjr@gmail.com>`  
+Just put angle brackets around an email and it becomes clickable: <hello@macdown.app>
+`<hello@macdown.app>`
 
-Same thing with urls: <https://macdown.uranusjr.com>  
-` <https://macdown.uranusjr.com>`  
+Same thing with urls: <https://macdown.app>
+` <https://macdown.app>`
 
-Perhaps you want to link some text like this: [Macdown Website](https://macdown.uranusjr.com "Title")  
-`[Macdown Website](https://macdown.uranusjr.com "Title")` (The title is optional)  
+Perhaps you want to link some text like this: [MacDown 3000 Website](https://macdown.app "Title")
+`[MacDown 3000 Website](https://macdown.app "Title")` (The title is optional)  
 
 
 #### Reference style
-Sometimes it looks too messy to include big long urls inline, or you want to keep all your urls together.  
+Sometimes it looks too messy to include big long urls inline, or you want to keep all your urls together.
 
-Make [a link][arbitrary_id] `[a link][arbitrary_id]` then on it's own line anywhere else in the file:  
-`[arbitrary_id]: https://macdown.uranusjr.com "Title"`
-  
-If the link text itself would make a good id, you can link [like this][] `[like this][]`, then on it's own line anywhere else in the file:  
-`[like this]: https://macdown.uranusjr.com`  
+Make [a link][arbitrary_id] `[a link][arbitrary_id]` then on it's own line anywhere else in the file:
+`[arbitrary_id]: https://macdown.app "Title"`
 
-[arbitrary_id]: https://macdown.uranusjr.com "Title"
-[like this]: https://macdown.uranusjr.com  
+If the link text itself would make a good id, you can link [like this][] `[like this][]`, then on it's own line anywhere else in the file:
+`[like this]: https://macdown.app`
+
+[arbitrary_id]: https://macdown.app "Title"
+[like this]: https://macdown.app  
 
 
 ### Images
@@ -246,7 +246,7 @@ You can add an optional language ID at the end of the first line. The language I
 
 ![Syntax highlighting example](https://d.pr/i/9HM6+)
 
-I support many popular languages as well as some generic syntax descriptions that can be used if your language of choice is not supported. See [relevant sections on the official site](https://macdown.uranusjr.com/features/) for a full list of supported syntaxes.
+I support many popular languages as well as some generic syntax descriptions that can be used if your language of choice is not supported. See [relevant sections on the official site](https://macdown.app/features/) for a full list of supported syntaxes.
 
 
 ### Inline Formatting
