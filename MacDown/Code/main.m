@@ -1,6 +1,6 @@
 //
 //  main.m
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Tzu-ping Chung  on 6/06/2014.
 //  Copyright (c) 2014 Tzu-ping Chung . All rights reserved.

@@ -1,6 +1,6 @@
 //
 //  MPToolbarController.h
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Niklas Berglund on 2017-02-12.
 //  Copyright © 2017 Tzu-ping Chung . All rights reserved.

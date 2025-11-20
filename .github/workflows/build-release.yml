@@ -37,7 +37,7 @@ jobs:
       run: |
         set -o pipefail
         xcodebuild archive \
-          -workspace MacDown.xcworkspace \
+          -workspace "MacDown 3000.xcworkspace" \
           -scheme MacDown \
           -configuration Release \
           -archivePath build/MacDown.xcarchive \
@@ -51,19 +51,19 @@ jobs:
     - name: Export application bundle
       run: |
         # Extract the .app from the archive
-        cp -R build/MacDown.xcarchive/Products/Applications/MacDown.app build/MacDown.app
+        cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
 
         # Display build info
         echo "Build completed successfully"
         ls -lh build/
 
         # Get version info
-        /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/MacDown.app/Contents/Info.plist || echo "Version info not available"
+        /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist || echo "Version info not available"
 
     - name: Create distributable archive
       run: |
         cd build
-        zip -r MacDown-arm64.zip MacDown.app
+        zip -r MacDown-arm64.zip "MacDown 3000.app"
         cd ..
 
         # Display archive size

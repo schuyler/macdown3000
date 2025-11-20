@@ -94,7 +94,7 @@ After cloning the repository, run the following commands inside the repository r
     bundle exec pod install
     make -C Dependency/peg-markdown-highlight
 
-and open `MacDown.xcworkspace` in Xcode. The first command initialises the dependency submodule(s) used in MacDown; the second one installs dependencies managed by CocoaPods.
+and open `MacDown 3000.xcworkspace` in Xcode. The first command initialises the dependency submodule(s) used in MacDown 3000; the second one installs dependencies managed by CocoaPods.
 
 Refer to the official guides of Git and CocoaPods if you need more instructions. If you run into build issues later on, try running the following commands to update dependencies:
 
@@ -105,7 +105,7 @@ Refer to the official guides of Git and CocoaPods if you need more instructions.
 
 MacDown 3000 is released under the terms of MIT License. You may find the content of the license [here](http://opensource.org/licenses/MIT), or inside the `LICENSE` directory.
 
-You may find full text of licenses about third-party components in the `LICENSE` directory, or the **About MacDown** panel in the application.
+You may find full text of licenses about third-party components in the `LICENSE` directory, or the **About MacDown 3000** panel in the application.
 
 The following editor themes and CSS files are extracted from [Mou](http://mouapp.com), courtesy of Chen Luo:
 

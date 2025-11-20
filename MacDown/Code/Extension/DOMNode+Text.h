@@ -1,6 +1,6 @@
 //
 //  DOMNode+Text.h
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Tzu-ping Chung on 18/1.
 //  Copyright (c) 2015 Tzu-ping Chung . All rights reserved.

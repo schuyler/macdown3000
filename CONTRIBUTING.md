@@ -1,4 +1,4 @@
-# Contributing to MacDown
+# Contributing to MacDown 3000
 
 ## Coding Style
 
@@ -17,11 +17,11 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
     `http://stackoverflow.com/questions/13155612/how-does-one-eliminate-objective-c-try-catch-blocks-like-this`
     `http://stackoverflow.com/questions/13155612`
 
-* The commit hash in GitHub commit page’s URL can be shortened. The followings are all equivalent:
+* The commit hash in GitHub commit page's URL can be shortened. The followings are all equivalent:
 
-    `https://github.com/uranusjr/macdown/commit/1612abb9dbd24113751958777a49cffc6767989c`
-    `https://github.com/uranusjr/macdown/commit/1612abb9dbd24`
-    `https://github.com/uranusjr/macdown/commit/1612abb`
+    `https://github.com/schuyler/macdown3000/commit/1612abb9dbd24113751958777a49cffc6767989c`
+    `https://github.com/schuyler/macdown3000/commit/1612abb9dbd24`
+    `https://github.com/schuyler/macdown3000/commit/1612abb`
 
 #### Code Blocks
 
@@ -92,7 +92,7 @@ Try to ensure that there’s a trailing newline in the end of a file. This is no
 
 ## Version Control
 
-MacDown uses Git for source control, and is hosted on GitHub.
+MacDown 3000 uses Git for source control, and is hosted on GitHub.
 
 ### Commit Messages
 

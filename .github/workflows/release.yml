@@ -156,7 +156,7 @@ jobs:
           set -o pipefail
 
           xcodebuild archive \
-            -workspace MacDown.xcworkspace \
+            -workspace "MacDown 3000.xcworkspace" \
             -scheme MacDown \
             -configuration Release \
             -archivePath build/MacDown.xcarchive \
@@ -175,23 +175,23 @@ jobs:
           echo "📦 Extracting application bundle from archive..."
 
           # Extract .app from archive
-          cp -R build/MacDown.xcarchive/Products/Applications/MacDown.app build/MacDown.app
+          cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
 
           # Display build info
           echo "Build contents:"
           ls -lh build/
 
           # Get and display version info
-          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/MacDown.app/Contents/Info.plist)
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
           echo "📌 App bundle version: $APP_VERSION"
 
           # Verify code signature
           echo "🔍 Verifying code signature..."
-          codesign -vvv --deep --strict build/MacDown.app
-          codesign -d -r- build/MacDown.app
+          codesign -vvv --deep --strict build/"MacDown 3000.app"
+          codesign -d -r- build/"MacDown 3000.app"
 
           # Verify it's signed with Developer ID
-          SIGNING_IDENTITY=$(codesign -dvv build/MacDown.app 2>&1 | grep "Authority=Developer ID Application")
+          SIGNING_IDENTITY=$(codesign -dvv build/"MacDown 3000.app" 2>&1 | grep "Authority=Developer ID Application")
           if [[ -z "$SIGNING_IDENTITY" ]]; then
             echo "::error::App is not signed with Developer ID Application certificate"
             exit 1
@@ -208,42 +208,42 @@ jobs:
 
           # Try create-dmg first (better UX)
           if create-dmg \
-            --volname "MacDown" \
+            --volname "MacDown 3000" \
             --window-pos 200 120 \
             --window-size 800 400 \
             --icon-size 100 \
-            --icon "MacDown.app" 200 190 \
-            --hide-extension "MacDown.app" \
+            --icon "MacDown 3000.app" 200 190 \
+            --hide-extension "MacDown 3000.app" \
             --app-drop-link 600 185 \
             --no-internet-enable \
-            "build/MacDown-${VERSION}.dmg" \
-            "build/MacDown.app" 2>&1; then
+            "build/MacDown 3000-${VERSION}.dmg" \
+            "build/MacDown 3000.app" 2>&1; then
             echo "✅ DMG created with create-dmg"
           else
             echo "⚠️ create-dmg failed, falling back to hdiutil..."
-            hdiutil create -volname "MacDown" \
-              -srcfolder build/MacDown.app \
+            hdiutil create -volname "MacDown 3000" \
+              -srcfolder "build/MacDown 3000.app" \
               -ov -format UDZO \
-              "build/MacDown-${VERSION}.dmg"
+              "build/MacDown 3000-${VERSION}.dmg"
             echo "✅ DMG created with hdiutil"
           fi
 
           # Display DMG info
-          ls -lh "build/MacDown-${VERSION}.dmg"
-          echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
+          ls -lh "build/MacDown 3000-${VERSION}.dmg"
+          echo "DMG size: $(du -h "build/MacDown 3000-${VERSION}.dmg" | cut -f1)"
 
       - name: Generate checksums
         run: |
           echo "🔐 Generating SHA256 checksums..."
 
           cd build
-          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
+          shasum -a 256 "MacDown 3000-${VERSION}.dmg" > "MacDown 3000-${VERSION}.dmg.sha256"
 
           echo "Checksum file contents:"
-          cat "MacDown-${VERSION}.dmg.sha256"
+          cat "MacDown 3000-${VERSION}.dmg.sha256"
 
           # Save checksum to environment for use in release notes
-          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
+          CHECKSUM=$(cat "MacDown 3000-${VERSION}.dmg.sha256")
           echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
 
           echo "✅ Checksums generated"
@@ -259,7 +259,7 @@ jobs:
           echo "📤 Submitting DMG for notarization..."
 
           # Submit for notarization without waiting
-          xcrun notarytool submit "build/MacDown-${VERSION}.dmg" \
+          xcrun notarytool submit "build/MacDown 3000-${VERSION}.dmg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
@@ -304,10 +304,10 @@ jobs:
           tag_name: ${{ github.ref_name || format('v{0}', env.VERSION) }}
           name: MacDown ${{ env.VERSION }}
           files: |
-            build/MacDown-${{ env.VERSION }}.dmg
-            build/MacDown-${{ env.VERSION }}.dmg.sha256
+            build/MacDown 3000-${{ env.VERSION }}.dmg
+            build/MacDown 3000-${{ env.VERSION }}.dmg.sha256
           body: |
-            ## MacDown ${{ env.VERSION }}
+            ## MacDown 3000 ${{ env.VERSION }}
 
             ### Download
 
@@ -329,8 +329,8 @@ jobs:
 
             2. **Once approved, staple the ticket:**
                ```bash
-               xcrun stapler staple MacDown-${{ env.VERSION }}.dmg
-               xcrun stapler validate MacDown-${{ env.VERSION }}.dmg
+               xcrun stapler staple "MacDown 3000-${{ env.VERSION }}.dmg"
+               xcrun stapler validate "MacDown 3000-${{ env.VERSION }}.dmg"
                ```
 
             3. **Re-upload the stapled DMG to this release**
@@ -348,7 +348,7 @@ jobs:
 
             Verify after download:
             ```bash
-            shasum -a 256 -c MacDown-${{ env.VERSION }}.dmg.sha256
+            shasum -a 256 -c "MacDown 3000-${{ env.VERSION }}.dmg.sha256"
             ```
 
             ---

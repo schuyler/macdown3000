@@ -1,6 +1,6 @@
 //
 //  WebView+WebViewPrivateHeaders.h
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Jan on 14.07.14.
 //  Copyright (c) 2014 Tzu-ping Chung . All rights reserved.

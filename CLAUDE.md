@@ -1,10 +1,10 @@
 # Claude Code Project Context
 
-This document provides essential information for Claude Code when working on the MacDown project.
+This document provides essential information for Claude Code when working on the MacDown 3000 project.
 
 ## Project Overview
 
-**MacDown** is an open source Markdown editor for macOS, released under the MIT License. It's built using Objective-C and Cocoa frameworks.
+**MacDown 3000** is an open source Markdown editor for macOS, released under the MIT License. It's built using Objective-C and Cocoa frameworks.
 
 ### Key Technologies
 - **Language:** Objective-C

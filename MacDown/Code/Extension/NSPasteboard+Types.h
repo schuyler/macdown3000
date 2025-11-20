@@ -1,6 +1,6 @@
 //
 //  NSPasteboard+Types.h
-//  MacDown
+//  MacDown 3000
 //
 //  Created by Tzu-ping Chung on 01/3.
 //  Copyright © 2016 Tzu-ping Chung . All rights reserved.

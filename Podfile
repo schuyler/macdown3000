@@ -3,7 +3,7 @@ platform :osx, "10.14"
 source 'https://github.com/MacDownApp/cocoapods-specs.git'  # Patched libraries.
 source 'https://cdn.cocoapods.org/'
 
-project 'MacDown.xcodeproj'
+project 'MacDown 3000.xcodeproj'
 
 inhibit_all_warnings!
 
