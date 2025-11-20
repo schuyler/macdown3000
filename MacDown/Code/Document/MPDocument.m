@@ -231,10 +231,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return ^{
         WebView *webView = weakObj.preview;
         NSWindow *window = webView.window;
-        @synchronized(window) {
-            if (window.isFlushWindowDisabled)
-                [window enableFlushWindow];
-        }
+
         [weakObj scaleWebview];
 
         // Set initial scroll position to prevent flash to top
@@ -248,6 +245,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
+        }
+
+        // Enable window flushing AFTER scroll position is set
+        @synchronized(window) {
+            if (window.isFlushWindowDisabled)
+                [window enableFlushWindow];
         }
     };
 }
