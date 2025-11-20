@@ -9,7 +9,7 @@
 #import "version.h"
 
 // These should match the main bundle's values.
-static NSString * const kMPApplicationName = @"MacDown";
+static NSString * const kMPApplicationName = @"MacDown 3000";
 
 #ifdef DEBUG
 static NSString * const kMPApplicationBundleIdentifier = @"app.macdown.macdown3000-debug";
