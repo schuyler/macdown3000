@@ -1,8 +1,8 @@
 # Site settings
 title: MacDown 3000
 description: A Free Software Markdown editor for macOS
-baseurl: "/macdown3000"
-url: "https://schuyler.github.io"
+baseurl: ""
+url: "https://macdown.app"
 
 # Build settings
 markdown: kramdown

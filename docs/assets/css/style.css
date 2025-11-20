@@ -72,7 +72,7 @@ nav .container {
 }
 
 .hamburger.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(7px, 7px);
+    transform: translateY(8px) rotate(45deg);
 }
 
 .hamburger.active .hamburger-line:nth-child(2) {
@@ -80,7 +80,7 @@ nav .container {
 }
 
 .hamburger.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(7px, -7px);
+    transform: translateY(-8px) rotate(-45deg);
 }
 
 .nav-links {
@@ -530,11 +530,22 @@ footer a:hover {
         border-radius: 8px;
         padding: 8px;
         background-color: rgba(255, 255, 255, 0.1);
+        width: auto;
+        height: auto;
+        gap: 5px;
+        justify-content: center;
+        top: 20px;
+        right: 20px;
     }
 
     /* Make hamburger lines white */
     .hamburger-line {
         background-color: white;
+    }
+
+    /* Change hamburger lines to dark when menu is active */
+    .hamburger.active .hamburger-line {
+        background-color: #333;
     }
 
     nav .container {
