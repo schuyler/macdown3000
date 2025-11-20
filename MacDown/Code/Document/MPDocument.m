@@ -1110,10 +1110,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl])
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
-        DOMNodeList *htmlNodes = [doc getElementsByTagName:@"html"];
-        if (htmlNodes.length >= 1)
+        DOMElement *bodyNode = (DOMElement *)[doc getElementsByTagName:@"body"].item(0);
+        if (bodyNode)
         {
-            static NSString *pattern = @"<html>(.*)</html>";
+            // Extract just the body content, not head or html tags
+            static NSString *pattern = @"<body[^>]*>(.*)</body>";
             static int opts = NSRegularExpressionDotMatchesLineSeparators;
 
             NSRegularExpression *regex =
@@ -1124,53 +1125,33 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                                     range:NSMakeRange(0, html.length)];
             if (result && [result rangeAtIndex:1].location != NSNotFound)
             {
-                html = [html substringWithRange:[result rangeAtIndex:1]];
-                DOMElement *htmlNode = (DOMElement *)[htmlNodes item:0];
+                NSString *bodyContent = [html substringWithRange:[result rangeAtIndex:1]];
 
                 CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 
-                // Use JavaScript to batch all DOM updates into a single paint cycle
-                // This prevents visual artifacts from innerHTML + Prism + MathJax running separately
+                // Only replace body content, preserving head (CSS, scripts)
                 JSContext *context = self.preview.mainFrame.javaScriptContext;
+                context[@"window"][@"__macdownTempHtml"] = bodyContent;
 
-                // Set HTML as window property (JSContext handles escaping automatically)
-                context[@"window"][@"__macdownTempHtml"] = html;
-
-                // Now run the update script that references the temp property
                 NSString *updateScript = [NSString stringWithFormat:
                     @"(function(){"
                     @"  var scrollY = %.0f;"
                     @"  var html = window.__macdownTempHtml;"
                     @"  delete window.__macdownTempHtml;"
-                    @"  requestAnimationFrame(function(){"
-                    @"    var body = document.body;"
-                    @"    var htmlEl = document.querySelector('html');"
-                    @"    "
-                    @"    body.style.visibility = 'hidden';"
-                    @"    "
-                    @"    htmlEl.innerHTML = html;"
-                    @"    if(window.Prism){Prism.highlightAll();}"
-                    @"    "
-                    @"    body.offsetHeight;"
-                    @"    "
-                    @"    body.style.visibility = 'visible';"
-                    @"    "
-                    @"    if(window.MathJax&&MathJax.Hub){"
-                    @"      MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
-                    @"      MathJax.Hub.Queue(function(){window.scrollTo(0,scrollY);});"
-                    @"    } else {"
-                    @"      window.scrollTo(0,scrollY);"
-                    @"    }"
-                    @"  });"
+                    @"  var body = document.body;"
+                    @"  body.innerHTML = html;"
+                    @"  if(window.Prism){Prism.highlightAll();}"
+                    @"  if(window.MathJax&&MathJax.Hub){"
+                    @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
+                    @"    MathJax.Hub.Queue(function(){window.scrollTo(0,scrollY);});"
+                    @"  } else {"
+                    @"    window.scrollTo(0,scrollY);"
+                    @"  }"
                     @"})();",
                     scrollBefore];
 
                 [context evaluateScript:updateScript];
-                NSLog(@"DOM replacement: batched update with requestAnimationFrame at scroll %.0f", scrollBefore);
-
-                // Don't update header locations here - it runs JavaScript that might cause reflow
-                // Header locations will be updated naturally next time user scrolls editor
-                // (via editorBoundsDidChange → updateHeaderLocations)
+                NSLog(@"DOM replacement: body-only update at scroll %.0f", scrollBefore);
 
                 // Mark rendering as complete so next edit will be processed
                 self.alreadyRenderingInWeb = NO;
