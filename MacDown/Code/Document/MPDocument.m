@@ -1727,6 +1727,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "    var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
         "    var images = document.querySelectorAll('img');"
         "    var result = [];"
+        "    var includedImages = [];"
+        "    var skippedImages = [];"
         "    "
         "    for (var i = 0; i < headers.length; i++) {"
         "        result.push({node: headers[i], type: 'header'});"
@@ -1736,6 +1738,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        var img = images[i];"
         "        var parent = img.parentElement;"
         "        var isStandalone = false;"
+        "        var alt = img.alt || img.src || 'unknown';"
         "        "
         "        if (parent && parent.children.length === 1) {"
         "            isStandalone = true;"
@@ -1748,6 +1751,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        "
         "        if (isStandalone) {"
         "            result.push({node: img, type: 'image'});"
+        "            includedImages.push(alt.substring(0,20));"
+        "        } else {"
+        "            skippedImages.push(alt.substring(0,20) + '(p:' + (parent?parent.tagName:'?') + ',ch:' + (parent?parent.children.length:'?') + ')');"
         "        }"
         "    }"
         "    "
@@ -1755,16 +1761,21 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         "        return a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;"
         "    });"
         "    "
-        "    return result.map(function(item) { return item.node.getBoundingClientRect().top; });"
+        "    var msg = 'Images: ' + images.length + ' total, ' + includedImages.length + ' included [' + includedImages.join('; ') + '], ' + skippedImages.length + ' skipped [' + skippedImages.join('; ') + ']';"
+        "    return {positions: result.map(function(item) { return item.node.getBoundingClientRect().top; }), debug: msg};"
         "} catch (e) {"
-        "    return [];"
+        "    return {positions: [], debug: 'Error: ' + e.message};"
         "}"
         "})()";
 
-    _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+    JSValue *jsResult = [self.preview.mainFrame.javaScriptContext evaluateScript:script];
+    NSArray *positions = [[jsResult valueForProperty:@"positions"] toArray];
+    NSString *debugMsg = [[jsResult valueForProperty:@"debug"] toString];
+
+    _webViewHeaderLocations = positions;
 
     // Debug: Log what we found in the preview
-    NSLog(@"Preview found %lu reference points", (unsigned long)_webViewHeaderLocations.count);
+    NSLog(@"Preview found %lu reference points. %@", (unsigned long)_webViewHeaderLocations.count, debugMsg);
 
     // add offset to all numbers
     for (NSNumber *location in _webViewHeaderLocations)
