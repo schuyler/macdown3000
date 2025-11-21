@@ -15,179 +15,68 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Get latest release info
-        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "📥 Fetching latest release information..."
 
           # Get the latest release (not draft, not pre-release)
-          gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName,name,url,publishedAt,assets > release.json
+          gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName,url,publishedAt,assets > release.json
 
           # Extract release info
           TAG_NAME=$(jq -r '.[0].tagName' release.json)
-          RELEASE_NAME=$(jq -r '.[0].name' release.json)
           RELEASE_URL=$(jq -r '.[0].url' release.json)
           PUBLISHED_AT=$(jq -r '.[0].publishedAt' release.json)
-
-          # Extract version (remove 'v' prefix)
           VERSION="${TAG_NAME#v}"
 
           # Find DMG asset
-          DMG_URL=$(jq -r '.[0].assets[] | select(.name | endswith(".dmg")) | .url' release.json)
           DMG_NAME=$(jq -r '.[0].assets[] | select(.name | endswith(".dmg")) | .name' release.json)
           DMG_SIZE=$(jq -r '.[0].assets[] | select(.name | endswith(".dmg")) | .size' release.json)
-
-          # Find checksum asset
-          CHECKSUM_URL=$(jq -r '.[0].assets[] | select(.name | endswith(".dmg.sha256")) | .url' release.json)
-
-          # Convert bytes to human readable
           DMG_SIZE_MB=$(echo "scale=1; $DMG_SIZE / 1024 / 1024" | bc)
 
-          # Download URL (convert API URL to browser download URL)
+          # Build download URLs
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${DMG_NAME}"
-          CHECKSUM_DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${DMG_NAME}.sha256"
+          CHECKSUM_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${DMG_NAME}.sha256"
 
-          echo "✅ Found release: $RELEASE_NAME"
-          echo "   Version: $VERSION"
-          echo "   Tag: $TAG_NAME"
-          echo "   DMG: $DMG_NAME ($DMG_SIZE_MB MB)"
+          echo "✅ Found release: $VERSION"
 
-          # Save to environment
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "RELEASE_URL=$RELEASE_URL" >> $GITHUB_ENV
-          echo "PUBLISHED_AT=$PUBLISHED_AT" >> $GITHUB_ENV
-          echo "DOWNLOAD_URL=$DOWNLOAD_URL" >> $GITHUB_ENV
-          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
-          echo "DMG_SIZE_MB=$DMG_SIZE_MB" >> $GITHUB_ENV
-          echo "CHECKSUM_URL=$CHECKSUM_DOWNLOAD_URL" >> $GITHUB_ENV
-
-      - name: Create release data file
-        run: |
-          echo "📝 Creating release data file..."
-
-          mkdir -p docs/_data
-
+          # Update the data file (Jekyll will use this via Liquid templating)
           cat > docs/_data/latest.json <<EOF
           {
-            "version": "${{ env.VERSION }}",
-            "tagName": "${{ env.TAG_NAME }}",
-            "releaseUrl": "${{ env.RELEASE_URL }}",
-            "publishedAt": "${{ env.PUBLISHED_AT }}",
-            "downloadUrl": "${{ env.DOWNLOAD_URL }}",
-            "dmgName": "${{ env.DMG_NAME }}",
-            "dmgSizeMB": "${{ env.DMG_SIZE_MB }}",
-            "checksumUrl": "${{ env.CHECKSUM_URL }}",
+            "version": "$VERSION",
+            "tagName": "$TAG_NAME",
+            "releaseUrl": "$RELEASE_URL",
+            "publishedAt": "$PUBLISHED_AT",
+            "downloadUrl": "$DOWNLOAD_URL",
+            "dmgName": "$DMG_NAME",
+            "dmgSizeMB": "$DMG_SIZE_MB",
+            "checksumUrl": "$CHECKSUM_URL",
             "updatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
 
-          echo "✅ Created docs/_data/latest.json"
+          echo "✅ Updated docs/_data/latest.json"
           cat docs/_data/latest.json
-
-      - name: Update index.html with download link
-        run: |
-          echo "📝 Updating index.html with download information..."
-
-          # Create updated download section
-          cat > /tmp/download-section.html <<'EOF'
-                  <div class="download-content" id="download">
-                      <h2>Download</h2>
-                      <p class="version"><strong>Version ${{ env.VERSION }}</strong></p>
-
-                      <p style="margin-top: 1.5rem;">
-                          <a href="${{ env.DOWNLOAD_URL }}" class="btn">Download MacDown ${{ env.VERSION }}</a>
-                      </p>
-
-                      <p style="margin-top: 1rem;">
-                          <small><strong>Size:</strong> ${{ env.DMG_SIZE_MB }} MB | <strong>Platform:</strong> macOS 11.0+, Apple Silicon</small>
-                      </p>
-
-                      <p style="margin-top: 1rem;">
-                          <small>
-                              <a href="${{ env.CHECKSUM_URL }}">SHA256 Checksum</a> |
-                              <a href="${{ env.RELEASE_URL }}">Release Notes</a> |
-                              <a href="https://github.com/schuyler/macdown3000/releases">All Releases</a>
-                          </small>
-                      </p>
-
-                      <p style="margin-top: 1.5rem; padding: 1rem; background: #f5f5f5; border-radius: 4px;">
-                          <small><strong>Note:</strong> MacDown 3000 is signed and notarized by Apple. Your Mac will verify the download automatically.</small>
-                      </p>
-                  </div>
-          EOF
-
-          # Replace the download section in index.html
-          # Find lines between '<div class="download-content" id="download">' and the next '</div>'
-          awk '
-            BEGIN { in_download = 0; }
-            /<div class="download-content" id="download">/ {
-              in_download = 1;
-              while ((getline line < "/tmp/download-section.html") > 0) {
-                print line;
-              }
-              next;
-            }
-            in_download == 1 && /<\/div>/ {
-              in_download = 0;
-              next;
-            }
-            in_download == 0 { print; }
-          ' docs/index.html > docs/index.html.tmp
-
-          mv docs/index.html.tmp docs/index.html
-
-          echo "✅ Updated docs/index.html"
-
-      - name: Update FAQ about code signing
-        run: |
-          echo "📝 Updating FAQ to reflect that app is now signed..."
-
-          # Update the "unidentified developer" FAQ since we're now signing
-          sed -i 's/MacDown 3000 is not signed with a paid Apple developer certificate\./MacDown 3000 is signed and notarized by Apple./' docs/index.html
-          sed -i 's/You can override this by going to System Settings.*"Open Anyway"\./The app will open without security warnings./' docs/index.html
-          sed -i 's/Alternatively, right-click the app and choose "Open" the first time you launch it\./If you encounter any issues, you can verify the DMG signature with the provided SHA256 checksum./' docs/index.html
-
-          echo "✅ Updated FAQ"
 
       - name: Commit and push changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add docs/_data/latest.json docs/index.html
+          git add docs/_data/latest.json
 
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 0
           fi
 
-          git commit -m "Update website with release ${{ env.VERSION }}
+          git commit -m "Update website with release ${VERSION}
 
-          - Updated download link to ${{ env.DMG_NAME }}
-          - Updated version display to ${{ env.VERSION }}
-          - Added file size (${{ env.DMG_SIZE_MB }} MB)
-          - Added SHA256 checksum link
-          - Updated FAQ to reflect code signing status
-
-          Auto-generated by update-website workflow after successful stapling."
+          Auto-generated by update-website workflow."
 
           git push
 
-          echo "✅ Changes pushed to repository"
-          echo "🌐 Website will update shortly via GitHub Pages"
-
-      - name: Summary
-        run: |
-          echo "## Website Updated! 🎉" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Release:** ${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Download:** [${{ env.DMG_NAME }}](${{ env.DOWNLOAD_URL }})" >> $GITHUB_STEP_SUMMARY
-          echo "**Size:** ${{ env.DMG_SIZE_MB }} MB" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The website will be updated automatically by GitHub Pages in a few minutes." >> $GITHUB_STEP_SUMMARY
+          echo "✅ Data file updated"
+          echo "🌐 Jekyll will regenerate the website automatically"

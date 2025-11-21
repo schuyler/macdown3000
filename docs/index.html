@@ -27,7 +27,29 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
         </div>
         <div class="download-content" id="download">
             <h2>Download</h2>
-            <p class="version"><strong>Version 3000.0.0</strong></p>
+            <p class="version"><strong>Version {{ site.data.latest.version }}</strong></p>
+
+            {% if site.data.latest.downloadUrl %}
+            <p style="margin-top: 1.5rem;">
+                <a href="{{ site.data.latest.downloadUrl }}" class="btn">Download MacDown {{ site.data.latest.version }}</a>
+            </p>
+
+            <p style="margin-top: 1rem;">
+                <small><strong>Size:</strong> {{ site.data.latest.dmgSizeMB }} MB | <strong>Platform:</strong> macOS 11.0+, Apple Silicon</small>
+            </p>
+
+            <p style="margin-top: 1rem;">
+                <small>
+                    <a href="{{ site.data.latest.checksumUrl }}">SHA256 Checksum</a> |
+                    <a href="{{ site.data.latest.releaseUrl }}">Release Notes</a> |
+                    <a href="https://github.com/schuyler/macdown3000/releases">All Releases</a>
+                </small>
+            </p>
+
+            <p style="margin-top: 1.5rem; padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+                <small><strong>Note:</strong> MacDown 3000 is signed and notarized by Apple. Your Mac will verify the download automatically.</small>
+            </p>
+            {% else %}
             <p>Coming Soon</p>
 
             <p style="margin-top: 2rem;">
@@ -36,6 +58,7 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
             <p style="margin-top: 1rem;">
                 <small>Releases will be available on the <a href="https://github.com/schuyler/macdown3000/releases">GitHub Releases</a> page.</small>
             </p>
+            {% endif %}
         </div>
     </div>
 </section>
