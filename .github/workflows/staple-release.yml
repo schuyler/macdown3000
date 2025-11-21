@@ -8,6 +8,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write  # Required to update release assets and notes
+
 jobs:
   staple:
     name: Staple Notarization and Update Release
