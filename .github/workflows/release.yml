@@ -327,7 +327,7 @@ jobs:
 
             ### Verification
 
-            **SHA256 Checksum (unsigned DMG):**
+            **SHA256 Checksum (before stapling):**
             ```
             ${{ env.CHECKSUM }}
             ```

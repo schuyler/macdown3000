@@ -1,16 +1,13 @@
 name: Update Website with Latest Release
 
 on:
-  workflow_run:
-    workflows: ["Staple and Publish Release"]
-    types:
-      - completed
+  release:
+    types: [published]
 
 jobs:
   update-website:
     name: Update Website Download Links
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
@@ -27,6 +24,14 @@ jobs:
 
           # Extract release info
           TAG_NAME=$(jq -r '.[0].tagName' release.json)
+
+          # Validate that a release was found
+          if [[ "$TAG_NAME" == "null" ]] || [[ -z "$TAG_NAME" ]]; then
+            echo "ℹ️ No published stable releases found, skipping website update"
+            echo "This is expected if only pre-releases or drafts exist."
+            exit 0
+          fi
+
           RELEASE_URL=$(jq -r '.[0].url' release.json)
           PUBLISHED_AT=$(jq -r '.[0].publishedAt' release.json)
           VERSION="${TAG_NAME#v}"

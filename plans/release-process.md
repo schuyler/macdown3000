@@ -292,24 +292,25 @@ Once you receive the approval email:
 
 4. **Workflow completes in ~2-3 minutes**
 
-#### Step 3: Publish the Release
+#### Step 3: Add Release Notes and Publish
 
 After the stapling workflow succeeds:
 
 1. Go to the release on GitHub
-2. Review the updated release notes
-3. Click `Publish release`
+2. **Add your release notes** (changelog, features, bug fixes)
+3. Review the updated release information
+4. Click **`Publish release`** (removes draft status)
 
 #### Step 4: Website Updates Automatically
 
-The `update-website.yml` workflow automatically triggers after the stapling workflow completes successfully. It will:
+The `update-website.yml` workflow automatically triggers when you publish the release. It will:
 
-- ✅ Fetch the latest release information
+- ✅ Fetch the published release information
 - ✅ Update `docs/_data/latest.json` with download links
 - ✅ Commit and push changes to the repository
 - ✅ Jekyll regenerates the website with new download links
 
-No manual intervention required for website updates!
+**Important:** The website only updates when you publish the release (not when stapling completes). This ensures you can add proper release notes before the download link goes live on the website.
 
 ### Manual Stapling (If Needed)
 
