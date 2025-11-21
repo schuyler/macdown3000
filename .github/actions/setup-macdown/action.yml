@@ -1,0 +1,18 @@
+name: 'Setup MacDown Build Environment'
+description: 'Sets up Ruby, CocoaPods, and builds dependencies for MacDown'
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+
+    - name: Install CocoaPods dependencies
+      run: bundle exec pod install
+      shell: bash
+
+    - name: Build peg-markdown-highlight
+      run: make -C Dependency/peg-markdown-highlight
+      shell: bash

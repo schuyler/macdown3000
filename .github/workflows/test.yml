@@ -20,17 +20,8 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
-
-    - name: Install CocoaPods dependencies
-      run: bundle exec pod install
-
-    - name: Build peg-markdown-highlight
-      run: make -C Dependency/peg-markdown-highlight
+    - name: Setup MacDown build environment
+      uses: ./.github/actions/setup-macdown
 
     - name: Run tests with coverage
       run: |
