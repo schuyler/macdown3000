@@ -361,3 +361,11 @@ jobs:
             build.log
             notarization-response.json
           retention-days: 7
+
+      - name: Upload DMG artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg-unstapled
+          path: build/MacDown-*.dmg*
+          retention-days: 7
