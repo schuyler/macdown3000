@@ -50,18 +50,16 @@ See `plans/release-process.md` for detailed instructions.
 
 Once you receive the notarization approval email:
 
-- [ ] **Download the DMG from the draft GitHub release**
-  - Go to: Releases → "MacDown 0.9.0" (draft status)
-  - Download: `MacDown-0.9.0.dmg`
+- [ ] **Trigger the stapling GitHub Action** (recommended)
+  - Go to: Actions → Staple DMG workflow
+  - Click "Run workflow"
+  - Enter the submission ID from the notarization email
+  - Workflow automatically updates the release with the stapled DMG
 
-- [ ] **Staple the notarization ticket**
-  ```bash
-  xcrun stapler staple ~/Downloads/MacDown-0.9.0.dmg
-  ```
-
-- [ ] **Re-upload the stapled DMG to GitHub**
-  - Delete the old un-stapled DMG from the release
-  - Upload the stapled DMG
+  *OR manually staple if preferred:*
+  - Download DMG from draft release
+  - Run: `xcrun stapler staple MacDown-0.9.0.dmg`
+  - Re-upload to the release
 
 - [ ] **Publish the release**
   - Go to: Releases → "MacDown 0.9.0" (draft)
