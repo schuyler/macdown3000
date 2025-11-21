@@ -350,7 +350,8 @@ nav .container {
     background-color: #f8f9fa;
     border-left: 4px solid #20a0a0;
     padding: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
     border-radius: 5px;
 }
 
@@ -445,7 +446,7 @@ nav .container {
 }
 
 .faq-item.active .faq-answer {
-    max-height: 300px;
+    max-height: 500px;
     padding: 1rem 1.5rem 1.5rem 1.5rem;
 }
 
