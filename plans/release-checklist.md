@@ -125,6 +125,7 @@ This checklist ensures nothing is missed during a release. Use it alongside the 
   ```bash
   git branch  # Should show "* main" or equivalent
   ```
+  **⚠️ CRITICAL:** Release tags MUST be created from main. The workflow will automatically fail if you tag a dev branch.
 
 - [ ] **In sync with origin**
   ```bash

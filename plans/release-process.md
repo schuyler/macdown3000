@@ -199,6 +199,8 @@ Before creating a release:
 
 The recommended way to trigger a release is by creating and pushing a version tag:
 
+**⚠️ IMPORTANT:** Release tags MUST be created from the `main` branch only. The workflow will fail if you tag a dev branch.
+
 1. **Ensure you're on the correct commit:**
    ```bash
    git checkout main
