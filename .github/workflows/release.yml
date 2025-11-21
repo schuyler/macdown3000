@@ -202,7 +202,7 @@ jobs:
             --hide-extension "MacDown 3000.app" \
             --app-drop-link 600 185 \
             --no-internet-enable \
-            "build/MacDown 3000-${VERSION}.dmg" \
+            "build/MacDown-${VERSION}.dmg" \
             "build/MacDown 3000.app" 2>&1; then
             echo "✅ DMG created with create-dmg"
           else
@@ -210,26 +210,26 @@ jobs:
             hdiutil create -volname "MacDown 3000" \
               -srcfolder "build/MacDown 3000.app" \
               -ov -format UDZO \
-              "build/MacDown 3000-${VERSION}.dmg"
+              "build/MacDown-${VERSION}.dmg"
             echo "✅ DMG created with hdiutil"
           fi
 
           # Display DMG info
-          ls -lh "build/MacDown 3000-${VERSION}.dmg"
-          echo "DMG size: $(du -h "build/MacDown 3000-${VERSION}.dmg" | cut -f1)"
+          ls -lh "build/MacDown-${VERSION}.dmg"
+          echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
       - name: Generate checksums
         run: |
           echo "🔐 Generating SHA256 checksums..."
 
           cd build
-          shasum -a 256 "MacDown 3000-${VERSION}.dmg" > "MacDown 3000-${VERSION}.dmg.sha256"
+          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
 
           echo "Checksum file contents:"
-          cat "MacDown 3000-${VERSION}.dmg.sha256"
+          cat "MacDown-${VERSION}.dmg.sha256"
 
           # Save checksum to environment for use in release notes
-          CHECKSUM=$(cat "MacDown 3000-${VERSION}.dmg.sha256")
+          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
           echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
 
           echo "✅ Checksums generated"
@@ -245,7 +245,7 @@ jobs:
           echo "📤 Submitting DMG for notarization..."
 
           # Submit for notarization without waiting (fast, doesn't tie up runner)
-          xcrun notarytool submit "build/MacDown 3000-${VERSION}.dmg" \
+          xcrun notarytool submit "build/MacDown-${VERSION}.dmg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
@@ -287,8 +287,8 @@ jobs:
           tag_name: ${{ github.ref_name || format('v{0}', env.VERSION) }}
           name: MacDown ${{ env.VERSION }}
           files: |
-            build/MacDown 3000-${{ env.VERSION }}.dmg
-            build/MacDown 3000-${{ env.VERSION }}.dmg.sha256
+            build/MacDown-${{ env.VERSION }}.dmg
+            build/MacDown-${{ env.VERSION }}.dmg.sha256
           body: |
             ## MacDown 3000 ${{ env.VERSION }}
 
@@ -320,8 +320,8 @@ jobs:
             ```bash
             # Download DMG from this release
             # Wait for Apple email, then:
-            xcrun stapler staple "MacDown 3000-${{ env.VERSION }}.dmg"
-            xcrun stapler validate "MacDown 3000-${{ env.VERSION }}.dmg"
+            xcrun stapler staple "MacDown-${{ env.VERSION }}.dmg"
+            xcrun stapler validate "MacDown-${{ env.VERSION }}.dmg"
             # Re-upload stapled DMG to this release
             ```
 

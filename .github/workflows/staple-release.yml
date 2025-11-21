@@ -102,7 +102,7 @@ jobs:
 
           # Download the DMG asset
           gh release download "$TAG" \
-            --pattern "MacDown 3000-${VERSION}.dmg" \
+            --pattern "MacDown-${VERSION}.dmg" \
             --dir build
 
           echo "✅ DMG downloaded"
@@ -113,15 +113,15 @@ jobs:
           echo "📎 Stapling notarization ticket to DMG..."
 
           # Staple the ticket
-          xcrun stapler staple "build/MacDown 3000-${VERSION}.dmg"
+          xcrun stapler staple "build/MacDown-${VERSION}.dmg"
 
           # Validate stapling
           echo "🔍 Validating stapled ticket..."
-          xcrun stapler validate "build/MacDown 3000-${VERSION}.dmg"
+          xcrun stapler validate "build/MacDown-${VERSION}.dmg"
 
           # Verify with spctl
           echo "🔍 Verifying Gatekeeper acceptance..."
-          spctl -a -vvv -t install "build/MacDown 3000-${VERSION}.dmg"
+          spctl -a -vvv -t install "build/MacDown-${VERSION}.dmg"
 
           echo "✅ DMG successfully stapled and verified"
 
@@ -130,13 +130,13 @@ jobs:
           echo "🔐 Generating checksums for stapled DMG..."
 
           cd build
-          shasum -a 256 "MacDown 3000-${VERSION}.dmg" > "MacDown 3000-${VERSION}.dmg.sha256"
+          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
 
           echo "Checksum:"
-          cat "MacDown 3000-${VERSION}.dmg.sha256"
+          cat "MacDown-${VERSION}.dmg.sha256"
 
           # Save for release notes
-          CHECKSUM=$(cat "MacDown 3000-${VERSION}.dmg.sha256")
+          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
           echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
 
           echo "✅ Checksums generated"
@@ -148,13 +148,13 @@ jobs:
           echo "📤 Updating release with stapled DMG..."
 
           # Delete old assets
-          gh release delete-asset "$TAG" "MacDown 3000-${VERSION}.dmg" --yes || true
-          gh release delete-asset "$TAG" "MacDown 3000-${VERSION}.dmg.sha256" --yes || true
+          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg" --yes || true
+          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg.sha256" --yes || true
 
           # Upload stapled DMG and new checksum
           gh release upload "$TAG" \
-            "build/MacDown 3000-${VERSION}.dmg" \
-            "build/MacDown 3000-${VERSION}.dmg.sha256" \
+            "build/MacDown-${VERSION}.dmg" \
+            "build/MacDown-${VERSION}.dmg.sha256" \
             --clobber
 
           echo "✅ Release updated with stapled DMG"
@@ -175,7 +175,7 @@ jobs:
 
           ### Installation
 
-          1. Download \`MacDown 3000-${VERSION}.dmg\`
+          1. Download \`MacDown-${VERSION}.dmg\`
           2. Open the DMG
           3. Drag MacDown 3000.app to your Applications folder
           4. Launch from Applications
@@ -191,7 +191,7 @@ jobs:
 
           Verify after download:
           \`\`\`bash
-          shasum -a 256 -c "MacDown 3000-${VERSION}.dmg.sha256"
+          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
           \`\`\`
 
           **Notarization:**
