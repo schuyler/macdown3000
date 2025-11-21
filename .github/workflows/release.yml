@@ -163,45 +163,15 @@ jobs:
 
       # ==================== BUILD ====================
 
-      - name: Build and archive MacDown
+      - name: Build and sign MacDown
         timeout-minutes: 30
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        uses: ./.github/actions/build-macdown
+        with:
+          enable-signing: true
+          team-id: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Verify code signature
         run: |
-          echo "🔨 Building MacDown for Release..."
-          set -o pipefail
-
-          xcodebuild archive \
-            -workspace "MacDown 3000.xcworkspace" \
-            -scheme MacDown \
-            -configuration Release \
-            -archivePath build/MacDown.xcarchive \
-            -arch arm64 -arch x86_64 \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            CODE_SIGN_STYLE="Manual" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            ENABLE_HARDENED_RUNTIME=YES \
-            | tee build.log
-
-          echo "✅ Archive created successfully"
-
-      - name: Extract application bundle
-        run: |
-          echo "📦 Extracting application bundle from archive..."
-
-          # Extract .app from archive
-          cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
-
-          # Display build info
-          echo "Build contents:"
-          ls -lh build/
-
-          # Get and display version info
-          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
-          echo "📌 App bundle version: $APP_VERSION"
-
-          # Verify code signature
           echo "🔍 Verifying code signature..."
           codesign -vvv --deep --strict build/"MacDown 3000.app"
           codesign -d -r- build/"MacDown 3000.app"

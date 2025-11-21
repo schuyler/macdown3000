@@ -1,0 +1,63 @@
+name: 'Build MacDown Archive'
+description: 'Builds MacDown universal binary with optional code signing'
+inputs:
+  enable-signing:
+    description: 'Enable code signing (true/false)'
+    required: false
+    default: 'false'
+  team-id:
+    description: 'Apple Team ID (required if signing enabled)'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build MacDown archive
+      shell: bash
+      run: |
+        echo "🔨 Building MacDown..."
+        set -o pipefail
+
+        # Common xcodebuild parameters
+        XCODEBUILD_COMMON="-workspace MacDown 3000.xcworkspace \
+          -scheme MacDown \
+          -configuration Release \
+          -archivePath build/MacDown.xcarchive \
+          -arch arm64 -arch x86_64 \
+          ONLY_ACTIVE_ARCH=NO"
+
+        # Build with or without signing
+        if [ "${{ inputs.enable-signing }}" == "true" ]; then
+          echo "Building with code signing..."
+          xcodebuild archive $XCODEBUILD_COMMON \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            CODE_SIGN_STYLE="Manual" \
+            DEVELOPMENT_TEAM="${{ inputs.team-id }}" \
+            ENABLE_HARDENED_RUNTIME=YES \
+            | tee build.log
+        else
+          echo "Building without code signing (verification only)..."
+          xcodebuild archive $XCODEBUILD_COMMON \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log
+        fi
+
+        echo "✅ Build completed"
+
+    - name: Extract application bundle
+      shell: bash
+      run: |
+        echo "📦 Extracting application bundle..."
+
+        # Extract .app from archive
+        cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
+
+        # Display build info
+        echo "Build contents:"
+        ls -lh build/
+
+        # Get version
+        APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
+        echo "📌 App version: $APP_VERSION"
