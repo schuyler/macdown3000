@@ -6,6 +6,9 @@ on:
     types:
       - completed
 
+permissions:
+  contents: write  # Required to commit and push website updates
+
 jobs:
   update-website:
     name: Update Website Download Links
