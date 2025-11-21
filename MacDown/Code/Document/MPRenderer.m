@@ -320,7 +320,7 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
     return htmlRenderer;
 }
 
-NS_INLINE hoedown_renderer *MPCreateHTMLTOCRenderer()
+NS_INLINE hoedown_renderer *MPCreateHTMLTOCRenderer(void)
 {
     hoedown_renderer *tocRenderer =
         hoedown_html_toc_renderer_new(kMPRendererTOCLevel);

@@ -1,4 +1,6 @@
-platform :osx, "10.14"
+MIN_DEPLOYMENT_TARGET = '11.0'
+
+platform :osx, MIN_DEPLOYMENT_TARGET
 
 source 'https://github.com/MacDownApp/cocoapods-specs.git'  # Patched libraries.
 source 'https://cdn.cocoapods.org/'
@@ -26,4 +28,15 @@ end
 
 target "macdown-cmd" do
   pod 'GBCli', '~> 1.1'
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Ensure all pods match the project's minimum deployment target
+      if config.build_settings['MACOSX_DEPLOYMENT_TARGET'].to_f < MIN_DEPLOYMENT_TARGET.to_f
+        config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = MIN_DEPLOYMENT_TARGET
+      end
+    end
+  end
 end

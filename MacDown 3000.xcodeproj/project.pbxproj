@@ -1128,6 +1128,7 @@
 		};
 		1F8A82A81952F19B00B6BF69 /* Update Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
+		alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -1135,7 +1136,7 @@
 			);
 			name = "Update Build Number";
 			outputPaths = (
-			);
+	);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "bash Tools/update_build_number.sh\n";
@@ -1150,7 +1151,8 @@
 			);
 			name = "Fetch Prism Resources";
 			outputPaths = (
-			);
+			"$(SRCROOT)/MacDown/Resources/Prism",
+	);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "SOURCE=\"$PWD/Dependency/prism\"\nTARGET=\"$PWD/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
@@ -1219,7 +1221,8 @@
 			);
 			name = "Transpile Styles";
 			outputPaths = (
-			);
+			"$(SRCROOT)/MacDown/Resources/Styles/GitHub-2020.css",
+	);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "make -C \"$PROJECT_DIR/Tools/GitHub-style-generator/\"\n";
