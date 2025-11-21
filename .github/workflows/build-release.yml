@@ -32,10 +32,11 @@ jobs:
       - name: Verify universal binary
         run: |
           echo "🔍 Verifying architectures..."
-          lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown*
+          LIPO_OUTPUT=$(lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown*)
+          echo "$LIPO_OUTPUT"
 
-          # Verify it's a universal binary
-          if lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown* | grep -q "arm64 x86_64"; then
+          # Verify it's a universal binary (check for both architectures)
+          if echo "$LIPO_OUTPUT" | grep -q "arm64" && echo "$LIPO_OUTPUT" | grep -q "x86_64"; then
             echo "✅ Confirmed: Universal binary (arm64 + x86_64)"
           else
             echo "::error::Build is not a universal binary!"
