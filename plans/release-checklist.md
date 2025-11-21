@@ -306,24 +306,24 @@ The release workflow submits to Apple (happens automatically):
 
 - [ ] **Downloaded DMG from GitHub release**
   - Go to: Releases → "MacDown 0.9.0" (draft)
-  - Download: `MacDown 3000-0.9.0.dmg`
+  - Download: `MacDown-0.9.0.dmg`
 
 - [ ] **Stapled the notarization ticket**
   ```bash
   cd ~/Downloads
-  xcrun stapler staple MacDown\ 3000-0.9.0.dmg
+  xcrun stapler staple MacDown-0.9.0.dmg
   ```
   - Should show: "The staple and validate action worked!"
 
 - [ ] **Validated stapling**
   ```bash
-  xcrun stapler validate MacDown\ 3000-0.9.0.dmg
+  xcrun stapler validate MacDown-0.9.0.dmg
   ```
   - Should show: "The validate action worked!"
 
 - [ ] **Verified code signature**
   ```bash
-  spctl -a -vvv -t install MacDown\ 3000-0.9.0.dmg
+  spctl -a -vvv -t install MacDown-0.9.0.dmg
   ```
   - Should show: `accepted` and `source=Notarized Developer ID`
 
@@ -336,7 +336,7 @@ The release workflow submits to Apple (happens automatically):
 
 - [ ] **Updated checksums** (if DMG was modified during stapling)
   ```bash
-  shasum -a 256 MacDown\ 3000-0.9.0.dmg
+  shasum -a 256 MacDown-0.9.0.dmg
   ```
   - If checksum changed, update checksum file in release
   - Usually checksums don't change after stapling

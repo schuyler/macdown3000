@@ -244,7 +244,7 @@ You can also manually trigger the workflow without creating a tag:
 
 ## Post-Notarization Stapling
 
-After the release workflow completes, the DMG has been **submitted** for notarization but is **not yet stapled**. You need to complete the stapling process manually.
+After the release workflow completes, the DMG has been **submitted** for notarization but is **not yet stapled**. Use the automated stapling workflow to complete the release.
 
 ### Why Stapling?
 
@@ -260,105 +260,81 @@ After the release workflow completes, the DMG has been **submitted** for notariz
 - ✅ No security warnings
 - ✅ Professional distribution
 
-### Stapling Process
+### Automated Stapling Process
 
 #### Step 1: Wait for Notarization Email
 
-Apple will send an email to your Apple ID address when notarization completes (typically 5-15 minutes, sometimes up to 1 hour).
+Apple will send an email to your Apple ID address when notarization completes (typically 5-15 minutes, sometimes up to 45 minutes).
 
 **Email subject:** "Your Mac software was successfully notarized"
 
-#### Step 2: Verify Notarization Status
+#### Step 2: Run the Stapling Workflow
 
-The release notes on GitHub include a `notarization info` command. Run it to verify:
+Once you receive the approval email:
 
-```bash
-xcrun notarytool info <SUBMISSION_ID> \
-  --apple-id your-email@example.com \
-  --password xxxx-xxxx-xxxx-xxxx \
-  --team-id YOUR_TEAM_ID
-```
+1. **Go to GitHub Actions**
+   - Navigate to: `Actions` → `Staple and Publish Release`
 
-**Expected output:**
-```
-status: Accepted
-```
+2. **Run the workflow**
+   - Click `Run workflow`
+   - Enter the release tag (e.g., `v3000.0.0-beta.1`)
+   - Click the green `Run workflow` button
 
-If status is `Invalid` or `Rejected`, see [Troubleshooting](#troubleshooting).
+3. **Monitor the workflow**
+   - The workflow will:
+     - ✅ Verify notarization was accepted
+     - ✅ Download the DMG from the release
+     - ✅ Staple the notarization ticket
+     - ✅ Validate the stapled DMG
+     - ✅ Generate updated checksums
+     - ✅ Replace the DMG and checksums in the release
+     - ✅ Update release notes to indicate it's ready
 
-#### Step 3: Download DMG from GitHub Release
+4. **Workflow completes in ~2-3 minutes**
 
-1. Go to the draft release on GitHub
-2. Download `MacDown-X.X.X.dmg` to your Mac
+#### Step 3: Publish the Release
 
-#### Step 4: Staple the Notarization Ticket
+After the stapling workflow succeeds:
 
-```bash
-# Navigate to the download directory
-cd ~/Downloads
+1. Go to the release on GitHub
+2. Review the updated release notes
+3. Click `Publish release`
 
-# Staple the ticket
-xcrun stapler staple MacDown-1.0.0.dmg
-```
+#### Step 4: Website Updates Automatically
 
-**Expected output:**
-```
-Processing: MacDown-1.0.0.dmg
-Processing: MacDown-1.0.0.dmg
-The staple and validate action worked!
-```
+The `update-website.yml` workflow automatically triggers after the stapling workflow completes successfully. It will:
 
-#### Step 5: Validate Stapling
+- ✅ Fetch the latest release information
+- ✅ Update `docs/_data/latest.json` with download links
+- ✅ Commit and push changes to the repository
+- ✅ Jekyll regenerates the website with new download links
 
-```bash
-xcrun stapler validate MacDown-1.0.0.dmg
-```
+No manual intervention required for website updates!
 
-**Expected output:**
-```
-Processing: MacDown-1.0.0.dmg
-The validate action worked!
-```
+### Manual Stapling (If Needed)
 
-#### Step 6: Verify Code Signature
+If the automated workflow fails or you need to staple manually:
 
-```bash
-spctl -a -vvv -t install MacDown-1.0.0.dmg
-```
+<details>
+<summary>Click to expand manual stapling instructions</summary>
 
-**Expected output:**
-```
-MacDown-1.0.0.dmg: accepted
-source=Notarized Developer ID
-```
-
-#### Step 7: Re-upload Stapled DMG
-
-1. **Edit the draft release** on GitHub
-
-2. **Delete the old DMG** (un-stapled version)
-
-3. **Upload the new DMG** (stapled version)
-   - Drag and drop the stapled `MacDown-1.0.0.dmg`
-
-4. **Update checksums** (optional but recommended):
+1. Download DMG from the GitHub release
+2. Staple the ticket:
    ```bash
-   shasum -a 256 MacDown-1.0.0.dmg > MacDown-1.0.0.dmg.sha256
+   xcrun stapler staple MacDown-X.X.X.dmg
    ```
-   - Delete old checksum file from release
-   - Upload new checksum file
+3. Validate:
+   ```bash
+   xcrun stapler validate MacDown-X.X.X.dmg
+   ```
+4. Verify:
+   ```bash
+   spctl -a -vvv -t install MacDown-X.X.X.dmg
+   ```
+5. Re-upload the stapled DMG to the release
+6. Update checksums if needed
 
-5. **Update release notes** to remove the "not yet stapled" warning
-
-#### Step 8: Publish the Release
-
-1. **Review the release notes** one final time
-
-2. **Uncheck "This is a draft"** (or click "Publish release")
-
-3. **Click "Publish release"**
-
-4. **Announce the release** (social media, mailing list, etc.)
+</details>
 
 ## Troubleshooting
 

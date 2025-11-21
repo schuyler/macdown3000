@@ -23,48 +23,20 @@ jobs:
       - name: Setup MacDown build environment
         uses: ./.github/actions/setup-macdown
 
-      - name: Build MacDown (Universal Binary - Unsigned)
+      - name: Build MacDown (unsigned)
         timeout-minutes: 30
+        uses: ./.github/actions/build-macdown
+        with:
+          enable-signing: false
+
+      - name: Verify universal binary
         run: |
-          echo "🔨 Building MacDown in Release configuration (dry run)..."
-          echo "This mirrors the release workflow but without code signing"
-          set -o pipefail
-
-          xcodebuild archive \
-            -workspace "MacDown 3000.xcworkspace" \
-            -scheme MacDown \
-            -configuration Release \
-            -archivePath build/MacDown.xcarchive \
-            -arch arm64 -arch x86_64 \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            | tee build.log
-
-          echo "✅ Universal binary build successful"
-
-      - name: Verify build output
-        run: |
-          echo "📦 Verifying build output..."
-
-          # Extract .app from archive
-          cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
-
-          # Display build info
-          echo "Build contents:"
-          ls -lh build/
-
-          # Get and verify version info
-          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
-          echo "📌 App version: $APP_VERSION"
-
-          # Verify universal binary
           echo "🔍 Verifying architectures..."
-          lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown*
+          LIPO_OUTPUT=$(lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown*)
+          echo "$LIPO_OUTPUT"
 
-          # Verify it's a universal binary
-          if lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown* | grep -q "arm64 x86_64"; then
+          # Verify it's a universal binary (check for both architectures)
+          if echo "$LIPO_OUTPUT" | grep -q "arm64" && echo "$LIPO_OUTPUT" | grep -q "x86_64"; then
             echo "✅ Confirmed: Universal binary (arm64 + x86_64)"
           else
             echo "::error::Build is not a universal binary!"

@@ -163,45 +163,15 @@ jobs:
 
       # ==================== BUILD ====================
 
-      - name: Build and archive MacDown
+      - name: Build and sign MacDown
         timeout-minutes: 30
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        uses: ./.github/actions/build-macdown
+        with:
+          enable-signing: true
+          team-id: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Verify code signature
         run: |
-          echo "🔨 Building MacDown for Release..."
-          set -o pipefail
-
-          xcodebuild archive \
-            -workspace "MacDown 3000.xcworkspace" \
-            -scheme MacDown \
-            -configuration Release \
-            -archivePath build/MacDown.xcarchive \
-            -arch arm64 -arch x86_64 \
-            ONLY_ACTIVE_ARCH=NO \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            CODE_SIGN_STYLE="Manual" \
-            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-            ENABLE_HARDENED_RUNTIME=YES \
-            | tee build.log
-
-          echo "✅ Archive created successfully"
-
-      - name: Extract application bundle
-        run: |
-          echo "📦 Extracting application bundle from archive..."
-
-          # Extract .app from archive
-          cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
-
-          # Display build info
-          echo "Build contents:"
-          ls -lh build/
-
-          # Get and display version info
-          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
-          echo "📌 App bundle version: $APP_VERSION"
-
-          # Verify code signature
           echo "🔍 Verifying code signature..."
           codesign -vvv --deep --strict build/"MacDown 3000.app"
           codesign -d -r- build/"MacDown 3000.app"
@@ -232,7 +202,7 @@ jobs:
             --hide-extension "MacDown 3000.app" \
             --app-drop-link 600 185 \
             --no-internet-enable \
-            "build/MacDown 3000-${VERSION}.dmg" \
+            "build/MacDown-${VERSION}.dmg" \
             "build/MacDown 3000.app" 2>&1; then
             echo "✅ DMG created with create-dmg"
           else
@@ -240,26 +210,26 @@ jobs:
             hdiutil create -volname "MacDown 3000" \
               -srcfolder "build/MacDown 3000.app" \
               -ov -format UDZO \
-              "build/MacDown 3000-${VERSION}.dmg"
+              "build/MacDown-${VERSION}.dmg"
             echo "✅ DMG created with hdiutil"
           fi
 
           # Display DMG info
-          ls -lh "build/MacDown 3000-${VERSION}.dmg"
-          echo "DMG size: $(du -h "build/MacDown 3000-${VERSION}.dmg" | cut -f1)"
+          ls -lh "build/MacDown-${VERSION}.dmg"
+          echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
       - name: Generate checksums
         run: |
           echo "🔐 Generating SHA256 checksums..."
 
           cd build
-          shasum -a 256 "MacDown 3000-${VERSION}.dmg" > "MacDown 3000-${VERSION}.dmg.sha256"
+          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
 
           echo "Checksum file contents:"
-          cat "MacDown 3000-${VERSION}.dmg.sha256"
+          cat "MacDown-${VERSION}.dmg.sha256"
 
           # Save checksum to environment for use in release notes
-          CHECKSUM=$(cat "MacDown 3000-${VERSION}.dmg.sha256")
+          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
           echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
 
           echo "✅ Checksums generated"
@@ -274,15 +244,15 @@ jobs:
         run: |
           echo "📤 Submitting DMG for notarization..."
 
-          # Submit for notarization without waiting
-          xcrun notarytool submit "build/MacDown 3000-${VERSION}.dmg" \
+          # Submit for notarization without waiting (fast, doesn't tie up runner)
+          xcrun notarytool submit "build/MacDown-${VERSION}.dmg" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
             --no-wait \
             --output-format json > notarization-response.json
 
-          # Extract submission ID using jq
+          # Extract submission ID
           SUBMISSION_ID=$(jq -r '.id' notarization-response.json)
 
           # Validate submission ID
@@ -293,21 +263,18 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Notarization submitted"
+          echo "✅ Notarization submitted successfully"
           echo ""
-          echo "📋 Notarization Details:"
-          echo "  Submission ID: $SUBMISSION_ID"
+          echo "📋 Submission ID: $SUBMISSION_ID"
           echo ""
-          echo "⏳ Notarization is processing in the background (typically 5-15 minutes)"
+          echo "⏳ Notarization typically takes 5-15 minutes (sometimes up to 45 minutes)"
+          echo "📧 You will receive an email from Apple when complete"
           echo ""
-          echo "To check status, run:"
-          echo "  xcrun notarytool info $SUBMISSION_ID --apple-id <your-apple-id> --password <app-password> --team-id $APPLE_TEAM_ID"
-          echo ""
-          echo "📧 You will receive an email from Apple when notarization completes"
-          echo ""
-          echo "After notarization completes, follow the manual stapling instructions in plans/release-process.md"
+          echo "Next steps:"
+          echo "1. Wait for Apple's email confirmation"
+          echo "2. Run the 'Staple and Publish Release' workflow to complete the release"
 
-          # Save submission ID for reference in release notes
+          # Save submission ID for reference
           echo "NOTARIZATION_ID=$SUBMISSION_ID" >> $GITHUB_ENV
 
       # ==================== CREATE RELEASE ====================
@@ -320,51 +287,49 @@ jobs:
           tag_name: ${{ github.ref_name || format('v{0}', env.VERSION) }}
           name: MacDown ${{ env.VERSION }}
           files: |
-            build/MacDown 3000-${{ env.VERSION }}.dmg
-            build/MacDown 3000-${{ env.VERSION }}.dmg.sha256
+            build/MacDown-${{ env.VERSION }}.dmg
+            build/MacDown-${{ env.VERSION }}.dmg.sha256
           body: |
             ## MacDown 3000 ${{ env.VERSION }}
 
-            ### Download
-
             **Platform:** macOS (Universal - Apple Silicon and Intel)
 
-            **⚠️ Important:** This DMG has been submitted for Apple notarization but the ticket is not yet stapled.
+            ⚠️ **Notarization in progress** - This release is not yet ready for distribution.
 
-            ### Post-Download Steps (Required)
+            ### Status
 
-            After notarization completes (you'll receive an email from Apple), the DMG needs to be stapled:
+            - ✅ Built and signed
+            - ⏳ Submitted for Apple notarization (Submission ID: `${{ env.NOTARIZATION_ID }}`)
+            - ⏳ Awaiting notarization approval (typically 5-15 minutes)
+            - ❌ Not yet stapled
 
-            1. **Check notarization status:**
-               ```bash
-               xcrun notarytool info ${{ env.NOTARIZATION_ID }} \
-                 --apple-id <your-apple-id> \
-                 --password <app-password> \
-                 --team-id ${{ secrets.APPLE_TEAM_ID }}
-               ```
+            ### Next Steps
 
-            2. **Once approved, staple the ticket:**
-               ```bash
-               xcrun stapler staple "MacDown 3000-${{ env.VERSION }}.dmg"
-               xcrun stapler validate "MacDown 3000-${{ env.VERSION }}.dmg"
-               ```
+            After receiving Apple's approval email:
 
-            3. **Re-upload the stapled DMG to this release**
+            1. Go to **Actions** → **Staple and Publish Release**
+            2. Click **Run workflow**
+            3. Enter the release tag: `${{ github.ref_name || format('v{0}', env.VERSION) }}`
+            4. The workflow will:
+               - Download the DMG from this release
+               - Staple the notarization ticket
+               - Update the DMG and checksums
+               - Mark the release as ready
 
-            4. **Publish the release** (currently in draft mode)
-
-            For complete instructions, see `plans/release-process.md` in the repository.
+            Or manually staple and update:
+            ```bash
+            # Download DMG from this release
+            # Wait for Apple email, then:
+            xcrun stapler staple "MacDown-${{ env.VERSION }}.dmg"
+            xcrun stapler validate "MacDown-${{ env.VERSION }}.dmg"
+            # Re-upload stapled DMG to this release
+            ```
 
             ### Verification
 
-            **SHA256 Checksum:**
+            **SHA256 Checksum (unsigned DMG):**
             ```
             ${{ env.CHECKSUM }}
-            ```
-
-            Verify after download:
-            ```bash
-            shasum -a 256 -c "MacDown 3000-${{ env.VERSION }}.dmg.sha256"
             ```
 
             ---

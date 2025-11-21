@@ -27,7 +27,29 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
         </div>
         <div class="download-content" id="download">
             <h2>Download</h2>
-            <p class="version"><strong>Version 3000.0.0</strong></p>
+            <p class="version"><strong>Version {{ site.data.latest.version }}</strong></p>
+
+            {% if site.data.latest.downloadUrl %}
+            <p style="margin-top: 1.5rem;">
+                <a href="{{ site.data.latest.downloadUrl }}" class="btn">Download MacDown {{ site.data.latest.version }}</a>
+            </p>
+
+            <p style="margin-top: 1rem;">
+                <small><strong>Size:</strong> {{ site.data.latest.dmgSizeMB }} MB | <strong>Platform:</strong> macOS 11.0+ (Universal Binary)</small>
+            </p>
+
+            <p style="margin-top: 1rem;">
+                <small>
+                    <a href="{{ site.data.latest.checksumUrl }}">SHA256 Checksum</a> |
+                    <a href="{{ site.data.latest.releaseUrl }}">Release Notes</a> |
+                    <a href="https://github.com/schuyler/macdown3000/releases">All Releases</a>
+                </small>
+            </p>
+
+            <p style="margin-top: 1.5rem; padding: 1rem; background: #f5f5f5; border-radius: 4px;">
+                <small><strong>Note:</strong> MacDown 3000 is signed and notarized by Apple. Your Mac will verify the download automatically.</small>
+            </p>
+            {% else %}
             <p>Coming Soon</p>
 
             <p style="margin-top: 2rem;">
@@ -36,6 +58,7 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
             <p style="margin-top: 1rem;">
                 <small>Releases will be available on the <a href="https://github.com/schuyler/macdown3000/releases">GitHub Releases</a> page.</small>
             </p>
+            {% endif %}
         </div>
     </div>
 </section>
@@ -122,8 +145,8 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
                 <p>Automatic bracket and quote pairing, list continuation, and formatting shortcuts. You can customize it or turn it off.</p>
             </div>
             <div class="feature">
-                <h3>Apple Silicon</h3>
-                <p>Built for M-series Macs. Fast and native.</p>
+                <h3>Universal Binary</h3>
+                <p>Optimized for Apple Silicon. Runs on Intel Macs too.</p>
             </div>
             <div class="feature">
                 <h3>Live Preview</h3>
@@ -181,9 +204,9 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
             </div>
 
             <div class="faq-item">
-                <h4 class="faq-question"><span class="faq-icon">►</span>Will you support Intel Macs?</h4>
+                <h4 class="faq-question"><span class="faq-icon">►</span>Does MacDown 3000 support Intel Macs?</h4>
                 <div class="faq-answer">
-                    <p>No. MacDown 3000 is exclusively for Apple Silicon (M-series) Macs running macOS 11.0 (Big Sur) or later. This allows us to focus on optimizing for modern hardware and maintaining a lean codebase. If you have an Intel Mac, the original MacDown may still work for you.</p>
+                    <p>Yes. MacDown 3000 is a universal binary that runs on both Apple Silicon and Intel Macs (macOS 11.0+). While our primary focus is optimizing for Apple Silicon, Intel Mac users can still use the application.</p>
                 </div>
             </div>
         </div>
@@ -192,16 +215,9 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
             <h3>Installation & Compatibility</h3>
 
             <div class="faq-item">
-                <h4 class="faq-question"><span class="faq-icon">►</span>macOS says you are an unidentified developer!</h4>
-                <div class="faq-answer">
-                    <p>MacDown 3000 is not signed with a paid Apple developer certificate. You can override this by going to System Settings → Privacy & Security, finding the blocked app message, and clicking "Open Anyway". Alternatively, right-click the app and choose "Open" the first time you launch it.</p>
-                </div>
-            </div>
-
-            <div class="faq-item">
                 <h4 class="faq-question"><span class="faq-icon">►</span>What are the system requirements?</h4>
                 <div class="faq-answer">
-                    <p>MacDown 3000 requires macOS 11.0 (Big Sur) or later and an Apple Silicon (M1, M2, M3, etc.) processor. Intel Macs are not supported.</p>
+                    <p>MacDown 3000 requires macOS 11.0 (Big Sur) or later. It's a universal binary optimized for Apple Silicon (M1, M2, M3, M4, etc.) with Intel Mac support included.</p>
                 </div>
             </div>
         </div>

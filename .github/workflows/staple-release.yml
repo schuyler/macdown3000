@@ -1,0 +1,215 @@
+name: Staple and Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., v3000.0.0-beta.1)'
+        required: true
+        type: string
+
+jobs:
+  staple:
+    name: Staple Notarization and Update Release
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        run: |
+          TAG="${{ github.event.inputs.release_tag }}"
+          VERSION=${TAG#v}  # Remove 'v' prefix
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Get release info
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📋 Fetching release information for $TAG..."
+
+          # Get release ID and body
+          gh release view "$TAG" --json id,body > release-info.json
+
+          RELEASE_ID=$(jq -r '.id' release-info.json)
+          RELEASE_BODY=$(jq -r '.body' release-info.json)
+
+          # Extract notarization submission ID from release notes
+          NOTARIZATION_ID=$(echo "$RELEASE_BODY" | grep -oE 'Submission ID: `[^`]+`' | sed 's/Submission ID: `\(.*\)`/\1/' || echo "")
+
+          if [[ -z "$NOTARIZATION_ID" ]]; then
+            echo "::error::Could not find notarization submission ID in release notes"
+            echo "Please ensure this release was created by the release workflow"
+            exit 1
+          fi
+
+          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
+          echo "NOTARIZATION_ID=$NOTARIZATION_ID" >> $GITHUB_ENV
+
+          echo "✅ Found release"
+          echo "   Release ID: $RELEASE_ID"
+          echo "   Notarization ID: $NOTARIZATION_ID"
+
+      - name: Verify notarization status
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "🔍 Checking notarization status..."
+
+          # Get notarization info
+          xcrun notarytool info "$NOTARIZATION_ID" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --output-format json > notarization-info.json
+
+          STATUS=$(jq -r '.status' notarization-info.json)
+
+          echo "Status: $STATUS"
+
+          if [[ "$STATUS" != "Accepted" ]]; then
+            echo "::error::Notarization status is '$STATUS', not 'Accepted'"
+            echo ""
+            echo "Current status: $STATUS"
+            echo ""
+            if [[ "$STATUS" == "In Progress" ]]; then
+              echo "Notarization is still in progress. Please wait for Apple's email and try again."
+            elif [[ "$STATUS" == "Invalid" ]]; then
+              echo "Notarization was rejected. Getting detailed log..."
+              xcrun notarytool log "$NOTARIZATION_ID" \
+                --apple-id "$APPLE_ID" \
+                --password "$APPLE_APP_PASSWORD" \
+                --team-id "$APPLE_TEAM_ID" \
+                developer_log.json || true
+              if [[ -f developer_log.json ]]; then
+                cat developer_log.json
+              fi
+            fi
+            exit 1
+          fi
+
+          echo "✅ Notarization accepted by Apple"
+
+      - name: Download DMG from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📥 Downloading DMG from release..."
+
+          # Download the DMG asset
+          gh release download "$TAG" \
+            --pattern "MacDown-${VERSION}.dmg" \
+            --dir build
+
+          echo "✅ DMG downloaded"
+          ls -lh build/
+
+      - name: Staple notarization ticket
+        run: |
+          echo "📎 Stapling notarization ticket to DMG..."
+
+          # Staple the ticket
+          xcrun stapler staple "build/MacDown-${VERSION}.dmg"
+
+          # Validate stapling
+          echo "🔍 Validating stapled ticket..."
+          xcrun stapler validate "build/MacDown-${VERSION}.dmg"
+
+          # Verify with spctl
+          echo "🔍 Verifying Gatekeeper acceptance..."
+          spctl -a -vvv -t install "build/MacDown-${VERSION}.dmg"
+
+          echo "✅ DMG successfully stapled and verified"
+
+      - name: Generate updated checksums
+        run: |
+          echo "🔐 Generating checksums for stapled DMG..."
+
+          cd build
+          shasum -a 256 "MacDown-${VERSION}.dmg" > "MacDown-${VERSION}.dmg.sha256"
+
+          echo "Checksum:"
+          cat "MacDown-${VERSION}.dmg.sha256"
+
+          # Save for release notes
+          CHECKSUM=$(cat "MacDown-${VERSION}.dmg.sha256")
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_ENV
+
+          echo "✅ Checksums generated"
+
+      - name: Update release with stapled DMG
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📤 Updating release with stapled DMG..."
+
+          # Delete old assets
+          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg" --yes || true
+          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg.sha256" --yes || true
+
+          # Upload stapled DMG and new checksum
+          gh release upload "$TAG" \
+            "build/MacDown-${VERSION}.dmg" \
+            "build/MacDown-${VERSION}.dmg.sha256" \
+            --clobber
+
+          echo "✅ Release updated with stapled DMG"
+
+      - name: Update release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📝 Updating release notes..."
+
+          # Create new release notes
+          cat > release-notes.md <<EOF
+          ## MacDown 3000 ${VERSION}
+
+          **Platform:** macOS (Universal - Apple Silicon and Intel)
+
+          ✅ **Ready to use:** This DMG is fully notarized and stapled by Apple.
+
+          ### Installation
+
+          1. Download \`MacDown-${VERSION}.dmg\`
+          2. Open the DMG
+          3. Drag MacDown 3000.app to your Applications folder
+          4. Launch from Applications
+
+          The app will open without security warnings (Gatekeeper approved).
+
+          ### Verification
+
+          **SHA256 Checksum:**
+          \`\`\`
+          ${CHECKSUM}
+          \`\`\`
+
+          Verify after download:
+          \`\`\`bash
+          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
+          \`\`\`
+
+          **Notarization:**
+          - Submission ID: \`${NOTARIZATION_ID}\`
+          - Status: Accepted by Apple
+          - Ticket: Stapled to DMG
+
+          ---
+
+          **Next Steps:**
+          - Add release notes (changelog, features, bug fixes) as needed
+          - Publish the release when ready
+          EOF
+
+          # Update the release notes
+          gh release edit "$TAG" --notes-file release-notes.md
+
+          echo "✅ Release notes updated"
+          echo ""
+          echo "🎉 Release is now ready for publication!"
+          echo "   View at: https://github.com/${{ github.repository }}/releases/tag/$TAG"
