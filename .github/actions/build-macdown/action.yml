@@ -18,18 +18,16 @@ runs:
         echo "🔨 Building MacDown..."
         set -o pipefail
 
-        # Common xcodebuild parameters
-        XCODEBUILD_COMMON="-workspace MacDown 3000.xcworkspace \
-          -scheme MacDown \
-          -configuration Release \
-          -archivePath build/MacDown.xcarchive \
-          -arch arm64 -arch x86_64 \
-          ONLY_ACTIVE_ARCH=NO"
-
         # Build with or without signing
         if [ "${{ inputs.enable-signing }}" == "true" ]; then
           echo "Building with code signing..."
-          xcodebuild archive $XCODEBUILD_COMMON \
+          xcodebuild archive \
+            -workspace "MacDown 3000.xcworkspace" \
+            -scheme MacDown \
+            -configuration Release \
+            -archivePath build/MacDown.xcarchive \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="Developer ID Application" \
             CODE_SIGN_STYLE="Manual" \
             DEVELOPMENT_TEAM="${{ inputs.team-id }}" \
@@ -37,7 +35,13 @@ runs:
             | tee build.log
         else
           echo "Building without code signing (verification only)..."
-          xcodebuild archive $XCODEBUILD_COMMON \
+          xcodebuild archive \
+            -workspace "MacDown 3000.xcworkspace" \
+            -scheme MacDown \
+            -configuration Release \
+            -archivePath build/MacDown.xcarchive \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
