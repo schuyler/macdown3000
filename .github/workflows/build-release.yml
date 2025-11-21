@@ -1,80 +1,82 @@
-name: Build arm64 Release
+name: Verify Release Build
 
 on:
   push:
     branches: [ main ]
-    # Note: Only builds release artifacts on main branch
-    # Claude branches use test.yml for CI checks only
-    # Tag triggers removed to avoid conflict with release.yml workflow
+    # Verify Release configuration builds successfully on every merge to main
+    # This catches build issues before attempting an actual release
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build-arm64:
-    name: Build arm64 Release
+  verify-release-build:
+    name: Verify Release Build (Dry Run)
     runs-on: macos-14
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
+      - name: Setup MacDown build environment
+        uses: ./.github/actions/setup-macdown
 
-    - name: Install CocoaPods dependencies
-      run: bundle exec pod install
+      - name: Build MacDown (Universal Binary - Unsigned)
+        timeout-minutes: 30
+        run: |
+          echo "🔨 Building MacDown in Release configuration (dry run)..."
+          echo "This mirrors the release workflow but without code signing"
+          set -o pipefail
 
-    - name: Build peg-markdown-highlight
-      run: make -C Dependency/peg-markdown-highlight
+          xcodebuild archive \
+            -workspace "MacDown 3000.xcworkspace" \
+            -scheme MacDown \
+            -configuration Release \
+            -archivePath build/MacDown.xcarchive \
+            -arch arm64 -arch x86_64 \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log
 
-    - name: Build MacDown for arm64
-      run: |
-        set -o pipefail
-        xcodebuild archive \
-          -workspace "MacDown 3000.xcworkspace" \
-          -scheme MacDown \
-          -configuration Release \
-          -archivePath build/MacDown.xcarchive \
-          -arch arm64 \
-          ONLY_ACTIVE_ARCH=NO \
-          CODE_SIGN_IDENTITY="" \
-          CODE_SIGNING_REQUIRED=NO \
-          CODE_SIGNING_ALLOWED=NO
-      continue-on-error: false
+          echo "✅ Universal binary build successful"
 
-    - name: Export application bundle
-      run: |
-        # Extract the .app from the archive
-        cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
+      - name: Verify build output
+        run: |
+          echo "📦 Verifying build output..."
 
-        # Display build info
-        echo "Build completed successfully"
-        ls -lh build/
+          # Extract .app from archive
+          cp -R build/MacDown.xcarchive/Products/Applications/"MacDown 3000.app" build/"MacDown 3000.app"
 
-        # Get version info
-        /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist || echo "Version info not available"
+          # Display build info
+          echo "Build contents:"
+          ls -lh build/
 
-    - name: Create distributable archive
-      run: |
-        cd build
-        zip -r MacDown-arm64.zip "MacDown 3000.app"
-        cd ..
+          # Get and verify version info
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" build/"MacDown 3000.app"/Contents/Info.plist)
+          echo "📌 App version: $APP_VERSION"
 
-        # Display archive size
-        ls -lh build/MacDown-arm64.zip
+          # Verify universal binary
+          echo "🔍 Verifying architectures..."
+          lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown*
 
-    - name: Upload arm64 build artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MacDown-arm64
-        path: build/MacDown-arm64.zip
-        retention-days: 30
+          # Verify it's a universal binary
+          if lipo -info build/"MacDown 3000.app"/Contents/MacOS/MacDown* | grep -q "arm64 x86_64"; then
+            echo "✅ Confirmed: Universal binary (arm64 + x86_64)"
+          else
+            echo "::error::Build is not a universal binary!"
+            exit 1
+          fi
 
-    # Note: Release creation removed - use release.yml workflow instead
-    # This workflow is for development builds only
+          echo "✅ Release build verification passed"
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build.log
+          retention-days: 7

@@ -41,7 +41,7 @@ This checklist ensures nothing is missed during a release. Use it alongside the 
 ### Version Management
 
 - [ ] **Semantic version decided** — Determine version number
-  - Consult `Tools/version.txt` for current and next planned version
+  - Review latest git tag to determine next version
   - Decide: MAJOR.MINOR.PATCH or pre-release (MAJOR.MINOR.PATCH-prerelease)
   - See 📖 `release-process.md` → "Release Version Numbering" for format
 
@@ -54,17 +54,9 @@ This checklist ensures nothing is missed during a release. Use it alongside the 
   - Valid formats: `0.9.0-alpha.1`, `0.9.0-beta.2`, `0.9.0-rc.1`
   - Use lowercase: `alpha`, `beta`, `rc` (not `Alpha`, `BETA`, etc.)
 
-- [ ] **Version in `Tools/version.txt` is correct and committed**
-  - CURRENT_VERSION should already match the version you're about to release
-  - Example: If releasing 0.9.0, CURRENT_VERSION should be 0.9.0
-  - VERSION_STATUS should reflect the release type (development, beta, alpha, rc)
-  - These should have been set in the previous development cycle
-  - Verify version.txt is committed to git before proceeding
-  - **Note:** Do NOT update version.txt right before release. It gets updated AFTER release for the next cycle (see Phase 4)
-
 - [ ] **Understand how version flows through system**
-  - `Tools/version.txt` (CURRENT_VERSION) → source of truth
-  - `Tools/utils.sh` → reads version.txt
+  - Git tags → single source of truth
+  - `Tools/utils.sh` → extracts version from git tags
   - `Tools/generate_version_header.sh` → creates version.h
   - Build system embeds version in app binary
 
@@ -133,14 +125,12 @@ This checklist ensures nothing is missed during a release. Use it alongside the 
   ```bash
   git branch  # Should show "* main" or equivalent
   ```
+  **⚠️ CRITICAL:** Release tags MUST be created from main. The workflow will automatically fail if you tag a dev branch.
 
 - [ ] **In sync with origin**
   ```bash
   git pull origin main  # No conflicts, fully up to date
   ```
-
-- [ ] **No uncommitted changes in Tools/version.txt**
-  - Must be committed before release
 
 - [ ] **Branch doesn't conflict with version tag**
   - Example: Don't have branch named "v0.9.0"
@@ -378,27 +368,12 @@ The release workflow submits to Apple (happens automatically):
 
 ### Git Repository Update (Post-Release Development)
 
-- [ ] **Updated `Tools/version.txt` for next development cycle**
-  ```bash
-  # Update for next development phase:
-  # - CURRENT_VERSION=0.9.0 → CURRENT_VERSION=0.9.1
-  # - VERSION_STATUS=released → VERSION_STATUS=development
-  # - PREVIOUS_VERSION=0.8.0 → PREVIOUS_VERSION=0.9.0
-  # - NEXT_VERSION_PLANNED=0.10.0 (your next target)
-  # - RELEASE_DATE stays as is (for reference)
-  ```
-
-- [ ] **Committed version update**
-  ```bash
-  git add Tools/version.txt
-  git commit -m "Bump version to 0.9.1 (development)"
-  git push origin main
-  ```
-
 - [ ] **Updated README.md with new version** (if needed)
   - Line 19: Update version display
   - Keep "Coming Soon" or replace with actual version?
   - Commit and push
+
+**Note:** Version management is now fully automated via git tags. Development builds automatically show as `<version>.post<N>` after a release tag. No manual version updates needed!
 
 ---
 
@@ -571,7 +546,7 @@ The release workflow submits to Apple (happens automatically):
 - [ ] **Incremented version number** (critical fix)
   - Don't try to release same version again
   - Bump patch: 0.9.0 → 0.9.1
-  - Update `Tools/version.txt` and commit
+  - Create new git tag with bumped version
 
 - [ ] **Resubmitted for notarization**
   - Delete old draft release
@@ -603,7 +578,7 @@ The release workflow submits to Apple (happens automatically):
 
 | What | Where |
 |------|-------|
-| Current version info | `Tools/version.txt` |
+| Current version info | Git tags (single source of truth) |
 | Build version scripts | `Tools/utils.sh` |
 | Version generation | `Tools/generate_version_header.sh` |
 | Release process details | `plans/release-process.md` |
