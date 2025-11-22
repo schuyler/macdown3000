@@ -69,19 +69,27 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           # Update the data file (Jekyll will use this via Liquid templating)
-          cat > docs/_data/latest.json <<EOF
-{
-  "version": "$VERSION",
-  "tagName": "$TAG_NAME",
-  "releaseUrl": "$RELEASE_URL",
-  "publishedAt": "$PUBLISHED_AT",
-  "downloadUrl": "$DOWNLOAD_URL",
-  "dmgName": "$DMG_NAME",
-  "dmgSizeMB": "$DMG_SIZE_MB",
-  "checksumUrl": "$CHECKSUM_URL",
-  "updatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-}
-EOF
+          jq -n \
+            --arg version "$VERSION" \
+            --arg tagName "$TAG_NAME" \
+            --arg releaseUrl "$RELEASE_URL" \
+            --arg publishedAt "$PUBLISHED_AT" \
+            --arg downloadUrl "$DOWNLOAD_URL" \
+            --arg dmgName "$DMG_NAME" \
+            --arg dmgSizeMB "$DMG_SIZE_MB" \
+            --arg checksumUrl "$CHECKSUM_URL" \
+            --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              version: $version,
+              tagName: $tagName,
+              releaseUrl: $releaseUrl,
+              publishedAt: $publishedAt,
+              downloadUrl: $downloadUrl,
+              dmgName: $dmgName,
+              dmgSizeMB: $dmgSizeMB,
+              checksumUrl: $checksumUrl,
+              updatedAt: $updatedAt
+            }' > docs/_data/latest.json
 
           echo "✅ Updated docs/_data/latest.json"
           cat docs/_data/latest.json
