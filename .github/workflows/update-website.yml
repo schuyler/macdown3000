@@ -26,13 +26,15 @@ jobs:
           echo "📥 Fetching latest release information..."
 
           # Get the latest release (not draft, not pre-release)
-          gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName,url,publishedAt,assets > release.json
+          gh release list --limit 1 --exclude-drafts --exclude-pre-releases --json tagName,publishedAt,assets > release.json
 
           # Extract release info
           TAG_NAME=$(jq -r '.[0].tagName' release.json)
-          RELEASE_URL=$(jq -r '.[0].url' release.json)
           PUBLISHED_AT=$(jq -r '.[0].publishedAt' release.json)
           VERSION="${TAG_NAME#v}"
+
+          # Construct release URL from repository and tag
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
 
           # Find DMG asset
           DMG_NAME=$(jq -r '.[0].assets[] | select(.name | endswith(".dmg")) | .name' release.json)
