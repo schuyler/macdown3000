@@ -26,9 +26,20 @@ jobs:
         run: |
           echo "📥 Fetching latest release information..."
 
-          # Get the latest release (gh release view without a tag shows the latest)
-          if ! gh release view --json tagName,publishedAt,assets,url > release.json 2>/dev/null; then
-            echo "❌ Error: No releases found in repository"
+          # Get the latest published release (including pre-releases, excluding drafts)
+          # gh release view without a tag excludes pre-releases, so we list first then view
+          LATEST_TAG=$(gh release list --exclude-drafts --limit 1 --json tagName --jq '.[0].tagName')
+
+          if [ -z "$LATEST_TAG" ] || [ "$LATEST_TAG" = "null" ]; then
+            echo "❌ Error: No published releases found in repository"
+            exit 1
+          fi
+
+          echo "Found latest release: $LATEST_TAG"
+
+          # Now get full details for this specific release
+          if ! gh release view "$LATEST_TAG" --json tagName,publishedAt,assets,url > release.json 2>/dev/null; then
+            echo "❌ Error: Failed to get release details for $LATEST_TAG"
             exit 1
           fi
 
