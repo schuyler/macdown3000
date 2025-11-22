@@ -53,9 +53,9 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
 
             {% if site.data.latest.prerelease %}
             <!-- Pre-release -->
-            <div style="margin-bottom: 2rem; padding: 1rem; background: #fff3cd; border-radius: 4px; border: 1px solid #ffc107;">
-                <p class="version"><strong>🧪 Pre-release: {{ site.data.latest.prerelease.version }}</strong></p>
-                <p style="margin-top: 0.5rem;">
+            <div style="margin-bottom: 2rem; padding: 1rem; background: #fff3cd; border-radius: 4px; border: 1px solid #ffc107; color: #856404;">
+                <p class="version" style="color: #856404;"><strong>🧪 Pre-release: {{ site.data.latest.prerelease.version }}</strong></p>
+                <p style="margin-top: 0.5rem; color: #856404;">
                     <small><em>Beta version - may contain experimental features or bugs</em></small>
                 </p>
 
@@ -63,14 +63,14 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
                     <a href="{{ site.data.latest.prerelease.downloadUrl }}" class="btn btn-secondary">Download Beta {{ site.data.latest.prerelease.version }}</a>
                 </p>
 
-                <p style="margin-top: 1rem;">
+                <p style="margin-top: 1rem; color: #856404;">
                     <small><strong>Size:</strong> {{ site.data.latest.prerelease.dmgSizeMB }} MB | <strong>Platform:</strong> macOS 11.0+ (Universal Binary)</small>
                 </p>
 
-                <p style="margin-top: 1rem;">
+                <p style="margin-top: 1rem; color: #856404;">
                     <small>
-                        <a href="{{ site.data.latest.prerelease.checksumUrl }}">SHA256 Checksum</a> |
-                        <a href="{{ site.data.latest.prerelease.releaseUrl }}">Release Notes</a>
+                        <a href="{{ site.data.latest.prerelease.checksumUrl }}" style="color: #0056b3;">SHA256 Checksum</a> |
+                        <a href="{{ site.data.latest.prerelease.releaseUrl }}" style="color: #0056b3;">Release Notes</a>
                     </small>
                 </p>
             </div>
