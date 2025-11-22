@@ -1,11 +1,13 @@
 {
-  "version": "Coming Soon",
-  "tagName": null,
-  "releaseUrl": "https://github.com/schuyler/macdown3000/releases",
-  "publishedAt": null,
-  "downloadUrl": null,
-  "dmgName": null,
-  "dmgSizeMB": null,
-  "checksumUrl": null,
-  "updatedAt": "2025-11-21T00:00:00Z"
+  "prerelease": {
+    "version": "3000.0.0-beta.0",
+    "tagName": "v3000.0.0-beta.0",
+    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.0-beta.0",
+    "publishedAt": "2025-11-22T08:36:57Z",
+    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.0-beta.0/MacDown-3000.0.0-beta.0.dmg",
+    "dmgName": "MacDown-3000.0.0-beta.0.dmg",
+    "dmgSizeMB": "6.2",
+    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.0-beta.0/MacDown-3000.0.0-beta.0.dmg.sha256"
+  },
+  "updatedAt": "2025-11-22T08:47:09Z"
 }
