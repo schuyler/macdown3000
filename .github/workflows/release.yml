@@ -221,6 +221,37 @@ jobs:
           ls -lh "build/MacDown-${VERSION}.dmg"
           echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
+      - name: Sign DMG
+        run: |
+          echo "🔐 Signing DMG..."
+
+          # Sign the DMG with Developer ID Application certificate
+          codesign --sign "Developer ID Application" \
+            --timestamp \
+            --options runtime \
+            --force \
+            "build/MacDown-${VERSION}.dmg"
+
+          echo "✅ DMG signed"
+
+      - name: Verify DMG signature
+        run: |
+          echo "🔍 Verifying DMG signature..."
+
+          # Verify the DMG signature
+          codesign -vvv --deep --strict "build/MacDown-${VERSION}.dmg"
+
+          # Show signature details
+          codesign -dvv "build/MacDown-${VERSION}.dmg" 2>&1 | grep "Authority="
+
+          # Verify it's signed with Developer ID
+          SIGNING_IDENTITY=$(codesign -dvv "build/MacDown-${VERSION}.dmg" 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$SIGNING_IDENTITY" ]]; then
+            echo "::error::DMG is not signed with Developer ID Application certificate"
+            exit 1
+          fi
+          echo "✅ Verified DMG signature: $SIGNING_IDENTITY"
+
       - name: Generate checksums
         run: |
           echo "🔐 Generating SHA256 checksums..."
@@ -301,7 +332,8 @@ jobs:
 
             ### Status
 
-            - ✅ Built and signed
+            - ✅ Application bundle built and signed
+            - ✅ DMG created and signed
             - ⏳ Submitted for Apple notarization (Submission ID: `${{ env.NOTARIZATION_ID }}`)
             - ⏳ Awaiting notarization approval (typically 5-15 minutes)
             - ❌ Not yet stapled
@@ -330,7 +362,7 @@ jobs:
 
             ### Verification
 
-            **SHA256 Checksum (unsigned DMG):**
+            **SHA256 Checksum (signed but unstapled DMG):**
             ```
             ${{ env.CHECKSUM }}
             ```
