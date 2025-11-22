@@ -298,6 +298,18 @@ jobs:
           gh release edit "$TAG" --notes-file release-notes.md
 
           echo "✅ Release notes updated"
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🚀 Publishing release..."
+
+          # Publish the release (make it public)
+          gh release edit "$TAG" --draft=false
+
           echo ""
-          echo "🎉 Release is now ready for publication!"
-          echo "   View at: https://github.com/${GITHUB_REPOSITORY}/releases/tag/$TAG"
+          echo "✅ Release published successfully!"
+          echo "🎉 View at: https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          echo ""
+          echo "The update-website workflow will now run automatically."
