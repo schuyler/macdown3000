@@ -221,14 +221,37 @@ jobs:
           ls -lh "build/MacDown-${VERSION}.dmg"
           echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
+      - name: Verify app bundle inside DMG
+        run: |
+          echo "🔍 Verifying app bundle inside DMG..."
+
+          # Mount the DMG
+          hdiutil attach "build/MacDown-${VERSION}.dmg" -mountpoint /tmp/dmg-verify -nobrowse -readonly
+
+          # Verify the app signature inside
+          codesign -vvv --deep --strict "/tmp/dmg-verify/MacDown 3000.app"
+
+          # Verify it's signed with Developer ID
+          SIGNING_IDENTITY=$(codesign -dvv "/tmp/dmg-verify/MacDown 3000.app" 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$SIGNING_IDENTITY" ]]; then
+            echo "::error::App inside DMG is not properly signed"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+
+          echo "✅ App bundle inside DMG is properly signed: $SIGNING_IDENTITY"
+
+          # Unmount
+          hdiutil detach /tmp/dmg-verify
+
       - name: Sign DMG
         run: |
           echo "🔐 Signing DMG..."
 
           # Sign the DMG with Developer ID Application certificate
+          # Note: --options runtime is NOT used for DMG files (only for executables)
           codesign --sign "Developer ID Application" \
             --timestamp \
-            --options runtime \
             --force \
             "build/MacDown-${VERSION}.dmg"
 

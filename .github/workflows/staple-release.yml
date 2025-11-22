@@ -97,19 +97,38 @@ jobs:
 
           echo "✅ Notarization accepted by Apple"
 
-      - name: Download DMG from release
+      - name: Download and verify DMG from release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "📥 Downloading DMG from release..."
+          echo "📥 Downloading DMG and checksum from release..."
 
-          # Download the DMG asset
+          # Download the DMG and checksum
           gh release download "$TAG" \
-            --pattern "MacDown-${VERSION}.dmg" \
+            --pattern "MacDown-${VERSION}.dmg*" \
             --dir build
 
-          echo "✅ DMG downloaded"
+          echo "✅ DMG and checksum downloaded"
           ls -lh build/
+
+          # Verify checksum
+          echo "🔍 Verifying DMG integrity..."
+          cd build
+          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
+          cd ..
+
+          # Verify DMG signature
+          echo "🔍 Verifying DMG signature..."
+          codesign -vvv --strict "build/MacDown-${VERSION}.dmg"
+
+          # Verify it's signed with Developer ID
+          SIGNING_IDENTITY=$(codesign -dvv "build/MacDown-${VERSION}.dmg" 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$SIGNING_IDENTITY" ]]; then
+            echo "::error::Downloaded DMG is not properly signed"
+            exit 1
+          fi
+
+          echo "✅ DMG verified and ready for stapling"
 
       - name: Staple notarization ticket
         run: |
@@ -121,6 +140,10 @@ jobs:
           # Validate stapling
           echo "🔍 Validating stapled ticket..."
           xcrun stapler validate "build/MacDown-${VERSION}.dmg"
+
+          # Re-verify code signature after stapling
+          echo "🔍 Verifying code signature is intact after stapling..."
+          codesign -vvv --strict "build/MacDown-${VERSION}.dmg"
 
           # Verify with spctl
           echo "🔍 Verifying Gatekeeper acceptance..."
@@ -150,17 +173,14 @@ jobs:
         run: |
           echo "📤 Updating release with stapled DMG..."
 
-          # Delete old assets
-          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg" --yes || true
-          gh release delete-asset "$TAG" "MacDown-${VERSION}.dmg.sha256" --yes || true
-
           # Upload stapled DMG and new checksum
+          # --clobber replaces existing assets atomically (no race condition)
           gh release upload "$TAG" \
             "build/MacDown-${VERSION}.dmg" \
             "build/MacDown-${VERSION}.dmg.sha256" \
             --clobber
 
-          echo "✅ Release updated with stapled DMG"
+          echo "✅ Release updated with stapled DMG (assets replaced atomically)"
 
       - name: Update release notes
         env:
