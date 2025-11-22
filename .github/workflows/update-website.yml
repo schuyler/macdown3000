@@ -26,70 +26,182 @@ jobs:
         run: |
           echo "📥 Fetching latest release information..."
 
-          # Get the latest release (gh release view without a tag shows the latest)
-          if ! gh release view --json tagName,publishedAt,assets,url > release.json 2>/dev/null; then
-            echo "❌ Error: No releases found in repository"
+          # Function to extract release details
+          extract_release_info() {
+            local TAG=$1
+            local OUTPUT_VAR_PREFIX=$2
+
+            if ! gh release view "$TAG" --json tagName,publishedAt,assets,url,isPrerelease > "release_${OUTPUT_VAR_PREFIX}.json" 2>/dev/null; then
+              return 1
+            fi
+
+            local tag_name=$(jq -r '.tagName' "release_${OUTPUT_VAR_PREFIX}.json")
+            local published_at=$(jq -r '.publishedAt' "release_${OUTPUT_VAR_PREFIX}.json")
+            local release_url=$(jq -r '.url' "release_${OUTPUT_VAR_PREFIX}.json")
+            local version="${tag_name#v}"
+
+            # Find DMG asset
+            local dmg_name=$(jq -r '.assets[] | select(.name | endswith(".dmg")) | .name' "release_${OUTPUT_VAR_PREFIX}.json")
+            local dmg_size=$(jq -r '.assets[] | select(.name | endswith(".dmg")) | .size' "release_${OUTPUT_VAR_PREFIX}.json")
+
+            if [ -z "$dmg_name" ] || [ "$dmg_name" = "null" ]; then
+              echo "⚠️  No DMG found for $TAG"
+              return 1
+            fi
+
+            local dmg_size_mb=$(echo "scale=1; $dmg_size / 1024 / 1024" | bc)
+            local download_url="https://github.com/${{ github.repository }}/releases/download/${tag_name}/${dmg_name}"
+            local checksum_url="https://github.com/${{ github.repository }}/releases/download/${tag_name}/${dmg_name}.sha256"
+
+            # Export variables with prefix
+            eval "${OUTPUT_VAR_PREFIX}_VERSION='$version'"
+            eval "${OUTPUT_VAR_PREFIX}_TAG_NAME='$tag_name'"
+            eval "${OUTPUT_VAR_PREFIX}_PUBLISHED_AT='$published_at'"
+            eval "${OUTPUT_VAR_PREFIX}_RELEASE_URL='$release_url'"
+            eval "${OUTPUT_VAR_PREFIX}_DMG_NAME='$dmg_name'"
+            eval "${OUTPUT_VAR_PREFIX}_DMG_SIZE_MB='$dmg_size_mb'"
+            eval "${OUTPUT_VAR_PREFIX}_DOWNLOAD_URL='$download_url'"
+            eval "${OUTPUT_VAR_PREFIX}_CHECKSUM_URL='$checksum_url'"
+
+            return 0
+          }
+
+          # Get latest stable release (non-pre-release)
+          STABLE_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
+
+          # Get latest pre-release
+          PRERELEASE_TAG=$(gh release list --exclude-drafts --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName' | head -1)
+
+          # Process stable release if it exists
+          HAS_STABLE=false
+          if [ -n "$STABLE_TAG" ] && [ "$STABLE_TAG" != "null" ]; then
+            echo "Found stable release: $STABLE_TAG"
+            if extract_release_info "$STABLE_TAG" "STABLE"; then
+              HAS_STABLE=true
+              echo "✅ Stable release: $STABLE_VERSION"
+            fi
+          fi
+
+          # Process pre-release if it exists
+          HAS_PRERELEASE=false
+          if [ -n "$PRERELEASE_TAG" ] && [ "$PRERELEASE_TAG" != "null" ]; then
+            echo "Found pre-release: $PRERELEASE_TAG"
+            if extract_release_info "$PRERELEASE_TAG" "PRERELEASE"; then
+              HAS_PRERELEASE=true
+              echo "✅ Pre-release: $PRERELEASE_VERSION"
+            fi
+          fi
+
+          # Ensure we have at least one release
+          if [ "$HAS_STABLE" = "false" ] && [ "$HAS_PRERELEASE" = "false" ]; then
+            echo "❌ Error: No published releases found in repository"
             exit 1
           fi
 
-          # Extract release info
-          TAG_NAME=$(jq -r '.tagName' release.json)
-          PUBLISHED_AT=$(jq -r '.publishedAt' release.json)
-          RELEASE_URL=$(jq -r '.url' release.json)
-          VERSION="${TAG_NAME#v}"
-
-          # Validate we got valid data
-          if [ -z "$TAG_NAME" ] || [ "$TAG_NAME" = "null" ]; then
-            echo "❌ Error: Failed to extract tag name from release"
-            exit 1
+          # Export VERSION for commit message (use stable if available, otherwise prerelease)
+          if [ "$HAS_STABLE" = "true" ]; then
+            echo "VERSION=$STABLE_VERSION" >> $GITHUB_ENV
+          else
+            echo "VERSION=$PRERELEASE_VERSION" >> $GITHUB_ENV
           fi
 
-          # Find DMG asset
-          DMG_NAME=$(jq -r '.assets[] | select(.name | endswith(".dmg")) | .name' release.json)
-          DMG_SIZE=$(jq -r '.assets[] | select(.name | endswith(".dmg")) | .size' release.json)
+          # Build JSON data file
+          UPDATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-          # Validate DMG exists
-          if [ -z "$DMG_NAME" ] || [ "$DMG_NAME" = "null" ]; then
-            echo "❌ Error: No DMG file found in release $TAG_NAME"
-            echo "Available assets:"
-            jq -r '.assets[].name' release.json
-            exit 1
+          if [ "$HAS_STABLE" = "true" ] && [ "$HAS_PRERELEASE" = "true" ]; then
+            # Both stable and pre-release exist
+            jq -n \
+              --arg stableVersion "$STABLE_VERSION" \
+              --arg stableTagName "$STABLE_TAG_NAME" \
+              --arg stableReleaseUrl "$STABLE_RELEASE_URL" \
+              --arg stablePublishedAt "$STABLE_PUBLISHED_AT" \
+              --arg stableDownloadUrl "$STABLE_DOWNLOAD_URL" \
+              --arg stableDmgName "$STABLE_DMG_NAME" \
+              --arg stableDmgSizeMB "$STABLE_DMG_SIZE_MB" \
+              --arg stableChecksumUrl "$STABLE_CHECKSUM_URL" \
+              --arg prereleaseVersion "$PRERELEASE_VERSION" \
+              --arg prereleaseTagName "$PRERELEASE_TAG_NAME" \
+              --arg prereleaseReleaseUrl "$PRERELEASE_RELEASE_URL" \
+              --arg prereleasePublishedAt "$PRERELEASE_PUBLISHED_AT" \
+              --arg prereleaseDownloadUrl "$PRERELEASE_DOWNLOAD_URL" \
+              --arg prereleaseDmgName "$PRERELEASE_DMG_NAME" \
+              --arg prereleaseDmgSizeMB "$PRERELEASE_DMG_SIZE_MB" \
+              --arg prereleaseChecksumUrl "$PRERELEASE_CHECKSUM_URL" \
+              --arg updatedAt "$UPDATED_AT" \
+              '{
+                stable: {
+                  version: $stableVersion,
+                  tagName: $stableTagName,
+                  releaseUrl: $stableReleaseUrl,
+                  publishedAt: $stablePublishedAt,
+                  downloadUrl: $stableDownloadUrl,
+                  dmgName: $stableDmgName,
+                  dmgSizeMB: $stableDmgSizeMB,
+                  checksumUrl: $stableChecksumUrl
+                },
+                prerelease: {
+                  version: $prereleaseVersion,
+                  tagName: $prereleaseTagName,
+                  releaseUrl: $prereleaseReleaseUrl,
+                  publishedAt: $prereleasePublishedAt,
+                  downloadUrl: $prereleaseDownloadUrl,
+                  dmgName: $prereleaseDmgName,
+                  dmgSizeMB: $prereleaseDmgSizeMB,
+                  checksumUrl: $prereleaseChecksumUrl
+                },
+                updatedAt: $updatedAt
+              }' > docs/_data/latest.json
+          elif [ "$HAS_STABLE" = "true" ]; then
+            # Only stable release exists
+            jq -n \
+              --arg version "$STABLE_VERSION" \
+              --arg tagName "$STABLE_TAG_NAME" \
+              --arg releaseUrl "$STABLE_RELEASE_URL" \
+              --arg publishedAt "$STABLE_PUBLISHED_AT" \
+              --arg downloadUrl "$STABLE_DOWNLOAD_URL" \
+              --arg dmgName "$STABLE_DMG_NAME" \
+              --arg dmgSizeMB "$STABLE_DMG_SIZE_MB" \
+              --arg checksumUrl "$STABLE_CHECKSUM_URL" \
+              --arg updatedAt "$UPDATED_AT" \
+              '{
+                stable: {
+                  version: $version,
+                  tagName: $tagName,
+                  releaseUrl: $releaseUrl,
+                  publishedAt: $publishedAt,
+                  downloadUrl: $downloadUrl,
+                  dmgName: $dmgName,
+                  dmgSizeMB: $dmgSizeMB,
+                  checksumUrl: $checksumUrl
+                },
+                updatedAt: $updatedAt
+              }' > docs/_data/latest.json
+          else
+            # Only pre-release exists
+            jq -n \
+              --arg version "$PRERELEASE_VERSION" \
+              --arg tagName "$PRERELEASE_TAG_NAME" \
+              --arg releaseUrl "$PRERELEASE_RELEASE_URL" \
+              --arg publishedAt "$PRERELEASE_PUBLISHED_AT" \
+              --arg downloadUrl "$PRERELEASE_DOWNLOAD_URL" \
+              --arg dmgName "$PRERELEASE_DMG_NAME" \
+              --arg dmgSizeMB "$PRERELEASE_DMG_SIZE_MB" \
+              --arg checksumUrl "$PRERELEASE_CHECKSUM_URL" \
+              --arg updatedAt "$UPDATED_AT" \
+              '{
+                prerelease: {
+                  version: $version,
+                  tagName: $tagName,
+                  releaseUrl: $releaseUrl,
+                  publishedAt: $publishedAt,
+                  downloadUrl: $downloadUrl,
+                  dmgName: $dmgName,
+                  dmgSizeMB: $dmgSizeMB,
+                  checksumUrl: $checksumUrl
+                },
+                updatedAt: $updatedAt
+              }' > docs/_data/latest.json
           fi
-
-          # Calculate size (now safe because we validated DMG_SIZE exists)
-          DMG_SIZE_MB=$(echo "scale=1; $DMG_SIZE / 1024 / 1024" | bc)
-
-          # Build download URLs
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${DMG_NAME}"
-          CHECKSUM_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/${DMG_NAME}.sha256"
-
-          echo "✅ Found release: $VERSION"
-
-          # Export VERSION for use in next step
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-          # Update the data file (Jekyll will use this via Liquid templating)
-          jq -n \
-            --arg version "$VERSION" \
-            --arg tagName "$TAG_NAME" \
-            --arg releaseUrl "$RELEASE_URL" \
-            --arg publishedAt "$PUBLISHED_AT" \
-            --arg downloadUrl "$DOWNLOAD_URL" \
-            --arg dmgName "$DMG_NAME" \
-            --arg dmgSizeMB "$DMG_SIZE_MB" \
-            --arg checksumUrl "$CHECKSUM_URL" \
-            --arg updatedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{
-              version: $version,
-              tagName: $tagName,
-              releaseUrl: $releaseUrl,
-              publishedAt: $publishedAt,
-              downloadUrl: $downloadUrl,
-              dmgName: $dmgName,
-              dmgSizeMB: $dmgSizeMB,
-              checksumUrl: $checksumUrl,
-              updatedAt: $updatedAt
-            }' > docs/_data/latest.json
 
           echo "✅ Updated docs/_data/latest.json"
           cat docs/_data/latest.json
