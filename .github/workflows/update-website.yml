@@ -5,6 +5,7 @@ on:
     workflows: ["Staple and Publish Release"]
     types:
       - completed
+  workflow_dispatch:  # Allow manual triggering
 
 permissions:
   contents: write  # Required to commit and push website updates
@@ -13,7 +14,7 @@ jobs:
   update-website:
     name: Update Website Download Links
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
