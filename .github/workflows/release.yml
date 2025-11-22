@@ -397,11 +397,18 @@ jobs:
         run: |
           echo "📝 Generating release notes from CHANGELOG.md..."
 
-          # Extract changelog for this version
+          # Verify changelog entry exists
+          if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::No changelog entry found for version ${VERSION}"
+            echo "::error::Please add a changelog entry to CHANGELOG.md before creating a release"
+            exit 1
+          fi
+
+          # Extract changelog for this version using string matching (not regex)
           CHANGELOG_CONTENT=$(awk -v ver="${VERSION}" '
             /^## \[/ {
               if (found) exit
-              if ($0 ~ "\\[" ver "\\]") {
+              if (index($0, "[" ver "]") > 0) {
                 found=1
                 next
               }
@@ -411,9 +418,11 @@ jobs:
           ' CHANGELOG.md)
 
           if [ -z "$CHANGELOG_CONTENT" ]; then
-            echo "::warning::No changelog entry found for version ${VERSION}"
-            CHANGELOG_CONTENT="No changelog available for this version."
+            echo "::error::Failed to extract changelog content for version ${VERSION}"
+            exit 1
           fi
+
+          echo "✅ Extracted changelog for version ${VERSION}"
 
           # Create release notes with changelog + notarization status
           cat > build/release-notes.md <<EOF
@@ -456,13 +465,17 @@ jobs:
 
           **Build Information:**
           - Build Date: ${BUILD_TIME}
-          - Commit: ${{ github.sha }}
-          - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - Commit: ${GITHUB_SHA}
+          - Workflow: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           EOF
 
           echo "✅ Release notes generated"
         env:
           TAG_NAME: ${{ github.ref_name || format('v{0}', env.VERSION) }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

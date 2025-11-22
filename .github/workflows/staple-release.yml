@@ -226,17 +226,25 @@ jobs:
       - name: Update release notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           echo "📝 Updating release notes..."
+
+          # Verify changelog entry exists
+          if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::No changelog entry found for version ${VERSION}"
+            echo "::error::Please add a changelog entry to CHANGELOG.md"
+            exit 1
+          fi
 
           # Extract changelog for this version
           echo "Extracting changelog for version ${VERSION}..."
 
-          # Use awk to extract the section for this version from CHANGELOG.md
+          # Use awk with string matching (not regex) to extract the section
           CHANGELOG_CONTENT=$(awk -v ver="${VERSION}" '
             /^## \[/ {
               if (found) exit
-              if ($0 ~ "\\[" ver "\\]") {
+              if (index($0, "[" ver "]") > 0) {
                 found=1
                 next
               }
@@ -246,9 +254,11 @@ jobs:
           ' CHANGELOG.md)
 
           if [ -z "$CHANGELOG_CONTENT" ]; then
-            echo "::warning::No changelog entry found for version ${VERSION}"
-            CHANGELOG_CONTENT="No changelog available for this version."
+            echo "::error::Failed to extract changelog content for version ${VERSION}"
+            exit 1
           fi
+
+          echo "✅ Extracted changelog for version ${VERSION}"
 
           # Create release notes with changelog + installation/verification details
           cat > release-notes.md <<EOF
@@ -281,7 +291,7 @@ jobs:
 
           ---
 
-          **Full Changelog:** https://github.com/\${{ github.repository }}/blob/main/CHANGELOG.md
+          **Full Changelog:** https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md
           EOF
 
           # Update the release notes
@@ -290,4 +300,4 @@ jobs:
           echo "✅ Release notes updated"
           echo ""
           echo "🎉 Release is now ready for publication!"
-          echo "   View at: https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          echo "   View at: https://github.com/${GITHUB_REPOSITORY}/releases/tag/$TAG"
