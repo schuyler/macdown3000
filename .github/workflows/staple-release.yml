@@ -229,24 +229,45 @@ jobs:
         run: |
           echo "📝 Updating release notes..."
 
-          # Create new release notes
+          # Extract changelog for this version
+          echo "Extracting changelog for version ${VERSION}..."
+
+          # Use awk to extract the section for this version from CHANGELOG.md
+          CHANGELOG_CONTENT=$(awk -v ver="${VERSION}" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "\\[" ver "\\]") {
+                found=1
+                next
+              }
+            }
+            found && /^## / { exit }
+            found && !/^---$/ { print }
+          ' CHANGELOG.md)
+
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            echo "::warning::No changelog entry found for version ${VERSION}"
+            CHANGELOG_CONTENT="No changelog available for this version."
+          fi
+
+          # Create release notes with changelog + installation/verification details
           cat > release-notes.md <<EOF
-          ## MacDown 3000 ${VERSION}
+          **MacDown 3000** is a modern, open-source Markdown editor for macOS.
 
-          **Platform:** macOS (Universal - Apple Silicon and Intel)
+          ${CHANGELOG_CONTENT}
 
-          ✅ **Ready to use:** This DMG is fully notarized and stapled by Apple.
+          ## Installation
 
-          ### Installation
+          **Platform:** macOS 10.14 or later (Universal - Apple Silicon and Intel)
 
-          1. Download \`MacDown-${VERSION}.dmg\`
+          1. Download \`MacDown-${VERSION}.dmg\` below
           2. Open the DMG
           3. Drag MacDown 3000.app to your Applications folder
           4. Launch from Applications
 
-          The app will open without security warnings (Gatekeeper approved).
+          ✅ This app is **fully notarized and stapled** by Apple - it will open without security warnings.
 
-          ### Verification
+          ## Verification
 
           **SHA256 Checksum:**
           \`\`\`
@@ -255,19 +276,12 @@ jobs:
 
           Verify after download:
           \`\`\`bash
-          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
+          shasum -a 256 MacDown-${VERSION}.dmg
           \`\`\`
-
-          **Notarization:**
-          - Submission ID: \`${NOTARIZATION_ID}\`
-          - Status: Accepted by Apple
-          - Ticket: Stapled to DMG
 
           ---
 
-          **Next Steps:**
-          - Add release notes (changelog, features, bug fixes) as needed
-          - Publish the release when ready
+          **Full Changelog:** https://github.com/\${{ github.repository }}/blob/main/CHANGELOG.md
           EOF
 
           # Update the release notes
