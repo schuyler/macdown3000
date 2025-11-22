@@ -167,6 +167,47 @@ jobs:
 
           echo "✅ Checksums generated"
 
+      - name: Final comprehensive verification
+        run: |
+          echo "🔍 Running final comprehensive verification before publishing..."
+
+          DMG_PATH="build/MacDown-${VERSION}.dmg"
+
+          # 1. Verify DMG signature
+          echo "  ✓ Checking DMG signature..."
+          codesign -vvv --strict "$DMG_PATH"
+
+          # 2. Verify notarization staple
+          echo "  ✓ Checking notarization staple..."
+          xcrun stapler validate "$DMG_PATH"
+
+          # 3. Verify Gatekeeper acceptance
+          echo "  ✓ Checking Gatekeeper acceptance..."
+          spctl -a -vvv -t install "$DMG_PATH"
+
+          # 4. Mount and verify app inside DMG
+          echo "  ✓ Checking app bundle inside DMG..."
+          hdiutil attach "$DMG_PATH" -mountpoint /tmp/final-verify -nobrowse -readonly
+          codesign -vvv --deep --strict "/tmp/final-verify/MacDown 3000.app"
+
+          # Get app version for logging
+          APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" \
+                        "/tmp/final-verify/MacDown 3000.app/Contents/Info.plist" 2>/dev/null || echo "unknown")
+          echo "    App version: $APP_VERSION"
+
+          hdiutil detach /tmp/final-verify
+
+          # 5. Verify checksum matches
+          echo "  ✓ Verifying checksum..."
+          cd build
+          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
+          cd ..
+
+          echo ""
+          echo "✅ All verification checks passed!"
+          echo "🎉 DMG is ready for distribution"
+          echo ""
+
       - name: Update release with stapled DMG
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

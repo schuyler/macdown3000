@@ -164,6 +164,46 @@ jobs:
           echo "📋 Available code signing identities:"
           security find-identity -v -p codesigning
 
+      - name: Validate certificate expiry
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "📅 Checking certificate expiry..."
+
+          # Extract certificate from keychain
+          security find-certificate -a -c "Developer ID Application" -p build.keychain | \
+            openssl x509 -noout -subject -dates > cert-info.txt 2>/dev/null || true
+
+          if [[ -s cert-info.txt ]]; then
+            cat cert-info.txt
+
+            # Extract expiry date (format: notAfter=Jan 1 00:00:00 2025 GMT)
+            EXPIRY_STR=$(grep "notAfter=" cert-info.txt | sed 's/notAfter=//')
+
+            if [[ -n "$EXPIRY_STR" ]]; then
+              # Convert to epoch (macOS date command)
+              EXPIRY_EPOCH=$(date -j -f "%b %d %T %Y %Z" "$EXPIRY_STR" +%s 2>/dev/null || echo 0)
+              NOW_EPOCH=$(date +%s)
+
+              if [[ $EXPIRY_EPOCH -gt 0 ]]; then
+                DAYS_UNTIL_EXPIRY=$(( ($EXPIRY_EPOCH - $NOW_EPOCH) / 86400 ))
+
+                if [[ $DAYS_UNTIL_EXPIRY -lt 0 ]]; then
+                  echo "::error::Certificate has expired!"
+                  exit 1
+                elif [[ $DAYS_UNTIL_EXPIRY -lt 30 ]]; then
+                  echo "::warning::Certificate expires in $DAYS_UNTIL_EXPIRY days - please renew soon"
+                elif [[ $DAYS_UNTIL_EXPIRY -lt 90 ]]; then
+                  echo "::notice::Certificate expires in $DAYS_UNTIL_EXPIRY days"
+                else
+                  echo "✅ Certificate is valid (expires in $DAYS_UNTIL_EXPIRY days)"
+                fi
+              fi
+            fi
+          fi
+
+          rm -f cert-info.txt
+
       # ==================== BUILD ====================
 
       - name: Build and sign MacDown
@@ -245,12 +285,29 @@ jobs:
           hdiutil detach /tmp/dmg-verify
 
       - name: Sign DMG
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔐 Signing DMG..."
 
-          # Sign the DMG with Developer ID Application certificate
+          # Get the exact signing identity to avoid ambiguity
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | \
+                     grep "Developer ID Application" | \
+                     grep "$APPLE_TEAM_ID" | \
+                     head -1 | \
+                     sed -E 's/.*"(.+)"/\1/')
+
+          if [[ -z "$IDENTITY" ]]; then
+            echo "::error::Could not find Developer ID Application certificate for team $APPLE_TEAM_ID"
+            security find-identity -v -p codesigning build.keychain
+            exit 1
+          fi
+
+          echo "Using signing identity: $IDENTITY"
+
+          # Sign the DMG with explicit identity
           # Note: --options runtime is NOT used for DMG files (only for executables)
-          codesign --sign "Developer ID Application" \
+          codesign --sign "$IDENTITY" \
             --timestamp \
             --force \
             "build/MacDown-${VERSION}.dmg"
