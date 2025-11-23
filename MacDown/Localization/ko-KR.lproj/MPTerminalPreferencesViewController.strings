@@ -2,16 +2,16 @@
 "0H2-qZ-OjP.title" = "<binary location>";
 
 /* Class = "NSTextFieldCell"; title = "Location:"; ObjectID = "EJe-0p-X4m"; */
-"EJe-0p-X4m.title" = "X:";
+"EJe-0p-X4m.title" = "위치:";
 
 /* Class = "NSTextFieldCell"; title = "Shell support not installed"; ObjectID = "g7m-Fr-pUo"; */
-"g7m-Fr-pUo.title" = "x �� �$X";
+"g7m-Fr-pUo.title" = "셸 지원 미설치";
 
-/* Class = "NSTextFieldCell"; title = "�"; ObjectID = "Me9-q2-eWj"; */
-"Me9-q2-eWj.title" = "�";
+/* Class = "NSTextFieldCell"; title = "●"; ObjectID = "Me9-q2-eWj"; */
+"Me9-q2-eWj.title" = "●";
 
 /* Class = "NSTextFieldCell"; title = "By activating shell support you can use the macdown utility to open MacDown and documents from a shell."; ObjectID = "W5n-x2-ygz"; */
-"W5n-x2-ygz.title" = "x ��D \1TXt macdown  ���| ��X� x� MacDown� 8| �  ����.";
+"W5n-x2-ygz.title" = "셸 지원을 활성화하면 macdown 유틸리티를 사용하여 셸에서 MacDown과 문서를 열 수 있습니다.";
 
 /* Class = "NSButtonCell"; title = "Install"; ObjectID = "XiC-FP-TWZ"; */
-"XiC-FP-TWZ.title" = "$X";
+"XiC-FP-TWZ.title" = "설치";

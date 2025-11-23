@@ -74,7 +74,7 @@
 {
     [self validateLocalization:@"ko-KR"
                 viewController:@"MPMarkdownPreferencesViewController"
-                 expectedCount:12]; // 12 localizable elements
+                 expectedCount:14]; // 14 localizable elements
 }
 
 - (void)testKoreanTerminalPreferencesLocalization
@@ -95,14 +95,14 @@
 {
     [self validateLocalization:@"ko-KR"
                 viewController:@"MPHtmlPreferencesViewController"
-                 expectedCount:21]; // 21 localizable elements
+                 expectedCount:20]; // 20 localizable elements
 }
 
 - (void)testKoreanEditorPreferencesLocalization
 {
     [self validateLocalization:@"ko-KR"
                 viewController:@"MPEditorPreferencesViewController"
-                 expectedCount:21]; // 21 localizable elements
+                 expectedCount:20]; // 20 localizable elements
 }
 
 #pragma mark - Japanese (ja) Localization Tests - Reference
@@ -111,7 +111,7 @@
 {
     [self validateLocalization:@"ja"
                 viewController:@"MPMarkdownPreferencesViewController"
-                 expectedCount:12];
+                 expectedCount:14];
 }
 
 - (void)testJapaneseTerminalPreferencesLocalization
@@ -132,14 +132,14 @@
 {
     [self validateLocalization:@"ja"
                 viewController:@"MPHtmlPreferencesViewController"
-                 expectedCount:21];
+                 expectedCount:20];
 }
 
 - (void)testJapaneseEditorPreferencesLocalization
 {
     [self validateLocalization:@"ja"
                 viewController:@"MPEditorPreferencesViewController"
-                 expectedCount:21];
+                 expectedCount:20];
 }
 
 #pragma mark - Chinese Simplified (zh-Hans) Localization Tests
@@ -148,7 +148,7 @@
 {
     [self validateLocalization:@"zh-Hans"
                 viewController:@"MPMarkdownPreferencesViewController"
-                 expectedCount:12];
+                 expectedCount:14];
 }
 
 - (void)testChineseSimplifiedTerminalPreferencesLocalization
@@ -169,14 +169,14 @@
 {
     [self validateLocalization:@"zh-Hans"
                 viewController:@"MPHtmlPreferencesViewController"
-                 expectedCount:21];
+                 expectedCount:20];
 }
 
 - (void)testChineseSimplifiedEditorPreferencesLocalization
 {
     [self validateLocalization:@"zh-Hans"
                 viewController:@"MPEditorPreferencesViewController"
-                 expectedCount:21];
+                 expectedCount:20];
 }
 
 @end

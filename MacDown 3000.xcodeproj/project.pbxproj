@@ -88,6 +88,7 @@
 		1FFEB3201972B04D00B2254F /* test.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB31F1972B04D00B2254F /* test.txt */; };
 		1FFEB3251972D88900B2254F /* NSObject+HTMLTabularize.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB3241972D88900B2254F /* NSObject+HTMLTabularize.m */; };
 		1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */; };
+		2B3C4D5E1972E5F700223344 /* MPLocalizationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C4D1972E5F600112233 /* MPLocalizationTests.m */; };
 		1FFEB32B19737D6E00B2254F /* YAMLSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32A19737D6E00B2254F /* YAMLSerialization.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc -Wno-unused-variable"; }; };
 		1FFEB32C19ABCD1200B2254F /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB32E19ABCD1400B2254F /* Fixtures */; };
 		1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */; };
@@ -497,6 +498,7 @@
 		1FFEB3231972D88900B2254F /* NSObject+HTMLTabularize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+HTMLTabularize.h"; sourceTree = "<group>"; };
 		1FFEB3241972D88900B2254F /* NSObject+HTMLTabularize.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+HTMLTabularize.m"; sourceTree = "<group>"; };
 		1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLTabularizeTests.m; sourceTree = "<group>"; };
+		1A2B3C4D1972E5F600112233 /* MPLocalizationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPLocalizationTests.m; sourceTree = "<group>"; };
 		1FFEB32919737D6E00B2254F /* YAMLSerialization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YAMLSerialization.h; sourceTree = "<group>"; };
 		1FFEB32A19737D6E00B2254F /* YAMLSerialization.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YAMLSerialization.m; sourceTree = "<group>"; };
 		1FFEB32E19ABCD1400B2254F /* Fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Fixtures; path = Fixtures; sourceTree = "<group>"; };
@@ -871,6 +873,7 @@
 				35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */,
 				C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */,
 				1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */,
+				1A2B3C4D1972E5F600112233 /* MPLocalizationTests.m */,
 				1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */,
 				6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */,
 				9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */,
@@ -1289,6 +1292,7 @@
 				1F51C9A5194565050015A96F /* MPPreferencesTests.m in Sources */,
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
 				1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */,
+				2B3C4D5E1972E5F700223344 /* MPLocalizationTests.m in Sources */,
 				1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */,
 				CCD97578A2886FFE73BD96F7 /* MPMathJaxRenderingTests.m in Sources */,
 				0319BD8F4A64D9E406448C13 /* MPSyntaxHighlightingTests.m in Sources */,
