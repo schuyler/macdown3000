@@ -49,16 +49,16 @@ jobs:
         id: commit
         run: echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Rename DMG with commit SHA
+      - name: Archive app bundle
         run: |
-          COMMIT_SHA=${{ steps.commit.outputs.sha }}
-          mv build/MacDown-*.dmg "build/MacDown-3000-build-${COMMIT_SHA}.dmg"
+          cd build
+          tar -czf "MacDown-3000-build-${{ steps.commit.outputs.sha }}.tar.gz" "MacDown 3000.app"
 
-      - name: Upload DMG artifact
+      - name: Upload app archive artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}.dmg
-          path: build/MacDown-3000-build-*.dmg
+          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}.tar.gz
+          path: build/MacDown-3000-build-*.tar.gz
           retention-days: 7
 
       - name: Upload build logs
