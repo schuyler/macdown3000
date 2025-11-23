@@ -45,7 +45,8 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Test Infrastructure:**
 - ✅ XCTest framework configured
 - ✅ GitHub Actions CI pipeline (test.yml)
-- ✅ Runs on macOS-14 runners
+- ✅ Runs on macOS-14 and macOS-15 runners
+- ✅ Runtime launch tests (detects hang-on-launch issues)
 - ✅ Code coverage reporting configured
 - ❌ No integration tests
 - ❌ Minimal UI testing
@@ -218,7 +219,7 @@ GitHub Actions macOS runners are:
 - (void)testEditorFontPreference
 - (void)testMarkdownExtensionsPreference
 - (void)testPreferenceDefaults
-- (void)testPreferenceMigration
+- (void)testPreferenceMigrationWithTimeout  // ✅ Issue #169 - timeout protection added
 
 // File I/O
 - (void)testFileEncodingDetection
