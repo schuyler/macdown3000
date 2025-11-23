@@ -120,7 +120,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         NSLog(@"[MPPreferences] This may occur on macOS Sequoia due to sandbox restrictions");
         NSLog(@"[MPPreferences] App will use default preferences");
         [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        [defaults synchronize];
+        // Note: Not calling synchronize - NSUserDefaults auto-syncs (deprecated since macOS 10.13)
         return;
     }
 
@@ -128,7 +128,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (!migrationSucceeded) {
         NSLog(@"[MPPreferences] Migration failed due to exception - marking as complete to prevent retry");
         [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        [defaults synchronize];
+        // Note: Not calling synchronize - NSUserDefaults auto-syncs
         return;
     }
 
@@ -137,48 +137,75 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     {
         NSLog(@"[MPPreferences] No legacy preferences found - migration not needed");
         [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        [defaults synchronize];
+        // Note: Not calling synchronize - NSUserDefaults auto-syncs
         return;
     }
 
     NSLog(@"[MPPreferences] Found %lu legacy preferences to migrate",
           (unsigned long)legacyPrefs.count);
 
-    // Copy all preferences from the legacy suite to the current suite
-    @try {
-        NSUserDefaults *currentSuite =
-            [[NSUserDefaults alloc] initWithSuiteName:kMPApplicationSuiteName];
+    // Phase 2: Copy preferences to new suite (with timeout protection)
+    dispatch_semaphore_t semaphore2 = dispatch_semaphore_create(0);
+    __block BOOL copySucceeded = NO;
+    __block NSUInteger migratedCount = 0;
 
-        NSUInteger migratedCount = 0;
-        for (NSString *key in legacyPrefs)
-        {
-            // Skip system-generated keys
-            if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
-                continue;
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @try {
+            NSUserDefaults *currentSuite =
+                [[NSUserDefaults alloc] initWithSuiteName:kMPApplicationSuiteName];
 
-            id value = legacyPrefs[key];
-            [currentSuite setObject:value
-                             forKey:key
-                       inSuiteNamed:kMPApplicationSuiteName];
-            migratedCount++;
+            for (NSString *key in legacyPrefs)
+            {
+                // Skip system-generated keys
+                if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
+                    continue;
+
+                id value = legacyPrefs[key];
+                // Use category method for explicit CFPreferences write
+                // to ensure proper suite targeting
+                [currentSuite setObject:value
+                                 forKey:key
+                           inSuiteNamed:kMPApplicationSuiteName];
+                migratedCount++;
+            }
+
+            // Note: Not calling synchronize - NSUserDefaults auto-syncs
+            // synchronize is deprecated since macOS 10.13
+            copySucceeded = YES;
         }
+        @catch (NSException *exception) {
+            NSLog(@"[MPPreferences] Exception during preference copying: %@ - Reason: %@",
+                  exception.name, exception.reason);
+        }
+        @finally {
+            dispatch_semaphore_signal(semaphore2);
+        }
+    });
 
-        [currentSuite synchronize];
+    // Wait with timeout for Phase 2
+    long waitResult2 = dispatch_semaphore_wait(semaphore2, timeout);
 
-        // Mark migration as complete
+    if (waitResult2 != 0) {
+        NSLog(@"[MPPreferences] Preference copying timed out after %.1f seconds - migration incomplete",
+              kMPMigrationTimeout);
         [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        [defaults synchronize];
+        // Note: Not calling synchronize - NSUserDefaults auto-syncs
+        return;
+    }
 
-        NSLog(@"[MPPreferences] Successfully migrated %lu preferences from legacy bundle identifier",
-              (unsigned long)migratedCount);
-    }
-    @catch (NSException *exception) {
-        NSLog(@"[MPPreferences] Exception during preference copying: %@ - Reason: %@",
-              exception.name, exception.reason);
-        NSLog(@"[MPPreferences] Marking migration as complete to prevent retry");
+    if (!copySucceeded) {
+        NSLog(@"[MPPreferences] Preference copying failed - marking migration as complete to prevent retry");
         [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        [defaults synchronize];
+        // Note: Not calling synchronize - NSUserDefaults auto-syncs
+        return;
     }
+
+    // Mark migration as complete
+    [defaults setBool:YES forKey:kMPMigrationCompletedKey];
+    // Note: Not calling synchronize - NSUserDefaults auto-syncs (deprecated since macOS 10.13)
+
+    NSLog(@"[MPPreferences] Successfully migrated %lu preferences from legacy bundle identifier",
+          (unsigned long)migratedCount);
 }
 
 #pragma mark - Accessors
