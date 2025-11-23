@@ -52,13 +52,13 @@ jobs:
       - name: Archive app bundle
         run: |
           cd build
-          tar -czf "MacDown-3000-build-${{ steps.commit.outputs.sha }}.tar.gz" "MacDown 3000.app"
+          zip -r "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip" "MacDown 3000.app"
 
       - name: Upload app archive artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}.tar.gz
-          path: build/MacDown-3000-build-*.tar.gz
+          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip
+          path: build/MacDown-3000-build-*.zip
           retention-days: 7
 
       - name: Upload build logs
