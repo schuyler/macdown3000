@@ -9,7 +9,11 @@ on:
 jobs:
   test:
     name: Run Unit Tests
-    runs-on: macos-14
+    strategy:
+      matrix:
+        os: [macos-14, macos-15]
+      fail-fast: false  # Continue testing other OS versions if one fails
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
       pull-requests: write  # Needed for PR comments
@@ -33,6 +37,89 @@ jobs:
           -derivedDataPath DerivedData \
           -resultBundlePath TestResults.xcresult
       continue-on-error: false
+
+    - name: Test app launch (smoke test for issue #169)
+      timeout-minutes: 2
+      run: |
+        echo "=== Building MacDown for launch test ==="
+        xcodebuild build \
+          -workspace "MacDown 3000.xcworkspace" \
+          -scheme MacDown \
+          -configuration Debug \
+          -derivedDataPath DerivedData
+
+        # Find built app
+        APP_PATH=$(find DerivedData -name "MacDown 3000.app" -type d | head -n 1)
+
+        if [ -z "$APP_PATH" ]; then
+          echo "ERROR: Could not find built MacDown 3000.app"
+          exit 1
+        fi
+
+        echo "=== Found app at: $APP_PATH ==="
+
+        # Test 1: Fresh install scenario (no legacy preferences)
+        echo "=== Test 1: Fresh install (no preferences) ==="
+        defaults delete com.uranusjr.macdown 2>/dev/null || true
+        defaults delete app.macdown.macdown3000 2>/dev/null || true
+
+        # Launch app with timeout protection
+        # Use 'timeout' to kill if app hangs (GNU timeout is available on macOS via GitHub Actions)
+        # The app should launch, initialize, and we'll force-quit it after 5 seconds
+        echo "Launching MacDown 3000 (will auto-quit after 5 seconds)..."
+        timeout 5s open -W -n "$APP_PATH" || {
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 124 ]; then
+            echo "ERROR: App launch timed out (likely hanging) - Issue #169 not fixed"
+            exit 1
+          elif [ $EXIT_CODE -eq 143 ] || [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ App launched successfully (terminated as expected)"
+          else
+            echo "WARNING: Unexpected exit code: $EXIT_CODE"
+          fi
+        }
+
+        # Verify migration completed flag was set
+        MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
+        echo "Migration completed flag: $MIGRATION_COMPLETE"
+
+        # Test 2: With legacy preferences (migration scenario)
+        echo ""
+        echo "=== Test 2: With legacy preferences (migration test) ==="
+        defaults delete app.macdown.macdown3000 2>/dev/null || true
+        defaults write com.uranusjr.macdown testMigrationKey "testMigrationValue"
+        defaults write com.uranusjr.macdown editorBaseFontName "Monaco"
+
+        echo "Created test legacy preferences"
+
+        # Launch again with legacy preferences present
+        echo "Launching MacDown 3000 with legacy preferences (will auto-quit after 5 seconds)..."
+        timeout 5s open -W -n -F "$APP_PATH" || {
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 124 ]; then
+            echo "ERROR: App launch timed out during migration (Issue #169 not fixed)"
+            exit 1
+          elif [ $EXIT_CODE -eq 143 ] || [ $EXIT_CODE -eq 0 ]; then
+            echo "✓ App launched successfully with migration"
+          else
+            echo "WARNING: Unexpected exit code: $EXIT_CODE"
+          fi
+        }
+
+        # Verify migration completed
+        MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
+        if [ "$MIGRATION_COMPLETE" = "1" ]; then
+          echo "✓ Migration completed successfully"
+        else
+          echo "WARNING: Migration completed flag not set"
+        fi
+
+        # Clean up test preferences
+        defaults delete com.uranusjr.macdown 2>/dev/null || true
+        defaults delete app.macdown.macdown3000 2>/dev/null || true
+
+        echo ""
+        echo "=== Launch test completed successfully on ${{ matrix.os }} ==="
 
     - name: Generate coverage report
       if: always()
@@ -97,7 +184,7 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
+        name: coverage-report-${{ matrix.os }}
         path: |
           coverage.txt
           coverage.json
