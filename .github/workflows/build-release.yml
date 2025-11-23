@@ -50,7 +50,7 @@ jobs:
         with:
           name: MacDown-unsigned-dmg
           path: build/MacDown-*.dmg
-          retention-days: 30
+          retention-days: 7
 
       - name: Upload build logs
         if: failure()
