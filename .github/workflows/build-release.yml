@@ -57,7 +57,7 @@ jobs:
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}
+          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}.dmg
           path: build/MacDown-3000-build-*.dmg
           retention-days: 7
 
