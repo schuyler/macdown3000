@@ -52,7 +52,9 @@ jobs:
       - name: Archive app bundle
         run: |
           cd build
-          zip -r "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip" "MacDown 3000.app"
+          zip -r "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip" "MacDown 3000.app" || { echo "::error::Failed to create archive"; exit 1; }
+          echo "✅ Archive created:"
+          ls -lh "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip"
 
       - name: Upload app archive artifact
         uses: actions/upload-artifact@v4
