@@ -24,6 +24,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPUtilityTests.m | JS/ObjC bridge | Good | ~34 |
 | MPStringLookupTests.m | String parsing | Excellent | ~188 |
 | MPPreferencesTests.m | Preferences | Minimal | ~49 |
+| MPLocalizationTests.m | Localization validation | Good | ~120 |
 | MPHTMLTabularizeTests.m | HTML generation | Good | ~58 |
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
@@ -37,12 +38,13 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Export functionality
 - Plugin system
 - Most extension categories
-- All UI components
+- Most UI components
 
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
 - Scroll synchronization (MPDocument.m) - 68 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, and setext header detection (Issue #39, Issue #143, Issue #144)
+- Preferences UI localization - Validation tests for complete translations added (Issue #40)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -224,6 +226,13 @@ GitHub Actions macOS runners are:
 - (void)testPreferenceDefaults
 - (void)testPreferenceMigrationWithTimeout  // ✅ Issue #169 - timeout protection added
 
+// Localization (✅ Issue #40 - implemented)
+- (void)testGeneralPreferencesLocalization
+- (void)testEditorPreferencesLocalization
+- (void)testRenderingPreferencesLocalization
+- (void)testHTMLPreferencesLocalization
+- (void)testUpdatesPreferencesLocalization
+
 // File I/O
 - (void)testFileEncodingDetection
 - (void)testUTF8FileLoading
@@ -395,6 +404,7 @@ MacDownTests/
 │   ├── MPStringLookupTests.m
 │   ├── MPColorTests.m
 │   ├── MPPreferencesTests.m
+│   ├── MPLocalizationTests.m (✅ implemented - Issue #40 - localization validation)
 │   ├── MPAssetTests.m
 │   └── MPFileIOTests.m (new - planned)
 ├── Integration/ (planned)
