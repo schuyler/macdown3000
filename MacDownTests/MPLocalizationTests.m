@@ -42,23 +42,32 @@
               viewController:(NSString *)viewControllerName
                expectedCount:(NSUInteger)expectedCount
 {
-    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
-    NSString *basePath = [bundle.bundlePath stringByDeletingLastPathComponent];
-    basePath = [basePath stringByDeletingLastPathComponent]; // Go up to project root
+    // Get the MacDown app bundle (not the test bundle)
+    NSBundle *appBundle = [NSBundle bundleWithIdentifier:@"com.uranusjr.macdown"];
+    XCTAssertNotNil(appBundle, @"Could not find MacDown app bundle");
 
-    NSString *baseFile = [NSString stringWithFormat:@"%@/MacDown/Localization/Base.lproj/%@.strings", basePath, viewControllerName];
-    NSString *localeFile = [NSString stringWithFormat:@"%@/MacDown/Localization/%@.lproj/%@.strings", basePath, locale, viewControllerName];
-
-    NSSet *baseObjectIDs = [self objectIDsFromStringsFile:baseFile];
-    NSSet *localeObjectIDs = [self objectIDsFromStringsFile:localeFile];
-
-    // Base file might not exist if there are no localizable strings
-    if (!baseObjectIDs && expectedCount == 0) {
+    if (!appBundle) {
         return;
     }
 
+    // Load the localized strings from the app bundle
+    NSString *stringsPath = [appBundle pathForResource:viewControllerName
+                                                ofType:@"strings"
+                                           inDirectory:nil
+                                       forLocalization:locale];
+
+    XCTAssertNotNil(stringsPath,
+                    @"Localization file missing for %@ locale: %@",
+                    locale, viewControllerName);
+
+    if (!stringsPath) {
+        return;
+    }
+
+    NSSet *localeObjectIDs = [self objectIDsFromStringsFile:stringsPath];
+
     XCTAssertNotNil(localeObjectIDs,
-                    @"Localization file missing or invalid for %@ locale: %@",
+                    @"Failed to load localization file for %@ locale: %@",
                     locale, viewControllerName);
 
     if (localeObjectIDs) {
