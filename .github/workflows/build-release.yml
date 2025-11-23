@@ -45,6 +45,26 @@ jobs:
 
           echo "✅ Release build verification passed"
 
+      - name: Get commit SHA
+        id: commit
+        run: echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Archive app bundle
+        if: github.event_name == 'push'
+        run: |
+          cd build
+          zip -r "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip" "MacDown 3000.app" || { echo "::error::Failed to create archive"; exit 1; }
+          echo "✅ Archive created:"
+          ls -lh "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip"
+
+      - name: Upload app archive artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: MacDown-3000-build-${{ steps.commit.outputs.sha }}
+          path: build/MacDown-3000-build-*.zip
+          retention-days: 7
+
       - name: Upload build logs
         if: failure()
         uses: actions/upload-artifact@v4
