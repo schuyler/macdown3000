@@ -45,10 +45,14 @@ jobs:
 
           echo "✅ Release build verification passed"
 
+      - name: Get commit SHA
+        id: commit
+        run: echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
+
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MacDown-unsigned-dmg
+          name: MacDown-unsigned-dmg-${{ steps.commit.outputs.sha }}
           path: build/MacDown-*.dmg
           retention-days: 7
 
