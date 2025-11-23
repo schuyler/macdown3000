@@ -36,7 +36,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 
 **What Exists:**
 - **GitHub Actions workflow** (`.github/workflows/test.yml`)
-- Runs on: `macos-14` (macOS Sonoma)
+- Runs on: `macos-14` (macOS Sonoma) and `macos-15` (macOS Sequoia)
 - Triggers: Push/PR to `main` and `develop` branches
 - Steps:
   1. Checkout with submodules
@@ -44,12 +44,15 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
   3. Install CocoaPods via Bundler
   4. Build peg-markdown-highlight dependency
   5. Run xcodebuild tests with code coverage
-  6. Generate and upload coverage reports
-  7. Post coverage comments to PRs
-  8. Upload test results on failure
+  6. Run runtime launch tests (fresh install and migration scenarios)
+  7. Generate and upload coverage reports
+  8. Post coverage comments to PRs
+  9. Upload test results on failure
 
 **Strengths:**
-- Modern runner (macos-14 = Sonoma)
+- Modern runners (macos-14 = Sonoma, macos-15 = Sequoia)
+- Multi-version macOS testing ensures compatibility
+- Runtime launch tests detect hang-on-launch issues
 - Submodule handling
 - Test result artifact upload
 - Uses actions/checkout@v4 (current)
