@@ -143,7 +143,7 @@
 "HFQ-gK-NFA.title" = "Remplacement de texte";
 
 /* Class = "NSMenuItem"; title = "Left 1:1 Right"; ObjectID = "hOV-YQ-vzy"; */
-"hOV-YQ-vzy.title" = "Gauche 1:1 Right";
+"hOV-YQ-vzy.title" = "Gauche 1:1 Droite";
 
 /* Class = "NSMenuItem"; title = "Smart Quotes"; ObjectID = "hQb-2v-fYv"; */
 "hQb-2v-fYv.title" = "Citations intelligentes";
@@ -179,7 +179,7 @@
 "Jzs-tR-jkL.title" = "Diminuer le retrait";
 
 /* Class = "NSMenuItem"; title = "Contributing to MacDown"; ObjectID = "K3J-v5-s91"; */
-"K3J-v5-s91.title" = "Contribue à MacDown 3000";
+"K3J-v5-s91.title" = "Contribuer à MacDown 3000";
 
 /* Class = "NSMenuItem"; title = "Revert to Saved"; ObjectID = "KaW-ft-85H"; */
 "KaW-ft-85H.title" = "Revenir à la version sauvegardée";
@@ -221,7 +221,7 @@
 "OY7-WF-poV.title" = "Réduire";
 
 /* Class = "NSMenuItem"; title = "Stop Speaking"; ObjectID = "Oyz-dy-DGm"; */
-"Oyz-dy-DGm.title" = "Arrêter Dictée";
+"Oyz-dy-DGm.title" = "Arrêter la dictée";
 
 /* Class = "NSMenuItem"; title = "Delete"; ObjectID = "pa3-QI-u2k"; */
 "pa3-QI-u2k.title" = "Supprimer";
@@ -344,7 +344,7 @@
 "YEy-JH-Tfz.title" = "Rechercher et remplacer…";
 
 /* Class = "NSMenuItem"; title = "Start Speaking"; ObjectID = "Ynk-f8-cLZ"; */
-"Ynk-f8-cLZ.title" = "Démarrer Dictée";
+"Ynk-f8-cLZ.title" = "Démarrer la dictée";
 
 /* Class = "NSMenuItem"; title = "Show Substitutions"; ObjectID = "z6F-FW-3nz"; */
 "z6F-FW-3nz.title" = "Afficher les remplacements";
