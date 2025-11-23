@@ -168,14 +168,9 @@ nav .container {
 }
 
 .btn-secondary {
-    background-color: transparent;
-    color: white;
-    border: 2px solid white;
-}
-
-.btn-secondary:hover {
     background-color: white;
     color: #20a0a0;
+    border: 2px solid white;
 }
 
 /* Demo and Download Section */
