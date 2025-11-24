@@ -33,7 +33,7 @@ jobs:
           else
             # Auto-detect latest draft release
             echo "🔍 Auto-detecting latest draft release..."
-            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName')
+            LATEST_DRAFT=$(gh release list --limit 10 --json tagName,isDraft --jq '.[] | select(.isDraft == true) | .tagName' | head -n 1)
 
             if [[ -z "$LATEST_DRAFT" ]]; then
               echo "::error::No draft releases found. Please provide a release tag manually."
