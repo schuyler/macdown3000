@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag (e.g., v3000.0.0-beta.1)'
-        required: true
+        description: 'Release tag (optional - auto-detects latest draft if not provided)'
+        required: false
         type: string
 
 permissions:
@@ -20,9 +20,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Detect or use provided release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.event.inputs.release_tag }}"
+          PROVIDED_TAG="${{ github.event.inputs.release_tag }}"
+
+          if [[ -n "$PROVIDED_TAG" ]]; then
+            # Use provided tag
+            TAG="$PROVIDED_TAG"
+            echo "📌 Using provided release tag: $TAG"
+          else
+            # Auto-detect latest draft release
+            echo "🔍 Auto-detecting latest draft release..."
+            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName')
+
+            if [[ -z "$LATEST_DRAFT" ]]; then
+              echo "::error::No draft releases found. Please provide a release tag manually."
+              exit 1
+            fi
+
+            TAG="$LATEST_DRAFT"
+            echo "📌 Auto-detected draft release: $TAG"
+          fi
+
           VERSION=${TAG#v}  # Remove 'v' prefix
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
