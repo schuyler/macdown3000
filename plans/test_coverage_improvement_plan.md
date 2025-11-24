@@ -45,7 +45,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Test Infrastructure:**
 - ✅ XCTest framework configured
 - ✅ GitHub Actions CI pipeline (test.yml)
-- ✅ Runs on macOS-14 and macOS-15 runners
+- ✅ Runs on macOS-14, macOS-15, and macOS-15-intel (Intel-specific testing)
 - ✅ Runtime launch tests (detects hang-on-launch issues)
 - ✅ Code coverage reporting configured
 - ❌ No integration tests
