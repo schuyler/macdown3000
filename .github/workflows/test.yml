@@ -9,7 +9,7 @@ jobs:
     name: Run Unit Tests
     strategy:
       matrix:
-        os: [macos-14, macos-15]
+        os: [macos-14, macos-15, macos-15-intel]
       fail-fast: false  # Continue testing other OS versions if one fails
     runs-on: ${{ matrix.os }}
     permissions:
@@ -24,6 +24,17 @@ jobs:
 
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
+
+    - name: Verify architecture and system info
+      run: |
+        echo "=== System Architecture ==="
+        uname -m
+        echo ""
+        echo "=== CPU Information ==="
+        sysctl -n machdep.cpu.brand_string
+        echo ""
+        echo "=== macOS Version ==="
+        sw_vers
 
     - name: Run tests with coverage
       run: |
