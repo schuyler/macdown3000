@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.0.0)'
-        required: true
+        description: 'Version to release (e.g., 1.0.0, or leave empty to auto-detect from latest tag)'
+        required: false
 
 permissions:
   contents: write  # Required to create releases and upload assets
@@ -92,12 +92,31 @@ jobs:
           echo "✅ All required secrets are configured"
 
       - name: Extract version from tag or input
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # Triggered by tag push
             VERSION=${GITHUB_REF#refs/tags/}
             VERSION=${VERSION#v}  # Remove 'v' prefix if present
+            echo "📌 Using tag version: $VERSION"
           else
-            VERSION="${{ github.event.inputs.version }}"
+            # Triggered by workflow_dispatch
+            PROVIDED_VERSION="${{ github.event.inputs.version }}"
+            if [[ -n "$PROVIDED_VERSION" ]]; then
+              VERSION="$PROVIDED_VERSION"
+              echo "📌 Using provided version: $VERSION"
+            else
+              # Auto-detect latest tag
+              echo "🔍 Auto-detecting version from latest tag..."
+              LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+              if [[ -z "$LATEST_TAG" ]]; then
+                echo "::error::No releases found. Please provide a version manually."
+                exit 1
+              fi
+              VERSION=${LATEST_TAG#v}  # Remove 'v' prefix
+              echo "📌 Auto-detected version: $VERSION"
+            fi
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "📦 Building version: $VERSION"
@@ -442,6 +461,9 @@ jobs:
           - ✅ DMG created and signed
           - ⏳ Submitted for Apple notarization (typically takes 5-15 minutes)
           - ❌ Not yet stapled
+
+          **Notarization Details:**
+          - Submission ID: \`${NOTARIZATION_ID}\`
 
           ### Next Steps
 
