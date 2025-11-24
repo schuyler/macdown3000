@@ -305,24 +305,15 @@ jobs:
 
           echo "✅ Extracted changelog for version ${VERSION}"
 
-          # Create release notes with changelog + installation/verification details
+          # Create release notes with changelog + verification details
           cat > release-notes.md <<EOF
           **MacDown 3000** is a modern, open-source Markdown editor for macOS.
 
           ${CHANGELOG_CONTENT}
 
-          ## Installation
-
-          **Platform:** macOS 10.14 or later (Universal - Apple Silicon and Intel)
-
-          1. Download \`MacDown-${VERSION}.dmg\` below
-          2. Open the DMG
-          3. Drag MacDown 3000.app to your Applications folder
-          4. Launch from Applications
-
-          ✅ This app is **fully notarized and stapled** by Apple - it will open without security warnings.
-
           ## Verification
+
+          ✅ This build is **fully notarized and stapled** by Apple.
 
           **SHA256 Checksum:**
           \`\`\`
