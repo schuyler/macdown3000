@@ -462,6 +462,9 @@ jobs:
           - ⏳ Submitted for Apple notarization (typically takes 5-15 minutes)
           - ❌ Not yet stapled
 
+          **Notarization Details:**
+          - Submission ID: \`${NOTARIZATION_ID}\`
+
           ### Next Steps
 
           After receiving Apple's notarization approval email:
