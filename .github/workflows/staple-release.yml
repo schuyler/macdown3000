@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag (e.g., v3000.0.0-beta.1)'
-        required: true
+        description: 'Release tag (optional - auto-detects latest draft if not provided)'
+        required: false
         type: string
 
 permissions:
@@ -20,9 +20,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
+      - name: Detect or use provided release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.event.inputs.release_tag }}"
+          PROVIDED_TAG="${{ github.event.inputs.release_tag }}"
+
+          if [[ -n "$PROVIDED_TAG" ]]; then
+            # Use provided tag
+            TAG="$PROVIDED_TAG"
+            echo "📌 Using provided release tag: $TAG"
+          else
+            # Auto-detect latest draft release
+            echo "🔍 Auto-detecting latest draft release..."
+            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName')
+
+            if [[ -z "$LATEST_DRAFT" ]]; then
+              echo "::error::No draft releases found. Please provide a release tag manually."
+              exit 1
+            fi
+
+            TAG="$LATEST_DRAFT"
+            echo "📌 Auto-detected draft release: $TAG"
+          fi
+
           VERSION=${TAG#v}  # Remove 'v' prefix
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
@@ -55,7 +76,7 @@ jobs:
           echo "   Release ID: $RELEASE_ID"
           echo "   Notarization ID: $NOTARIZATION_ID"
 
-      - name: Verify notarization status
+      - name: Verify notarization status (with polling)
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
@@ -63,39 +84,63 @@ jobs:
         run: |
           echo "🔍 Checking notarization status..."
 
-          # Get notarization info
-          xcrun notarytool info "$NOTARIZATION_ID" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --output-format json > notarization-info.json
+          MAX_ATTEMPTS=120  # 120 attempts = up to 60 minutes with 30s delays
+          ATTEMPT=1
+          WAIT_TIME=30     # Start with 30 second wait between checks
 
-          STATUS=$(jq -r '.status' notarization-info.json)
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "📋 Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking notarization status..."
 
-          echo "Status: $STATUS"
+            # Get notarization info
+            xcrun notarytool info "$NOTARIZATION_ID" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --output-format json > notarization-info.json
 
-          if [[ "$STATUS" != "Accepted" ]]; then
-            echo "::error::Notarization status is '$STATUS', not 'Accepted'"
-            echo ""
-            echo "Current status: $STATUS"
-            echo ""
-            if [[ "$STATUS" == "In Progress" ]]; then
-              echo "Notarization is still in progress. Please wait for Apple's email and try again."
+            STATUS=$(jq -r '.status' notarization-info.json)
+            echo "   Status: $STATUS"
+
+            if [[ "$STATUS" == "Accepted" ]]; then
+              echo ""
+              echo "✅ Notarization accepted by Apple!"
+              exit 0
             elif [[ "$STATUS" == "Invalid" ]]; then
-              echo "Notarization was rejected. Getting detailed log..."
+              echo "::error::Notarization was rejected by Apple"
+              echo ""
+              echo "Getting detailed rejection log..."
               xcrun notarytool log "$NOTARIZATION_ID" \
                 --apple-id "$APPLE_ID" \
                 --password "$APPLE_APP_PASSWORD" \
                 --team-id "$APPLE_TEAM_ID" \
                 developer_log.json || true
               if [[ -f developer_log.json ]]; then
+                echo ""
+                echo "Rejection details:"
                 cat developer_log.json
               fi
+              exit 1
+            elif [[ "$STATUS" == "In Progress" ]]; then
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "   ⏳ Still processing... waiting ${WAIT_TIME}s before next check"
+                sleep $WAIT_TIME
+                ATTEMPT=$((ATTEMPT + 1))
+              else
+                echo "::error::Notarization timeout - exceeded maximum wait time (60 minutes)"
+                echo ""
+                echo "The notarization is still in progress. This may indicate:"
+                echo "  - Apple's servers are experiencing delays"
+                echo "  - There's an issue with the notarization submission"
+                echo ""
+                echo "You can check the status manually at any time by running:"
+                echo "  xcrun notarytool info $NOTARIZATION_ID --apple-id <email> --password <app-password> --team-id <team-id>"
+                exit 1
+              fi
+            else
+              echo "::error::Unknown notarization status: $STATUS"
+              exit 1
             fi
-            exit 1
-          fi
-
-          echo "✅ Notarization accepted by Apple"
+          done
 
       - name: Download and verify DMG from release
         env:
@@ -260,24 +305,15 @@ jobs:
 
           echo "✅ Extracted changelog for version ${VERSION}"
 
-          # Create release notes with changelog + installation/verification details
+          # Create release notes with changelog + verification details
           cat > release-notes.md <<EOF
           **MacDown 3000** is a modern, open-source Markdown editor for macOS.
 
           ${CHANGELOG_CONTENT}
 
-          ## Installation
-
-          **Platform:** macOS 10.14 or later (Universal - Apple Silicon and Intel)
-
-          1. Download \`MacDown-${VERSION}.dmg\` below
-          2. Open the DMG
-          3. Drag MacDown 3000.app to your Applications folder
-          4. Launch from Applications
-
-          ✅ This app is **fully notarized and stapled** by Apple - it will open without security warnings.
-
           ## Verification
+
+          ✅ This build is **fully notarized and stapled** by Apple.
 
           **SHA256 Checksum:**
           \`\`\`
