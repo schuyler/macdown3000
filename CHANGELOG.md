@@ -1,5 +1,16 @@
 # Changelog
 
+## [3000.0.0-beta.1] - 2025-11-24
+
+### Fixed
+- **Hang on launch for macOS Sequoia** - Fixed initialization deadlock affecting macOS 15.x (#169, #170)
+- **Intel Mac toolbar crash** - Fixed buffer overflow in toolbar initialization (#178)
+- **French localization errors** - Corrected translation issues in French language files (#172)
+
+### Infrastructure
+- **Intel CI testing** - Added dedicated Intel Mac testing with diagnostic logging (#177)
+- **Unsigned artifact preservation** - Retained unsigned builds in dry run workflow (#171)
+
 ## [3000.0.0-beta.0] - 2025-11-21
 
 ### Major Changes
