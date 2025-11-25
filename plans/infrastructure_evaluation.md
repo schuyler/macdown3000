@@ -23,7 +23,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 **Critical Issues:**
 - ⚠️ Outdated dependencies (CocoaPods 1.8.4 from 2020)
 - ✅ Ruby 2.7 in CI (EOL, should use 3.x) - Updated to Ruby 3.3
-- ⚠️ Limited test coverage (~484 lines for 63 source files)
+- ⚠️ Limited test coverage (~1,396 lines for 63 source files - improved but still needs expansion)
 - ⚠️ No CHANGELOG.md
 - ⚠️ README still references original MacDown project
 - ✅ ~~No code signing/release automation~~ (IMPLEMENTED - see .github/workflows/release.yml)
@@ -105,17 +105,19 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 ### Current State: ⚠️ ADEQUATE (needs expansion)
 
 **What Exists:**
-- **6 test files** in `MacDownTests/`:
+- **8 test files** in `MacDownTests/`:
   - `MPUtilityTests.m` (33 lines) - JavaScript bridge tests
   - `MPColorTests.m` (38 lines) - Color conversion tests
   - `MPPreferencesTests.m` (48 lines) - Preferences tests
   - `MPHTMLTabularizeTests.m` (57 lines) - HTML table tests
   - `MPAssetTests.m` (121 lines) - Asset handling tests
   - `MPStringLookupTests.m` (187 lines) - String lookup tests
+  - `MPDocumentIOTests.m` (340 lines) - File I/O, document state management, autosave
+  - `MPScrollSyncTests.m` (574 lines) - Scroll sync, header detection, JavaScript sort logic
 
-- **Total: ~484 lines of test code** for **63 source files**
+- **Total: ~1,396 lines of test code** for **63 source files**
 
-**Test Coverage:** ~7.7 lines of tests per source file (VERY LOW)
+**Test Coverage:** ~22 lines of tests per source file (IMPROVED)
 
 **What's Tested:**
 - ✅ JavaScript-to-ObjC bridge
@@ -124,11 +126,12 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ HTML tabularization
 - ✅ Asset management
 - ✅ String lookups
+- ✅ File I/O and autosave (Issue #90)
+- ✅ Scroll synchronization (Issue #39, Issue #144)
+- ✅ JavaScript sort logic (Issue #144)
 
 **What's NOT Tested:**
-- ❌ File I/O and autosave
-- ❌ Editor functionality
-- ❌ Preview pane rendering
+- ❌ Editor functionality (text manipulation, syntax highlighting)
 - ❌ PDF/HTML export
 - ❌ Mermaid diagram rendering
 - ❌ LaTeX math rendering
@@ -136,6 +139,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 
 **Minimal Coverage:**
 - ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), needs expansion
+- ⚠️ Preview pane - Scroll sync tested (Issue #39, Issue #144), but rendering logic needs more coverage
 
 ### Test Infrastructure:
 - Uses **XCTest** framework (standard)
@@ -159,30 +163,36 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
    - ⏳ Add syntax highlighting tests (MPSyntaxHighlightingTests.m)
    - ⏳ Add math rendering tests (MPMathJaxRenderingTests.m)
 
-2. **Add file I/O tests**
-   - Test open, save, autosave
-   - Test file permissions issues
-   - Test recovery from crashes
+2. ✅ **Add file I/O tests** (Issue #90 - completed)
+   - ✅ MPDocumentIOTests.m implemented with 12 tests
+   - ✅ Tests cover open, save, autosave, document state management
+   - ⏳ Test file permissions issues (future expansion)
+   - ⏳ Test recovery from crashes (future expansion)
+
+3. ✅ **Add scroll sync tests** (Issue #39, Issue #144 - completed)
+   - ✅ MPScrollSyncTests.m implemented with 28 tests
+   - ✅ Tests cover header detection, scroll position preservation
+   - ✅ Tests cover JavaScript sort logic edge cases (Issue #144)
 
 #### HIGH PRIORITY
-3. **Add UI tests using XCUITest**
+4. **Add UI tests using XCUITest**
    - Test main window creation
    - Test editor-preview sync
    - Test menu commands
    - Test keyboard shortcuts
 
-4. **Add integration tests**
+5. **Add integration tests**
    - Test full document lifecycle
    - Test export workflows (PDF, HTML)
    - Test settings migration
 
 #### MEDIUM PRIORITY
-5. **Add performance benchmarks**
+6. **Add performance benchmarks**
    - Rendering speed tests
    - Memory usage profiling
    - Startup time measurement
 
-6. ✅ **Set up test coverage reporting** (completed)
+7. ✅ **Set up test coverage reporting** (completed)
    - Coverage reporting configured in CI
    - Future: Consider coverage threshold enforcement
 
@@ -515,24 +525,34 @@ Create issues for:
    - ✅ DMG creation with professional layout
    - ✅ Draft GitHub releases
 
-6. ✅ **Add comprehensive Markdown rendering tests** (Issue #89, Issue #81 - in progress)
+6. ✅ **Add comprehensive Markdown rendering tests** (Issue #89, Issue #81 - partially complete)
    - Status: 18 golden file tests + 3 regression tests implemented
    - Regression tests document known hoedown parser bugs (#34, #36, #37)
    - Next: Expand coverage for syntax highlighting and math rendering
    - Impact: Prevent rendering regressions
 
-7. **Create developer setup script (setup.sh)**
+7. ✅ **Add file I/O and document state tests** (Issue #90 - completed)
+   - Status: MPDocumentIOTests.m with 12 comprehensive tests
+   - Tests cover document creation, saving, loading, autosave, state management
+   - Impact: High - prevents data loss bugs
+
+8. ✅ **Add scroll sync and JavaScript logic tests** (Issue #39, Issue #144 - completed)
+   - Status: MPScrollSyncTests.m with 28 comprehensive tests
+   - Tests cover header detection, scroll position preservation, JavaScript sort edge cases
+   - Impact: High - prevents scroll sync regressions
+
+9. **Create developer setup script (setup.sh)**
    - Priority: MEDIUM
    - Effort: LOW
    - Impact: Better developer experience
 
 ### Phase 2: Quality Improvements (v1.1+)
 
-8. Add UI/integration tests
-9. ✅ Set up code coverage monitoring (completed)
-10. Add linting workflows (SwiftLint, clang-format)
-11. Create architecture documentation
-12. Generate API docs
+10. ✅ Set up code coverage monitoring (completed)
+11. Add UI/integration tests
+12. Add linting workflows (SwiftLint, clang-format)
+13. Create architecture documentation
+14. Generate API docs
 
 ---
 

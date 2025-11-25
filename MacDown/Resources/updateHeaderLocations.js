@@ -66,7 +66,10 @@
 
         // Sort by document order
         result.sort(function(a, b) {
-            return a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+            var position = a.node.compareDocumentPosition(b.node);
+            if (position & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+            if (position & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+            return 0;  // Same node or disconnected
         });
 
         // Return y-coordinates
