@@ -34,6 +34,24 @@
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+/**
+ * Fallback JavaScript for header and image location detection.
+ * Used if updateHeaderLocations.js fails to load from bundle.
+ * See also: MacDown/Resources/updateHeaderLocations.js
+ */
+static NSString * const kUpdateHeaderLocationsFallbackScript = @
+"(function(){try{if(!document.body)return[];var h=document.querySelectorAll('h1, h2, h3, h4, h5, h6');"
+"var i=document.querySelectorAll('img');var r=[];for(var x=0;x<h.length;x++){r.push({node:h[x],type:'header'})}"
+"for(var x=0;x<i.length;x++){var img=i[x];var p=img.parentElement;var s=false;"
+"if(p){if(p.tagName==='P'){var c=0;for(var y=0;y<p.children.length;y++){if(p.children[y].tagName==='IMG')c++}s=(c===1)}"
+"else if(p.children.length===1){s=true}else if(p.tagName==='A'&&p.children.length===1){var g=p.parentElement;"
+"if(g&&g.tagName==='P'){var c=0;for(var y=0;y<g.children.length;y++){var n=g.children[y];"
+"if(n.tagName==='IMG'||(n.tagName==='A'&&n.children.length===1&&n.children[0].tagName==='IMG'))c++}s=(c===1)}"
+"else if(g&&g.children.length===1){s=true}}if(s){r.push({node:img,type:'image'})}}"
+"r.sort(function(a,b){var pos=a.node.compareDocumentPosition(b.node);"
+"if(pos&Node.DOCUMENT_POSITION_FOLLOWING)return -1;if(pos&Node.DOCUMENT_POSITION_PRECEDING)return 1;return 0});"
+"return r.map(function(item){return item.node.getBoundingClientRect().top})}catch(e){return[]}})()";
+
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
@@ -1791,8 +1809,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSString *scriptPath = [[NSBundle mainBundle] pathForResource:@"updateHeaderLocations" ofType:@"js"];
-        if (scriptPath) {
-            script = [NSString stringWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:NULL];
+
+        if (!scriptPath) {
+            NSLog(@"[MacDown] updateHeaderLocations.js not found in bundle resources");
+            NSAssert(scriptPath != nil,
+                    @"updateHeaderLocations.js missing from bundle - verify Xcode build configuration");
+        } else {
+            NSError *error = nil;
+            script = [NSString stringWithContentsOfFile:scriptPath
+                                              encoding:NSUTF8StringEncoding
+                                                 error:&error];
+
+            if (error || !script) {
+                NSLog(@"[MacDown] Failed to read updateHeaderLocations.js: %@",
+                      error.localizedDescription ?: @"unknown error");
+                NSAssert(script != nil,
+                        @"Failed to load updateHeaderLocations.js - check file encoding and permissions");
+            }
+        }
+
+        // Fall back to inline JavaScript if file loading failed
+        if (!script) {
+            NSLog(@"[MacDown] Using inline fallback for header location detection");
+            script = kUpdateHeaderLocationsFallbackScript;
         }
     });
 
