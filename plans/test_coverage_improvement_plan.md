@@ -17,7 +17,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 
 ## Current State Assessment
 
-### What We Have (7 test files, ~822 lines)
+### What We Have (8 test files, ~1,396 lines)
 
 | Test File | Coverage Area | Quality | Lines |
 |-----------|--------------|---------|-------|
@@ -28,6 +28,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
 | MPDocumentIOTests.m | File I/O, document state | Good | ~340 |
+| MPScrollSyncTests.m | Scroll sync, JavaScript sort | Excellent | ~574 |
 
 ### What We're Missing (Critical Gaps)
 
@@ -41,6 +42,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
+- Scroll synchronization (MPDocument.m) - 28 regression tests covering header detection, scroll position preservation, and JavaScript sort logic (Issue #39, Issue #144)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -126,6 +128,7 @@ GitHub Actions macOS runners are:
 
 **Test Files:**
 - `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave)
+- `MPScrollSyncTests.m` - ✅ COMPLETED (28 tests, scroll sync, header detection, JavaScript sort logic - Issue #39, Issue #144)
 - Additional tests needed for complete document lifecycle coverage
 
 **Estimated Impact:**
