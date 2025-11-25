@@ -23,7 +23,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 **Critical Issues:**
 - ⚠️ Outdated dependencies (CocoaPods 1.8.4 from 2020)
 - ✅ Ruby 2.7 in CI (EOL, should use 3.x) - Updated to Ruby 3.3
-- ⚠️ Limited test coverage (~1,396 lines for 63 source files - improved but still needs expansion)
+- ⚠️ Limited test coverage (~1,897 lines for 63 source files - improved but still needs expansion)
 - ⚠️ No CHANGELOG.md
 - ⚠️ README still references original MacDown project
 - ✅ ~~No code signing/release automation~~ (IMPLEMENTED - see .github/workflows/release.yml)
@@ -113,11 +113,11 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
   - `MPAssetTests.m` (121 lines) - Asset handling tests
   - `MPStringLookupTests.m` (187 lines) - String lookup tests
   - `MPDocumentIOTests.m` (340 lines) - File I/O, document state management, autosave
-  - `MPScrollSyncTests.m` (574 lines) - Scroll sync, header detection, JavaScript sort logic
+  - `MPScrollSyncTests.m` (1075 lines) - Scroll sync, header detection, JavaScript sort logic, horizontal rule regex, setext header detection
 
-- **Total: ~1,396 lines of test code** for **63 source files**
+- **Total: ~1,897 lines of test code** for **63 source files**
 
-**Test Coverage:** ~22 lines of tests per source file (IMPROVED)
+**Test Coverage:** ~30 lines of tests per source file (IMPROVED)
 
 **What's Tested:**
 - ✅ JavaScript-to-ObjC bridge
@@ -129,6 +129,8 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ File I/O and autosave (Issue #90)
 - ✅ Scroll synchronization (Issue #39, Issue #144)
 - ✅ JavaScript sort logic (Issue #144)
+- ✅ Horizontal rule regex edge cases (Issue #143)
+- ✅ Setext header detection (Issue #143)
 
 **What's NOT Tested:**
 - ❌ Editor functionality (text manipulation, syntax highlighting)
@@ -139,7 +141,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 
 **Minimal Coverage:**
 - ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), needs expansion
-- ⚠️ Preview pane - Scroll sync tested (Issue #39, Issue #144), but rendering logic needs more coverage
+- ⚠️ Preview pane - Scroll sync tested (Issue #39, Issue #143, Issue #144), but rendering logic needs more coverage
 
 ### Test Infrastructure:
 - Uses **XCTest** framework (standard)
@@ -169,10 +171,12 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
    - ⏳ Test file permissions issues (future expansion)
    - ⏳ Test recovery from crashes (future expansion)
 
-3. ✅ **Add scroll sync tests** (Issue #39, Issue #144 - completed)
-   - ✅ MPScrollSyncTests.m implemented with 28 tests
+3. ✅ **Add scroll sync tests** (Issue #39, Issue #143, Issue #144 - completed)
+   - ✅ MPScrollSyncTests.m implemented with 68 tests
    - ✅ Tests cover header detection, scroll position preservation
    - ✅ Tests cover JavaScript sort logic edge cases (Issue #144)
+   - ✅ Tests cover horizontal rule regex edge cases (Issue #143)
+   - ✅ Tests cover setext header detection (Issue #143)
 
 #### HIGH PRIORITY
 4. **Add UI tests using XCUITest**
@@ -536,9 +540,9 @@ Create issues for:
    - Tests cover document creation, saving, loading, autosave, state management
    - Impact: High - prevents data loss bugs
 
-8. ✅ **Add scroll sync and JavaScript logic tests** (Issue #39, Issue #144 - completed)
-   - Status: MPScrollSyncTests.m with 28 comprehensive tests
-   - Tests cover header detection, scroll position preservation, JavaScript sort edge cases
+8. ✅ **Add scroll sync and JavaScript logic tests** (Issue #39, Issue #143, Issue #144 - completed)
+   - Status: MPScrollSyncTests.m with 68 comprehensive tests
+   - Tests cover header detection, scroll position preservation, JavaScript sort edge cases, horizontal rule regex edge cases, setext header detection
    - Impact: High - prevents scroll sync regressions
 
 9. **Create developer setup script (setup.sh)**
