@@ -1878,11 +1878,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Check if line is a setext-style header (dashes after content).
         // A line of dashes is a setext header if:
         //   1. Previous line had content (text, not dashes)
-        //   2. Current line is all dashes (matches dashRegex)
-        //   3. Current line is NOT a horizontal rule (3+ dashes might be HR)
+        //   2. Current line is all consecutive dashes (matches dashRegex)
         //
-        // This ensures "Text\n---" is a header but "\n---" is an HR.
-        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] && !isHorizontalRule;
+        // Note: dashRegex pattern ^([-]+)$ only matches consecutive dashes (---, not - - -).
+        // Spaced patterns like "- - -" match hrRegex but not dashRegex, so they're HRs.
+        // This ensures "Text\n---" is a setext header but "\n---" and "- - -" are HRs.
+        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
 
         BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0 ||
                         [imgRefRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0);
