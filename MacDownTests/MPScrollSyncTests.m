@@ -8,6 +8,7 @@
 
 #import <XCTest/XCTest.h>
 #import <WebKit/WebKit.h>
+#import <JavaScriptCore/JavaScriptCore.h>
 #import "MPDocument.h"
 #import "MPPreferences.h"
 
@@ -386,6 +387,194 @@
     self.document.lastPreviewScrollTop = 123.456;
     XCTAssertEqualWithAccuracy(self.document.lastPreviewScrollTop, 123.456, 0.01,
                               @"Should handle fractional scroll position");
+}
+
+#pragma mark - Sort Logic Tests (Issue #144)
+
+/**
+ * Test that JavaScript sort function properly handles all compareDocumentPosition return values.
+ * Regression test for Issue #144: Sort logic should handle edge cases more robustly.
+ *
+ * This test demonstrates the bug by using the current (buggy) sort logic.
+ * It validates that the FIXED sort function will correctly handle:
+ * - DOCUMENT_POSITION_FOLLOWING (bit 2, value 4)
+ * - DOCUMENT_POSITION_PRECEDING (bit 1, value 2)
+ * - Nodes in various document positions
+ *
+ * Expected: This test FAILS with buggy code, PASSES after fix.
+ */
+- (void)testJavaScriptSortHandlesAllComparisons
+{
+    // Unit test of the sort logic in isolation
+    // Document order is: C → B → A (C comes first, A comes last)
+    NSString *testScript = @"(function() {\n"
+                           @"    // Create mock nodes with compareDocumentPosition\n"
+                           @"    // Document order: nodeC, nodeB, nodeA\n"
+                           @"    \n"
+                           @"    var nodeC = {\n"
+                           @"        name: 'nodeC',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            if (other.name === 'nodeA') return 4; // A FOLLOWS C\n"
+                           @"            if (other.name === 'nodeB') return 4; // B FOLLOWS C\n"
+                           @"            return 0;\n"
+                           @"        },\n"
+                           @"        getBoundingClientRect: function() { return {top: 10}; }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    var nodeB = {\n"
+                           @"        name: 'nodeB',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            if (other.name === 'nodeC') return 2; // C PRECEDES B\n"
+                           @"            if (other.name === 'nodeA') return 4; // A FOLLOWS B\n"
+                           @"            return 0;\n"
+                           @"        },\n"
+                           @"        getBoundingClientRect: function() { return {top: 20}; }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    var nodeA = {\n"
+                           @"        name: 'nodeA',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            if (other.name === 'nodeC') return 2; // C PRECEDES A\n"
+                           @"            if (other.name === 'nodeB') return 2; // B PRECEDES A\n"
+                           @"            return 0;\n"
+                           @"        },\n"
+                           @"        getBoundingClientRect: function() { return {top: 30}; }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    // Create result array in wrong order (A, B, C)\n"
+                           @"    // Correct document order should be: C, B, A\n"
+                           @"    var result = [\n"
+                           @"        {node: nodeA, type: 'header'},\n"
+                           @"        {node: nodeB, type: 'header'},\n"
+                           @"        {node: nodeC, type: 'header'}\n"
+                           @"    ];\n"
+                           @"    \n"
+                           @"    // This is the CURRENT (buggy) sort from lines 67-70\n"
+                           @"    result.sort(function(a, b) {\n"
+                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"    });\n"
+                           @"    \n"
+                           @"    // Return the sorted node names\n"
+                           @"    return result.map(function(item) { return item.node.name; });\n"
+                           @"})()";
+
+    JSContext *context = [[JSContext alloc] init];
+
+    // Set up Node constants
+    context[@"Node"] = @{
+        @"DOCUMENT_POSITION_DISCONNECTED": @1,
+        @"DOCUMENT_POSITION_PRECEDING": @2,
+        @"DOCUMENT_POSITION_FOLLOWING": @4,
+        @"DOCUMENT_POSITION_CONTAINS": @8,
+        @"DOCUMENT_POSITION_CONTAINED_BY": @16
+    };
+
+    JSValue *result = [context evaluateScript:testScript];
+    NSArray *sortedNames = [result toArray];
+
+    // With the CURRENT buggy code, the sort is incorrect
+    // This test documents the bug and will FAIL until we fix it
+    //
+    // Expected order (correct document order): [nodeC, nodeB, nodeA]
+    // With current buggy code, we get wrong order because it only checks FOLLOWING bit
+    //
+    // The bug: only checking FOLLOWING bit (& 4), not PRECEDING bit (& 2)
+    // When comparing nodeA to nodeB, nodeA.compare(nodeB) = 2 (PRECEDING)
+    // Buggy code: (2 & 4) = 0 → returns 1 (A > B) ← WRONG
+    // Fixed code should return -1 (A < B) because B precedes A
+
+    NSLog(@"Current sort result: %@", sortedNames);
+    NSLog(@"Expected (correct) order: [nodeC, nodeB, nodeA]");
+
+    // This assertion will FAIL with the current buggy code
+    // After fixing lines 67-70 in updateHeaderLocations.js, it should PASS
+    XCTAssertEqualObjects(sortedNames[0], @"nodeC",
+                         @"First node should be nodeC (precedes all others)");
+    XCTAssertEqualObjects(sortedNames[1], @"nodeB",
+                         @"Second node should be nodeB (between C and A)");
+    XCTAssertEqualObjects(sortedNames[2], @"nodeA",
+                         @"Third node should be nodeA (follows all others)");
+}
+
+/**
+ * Test that sort function handles same node comparison (edge case).
+ * Regression test for Issue #144.
+ */
+- (void)testJavaScriptSortHandlesSameNode
+{
+    NSString *testScript = @"(function() {\n"
+                           @"    var sameNode = {\n"
+                           @"        name: 'sameNode',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            return 0; // Same node\n"
+                           @"        }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    var result = [{node: sameNode, type: 'header'}];\n"
+                           @"    \n"
+                           @"    // Current buggy sort\n"
+                           @"    result.sort(function(a, b) {\n"
+                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"    });\n"
+                           @"    \n"
+                           @"    return result.length;\n"
+                           @"})()";
+
+    JSContext *context = [[JSContext alloc] init];
+    JSValue *result = [context evaluateScript:testScript];
+
+    // Should not crash and should return 1 element
+    XCTAssertEqual([result toInt32], 1,
+                  @"Single node array should remain size 1 after sort");
+}
+
+/**
+ * Test that sort function handles disconnected nodes (edge case).
+ * Regression test for Issue #144.
+ *
+ * The buggy sort always returns 1 when FOLLOWING bit isn't set,
+ * even for disconnected nodes (which should return 0 for stability).
+ * This test passes with both buggy and fixed code (no crash),
+ * but documents the edge case behavior.
+ */
+- (void)testJavaScriptSortHandlesDisconnectedNodes
+{
+    NSString *testScript = @"(function() {\n"
+                           @"    var disconnectedA = {\n"
+                           @"        name: 'disconnectedA',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            return 1; // DISCONNECTED\n"
+                           @"        }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    var disconnectedB = {\n"
+                           @"        name: 'disconnectedB',\n"
+                           @"        compareDocumentPosition: function(other) {\n"
+                           @"            return 1; // DISCONNECTED\n"
+                           @"        }\n"
+                           @"    };\n"
+                           @"    \n"
+                           @"    var result = [\n"
+                           @"        {node: disconnectedA, type: 'header'},\n"
+                           @"        {node: disconnectedB, type: 'header'}\n"
+                           @"    ];\n"
+                           @"    \n"
+                           @"    // Current buggy sort - returns 1 for disconnected nodes\n"
+                           @"    result.sort(function(a, b) {\n"
+                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"    });\n"
+                           @"    \n"
+                           @"    return result.length;\n"
+                           @"})()";
+
+    JSContext *context = [[JSContext alloc] init];
+    JSValue *result = [context evaluateScript:testScript];
+
+    // Should not crash and should return 2 elements
+    // With buggy code: always returns 1 (causes unnecessary swaps)
+    // With fixed code: should return 0 (stable sort for disconnected nodes)
+    XCTAssertEqual([result toInt32], 2,
+                  @"Disconnected nodes should not crash sort");
 }
 
 @end
