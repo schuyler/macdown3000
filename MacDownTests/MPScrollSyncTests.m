@@ -570,4 +570,506 @@
                   @"Disconnected nodes should not crash sort");
 }
 
+#pragma mark - Horizontal Rule Detection Tests (Issue #143)
+
+#pragma mark - Basic HR Types
+
+/**
+ * Test that three dashes form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleThreeDashes
+{
+    NSString *markdown = @"---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Three dashes should be recognized as HR");
+}
+
+/**
+ * Test that three asterisks form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleThreeAsterisks
+{
+    NSString *markdown = @"***";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Three asterisks should be recognized as HR");
+}
+
+/**
+ * Test that three underscores form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleThreeUnderscores
+{
+    NSString *markdown = @"___";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Three underscores should be recognized as HR");
+}
+
+#pragma mark - Spacing Variants
+
+/**
+ * Test that spaced dashes form a horizontal rule.
+ * Regression test for Issue #143 - CommonMark allows spaces between HR characters.
+ */
+- (void)testHorizontalRuleSpacedDashes
+{
+    NSString *markdown = @"- - -";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Spaced dashes (- - -) should be recognized as HR");
+}
+
+/**
+ * Test that spaced asterisks form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleSpacedAsterisks
+{
+    NSString *markdown = @"* * *";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Spaced asterisks (* * *) should be recognized as HR");
+}
+
+/**
+ * Test that spaced underscores form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleSpacedUnderscores
+{
+    NSString *markdown = @"_ _ _";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Spaced underscores (_ _ _) should be recognized as HR");
+}
+
+/**
+ * Test that irregularly spaced characters form a horizontal rule.
+ * Regression test for Issue #143 - any amount of whitespace allowed.
+ */
+- (void)testHorizontalRuleIrregularSpacing
+{
+    NSString *markdown = @"-  -  -";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Irregularly spaced dashes should be recognized as HR");
+}
+
+#pragma mark - Minimum Character Requirements
+
+/**
+ * Test that two dashes do NOT form a horizontal rule.
+ * Regression test for Issue #143 - minimum 3 characters required.
+ */
+- (void)testTwoDashesNotHorizontalRule
+{
+    NSString *markdown = @"Some text\n--";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Two dashes should NOT be treated as HR (setext header instead)");
+}
+
+/**
+ * Test that single dash does NOT form a horizontal rule.
+ * Regression test for Issue #143.
+ */
+- (void)testSingleDashNotHorizontalRule
+{
+    NSString *markdown = @"-";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Single dash should NOT be treated as HR");
+}
+
+/**
+ * Test that two spaced dashes do NOT form a horizontal rule.
+ * Regression test for Issue #143 - must have 3+ characters.
+ */
+- (void)testTwoSpacedDashesNotHorizontalRule
+{
+    NSString *markdown = @"- -";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Two spaced dashes should NOT be treated as HR");
+}
+
+#pragma mark - Setext vs HR Context
+
+/**
+ * Test that dashes after text form a setext header, not an HR.
+ * Regression test for Issue #143 - previousLineHadContent flag behavior.
+ */
+- (void)testSetextHeaderWithThreeDashes
+{
+    NSString *markdown = @"Header Text\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Three dashes after text should be setext header (context-dependent)");
+}
+
+/**
+ * Test that dashes after text form a setext header.
+ * Regression test for Issue #143.
+ */
+- (void)testSetextHeaderWithManyDashes
+{
+    NSString *markdown = @"Header Text\n--------";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Many dashes after text should be setext header");
+}
+
+/**
+ * Test that dashes after blank line form an HR, not a header.
+ * Regression test for Issue #143 - blank line breaks setext context.
+ */
+- (void)testHorizontalRuleAfterBlankLine
+{
+    NSString *markdown = @"Text\n\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Dashes after blank line should be HR, not setext header");
+}
+
+/**
+ * Test that standalone three dashes form an HR.
+ * Regression test for Issue #143 - no previous content means HR.
+ */
+- (void)testStandaloneThreeDashesIsHR
+{
+    NSString *markdown = @"---\n\nSome text";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Standalone three dashes should be HR");
+}
+
+#pragma mark - previousLineHadContent Flag
+
+/**
+ * Test that previousLineHadContent flag is true after text lines.
+ * Regression test for Issue #143 - flag logic verification.
+ */
+- (void)testPreviousLineHadContentAfterText
+{
+    NSString *markdown = @"Some text\n--";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Flag should be true after text, making -- a setext header");
+}
+
+/**
+ * Test that previousLineHadContent flag is false after empty lines.
+ * Regression test for Issue #143.
+ */
+- (void)testPreviousLineHadContentAfterEmptyLine
+{
+    NSString *markdown = @"\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Flag should be false after empty line, making --- an HR");
+}
+
+/**
+ * Test that previousLineHadContent flag is false after dash lines.
+ * Regression test for Issue #143 - dash lines don't count as content.
+ */
+- (void)testPreviousLineHadContentAfterDashes
+{
+    NSString *markdown = @"---\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Flag should be false after dash line, both lines are HRs");
+}
+
+/**
+ * Test multiple setext headers in sequence.
+ * Regression test for Issue #143 - verify flag resets correctly.
+ */
+- (void)testMultipleSetextHeaders
+{
+    NSString *markdown = @"Header 1\n---\n\nHeader 2\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Multiple setext headers should be detected correctly");
+}
+
+#pragma mark - Leading Whitespace
+
+/**
+ * Test that HR with no leading spaces is recognized.
+ * Regression test for Issue #143 - baseline case.
+ */
+- (void)testHorizontalRuleNoLeadingSpaces
+{
+    NSString *markdown = @"---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR with no leading spaces should be recognized");
+}
+
+/**
+ * Test that HR with one leading space is recognized.
+ * Regression test for Issue #143 - CommonMark allows 0-3 leading spaces.
+ */
+- (void)testHorizontalRuleOneLeadingSpace
+{
+    NSString *markdown = @" ---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR with 1 leading space should be recognized");
+}
+
+/**
+ * Test that HR with two leading spaces is recognized.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleTwoLeadingSpaces
+{
+    NSString *markdown = @"  ---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR with 2 leading spaces should be recognized");
+}
+
+/**
+ * Test that HR with three leading spaces is recognized.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleThreeLeadingSpaces
+{
+    NSString *markdown = @"   ---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR with 3 leading spaces should be recognized");
+}
+
+/**
+ * Test that line with four leading spaces is NOT an HR (code block).
+ * Regression test for Issue #143 - 4+ spaces = indented code block.
+ */
+- (void)testFourLeadingSpacesNotHR
+{
+    NSString *markdown = @"    ---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"4+ leading spaces should be code block, not HR");
+}
+
+/**
+ * Test that leading spaces work with spacing variants.
+ * Regression test for Issue #143 - combined edge cases.
+ */
+- (void)testLeadingSpacesWithSpacedHR
+{
+    NSString *markdown = @"  - - -";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Leading spaces + spaced characters should be recognized as HR");
+}
+
+#pragma mark - Invalid HR Patterns
+
+/**
+ * Test that mixed dash types do NOT form an HR.
+ * Regression test for Issue #143 - must use same character.
+ */
+- (void)testMixedCharactersNotHR
+{
+    NSString *markdown = @"-*-";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Mixed characters should NOT form an HR");
+}
+
+/**
+ * Test that dashes with trailing text do NOT form an HR.
+ * Regression test for Issue #143.
+ */
+- (void)testDashesWithTrailingTextNotHR
+{
+    NSString *markdown = @"---text";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Dashes with trailing text should NOT be HR");
+}
+
+/**
+ * Test that dashes with leading text do NOT form an HR.
+ * Regression test for Issue #143.
+ */
+- (void)testDashesWithLeadingTextNotHR
+{
+    NSString *markdown = @"text---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Dashes with leading text should NOT be HR");
+}
+
+/**
+ * Test that dashes with both leading and trailing spaces still form HR.
+ * Regression test for Issue #143 - trailing spaces allowed.
+ */
+- (void)testHorizontalRuleWithTrailingSpaces
+{
+    NSString *markdown = @"---   ";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR with trailing spaces should be recognized");
+}
+
+#pragma mark - Many Characters
+
+/**
+ * Test that many dashes form an HR.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleManyDashes
+{
+    NSString *markdown = @"----------";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Many dashes should be recognized as HR");
+}
+
+/**
+ * Test that many spaced dashes form an HR.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleManySpacedDashes
+{
+    NSString *markdown = @"- - - - - - - - - -";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Many spaced dashes should be recognized as HR");
+}
+
+/**
+ * Test that very long HR with mixed spacing works.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleVeryLongMixedSpacing
+{
+    NSString *markdown = @"--  --  --  --  --";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Long HR with irregular spacing should be recognized");
+}
+
+#pragma mark - Complex Contexts
+
+/**
+ * Test that HR after ATX header is recognized.
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleAfterATXHeader
+{
+    NSString *markdown = @"# Header\n\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR after ATX header should be recognized");
+}
+
+/**
+ * Test setext header followed by HR.
+ * Regression test for Issue #143.
+ */
+- (void)testSetextHeaderFollowedByHR
+{
+    NSString *markdown = @"Header\n---\n\n***";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Setext header followed by HR should both be detected");
+}
+
+/**
+ * Test alternating setext headers and HRs.
+ * Regression test for Issue #143 - stress test for flag logic.
+ */
+- (void)testAlternatingSetextAndHR
+{
+    NSString *markdown = @"Header 1\n---\n\n***\n\nHeader 2\n___\n\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Alternating patterns should be handled correctly");
+}
+
+/**
+ * Test HR between paragraphs (common use case).
+ * Regression test for Issue #143.
+ */
+- (void)testHorizontalRuleBetweenParagraphs
+{
+    NSString *markdown = @"First paragraph.\n\n---\n\nSecond paragraph.";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"HR between paragraphs should be recognized");
+}
+
+#pragma mark - Edge Cases and Regressions
+
+/**
+ * Test that asterisk HR doesn't interfere with emphasis.
+ * Regression test for Issue #143.
+ */
+- (void)testAsteriskHRWithEmphasis
+{
+    NSString *markdown = @"*emphasis* text\n\n***\n\n**bold**";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Asterisk HR should not interfere with emphasis detection");
+}
+
+/**
+ * Test underscore HR with underscored text.
+ * Regression test for Issue #143.
+ */
+- (void)testUnderscoreHRWithUnderscores
+{
+    NSString *markdown = @"some_variable_name\n\n___\n\nanother_variable";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Underscore HR should not interfere with underscored text");
+}
+
+/**
+ * Test that tab characters are NOT treated as spaces in HR.
+ * Regression test for Issue #143 - tabs have different meaning in Markdown.
+ */
+- (void)testHorizontalRuleWithTabs
+{
+    NSString *markdown = @"\t---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Tab before dashes creates code block, not HR");
+}
+
+/**
+ * Test setext header with equals signs (alternative syntax).
+ * Regression test for Issue #143 - equals signs are level-1 setext.
+ */
+- (void)testSetextHeaderWithEquals
+{
+    NSString *markdown = @"Header\n===";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Equals signs form level-1 setext header");
+}
+
+/**
+ * Regression test for exact example in Issue #143.
+ * Tests all the edge cases mentioned in the issue in one document.
+ */
+- (void)testIssue143ExampleCases
+{
+    NSString *markdown = @"Some text\n--\n\n- - -\n\nText\n---\n---";
+    self.document.markdown = markdown;
+    XCTAssertNoThrow([self.document updateHeaderLocations],
+                     @"Issue #143 example should be handled correctly");
+}
+
 @end
