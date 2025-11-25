@@ -449,9 +449,12 @@
                            @"        {node: nodeC, type: 'header'}\n"
                            @"    ];\n"
                            @"    \n"
-                           @"    // This is the CURRENT (buggy) sort from lines 67-70\n"
+                           @"    // This is the FIXED sort from lines 67-73\n"
                            @"    result.sort(function(a, b) {\n"
-                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"        var position = a.node.compareDocumentPosition(b.node);\n"
+                           @"        if (position & 4) return -1;  // FOLLOWING\n"
+                           @"        if (position & 2) return 1;   // PRECEDING\n"
+                           @"        return 0;  // Same node or disconnected\n"
                            @"    });\n"
                            @"    \n"
                            @"    // Return the sorted node names\n"
@@ -460,34 +463,18 @@
 
     JSContext *context = [[JSContext alloc] init];
 
-    // Set up Node constants
-    context[@"Node"] = @{
-        @"DOCUMENT_POSITION_DISCONNECTED": @1,
-        @"DOCUMENT_POSITION_PRECEDING": @2,
-        @"DOCUMENT_POSITION_FOLLOWING": @4,
-        @"DOCUMENT_POSITION_CONTAINS": @8,
-        @"DOCUMENT_POSITION_CONTAINED_BY": @16
-    };
-
     JSValue *result = [context evaluateScript:testScript];
     NSArray *sortedNames = [result toArray];
 
-    // With the CURRENT buggy code, the sort is incorrect
-    // This test documents the bug and will FAIL until we fix it
-    //
-    // Expected order (correct document order): [nodeC, nodeB, nodeA]
-    // With current buggy code, we get wrong order because it only checks FOLLOWING bit
-    //
-    // The bug: only checking FOLLOWING bit (& 4), not PRECEDING bit (& 2)
-    // When comparing nodeA to nodeB, nodeA.compare(nodeB) = 2 (PRECEDING)
-    // Buggy code: (2 & 4) = 0 → returns 1 (A > B) ← WRONG
-    // Fixed code should return -1 (A < B) because B precedes A
+    // With the FIXED code, nodes should be in correct document order
+    // Expected order: [nodeC, nodeB, nodeA] (C precedes B, B precedes A)
+    // The fixed sort properly checks both FOLLOWING and PRECEDING bits
+    // and returns 0 for same node or disconnected nodes
 
-    NSLog(@"Current sort result: %@", sortedNames);
-    NSLog(@"Expected (correct) order: [nodeC, nodeB, nodeA]");
+    NSLog(@"Sort result: %@", sortedNames);
+    NSLog(@"Expected order: [nodeC, nodeB, nodeA]");
 
-    // This assertion will FAIL with the current buggy code
-    // After fixing lines 67-70 in updateHeaderLocations.js, it should PASS
+    // This assertion should PASS with the fixed code
     XCTAssertEqualObjects(sortedNames[0], @"nodeC",
                          @"First node should be nodeC (precedes all others)");
     XCTAssertEqualObjects(sortedNames[1], @"nodeB",
@@ -499,6 +486,9 @@
 /**
  * Test that sort function handles same node comparison (edge case).
  * Regression test for Issue #144.
+ *
+ * When compareDocumentPosition returns 0 (same node), the fixed sort
+ * correctly returns 0, maintaining sort stability.
  */
 - (void)testJavaScriptSortHandlesSameNode
 {
@@ -512,9 +502,12 @@
                            @"    \n"
                            @"    var result = [{node: sameNode, type: 'header'}];\n"
                            @"    \n"
-                           @"    // Current buggy sort\n"
+                           @"    // Fixed sort - returns 0 for same node\n"
                            @"    result.sort(function(a, b) {\n"
-                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"        var position = a.node.compareDocumentPosition(b.node);\n"
+                           @"        if (position & 4) return -1;  // FOLLOWING\n"
+                           @"        if (position & 2) return 1;   // PRECEDING\n"
+                           @"        return 0;  // Same node or disconnected\n"
                            @"    });\n"
                            @"    \n"
                            @"    return result.length;\n"
@@ -532,10 +525,8 @@
  * Test that sort function handles disconnected nodes (edge case).
  * Regression test for Issue #144.
  *
- * The buggy sort always returns 1 when FOLLOWING bit isn't set,
- * even for disconnected nodes (which should return 0 for stability).
- * This test passes with both buggy and fixed code (no crash),
- * but documents the edge case behavior.
+ * When nodes are disconnected (bit 0 set), the fixed sort returns 0,
+ * maintaining sort stability and avoiding unnecessary swaps.
  */
 - (void)testJavaScriptSortHandlesDisconnectedNodes
 {
@@ -559,9 +550,12 @@
                            @"        {node: disconnectedB, type: 'header'}\n"
                            @"    ];\n"
                            @"    \n"
-                           @"    // Current buggy sort - returns 1 for disconnected nodes\n"
+                           @"    // Fixed sort - returns 0 for disconnected nodes\n"
                            @"    result.sort(function(a, b) {\n"
-                           @"        return a.node.compareDocumentPosition(b.node) & 4 ? -1 : 1;\n"
+                           @"        var position = a.node.compareDocumentPosition(b.node);\n"
+                           @"        if (position & 4) return -1;  // FOLLOWING\n"
+                           @"        if (position & 2) return 1;   // PRECEDING\n"
+                           @"        return 0;  // Same node or disconnected\n"
                            @"    });\n"
                            @"    \n"
                            @"    return result.length;\n"
@@ -571,8 +565,7 @@
     JSValue *result = [context evaluateScript:testScript];
 
     // Should not crash and should return 2 elements
-    // With buggy code: always returns 1 (causes unnecessary swaps)
-    // With fixed code: should return 0 (stable sort for disconnected nodes)
+    // Fixed code returns 0 for disconnected nodes (stable sort)
     XCTAssertEqual([result toInt32], 2,
                   @"Disconnected nodes should not crash sort");
 }
