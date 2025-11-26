@@ -468,3 +468,17 @@ The approach of modifying individual theme CSS files was **abandoned** due to in
 **Code Review:** Approved by Chico with recommendation for manual testing verification
 
 **Outcome:** Issue #28 resolved - code blocks now wrap properly in PDF exports across all themes and edge cases.
+
+---
+
+## Related Implementation: Issue #30 (HTML Export)
+
+Following the same universal stylesheet pattern established for PDF exports (print.css), HTML export word-breaking was implemented:
+
+- **File:** `MacDown/Resources/Extensions/export.css`
+- **Purpose:** Universal word-breaking rules for paragraph text in HTML exports
+- **Loading:** Added to MPRenderer.m, loads LAST in stylesheet cascade
+- **Coverage:** p, li, td, th, blockquote, dd, and body elements
+- **Test Suite:** `MPHTMLExportTests.m` with comprehensive test coverage
+
+This mirrors the print.css approach: single universal file, loaded last for proper cascade order, works across all themes.

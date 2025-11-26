@@ -1,0 +1,55 @@
+/* HTML Export & Screen Preview - Paragraph Text Wrapping
+ *
+ * This stylesheet provides universal text wrapping styles for HTML exports
+ * and screen preview. It ensures long words and URLs wrap properly within
+ * their containers instead of causing horizontal overflow.
+ *
+ * Issue: #30
+ * Based on: PR #1320 from MacDownApp/macdown by @radicm
+ *
+ * Note: This file loads LAST in the stylesheet cascade to ensure it can
+ * override theme defaults when necessary.
+ */
+
+/* Main paragraph wrapping - handles regular prose with long words/URLs */
+p {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* List items - ensure long text in lists wraps properly */
+li {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Table cells - handle long content in tables */
+td, th {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Blockquotes - ensure quoted content wraps */
+blockquote {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Description list definitions */
+dd {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Body fallback - catch any edge cases via inheritance */
+body {
+    word-wrap: break-word;  /* Legacy property for older browsers */
+    overflow-wrap: break-word;
+}
+
+/* NOTE: Code elements are NOT targeted here.
+ * Code blocks use different wrapping rules (white-space: pre-wrap)
+ * which are handled by print.css for PDF exports.
+ * For screen preview and HTML export, code blocks maintain their
+ * natural overflow behavior with horizontal scrolling.
+ */

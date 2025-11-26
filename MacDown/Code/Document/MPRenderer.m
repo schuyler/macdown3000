@@ -483,9 +483,13 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         [stylesheets addObject:[MPStyleSheet CSSWithURL:url]];
     }
 
-    // Load print.css last to ensure it overrides theme defaults for PDF export
+    // Load print.css to ensure it overrides theme defaults for PDF export
     NSURL *printURL = MPExtensionURL(@"print", @"css");
     [stylesheets addObject:[MPStyleSheet CSSWithURL:printURL]];
+
+    // Load export.css last for paragraph text wrapping in HTML exports and preview
+    NSURL *exportURL = MPExtensionURL(@"export", @"css");
+    [stylesheets addObject:[MPStyleSheet CSSWithURL:exportURL]];
 
     return stylesheets;
 }
@@ -679,6 +683,14 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     {
         scriptsOption = MPAssetEmbedded;
         [scripts addObjectsFromArray:self.mathjaxScripts];
+    }
+
+    // Add export.css LAST for paragraph text wrapping in HTML exports
+    // Must be after all other stylesheets to ensure proper cascade order
+    if (withStyles)
+    {
+        NSURL *exportURL = MPExtensionURL(@"export", @"css");
+        [styles addObject:[MPStyleSheet CSSWithURL:exportURL]];
     }
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];

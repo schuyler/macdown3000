@@ -131,13 +131,17 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ JavaScript sort logic (Issue #144)
 - ✅ Horizontal rule regex edge cases (Issue #143)
 - ✅ Setext header detection (Issue #143)
+- ✅ HTML export functionality (Issue #30)
 
 **What's NOT Tested:**
 - ❌ Editor functionality (text manipulation, syntax highlighting)
-- ❌ PDF/HTML export
+- ⚠️ PDF export (needs testing)
 - ❌ Mermaid diagram rendering
 - ❌ LaTeX math rendering
 - ❌ Most UI components
+
+**Partially Tested:**
+- ✅ HTML export - MPHTMLExportTests.m implemented (Issue #30)
 
 **Minimal Coverage:**
 - ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), needs expansion
