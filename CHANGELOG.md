@@ -1,5 +1,14 @@
 # Changelog
 
+## [3000.0.0-beta.2] - 2025-11-26
+
+### Fixed
+- Fix line breaking in HTML exports (#191)
+- Fix horizontal rule regex edge cases and fragile header detection (#185)
+- Fix Markdown preferences display for Korean locale (#176)
+- Fix buffer overflow in toolbar initialization - Intel Mac crash (#178)
+- Fix hang-on-launch issue on macOS Sequoia (#170)
+
 ## [3000.0.0-beta.1] - 2025-11-24
 
 ### Fixed
