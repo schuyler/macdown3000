@@ -662,10 +662,6 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     {
         stylesOption = MPAssetEmbedded;
         [styles addObjectsFromArray:self.baseStylesheets];
-
-        // Add export.css for paragraph text wrapping in HTML exports
-        NSURL *exportURL = MPExtensionURL(@"export", @"css");
-        [styles addObject:[MPStyleSheet CSSWithURL:exportURL]];
     }
     if (withHighlighting)
     {
@@ -687,6 +683,14 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     {
         scriptsOption = MPAssetEmbedded;
         [scripts addObjectsFromArray:self.mathjaxScripts];
+    }
+
+    // Add export.css LAST for paragraph text wrapping in HTML exports
+    // Must be after all other stylesheets to ensure proper cascade order
+    if (withStyles)
+    {
+        NSURL *exportURL = MPExtensionURL(@"export", @"css");
+        [styles addObject:[MPStyleSheet CSSWithURL:exportURL]];
     }
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];

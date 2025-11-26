@@ -277,6 +277,33 @@ NSURL *MPExtensionURL(NSString *name, NSString *extension);
                   @"export.css overflow-wrap should be present with highlighting");
 }
 
+- (void)testExportCSSIsLastStylesheetInHTMLExportWithHighlighting
+{
+    // Set up test markdown with code that will trigger Prism highlighting
+    self.dataSource.markdown = @"# Test\n\nSome text.\n\n```javascript\nconst x = 1;\n```";
+    self.dataSource.title = @"CSS Order Test";
+    self.delegate.syntaxHighlighting = YES;
+
+    // Parse and get exported HTML with styles and highlighting
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+
+    // Export.css rules should appear AFTER prism styles in the HTML
+    // Find the last occurrence of word-break (from export.css)
+    NSRange exportRange = [html rangeOfString:@"word-break: break-word"
+                                      options:NSBackwardsSearch];
+    // Find any occurrence of prism-related CSS (prism stylesheets)
+    NSRange prismRange = [html rangeOfString:@"token" options:NSCaseInsensitiveSearch];
+
+    // If both exist, export.css content should come after Prism content
+    if (exportRange.location != NSNotFound && prismRange.location != NSNotFound) {
+        XCTAssertGreaterThan(exportRange.location, prismRange.location,
+                             @"export.css should appear after prism styles in HTML for correct cascade order");
+    }
+}
+
 
 #pragma mark - Integration Tests
 
