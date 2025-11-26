@@ -31,17 +31,29 @@ jobs:
             TAG="$PROVIDED_TAG"
             echo "📌 Using provided release tag: $TAG"
           else
-            # Auto-detect latest draft release
-            echo "🔍 Auto-detecting latest draft release..."
-            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName')
+            # Auto-detect latest release (draft or published)
+            echo "🔍 Auto-detecting latest release..."
 
-            if [[ -z "$LATEST_DRAFT" ]]; then
-              echo "::error::No draft releases found. Please provide a release tag manually."
-              exit 1
+            # First try to find a draft release
+            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName // empty')
+
+            if [[ -n "$LATEST_DRAFT" ]]; then
+              TAG="$LATEST_DRAFT"
+              echo "📌 Auto-detected draft release: $TAG"
+            else
+              # No drafts found, try latest published release
+              echo "⚠️  No draft releases found, checking latest published release..."
+              LATEST_RELEASE=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty')
+
+              if [[ -z "$LATEST_RELEASE" ]]; then
+                echo "::error::No releases found (draft or published). Please provide a release tag manually."
+                exit 1
+              fi
+
+              TAG="$LATEST_RELEASE"
+              echo "📌 Auto-detected published release: $TAG"
+              echo "::warning::Release is already published. Will staple and update in place."
             fi
-
-            TAG="$LATEST_DRAFT"
-            echo "📌 Auto-detected draft release: $TAG"
           fi
 
           VERSION=${TAG#v}  # Remove 'v' prefix
@@ -341,11 +353,20 @@ jobs:
         run: |
           echo "🚀 Publishing release..."
 
-          # Publish the release (make it public)
-          gh release edit "$TAG" --draft=false
+          # Check if release is already published
+          IS_DRAFT=$(gh release view "$TAG" --json isDraft --jq '.isDraft')
 
-          echo ""
-          echo "✅ Release published successfully!"
+          if [[ "$IS_DRAFT" == "true" ]]; then
+            echo "Release is draft, publishing now..."
+            gh release edit "$TAG" --draft=false
+            echo ""
+            echo "✅ Release published successfully!"
+          else
+            echo "Release is already published, skipping publish step."
+            echo ""
+            echo "✅ Release updated successfully!"
+          fi
+
           echo "🎉 View at: https://github.com/${{ github.repository }}/releases/tag/$TAG"
           echo ""
           echo "The update-website workflow will now run automatically."

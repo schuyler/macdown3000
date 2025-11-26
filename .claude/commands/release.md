@@ -293,25 +293,25 @@ Once the build workflow completes successfully, Apple will notarize the DMG. You
 
 **When you receive the notarization email:**
 
-1. Get the release URL:
-```bash
-gh release view "v3000.0.0-{VERSION}" --repo schuyler/macdown3000 --json url
-```
-
-2. Trigger the stapling workflow to finalize the release:
+1. Trigger the stapling workflow to finalize and publish the release:
 ```bash
 gh workflow run staple-release.yml --repo schuyler/macdown3000 -f release_tag=v{VERSION}
 ```
 
-3. Monitor the stapling workflow:
+2. Monitor the stapling workflow:
 ```bash
 gh run list --repo schuyler/macdown3000 --workflow staple-release.yml --limit 1
 gh run watch {RUN_ID} --repo schuyler/macdown3000
 ```
 
-4. After stapling completes, publish the release by going to the release URL and clicking "Publish release"
+The stapling workflow will automatically:
+- Verify notarization is complete
+- Download and staple the DMG
+- Update the release with the stapled DMG
+- Update release notes with verification details
+- Publish the release (if still draft)
 
-The website will update automatically after publishing.
+The website will update automatically after the workflow completes.
 
 
 ### Step 6: Completion Summary
@@ -327,7 +327,7 @@ Summary:
 1. Build workflow runs (~10-15 minutes)
 2. Apple notarization email arrives (~5-45 minutes)
 3. You trigger stapling workflow when email arrives
-4. You publish the release to make it public
+4. Stapling workflow publishes the release automatically
 
 **Resources:**
 - Build workflow: https://github.com/schuyler/macdown3000/actions/workflows/release.yml
