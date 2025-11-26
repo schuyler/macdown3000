@@ -1,0 +1,15 @@
+# Apple Developer Credentials for MacDown Release Automation
+#
+# Copy this file to .envrc and fill in your credentials:
+#   cp .envrc.example .envrc
+#
+# These credentials are used by the /release command for notarization polling.
+#
+# To get these values:
+# - APPLE_ID: Your Apple Developer account email
+# - APPLE_APP_PASSWORD: Generate at https://appleid.apple.com (App-Specific Passwords)
+# - APPLE_TEAM_ID: Find at https://developer.apple.com/account (Membership page)
+
+export APPLE_ID="your-apple-id@example.com"
+export APPLE_APP_PASSWORD="xxxx-xxxx-xxxx-xxxx"
+export APPLE_TEAM_ID="XXXXXXXXXX"

@@ -194,3 +194,6 @@ bin/
 
 # Claude Code plugins (installed via SessionStart hook)
 .claude/plugins/
+
+# Local environment variables (Apple credentials for release automation)
+.envrc

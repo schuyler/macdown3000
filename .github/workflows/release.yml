@@ -121,6 +121,21 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "📦 Building version: $VERSION"
 
+      - name: Verify changelog entry exists
+        run: |
+          echo "📝 Checking for changelog entry for version ${VERSION}..."
+
+          if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::No changelog entry found for version ${VERSION}"
+            echo "::error::Please add a changelog entry to CHANGELOG.md before creating a release"
+            echo ""
+            echo "Expected format in CHANGELOG.md:"
+            echo "## [${VERSION}] - $(date -u +'%Y-%m-%d')"
+            exit 1
+          fi
+
+          echo "✅ Found changelog entry for version ${VERSION}"
+
       - name: Detect pre-release from version string
         run: |
           if [[ "$VERSION" =~ -(beta|alpha|rc) ]]; then
@@ -415,13 +430,6 @@ jobs:
       - name: Generate release notes
         run: |
           echo "📝 Generating release notes from CHANGELOG.md..."
-
-          # Verify changelog entry exists
-          if ! grep -q "^## \[${VERSION}\]" CHANGELOG.md; then
-            echo "::error::No changelog entry found for version ${VERSION}"
-            echo "::error::Please add a changelog entry to CHANGELOG.md before creating a release"
-            exit 1
-          fi
 
           # Extract changelog for this version using string matching (not regex)
           CHANGELOG_CONTENT=$(awk -v ver="${VERSION}" '
