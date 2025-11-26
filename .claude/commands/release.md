@@ -120,8 +120,21 @@ Merged PRs:
 {list of PR titles with numbers}
 
 I'll help you build the changelog entry for version {VERSION}.
-```
 
+**IMPORTANT:** Only include user-visible changes to the MacDown application.
+Do NOT include:
+- Website updates
+- Release automation/workflow changes
+- CI/CD pipeline updates
+- Internal tooling changes
+
+DO include:
+- Bug fixes users will notice
+- New features or capabilities
+- Changes to existing behavior
+- Performance improvements
+- Infrastructure changes that affect users (e.g., new system requirements)
+```
 
 #### 2c. Interactive Categorization
 
