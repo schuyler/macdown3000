@@ -2,7 +2,6 @@
 #
 # SessionStart hook: Setup development environment
 # - Installs and configures GitHub CLI
-# - Installs Duck Soup development workflow plugin
 #
 # Only runs on initial session startup (not resume/clear/compact)
 
@@ -36,13 +35,4 @@ if [ -x .claude/scripts/install-gh.sh ]; then
   .claude/scripts/install-gh.sh <<< "$INPUT"
 else
   echo "⚠ GitHub CLI setup script not found"
-fi
-
-echo ""
-
-# Run Duck Soup plugin setup
-if [ -x .claude/scripts/install-duck-soup.sh ]; then
-  .claude/scripts/install-duck-soup.sh
-else
-  echo "⚠ Duck Soup plugin setup script not found"
 fi

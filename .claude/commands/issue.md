@@ -10,27 +10,16 @@ Process a GitHub issue from requirements gathering through implementation to pul
 
 - **Repository:** https://github.com/schuyler/macdown3000
 
-### GitHub CLI Setup
+### GitHub CLI
 
-**IMPORTANT:** The `gh` CLI is automatically installed via SessionStart hook on Linux.
-
-**Authentication:** The `GITHUB_TOKEN` environment variable must be set in Claude Code Web settings (see [CLAUDE.md](../CLAUDE.md#github-api-access) for instructions). The token is automatically available in the session environment.
+The `gh` CLI is automatically installed via SessionStart hook on Linux. It uses the `GH_TOKEN` environment variable automatically—no manual authentication needed.
 
 ## Workflow
 
-### Step 1: Authenticate and Fetch Issue
+### Step 1: Fetch Issue
 
 Extract the issue number from the command arguments (accept both `123` and `#123` formats).
 
-**Authentication:**
-The SessionStart hook automatically authenticates `gh`. If needed, you can authenticate manually:
-
-```bash
-# Secure method using printf (avoids token exposure)
-printf "%s" "$GITHUB_TOKEN" | /tmp/gh/bin/gh auth login --with-token
-```
-
-Fetch the issue from GitHub:
 ```bash
 /tmp/gh/bin/gh issue view {number} --repo schuyler/macdown3000 --json title,body,labels,assignees
 ```
@@ -55,7 +44,6 @@ Ask the user clarifying questions about:
 
 Post a comment to the GitHub issue documenting all requirements, clarifications, and decisions made during Step 2.
 
-Use the `gh` CLI:
 ```bash
 /tmp/gh/bin/gh issue comment {number} --repo schuyler/macdown3000 --body "COMMENT_TEXT_HERE"
 ```
@@ -86,7 +74,6 @@ Use TodoWrite to create detailed todo items for the entire workflow:
 
 Generate a branch name based on the issue (e.g., `issue-{number}-{brief-description}` or `fix/issue-{number}`).
 
-Create and switch to the branch:
 ```bash
 git checkout -b {branch-name}
 ```
@@ -236,7 +223,7 @@ If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8
 
 #### 10c. Monitor Workflow Run
 
-Wait 10 seconds for the workflow to start, then monitor it using `gh`:
+Wait 10 seconds for the workflow to start, then monitor it:
 
 ```bash
 sleep 10
@@ -250,69 +237,29 @@ sleep 10
 Use `gh run watch` to monitor the workflow run until completion:
 
 ```bash
-# Watch the workflow run (auto-updates until completion)
 /tmp/gh/bin/gh run watch $RUN_ID --repo schuyler/macdown3000 --exit-status
 ```
 
 This command will automatically poll the workflow status and display updates until it completes or fails.
 
-Alternatively, for more control with timeout handling:
-
-```bash
-# View workflow details
-/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000
-
-# Poll until completion with timeout
-ELAPSED=0
-MAX_WAIT=900  # 15 minutes
-
-while [ $ELAPSED -lt $MAX_WAIT ]; do
-  STATUS=$(/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --json status --jq '.status')
-  CONCLUSION=$(/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --json conclusion --jq '.conclusion // "N/A"')
-
-  echo "[$(date +%H:%M:%S)] Status: $STATUS, Conclusion: $CONCLUSION"
-
-  if [ "$STATUS" = "completed" ]; then
-    break
-  fi
-
-  sleep 30
-  ELAPSED=$((ELAPSED + 30))
-done
-
-if [ $ELAPSED -ge $MAX_WAIT ]; then
-  echo "WARNING: Workflow still running after 15 minutes"
-  /tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --web
-fi
-```
-
 #### 10e. Check Results
 
-Once the workflow completes (status is "completed"), check the conclusion:
+Once the workflow completes, check the conclusion:
 
 - **success**: Tests passed! Proceed to Step 11.
 - **failure**: Tests failed. Analyze the logs and fix the issues.
 - **cancelled** or **skipped**: Report to user for guidance.
 
-To get detailed job information and logs if tests fail:
+To get logs if tests fail:
 
 ```bash
-# View the run summary
-/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000
-
-# Get the full logs
 /tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log
-
-# Or view logs for a specific job if there are multiple
-/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log --job {job-id}
 ```
-
-Analyze the logs to identify which tests failed and why.
 
 #### 10f. Handle Test Failures
 
 If tests fail:
-1. Review the job logs from the API response
+1. Review the job logs
 2. Identify the specific test failures
 3. Return to Step 9 to fix the issues
 4. Commit the fixes
@@ -397,70 +344,33 @@ If manual testing is not relevant for this change, please say so.
 
 Before the final push, ensure your branch is up-to-date with the main branch.
 
-#### 13a. Fetch Latest from Remote
-
 ```bash
 git fetch origin main
-```
-
-#### 13b. Rebase on Main
-
-```bash
 git rebase origin/main
 ```
 
-#### 13c. Handle Conflicts (If Any)
-
 If conflicts occur during rebase:
 
-1. **Attempt to resolve automatically** - Analyze the conflicts and resolve them based on:
-   - The requirements and implementation plan
-   - Groucho's architectural guidance
-   - The nature of the conflicting changes
-
-2. **Only ask the user if:**
-   - The conflicts are too complex to resolve confidently
-   - The resolution requires business logic decisions
-   - You're unsure which changes should take precedence
-
-3. **After resolving conflicts:**
-   - Stage the resolved files: `git add <resolved-files>`
-   - Continue the rebase: `git rebase --continue`
-   - **Return to Step 9** to re-implement or adjust as needed
-   - **Re-run all tests** via CI (Step 10)
-   - **Consult Chico** (Step 11) to review the conflict resolution
-   - **Continue through Steps 12-13** until rebase succeeds without conflicts
-
-4. **Abort if stuck:**
-   - If unable to resolve: `git rebase --abort`
-   - Inform the user and ask for guidance
+1. **Attempt to resolve automatically** - Analyze the conflicts and resolve them
+2. **Only ask the user if:** conflicts are too complex or require business logic decisions
+3. **After resolving:** `git add <files>` then `git rebase --continue`
+4. **Abort if stuck:** `git rebase --abort` and ask for guidance
 
 ### Step 14: Force Push After Rebase
 
-If the rebase modified history (you rebased commits that were already pushed), you'll need to force push:
+If the rebase modified history:
 
 ```bash
 git push --force-with-lease origin {branch-name}
 ```
 
-**IMPORTANT:** Only use force push if you rebased already-pushed commits. If this is the first push or you only added new commits, a regular push is sufficient.
-
-If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s).
+If network errors occur, retry up to 4 times with exponential backoff.
 
 ### Step 15: Re-verify Tests After Rebase
 
-After rebasing and pushing, the CI will run again. Monitor the new workflow run:
-
-1. Wait 10 seconds for the workflow to start
-2. Get the new workflow run ID (same API call as Step 10c)
-3. Monitor status until completion (same as Step 10d)
-4. Verify tests pass (same as Step 10e)
-
-If tests fail after rebase, return to Step 9 to fix issues.
+After rebasing and pushing, monitor the new workflow run and verify tests pass.
 
 ### Step 16: Create Pull Request
-
-Use `gh` to create a pull request:
 
 ```bash
 /tmp/gh/bin/gh pr create \
@@ -508,9 +418,7 @@ Agent Consultations:
 Branch: {branch-name}
 Pull Request: {PR URL}
 
-Manual Testing: {included/not applicable}
-
-The pull request is ready for your review and manual testing. The issue will remain open for you to close after verification.
+The pull request is ready for your review.
 ```
 
 ## Important Reminders
@@ -522,5 +430,4 @@ The pull request is ready for your review and manual testing. The issue will rem
 5. **Iterate with agents** - If they have concerns, address them before proceeding
 6. **No auto-close** - Never use "Fixes #" or "Closes #" in commits or PR
 7. **Run in parallel** - Harpo and Zeppo consultations in Step 12 should run simultaneously
-8. **Authenticate `gh` with environment variable** - `GITHUB_TOKEN` must be set in Claude Code Web settings
-9. **No co-authored-by** - The project has `includeCoAuthoredBy: false` configured. Do NOT add "Co-authored-by:" trailers to commits or mention co-authorship in PRs
+8. **No co-authored-by** - Do NOT add "Co-authored-by:" trailers to commits
