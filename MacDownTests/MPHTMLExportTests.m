@@ -1,0 +1,337 @@
+//
+//  MPHTMLExportTests.m
+//  MacDown 3000
+//
+//  Tests for issue #30: Fix line breaking in HTML exports
+//  Verifies that export.css provides proper word-breaking for paragraphs
+//  and other block elements in HTML exports and screen preview.
+//
+//  Copyright (c) 2025 Tzu-ping Chung. All rights reserved.
+//
+
+#import <XCTest/XCTest.h>
+#import "MPAsset.h"
+#import "MPRenderer.h"
+#import "MPRendererTestHelpers.h"
+
+// Helper function declaration (from MPUtilities)
+NSURL *MPExtensionURL(NSString *name, NSString *extension);
+
+// Category to expose private properties for testing
+@interface MPRenderer (ExportTesting)
+@property (readonly) NSArray *baseStylesheets;
+@end
+
+
+@interface MPHTMLExportTests : XCTestCase
+@property (strong) NSBundle *bundle;
+@property (strong) MPRenderer *renderer;
+@property (strong) MPMockRendererDataSource *dataSource;
+@property (strong) MPMockRendererDelegate *delegate;
+@end
+
+
+@implementation MPHTMLExportTests
+
+- (void)setUp
+{
+    [super setUp];
+    self.bundle = [NSBundle bundleForClass:[self class]];
+
+    // Create mock data source and delegate
+    self.dataSource = [[MPMockRendererDataSource alloc] init];
+    self.delegate = [[MPMockRendererDelegate alloc] init];
+
+    // Create renderer and wire it up
+    self.renderer = [[MPRenderer alloc] init];
+    self.renderer.dataSource = self.dataSource;
+    self.renderer.delegate = self.delegate;
+}
+
+- (void)tearDown
+{
+    self.renderer = nil;
+    self.dataSource = nil;
+    self.delegate = nil;
+    self.bundle = nil;
+    [super tearDown];
+}
+
+
+#pragma mark - Helper Methods
+
+- (NSURL *)exportCSSURL
+{
+    return MPExtensionURL(@"export", @"css");
+}
+
+- (NSURL *)printCSSURL
+{
+    return MPExtensionURL(@"print", @"css");
+}
+
+- (NSString *)exportCSSContent
+{
+    NSURL *url = [self exportCSSURL];
+    if (!url) return nil;
+    NSError *error = nil;
+    NSString *content = [NSString stringWithContentsOfURL:url
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:&error];
+    return content;
+}
+
+
+#pragma mark - CSS File Existence Tests
+
+- (void)testExportCSSFileExists
+{
+    NSURL *url = [self exportCSSURL];
+    XCTAssertNotNil(url, @"export.css URL should be generated");
+
+    // Verify file actually exists
+    BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:url.path];
+    XCTAssertTrue(exists, @"export.css file should exist at %@", url.path);
+}
+
+- (void)testExportCSSCanBeLoaded
+{
+    NSURL *url = [self exportCSSURL];
+    XCTAssertNotNil(url, @"export.css URL should exist");
+
+    MPStyleSheet *stylesheet = [MPStyleSheet CSSWithURL:url];
+    XCTAssertNotNil(stylesheet, @"export.css should load as MPStyleSheet");
+
+    NSString *html = [stylesheet htmlForOption:MPAssetEmbedded];
+    XCTAssertNotNil(html, @"export.css should render as embedded style");
+    XCTAssertTrue([html containsString:@"<style"], @"Should generate style tag");
+}
+
+
+#pragma mark - CSS Content Tests
+
+- (void)testExportCSSContainsParagraphBreaking
+{
+    NSString *cssContent = [self exportCSSContent];
+    XCTAssertNotNil(cssContent, @"export.css should have content");
+
+    // Check for paragraph selector with word-breaking properties
+    XCTAssertTrue([cssContent containsString:@"word-break"],
+                  @"Should include word-break property");
+    XCTAssertTrue([cssContent containsString:@"overflow-wrap"],
+                  @"Should include overflow-wrap property");
+    XCTAssertTrue([cssContent containsString:@"break-word"],
+                  @"Should use break-word value");
+}
+
+- (void)testExportCSSContainsListAndTableBreaking
+{
+    NSString *cssContent = [self exportCSSContent];
+    XCTAssertNotNil(cssContent, @"export.css should have content");
+
+    // Check for list item and table cell selectors
+    XCTAssertTrue([cssContent containsString:@"li"],
+                  @"Should target li elements");
+    XCTAssertTrue([cssContent containsString:@"td"],
+                  @"Should target td elements");
+    XCTAssertTrue([cssContent containsString:@"th"],
+                  @"Should target th elements");
+}
+
+- (void)testExportCSSContainsBlockquoteAndDescriptionBreaking
+{
+    NSString *cssContent = [self exportCSSContent];
+    XCTAssertNotNil(cssContent, @"export.css should have content");
+
+    // Check for blockquote and description list elements
+    XCTAssertTrue([cssContent containsString:@"blockquote"],
+                  @"Should target blockquote elements");
+    XCTAssertTrue([cssContent containsString:@"dd"],
+                  @"Should target dd elements");
+}
+
+- (void)testExportCSSContainsBodyBreaking
+{
+    NSString *cssContent = [self exportCSSContent];
+    XCTAssertNotNil(cssContent, @"export.css should have content");
+
+    // Check for body element with legacy word-wrap
+    XCTAssertTrue([cssContent containsString:@"body"],
+                  @"Should target body element");
+    XCTAssertTrue([cssContent containsString:@"word-wrap"],
+                  @"Should include legacy word-wrap property");
+}
+
+
+#pragma mark - Stylesheet Array Tests
+
+- (void)testStylesheetsIncludeExportCSS
+{
+    // Get stylesheets array
+    NSArray *stylesheets = [self.renderer stylesheets];
+    XCTAssertNotNil(stylesheets, @"stylesheets should not be nil");
+    XCTAssertTrue(stylesheets.count > 0, @"stylesheets should not be empty");
+
+    // Extract URLs from stylesheets
+    NSMutableArray *urls = [NSMutableArray array];
+    for (MPStyleSheet *ss in stylesheets) {
+        if ([ss respondsToSelector:@selector(url)]) {
+            NSURL *url = [ss performSelector:@selector(url)];
+            if (url) [urls addObject:url.lastPathComponent];
+        }
+    }
+
+    // Check export.css is included
+    XCTAssertTrue([urls containsObject:@"export.css"],
+                  @"stylesheets array should include export.css");
+}
+
+- (void)testExportCSSLoadedAfterPrintCSS
+{
+    NSArray *stylesheets = [self.renderer stylesheets];
+    XCTAssertNotNil(stylesheets, @"stylesheets should not be nil");
+
+    // Find indices of print.css and export.css
+    NSInteger printIndex = -1;
+    NSInteger exportIndex = -1;
+
+    for (NSInteger i = 0; i < stylesheets.count; i++) {
+        MPStyleSheet *ss = stylesheets[i];
+        if ([ss respondsToSelector:@selector(url)]) {
+            NSURL *url = [ss performSelector:@selector(url)];
+            if ([url.lastPathComponent isEqualToString:@"print.css"]) {
+                printIndex = i;
+            }
+            if ([url.lastPathComponent isEqualToString:@"export.css"]) {
+                exportIndex = i;
+            }
+        }
+    }
+
+    XCTAssertGreaterThanOrEqual(printIndex, 0,
+                                 @"print.css should be in stylesheets");
+    XCTAssertGreaterThanOrEqual(exportIndex, 0,
+                                 @"export.css should be in stylesheets");
+    XCTAssertGreaterThan(exportIndex, printIndex,
+                         @"export.css should load after print.css for correct cascade");
+}
+
+
+#pragma mark - HTML Export Tests
+
+- (void)testHTMLExportWithStylesEmbedsExportCSS
+{
+    // Set up test markdown
+    self.dataSource.markdown = @"# Test\n\nThis is a paragraph with text.";
+    self.dataSource.title = @"Test Document";
+
+    // Parse and get exported HTML with styles
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    XCTAssertTrue([html containsString:@"<style"],
+                  @"Should embed styles");
+    XCTAssertTrue([html containsString:@"word-break"],
+                  @"Should embed word-break rules from export.css");
+    XCTAssertTrue([html containsString:@"overflow-wrap"],
+                  @"Should embed overflow-wrap rules from export.css");
+}
+
+- (void)testHTMLExportWithoutStylesExcludesExportCSS
+{
+    // Set up test markdown
+    self.dataSource.markdown = @"# Test\n\nThis is a paragraph.";
+    self.dataSource.title = @"Test Document";
+
+    // Parse and get exported HTML without styles
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    // When withStyles=NO, no style content should be embedded
+    // The word-break rules from export.css should NOT appear
+    BOOL hasWordBreak = [html containsString:@"word-break: break-word"];
+    BOOL hasOverflowWrap = [html containsString:@"overflow-wrap: break-word"];
+    // Note: Some basic styles might still be present from other sources
+    // The key is that export.css-specific rules shouldn't be there
+    XCTAssertFalse(hasWordBreak && hasOverflowWrap,
+                   @"export.css rules should not appear when withStyles=NO");
+}
+
+- (void)testHTMLExportWithHighlightingIncludesExportCSS
+{
+    // Set up test markdown with code
+    self.dataSource.markdown = @"# Test\n\nParagraph text.\n\n```javascript\nconst x = 1;\n```";
+    self.dataSource.title = @"Test Document";
+    self.delegate.syntaxHighlighting = YES;
+
+    // Parse and get exported HTML with styles and highlighting
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    XCTAssertTrue([html containsString:@"word-break"],
+                  @"export.css word-break should be present with highlighting");
+    XCTAssertTrue([html containsString:@"overflow-wrap"],
+                  @"export.css overflow-wrap should be present with highlighting");
+}
+
+
+#pragma mark - Integration Tests
+
+- (void)testExportCSSHandlesLongURLsInParagraphs
+{
+    // Create markdown with a very long URL
+    NSString *longURL = @"https://example.com/very/long/path/that/should/break/properly/when/it/exceeds/the/container/width";
+    self.dataSource.markdown = [NSString stringWithFormat:@"Visit this link: %@", longURL];
+    self.dataSource.title = @"Long URL Test";
+
+    // Parse and export
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    XCTAssertTrue([html containsString:longURL],
+                  @"Long URL should be present in output");
+    XCTAssertTrue([html containsString:@"word-break"],
+                  @"Word-break rules should be present to handle long URLs");
+}
+
+- (void)testExportCSSHandlesLongWordsInLists
+{
+    // Create markdown with long words in a list
+    self.dataSource.markdown = @"- Supercalifragilisticexpialidocious\n- Pneumonoultramicroscopicsilicovolcanoconiosis";
+    self.dataSource.title = @"Long Words Test";
+
+    // Parse and export
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    XCTAssertTrue([html containsString:@"<li>"],
+                  @"Should contain list items");
+    XCTAssertTrue([html containsString:@"word-break"],
+                  @"Word-break rules should be present for list items");
+}
+
+- (void)testExportCSSHandlesLongTextInTables
+{
+    // Create markdown with long text in table cells
+    self.dataSource.markdown = @"| Header | Description |\n|--------|-------------|\n| Key | ThisIsAVeryLongWordWithoutSpacesThatShouldWrapProperly |";
+    self.dataSource.title = @"Table Test";
+
+    // Parse and export
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertNotNil(html, @"Exported HTML should not be nil");
+    XCTAssertTrue([html containsString:@"<table"],
+                  @"Should contain table");
+    XCTAssertTrue([html containsString:@"<td"],
+                  @"Should contain table cells");
+    XCTAssertTrue([html containsString:@"word-break"],
+                  @"Word-break rules should be present for table cells");
+}
+
+@end

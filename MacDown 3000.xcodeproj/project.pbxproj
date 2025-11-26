@@ -92,6 +92,7 @@
 		1FFEB32C19ABCD1200B2254F /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB32E19ABCD1400B2254F /* Fixtures */; };
 		1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */; };
 		1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */; };
+		A30E1B2D2D3E4F5A6B7C8D9F /* MPHTMLExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */; };
 		3028039E1FD84EAC0055B0DA /* contribute.md in Resources */ = {isa = PBXBuildFile; fileRef = 3028039D1FD84EAB0055B0DA /* contribute.md */; };
 		770BB49E962A302D0715A6A5 /* libPods-MacDown.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */; };
 		852D523C1E260A6400BA7162 /* MPTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 852D523A1E260A6400BA7162 /* MPTerminalPreferencesViewController.m */; };
@@ -501,6 +502,7 @@
 		1FFEB32E19ABCD1400B2254F /* Fixtures */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Fixtures; path = Fixtures; sourceTree = "<group>"; };
 		1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMarkdownRenderingTests.m; sourceTree = "<group>"; };
 		1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPStringLookupTests.m; sourceTree = "<group>"; };
+		A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLExportTests.m; sourceTree = "<group>"; };
 		263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-macdown-cmd.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3028039D1FD84EAB0055B0DA /* contribute.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = contribute.md; path = Resources/contribute.md; sourceTree = "<group>"; };
 		35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentIOTests.m; sourceTree = "<group>"; };
@@ -874,6 +876,7 @@
 				9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */,
 				3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */,
 				5F23020AD4494E700E72C264 /* MPRendererTestHelpers.h */,
+				A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 			);
 			path = MacDownTests;
@@ -1292,6 +1295,7 @@
 				D3877A6637DE48017448C8DB /* MPRendererTestHelpers.m in Sources */,
 				1F25E1C31A50F4F10029371D /* MPColorTests.m in Sources */,
 				1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */,
+				A30E1B2D2D3E4F5A6B7C8D9F /* MPHTMLExportTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
