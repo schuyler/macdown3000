@@ -125,3 +125,15 @@ The specificity analysis in this document is **correct**, but the implementation
 This provides the same specificity override (`pre code` = 0-0-2 + `!important`) but through a single maintainable file instead of 6 separate modifications.
 
 See `ISSUE_28_INVESTIGATION.md` for complete resolution details.
+
+---
+
+## Update: HTML Export Implementation (Issue #30)
+
+Following the same pattern as print.css (Issue #28), a universal solution was implemented for HTML exports:
+
+- **Created:** `MacDown/Resources/Extensions/export.css` (word-breaking rules for HTML exports)
+- **Modified:** `MPRenderer.m` to load export.css LAST in stylesheet cascade
+- **Result:** Universal word-breaking fix for paragraph text in HTML exports
+
+This applies `word-break: break-word` and `overflow-wrap: break-word` to p, li, td, th, blockquote, dd, and body elements for both screen preview and HTML exports.

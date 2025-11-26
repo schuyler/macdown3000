@@ -164,21 +164,21 @@ GitHub Actions macOS runners are:
 - (void)testTextDeletion
 ```
 
-### Phase 3: Export Functionality (MEDIUM PRIORITY)
+### Phase 3: Export Functionality (MEDIUM PRIORITY) - PARTIALLY COMPLETED
 
 **Goal:** Verify HTML/PDF export works correctly
 
-**New Test Files:**
-- `MPExportTests.m` - Export operations
-- `MPHTMLGenerationTests.m` - Complete HTML document generation
+**Status:** ✅ **HTML EXPORT TESTS IMPLEMENTED** (Issue #30)
+- ✅ `MPHTMLExportTests.m` - Comprehensive HTML export testing
+- ⏳ `MPExportTests.m` - General export operations (planned)
+- ⏳ PDF export tests (planned)
 
-**Estimated Impact:**
-- Coverage: +2-4%
-- Bug prevention: Medium-High
-- Maintenance: Low
-- CI time: +30-45 seconds
+**Actual Impact (MPHTMLExportTests.m):**
+- Tests added: Comprehensive suite covering word-breaking, long lines, special characters, Unicode, tables, and export.css integration
+- Coverage: HTML export functionality validated
+- Maintenance: Low (golden file approach for some tests)
 
-**Example Tests:**
+**Example Tests Implemented:**
 ```objective-c
 // HTML Export
 - (void)testHTMLExportBasic
@@ -189,7 +189,7 @@ GitHub Actions macOS runners are:
 - (void)testHTMLExportWithSyntaxHighlighting
 - (void)testHTMLExportWithMathJax
 
-// PDF Export
+// PDF Export (planned)
 - (void)testPDFGenerationBasic
 - (void)testPDFGenerationWithImages
 - (void)testPDFGenerationWithStyles
@@ -388,7 +388,8 @@ MacDownTests/
 │   └── MPMathJaxRenderingTests.m
 ├── Document/
 │   ├── MPDocumentIOTests.m (✅ implemented - Issue #90 - file I/O and state)
-│   └── MPExportTests.m (planned)
+│   ├── MPHTMLExportTests.m (✅ implemented - Issue #30 - HTML export)
+│   └── MPExportTests.m (planned - general export operations)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m
 │   ├── MPStringLookupTests.m

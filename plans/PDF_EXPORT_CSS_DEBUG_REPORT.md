@@ -239,3 +239,16 @@ Instead of modifying 6 theme CSS files individually, a **universal print stylesh
 This approach is more maintainable and works universally across all themes without per-theme modifications.
 
 See `ISSUE_28_INVESTIGATION.md` for complete resolution details.
+
+---
+
+## Related Implementation: Issue #30 (HTML Export)
+
+The same universal stylesheet pattern was applied to HTML exports:
+
+- **File:** `MacDown/Resources/Extensions/export.css`
+- **Purpose:** Word-breaking rules for paragraph text in HTML exports
+- **Implementation:** Loads LAST in MPRenderer.m stylesheet cascade
+- **Test Suite:** `MPHTMLExportTests.m`
+
+This demonstrates the effectiveness of the universal stylesheet approach for export-specific styling needs.
