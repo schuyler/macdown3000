@@ -1,11 +1,62 @@
+/* Class = "NSSegmentedCell"; 0rH-I9-Dxr.ibShadowedLabels[0] = "Reveal"; ObjectID = "0rH-I9-Dxr"; */
+"0rH-I9-Dxr.ibShadowedLabels[0]" = "표시";
+
+/* Class = "NSSegmentedCell"; 0rH-I9-Dxr.ibShadowedLabels[1] = "Reload"; ObjectID = "0rH-I9-Dxr"; */
+"0rH-I9-Dxr.ibShadowedLabels[1]" = "리로드";
+
+/* Class = "NSTextFieldCell"; title = "Math support requires Internet connection."; ObjectID = "5Ch-dG-juL"; */
+"5Ch-dG-juL.title" = "수식 지원은 인터넷 연결이 필요합니다.";
+
+/* Class = "NSButtonCell"; title = "TeX-like math syntax"; ObjectID = "6vg-3f-KWk"; */
+"6vg-3f-KWk.title" = "TeX 스타일 수식 구문";
+
 /* Class = "NSTextFieldCell"; title = "CSS:"; ObjectID = "9I3-I7-HLu"; */
 "9I3-I7-HLu.title" = "CSS:";
 
 /* Class = "NSTextFieldCell"; title = "Theme:"; ObjectID = "a6o-qD-AIp"; */
 "a6o-qD-AIp.title" = "테마:";
 
+/* Class = "NSButtonCell"; title = "Scale preview based on editor font size"; ObjectID = "aWw-Wb-pBl"; */
+"aWw-Wb-pBl.title" = "에디터 폰트 크기에 따라 미리보기 크기 조정";
+
+/* Class = "NSButtonCell"; title = "Mermaid"; ObjectID = "bda-Ft-ecb"; */
+"bda-Ft-ecb.title" = "Mermaid";
+
+/* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
+"BuQ-02-oQB.title" = "코드 블록 구문 강조";
+
 /* Class = "NSTextFieldCell"; title = "Default path:"; ObjectID = "e1A-Mm-svq"; */
 "e1A-Mm-svq.title" = "기본 경로:";
+
+/* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
+"GF9-Dm-IoB.title" = "달러 기호 ($)를 인라인 구분자로 사용";
+
+/* Class = "NSButtonCell"; title = "Detect Jekyll front-matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "Jekyll 머리말 감지";
+
+/* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
+"Jmq-wq-Dux.title" = "사용자 정의";
+
+/* Class = "NSButtonCell"; title = "Task list syntax"; ObjectID = "kBf-iW-HlH"; */
+"kBf-iW-HlH.title" = "작업 목록 구문";
+
+/* Class = "NSButtonCell"; title = "Graphviz"; ObjectID = "Lnj-HG-QHi"; */
+"Lnj-HG-QHi.title" = "Graphviz";
+
+/* Class = "NSButtonCell"; title = "Detect table of contents token"; ObjectID = "nvS-dZ-eHT"; */
+"nvS-dZ-eHT.title" = "목차 토큰 감지";
+
+/* Class = "NSMenuItem"; title = "None"; ObjectID = "pWW-vM-8JK"; */
+"pWW-vM-8JK.title" = "없음";
+
+/* Class = "NSMenuItem"; title = "Language name"; ObjectID = "qFd-cs-OtZ"; */
+"qFd-cs-OtZ.title" = "언어 이름";
+
+/* Class = "NSButtonCell"; title = "Render newline literally"; ObjectID = "Sty-qG-J6K"; */
+"Sty-qG-J6K.title" = "줄바꿈 그대로 렌더링";
+
+/* Class = "NSTextFieldCell"; title = "Accessory:"; ObjectID = "wNy-ka-IZm"; */
+"wNy-ka-IZm.title" = "액세서리:";
 
 /* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
 "WZa-V6-vvf.title" = "행 번호 보이기";
