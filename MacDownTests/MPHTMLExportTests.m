@@ -14,9 +14,6 @@
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
 
-// Helper function declaration (from MPUtilities)
-NSURL *MPExtensionURL(NSString *name, NSString *extension);
-
 // Category to expose private methods for testing
 @interface MPRenderer (ExportTesting)
 - (NSArray *)stylesheets;
@@ -62,12 +59,19 @@ NSURL *MPExtensionURL(NSString *name, NSString *extension);
 
 - (NSURL *)exportCSSURL
 {
-    return MPExtensionURL(@"export", @"css");
+    // Use main bundle to find export.css in Extensions subdirectory
+    // This avoids dependency on MPExtensionURL which isn't available to test target
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    return [mainBundle URLForResource:@"export" withExtension:@"css"
+                         subdirectory:@"Extensions"];
 }
 
 - (NSURL *)printCSSURL
 {
-    return MPExtensionURL(@"print", @"css");
+    // Use main bundle to find print.css in Extensions subdirectory
+    NSBundle *mainBundle = [NSBundle mainBundle];
+    return [mainBundle URLForResource:@"print" withExtension:@"css"
+                         subdirectory:@"Extensions"];
 }
 
 - (NSString *)exportCSSContent
