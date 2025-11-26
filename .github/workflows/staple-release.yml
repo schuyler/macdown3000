@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag (optional - auto-detects latest draft if not provided)'
+        description: 'Release tag (optional - auto-detects latest release if not provided)'
         required: false
         type: string
 
@@ -31,32 +31,27 @@ jobs:
             TAG="$PROVIDED_TAG"
             echo "📌 Using provided release tag: $TAG"
           else
-            # Auto-detect latest release (draft or published)
+            # Auto-detect latest release
             echo "🔍 Auto-detecting latest release..."
+            TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty')
 
-            # First try to find a draft release
-            LATEST_DRAFT=$(gh release list --draft --limit 1 --json tagName --jq '.[0].tagName // empty')
-
-            if [[ -n "$LATEST_DRAFT" ]]; then
-              TAG="$LATEST_DRAFT"
-              echo "📌 Auto-detected draft release: $TAG"
-            else
-              # No drafts found, try latest published release
-              echo "⚠️  No draft releases found, checking latest published release..."
-              LATEST_RELEASE=$(gh release list --limit 1 --json tagName --jq '.[0].tagName // empty')
-
-              if [[ -z "$LATEST_RELEASE" ]]; then
-                echo "::error::No releases found (draft or published). Please provide a release tag manually."
-                exit 1
-              fi
-
-              TAG="$LATEST_RELEASE"
-              echo "📌 Auto-detected published release: $TAG"
-              echo "::warning::Release is already published. Will staple and update in place."
+            if [[ -z "$TAG" ]]; then
+              echo "::error::No releases found. Please provide a release tag manually."
+              exit 1
             fi
+
+            echo "📌 Auto-detected release: $TAG"
           fi
 
           VERSION=${TAG#v}  # Remove 'v' prefix
+
+          # Validate version format (should be X.Y.Z or X.Y.Z-beta.N)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid version format: $VERSION (from tag: $TAG)"
+            echo "Expected format: vX.Y.Z or vX.Y.Z-beta.N"
+            exit 1
+          fi
+
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
 
@@ -77,6 +72,9 @@ jobs:
 
           if [[ -z "$NOTARIZATION_ID" ]]; then
             echo "::error::Could not find notarization submission ID in release notes"
+            echo "::error::Expected format: 'Submission ID: \`...\`'"
+            echo "::error::Release notes preview:"
+            echo "$RELEASE_BODY" | head -20
             echo "Please ensure this release was created by the release workflow"
             exit 1
           fi
@@ -115,7 +113,7 @@ jobs:
 
             if [[ "$STATUS" == "Accepted" ]]; then
               echo ""
-              echo "✅ Notarization accepted by Apple!"
+              echo "✅ Notarization accepted by Apple"
               exit 0
             elif [[ "$STATUS" == "Invalid" ]]; then
               echo "::error::Notarization was rejected by Apple"
@@ -160,10 +158,21 @@ jobs:
         run: |
           echo "📥 Downloading DMG and checksum from release..."
 
-          # Download the DMG and checksum
-          gh release download "$TAG" \
-            --pattern "MacDown-${VERSION}.dmg*" \
-            --dir build
+          # Download the DMG and checksum with retry logic
+          for attempt in {1..5}; do
+            if gh release download "$TAG" \
+              --pattern "MacDown-${VERSION}.dmg*" \
+              --dir build; then
+              break
+            fi
+            if [ $attempt -eq 5 ]; then
+              echo "::error::Failed to download DMG after 5 attempts"
+              exit 1
+            fi
+            wait_time=$((2**attempt))
+            echo "Download failed, retrying in ${wait_time}s..."
+            sleep $wait_time
+          done
 
           echo "✅ DMG and checksum downloaded"
           ls -lh build/
@@ -182,6 +191,13 @@ jobs:
           SIGNING_IDENTITY=$(codesign -dvv "build/MacDown-${VERSION}.dmg" 2>&1 | grep "Authority=Developer ID Application")
           if [[ -z "$SIGNING_IDENTITY" ]]; then
             echo "::error::Downloaded DMG is not properly signed"
+            exit 1
+          fi
+
+          # Check if DMG is already stapled
+          if xcrun stapler validate "build/MacDown-${VERSION}.dmg" 2>/dev/null; then
+            echo "::error::DMG is already stapled. This workflow may have already run."
+            echo "To re-staple, delete the release assets and re-upload from build-release workflow."
             exit 1
           fi
 
@@ -261,7 +277,7 @@ jobs:
           cd ..
 
           echo ""
-          echo "✅ All verification checks passed!"
+          echo "✅ All verification checks passed"
           echo "🎉 DMG is ready for distribution"
           echo ""
 
@@ -271,12 +287,23 @@ jobs:
         run: |
           echo "📤 Updating release with stapled DMG..."
 
-          # Upload stapled DMG and new checksum
+          # Upload stapled DMG and new checksum with retry logic
           # --clobber replaces existing assets atomically (no race condition)
-          gh release upload "$TAG" \
-            "build/MacDown-${VERSION}.dmg" \
-            "build/MacDown-${VERSION}.dmg.sha256" \
-            --clobber
+          for attempt in {1..5}; do
+            if gh release upload "$TAG" \
+              "build/MacDown-${VERSION}.dmg" \
+              "build/MacDown-${VERSION}.dmg.sha256" \
+              --clobber; then
+              break
+            fi
+            if [ $attempt -eq 5 ]; then
+              echo "::error::Failed to upload stapled DMG after 5 attempts"
+              exit 1
+            fi
+            wait_time=$((2**attempt))
+            echo "Upload failed, retrying in ${wait_time}s..."
+            sleep $wait_time
+          done
 
           echo "✅ Release updated with stapled DMG (assets replaced atomically)"
 
@@ -360,11 +387,11 @@ jobs:
             echo "Release is draft, publishing now..."
             gh release edit "$TAG" --draft=false
             echo ""
-            echo "✅ Release published successfully!"
+            echo "✅ Release published successfully"
           else
             echo "Release is already published, skipping publish step."
             echo ""
-            echo "✅ Release updated successfully!"
+            echo "✅ Release updated successfully"
           fi
 
           echo "🎉 View at: https://github.com/${{ github.repository }}/releases/tag/$TAG"
