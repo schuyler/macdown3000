@@ -8,6 +8,14 @@ inputs:
   team-id:
     description: 'Apple Team ID (required if signing enabled)'
     required: false
+  marketing-version:
+    description: 'Marketing version for CFBundleShortVersionString (e.g., 3000.0.0-beta.2)'
+    required: false
+    default: ''
+  build-number:
+    description: 'Build number for CFBundleVersion (e.g., 142)'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
@@ -17,6 +25,17 @@ runs:
       run: |
         echo "🔨 Building MacDown..."
         set -o pipefail
+
+        # Build version settings (only if provided)
+        VERSION_ARGS=""
+        if [ -n "${{ inputs.marketing-version }}" ]; then
+          VERSION_ARGS="MARKETING_VERSION=${{ inputs.marketing-version }}"
+          echo "📌 Setting marketing version: ${{ inputs.marketing-version }}"
+        fi
+        if [ -n "${{ inputs.build-number }}" ]; then
+          VERSION_ARGS="$VERSION_ARGS CURRENT_PROJECT_VERSION=${{ inputs.build-number }}"
+          echo "📌 Setting build number: ${{ inputs.build-number }}"
+        fi
 
         # Build with or without signing
         if [ "${{ inputs.enable-signing }}" == "true" ]; then
@@ -32,6 +51,7 @@ runs:
             CODE_SIGN_STYLE="Manual" \
             DEVELOPMENT_TEAM="${{ inputs.team-id }}" \
             ENABLE_HARDENED_RUNTIME=YES \
+            $VERSION_ARGS \
             | tee build.log
         else
           echo "Building without code signing (verification only)..."
@@ -45,6 +65,7 @@ runs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
+            $VERSION_ARGS \
             | tee build.log
         fi
 

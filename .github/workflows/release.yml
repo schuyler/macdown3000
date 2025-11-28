@@ -149,6 +149,12 @@ jobs:
       - name: Set build timestamp
         run: echo "BUILD_TIME=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_ENV
 
+      - name: Compute build number
+        run: |
+          BUILD_NUMBER=$(git rev-list --count HEAD)
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+          echo "📌 Build number: $BUILD_NUMBER"
+
       # ==================== DEPENDENCIES ====================
 
       - name: Setup MacDown build environment
@@ -246,6 +252,8 @@ jobs:
         with:
           enable-signing: true
           team-id: ${{ secrets.APPLE_TEAM_ID }}
+          marketing-version: ${{ env.VERSION }}
+          build-number: ${{ env.BUILD_NUMBER }}
 
       - name: Verify code signature
         run: |
