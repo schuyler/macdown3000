@@ -14,7 +14,7 @@
     <meta property="og:url" content="{{ page.url | absolute_url }}">
     <meta property="og:title" content="{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}">
     <meta property="og:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
-    <meta property="og:image" content="{{ '/assets/images/screenshot.png' | absolute_url }}">
+    <meta property="og:image" content="{{ site.url }}/assets/images/logo.png">
     <meta property="og:site_name" content="{{ site.title }}">
 
     <!-- Twitter Card -->
@@ -22,7 +22,7 @@
     <meta name="twitter:url" content="{{ page.url | absolute_url }}">
     <meta name="twitter:title" content="{% if page.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}">
     <meta name="twitter:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
-    <meta name="twitter:image" content="{{ '/assets/images/screenshot.png' | absolute_url }}">
+    <meta name="twitter:image" content="{{ site.url }}/assets/images/logo.png">
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="{{ '/assets/images/logo.png' | relative_url }}">
