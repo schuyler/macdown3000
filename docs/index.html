@@ -13,7 +13,13 @@ description: MacDown 3000 - A free, open source Markdown editor for macOS with l
             <h1>MacDown 3000</h1>
             <p>a free, lightweight Markdown editor for macOS</p>
             <div class="hero-buttons">
-                <a href="#download" class="btn">Download</a>
+                {% if site.data.latest.stable %}
+                <a href="{{ site.data.latest.stable.downloadUrl }}" class="btn">Download</a>
+                {% elsif site.data.latest.prerelease %}
+                <a href="{{ site.data.latest.prerelease.downloadUrl }}" class="btn">Download Beta</a>
+                {% else %}
+                <a href="https://github.com/schuyler/macdown3000/releases" class="btn">Downloads</a>
+                {% endif %}
                 <a href="https://github.com/schuyler/macdown3000" class="btn btn-secondary">View on GitHub</a>
             </div>
         </div>
