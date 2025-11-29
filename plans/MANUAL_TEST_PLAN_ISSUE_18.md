@@ -1,7 +1,7 @@
 # Manual Testing Plan: Mermaid Gantt Diagram Rendering Fix (Issue #18)
 
 **Issue:** Mermaid gantt diagram rendering issues (today's indicator missing, x-axis label overlap)
-**Fix:** Removed external `mermaid.forest.css` loading; use Mermaid 8.0+ theme API with `theme: 'forest'`
+**Fix:** Removed external `mermaid.forest.css` loading; use Mermaid 11.x Promise-based API with `theme: 'forest'` configuration
 **Branch:** claude/fix-issue-18-01VvFppPfidfrm55767bTco1
 **Commit:** fbbda69
 
@@ -16,7 +16,7 @@ The fix addresses two critical issues with Mermaid gantt charts:
 
 **Root Cause:** External `mermaid.forest.css` stylesheet was interfering with Mermaid's internal theming system, preventing proper rendering logic from executing.
 
-**Solution:** Use Mermaid 8.0+ built-in theme API by setting `theme: 'forest'` in `mermaid.initialize()` and removing the external CSS loading.
+**Solution:** Use Mermaid 11.x Promise-based API by setting `theme: 'forest'` and other configuration in `mermaid.initialize()`, and rendering with `await mermaid.render()`. Also removes the external CSS loading.
 
 ---
 
