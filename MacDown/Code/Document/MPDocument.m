@@ -173,7 +173,7 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @interface MPDocument ()
     <NSSplitViewDelegate, NSTextViewDelegate,
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-     WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate,
+     WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
 #endif
      MPAutosaving, MPRendererDataSource, MPRendererDelegate>
 
@@ -411,6 +411,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.preview.policyDelegate = self;
     self.preview.editingDelegate = self;
     self.preview.resourceLoadDelegate = self;
+    self.preview.UIDelegate = self;
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(editorTextDidChange:)
@@ -496,6 +497,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.renderer = nil;
         self.preview.frameLoadDelegate = nil;
         self.preview.policyDelegate = nil;
+        self.preview.UIDelegate = nil;
 
         [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -978,6 +980,35 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         dragDestinationActionMaskForDraggingInfo:(id<NSDraggingInfo>)info
 {
     return WebDragDestinationActionNone;
+}
+
+- (NSArray *)webView:(WebView *)sender
+        contextMenuItemsForElement:(NSDictionary *)element
+        defaultMenuItems:(NSArray *)defaultMenuItems
+{
+    NSMutableArray *items = [NSMutableArray arrayWithArray:defaultMenuItems];
+
+    for (NSInteger i = 0; i < items.count; i++)
+    {
+        NSMenuItem *item = items[i];
+        if (item.tag == WebMenuItemTagReload)
+        {
+            NSMenuItem *reloadItem = [[NSMenuItem alloc]
+                initWithTitle:item.title
+                action:@selector(reloadPreview:)
+                keyEquivalent:@""];
+            reloadItem.target = self;
+            [items replaceObjectAtIndex:i withObject:reloadItem];
+            break;
+        }
+    }
+
+    return items;
+}
+
+- (void)reloadPreview:(id)sender
+{
+    [self.renderer parseAndRenderNow];
 }
 
 #pragma mark - MPRendererDataSource
