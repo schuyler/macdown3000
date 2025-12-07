@@ -107,9 +107,14 @@ gh pr list --repo schuyler/macdown3000 --state merged --limit 30 --json number,t
 
 (Note: Get LAST_RELEASE_DATE from `gh release view $LAST_TAG`)
 
-#### 2b. Display Recent Changes to User
+#### 2b. Filter and Display Recent Changes
 
-Present the recent commits and PRs to the user:
+**Filter out non-app changes:** Only include changes to the desktop application itself. Exclude:
+- Website changes (commits mentioning "website", "docs/", etc.)
+- Build/release workflow changes (CI/CD, GitHub Actions, release scripts)
+- Infrastructure-only changes that don't affect the app
+
+Present the filtered commits and PRs to the user:
 ```
 📋 Recent commits since {LAST_TAG}:
 
@@ -285,13 +290,11 @@ The release workflow has been triggered and is now running. This typically takes
 When the build completes successfully, look for the notarization submission ID in the workflow logs under the "Submit DMG for notarization" step. Search for `Submission ID: {UUID}`.
 
 
-### Step 5: Notarization Tracking
+### Step 5: Notarization and Stapling
 
-Once the build workflow completes successfully, Apple will notarize the DMG. You will receive an email from Apple with the subject "Your Mac software was successfully notarized".
+Once the build workflow completes successfully, Apple will notarize the DMG. This typically takes 5-15 minutes.
 
-**Typical wait:** 5-45 minutes (usually 10-15 minutes)
-
-**When you receive the notarization email:**
+**To check notarization status and trigger stapling:**
 
 1. Trigger the stapling workflow to finalize and publish the release:
 ```bash
@@ -305,7 +308,7 @@ gh run watch {RUN_ID} --repo schuyler/macdown3000
 ```
 
 The stapling workflow will automatically:
-- Verify notarization is complete
+- Verify notarization is complete (retries if still pending)
 - Download and staple the DMG
 - Update the release with the stapled DMG
 - Update release notes with verification details
@@ -325,15 +328,15 @@ Summary:
 
 **What happens next:**
 1. Build workflow runs (~10-15 minutes)
-2. Apple notarization email arrives (~5-45 minutes)
-3. You trigger stapling workflow when email arrives
-4. Stapling workflow publishes the release automatically
+2. Apple notarizes the DMG (~5-15 minutes)
+3. You trigger stapling workflow when build completes
+4. Stapling workflow verifies notarization and publishes the release
 
 **Resources:**
 - Build workflow: https://github.com/schuyler/macdown3000/actions/workflows/release.yml
 - Draft release: https://github.com/schuyler/macdown3000/releases/tag/v{VERSION}
 
-See Step 5 above for next steps when notarization completes.
+See Step 5 above for stapling instructions.
 
 
 
