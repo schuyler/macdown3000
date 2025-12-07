@@ -687,15 +687,28 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSLocalizedString(@"Restore Preview Pane",
                               @"Toggle preview pane menu item");
 
+        // Issue #23: Disable "Hide Preview" when editor is not visible
+        // (hiding preview would leave no visible panes)
+        if (self.previewVisible && !self.editorVisible)
+        {
+            return NO;
+        }
     }
     else if (action == @selector(toggleEditorPane:))
     {
-        NSMenuItem *it = (NSMenuItem*)item;
+        NSMenuItem *it = ((NSMenuItem *)item);
         it.title = self.editorVisible ?
         NSLocalizedString(@"Hide Editor Pane",
                           @"Toggle editor pane menu item") :
         NSLocalizedString(@"Restore Editor Pane",
                           @"Toggle editor pane menu item");
+
+        // Issue #23: Disable "Hide Editor" when preview is not visible
+        // (hiding editor would leave no visible panes)
+        if (self.editorVisible && !self.previewVisible)
+        {
+            return NO;
+        }
     }
     return result;
 }
@@ -1559,6 +1572,14 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     if (isVisible)
     {
+        // Issue #23: Don't hide if the other pane is not visible
+        // (this would leave no visible panes)
+        BOOL otherPaneVisible = forEditorPane ? self.previewVisible : self.editorVisible;
+        if (!otherPaneVisible)
+        {
+            return;
+        }
+
         CGFloat oldRatio = self.splitView.dividerLocation;
         if (oldRatio != 0.0 && oldRatio != 1.0)
         {
