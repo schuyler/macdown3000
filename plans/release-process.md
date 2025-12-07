@@ -45,7 +45,7 @@ Before using the release workflow, you must have:
 
 Apple requires **Hardened Runtime** to be enabled for all notarized applications. The workflow automatically enables this with the `ENABLE_HARDENED_RUNTIME=YES` build setting.
 
-**If your app requires runtime exceptions** (e.g., for plugins, JIT compilation, or unsigned code execution), you must:
+**If your app requires runtime exceptions** (e.g., for JIT compilation or unsigned code execution), you must:
 
 1. Create an entitlements file (e.g., `MacDown/MacDown.entitlements`) with required exceptions:
    ```xml
