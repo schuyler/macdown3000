@@ -21,7 +21,7 @@ You can also find me in the **"Open With"** menu whenever you right-click a `.md
 
 ## Markdown and I
 
-**Markdown** is a plain text formatting syntax created by John Gruber, aiming to provide a easy-to-read and feasible markup. The original Markdown syntax specification can be found [here](https://daringfireball.net/projects/markdown/syntax).
+**Markdown** is a plain text formatting syntax created by John Gruber, aiming to provide an easy-to-read and feasible markup. The original Markdown syntax specification can be found [here](https://daringfireball.net/projects/markdown/syntax).
 
 **MacDown 3000** is created as a simple-to-use editor for Markdown documents. I render your Markdown contents real-time into HTML, and display them in a preview panel.
 
@@ -36,7 +36,7 @@ You can customize the editor window to your liking in the [**Editor** preference
 You can configure various application (that's me!) behaviors in the [**General** preference pane](#general-pane).
 
 ## The Basics
-Before I tell you about all the extra syntaxes and capabilities I have, I'll introduce you to the basics of standard markdown. If you already know markdown, and want to jump straight to learning about the fancier things I can do, I suggest you skip to the [**Markdown** preference pane](#markdown-pane). Lets jump right in.  
+Before I tell you about all the extra syntaxes and capabilities I have, I'll introduce you to the basics of standard markdown. If you already know markdown, and want to jump straight to learning about the fancier things I can do, I suggest you skip to the [**Markdown** preference pane](#markdown-pane). Let's jump right in.  
 
 ### Line Breaks
 To force a line break, put two spaces and a newline (return) at the end of the line.
@@ -96,10 +96,10 @@ Perhaps you want to link some text like this: [MacDown 3000 Website](https://mac
 #### Reference style
 Sometimes it looks too messy to include big long urls inline, or you want to keep all your urls together.
 
-Make [a link][arbitrary_id] `[a link][arbitrary_id]` then on it's own line anywhere else in the file:
+Make [a link][arbitrary_id] `[a link][arbitrary_id]` then on its own line anywhere else in the file:
 `[arbitrary_id]: https://macdown.app "Title"`
 
-If the link text itself would make a good id, you can link [like this][] `[like this][]`, then on it's own line anywhere else in the file:
+If the link text itself would make a good id, you can link [like this][] `[like this][]`, then on its own line anywhere else in the file:
 `[like this]: https://macdown.app`
 
 [arbitrary_id]: https://macdown.app "Title"

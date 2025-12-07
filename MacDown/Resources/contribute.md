@@ -10,11 +10,11 @@ MacDown 3000 is hosted on GitHub:
 
 https://github.com/schuyler/macdown3000
 
-Here you can get the source code, read through the issues and start contributing.
+Here you can get the source code, read through the issues, and start contributing.
 
 ## But, I am not a Coder
 
-Contribution is not limited to software developers, since there are other ways you can help. For example, contributing towards documentation, translation and support.
+Contribution is not limited to software developers, since there are other ways you can help. For example, contributing towards documentation, translation, and support.
 
 If you want to help translate, please open an issue on GitHub to discuss adding or updating translations for your language.
 
