@@ -1,5 +1,19 @@
 # Changelog
 
+## [3000.0.0-beta.3] - 2025-12-07
+
+This release addresses several bug fixes including a critical issue where both editor and preview panes could be hidden simultaneously, improvements to the preview pane reload behavior, and removes the deprecated plugin system.
+
+### Fixed
+- Fix hiding both editor and preview panes bug (#207, #23)
+- Fix preview pane Reload to re-render instead of loading raw markdown (#204)
+- Fix download button to directly download DMG file (#202)
+- Fix documentation typos and add missing Oxford commas (#206)
+- Fix version number in About pane and Credits.rtf formatting
+
+### Removed
+- Remove deprecated plugin system (#205)
+
 ## [3000.0.0-beta.2] - 2025-11-26
 
 ### Fixed
