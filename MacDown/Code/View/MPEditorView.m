@@ -9,6 +9,9 @@
 #import "MPEditorView.h"
 
 
+static NSString * const kMPMarkdownPasteboardType = @"net.daringfireball.markdown";
+
+
 NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 {
     return (r1.origin.x == r2.origin.x && r1.origin.y == r2.origin.y
@@ -176,6 +179,41 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     [super didChangeText];
     if (self.scrollsPastEnd)
         [self updateContentGeometry];
+}
+
+/** Overridden to advertise markdown UTType support for pasteboard operations.
+ */
+- (NSArray<NSPasteboardType> *)writablePasteboardTypes
+{
+    NSMutableArray *types = [[super writablePasteboardTypes] mutableCopy];
+    if (![types containsObject:kMPMarkdownPasteboardType])
+        [types addObject:kMPMarkdownPasteboardType];
+    return types;
+}
+
+/** Overridden to include markdown UTType when copying to pasteboard.
+ *
+ * Writes plain text and net.daringfireball.markdown types to the pasteboard
+ * when requested, improving interoperability with Markdown-aware applications.
+ * This method is called by both copy: and cut: operations.
+ */
+- (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard
+                             types:(NSArray<NSPasteboardType> *)types
+{
+    NSString *selectedText = [[self string] substringWithRange:[self selectedRange]];
+
+    [pboard declareTypes:types owner:nil];
+
+    if ([types containsObject:NSPasteboardTypeString])
+        [pboard setString:selectedText forType:NSPasteboardTypeString];
+
+    if ([types containsObject:kMPMarkdownPasteboardType])
+    {
+        NSData *markdownData = [selectedText dataUsingEncoding:NSUTF8StringEncoding];
+        [pboard setData:markdownData forType:kMPMarkdownPasteboardType];
+    }
+
+    return YES;
 }
 
 
