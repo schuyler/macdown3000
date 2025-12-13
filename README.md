@@ -16,7 +16,7 @@ This project honors the original intentions and contributions of both Mou and Ma
 
 ## Download & Install
 
-**Version 3000.0.0-beta.0** - Available Now
+**Version 3000.0.0** - Available Now
 
 Download the latest release from the [GitHub Releases](https://github.com/schuyler/macdown3000/releases) page, unzip, and drag the app to your Applications folder.
 

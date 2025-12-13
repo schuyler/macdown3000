@@ -1,5 +1,15 @@
 # Changelog
 
+## [3000.0.0] - 2025-12-13
+
+This release finalizes the MacDown 3000 platform with expanded internationalization support and improved clipboard handling for Markdown content.
+
+### Added
+- Add complete localizations for Russian, Arabic, Hindi, Ukrainian, and Hebrew preferences (#212)
+
+### Fixed
+- Add markdown UTType when copying from editor to improve clipboard compatibility (#208)
+
 ## [3000.0.0-beta.3] - 2025-12-07
 
 This release addresses several bug fixes including a critical issue where both editor and preview panes could be hidden simultaneously, improvements to the preview pane reload behavior, and removes the deprecated plugin system.
