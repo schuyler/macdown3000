@@ -1,27 +1,27 @@
 /* Class = "NSButtonCell"; title = "Sync preview scrollbar when editor scrolls"; ObjectID = "2Uj-Sx-FjV"; */
-"2Uj-Sx-FjV.title" = "مزامنة تمرير المعاينة مع المحرر";
+"2Uj-Sx-FjV.title" = "Синхронизировать прокрутку предпросмотра с редактором";
 
 /* Class = "NSButtonCell"; title = "Put editor on the right"; ObjectID = "bUn-PQ-5Ez"; */
-"bUn-PQ-5Ez.title" = "وضع المحرر على اليمين";
+"bUn-PQ-5Ez.title" = "Разместить редактор справа";
 
 /* Class = "NSBox"; title = "Update"; ObjectID = "eLn-fW-Agu"; */
-"eLn-fW-Agu.title" = "التحديث";
+"eLn-fW-Agu.title" = "Обновление";
 
 /* Class = "NSButtonCell"; title = "Automatically create files for link targets"; ObjectID = "hpF-zP-3cM"; */
-"hpF-zP-3cM.title" = "إنشاء ملفات تلقائياً لأهداف الروابط";
+"hpF-zP-3cM.title" = "Автоматически создавать файлы для целей ссылок";
 
 /* Class = "NSButtonCell"; title = "Ensure open document on launch"; ObjectID = "l9N-wk-WRY"; */
-"l9N-wk-WRY.title" = "التأكد من فتح مستند عند التشغيل";
+"l9N-wk-WRY.title" = "Обязательно открывать документ при запуске";
 
 /* Class = "NSBox"; title = "Behavior"; ObjectID = "Nma-PL-ZvX"; */
-"Nma-PL-ZvX.title" = "السلوك";
+"Nma-PL-ZvX.title" = "Поведение";
 
 /* Class = "NSButtonCell"; title = "Update preview automatically as you type"; ObjectID = "npz-xj-plX"; */
-"npz-xj-plX.title" = "تحديث المعاينة تلقائياً أثناء الكتابة";
+"npz-xj-plX.title" = "Автоматически обновлять предпросмотр при вводе";
 
 /* Class = "NSButtonCell"; title = "Show word count"; ObjectID = "oeW-bF-ybW"; */
-"oeW-bF-ybW.title" = "إظهار عدد الكلمات";
+"oeW-bF-ybW.title" = "Показывать количество слов";
 
 /* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
-"vbz-fv-8BX.title" = "تضمين الإصدارات التجريبية";
+"vbz-fv-8BX.title" = "Включать предварительные версии";
 

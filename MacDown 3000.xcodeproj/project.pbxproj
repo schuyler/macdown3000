@@ -518,6 +518,10 @@
 		E70ECDD5241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MainMenu.strings"; sourceTree = "<group>"; };
 		E70ECDD6241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPMarkdownPreferencesViewController.strings"; sourceTree = "<group>"; };
 		E70ECDD7241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPDocument.strings"; sourceTree = "<group>"; };
+		E70ECDD8241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPTerminalPreferencesViewController.strings"; sourceTree = "<group>"; };
+		E70ECDD9241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPGeneralPreferencesViewController.strings"; sourceTree = "<group>"; };
+		E70ECDDA241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPHtmlPreferencesViewController.strings"; sourceTree = "<group>"; };
+		E70ECDDB241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPEditorPreferencesViewController.strings"; sourceTree = "<group>"; };
 		E744518A241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/MPExportPanelAccessoryViewController.strings; sourceTree = "<group>"; };
 		E744518B241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E744518C241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/MainMenu.strings; sourceTree = "<group>"; };
@@ -1409,6 +1413,7 @@
 				1F5601432099A1E60035F207 /* de-DE */,
 				1F9F35212099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A82099A228004EC5D7 /* et */,
+				E70ECDDB241C933C00537A46 /* ru-RU */,
 				E744518F241C934C00D9ABD9 /* cs */,
 				E77E5D6F241C935100699B5A /* da-DK */,
 			);
@@ -1439,6 +1444,7 @@
 				1F5601422099A1E60035F207 /* de-DE */,
 				1F9F351F2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A72099A228004EC5D7 /* et */,
+				E70ECDDA241C933C00537A46 /* ru-RU */,
 				E744518E241C934C00D9ABD9 /* cs */,
 				E77E5D6D241C935100699B5A /* da-DK */,
 			);
@@ -1573,6 +1579,7 @@
 				1F5601412099A1E60035F207 /* de-DE */,
 				1F9F35202099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A62099A228004EC5D7 /* et */,
+				E70ECDD8241C933C00537A46 /* ru-RU */,
 				E744518D241C934C00D9ABD9 /* cs */,
 				E77E5D6E241C935100699B5A /* da-DK */,
 			);
@@ -1632,6 +1639,7 @@
 				1F5601442099A1E60035F207 /* de-DE */,
 				1F9F35222099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A92099A228004EC5D7 /* et */,
+				E70ECDD9241C933C00537A46 /* ru-RU */,
 				E7445190241C934C00D9ABD9 /* cs */,
 				E77E5D70241C935100699B5A /* da-DK */,
 			);
