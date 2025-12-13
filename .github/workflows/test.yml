@@ -5,8 +5,30 @@ on:
     branches: [ main, develop ]
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      app_code: ${{ steps.filter.outputs.app_code }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            app_code:
+              - 'MacDown/**'
+              - 'MacDownTests/**'
+              - 'Dependency/**'
+              - 'MacDown 3000.xcodeproj/**'
+              - 'MacDown 3000.xcworkspace/**'
+              - 'Podfile'
+              - 'Podfile.lock'
+
   test:
     name: Run Unit Tests
+    needs: changes
+    if: needs.changes.outputs.app_code == 'true'
     strategy:
       matrix:
         os: [macos-14, macos-15, macos-15-intel]
