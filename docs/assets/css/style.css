@@ -492,6 +492,16 @@ nav .container {
     text-decoration: underline;
 }
 
+/* Download section links - teal accent to match site theme */
+.download-content a:not(.btn) {
+    color: #20a0a0;
+    text-decoration: none;
+}
+
+.download-content a:not(.btn):hover {
+    text-decoration: underline;
+}
+
 /* Footer */
 footer {
     background-color: #333;
