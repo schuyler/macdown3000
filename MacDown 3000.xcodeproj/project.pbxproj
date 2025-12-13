@@ -522,6 +522,21 @@
 		E70ECDD9241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPGeneralPreferencesViewController.strings"; sourceTree = "<group>"; };
 		E70ECDDA241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPHtmlPreferencesViewController.strings"; sourceTree = "<group>"; };
 		E70ECDDB241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPEditorPreferencesViewController.strings"; sourceTree = "<group>"; };
+		E70ECDDC241C933C00537A46 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/MPMarkdownPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDDD241C933C00537A46 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/MPTerminalPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDDE241C933C00537A46 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/MPGeneralPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDDF241C933C00537A46 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/MPHtmlPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE0241C933C00537A46 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/MPEditorPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE1241C933C00537A46 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPMarkdownPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE2241C933C00537A46 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/MPTerminalPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE3241C933C00537A46 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPGeneralPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE4241C933C00537A46 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPHtmlPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE5241C933C00537A46 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPEditorPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE6241C933C00537A46 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/MPMarkdownPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE7241C933C00537A46 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = he.lproj/MPTerminalPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE8241C933C00537A46 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/MPGeneralPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDE9241C933C00537A46 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/MPHtmlPreferencesViewController.strings; sourceTree = "<group>"; };
+		E70ECDEA241C933C00537A46 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/MPEditorPreferencesViewController.strings; sourceTree = "<group>"; };
 		E744518A241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/MPExportPanelAccessoryViewController.strings; sourceTree = "<group>"; };
 		E744518B241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E744518C241C934C00D9ABD9 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = Localization/cs.lproj/MainMenu.strings; sourceTree = "<group>"; };
@@ -1414,6 +1429,9 @@
 				1F9F35212099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A82099A228004EC5D7 /* et */,
 				E70ECDDB241C933C00537A46 /* ru-RU */,
+				E70ECDE0241C933C00537A46 /* hi */,
+				E70ECDE5241C933C00537A46 /* uk */,
+				E70ECDEA241C933C00537A46 /* he */,
 				E744518F241C934C00D9ABD9 /* cs */,
 				E77E5D6F241C935100699B5A /* da-DK */,
 			);
@@ -1445,6 +1463,9 @@
 				1F9F351F2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A72099A228004EC5D7 /* et */,
 				E70ECDDA241C933C00537A46 /* ru-RU */,
+				E70ECDDF241C933C00537A46 /* hi */,
+				E70ECDE4241C933C00537A46 /* uk */,
+				E70ECDE9241C933C00537A46 /* he */,
 				E744518E241C934C00D9ABD9 /* cs */,
 				E77E5D6D241C935100699B5A /* da-DK */,
 			);
@@ -1476,6 +1497,9 @@
 				1F9F35232099A1FC00C4B4F1 /* sk-SK */,
 				1FB813AA2099A228004EC5D7 /* et */,
 				E70ECDD6241C933C00537A46 /* ru-RU */,
+				E70ECDDC241C933C00537A46 /* hi */,
+				E70ECDE1241C933C00537A46 /* uk */,
+				E70ECDE6241C933C00537A46 /* he */,
 				E7445192241C934C00D9ABD9 /* cs */,
 				E77E5D71241C935100699B5A /* da-DK */,
 			);
@@ -1580,6 +1604,9 @@
 				1F9F35202099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A62099A228004EC5D7 /* et */,
 				E70ECDD8241C933C00537A46 /* ru-RU */,
+				E70ECDDD241C933C00537A46 /* hi */,
+				E70ECDE2241C933C00537A46 /* uk */,
+				E70ECDE7241C933C00537A46 /* he */,
 				E744518D241C934C00D9ABD9 /* cs */,
 				E77E5D6E241C935100699B5A /* da-DK */,
 			);
@@ -1640,6 +1667,9 @@
 				1F9F35222099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A92099A228004EC5D7 /* et */,
 				E70ECDD9241C933C00537A46 /* ru-RU */,
+				E70ECDDE241C933C00537A46 /* hi */,
+				E70ECDE3241C933C00537A46 /* uk */,
+				E70ECDE8241C933C00537A46 /* he */,
 				E7445190241C934C00D9ABD9 /* cs */,
 				E77E5D70241C935100699B5A /* da-DK */,
 			);
