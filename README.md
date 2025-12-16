@@ -19,7 +19,7 @@ This project honors the original intentions and contributions of both Mou and Ma
 
 **Version 3000.0.0** - Available Now
 
-Download the latest release from the [GitHub Releases](https://github.com/schuyler/macdown3000/releases) page, unzip, and drag the app to your Applications folder.
+Download the latest release from the [GitHub Releases](https://github.com/schuyler/macdown3000/releases) page. Open the DMG file and drag MacDown 3000 to your Applications folder.
 
 ### System Requirements
 
@@ -27,14 +27,6 @@ Download the latest release from the [GitHub Releases](https://github.com/schuyl
 - Universal binary supporting both:
   - Apple Silicon (M-series processors)
   - Intel x86_64 processors
-
-### Important Note
-
-MacDown 3000 is not signed with a paid Apple developer certificate. macOS will display an "unidentified developer" warning. To open the app:
-
-1. Go to System Settings → Privacy & Security
-2. Find the blocked app message and click "Open Anyway"
-3. Alternatively, right-click the app and choose "Open" the first time you launch it
 
 ## Screenshot
 
