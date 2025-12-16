@@ -1,6 +1,7 @@
 # MacDown 3000
 
 [![Tests](https://github.com/schuyler/macdown3000/workflows/Tests/badge.svg)](https://github.com/schuyler/macdown3000/actions)
+[![Downloads](https://img.shields.io/github/downloads/schuyler/macdown3000/total)](https://github.com/schuyler/macdown3000/releases)
 
 MacDown 3000 is a free Markdown editor for macOS, available under the MIT License. It continues the legacy started by Chen Luo's [Mou](http://25.io/mou/) and carried forward by Tzu-ping Chung's [MacDown](https://macdown.uranusjr.com).
 
