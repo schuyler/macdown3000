@@ -193,27 +193,26 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
 /** Overridden to include markdown UTType when copying to pasteboard.
  *
- * Writes plain text and net.daringfireball.markdown types to the pasteboard
- * when requested, improving interoperability with Markdown-aware applications.
+ * Adds net.daringfireball.markdown type to the pasteboard alongside standard
+ * types, improving interoperability with Markdown-aware applications.
  * This method is called by both copy: and cut: operations.
  */
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard
                              types:(NSArray<NSPasteboardType> *)types
 {
-    NSString *selectedText = [[self string] substringWithRange:[self selectedRange]];
+    // Let superclass handle standard types (plain text, RTF, etc.)
+    BOOL success = [super writeSelectionToPasteboard:pboard types:types];
 
-    [pboard declareTypes:types owner:nil];
-
-    if ([types containsObject:NSPasteboardTypeString])
-        [pboard setString:selectedText forType:NSPasteboardTypeString];
-
-    if ([types containsObject:kMPMarkdownPasteboardType])
+    // Add markdown type if requested (without clearing existing pasteboard data)
+    if (success && [types containsObject:kMPMarkdownPasteboardType])
     {
+        NSString *selectedText = [[self string] substringWithRange:[self selectedRange]];
         NSData *markdownData = [selectedText dataUsingEncoding:NSUTF8StringEncoding];
+        [pboard addTypes:@[kMPMarkdownPasteboardType] owner:nil];
         [pboard setData:markdownData forType:kMPMarkdownPasteboardType];
     }
 
-    return YES;
+    return success;
 }
 
 
