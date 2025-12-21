@@ -12,5 +12,6 @@
 
 @property BOOL scrollsPastEnd;
 - (NSRect)contentRect;
+- (void)paste:(id)sender;
 
 @end
