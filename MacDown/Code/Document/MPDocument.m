@@ -85,6 +85,12 @@ NS_INLINE NSString *MPRectStringForAutosaveName(NSString *name)
     return rectString;
 }
 
+NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
+{
+    // The == part takes care of cases where s1 and s2 are both nil.
+    return ([s1 isEqualToString:s2] || s1 == s2);
+}
+
 NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     DOMDocument *doc = webview.mainFrameDocument;
@@ -201,6 +207,8 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property BOOL shouldHandleBoundsChange;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
+@property (copy) NSString *currentStyleName;
+@property (copy) NSString *currentHighlightingThemeName;
 @property CGFloat lastPreviewScrollTop;
 @property (nonatomic, readonly) BOOL needsHtml;
 @property (nonatomic) NSUInteger totalWords;
@@ -1127,10 +1135,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
+    // Check if CSS style or highlighting theme has changed.
+    // If either changed, we must do a full reload to update <head> with new CSS links.
+    NSString *newStyleName = self.preferences.htmlStyleName;
+    NSString *newHighlightingTheme = self.preferences.htmlHighlightingThemeName;
+    BOOL stylesChanged = !MPAreNilableStringsEqual(self.currentStyleName, newStyleName) ||
+                         !MPAreNilableStringsEqual(self.currentHighlightingThemeName, newHighlightingTheme);
+
     // Try DOM replacement to preserve scroll position.
     // Avoid DOM replacement when MathJax is enabled to prevent race conditions with
     // async MathJax rendering. Full reload has proper completion handlers.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !self.preferences.htmlMathJax)
+    // Also skip DOM replacement if styles changed, since <head> CSS links need updating.
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !self.preferences.htmlMathJax && !stylesChanged)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -1186,6 +1202,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
+    self.currentStyleName = newStyleName;
+    self.currentHighlightingThemeName = newHighlightingTheme;
 }
 
 
