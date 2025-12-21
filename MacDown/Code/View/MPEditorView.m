@@ -7,6 +7,7 @@
 //
 
 #import "MPEditorView.h"
+#import "NSPasteboard+Types.h"
 
 
 static NSString * const kMPMarkdownPasteboardType = @"net.daringfireball.markdown";
@@ -213,6 +214,48 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     }
 
     return success;
+}
+
+/** Overridden to linkify selected text when pasting a URL.
+ *
+ * When text is selected and an http(s) URL is pasted, wraps the selected text
+ * in a Markdown link format: [selected text](pasted url)
+ */
+- (void)paste:(id)sender
+{
+    NSRange selectedRange = self.selectedRange;
+
+    // Only linkify if text is selected
+    if (selectedRange.length == 0)
+    {
+        [super paste:sender];
+        return;
+    }
+
+    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+    NSURL *pastedURL = [pasteboard URLForType:NSPasteboardTypeString];
+
+    // Only linkify if pasted content is a valid URL
+    if (!pastedURL)
+    {
+        [super paste:sender];
+        return;
+    }
+
+    // Only linkify for http and https schemes (not file://)
+    NSString *scheme = pastedURL.scheme.lowercaseString;
+    if (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"])
+    {
+        [super paste:sender];
+        return;
+    }
+
+    // Wrap selected text as markdown link
+    NSString *selectedText = [self.string substringWithRange:selectedRange];
+    NSString *markdownLink = [NSString stringWithFormat:@"[%@](%@)",
+                              selectedText, pastedURL.absoluteString];
+
+    [self insertText:markdownLink replacementRange:selectedRange];
 }
 
 
