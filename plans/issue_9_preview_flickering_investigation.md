@@ -702,6 +702,29 @@ This flickering issue has a long history:
 
 ---
 
+## Update: Style Change Detection (Issue #219)
+
+While the full DOM replacement approach discussed in this document (Option 1, lines 461-498) remains disabled due to challenges with re-triggering MathJax and Prism, **Issue #219** implemented a complementary solution that improves style change handling.
+
+**Implementation:**
+
+In `MPDocument.m`, added style change detection:
+- `currentStyleName` and `currentHighlightingThemeName` properties track active styles
+- Before applying DOM replacement optimization, check if styles have changed
+- If CSS style or syntax highlighting theme changed: **force full HTML reload**
+- If only text content changed: **preserve fast path** (when DOM replacement is enabled)
+
+**What This Fixes:**
+- CSS style changes now properly update the Preview pane
+- Syntax highlighting theme changes correctly refresh preview content
+- Prevents stale styling when users switch themes or highlighting options
+
+**Relationship to This Investigation:**
+
+Issue #219 addresses a prerequisite for re-enabling DOM replacement: detecting when full page reload is necessary vs. when incremental DOM updates can be used. The DOM replacement code itself (lines 1091-1131) remains disabled, but the style detection logic is now in place for when that optimization is re-enabled in the future.
+
+---
+
 ## References
 
 - WebKit Rendering Pipeline: https://www.webkit.org/blog/
