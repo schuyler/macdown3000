@@ -45,6 +45,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
 - Scroll synchronization (MPDocument.m) - 68 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, and setext header detection (Issue #39, Issue #143, Issue #144)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
+- Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
