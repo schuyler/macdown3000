@@ -1,5 +1,14 @@
 # Changelog
 
+## [3000.0.1] - 2025-12-20
+
+This patch release fixes three bugs affecting the editor and preview pane.
+
+### Fixed
+- Fix CSS style and syntax highlighting theme changes not applying in Preview pane (#219, #221) -- thanks @kojika!
+- Fix copy-paste regression in editor (#214, #220) -- thanks @sveinbjornt!
+- Add smart paste linkification for selected text (#222, #223)
+
 ## [3000.0.0] - 2025-12-13
 
 This release finalizes the MacDown 3000 platform with expanded internationalization support and improved clipboard handling for Markdown content.
