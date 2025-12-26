@@ -1,0 +1,275 @@
+name: Update Homebrew Cask
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., v3000.0.1)'
+        required: true
+        type: string
+
+jobs:
+  update-cask:
+    name: Submit PR to homebrew-cask
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate HOMEBREW_GITHUB_TOKEN
+        env:
+          HOMEBREW_GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+        run: |
+          if [[ -z "$HOMEBREW_GITHUB_TOKEN" ]]; then
+            echo "::error::Missing HOMEBREW_GITHUB_TOKEN secret"
+            echo ""
+            echo "To configure:"
+            echo "1. Create a GitHub PAT with 'public_repo' scope at:"
+            echo "   https://github.com/settings/tokens"
+            echo "2. Add it as a repository secret named HOMEBREW_GITHUB_TOKEN"
+            exit 1
+          fi
+          echo "✅ HOMEBREW_GITHUB_TOKEN is configured"
+
+      - name: Determine version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ github.event.inputs.release_tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+
+          VERSION=${TAG#v}  # Remove 'v' prefix
+
+          # Validate version format
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z (no pre-release suffixes for homebrew)"
+            echo ""
+            echo "Pre-release versions (beta, alpha, rc) should not be submitted to homebrew-cask."
+            exit 1
+          fi
+
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "📦 Version: $VERSION"
+
+      - name: Download release DMG and calculate SHA256
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📥 Downloading DMG from release..."
+
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/MacDown-${VERSION}.dmg"
+
+          # Download with retry
+          for attempt in {1..5}; do
+            if curl -fSL -o "MacDown-${VERSION}.dmg" "$DMG_URL"; then
+              break
+            fi
+            if [ $attempt -eq 5 ]; then
+              echo "::error::Failed to download DMG after 5 attempts"
+              exit 1
+            fi
+            wait_time=$((2**attempt))
+            echo "Download failed, retrying in ${wait_time}s..."
+            sleep $wait_time
+          done
+
+          echo "✅ DMG downloaded"
+          ls -lh "MacDown-${VERSION}.dmg"
+
+          # Calculate SHA256
+          SHA256=$(sha256sum "MacDown-${VERSION}.dmg" | awk '{print $1}')
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+          echo "🔐 SHA256: $SHA256"
+
+      - name: Fork and clone homebrew-cask
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+        run: |
+          echo "🍺 Setting up homebrew-cask fork..."
+
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Get the authenticated user
+          FORK_OWNER=$(gh api user --jq '.login')
+          if [[ -z "$FORK_OWNER" ]]; then
+            echo "::error::Failed to get authenticated user - check HOMEBREW_GITHUB_TOKEN permissions"
+            exit 1
+          fi
+
+          # Check if fork exists, create if not
+          if gh api "repos/${FORK_OWNER}/homebrew-cask" --silent 2>/dev/null; then
+            echo "📂 Using existing fork: ${FORK_OWNER}/homebrew-cask"
+          else
+            echo "🍴 Creating fork of homebrew/homebrew-cask..."
+            gh repo fork homebrew/homebrew-cask --clone=false
+          fi
+          echo "FORK_OWNER=$FORK_OWNER" >> $GITHUB_ENV
+          echo "📂 Fork owner: $FORK_OWNER"
+
+          # Clone the fork (gh clone auto-adds upstream for forks)
+          gh repo clone "${FORK_OWNER}/homebrew-cask" homebrew-cask -- --depth 1
+
+          cd homebrew-cask
+          git fetch upstream main --depth 1
+
+          echo "✅ Repository cloned"
+
+      - name: Create cask file
+        run: |
+          echo "📝 Creating cask file..."
+
+          CASK_FILE="homebrew-cask/Casks/m/macdown3000.rb"
+          mkdir -p "$(dirname "$CASK_FILE")"
+
+          cat > "$CASK_FILE" <<'CASK'
+          cask "macdown3000" do
+            version "VERSION_PLACEHOLDER"
+            sha256 "SHA256_PLACEHOLDER"
+
+            url "https://github.com/schuyler/macdown3000/releases/download/v#{version}/MacDown-#{version}.dmg",
+                verified: "github.com/schuyler/macdown3000/"
+            name "MacDown 3000"
+            desc "Markdown editor with live preview and syntax highlighting"
+            homepage "https://macdown.app/"
+
+            depends_on macos: ">= :big_sur"
+
+            app "MacDown 3000.app"
+
+            zap trash: [
+              "~/Library/Application Support/MacDown 3000",
+              "~/Library/Caches/app.macdown.macdown3000",
+              "~/Library/Preferences/app.macdown.macdown3000.plist",
+            ]
+          end
+          CASK
+
+          # Strip leading whitespace (10 spaces from YAML indentation)
+          sed -i 's/^          //' "$CASK_FILE"
+
+          # Replace placeholders
+          sed -i "s|VERSION_PLACEHOLDER|${VERSION}|" "$CASK_FILE"
+          sed -i "s|SHA256_PLACEHOLDER|${SHA256}|" "$CASK_FILE"
+
+          echo "✅ Cask file created:"
+          cat "$CASK_FILE"
+
+          # Validate Ruby syntax
+          if ! ruby -c "$CASK_FILE" > /dev/null 2>&1; then
+            echo "::error::Generated cask file has invalid Ruby syntax"
+            ruby -c "$CASK_FILE"
+            exit 1
+          fi
+          echo "✅ Ruby syntax valid"
+
+      - name: Determine if new cask or update
+        run: |
+          cd homebrew-cask
+
+          if git ls-tree -r upstream/main --name-only | grep -q "Casks/m/macdown3000.rb"; then
+            echo "IS_NEW_CASK=false" >> $GITHUB_ENV
+            echo "📋 Existing cask found - this will be an update"
+          else
+            echo "IS_NEW_CASK=true" >> $GITHUB_ENV
+            echo "📋 No existing cask - this will be a new submission"
+          fi
+
+      - name: Create branch and commit
+        run: |
+          cd homebrew-cask
+
+          # Create branch from upstream main
+          BRANCH_NAME="macdown3000-${VERSION}"
+          git checkout -b "$BRANCH_NAME" upstream/main
+
+          # Stage and commit
+          git add Casks/m/macdown3000.rb
+
+          # Commit message follows homebrew conventions: "cask-name version" or "cask-name version (new cask)"
+          if [[ "$IS_NEW_CASK" == "true" ]]; then
+            git commit -m "macdown3000 ${VERSION} (new cask)"
+          else
+            git commit -m "macdown3000 ${VERSION}"
+          fi
+
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "✅ Changes committed"
+
+      - name: Push branch to fork
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+        run: |
+          cd homebrew-cask
+
+          # Configure git to use token for HTTPS auth
+          git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=${GH_TOKEN}"; }; f'
+
+          # Push with retry
+          for attempt in {1..4}; do
+            if git push -u origin "$BRANCH_NAME" --force; then
+              break
+            fi
+            if [ $attempt -eq 4 ]; then
+              echo "::error::Failed to push after 4 attempts"
+              exit 1
+            fi
+            wait_time=$((2**attempt))
+            echo "Push failed, retrying in ${wait_time}s..."
+            sleep $wait_time
+          done
+
+          echo "✅ Branch pushed to fork"
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
+        run: |
+          cd homebrew-cask
+
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list \
+            --repo homebrew/homebrew-cask \
+            --head "${FORK_OWNER}:${BRANCH_NAME}" \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [[ -n "$EXISTING_PR" ]]; then
+            echo "⚠️ PR #${EXISTING_PR} already exists for this version"
+            echo "View at: https://github.com/homebrew/homebrew-cask/pull/${EXISTING_PR}"
+            exit 0
+          fi
+
+          # PR title follows homebrew conventions
+          if [[ "$IS_NEW_CASK" == "true" ]]; then
+            PR_TITLE="macdown3000 ${VERSION} (new cask)"
+          else
+            PR_TITLE="macdown3000 ${VERSION}"
+          fi
+
+          # Create PR body
+          PR_BODY="MacDown 3000 is an open-source Markdown editor for macOS with live preview and syntax highlighting."
+          PR_BODY="${PR_BODY}"$'\n\n'"**Release:** https://github.com/${{ github.repository }}/releases/tag/${TAG}"
+          PR_BODY="${PR_BODY}"$'\n\n'"The DMG is signed with a Developer ID Application certificate and notarized by Apple."
+
+          PR_URL=$(gh pr create \
+            --repo homebrew/homebrew-cask \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --head "${FORK_OWNER}:${BRANCH_NAME}" \
+            --base main)
+
+          echo ""
+          echo "✅ Pull request created successfully!"
+          echo "🔗 $PR_URL"
+          echo ""
+          echo "Next steps:"
+          echo "  - Homebrew maintainers will review the PR"
+          echo "  - They may request changes or ask questions"
+          echo "  - Manual follow-up may be required"
