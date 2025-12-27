@@ -123,16 +123,16 @@ jobs:
         run: |
           echo "📝 Creating cask file..."
 
-          CASK_FILE="homebrew-cask/Casks/m/macdown3000.rb"
+          CASK_FILE="homebrew-cask/Casks/m/macdown-3000.rb"
           mkdir -p "$(dirname "$CASK_FILE")"
 
           cat > "$CASK_FILE" <<'CASK'
-          cask "macdown3000" do
+          cask "macdown-3000" do
             version "VERSION_PLACEHOLDER"
             sha256 "SHA256_PLACEHOLDER"
 
-            url "https://github.com/schuyler/macdown3000/releases/download/v#{version}/MacDown-#{version}.dmg",
-                verified: "github.com/schuyler/macdown3000/"
+            url "https://github.com/schuyler/macdown-3000/releases/download/v#{version}/MacDown-#{version}.dmg",
+                verified: "github.com/schuyler/macdown-3000/"
             name "MacDown 3000"
             desc "Markdown editor with live preview and syntax highlighting"
             homepage "https://macdown.app/"
@@ -143,8 +143,8 @@ jobs:
 
             zap trash: [
               "~/Library/Application Support/MacDown 3000",
-              "~/Library/Caches/app.macdown.macdown3000",
-              "~/Library/Preferences/app.macdown.macdown3000.plist",
+              "~/Library/Caches/app.macdown.macdown-3000",
+              "~/Library/Preferences/app.macdown.macdown-3000.plist",
             ]
           end
           CASK
@@ -171,7 +171,7 @@ jobs:
         run: |
           cd homebrew-cask
 
-          if git ls-tree -r upstream/main --name-only | grep -q "Casks/m/macdown3000.rb"; then
+          if git ls-tree -r upstream/main --name-only | grep -q "Casks/m/macdown-3000.rb"; then
             echo "IS_NEW_CASK=false" >> $GITHUB_ENV
             echo "📋 Existing cask found - this will be an update"
           else
@@ -184,17 +184,17 @@ jobs:
           cd homebrew-cask
 
           # Create branch from upstream main
-          BRANCH_NAME="macdown3000-${VERSION}"
+          BRANCH_NAME="macdown-3000-${VERSION}"
           git checkout -b "$BRANCH_NAME" upstream/main
 
           # Stage and commit
-          git add Casks/m/macdown3000.rb
+          git add Casks/m/macdown-3000.rb
 
           # Commit message follows homebrew conventions: "cask-name version" or "cask-name version (new cask)"
           if [[ "$IS_NEW_CASK" == "true" ]]; then
-            git commit -m "macdown3000 ${VERSION} (new cask)"
+            git commit -m "macdown-3000 ${VERSION} (new cask)"
           else
-            git commit -m "macdown3000 ${VERSION}"
+            git commit -m "macdown-3000 ${VERSION}"
           fi
 
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
@@ -246,9 +246,9 @@ jobs:
 
           # PR title follows homebrew conventions
           if [[ "$IS_NEW_CASK" == "true" ]]; then
-            PR_TITLE="macdown3000 ${VERSION} (new cask)"
+            PR_TITLE="macdown-3000 ${VERSION} (new cask)"
           else
-            PR_TITLE="macdown3000 ${VERSION}"
+            PR_TITLE="macdown-3000 ${VERSION}"
           fi
 
           # Create PR body
