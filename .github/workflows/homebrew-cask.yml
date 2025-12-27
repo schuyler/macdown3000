@@ -113,13 +113,11 @@ jobs:
           echo "FORK_OWNER=$FORK_OWNER" >> $GITHUB_ENV
           echo "📂 Fork owner: $FORK_OWNER"
 
-          # Clone the fork
+          # Clone the fork (gh clone auto-adds upstream for forks)
           gh repo clone "${FORK_OWNER}/homebrew-cask" homebrew-cask -- --depth 1
 
-          # Add upstream remote
           cd homebrew-cask
-          git remote add upstream https://github.com/homebrew/homebrew-cask.git
-          git fetch upstream master --depth 1
+          git fetch upstream main --depth 1
 
           echo "✅ Repository cloned"
 
@@ -135,7 +133,8 @@ jobs:
             version "VERSION_PLACEHOLDER"
             sha256 "SHA256_PLACEHOLDER"
 
-            url "https://github.com/schuyler/macdown3000/releases/download/v#{version}/MacDown-#{version}.dmg"
+            url "https://github.com/schuyler/macdown3000/releases/download/v#{version}/MacDown-#{version}.dmg",
+                verified: "github.com/schuyler/macdown3000/"
             name "MacDown 3000"
             desc "Markdown editor with live preview and syntax highlighting"
             homepage "https://macdown.app/"
@@ -174,11 +173,11 @@ jobs:
         run: |
           cd homebrew-cask
 
-          if git ls-tree -r upstream/master --name-only | grep -q "Casks/m/macdown3000.rb"; then
-            echo "CASK_ACTION=Update" >> $GITHUB_ENV
+          if git ls-tree -r upstream/main --name-only | grep -q "Casks/m/macdown3000.rb"; then
+            echo "IS_NEW_CASK=false" >> $GITHUB_ENV
             echo "📋 Existing cask found - this will be an update"
           else
-            echo "CASK_ACTION=Create" >> $GITHUB_ENV
+            echo "IS_NEW_CASK=true" >> $GITHUB_ENV
             echo "📋 No existing cask - this will be a new submission"
           fi
 
@@ -186,15 +185,19 @@ jobs:
         run: |
           cd homebrew-cask
 
-          # Create branch from upstream master
+          # Create branch from upstream main
           BRANCH_NAME="macdown3000-${VERSION}"
-          git checkout -b "$BRANCH_NAME" upstream/master
+          git checkout -b "$BRANCH_NAME" upstream/main
 
           # Stage and commit
           git add Casks/m/macdown3000.rb
 
-          # Commit message follows homebrew conventions
-          git commit -m "${CASK_ACTION} macdown3000 ${VERSION}"
+          # Commit message follows homebrew conventions: "cask-name version" or "cask-name version (new cask)"
+          if [[ "$IS_NEW_CASK" == "true" ]]; then
+            git commit -m "macdown3000 ${VERSION} (new cask)"
+          else
+            git commit -m "macdown3000 ${VERSION}"
+          fi
 
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
           echo "✅ Changes committed"
@@ -204,6 +207,9 @@ jobs:
           GH_TOKEN: ${{ secrets.HOMEBREW_GITHUB_TOKEN }}
         run: |
           cd homebrew-cask
+
+          # Configure git to use token for HTTPS auth
+          git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=${GH_TOKEN}"; }; f'
 
           # Push with retry
           for attempt in {1..4}; do
@@ -240,18 +246,24 @@ jobs:
             exit 0
           fi
 
-          # Create PR - build body without indentation issues
-          PR_BODY="${CASK_ACTION} cask for MacDown 3000 version ${VERSION}."
-          PR_BODY="${PR_BODY}"$'\n\n'"MacDown 3000 is an open-source Markdown editor for macOS with live preview and syntax highlighting."
+          # PR title follows homebrew conventions
+          if [[ "$IS_NEW_CASK" == "true" ]]; then
+            PR_TITLE="macdown3000 ${VERSION} (new cask)"
+          else
+            PR_TITLE="macdown3000 ${VERSION}"
+          fi
+
+          # Create PR body
+          PR_BODY="MacDown 3000 is an open-source Markdown editor for macOS with live preview and syntax highlighting."
           PR_BODY="${PR_BODY}"$'\n\n'"**Release:** https://github.com/${{ github.repository }}/releases/tag/${TAG}"
           PR_BODY="${PR_BODY}"$'\n\n'"The DMG is signed with a Developer ID Application certificate and notarized by Apple."
 
           PR_URL=$(gh pr create \
             --repo homebrew/homebrew-cask \
-            --title "${CASK_ACTION} macdown3000 ${VERSION}" \
+            --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --head "${FORK_OWNER}:${BRANCH_NAME}" \
-            --base master)
+            --base main)
 
           echo ""
           echo "✅ Pull request created successfully!"
