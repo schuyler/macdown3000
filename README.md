@@ -19,6 +19,16 @@ This project honors the original intentions and contributions of both Mou and Ma
 
 **Version 3000.0.0** - Available Now
 
+### Homebrew
+
+The easiest way to install MacDown 3000 is with [Homebrew](https://brew.sh):
+
+```bash
+brew install --cask macdown-3000
+```
+
+### Manual Download
+
 Download the latest release from the [GitHub Releases](https://github.com/schuyler/macdown3000/releases) page. Open the DMG file and drag MacDown 3000 to your Applications folder.
 
 ### System Requirements
