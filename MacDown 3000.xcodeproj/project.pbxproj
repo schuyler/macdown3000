@@ -279,15 +279,6 @@
 		1F41FF7A1C8EEE9200FD9886 /* Templates */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Templates; path = Resources/Templates; sourceTree = "<group>"; };
 		1F4C8E99194AE0B9004BF82E /* MarkdownDocument.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = MarkdownDocument.icns; path = Resources/MarkdownDocument.icns; sourceTree = "<group>"; };
 		1F51C9A1194564670015A96F /* libPods-MacDown-PAPreferences.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libPods-MacDown-PAPreferences.a"; path = "../../../../Library/Developer/Xcode/DerivedData/MacDown-ggdtxvuybojeqbhjydkhilziizrv/Build/Products/Debug/libPods-MacDown-PAPreferences.a"; sourceTree = "<group>"; };
-		1F56013E2099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		1F56013F2099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPExportPanelAccessoryViewController.strings"; sourceTree = "<group>"; };
-		1F5601402099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MainMenu.strings"; sourceTree = "<group>"; };
-		1F5601412099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "de-DE.lproj/MPTerminalPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F5601422099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPHtmlPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F5601432099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPEditorPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F5601442099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPGeneralPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F5601452099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPMarkdownPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F5601462099A1E60035F207 /* de-DE */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "de-DE"; path = "Localization/de-DE.lproj/MPDocument.strings"; sourceTree = "<group>"; };
 		1F59491A1AB57C78007394CB /* syntax_highlighting.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = syntax_highlighting.json; path = Resources/syntax_highlighting.json; sourceTree = "<group>"; };
 		1F59491C1AB57D87007394CB /* NSJSONSerialization+File.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSJSONSerialization+File.h"; sourceTree = "<group>"; };
 		1F59491D1AB57D87007394CB /* NSJSONSerialization+File.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSJSONSerialization+File.m"; sourceTree = "<group>"; };
@@ -394,15 +385,6 @@
 		1F9A14EB194EEE9900D1C6A9 /* MPMainController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MPMainController.m; path = Code/Application/MPMainController.m; sourceTree = "<group>"; };
 		1F9A14EE194EEEDD00D1C6A9 /* Styles */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Styles; path = Resources/Styles; sourceTree = "<group>"; };
 		1F9A14F3194EF6A600D1C6A9 /* Themes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Themes; path = Resources/Themes; sourceTree = "<group>"; };
-		1F9F351C2099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/Localizable.strings"; sourceTree = "<group>"; };
-		1F9F351D2099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPExportPanelAccessoryViewController.strings"; sourceTree = "<group>"; };
-		1F9F351E2099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MainMenu.strings"; sourceTree = "<group>"; };
-		1F9F351F2099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPHtmlPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F9F35202099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "sk-SK.lproj/MPTerminalPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F9F35212099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPEditorPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F9F35222099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPGeneralPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F9F35232099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPMarkdownPreferencesViewController.strings"; sourceTree = "<group>"; };
-		1F9F35242099A1FC00C4B4F1 /* sk-SK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "sk-SK"; path = "Localization/sk-SK.lproj/MPDocument.strings"; sourceTree = "<group>"; };
 		1FA6CDB81952D2CD008D5CA0 /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = dsa_pub.pem; path = Resources/dsa_pub.pem; sourceTree = "<group>"; };
 		1FA6DE211941CC9E000409FB /* MacDown 3000.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MacDown 3000.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1FA6DE241941CC9E000409FB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -1365,8 +1347,6 @@
 				1F6B58F21F5D2EA2006559CB /* nl-NL */,
 				1F20EA262099A18A00C81510 /* nb-NO */,
 				1FBD430F2099A1A200B348CD /* tr */,
-				1F5601402099A1E60035F207 /* de-DE */,
-				1F9F351E2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A52099A228004EC5D7 /* et */,
 				E7D458CB241C933800411A36 /* fi */,
 				E70ECDD5241C933C00537A46 /* ru-RU */,
@@ -1397,8 +1377,6 @@
 				1F6B58F91F5D2EA3006559CB /* nl-NL */,
 				1F20EA2C2099A18A00C81510 /* nb-NO */,
 				1FBD43152099A1A200B348CD /* tr */,
-				1F5601462099A1E60035F207 /* de-DE */,
-				1F9F35242099A1FC00C4B4F1 /* sk-SK */,
 				1FB813AB2099A228004EC5D7 /* et */,
 				E70ECDD7241C933C00537A46 /* ru-RU */,
 				E7445191241C934C00D9ABD9 /* cs */,
@@ -1428,8 +1406,6 @@
 				1F6B58F61F5D2EA2006559CB /* nl-NL */,
 				1F20EA292099A18A00C81510 /* nb-NO */,
 				1FBD43122099A1A200B348CD /* tr */,
-				1F5601432099A1E60035F207 /* de-DE */,
-				1F9F35212099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A82099A228004EC5D7 /* et */,
 				E70ECDDB241C933C00537A46 /* ru-RU */,
 				E70ECDE0241C933C00537A46 /* hi */,
@@ -1462,8 +1438,6 @@
 				1F6B58F71F5D2EA2006559CB /* nl-NL */,
 				1F20EA272099A18A00C81510 /* nb-NO */,
 				1FBD43112099A1A200B348CD /* tr */,
-				1F5601422099A1E60035F207 /* de-DE */,
-				1F9F351F2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A72099A228004EC5D7 /* et */,
 				E70ECDDA241C933C00537A46 /* ru-RU */,
 				E70ECDDF241C933C00537A46 /* hi */,
@@ -1496,8 +1470,6 @@
 				1F6B58F51F5D2EA2006559CB /* nl-NL */,
 				1F20EA2B2099A18A00C81510 /* nb-NO */,
 				1FBD43142099A1A200B348CD /* tr */,
-				1F5601452099A1E60035F207 /* de-DE */,
-				1F9F35232099A1FC00C4B4F1 /* sk-SK */,
 				1FB813AA2099A228004EC5D7 /* et */,
 				E70ECDD6241C933C00537A46 /* ru-RU */,
 				E70ECDDC241C933C00537A46 /* hi */,
@@ -1573,8 +1545,6 @@
 				1F6B58FB1F5D2EE5006559CB /* nl-NL */,
 				1F20EA242099A18A00C81510 /* nb-NO */,
 				1FBD430D2099A1A200B348CD /* tr */,
-				1F56013E2099A1E60035F207 /* de-DE */,
-				1F9F351C2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A32099A228004EC5D7 /* et */,
 				E70ECDD4241C933C00537A46 /* ru-RU */,
 				E744518B241C934C00D9ABD9 /* cs */,
@@ -1603,8 +1573,6 @@
 				1F6B58F81F5D2EA2006559CB /* nl-NL */,
 				1F20EA282099A18A00C81510 /* nb-NO */,
 				1FBD43102099A1A200B348CD /* tr */,
-				1F5601412099A1E60035F207 /* de-DE */,
-				1F9F35202099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A62099A228004EC5D7 /* et */,
 				E70ECDD8241C933C00537A46 /* ru-RU */,
 				E70ECDDD241C933C00537A46 /* hi */,
@@ -1637,8 +1605,6 @@
 				1F6B58F31F5D2EA2006559CB /* nl-NL */,
 				1F20EA252099A18A00C81510 /* nb-NO */,
 				1FBD430E2099A1A200B348CD /* tr */,
-				1F56013F2099A1E60035F207 /* de-DE */,
-				1F9F351D2099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A42099A228004EC5D7 /* et */,
 				E744518A241C934C00D9ABD9 /* cs */,
 				E77E5D6B241C935100699B5A /* da-DK */,
@@ -1666,8 +1632,6 @@
 				1F6B58F41F5D2EA2006559CB /* nl-NL */,
 				1F20EA2A2099A18A00C81510 /* nb-NO */,
 				1FBD43132099A1A200B348CD /* tr */,
-				1F5601442099A1E60035F207 /* de-DE */,
-				1F9F35222099A1FC00C4B4F1 /* sk-SK */,
 				1FB813A92099A228004EC5D7 /* et */,
 				E70ECDD9241C933C00537A46 /* ru-RU */,
 				E70ECDDE241C933C00537A46 /* hi */,
