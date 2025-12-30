@@ -1,13 +1,13 @@
 {
   "stable": {
-    "version": "3000.0.1",
-    "tagName": "v3000.0.1",
-    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.1",
-    "publishedAt": "2025-12-21T07:23:45Z",
-    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.1/MacDown-3000.0.1.dmg",
-    "dmgName": "MacDown-3000.0.1.dmg",
-    "dmgSizeMB": "6.3",
-    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.1/MacDown-3000.0.1.dmg.sha256"
+    "version": "3000.0.2",
+    "tagName": "v3000.0.2",
+    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.2",
+    "publishedAt": "2025-12-30T23:37:38Z",
+    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.2/MacDown-3000.0.2.dmg",
+    "dmgName": "MacDown-3000.0.2.dmg",
+    "dmgSizeMB": "6.8",
+    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.2/MacDown-3000.0.2.dmg.sha256"
   },
-  "updatedAt": "2025-12-21T07:23:57Z"
+  "updatedAt": "2025-12-30T23:37:51Z"
 }
