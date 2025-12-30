@@ -40,6 +40,17 @@ NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
 
     if (!ok)
         return;
+
+    // Copy bundled Images directory alongside the file for relative image paths
+    NSURL *imagesSource = [[NSBundle mainBundle] URLForResource:@"Images"
+                                                  withExtension:nil];
+    if (imagesSource)
+    {
+        NSURL *imagesTarget = [NSURL fileURLWithPathComponents:@[NSTemporaryDirectory(),
+                                                                  @"Images"]];
+        [manager removeItemAtURL:imagesTarget error:NULL];
+        [manager copyItemAtURL:imagesSource toURL:imagesTarget error:NULL];
+    }
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
     [c openDocumentWithContentsOfURL:target display:YES completionHandler:
      ^(NSDocument *document, BOOL wasOpen, NSError *error) {
