@@ -105,7 +105,7 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 ### Current State: ⚠️ ADEQUATE (needs expansion)
 
 **What Exists:**
-- **8 test files** in `MacDownTests/`:
+- **13+ test files** in `MacDownTests/` (expanded with Issue #234):
   - `MPUtilityTests.m` (33 lines) - JavaScript bridge tests
   - `MPColorTests.m` (38 lines) - Color conversion tests
   - `MPPreferencesTests.m` (48 lines) - Preferences tests
@@ -114,10 +114,13 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
   - `MPStringLookupTests.m` (187 lines) - String lookup tests
   - `MPDocumentIOTests.m` (340 lines) - File I/O, document state management, autosave
   - `MPScrollSyncTests.m` (1075 lines) - Scroll sync, header detection, JavaScript sort logic, horizontal rule regex, setext header detection
+  - `MPDocumentLifecycleTests.m` - Document lifecycle, dirty flags, encoding detection (Issue #234)
+  - `MPNotificationTests.m` - NSNotificationCenter observers, preference notifications (Issue #234)
+  - `MPRendererEdgeCaseTests.m` - Renderer edge cases, nil handling, concurrent rendering (Issue #234)
+  - `HGMarkdownHighlighterTests.m` - Syntax highlighter properties and edge cases (Issue #234)
+  - `MPImageExportTests.m` - Image export, base64, linked images, alt text (Issue #234)
 
-- **Total: ~1,897 lines of test code** for **63 source files**
-
-**Test Coverage:** ~30 lines of tests per source file (IMPROVED)
+**Test Coverage:** Continuing to improve with targeted test additions
 
 **What's Tested:**
 - ✅ JavaScript-to-ObjC bridge
@@ -132,20 +135,26 @@ MacDown 3000 has inherited a **solid foundation** from the original MacDown proj
 - ✅ Horizontal rule regex edge cases (Issue #143)
 - ✅ Setext header detection (Issue #143)
 - ✅ HTML export functionality (Issue #30)
+- ✅ Document lifecycle and dirty flags (Issue #234)
+- ✅ Notification observers and preference changes (Issue #234)
+- ✅ Renderer edge cases and concurrent rendering (Issue #234)
+- ✅ Syntax highlighter properties (Issue #234)
+- ✅ Image export with base64 and linked images (Issue #234)
 
 **What's NOT Tested:**
-- ❌ Editor functionality (text manipulation, syntax highlighting)
+- ❌ Editor functionality (text manipulation beyond basic tests)
 - ⚠️ PDF export (needs testing)
 - ❌ Mermaid diagram rendering
 - ❌ LaTeX math rendering
 - ❌ Most UI components
 
 **Partially Tested:**
-- ✅ HTML export - MPHTMLExportTests.m implemented (Issue #30)
+- ✅ HTML export - MPHTMLExportTests.m, MPImageExportTests.m (Issue #30, Issue #234)
+- ⚠️ Syntax highlighting - HGMarkdownHighlighterTests.m covers properties and edge cases (Issue #234), but integration needs more coverage
 
 **Minimal Coverage:**
-- ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), needs expansion
-- ⚠️ Preview pane - Scroll sync tested (Issue #39, Issue #143, Issue #144), but rendering logic needs more coverage
+- ⚠️ Markdown rendering - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81), edge cases added (Issue #234), needs expansion
+- ⚠️ Preview pane - Scroll sync tested (Issue #39, Issue #143, Issue #144), renderer edge cases tested (Issue #234), but rendering logic needs more coverage
 
 ### Test Infrastructure:
 - Uses **XCTest** framework (standard)
@@ -549,18 +558,23 @@ Create issues for:
    - Tests cover header detection, scroll position preservation, JavaScript sort edge cases, horizontal rule regex edge cases, setext header detection
    - Impact: High - prevents scroll sync regressions
 
-9. **Create developer setup script (setup.sh)**
+9. ✅ **Add notification, lifecycle, and edge case tests** (Issue #234 - completed)
+   - Status: 5 new test suites implemented (MPNotificationTests, MPDocumentLifecycleTests, MPRendererEdgeCaseTests, HGMarkdownHighlighterTests, MPImageExportTests)
+   - Tests cover notification observers, document lifecycle, renderer edge cases, syntax highlighter properties, image export
+   - Impact: High - improves coverage of core functionality and edge cases
+
+10. **Create developer setup script (setup.sh)**
    - Priority: MEDIUM
    - Effort: LOW
    - Impact: Better developer experience
 
 ### Phase 2: Quality Improvements (v1.1+)
 
-10. ✅ Set up code coverage monitoring (completed)
-11. Add UI/integration tests
-12. Add linting workflows (SwiftLint, clang-format)
-13. Create architecture documentation
-14. Generate API docs
+11. ✅ Set up code coverage monitoring (completed)
+12. Add UI/integration tests
+13. Add linting workflows (SwiftLint, clang-format)
+14. Create architecture documentation
+15. Generate API docs
 
 ---
 
