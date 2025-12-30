@@ -11,6 +11,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
+#import "hoedown/document.h"
 
 
 @interface MPImageExportTests : XCTestCase
