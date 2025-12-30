@@ -10,6 +10,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <sys/stat.h>
 #import "MPAsset.h"
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
@@ -26,6 +27,8 @@
 @property (strong) MPRenderer *renderer;
 @property (strong) MPMockRendererDataSource *dataSource;
 @property (strong) MPMockRendererDelegate *delegate;
+@property (strong) NSString *testDirectory;
+@property (strong) NSFileManager *fileManager;
 @end
 
 
@@ -35,6 +38,15 @@
 {
     [super setUp];
     self.bundle = [NSBundle bundleForClass:[self class]];
+    self.fileManager = [NSFileManager defaultManager];
+
+    // Create unique test directory for file operations
+    NSString *tempDir = NSTemporaryDirectory();
+    self.testDirectory = [tempDir stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
+    [self.fileManager createDirectoryAtPath:self.testDirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:nil];
 
     // Create mock data source and delegate
     self.dataSource = [[MPMockRendererDataSource alloc] init];
@@ -48,10 +60,16 @@
 
 - (void)tearDown
 {
+    // Clean up test directory
+    if (self.testDirectory) {
+        [self.fileManager removeItemAtPath:self.testDirectory error:nil];
+    }
+
     self.renderer = nil;
     self.dataSource = nil;
     self.delegate = nil;
     self.bundle = nil;
+    self.testDirectory = nil;
     [super tearDown];
 }
 
@@ -349,6 +367,163 @@
                   @"Should contain table cells");
     XCTAssertTrue([html containsString:@"word-break"],
                   @"Word-break rules should be present for table cells");
+}
+
+
+#pragma mark - File Export Tests
+
+- (void)testHTMLExportWritesToFile
+{
+    // Set up test markdown
+    self.dataSource.markdown = @"# Test Document\n\nThis is a **paragraph** with _formatting_.";
+    self.dataSource.title = @"Test Document";
+
+    // Parse and get exported HTML
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    XCTAssertNotNil(html, @"Should generate HTML");
+
+    // Write to file
+    NSURL *fileURL = [NSURL fileURLWithPath:[self.testDirectory stringByAppendingPathComponent:@"export.html"]];
+    NSError *error = nil;
+    BOOL success = [html writeToURL:fileURL
+                         atomically:YES
+                           encoding:NSUTF8StringEncoding
+                              error:&error];
+
+    XCTAssertTrue(success, @"Should write HTML to file");
+    XCTAssertNil(error, @"Should not have error");
+    XCTAssertTrue([self.fileManager fileExistsAtPath:fileURL.path], @"File should exist");
+
+    // Read back and verify content
+    NSString *readBack = [NSString stringWithContentsOfURL:fileURL
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:&error];
+    XCTAssertNil(error, @"Should read file without error");
+    XCTAssertEqualObjects(readBack, html, @"Content should match");
+    XCTAssertTrue([readBack containsString:@"<h1>Test Document</h1>"], @"Should contain heading");
+    XCTAssertTrue([readBack containsString:@"<strong>paragraph</strong>"], @"Should contain bold text");
+}
+
+- (void)testHTMLExportOverwritesExistingFile
+{
+    NSURL *fileURL = [NSURL fileURLWithPath:[self.testDirectory stringByAppendingPathComponent:@"overwrite.html"]];
+
+    // Write initial content
+    NSString *initialContent = @"<html><body>Initial</body></html>";
+    NSError *error = nil;
+    [initialContent writeToURL:fileURL atomically:YES encoding:NSUTF8StringEncoding error:&error];
+    XCTAssertNil(error, @"Should write initial file");
+
+    // Generate and write new HTML
+    self.dataSource.markdown = @"# New Content\n\nReplaced.";
+    self.dataSource.title = @"New";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    BOOL success = [html writeToURL:fileURL
+                         atomically:YES
+                           encoding:NSUTF8StringEncoding
+                              error:&error];
+    XCTAssertTrue(success, @"Should overwrite file");
+
+    // Verify new content
+    NSString *readBack = [NSString stringWithContentsOfURL:fileURL
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:&error];
+    XCTAssertTrue([readBack containsString:@"<h1>New Content</h1>"], @"Should have new content");
+    XCTAssertFalse([readBack containsString:@"Initial"], @"Should not have old content");
+}
+
+- (void)testHTMLExportCreatesValidStructure
+{
+    // Set up complex markdown
+    self.dataSource.markdown = @"# Heading\n\n## Subheading\n\nParagraph with **bold** and _italic_.\n\n- List item 1\n- List item 2\n\n```\ncode block\n```";
+    self.dataSource.title = @"Structure Test";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    // Write to file
+    NSURL *fileURL = [NSURL fileURLWithPath:[self.testDirectory stringByAppendingPathComponent:@"structure.html"]];
+    NSError *error = nil;
+    [html writeToURL:fileURL atomically:YES encoding:NSUTF8StringEncoding error:&error];
+
+    // Read and verify structure
+    NSString *content = [NSString stringWithContentsOfURL:fileURL
+                                                 encoding:NSUTF8StringEncoding
+                                                    error:&error];
+    XCTAssertNotNil(content, @"Should read content");
+
+    // Verify HTML structure elements
+    XCTAssertTrue([content containsString:@"<!DOCTYPE html>"] || [content containsString:@"<html"],
+                  @"Should be complete HTML document");
+    XCTAssertTrue([content containsString:@"<head>"], @"Should have head");
+    XCTAssertTrue([content containsString:@"<body"], @"Should have body");
+    XCTAssertTrue([content containsString:@"<h1>"], @"Should have h1");
+    XCTAssertTrue([content containsString:@"<h2>"], @"Should have h2");
+    XCTAssertTrue([content containsString:@"<ul>"], @"Should have list");
+    XCTAssertTrue([content containsString:@"<li>"], @"Should have list items");
+    XCTAssertTrue([content containsString:@"<pre>"] || [content containsString:@"<code>"],
+                  @"Should have code block");
+}
+
+- (void)testHTMLExportWithDifferentEncodings
+{
+    // Test with Unicode content
+    self.dataSource.markdown = @"# Unicode Test\n\nHello 世界! Привет мир! مرحبا بالعالم";
+    self.dataSource.title = @"Unicode";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    NSURL *fileURL = [NSURL fileURLWithPath:[self.testDirectory stringByAppendingPathComponent:@"unicode.html"]];
+    NSError *error = nil;
+    BOOL success = [html writeToURL:fileURL
+                         atomically:YES
+                           encoding:NSUTF8StringEncoding
+                              error:&error];
+    XCTAssertTrue(success, @"Should write Unicode content");
+
+    // Read back and verify Unicode preserved
+    NSString *readBack = [NSString stringWithContentsOfURL:fileURL
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:&error];
+    XCTAssertTrue([readBack containsString:@"世界"], @"Should preserve Chinese");
+    XCTAssertTrue([readBack containsString:@"Привет"], @"Should preserve Russian");
+    XCTAssertTrue([readBack containsString:@"مرحبا"], @"Should preserve Arabic");
+}
+
+- (void)testHTMLExportToReadOnlyDirectoryFails
+{
+    // Create a read-only directory
+    NSString *readOnlyDir = [self.testDirectory stringByAppendingPathComponent:@"readonly"];
+    NSError *error = nil;
+    [self.fileManager createDirectoryAtPath:readOnlyDir
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:&error];
+
+    // Make it read-only
+    const char *path = [readOnlyDir fileSystemRepresentation];
+    chmod(path, S_IRUSR | S_IXUSR);  // r-x only
+
+    // Try to write
+    self.dataSource.markdown = @"# Test";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    NSURL *fileURL = [NSURL fileURLWithPath:[readOnlyDir stringByAppendingPathComponent:@"test.html"]];
+    BOOL success = [html writeToURL:fileURL
+                         atomically:YES
+                           encoding:NSUTF8StringEncoding
+                              error:&error];
+
+    XCTAssertFalse(success, @"Write should fail to read-only directory");
+    XCTAssertNotNil(error, @"Should return error");
+
+    // Restore permissions for cleanup
+    chmod(path, S_IRWXU);
 }
 
 @end
