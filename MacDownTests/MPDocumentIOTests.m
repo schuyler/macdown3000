@@ -256,4 +256,160 @@
     XCTAssertTrue(hasMarkdownExtension, @"Should include at least one Markdown extension");
 }
 
+
+#pragma mark - Error Handling Tests
+
+- (void)testReadFromDataMalformedUTF8Sequences
+{
+    // Test various malformed UTF-8 sequences
+
+    // Invalid continuation byte
+    const unsigned char bytes1[] = {0xC3, 0x28};  // 0xC3 expects continuation, 0x28 is ASCII
+    NSData *data1 = [NSData dataWithBytes:bytes1 length:sizeof(bytes1)];
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:data1
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+    XCTAssertFalse(success, @"Should reject invalid continuation byte");
+
+    // Overlong encoding (2-byte encoding of ASCII)
+    const unsigned char bytes2[] = {0xC0, 0xAF};  // Overlong '/'
+    NSData *data2 = [NSData dataWithBytes:bytes2 length:sizeof(bytes2)];
+    success = [self.document readFromData:data2
+                                   ofType:@"net.daringfireball.markdown"
+                                    error:&error];
+    XCTAssertFalse(success, @"Should reject overlong encoding");
+
+    // Incomplete multi-byte sequence at end
+    const unsigned char bytes3[] = {0x48, 0x65, 0x6C, 0x6C, 0x6F, 0xE2, 0x82};  // "Hello" + incomplete €
+    NSData *data3 = [NSData dataWithBytes:bytes3 length:sizeof(bytes3)];
+    success = [self.document readFromData:data3
+                                   ofType:@"net.daringfireball.markdown"
+                                    error:&error];
+    XCTAssertFalse(success, @"Should reject incomplete multi-byte at end");
+}
+
+- (void)testReadFromDataEmptyData
+{
+    // Empty data should succeed (empty document is valid)
+    NSData *emptyData = [NSData data];
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:emptyData
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+
+    // Empty string from empty data is valid UTF-8
+    XCTAssertTrue(success, @"Empty data should be valid");
+    XCTAssertNil(error, @"Should not have error for empty data");
+}
+
+- (void)testReadFromDataNilData
+{
+    // Nil data creates an empty string, which is valid
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:nil
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+
+    // NSString initWithData:nil returns @"" (empty string), which is valid
+    XCTAssertTrue(success, @"Nil data should succeed (becomes empty string)");
+    XCTAssertNil(error, @"Should not have error");
+}
+
+- (void)testReadFromDataLargeFile
+{
+    // Create a large markdown document (1MB)
+    NSMutableString *largeMarkdown = [NSMutableString stringWithCapacity:1024 * 1024];
+    for (int i = 0; i < 10000; i++) {
+        [largeMarkdown appendFormat:@"## Heading %d\n\nParagraph with some content for line %d.\n\n", i, i];
+    }
+
+    NSData *largeData = [largeMarkdown dataUsingEncoding:NSUTF8StringEncoding];
+    XCTAssertGreaterThan(largeData.length, 500000, @"Should be at least 500KB");
+
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:largeData
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+
+    XCTAssertTrue(success, @"Should handle large files");
+    XCTAssertNil(error, @"Should not error on large file");
+}
+
+- (void)testReadFromDataWithBOM
+{
+    // UTF-8 with BOM (Byte Order Mark)
+    const unsigned char bom[] = {0xEF, 0xBB, 0xBF};  // UTF-8 BOM
+    NSMutableData *dataWithBOM = [NSMutableData dataWithBytes:bom length:sizeof(bom)];
+    [dataWithBOM appendData:[@"# Document with BOM\n\nContent here." dataUsingEncoding:NSUTF8StringEncoding]];
+
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:dataWithBOM
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+
+    XCTAssertTrue(success, @"Should handle UTF-8 BOM");
+    XCTAssertNil(error, @"Should not error with BOM");
+}
+
+- (void)testWriteToReadOnlyDirectory
+{
+    // Create a read-only directory
+    NSString *readOnlyDir = [self.testDirectory stringByAppendingPathComponent:@"readonly"];
+    NSError *error = nil;
+    [self.fileManager createDirectoryAtPath:readOnlyDir
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:&error];
+
+    // Make it read-only
+    const char *path = [readOnlyDir fileSystemRepresentation];
+    chmod(path, S_IRUSR | S_IXUSR);  // r-x only
+
+    // Create some test content and try to write
+    NSString *content = @"# Test\n\nThis should fail to write.";
+    NSData *data = [content dataUsingEncoding:NSUTF8StringEncoding];
+
+    NSURL *targetURL = [NSURL fileURLWithPath:[readOnlyDir stringByAppendingPathComponent:@"test.md"]];
+    BOOL success = [data writeToURL:targetURL
+                            options:NSDataWritingAtomic
+                              error:&error];
+
+    XCTAssertFalse(success, @"Write to read-only directory should fail");
+    XCTAssertNotNil(error, @"Should return error");
+    XCTAssertEqual(error.domain, NSCocoaErrorDomain, @"Should be Cocoa error");
+
+    // Restore permissions for cleanup
+    chmod(path, S_IRWXU);
+}
+
+- (void)testDataOfTypeReturnsUTF8
+{
+    // Test that dataOfType returns valid UTF-8 data
+    // Note: In headless mode, the document has no content, so this tests the empty case
+    NSError *error = nil;
+    NSData *data = [self.document dataOfType:@"net.daringfireball.markdown" error:&error];
+
+    // Without editor, markdown is nil, so data should be nil or empty
+    // The implementation converts markdown to data, so nil markdown = nil data
+    if (data != nil) {
+        // If we got data, verify it's valid UTF-8
+        NSString *decoded = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        XCTAssertNotNil(decoded, @"Data should be valid UTF-8");
+    }
+}
+
+- (void)testOpenNonexistentFile
+{
+    NSURL *nonexistentURL = [NSURL fileURLWithPath:[self.testDirectory stringByAppendingPathComponent:@"does_not_exist.md"]];
+
+    NSError *error = nil;
+    MPDocument *doc = [[MPDocument alloc] initWithContentsOfURL:nonexistentURL
+                                                         ofType:@"net.daringfireball.markdown"
+                                                          error:&error];
+
+    XCTAssertNil(doc, @"Should not create document from nonexistent file");
+    XCTAssertNotNil(error, @"Should return error for nonexistent file");
+}
+
 @end
