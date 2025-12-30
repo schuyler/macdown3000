@@ -240,9 +240,11 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
 
-    // Without SmartyPants, quotes remain as-is
-    XCTAssertTrue([html containsString:@"\"quoted\""],
-                  @"Straight quotes should remain without SmartyPants");
+    // Without SmartyPants, quotes remain as straight quotes (may be HTML-encoded)
+    // Check for either literal quotes or HTML entities
+    BOOL hasQuotes = [html containsString:@"\"quoted\""] ||
+                     [html containsString:@"&quot;quoted&quot;"];
+    XCTAssertTrue(hasQuotes, @"Should have straight quotes (literal or encoded)");
 }
 
 
