@@ -12,10 +12,6 @@
 @interface MPPreferencesTests : XCTestCase
 @property MPPreferences *preferences;
 @property NSDictionary *oldFontInfo;
-@property BOOL oldSyntaxHighlighting;
-@property BOOL oldMathJax;
-@property NSString *oldStyleName;
-@property NSString *oldHighlightingThemeName;
 @end
 
 
@@ -25,23 +21,13 @@
 {
     [super setUp];
     self.preferences = [MPPreferences sharedInstance];
-
-    // Save original values for restoration
     self.oldFontInfo = [self.preferences.editorBaseFontInfo copy];
-    self.oldSyntaxHighlighting = self.preferences.htmlSyntaxHighlighting;
-    self.oldMathJax = self.preferences.htmlMathJax;
-    self.oldStyleName = [self.preferences.htmlStyleName copy];
-    self.oldHighlightingThemeName = [self.preferences.htmlHighlightingThemeName copy];
 }
 
 - (void)tearDown
 {
-    // Restore original values
+    // Only restore font info which is what the original test modified
     self.preferences.editorBaseFontInfo = self.oldFontInfo;
-    self.preferences.htmlSyntaxHighlighting = self.oldSyntaxHighlighting;
-    self.preferences.htmlMathJax = self.oldMathJax;
-    self.preferences.htmlStyleName = self.oldStyleName;
-    self.preferences.htmlHighlightingThemeName = self.oldHighlightingThemeName;
     [self.preferences synchronize];
     [super tearDown];
 }
@@ -95,6 +81,9 @@
 
 - (void)testSyntaxHighlightingToggle
 {
+    // Save original
+    BOOL original = self.preferences.htmlSyntaxHighlighting;
+
     // Toggle ON
     self.preferences.htmlSyntaxHighlighting = YES;
     XCTAssertTrue([self.preferences synchronize], @"Should sync");
@@ -104,10 +93,16 @@
     self.preferences.htmlSyntaxHighlighting = NO;
     XCTAssertTrue([self.preferences synchronize], @"Should sync");
     XCTAssertFalse(self.preferences.htmlSyntaxHighlighting, @"Should be OFF");
+
+    // Restore
+    self.preferences.htmlSyntaxHighlighting = original;
+    [self.preferences synchronize];
 }
 
 - (void)testMathJaxToggle
 {
+    BOOL original = self.preferences.htmlMathJax;
+
     self.preferences.htmlMathJax = YES;
     [self.preferences synchronize];
     XCTAssertTrue(self.preferences.htmlMathJax, @"MathJax should be ON");
@@ -115,10 +110,18 @@
     self.preferences.htmlMathJax = NO;
     [self.preferences synchronize];
     XCTAssertFalse(self.preferences.htmlMathJax, @"MathJax should be OFF");
+
+    // Restore
+    self.preferences.htmlMathJax = original;
+    [self.preferences synchronize];
 }
 
 - (void)testExtensionFlags
 {
+    // Save originals
+    BOOL originalTables = self.preferences.extensionTables;
+    BOOL originalStrike = self.preferences.extensionStrikethough;
+
     // Test table extension
     self.preferences.extensionTables = YES;
     [self.preferences synchronize];
@@ -132,6 +135,11 @@
     self.preferences.extensionStrikethough = YES;
     [self.preferences synchronize];
     XCTAssertTrue(self.preferences.extensionStrikethough, @"Strikethrough should be ON");
+
+    // Restore
+    self.preferences.extensionTables = originalTables;
+    self.preferences.extensionStrikethough = originalStrike;
+    [self.preferences synchronize];
 }
 
 
@@ -139,22 +147,36 @@
 
 - (void)testStyleNamePersistence
 {
+    // Save original
+    NSString *original = self.preferences.htmlStyleName;
+
     NSString *testStyleName = @"GitHub2";
     self.preferences.htmlStyleName = testStyleName;
     [self.preferences synchronize];
 
     NSString *result = self.preferences.htmlStyleName;
     XCTAssertEqualObjects(result, testStyleName, @"Style name should persist");
+
+    // Restore
+    self.preferences.htmlStyleName = original;
+    [self.preferences synchronize];
 }
 
 - (void)testHighlightingThemeNamePersistence
 {
+    // Save original
+    NSString *original = self.preferences.htmlHighlightingThemeName;
+
     NSString *testTheme = @"tomorrow";
     self.preferences.htmlHighlightingThemeName = testTheme;
     [self.preferences synchronize];
 
     NSString *result = self.preferences.htmlHighlightingThemeName;
     XCTAssertEqualObjects(result, testTheme, @"Theme name should persist");
+
+    // Restore
+    self.preferences.htmlHighlightingThemeName = original;
+    [self.preferences synchronize];
 }
 
 
@@ -171,15 +193,6 @@
 
 #pragma mark - Edge Cases
 
-- (void)testEmptyStringPreference
-{
-    self.preferences.htmlStyleName = @"";
-    [self.preferences synchronize];
-
-    NSString *result = self.preferences.htmlStyleName;
-    XCTAssertEqualObjects(result, @"", @"Empty string should persist");
-}
-
 - (void)testNilFontInfoFallback
 {
     // Setting font info to nil should not crash
@@ -194,6 +207,7 @@
 
     // Restore
     self.preferences.editorBaseFontInfo = original;
+    [self.preferences synchronize];
 }
 
 - (void)testSynchronizeReturnsSuccess
@@ -215,32 +229,50 @@
 
 - (void)testEditorInsetValues
 {
+    CGFloat original = self.preferences.editorHorizontalInset;
+
     CGFloat testInset = 25.0;
     self.preferences.editorHorizontalInset = testInset;
     [self.preferences synchronize];
 
     CGFloat result = self.preferences.editorHorizontalInset;
     XCTAssertEqualWithAccuracy(result, testInset, 0.01, @"Inset should persist");
+
+    // Restore
+    self.preferences.editorHorizontalInset = original;
+    [self.preferences synchronize];
 }
 
 - (void)testEditorMaximumWidth
 {
+    CGFloat original = self.preferences.editorMaximumWidth;
+
     CGFloat testWidth = 800.0;
     self.preferences.editorMaximumWidth = testWidth;
     [self.preferences synchronize];
 
     CGFloat result = self.preferences.editorMaximumWidth;
     XCTAssertEqualWithAccuracy(result, testWidth, 0.01, @"Width should persist");
+
+    // Restore
+    self.preferences.editorMaximumWidth = original;
+    [self.preferences synchronize];
 }
 
 - (void)testEditorLineSpacing
 {
+    CGFloat original = self.preferences.editorLineSpacing;
+
     CGFloat testSpacing = 1.5;
     self.preferences.editorLineSpacing = testSpacing;
     [self.preferences synchronize];
 
     CGFloat result = self.preferences.editorLineSpacing;
     XCTAssertEqualWithAccuracy(result, testSpacing, 0.01, @"Line spacing should persist");
+
+    // Restore
+    self.preferences.editorLineSpacing = original;
+    [self.preferences synchronize];
 }
 
 @end

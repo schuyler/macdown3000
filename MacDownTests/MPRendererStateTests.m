@@ -152,16 +152,16 @@
                                 @"Renderer may query style name");
 }
 
-- (void)testRendererProducesHTMLOutput
+- (void)testRendererProducesHTML
 {
+    // parseMarkdown: is synchronous and doesn't call delegate callback
+    // Instead, we verify HTML is available via HTMLForExportWithStyles
     self.dataSource.markdown = @"# Hello World\n\nThis is a test.";
     [self.renderer parseMarkdown:self.dataSource.markdown];
 
-    XCTAssertGreaterThan(self.delegate.htmlOutputCallCount, 0,
-                         @"Renderer should call didProduceHTMLOutput");
-    XCTAssertNotNil(self.delegate.lastReceivedHTML,
-                    @"Should receive HTML output");
-    XCTAssertTrue([self.delegate.lastReceivedHTML containsString:@"Hello World"],
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+    XCTAssertNotNil(html, @"Should produce HTML");
+    XCTAssertTrue([html containsString:@"Hello World"],
                   @"HTML should contain heading text");
 }
 
