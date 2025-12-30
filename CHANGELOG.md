@@ -1,5 +1,23 @@
 # Changelog
 
+## [3000.0.2] - 2025-12-30
+
+This release removes remote image loading from the built-in help file, fixes broken localization for German and Slovak, and expands unit test coverage.
+
+MacDown 3000 is now available via Homebrew. Try it!
+
+```bash
+brew install --cask macdown-3000
+```
+
+### Fixed
+- Import help.md images locally to eliminate external d.pr network requests (#232) -- thanks @robbyt!
+- Fix broken German (DE) and Slovak (SK) localizations (#230) -- thanks @emsspree!
+
+### Infrastructure
+- Expand unit test coverage with notification, lifecycle, and edge case tests (#233, #235)
+- Add workflow to submit PRs to homebrew-cask on release (#225, #226)
+
 ## [3000.0.1] - 2025-12-20
 
 This patch release fixes three bugs affecting the editor and preview pane.
