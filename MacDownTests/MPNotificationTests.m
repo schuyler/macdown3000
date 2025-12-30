@@ -381,17 +381,17 @@
                     object:nil
                      queue:[NSOperationQueue mainQueue]
                 usingBlock:^(NSNotification *notification) {
-        notificationReceived = YES;
-        [expectation fulfill];
+        // Guard against multiple fulfillment - NSUserDefaultsDidChangeNotification
+        // can fire multiple times when preferences are changed
+        if (!notificationReceived) {
+            notificationReceived = YES;
+            [expectation fulfill];
+        }
     }];
 
     // Change a preference to trigger defaults change
     BOOL originalValue = self.preferences.htmlMathJax;
     self.preferences.htmlMathJax = !originalValue;
-    [self.preferences synchronize];
-
-    // Restore
-    self.preferences.htmlMathJax = originalValue;
     [self.preferences synchronize];
 
     [self waitForExpectationsWithTimeout:2.0 handler:nil];
