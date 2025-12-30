@@ -1,6 +1,6 @@
 # MacDown 3000
 
-![MacDown 3000 logo](https://macdown.app/assets/images/logo-160.png)
+![MacDown 3000 logo](Images/logo-160.png)
 
 Hello there! I'm **MacDown 3000**, the open source Markdown editor for macOS.
 
@@ -25,7 +25,7 @@ You can also find me in the **"Open With"** menu whenever you right-click a `.md
 
 **MacDown 3000** is created as a simple-to-use editor for Markdown documents. I render your Markdown contents real-time into HTML, and display them in a preview panel.
 
-![MacDown Screenshot](https://d.pr/i/10UGP+)
+![MacDown Screenshot](Images/screenshot.png)
 
 I support all the original Markdown syntaxes. But I can do so much more! Various popular but non-standard syntaxes can be turned on/off from the [**Markdown** preference pane](#markdown-pane).
 
@@ -200,7 +200,7 @@ If you type three asterisks `***` or three dashes `---` on a line, I'll display 
 
 ## <a name="markdown-pane"></a>The Markdown Preference Pane
 This is where I keep all preferences related to how I parse markdown into html.  
-![Markdown preferences pane](https://d.pr/i/RQEi+)
+![Markdown preferences pane](Images/preferences-markdown.png)
 
 ### Document Formatting
 The ***Smartypants*** extension automatically transforms straight quotes (`"` and `'`) in your text into typographer’s quotes (`“`, `”`, `‘`, and `’`) according to the context. Very useful if you’re a typography freak like I am. Quote and Smartypants are syntactically incompatible. If both are enabled, Quote takes precedence.
@@ -244,7 +244,7 @@ print('Hello world!')
 
 You can add an optional language ID at the end of the first line. The language ID will only be used to highlight the code inside if you tick the ***Enable highlighting in code blocks*** option. This is what happens if you enable it:
 
-![Syntax highlighting example](https://d.pr/i/9HM6+)
+![Syntax highlighting example](Images/syntax-highlighting-demo.png)
 
 I support many popular languages as well as some generic syntax descriptions that can be used if your language of choice is not supported. See [relevant sections on the official site](https://macdown.app/features/) for a full list of supported syntaxes.
 
@@ -271,7 +271,7 @@ Footnotes           | [\^4] and [\^4]: | [^4] and footnote 4   |
 
 ## <a name="rendering-pane"></a>The Rendering Preference Pane
 This is where I keep preferences relating to how I render and style the parsed markdown in the preview window.  
-![Rendering preferences pane](https://d.pr/i/rT4d+)
+![Rendering preferences pane](Images/preferences-rendering.png)
 
 ### CSS
 You can choose different css files for me to use to render your html. You can even customize or add your own custom css files.
@@ -320,13 +320,13 @@ Normally I require you to put two spaces and a newline (aka return) at the end o
 ## <a name="general-pane"></a>The General Preferences Pane
 
 This is where I keep preferences related to application behavior.  
-![General preferences pane](https://d.pr/i/rvwu+)
+![General preferences pane](Images/preferences-general.png)
 
 The General Preferences Pane allows you to tell me how you want me to behave. For example, do you want me to make sure there is a document open when I launch? You can also tell me if I should constantly update the preview window as you type, or wait for you to hit `command-R` instead. Maybe you prefer your editor window on the right? Or to see the word-count as you type. This is also the place to tell me if you are interested in pre-releases of me, or just want to stick to better-tested official releases.  
 
 ## <a name="editor-pane"></a>The Editor Preference Pane
 This is where I keep preferences related to the behavior and styling of the editing window.  
-![Editor preferences pane](https://d.pr/i/6OL5+)
+![Editor preferences pane](Images/preferences-editor.png)
 
 
 ### Styling
