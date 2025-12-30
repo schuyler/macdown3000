@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		0319BD8F4A64D9E406448C13 /* MPSyntaxHighlightingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */; };
+		PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */; };
+		PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */; };
+		PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */; };
+		PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */; };
+		PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */; };
 		03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */; };
 		197TESTS0B00000000197RSTB /* MPRendererStateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 197TESTS0F00000000197RSTF /* MPRendererStateTests.m */; };
 		1F002A23195B3DAE008B8D93 /* MPRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F002A22195B3DAE008B8D93 /* MPRenderer.m */; };
@@ -500,6 +505,11 @@
 		9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSyntaxHighlightingTests.m; sourceTree = "<group>"; };
 		A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLExportTests.m; sourceTree = "<group>"; };
 		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
+		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
+		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
+		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
+		PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGMarkdownHighlighterTests.m; sourceTree = "<group>"; };
+		PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageExportTests.m; sourceTree = "<group>"; };
 		E70ECDD4241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		E70ECDD5241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MainMenu.strings"; sourceTree = "<group>"; };
 		E70ECDD6241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPMarkdownPreferencesViewController.strings"; sourceTree = "<group>"; };
@@ -874,6 +884,11 @@
 				3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */,
 				5F23020AD4494E700E72C264 /* MPRendererTestHelpers.h */,
 				A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */,
+				PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */,
+				PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */,
+				PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */,
+				PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */,
+				PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 			);
 			path = MacDownTests;
@@ -1296,6 +1311,11 @@
 				1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */,
 				A30E1B2D2D3E4F5A6B7C8D9F /* MPHTMLExportTests.m in Sources */,
 				197TESTS0B00000000197RSTB /* MPRendererStateTests.m in Sources */,
+				PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */,
+				PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */,
+				PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */,
+				PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */,
+				PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
