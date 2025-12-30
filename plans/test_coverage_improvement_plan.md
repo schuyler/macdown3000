@@ -17,8 +17,9 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 
 ## Current State Assessment
 
-### What We Have (8 test files, ~1,897 lines)
+### What We Have (13+ test files)
 
+**Core Test Files:**
 | Test File | Coverage Area | Quality | Lines |
 |-----------|--------------|---------|-------|
 | MPUtilityTests.m | JS/ObjC bridge | Good | ~34 |
@@ -30,6 +31,11 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPAssetTests.m | Asset handling | Good | ~122 |
 | MPDocumentIOTests.m | File I/O, document state | Good | ~340 |
 | MPScrollSyncTests.m | Scroll sync, JavaScript sort, horizontal rule/setext header detection | Excellent | ~1075 |
+| MPDocumentLifecycleTests.m | Document lifecycle, dirty flags, encoding | Good | (Issue #234) |
+| MPNotificationTests.m | Notification observers, preference changes | Good | (Issue #234) |
+| MPRendererEdgeCaseTests.m | Renderer edge cases, nil handling | Good | (Issue #234) |
+| HGMarkdownHighlighterTests.m | Syntax highlighter properties, edge cases | Good | (Issue #234) |
+| MPImageExportTests.m | Image export, base64, alt text | Good | (Issue #234) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -88,10 +94,11 @@ GitHub Actions macOS runners are:
 
 **Goal:** Test the heart of MacDown - markdown to HTML conversion
 
-**Status:** ✅ **PARTIALLY IMPLEMENTED** (Issue #89, Issue #81)
+**Status:** ✅ **PARTIALLY IMPLEMENTED** (Issue #89, Issue #81, Issue #234)
 - ✅ `MPMarkdownRenderingTests.m` - 18 golden file tests for core markdown syntax (Issue #89)
 - ✅ `MPMarkdownRenderingTests.m` - 3 regression tests for known hoedown bugs (Issue #81)
-- ⏳ `MPSyntaxHighlightingTests.m` - Code block highlighting (planned)
+- ✅ `HGMarkdownHighlighterTests.m` - Syntax highlighter property tests and edge cases (Issue #234)
+- ✅ `MPRendererEdgeCaseTests.m` - Nil handling, extension combinations, malformed HTML, concurrent rendering (Issue #234)
 - ⏳ `MPMathJaxRenderingTests.m` - Math formula rendering (planned)
 
 **Actual Impact (MPMarkdownRenderingTests.m):**
@@ -125,14 +132,15 @@ GitHub Actions macOS runners are:
 - (void)testUnicodeSupport
 ```
 
-### Phase 2: Document Logic (HIGH PRIORITY) - PARTIALLY COMPLETED
+### Phase 2: Document Logic (HIGH PRIORITY) - COMPLETED
 
 **Goal:** Test document state management without UI
 
 **Test Files:**
-- `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave)
+- `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave - Issue #90)
 - `MPScrollSyncTests.m` - ✅ COMPLETED (68 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection - Issue #39, Issue #143, Issue #144)
-- Additional tests needed for complete document lifecycle coverage
+- `MPDocumentLifecycleTests.m` - ✅ COMPLETED (Document dirty flags, revert behavior, encoding detection, file conflicts - Issue #234)
+- `MPNotificationTests.m` - ✅ COMPLETED (NSNotificationCenter observer patterns, preference change notifications, theme/font changes - Issue #234)
 
 **Estimated Impact:**
 - Coverage: +3-5%
@@ -171,8 +179,9 @@ GitHub Actions macOS runners are:
 
 **Goal:** Verify HTML/PDF export works correctly
 
-**Status:** ✅ **HTML EXPORT TESTS IMPLEMENTED** (Issue #30)
-- ✅ `MPHTMLExportTests.m` - Comprehensive HTML export testing
+**Status:** ✅ **HTML EXPORT TESTS IMPLEMENTED** (Issue #30, Issue #234)
+- ✅ `MPHTMLExportTests.m` - Comprehensive HTML export testing (Issue #30)
+- ✅ `MPImageExportTests.m` - Base64 images, linked images, invalid URLs, alt text preservation (Issue #234)
 - ⏳ `MPExportTests.m` - General export operations (planned)
 - ⏳ PDF export tests (planned)
 
@@ -393,12 +402,16 @@ These tests capture the current broken behavior to prevent regressions and valid
 ```
 MacDownTests/
 ├── MPMarkdownRenderingTests.m ✅ (implemented - Issue #89, Issue #81)
+├── MPRendererEdgeCaseTests.m ✅ (implemented - Issue #234)
+├── HGMarkdownHighlighterTests.m ✅ (implemented - Issue #234)
 ├── Rendering/ (planned)
-│   ├── MPSyntaxHighlightingTests.m
 │   └── MPMathJaxRenderingTests.m
 ├── Document/
 │   ├── MPDocumentIOTests.m (✅ implemented - Issue #90 - file I/O and state)
+│   ├── MPDocumentLifecycleTests.m (✅ implemented - Issue #234 - lifecycle and edge cases)
+│   ├── MPNotificationTests.m (✅ implemented - Issue #234 - notification observers)
 │   ├── MPHTMLExportTests.m (✅ implemented - Issue #30 - HTML export)
+│   ├── MPImageExportTests.m (✅ implemented - Issue #234 - image export)
 │   └── MPExportTests.m (planned - general export operations)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m

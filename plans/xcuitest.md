@@ -14,18 +14,31 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 
 ### What We Test Well ✓
 
-**Rendering Engine** (MPMarkdownRenderingTests, MPMathJaxRenderingTests):
+**Rendering Engine** (MPMarkdownRenderingTests, MPMathJaxRenderingTests, MPRendererEdgeCaseTests):
 - Markdown → HTML conversion with golden files
 - Known Hoedown bugs (#34, #36, #37) documented
 - MathJax syntax preservation
 - Syntax highlighting CSS classes
 - HTML export structure
+- Renderer edge cases: nil handling, concurrent rendering, extension combinations (Issue #234)
 
 **Utilities**:
 - String operations (MPStringLookupTests)
 - Asset loading (MPAssetTests)
 - Color conversion (MPColorTests)
 - Preferences persistence (MPPreferencesTests)
+- Syntax highlighter properties (HGMarkdownHighlighterTests - Issue #234)
+
+**Document Lifecycle** (MPDocumentIOTests, MPDocumentLifecycleTests):
+- File I/O and state management
+- Document dirty flags, revert behavior, encoding detection (Issue #234)
+
+**Notifications** (MPNotificationTests):
+- NSNotificationCenter observer patterns, preference change notifications (Issue #234)
+
+**Export** (MPHTMLExportTests, MPImageExportTests):
+- HTML export workflows
+- Image export with base64, linked images, alt text preservation (Issue #234)
 
 **Edge Cases**:
 - Unicode handling
@@ -41,7 +54,8 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 - JavaScript errors in preview
 - Scroll position restoration
 
-**2. Document Lifecycle**
+**2. Document Lifecycle** (Partially Addressed)
+- ✅ Basic lifecycle tests added (Issue #234)
 - Window controller initialization
 - `markdown` property getter/setter (returns nil in headless tests)
 - Multiple simultaneous documents
@@ -51,9 +65,10 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 - Logic tested ✓
 - Integration not tested: actual scrolling, WebView coordination, image loading
 
-**4. File Operations**
+**4. File Operations** (Partially Addressed)
+- ✅ Image export tests added (Issue #234)
 - Missing: disk full, permission errors, file conflicts, iCloud/network drives
-- Missing: export writes actual files, PDF generation
+- Missing: export writes actual files verification, PDF generation
 - Missing: autosave failure recovery
 
 **5. User Interactions**
@@ -66,9 +81,11 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 
 ## Proposed Solution
 
-### Phase 1: Enhanced Unit Tests (2-3 weeks)
+### Phase 1: Enhanced Unit Tests (2-3 weeks) - PARTIALLY IMPLEMENTED
 
 **No GUI required. Can run in CI headless.**
+
+**Status:** Issue #234 implemented notification tests, document lifecycle tests, renderer edge case tests, syntax highlighter tests, and image export tests. Additional Phase 1 work outlined below remains to be completed.
 
 #### 1.1 File Operations Integration Tests
 
