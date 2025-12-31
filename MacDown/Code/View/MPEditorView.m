@@ -79,7 +79,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         }
     }
 
-    return NSDragOperationNone;
+    return [super draggingEntered:sender];
 }
 
 /** Handles dropped image files by inlining them as base64 data URLs.
@@ -117,7 +117,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         NSData *fileData = [NSData dataWithContentsOfFile:url.path
                                                   options:NSDataReadingMappedIfSafe
                                                     error:&error];
-        if (error) continue;  // Skip files that can't be read
+        if (!fileData) continue;  // Skip files that can't be read
 
         // Convert to base64 using modern API
         NSString *base64String = [fileData base64EncodedStringWithOptions:0];
