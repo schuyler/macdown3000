@@ -266,6 +266,57 @@ jobs:
           marketing-version: ${{ env.VERSION }}
           build-number: ${{ env.BUILD_NUMBER }}
 
+      - name: Sign CLI binary explicitly
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "🔐 Signing macdown CLI binary..."
+
+          CLI_BINARY="build/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
+
+          # Verify CLI binary exists
+          if [ ! -f "$CLI_BINARY" ]; then
+            echo "::error::CLI binary not found at expected location: $CLI_BINARY"
+            exit 1
+          fi
+
+          # Get the exact signing identity (same as DMG signing)
+          IDENTITY=$(security find-identity -v -p codesigning build.keychain | \
+                     grep "Developer ID Application" | \
+                     grep "$APPLE_TEAM_ID" | \
+                     head -1 | \
+                     sed -E 's/.*"(.+)"/\1/')
+
+          if [[ -z "$IDENTITY" ]]; then
+            echo "::error::Could not find Developer ID Application certificate"
+            exit 1
+          fi
+
+          echo "Using signing identity: $IDENTITY"
+
+          # Sign the CLI binary with full signing options
+          # --force: Replace existing signature from CodeSignOnCopy
+          # --options runtime: Enable hardened runtime (required for notarization)
+          # --timestamp: Add secure timestamp from Apple's servers
+          codesign --sign "$IDENTITY" \
+            --force \
+            --options runtime \
+            --timestamp \
+            "$CLI_BINARY"
+
+          echo "✅ CLI binary signed successfully"
+
+          # Re-sign the app bundle to update the seal after modifying nested component
+          echo "🔐 Re-signing app bundle to update code signature seal..."
+          codesign --sign "$IDENTITY" \
+            --force \
+            --deep \
+            --options runtime \
+            --timestamp \
+            "build/MacDown 3000.app"
+
+          echo "✅ App bundle re-signed successfully"
+
       - name: Verify code signature
         run: |
           echo "🔍 Verifying code signature..."
@@ -279,6 +330,33 @@ jobs:
             exit 1
           fi
           echo "✅ Verified signature: $SIGNING_IDENTITY"
+
+          # Verify CLI binary signature explicitly
+          echo "🔍 Verifying CLI binary signature..."
+          CLI_BINARY="build/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
+
+          codesign -vvv --strict "$CLI_BINARY"
+
+          # Verify CLI binary is signed with Developer ID
+          CLI_SIGNING_IDENTITY=$(codesign -dvv "$CLI_BINARY" 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$CLI_SIGNING_IDENTITY" ]]; then
+            echo "::error::CLI binary is not signed with Developer ID Application certificate"
+            exit 1
+          fi
+          echo "✅ Verified CLI binary signature: $CLI_SIGNING_IDENTITY"
+
+          # Verify CLI binary has hardened runtime
+          CLI_FLAGS=$(codesign -dvv "$CLI_BINARY" 2>&1 | grep "flags=" || true)
+          if [[ "$CLI_FLAGS" != *"runtime"* ]]; then
+            echo "::error::CLI binary does not have hardened runtime enabled"
+            echo "Flags found: $CLI_FLAGS"
+            exit 1
+          fi
+          echo "✅ CLI binary has hardened runtime enabled"
+
+          # Show CLI binary signature details
+          echo "📋 CLI binary signature details:"
+          codesign -dvv "$CLI_BINARY" 2>&1 | head -20
 
           echo "✅ Application bundle ready"
 
@@ -333,6 +411,36 @@ jobs:
           fi
 
           echo "✅ App bundle inside DMG is properly signed: $SIGNING_IDENTITY"
+
+          # Verify CLI binary inside DMG
+          echo "🔍 Verifying CLI binary inside DMG..."
+          CLI_BINARY_IN_DMG="/tmp/dmg-verify/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
+
+          if [ ! -f "$CLI_BINARY_IN_DMG" ]; then
+            echo "::error::CLI binary not found in DMG"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+
+          codesign -vvv --strict "$CLI_BINARY_IN_DMG"
+
+          CLI_IN_DMG_IDENTITY=$(codesign -dvv "$CLI_BINARY_IN_DMG" 2>&1 | grep "Authority=Developer ID Application")
+          if [[ -z "$CLI_IN_DMG_IDENTITY" ]]; then
+            echo "::error::CLI binary in DMG is not properly signed"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+
+          # Verify CLI binary in DMG has hardened runtime
+          CLI_DMG_FLAGS=$(codesign -dvv "$CLI_BINARY_IN_DMG" 2>&1 | grep "flags=" || true)
+          if [[ "$CLI_DMG_FLAGS" != *"runtime"* ]]; then
+            echo "::error::CLI binary in DMG does not have hardened runtime enabled"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+
+          echo "✅ CLI binary inside DMG is properly signed: $CLI_IN_DMG_IDENTITY"
+          echo "✅ CLI binary in DMG has hardened runtime enabled"
 
           # Unmount
           hdiutil detach /tmp/dmg-verify
