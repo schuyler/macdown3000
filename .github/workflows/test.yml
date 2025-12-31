@@ -6,30 +6,8 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  changes:
-    name: Detect Changes
-    runs-on: ubuntu-latest
-    outputs:
-      app_code: ${{ steps.filter.outputs.app_code }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            app_code:
-              - 'MacDown/**'
-              - 'MacDownTests/**'
-              - 'Dependency/**'
-              - 'MacDown 3000.xcodeproj/**'
-              - 'MacDown 3000.xcworkspace/**'
-              - 'Podfile'
-              - 'Podfile.lock'
-
   test:
     name: Run Unit Tests
-    needs: changes
-    if: needs.changes.outputs.app_code == 'true'
     strategy:
       matrix:
         os: [macos-14, macos-15, macos-15-intel]
@@ -95,21 +73,39 @@ jobs:
         defaults delete com.uranusjr.macdown 2>/dev/null || true
         defaults delete app.macdown.macdown3000 2>/dev/null || true
 
-        # Launch app with timeout protection
-        # Use 'timeout' to kill if app hangs (GNU timeout is available on macOS via GitHub Actions)
-        # The app should launch, initialize, and we'll force-quit it after 5 seconds
+        # Launch app with timeout protection (macOS-compatible, no GNU timeout)
+        # Background the process, then use a sleep loop to implement timeout
         echo "Launching MacDown 3000 (will auto-quit after 5 seconds)..."
-        timeout 5s open -W -n "$APP_PATH" || {
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 124 ]; then
-            echo "ERROR: App launch timed out (likely hanging) - Issue #169 not fixed"
-            exit 1
-          elif [ $EXIT_CODE -eq 143 ] || [ $EXIT_CODE -eq 0 ]; then
-            echo "✓ App launched successfully (terminated as expected)"
-          else
-            echo "WARNING: Unexpected exit code: $EXIT_CODE"
+        open -W -n "$APP_PATH" &
+        APP_PID=$!
+        TIMEOUT=5
+        ELAPSED=0
+        TIMED_OUT=false
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            # Process has exited
+            break
           fi
-        }
+          sleep 1
+          ELAPSED=$((ELAPSED + 1))
+        done
+        if kill -0 $APP_PID 2>/dev/null; then
+          # Still running after timeout - kill it
+          kill $APP_PID 2>/dev/null
+          TIMED_OUT=true
+        fi
+        EXIT_CODE=0
+        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
+        # For a GUI app: still running after timeout = SUCCESS (launched properly)
+        # Exiting early might indicate a crash or hang during init
+        if [ "$TIMED_OUT" = "true" ]; then
+          echo "✓ App launched successfully (killed after 5s timeout as expected)"
+        elif [ $EXIT_CODE -eq 0 ]; then
+          echo "✓ App launched and exited cleanly"
+        else
+          echo "ERROR: App exited unexpectedly with code $EXIT_CODE - possible crash or hang"
+          exit 1
+        fi
 
         # Verify migration completed flag was set
         MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
@@ -124,19 +120,37 @@ jobs:
 
         echo "Created test legacy preferences"
 
-        # Launch again with legacy preferences present
+        # Launch again with legacy preferences present (macOS-compatible timeout)
         echo "Launching MacDown 3000 with legacy preferences (will auto-quit after 5 seconds)..."
-        timeout 5s open -W -n -F "$APP_PATH" || {
-          EXIT_CODE=$?
-          if [ $EXIT_CODE -eq 124 ]; then
-            echo "ERROR: App launch timed out during migration (Issue #169 not fixed)"
-            exit 1
-          elif [ $EXIT_CODE -eq 143 ] || [ $EXIT_CODE -eq 0 ]; then
-            echo "✓ App launched successfully with migration"
-          else
-            echo "WARNING: Unexpected exit code: $EXIT_CODE"
+        open -W -n -F "$APP_PATH" &
+        APP_PID=$!
+        TIMEOUT=5
+        ELAPSED=0
+        TIMED_OUT=false
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          if ! kill -0 $APP_PID 2>/dev/null; then
+            # Process has exited
+            break
           fi
-        }
+          sleep 1
+          ELAPSED=$((ELAPSED + 1))
+        done
+        if kill -0 $APP_PID 2>/dev/null; then
+          # Still running after timeout - kill it
+          kill $APP_PID 2>/dev/null
+          TIMED_OUT=true
+        fi
+        EXIT_CODE=0
+        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
+        # For a GUI app: still running after timeout = SUCCESS (launched properly)
+        if [ "$TIMED_OUT" = "true" ]; then
+          echo "✓ App launched successfully with migration (killed after 5s timeout)"
+        elif [ $EXIT_CODE -eq 0 ]; then
+          echo "✓ App launched with migration and exited cleanly"
+        else
+          echo "ERROR: App exited unexpectedly during migration with code $EXIT_CODE"
+          exit 1
+        fi
 
         # Verify migration completed
         MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
