@@ -160,6 +160,17 @@ jobs:
       - name: Setup MacDown build environment
         uses: ./.github/actions/setup-macdown
 
+      - name: Run tests before release
+        run: |
+          echo "🧪 Running unit tests to ensure code quality before release..."
+          set -o pipefail
+          xcodebuild test \
+            -workspace "MacDown 3000.xcworkspace" \
+            -scheme MacDown \
+            -derivedDataPath DerivedData \
+            | xcpretty --color
+          echo "✅ All tests passed"
+
       - name: Install build tools
         run: brew install create-dmg jq
 
