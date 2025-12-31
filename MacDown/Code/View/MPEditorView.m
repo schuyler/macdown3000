@@ -8,6 +8,7 @@
 
 #import "MPEditorView.h"
 #import "NSPasteboard+Types.h"
+#import <CoreServices/CoreServices.h>
 
 
 static NSString * const kMPMarkdownPasteboardType = @"net.daringfireball.markdown";
@@ -44,56 +45,99 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 }
 
 - (void)awakeFromNib {
-    [self registerForDraggedTypes:[NSArray arrayWithObjects: NSDragPboard, nil]];
+    [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
     [super awakeFromNib];
 }
 
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender {
-    NSPasteboard *pboard;
-    NSDragOperation sourceDragMask;
-    
-    sourceDragMask = [sender draggingSourceOperationMask];
-    pboard = [sender draggingPasteboard];
-    
-    // TODO this seems to be a NOOP
-    if ([pboard canReadItemWithDataConformingToTypes:[NSArray arrayWithObjects:@"public.jpeg", nil]]) {
-        if (sourceDragMask & NSDragOperationLink) {
-            return NSDragOperationLink;
-        } else if (sourceDragMask & NSDragOperationCopy) {
-            return NSDragOperationCopy;
+/** Returns whether the drag contains at least one supported image file.
+ *
+ * Checks for JPEG, PNG, GIF, and WebP image types using UTI conformance.
+ */
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
+{
+    NSPasteboard *pboard = [sender draggingPasteboard];
+
+    // Check if pasteboard contains file URLs
+    if (![pboard.types containsObject:NSPasteboardTypeFileURL]) {
+        return NSDragOperationNone;
+    }
+
+    // Get all URLs from pasteboard
+    NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
+
+    // Check if at least one file is a supported image type
+    for (NSURL *url in urls) {
+        if (![url isFileURL]) continue;
+
+        NSString *uti = [self imageUTIForFilePath:url.path];
+        if (uti) {
+            // At least one supported image found
+            NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+            if (sourceDragMask & NSDragOperationCopy) {
+                return NSDragOperationCopy;
+            }
         }
     }
-    
+
     return NSDragOperationNone;
 }
 
-- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender {
-    NSPasteboard *pboard;
-    NSDragOperation sourceDragMask;
-    
-    sourceDragMask = [sender draggingSourceOperationMask];
-    pboard = [sender draggingPasteboard];
-    
-    // TODO since above method doesn't filter, this inlines all file types ATM
-    // TODO this isn't undo-able
-    if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
-        NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
-        
-        // Load data of file.
-        NSError *error;
-        NSData *fileData = [NSData dataWithContentsOfFile: files[0]
-                                                  options: NSMappedRead
-                                                    error: &error];
-        if (error) return NO;
+/** Handles dropped image files by inlining them as base64 data URLs.
+ *
+ * Processes all supported image files (JPEG, PNG, GIF, WebP) and inserts them
+ * as Markdown image syntax with data URLs. Uses insertText:replacementRange:
+ * to ensure the operation is undoable.
+ */
+- (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
+{
+    NSPasteboard *pboard = [sender draggingPasteboard];
 
-        // convert to base64 representation
-        NSString *dataString = [fileData base64Encoding];
-        
-        // insert into text.
-        NSInteger insertionPoint = [[[self selectedRanges] objectAtIndex:0] rangeValue].location;
-        [self setString:[NSString stringWithFormat:@"%@![](data:image/jpeg;base64,%@)%@", [[self string] substringToIndex:insertionPoint], dataString, [[self string] substringFromIndex:insertionPoint]]];
-        [self didChangeText];
-    } else return [super performDragOperation:sender];
+    // Check if pasteboard contains file URLs
+    if (![pboard.types containsObject:NSPasteboardTypeFileURL]) {
+        return [super performDragOperation:sender];
+    }
+
+    // Get all URLs from pasteboard
+    NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
+
+    // Filter for supported image files and build markdown
+    NSMutableArray *imageMarkdown = [NSMutableArray array];
+
+    for (NSURL *url in urls) {
+        if (![url isFileURL]) continue;
+
+        NSString *uti = [self imageUTIForFilePath:url.path];
+        if (!uti) continue;  // Skip unsupported files
+
+        NSString *mimeType = [self mimeTypeForUTI:uti];
+        if (!mimeType) continue;
+
+        // Load file data
+        NSError *error;
+        NSData *fileData = [NSData dataWithContentsOfFile:url.path
+                                                  options:NSDataReadingMappedIfSafe
+                                                    error:&error];
+        if (error) continue;  // Skip files that can't be read
+
+        // Convert to base64 using modern API
+        NSString *base64String = [fileData base64EncodedStringWithOptions:0];
+
+        // Create markdown image with data URL
+        NSString *markdown = [NSString stringWithFormat:@"![](data:%@;base64,%@)",
+                              mimeType, base64String];
+        [imageMarkdown addObject:markdown];
+    }
+
+    // If no valid images were found, fall back to default behavior
+    if (imageMarkdown.count == 0) {
+        return [super performDragOperation:sender];
+    }
+
+    // Insert all images at cursor position (undoable)
+    NSRange selectedRange = self.selectedRange;
+    NSString *markdownText = [imageMarkdown componentsJoinedByString:@"\n"];
+    [self insertText:markdownText replacementRange:selectedRange];
+
     return YES;
 }
 
@@ -261,6 +305,57 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
 
 #pragma mark - Private
+
+/** Returns the supported image UTI for a file path, or nil if unsupported.
+ *
+ * Checks if the file's UTI conforms to one of the supported image types:
+ * JPEG, PNG, GIF, or WebP.
+ *
+ * @param filePath The path to the file
+ * @return The matching supported UTI string, or nil if not a supported image
+ */
+- (NSString *)imageUTIForFilePath:(NSString *)filePath
+{
+    NSArray *supportedUTIs = @[@"public.jpeg", @"public.png",
+                               @"com.compuserve.gif", @"public.webp"];
+
+    // Get UTI from file extension
+    NSString *extension = [filePath pathExtension];
+    CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(
+        kUTTagClassFilenameExtension,
+        (__bridge CFStringRef)extension,
+        NULL);
+
+    if (!fileUTI) return nil;
+
+    NSString *uti = (__bridge_transfer NSString *)fileUTI;
+
+    // Check if the UTI conforms to any of our supported types
+    for (NSString *supportedUTI in supportedUTIs) {
+        if (UTTypeConformsTo((__bridge CFStringRef)uti,
+                             (__bridge CFStringRef)supportedUTI)) {
+            return supportedUTI;
+        }
+    }
+
+    return nil;
+}
+
+/** Maps a UTI to its corresponding MIME type for data URLs.
+ *
+ * @param uti The Uniform Type Identifier
+ * @return The MIME type string, or nil if not supported
+ */
+- (NSString *)mimeTypeForUTI:(NSString *)uti
+{
+    NSDictionary *mapping = @{
+        @"public.jpeg": @"image/jpeg",
+        @"public.png": @"image/png",
+        @"com.compuserve.gif": @"image/gif",
+        @"public.webp": @"image/webp"
+    };
+    return mapping[uti];
+}
 
 - (void)updateContentGeometry
 {
