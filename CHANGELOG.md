@@ -1,5 +1,10 @@
 # Changelog
 
+## [3000.0.3-test] - 2025-12-31
+
+### Infrastructure
+- Code-sign the macdown CLI binary for Homebrew Cask compatibility (#238)
+
 ## [3000.0.2] - 2025-12-30
 
 This release removes remote image loading from the built-in help file, fixes broken localization for German and Slovak, and expands unit test coverage.
