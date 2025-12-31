@@ -94,8 +94,8 @@ jobs:
           kill $APP_PID 2>/dev/null
           TIMED_OUT=true
         fi
-        wait $APP_PID 2>/dev/null
-        EXIT_CODE=$?
+        EXIT_CODE=0
+        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
         if [ "$TIMED_OUT" = "true" ]; then
           echo "ERROR: App launch timed out (likely hanging) - Issue #169 not fixed"
           exit 1
@@ -138,8 +138,8 @@ jobs:
           kill $APP_PID 2>/dev/null
           TIMED_OUT=true
         fi
-        wait $APP_PID 2>/dev/null
-        EXIT_CODE=$?
+        EXIT_CODE=0
+        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
         if [ "$TIMED_OUT" = "true" ]; then
           echo "ERROR: App launch timed out during migration (Issue #169 not fixed)"
           exit 1
