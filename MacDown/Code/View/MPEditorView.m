@@ -55,6 +55,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     sourceDragMask = [sender draggingSourceOperationMask];
     pboard = [sender draggingPasteboard];
     
+    // TODO this seems to be a NOOP
     if ([pboard canReadItemWithDataConformingToTypes:[NSArray arrayWithObjects:@"public.jpeg", nil]]) {
         if (sourceDragMask & NSDragOperationLink) {
             return NSDragOperationLink;
@@ -73,26 +74,26 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     sourceDragMask = [sender draggingSourceOperationMask];
     pboard = [sender draggingPasteboard];
     
+    // TODO since above method doesn't filter, this inlines all file types ATM
+    // TODO this isn't undo-able
     if ( [[pboard types] containsObject:NSFilenamesPboardType] ) {
         NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
         
-        /* Load data of file. */
+        // Load data of file.
         NSError *error;
         NSData *fileData = [NSData dataWithContentsOfFile: files[0]
                                                   options: NSMappedRead
                                                     error: &error];
-        if (!error) {
-            // convert to base64 representation
-            NSString *dataString = [fileData base64Encoding];
-            
-            // insert into text.
-            NSInteger insertionPoint = [[[self selectedRanges] objectAtIndex:0] rangeValue].location;
-            [self setString:[NSString stringWithFormat:@"%@![](data:image/jpeg;base64,%@)%@", [[self string] substringToIndex:insertionPoint], dataString, [[self string] substringFromIndex:insertionPoint]]];
-            [self didChangeText];
-        } else {
-            return NO;
-        }
-    }
+        if (error) return NO;
+
+        // convert to base64 representation
+        NSString *dataString = [fileData base64Encoding];
+        
+        // insert into text.
+        NSInteger insertionPoint = [[[self selectedRanges] objectAtIndex:0] rangeValue].location;
+        [self setString:[NSString stringWithFormat:@"%@![](data:image/jpeg;base64,%@)%@", [[self string] substringToIndex:insertionPoint], dataString, [[self string] substringFromIndex:insertionPoint]]];
+        [self didChangeText];
+    } else return [super performDragOperation:sender];
     return YES;
 }
 
