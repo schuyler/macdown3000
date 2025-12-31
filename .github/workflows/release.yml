@@ -261,7 +261,7 @@ jobs:
         run: |
           echo "🔐 Signing macdown CLI binary..."
 
-          CLI_BINARY="build/MacDown 3000.app/Contents/MacOS/bin/macdown"
+          CLI_BINARY="build/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
 
           # Verify CLI binary exists
           if [ ! -f "$CLI_BINARY" ]; then
@@ -295,6 +295,17 @@ jobs:
 
           echo "✅ CLI binary signed successfully"
 
+          # Re-sign the app bundle to update the seal after modifying nested component
+          echo "🔐 Re-signing app bundle to update code signature seal..."
+          codesign --sign "$IDENTITY" \
+            --force \
+            --deep \
+            --options runtime \
+            --timestamp \
+            "build/MacDown 3000.app"
+
+          echo "✅ App bundle re-signed successfully"
+
       - name: Verify code signature
         run: |
           echo "🔍 Verifying code signature..."
@@ -311,7 +322,7 @@ jobs:
 
           # Verify CLI binary signature explicitly
           echo "🔍 Verifying CLI binary signature..."
-          CLI_BINARY="build/MacDown 3000.app/Contents/MacOS/bin/macdown"
+          CLI_BINARY="build/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
 
           codesign -vvv --strict "$CLI_BINARY"
 
@@ -392,7 +403,7 @@ jobs:
 
           # Verify CLI binary inside DMG
           echo "🔍 Verifying CLI binary inside DMG..."
-          CLI_BINARY_IN_DMG="/tmp/dmg-verify/MacDown 3000.app/Contents/MacOS/bin/macdown"
+          CLI_BINARY_IN_DMG="/tmp/dmg-verify/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
 
           if [ ! -f "$CLI_BINARY_IN_DMG" ]; then
             echo "::error::CLI binary not found in DMG"
