@@ -97,6 +97,13 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         return [super performDragOperation:sender];
     }
 
+    // Only inline images on copy operations (Option+drag)
+    // Regular drags fall back to default behavior (insert file path)
+    NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
+    if (!(sourceDragMask & NSDragOperationCopy)) {
+        return [super performDragOperation:sender];
+    }
+
     // Get all URLs from pasteboard
     NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
 
