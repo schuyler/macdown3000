@@ -49,44 +49,12 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     [super awakeFromNib];
 }
 
-/** Returns whether the drag contains at least one supported image file.
- *
- * Checks for JPEG, PNG, GIF, and WebP image types using UTI conformance.
- */
-- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
-{
-    NSPasteboard *pboard = [sender draggingPasteboard];
-
-    // Check if pasteboard contains file URLs
-    if (![pboard.types containsObject:NSPasteboardTypeFileURL]) {
-        return NSDragOperationNone;
-    }
-
-    // Get all URLs from pasteboard
-    NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
-
-    // Check if at least one file is a supported image type
-    for (NSURL *url in urls) {
-        if (![url isFileURL]) continue;
-
-        NSString *uti = [self imageUTIForFilePath:url.path];
-        if (uti) {
-            // At least one supported image found
-            NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
-            if (sourceDragMask & NSDragOperationCopy) {
-                return NSDragOperationCopy;
-            }
-        }
-    }
-
-    return [super draggingEntered:sender];
-}
-
-/** Handles dropped image files by inlining them as base64 data URLs.
+/** Handles dropped files by inlining images and inserting other content.
  *
  * Processes all supported image files (JPEG, PNG, GIF, WebP) and inserts them
- * as Markdown image syntax with data URLs. Uses insertText:replacementRange:
- * to ensure the operation is undoable.
+ * as Markdown image syntax with data URLs. For non-image files, textClipping
+ * content is extracted and inserted, while other files have their paths inserted.
+ * Uses insertText:replacementRange: to ensure the operation is undoable.
  */
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
@@ -97,7 +65,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         return [super performDragOperation:sender];
     }
 
-    // Only inline images on copy operations (Option+drag)
+    // Only handle specially on copy operations (Option+drag)
     // Regular drags fall back to default behavior (insert file path)
     NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
     if (!(sourceDragMask & NSDragOperationCopy)) {
@@ -107,43 +75,53 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     // Get all URLs from pasteboard
     NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
 
-    // Filter for supported image files and build markdown
-    NSMutableArray *imageMarkdown = [NSMutableArray array];
+    // Collect all content to insert
+    NSMutableArray *contentParts = [NSMutableArray array];
 
     for (NSURL *url in urls) {
         if (![url isFileURL]) continue;
 
+        // Check if it's a supported image
         NSString *uti = [self imageUTIForFilePath:url.path];
-        if (!uti) continue;  // Skip unsupported files
+        if (uti) {
+            NSString *mimeType = [self mimeTypeForUTI:uti];
+            if (!mimeType) continue;
 
-        NSString *mimeType = [self mimeTypeForUTI:uti];
-        if (!mimeType) continue;
+            // Load file data
+            NSError *error;
+            NSData *fileData = [NSData dataWithContentsOfFile:url.path
+                                                      options:NSDataReadingMappedIfSafe
+                                                        error:&error];
+            if (!fileData) continue;
 
-        // Load file data
-        NSError *error;
-        NSData *fileData = [NSData dataWithContentsOfFile:url.path
-                                                  options:NSDataReadingMappedIfSafe
-                                                    error:&error];
-        if (!fileData) continue;  // Skip files that can't be read
-
-        // Convert to base64 using modern API
-        NSString *base64String = [fileData base64EncodedStringWithOptions:0];
-
-        // Create markdown image with data URL
-        NSString *markdown = [NSString stringWithFormat:@"![](data:%@;base64,%@)",
-                              mimeType, base64String];
-        [imageMarkdown addObject:markdown];
+            // Convert to base64 and create markdown image
+            NSString *base64String = [fileData base64EncodedStringWithOptions:0];
+            NSString *markdown = [NSString stringWithFormat:@"![](data:%@;base64,%@)",
+                                  mimeType, base64String];
+            [contentParts addObject:markdown];
+        }
+        // Check if it's a textClipping
+        else if ([self isTextClippingAtPath:url.path]) {
+            NSString *clippingContent = [self textContentFromClipping:url];
+            if (clippingContent) {
+                [contentParts addObject:clippingContent];
+            }
+        }
+        // For other files, insert the file path
+        else {
+            [contentParts addObject:url.path];
+        }
     }
 
-    // If no valid images were found, fall back to default behavior
-    if (imageMarkdown.count == 0) {
+    // If no content was extracted, fall back to default behavior
+    if (contentParts.count == 0) {
         return [super performDragOperation:sender];
     }
 
-    // Insert all images at cursor position (undoable)
+    // Insert all content at cursor position (undoable)
     NSRange selectedRange = self.selectedRange;
-    NSString *markdownText = [imageMarkdown componentsJoinedByString:@"\n"];
-    [self insertText:markdownText replacementRange:selectedRange];
+    NSString *combinedContent = [contentParts componentsJoinedByString:@"\n"];
+    [self insertText:combinedContent replacementRange:selectedRange];
 
     return YES;
 }
@@ -362,6 +340,69 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         @"public.webp": @"image/webp"
     };
     return mapping[uti];
+}
+
+/** Returns whether the file at the given path is a textClipping file.
+ *
+ * TextClipping files are created by macOS when dragging text to Finder.
+ * They have the UTI com.apple.finder.textclipping.
+ *
+ * @param filePath The path to the file
+ * @return YES if the file is a textClipping, NO otherwise
+ */
+- (BOOL)isTextClippingAtPath:(NSString *)filePath
+{
+    NSString *extension = [filePath pathExtension];
+    CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(
+        kUTTagClassFilenameExtension,
+        (__bridge CFStringRef)extension,
+        NULL);
+
+    if (!fileUTI) return NO;
+
+    BOOL isTextClipping = UTTypeConformsTo(fileUTI,
+        CFSTR("com.apple.finder.textclipping"));
+    CFRelease(fileUTI);
+
+    return isTextClipping;
+}
+
+/** Reads the text content from a textClipping file.
+ *
+ * TextClipping files store their content as a binary plist. This method
+ * extracts the UTF-8 or UTF-16 text content from the file.
+ *
+ * @param url The file URL of the textClipping
+ * @return The text content, or nil if it could not be read
+ */
+- (NSString *)textContentFromClipping:(NSURL *)url
+{
+    NSError *error;
+    NSData *fileData = [NSData dataWithContentsOfURL:url options:0 error:&error];
+    if (!fileData) return nil;
+
+    // Try to read as binary plist
+    NSDictionary *plist = [NSPropertyListSerialization
+        propertyListWithData:fileData
+        options:NSPropertyListImmutable
+        format:NULL
+        error:&error];
+
+    if (![plist isKindOfClass:[NSDictionary class]]) return nil;
+
+    // Try UTF-8 text first
+    NSData *textData = plist[@"public.utf8-plain-text"];
+    if (textData) {
+        return [[NSString alloc] initWithData:textData encoding:NSUTF8StringEncoding];
+    }
+
+    // Fall back to UTF-16 text
+    textData = plist[@"public.utf16-plain-text"];
+    if (textData) {
+        return [[NSString alloc] initWithData:textData encoding:NSUTF16StringEncoding];
+    }
+
+    return nil;
 }
 
 - (void)updateContentGeometry
