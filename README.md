@@ -9,7 +9,7 @@ Visit the [project website](https://schuyler.github.io/macdown3000/) for more in
 
 ## About MacDown 3000
 
-In 2025, there's still a need for a modern, lightweight Markdown editor for macOS with live preview capabilities. MacDown 3000 is essentially *MacDown Continued*. The focus is on keeping MacDown up to date with modern Markdown best practices and maintaining compatibility with current library dependencies.
+In 2026, there's still a need for a modern, lightweight Markdown editor for macOS with live preview capabilities. MacDown 3000 is essentially *MacDown Continued*. The focus is on keeping MacDown up to date with modern Markdown best practices and maintaining compatibility with current library dependencies.
 
 MacDown 3000 supports macOS 11.0 (Big Sur) and later on both Apple Silicon and Intel Macs.
 
