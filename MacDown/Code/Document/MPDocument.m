@@ -56,7 +56,8 @@ NS_INLINE NSDictionary *MPEditorKeysToObserve()
                  @"automaticTextReplacementEnabled": @NO,
                  @"continuousSpellCheckingEnabled": @NO,
                  @"enabledTextCheckingTypes": @(NSTextCheckingAllTypes),
-                 @"grammarCheckingEnabled": @NO};
+                 @"grammarCheckingEnabled": @NO,
+                 @"smartInsertDeleteEnabled": @NO};
     });
     return keys;
 }
