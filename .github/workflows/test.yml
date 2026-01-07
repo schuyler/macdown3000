@@ -10,7 +10,7 @@ jobs:
     name: Run Unit Tests
     strategy:
       matrix:
-        os: [macos-14, macos-15, macos-15-intel]
+        os: [macos-14, macos-15, macos-15-intel, macos-26]
       fail-fast: false  # Continue testing other OS versions if one fails
     runs-on: ${{ matrix.os }}
     permissions:
