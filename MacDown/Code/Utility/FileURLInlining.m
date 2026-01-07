@@ -10,6 +10,23 @@
 
 @implementation FileURLInlining
 
+/** Return the collected inline content of its argument as array of NSString, or nil when nothing could be inlined
+ *
+ * @param iterable  enumerated objects, only NSURLs can be inlined
+ * @return array of inlined content, or nil when none was found
+ */
++(NSArray<NSString*>*)inlineFromIterable:(id<NSFastEnumeration>)iterable {
+    NSMutableArray<NSString*> *texts = [NSMutableArray array];
+    for (id item in iterable) {
+        if(! [item isKindOfClass:[NSURL class]]) continue;
+        FileURLInlining *file = [self withURL:item];
+        if(! file) continue;
+        [texts addObject: [file inlineContent]];
+    }
+    if(texts.count == 0) texts = nil;
+    return texts;
+}
+
 +(instancetype)withURL:(NSURL *)url {
     if(! url.isFileURL) return nil;
 

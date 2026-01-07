@@ -59,13 +59,6 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
  */
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
-    NSPasteboard *pboard = [sender draggingPasteboard];
-
-    // Check if pasteboard contains file URLs
-    if (![pboard.types containsObject:NSPasteboardTypeFileURL]) {
-        return [super performDragOperation:sender];
-    }
-
     // Only handle specially on copy operations (Option+drag)
     // Regular drags fall back to default behavior (insert file path)
     NSDragOperation sourceDragMask = [sender draggingSourceOperationMask];
@@ -73,22 +66,13 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         return [super performDragOperation:sender];
     }
 
+    NSPasteboard *pboard = [sender draggingPasteboard];
     // Get all URLs from pasteboard
     NSArray *urls = [pboard readObjectsForClasses:@[[NSURL class]] options:nil];
 
     // Collect all content to insert
-    NSMutableArray *contentParts = [NSMutableArray array];
-
-    for (NSURL *url in urls) {
-        FileURLInlining *file = [FileURLInlining withURL:url];
-        if(! file) continue;
-        [contentParts addObject:[file inlineContent]];
-    }
-
-    // If no content was extracted, fall back to default behavior
-    if (contentParts.count == 0) {
-        return [super performDragOperation:sender];
-    }
+    NSArray<NSString*> *contentParts = [FileURLInlining inlineFromIterable:urls];
+    if(! contentParts) return [super performDragOperation:sender];
 
     // Insert all content at cursor position (undoable)
     NSRange selectedRange = self.selectedRange;

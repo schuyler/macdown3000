@@ -7,6 +7,7 @@
 //
 
 @interface FileURLInlining : NSObject
++(NSArray<NSString*>*)inlineFromIterable:(id<NSFastEnumeration>)iterable;
 +(instancetype) withURL: (NSURL *) url;
 -(NSString *) inlineContent;
 @property (nonatomic, strong) NSURL *url;
