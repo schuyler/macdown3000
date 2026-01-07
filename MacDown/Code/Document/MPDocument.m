@@ -1646,8 +1646,28 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
         style.lineSpacing = self.preferences.editorLineSpacing;
-        self.editor.defaultParagraphStyle = [style copy];
+
+        // Configure tab stops to match 4-space tab width (fixes #195)
         NSFont *font = [self.preferences.editorBaseFont copy];
+        if (font)
+        {
+            NSDictionary *attrs = @{NSFontAttributeName: font};
+            CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
+            CGFloat tabInterval = spaceWidth * 4;
+
+            NSMutableArray *tabStops = [NSMutableArray array];
+            for (NSInteger i = 1; i <= 100; i++)
+            {
+                NSTextTab *tab = [[NSTextTab alloc]
+                    initWithTextAlignment:NSTextAlignmentLeft
+                                 location:tabInterval * i
+                                  options:@{}];
+                [tabStops addObject:tab];
+            }
+            style.tabStops = tabStops;
+        }
+
+        self.editor.defaultParagraphStyle = [style copy];
         if (font)
             self.editor.font = font;
         self.editor.textColor = nil;
