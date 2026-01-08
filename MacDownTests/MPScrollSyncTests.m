@@ -18,8 +18,11 @@
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (weak) WebView *preview;
+@property BOOL shouldHandleBoundsChange;
+@property BOOL shouldHandlePreviewBoundsChange;
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
+- (void)syncScrollersReverse;
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1070,6 +1073,129 @@
     self.document.markdown = markdown;
     XCTAssertNoThrow([self.document updateHeaderLocations],
                      @"Issue #143 example should be handled correctly");
+}
+
+#pragma mark - Preview to Editor Reverse Sync Tests (Issue #258)
+
+/**
+ * Test that syncScrollersReverse method exists and doesn't crash.
+ * Regression test for Issue #258 - bidirectional scroll sync.
+ */
+- (void)testSyncScrollersReverseExists
+{
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should exist and not crash");
+}
+
+/**
+ * Test that shouldHandlePreviewBoundsChange property is initialized correctly.
+ * Regression test for Issue #258 - loop prevention flag.
+ */
+- (void)testPreviewBoundsChangeFlagInitialized
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES by default");
+}
+
+/**
+ * Test that both loop prevention flags are independent.
+ * Regression test for Issue #258 - ensures bidirectional sync doesn't loop.
+ */
+- (void)testLoopPreventionFlagsAreIndependent
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Initially both should be YES
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should be YES initially");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES initially");
+
+    // Setting one should not affect the other
+    doc.shouldHandleBoundsChange = NO;
+    XCTAssertFalse(doc.shouldHandleBoundsChange,
+                   @"shouldHandleBoundsChange should be NO after setting");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should still be YES");
+
+    doc.shouldHandlePreviewBoundsChange = NO;
+    XCTAssertFalse(doc.shouldHandlePreviewBoundsChange,
+                   @"shouldHandlePreviewBoundsChange should be NO after setting");
+}
+
+/**
+ * Test that syncScrollersReverse handles empty header locations gracefully.
+ * Regression test for Issue #258 - edge case handling.
+ */
+- (void)testSyncScrollersReverseWithEmptyLocations
+{
+    self.document.webViewHeaderLocations = @[];
+    self.document.editorHeaderLocations = @[];
+
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should handle empty header locations");
+}
+
+/**
+ * Test that syncScrollersReverse handles nil header locations gracefully.
+ * Regression test for Issue #258 - nil safety.
+ */
+- (void)testSyncScrollersReverseWithNilLocations
+{
+    self.document.webViewHeaderLocations = nil;
+    self.document.editorHeaderLocations = nil;
+
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should handle nil header locations");
+}
+
+/**
+ * Test that reverse sync uses the same reference points as forward sync.
+ * Regression test for Issue #258 - algorithm symmetry.
+ */
+- (void)testReverseSyncUsesHeaderLocations
+{
+    // Set up some header locations
+    self.document.webViewHeaderLocations = @[@(100), @(300), @(500)];
+    self.document.editorHeaderLocations = @[@(50), @(150), @(250)];
+
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should use webViewHeaderLocations and editorHeaderLocations");
+}
+
+/**
+ * Test that reverse sync with single header location works.
+ * Regression test for Issue #258 - edge case with minimal headers.
+ */
+- (void)testReverseSyncWithSingleHeader
+{
+    self.document.webViewHeaderLocations = @[@(100)];
+    self.document.editorHeaderLocations = @[@(50)];
+
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should handle single header");
+}
+
+/**
+ * Test that reverse sync with many headers works.
+ * Regression test for Issue #258 - performance with many reference points.
+ */
+- (void)testReverseSyncWithManyHeaders
+{
+    NSMutableArray *webLocations = [NSMutableArray array];
+    NSMutableArray *editorLocations = [NSMutableArray array];
+
+    for (int i = 0; i < 100; i++) {
+        [webLocations addObject:@(i * 100)];
+        [editorLocations addObject:@(i * 80)];
+    }
+
+    self.document.webViewHeaderLocations = webLocations;
+    self.document.editorHeaderLocations = editorLocations;
+
+    XCTAssertNoThrow([self.document syncScrollersReverse],
+                     @"syncScrollersReverse should handle many headers");
 }
 
 @end

@@ -30,7 +30,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
 | MPDocumentIOTests.m | File I/O, document state | Good | ~340 |
-| MPScrollSyncTests.m | Scroll sync, JavaScript sort, horizontal rule/setext header detection | Excellent | ~1075 |
+| MPScrollSyncTests.m | Scroll sync, JavaScript sort, horizontal rule/setext header detection, bidirectional scroll sync | Excellent | ~1201 |
 | MPDocumentLifecycleTests.m | Document lifecycle, dirty flags, encoding | Good | (Issue #234) |
 | MPNotificationTests.m | Notification observers, preference changes | Good | (Issue #234) |
 | MPRendererEdgeCaseTests.m | Renderer edge cases, nil handling | Good | (Issue #234) |
@@ -49,7 +49,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
-- Scroll synchronization (MPDocument.m) - 68 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, and setext header detection (Issue #39, Issue #143, Issue #144)
+- Scroll synchronization (MPDocument.m) - 70 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, and bidirectional scroll sync (Issue #39, Issue #143, Issue #144, Issue #258)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
 
@@ -138,7 +138,7 @@ GitHub Actions macOS runners are:
 
 **Test Files:**
 - `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave - Issue #90)
-- `MPScrollSyncTests.m` - ✅ COMPLETED (68 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection - Issue #39, Issue #143, Issue #144)
+- `MPScrollSyncTests.m` - ✅ COMPLETED (70 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync - Issue #39, Issue #143, Issue #144, Issue #258)
 - `MPDocumentLifecycleTests.m` - ✅ COMPLETED (Document dirty flags, revert behavior, encoding detection, file conflicts - Issue #234)
 - `MPNotificationTests.m` - ✅ COMPLETED (NSNotificationCenter observer patterns, preference change notifications, theme/font changes - Issue #234)
 
