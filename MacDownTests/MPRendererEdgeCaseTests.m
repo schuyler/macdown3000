@@ -588,4 +588,90 @@
     }, @"Should not crash on invalid front matter");
 }
 
+
+#pragma mark - Issue #254: Lists After Paragraphs
+
+/**
+ * Tests for Issue #254: Lists immediately following paragraphs should render
+ * correctly without requiring a blank line (CommonMark/GFM behavior).
+ *
+ * NOTE: The simple regex fix has known edge cases:
+ * - Lists inside fenced code blocks may be incorrectly modified
+ * - Lists inside indented code blocks may be incorrectly modified
+ * - Blockquotes may need special handling
+ * These edge cases are intentionally not addressed for simplicity.
+ */
+
+- (void)testUnorderedListAfterParagraph_Hyphen
+{
+    self.dataSource.markdown = @"Text here:\n- Item 1\n- Item 2";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ul>"],
+                  @"Should render unordered list with hyphen after paragraph");
+    XCTAssertTrue([html containsString:@"<li>Item 1</li>"],
+                  @"Should contain list items");
+}
+
+- (void)testUnorderedListAfterParagraph_Asterisk
+{
+    self.dataSource.markdown = @"Text here:\n* Item 1\n* Item 2";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ul>"],
+                  @"Should render unordered list with asterisk after paragraph");
+}
+
+- (void)testUnorderedListAfterParagraph_Plus
+{
+    self.dataSource.markdown = @"Text here:\n+ Item 1\n+ Item 2";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ul>"],
+                  @"Should render unordered list with plus after paragraph");
+}
+
+- (void)testOrderedListAfterParagraph
+{
+    self.dataSource.markdown = @"My list:\n1. First\n2. Second";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ol>"],
+                  @"Should render ordered list after paragraph");
+    XCTAssertTrue([html containsString:@"<li>First</li>"],
+                  @"Should contain list items");
+}
+
+- (void)testListWithBlankLineStillWorks
+{
+    // Regression test: existing behavior must be preserved
+    self.dataSource.markdown = @"Text here:\n\n- Item 1\n- Item 2";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ul>"],
+                  @"Lists with blank lines should still work");
+}
+
+- (void)testListAfterParagraphWithoutColon
+{
+    // Lists should work after any paragraph, not just ones ending with colon
+    self.dataSource.markdown = @"This is a paragraph without colon\n- Item 1\n- Item 2";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<ul>"],
+                  @"Should render list after paragraph without colon");
+}
+
 @end
