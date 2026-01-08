@@ -206,6 +206,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property BOOL copying;
 @property BOOL printing;
 @property BOOL shouldHandleBoundsChange;
+@property BOOL shouldHandlePreviewBoundsChange;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
 @property (copy) NSString *currentStyleName;
@@ -230,7 +231,8 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 
 - (void)scaleWebview;
 - (void)syncScrollers;
--(void) updateHeaderLocations;
+- (void)syncScrollersReverse;
+- (void)updateHeaderLocations;
 
 @end
 
@@ -366,6 +368,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.isPreviewReady = NO;
     self.shouldHandleBoundsChange = YES;
+    self.shouldHandlePreviewBoundsChange = YES;
     self.previousSplitRatio = -1.0;
     
     return self;
@@ -449,6 +452,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                        name:NSScrollViewDidEndLiveScrollNotification
                      object:self.preview.enclosingScrollView];
     }
+    [center addObserver:self selector:@selector(previewBoundsDidChange:)
+                   name:NSViewBoundsDidChangeNotification
+                 object:self.preview.enclosingScrollView.contentView];
 
     self.needsToUnregister = YES;
 
@@ -1290,6 +1296,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.lastPreviewScrollTop = contentView.bounds.origin.y;
 }
 
+- (void)previewBoundsDidChange:(NSNotification *)notification
+{
+    if (!self.shouldHandlePreviewBoundsChange)
+        return;
+
+    if (self.preferences.editorSyncScrolling)
+    {
+        @synchronized(self) {
+            self.shouldHandlePreviewBoundsChange = NO;
+            if (!_inLiveScroll) {
+                [self updateHeaderLocations];
+            }
+            [self syncScrollersReverse];
+            self.shouldHandlePreviewBoundsChange = YES;
+        }
+    }
+}
+
 
 #pragma mark - KVO
 
@@ -2098,10 +2122,110 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat previewY = topHeaderY + (bottomHeaderY - topHeaderY) * percentScrolledBetweenHeaders;
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
     contentBounds.origin.y = previewY;
+
+    // Prevent reverse sync from triggering while we programmatically scroll preview
+    self.shouldHandlePreviewBoundsChange = NO;
     self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+    self.shouldHandlePreviewBoundsChange = YES;
 
     // Save this scroll position so it persists across preview refreshes
     self.lastPreviewScrollTop = previewY;
+}
+
+/**
+ * Synchronizes editor pane scroll position with preview pane position.
+ *
+ * This is the reverse of syncScrollers - when the user scrolls the preview,
+ * this method scrolls the editor to the corresponding position.
+ *
+ * Algorithm:
+ * 1. Find reference points (headers/images) before and after current preview position
+ * 2. Calculate percentage scrolled between those reference points
+ * 3. Apply same percentage between corresponding editor reference points
+ * 4. Use "tapering" at document edges to center-align content mid-document but
+ *    align to top/bottom at document boundaries
+ */
+- (void)syncScrollersReverse
+{
+    CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
+    CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
+    CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
+    CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
+    NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
+    CGFloat currY = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+    CGFloat minY = 0;
+    CGFloat maxY = 0;
+
+    // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
+    // Taper values: 0 at document edges, 1.0 in the middle of the document.
+    CGFloat topTaper = MAX(0, MIN(1.0, currY / previewVisibleHeight));
+    CGFloat bottomTaper = 1.0 - MAX(0, MIN(1.0, (currY - previewContentHeight + 2 * previewVisibleHeight) / previewVisibleHeight));
+    // Divide by 2 to center-align: shifts reference points by half the visible height
+    CGFloat adjustmentForScroll = topTaper * bottomTaper * previewVisibleHeight / 2;
+
+    // Search through preview header locations to find reference points
+    for (NSNumber *headerYNum in _webViewHeaderLocations) {
+        CGFloat headerY = [headerYNum floatValue];
+        headerY -= adjustmentForScroll;
+
+        if (headerY < currY)
+        {
+            // The header is before our current scroll position. the closest
+            // of these will be our first reference node
+            relativeHeaderIndex += 1;
+            minY = headerY;
+        } else if (maxY == 0 && headerY < previewContentHeight - previewVisibleHeight)
+        {
+            // Skip any headers that are within the last screen of the preview.
+            // we'll interpolate to the end of the document in that case.
+            maxY = headerY;
+        }
+    }
+
+    // Usually, we'll be scrolling between two reference nodes, but toward the end
+    // of the document we'll ignore nodes and reference the end of the document instead
+    BOOL interpolateToEndOfDocument = NO;
+
+    if (maxY == 0)
+    {
+        // We only have a reference node before our current position,
+        // but not after, so we'll use the end of the document.
+        maxY = previewContentHeight - previewVisibleHeight + adjustmentForScroll;
+        interpolateToEndOfDocument = YES;
+    }
+
+    // We are currently at currY offset, between minY and maxY, which represent
+    // headers indexed by relativeHeaderIndex and relativeHeaderIndex+1.
+    currY = MAX(0, currY - minY);
+    maxY -= minY;
+    minY -= minY;
+    CGFloat percentScrolledBetweenHeaders = MAX(0, MIN(1.0, currY / maxY));
+
+    // Now that we know where the preview position is relative to two reference nodes,
+    // we need to find the positions of those nodes in the editor
+    CGFloat topHeaderY = 0;
+    CGFloat bottomHeaderY = editorContentHeight - editorVisibleHeight;
+
+    // Find the Y positions in the editor that we're scrolling between
+    if ([_editorHeaderLocations count] > relativeHeaderIndex)
+    {
+        topHeaderY = floorf([_editorHeaderLocations[relativeHeaderIndex] doubleValue]) - adjustmentForScroll;
+    }
+
+    if (!interpolateToEndOfDocument && [_editorHeaderLocations count] > relativeHeaderIndex + 1)
+    {
+        bottomHeaderY = ceilf([_editorHeaderLocations[relativeHeaderIndex + 1] doubleValue]) - adjustmentForScroll;
+    }
+
+    // Now we scroll percentScrolledBetweenHeaders percent between those two positions in the editor
+    CGFloat editorY = topHeaderY + (bottomHeaderY - topHeaderY) * percentScrolledBetweenHeaders;
+    NSRect contentBounds = self.editor.enclosingScrollView.contentView.bounds;
+    contentBounds.origin.y = editorY;
+
+    // Prevent forward sync from triggering while we programmatically scroll editor
+    self.shouldHandleBoundsChange = NO;
+    self.editor.enclosingScrollView.contentView.bounds = contentBounds;
+    self.shouldHandleBoundsChange = YES;
 }
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio
