@@ -61,8 +61,8 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 - Multiple simultaneous documents
 - Document restoration
 
-**3. Scroll Synchronization** (Issue #39)
-- Logic tested ✓
+**3. Scroll Synchronization** (Issue #39, Issue #258)
+- Logic tested ✓ (including bidirectional scroll sync)
 - Integration not tested: actual scrolling, WebView coordination, image loading
 
 **4. File Operations** (Partially Addressed)

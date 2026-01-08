@@ -1268,10 +1268,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         @synchronized(self) {
             self.shouldHandleBoundsChange = NO;
-            if(!_inLiveScroll){
+            if (!_inLiveScroll) {
                 [self updateHeaderLocations];
             }
-            
             [self syncScrollers];
             self.shouldHandleBoundsChange = YES;
         }
