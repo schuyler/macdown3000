@@ -18,7 +18,7 @@
       htmlLabels: false,
       useMaxWidth: true
     },
-    securityLevel: 'loose',
+    securityLevel: 'antiscript',
     logLevel: 'error'
   });
 
