@@ -163,12 +163,10 @@ jobs:
       - name: Run tests before release
         run: |
           echo "🧪 Running unit tests to ensure code quality before release..."
-          set -o pipefail
           xcodebuild test \
             -workspace "MacDown 3000.xcworkspace" \
             -scheme MacDown \
-            -derivedDataPath DerivedData \
-            | xcpretty --color
+            -derivedDataPath DerivedData
           echo "✅ All tests passed"
 
       - name: Install build tools
