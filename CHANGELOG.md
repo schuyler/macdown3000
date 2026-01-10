@@ -1,17 +1,19 @@
 # Changelog
 
-## [3000.0.3] - 2026-01-08
+## [3000.0.3-beta.1] - 2026-01-09
 
-This release fixes several bugs with Markdown rendering and drag-and-drop, improves settings persistence, and code-signs the macdown CLI binary.
+This beta release upgrades Mermaid to v11.12.1, adds bidirectional scroll sync, and includes several bug fixes for Markdown rendering, drag-and-drop, and settings persistence.
+
+### Added
+- Upgrade Mermaid to v11.12.1 for improved flowchart rendering (#262, #35)
+- Add bidirectional scroll sync between preview and editor (#261, #258) -- thanks @dadvir!
+- Code-sign the macdown CLI binary (#239, #238) -- thanks @henryhchchc!
 
 ### Fixed
 - Fix lists not rendering immediately after paragraphs (#260, #254) -- thanks @justinabrahms!
 - Fix tab characters causing unexpected line breaks near line end (#256)
 - Fix persistence of Substitutions and Spelling settings (#252)
 - Fix drag-and-drop for images and mixed file types (#240, #244, #247) -- thanks @wltb!
-
-### Added
-- Code-sign the macdown CLI binary (#239, #238) -- thanks @henryhchchc!
 
 ### Documentation
 - Update README for 2026 (#246) -- thanks @brianzelip!
