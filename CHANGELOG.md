@@ -1,5 +1,21 @@
 # Changelog
 
+## [3000.0.3] - 2026-01-08
+
+This release fixes several bugs with Markdown rendering and drag-and-drop, improves settings persistence, and code-signs the macdown CLI binary.
+
+### Fixed
+- Fix lists not rendering immediately after paragraphs (#260, #254) -- thanks @justinabrahms!
+- Fix tab characters causing unexpected line breaks near line end (#256)
+- Fix persistence of Substitutions and Spelling settings (#252)
+- Fix drag-and-drop for images and mixed file types (#240, #244, #247) -- thanks @wltb!
+
+### Added
+- Code-sign the macdown CLI binary (#239, #238) -- thanks @henryhchchc!
+
+### Documentation
+- Update README for 2026 (#246) -- thanks @brianzelip!
+
 ## [3000.0.2] - 2025-12-30
 
 This release removes remote image loading from the built-in help file, fixes broken localization for German and Slovak, and expands unit test coverage.
