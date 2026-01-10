@@ -313,6 +313,10 @@ date: 2014-06-06 20:00:00
 ---
 ```
 
+### Table of Contents Token
+
+If you include a table of contents token, which looks like `[TOC]`, then I will generate a table of contents for the document based on the headings you've defined. This will be inserted at the place where you put the token.
+
 ### Render newline literally
 Normally I require you to put two spaces and a newline (aka return) at the end of a line in order to create a line break. If you like, I can render a newline any time you end a line with a newline. However, if you enable this, markdown that looks lovely when I render it might look pretty funky when you let some *other* program render it.
 
