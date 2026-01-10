@@ -9,5 +9,15 @@
     "dmgSizeMB": "6.8",
     "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.2/MacDown-3000.0.2.dmg.sha256"
   },
-  "updatedAt": "2025-12-30T23:37:51Z"
+  "prerelease": {
+    "version": "3000.0.3-beta.1",
+    "tagName": "v3000.0.3-beta.1",
+    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.3-beta.1",
+    "publishedAt": "2026-01-10T04:34:57Z",
+    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.3-beta.1/MacDown-3000.0.3-beta.1.dmg",
+    "dmgName": "MacDown-3000.0.3-beta.1.dmg",
+    "dmgSizeMB": "7.3",
+    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.3-beta.1/MacDown-3000.0.3-beta.1.dmg.sha256"
+  },
+  "updatedAt": "2026-01-10T04:35:09Z"
 }
