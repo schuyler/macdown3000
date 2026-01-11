@@ -32,13 +32,14 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
 #### Statements Inside `if`, `while`, etc.
 
 * Prefer implicit boolean conversion when it makes sense.
-    * `if (str.length)` is better than `if (str.length != 0)` if you want to know whether a string is empty. 
+    * `if (str.length)` is better than `if (str.length != 0)` if you want to know whether a string is empty.
     * The same applies when checking for an object’s `nil`-ness.
     * If what you want to compare against is *zero as a number*, not emptiness, such as for `NSRange` position, `NSPoint` coordinates, etc., *do* use the `== 0`/`!= 0` expression.
 
 * If statements need to span multiple lines, prefer putting logical operators at the *beginning* of the line.
 
     Yes:
+
     ```c
     while (this_is_very_long
            || this_is_also_very_long)
@@ -48,6 +49,7 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
     ```
 
     No:
+
     ```c
     while (this_is_very_long ||
            this_is_also_very_long)
@@ -59,6 +61,7 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
 * If code alignment is ambiguous, add extra indentation.
 
     Yes:
+
     ```c
     if (this_is_very_long
             || this_is_also_very_long)
@@ -66,6 +69,7 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
     ```
 
     No:
+
     ```c
     if (this_is_very_long
         || this_is_also_very_long)
@@ -75,6 +79,7 @@ Exception: If a URL in a comment is too long, it can go over the limit. This hap
     The above is not enforced (but recommended) if braces exist. Useful if you have a hard time fitting the statement into the 80-column constraint.
 
     Okay:
+
     ```c
     if (this_is_very_long
         || this_is_very_very_truly_long)

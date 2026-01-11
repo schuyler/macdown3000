@@ -5,17 +5,20 @@
 This beta release upgrades Mermaid to v11.12.1, adds bidirectional scroll sync, and includes several bug fixes for Markdown rendering, drag-and-drop, and settings persistence.
 
 ### Added
+
 - Upgrade Mermaid to v11.12.1 for improved flowchart rendering (#262, #35)
 - Add bidirectional scroll sync between preview and editor (#261, #258) -- thanks @dadvir!
 - Code-sign the macdown CLI binary (#239, #238) -- thanks @henryhchchc!
 
 ### Fixed
+
 - Fix lists not rendering immediately after paragraphs (#260, #254) -- thanks @justinabrahms!
 - Fix tab characters causing unexpected line breaks near line end (#256)
 - Fix persistence of Substitutions and Spelling settings (#252)
 - Fix drag-and-drop for images and mixed file types (#240, #244, #247) -- thanks @wltb!
 
 ### Documentation
+
 - Update README for 2026 (#246) -- thanks @brianzelip!
 
 ## [3000.0.2] - 2025-12-30
@@ -29,10 +32,12 @@ brew install --cask macdown-3000
 ```
 
 ### Fixed
+
 - Import help.md images locally to eliminate external d.pr network requests (#232) -- thanks @robbyt!
 - Fix broken German (DE) and Slovak (SK) localizations (#230) -- thanks @emsspree!
 
 ### Infrastructure
+
 - Expand unit test coverage with notification, lifecycle, and edge case tests (#233, #235)
 - Add workflow to submit PRs to homebrew-cask on release (#225, #226)
 
@@ -41,6 +46,7 @@ brew install --cask macdown-3000
 This patch release fixes three bugs affecting the editor and preview pane.
 
 ### Fixed
+
 - Fix CSS style and syntax highlighting theme changes not applying in Preview pane (#219, #221) -- thanks @kojika!
 - Fix copy-paste regression in editor (#214, #220) -- thanks @sveinbjornt!
 - Add smart paste linkification for selected text (#222, #223)
@@ -50,9 +56,11 @@ This patch release fixes three bugs affecting the editor and preview pane.
 This release finalizes the MacDown 3000 platform with expanded internationalization support and improved clipboard handling for Markdown content.
 
 ### Added
+
 - Add complete localizations for Russian, Arabic, Hindi, Ukrainian, and Hebrew preferences (#212)
 
 ### Fixed
+
 - Add markdown UTType when copying from editor to improve clipboard compatibility (#208)
 
 ## [3000.0.0-beta.3] - 2025-12-07
@@ -60,6 +68,7 @@ This release finalizes the MacDown 3000 platform with expanded internationalizat
 This release addresses several bug fixes including a critical issue where both editor and preview panes could be hidden simultaneously, improvements to the preview pane reload behavior, and removes the deprecated plugin system.
 
 ### Fixed
+
 - Fix hiding both editor and preview panes bug (#207, #23)
 - Fix preview pane Reload to re-render instead of loading raw markdown (#204)
 - Fix download button to directly download DMG file (#202)
@@ -67,11 +76,13 @@ This release addresses several bug fixes including a critical issue where both e
 - Fix version number in About pane and Credits.rtf formatting
 
 ### Removed
+
 - Remove deprecated plugin system (#205)
 
 ## [3000.0.0-beta.2] - 2025-11-26
 
 ### Fixed
+
 - Fix line breaking in HTML exports (#191)
 - Fix horizontal rule regex edge cases and fragile header detection (#185)
 - Fix Markdown preferences display for Korean locale (#176)
@@ -81,22 +92,26 @@ This release addresses several bug fixes including a critical issue where both e
 ## [3000.0.0-beta.1] - 2025-11-24
 
 ### Fixed
+
 - **Hang on launch for macOS Sequoia** - Fixed initialization deadlock affecting macOS 15.x (#169, #170)
 - **Intel Mac toolbar crash** - Fixed buffer overflow in toolbar initialization (#178)
 - **French localization errors** - Corrected translation issues in French language files (#172)
 
 ### Infrastructure
+
 - **Intel CI testing** - Added dedicated Intel Mac testing with diagnostic logging (#177)
 - **Unsigned artifact preservation** - Retained unsigned builds in dry run workflow (#171)
 
 ## [3000.0.0-beta.0] - 2025-11-21
 
 ### Major Changes
+
 - **Rebranded as MacDown 3000** - New identity and versioning scheme for the modernized Markdown editor
 - **Apple Silicon support** - Native arm64 builds with full compatibility alongside Intel x86_64 builds
 - **Modernized project infrastructure** - Updated to Xcode standards with improved CI/CD automation
 
 ### Fixed
+
 - **Preview pane flickering** - Fixed by reverting WebCache disabling approach (#9, #109)
 - **Editor/preview pane sync issues** - Fixed loss of sync caused by image loading delays (#39, #145)
 - **Mermaid gantt diagram rendering** - Corrected diagram rendering output (#18, #151)
@@ -106,19 +121,23 @@ This release addresses several bug fixes including a critical issue where both e
 - **Compiler warnings** - Resolved all compiler warnings for cleaner builds
 
 ### Changed
+
 - **Updated application namespace** - Changed from original MacDown NSID to new namespace (#128)
 - **Upgraded dependencies** - Updated CocoaPods, Hoedown, Prism, and other core dependencies (#132)
 - **Strikethrough syntax** - Enabled by default for better Markdown compatibility (#45, #102)
 
 ### Removed
+
 - **Travis CI** - Replaced with GitHub Actions
 - **Broken Transifex references** - Cleaned up obsolete translation service integrations (#127)
 - **Sparkle auto-updates** - Temporarily disabled pending modernization
 
 ### Known Issues
+
 - **Hoedown parser limitations** - Documented edge cases in Markdown parsing that users should be aware of
 
 ### Infrastructure
+
 - **GitHub Actions CI/CD** - Complete migration from Travis CI with matrix testing for multiple macOS versions
 - **Regression tests** - Tests for known Hoedown parser limitations and issue #39 edge cases (#148, #149)
 - **File I/O and document lifecycle tests** - Enhanced testing coverage for document operations (#90, #97)
