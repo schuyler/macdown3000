@@ -30,6 +30,10 @@ jobs:
         run: npm install -g markdownlint-cli
 
       - name: Lint documentation
+        # We lint specific files rather than **/*.md because:
+        # - MacDownTests/Fixtures/ contains intentionally varied markdown for parser testing
+        # - plans/ contains internal working documents
+        # Only user-facing documentation is validated
         run: |
           markdownlint \
             README.md \
