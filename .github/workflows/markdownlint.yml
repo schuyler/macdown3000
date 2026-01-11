@@ -1,0 +1,39 @@
+name: Markdown Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - '.markdownlint.json'
+      - '.github/workflows/markdownlint.yml'
+  pull_request:
+    paths:
+      - '**.md'
+      - '.markdownlint.json'
+      - '.github/workflows/markdownlint.yml'
+
+jobs:
+  lint:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+
+      - name: Lint documentation
+        run: |
+          markdownlint \
+            README.md \
+            CHANGELOG.md \
+            CONTRIBUTING.md \
+            MacDown/Resources/help.md \
+            MacDown/Resources/contribute.md
