@@ -297,9 +297,9 @@ or (in MathML)
 ### Task List Syntax
 
 1. [x] I can render checkbox list syntax
-    * [x] I support nesting
-    * [x] I support ordered *and* unordered lists
-2. [ ] I don't support clicking checkboxes directly in the html window
+	* [x] I support nesting
+	* [x] I support ordered *and* unordered lists
+2. [ ] I don't support clicking checkboxes directly in the HTML window
 
 ### Jekyll front-matter
 
@@ -307,7 +307,7 @@ If you like, I can display Jekyll front-matter in a nice table. Just make sure y
 
 ```yaml
 ---
-title: "Macdown is my friend"
+title: "MacDown is my friend"
 date: 2014-06-06 20:00:00
 ---
 ```
@@ -318,7 +318,7 @@ If you include a table of contents token, which looks like `[TOC]`, then I will 
 
 ### Render newline literally
 
-Normally I require you to put two spaces and a newline (aka return) at the end of a line in order to create a line break. If you like, I can render a newline any time you end a line with a newline. However, if you enable this, markdown that looks lovely when I render it might look pretty funky when you let some *other* program render it.
+Normally I require you to put two spaces and a newline (a.k.a. return) at the end of a line in order to create a line break. If you like, I can render a newline any time you end a line with a newline. However, if you enable this, markdown that looks lovely when I render it might look pretty funky when you let some *other* program render it.
 
 ## <a name="general-pane"></a>The General Preferences Pane
 
