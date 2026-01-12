@@ -107,7 +107,7 @@ Refer to the official guides of Git and CocoaPods if you need more instructions.
 
 ## License
 
-MacDown 3000 is released under the terms of MIT License. You may find the content of the license [here](http://opensource.org/licenses/MIT), or inside the `LICENSE` directory.
+MacDown 3000 is released under the terms of MIT License. You may find the content of the license [on opensource.org](http://opensource.org/licenses/MIT), or inside the `LICENSE` directory.
 
 You may find full text of licenses about third-party components in the `LICENSE` directory, or the **About MacDown 3000** panel in the application.
 
