@@ -297,8 +297,8 @@ or (in MathML)
 ### Task List Syntax
 
 1. [x] I can render checkbox list syntax
-	* [x] I support nesting
-	* [x] I support ordered *and* unordered lists
+    * [x] I support nesting
+    * [x] I support ordered *and* unordered lists
 2. [ ] I don't support clicking checkboxes directly in the HTML window
 
 ### Jekyll front-matter
