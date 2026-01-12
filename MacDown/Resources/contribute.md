@@ -21,4 +21,3 @@ If you want to help translate, please open an issue on GitHub to discuss adding 
 ## License
 
 MacDown 3000 is released under the terms of MIT License. For more details take a look at the [README](https://github.com/schuyler/macdown3000/blob/main/README.md).
-
