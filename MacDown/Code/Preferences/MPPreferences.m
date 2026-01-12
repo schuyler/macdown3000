@@ -451,6 +451,26 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.htmlTemplateName = @"Default";
     if (![defaults objectForKey:@"extensionStrikethough"])
         self.extensionStrikethough = YES;
+
+    // One-time fix for users who migrated with incorrect substitution defaults.
+    // Text substitutions (smart dashes, smart quotes, etc.) break Markdown syntax
+    // and should be OFF by default. This resets them for all users, then marks
+    // the fix as applied so future explicit user choices are preserved.
+    // Related to GitHub issue #263.
+    static NSString * const kMPDidApplySubstitutionDefaultsFix =
+        @"MPDidApplySubstitutionDefaultsFix";
+    if (![defaults boolForKey:kMPDidApplySubstitutionDefaultsFix])
+    {
+        [defaults setBool:NO forKey:@"editorAutomaticDashSubstitutionEnabled"];
+        [defaults setBool:NO forKey:@"editorAutomaticQuoteSubstitutionEnabled"];
+        [defaults setBool:NO forKey:@"editorAutomaticTextReplacementEnabled"];
+        [defaults setBool:NO forKey:@"editorAutomaticSpellingCorrectionEnabled"];
+        [defaults setBool:NO forKey:@"editorSmartInsertDeleteEnabled"];
+        [defaults setBool:NO forKey:@"editorAutomaticDataDetectionEnabled"];
+        [defaults setBool:NO forKey:@"editorContinuousSpellCheckingEnabled"];
+        [defaults setBool:NO forKey:@"editorGrammarCheckingEnabled"];
+        [defaults setBool:YES forKey:kMPDidApplySubstitutionDefaultsFix];
+    }
 }
 
 @end
