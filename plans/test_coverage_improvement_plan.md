@@ -339,13 +339,13 @@ GitHub Actions macOS runners are:
 
 **Regression Tests (Issue #81):**
 
-Three regression tests document known hoedown parser limitations that will be fixed in parser modernization (#77):
+Three regression tests document known hoedown parser limitations:
 
 1. ✅ **Issue #34** - `regression-issue34.md/.html` - Lists after colons (requires blank lines)
-2. ✅ **Issue #36** - `regression-issue36.md/.html` - Code blocks without blank lines
-3. ✅ **Issue #37** - `regression-issue37.md/.html` - Square brackets in code blocks (is_ref() false positive)
+2. ✅ **Issue #36** - `regression-issue36.md/.html` - Code blocks without blank lines - **FIXED** via preprocessor (inserts blank lines before fenced code blocks)
+3. ✅ **Issue #37** - `regression-issue37.md/.html` - Square brackets in code blocks (is_ref() false positive) - still a hoedown limitation
 
-These tests capture the current broken behavior to prevent regressions and validate fixes when the parser is modernized.
+Issues #34 and #37 remain known hoedown limitations that will be addressed in parser modernization (#77).
 
 ### MPDocumentIOTests.m - ✅ IMPLEMENTED
 
