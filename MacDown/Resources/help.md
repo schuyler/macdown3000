@@ -299,7 +299,7 @@ or (in MathML)
 1. [x] I can render checkbox list syntax
     * [x] I support nesting
     * [x] I support ordered *and* unordered lists
-2. [ ] I don't support clicking checkboxes directly in the HTML window
+2. [x] I support clicking checkboxes directly in the preview window to toggle them
 
 ### Jekyll front-matter
 

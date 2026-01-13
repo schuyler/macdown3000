@@ -274,4 +274,153 @@
     [self.preferences synchronize];
 }
 
+
+#pragma mark - Checkbox/Task List Migration Tests
+
+/**
+ * Test that checkbox/task list is enabled by default for fresh installs.
+ * Related to GitHub issue #269.
+ */
+- (void)testCheckboxEnabledByDefaultForFreshInstall
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
+    NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    // Simulate fresh install: remove the migration flag and preference
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"htmlTaskList"];
+
+    // Create a new preferences instance to trigger loadDefaultUserDefaults
+    // Note: Since MPPreferences is a singleton, we call loadDefaultUserDefaults directly
+    // by reinitializing - this simulates app launch
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // After migration, htmlTaskList should be enabled
+    XCTAssertTrue(prefs.htmlTaskList,
+                  @"Checkbox/task list should be enabled by default for fresh installs");
+
+    // Migration flag should be set
+    XCTAssertTrue([defaults boolForKey:@"MPDidApplyTaskListDefaultFix"],
+                  @"Migration flag should be set after first run");
+
+    // Restore original values
+    if (originalMigrationFlag)
+        [defaults setObject:originalMigrationFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalTaskList)
+        [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
+    else
+        [defaults removeObjectForKey:@"htmlTaskList"];
+}
+
+/**
+ * Test that checkbox migration applies to existing users who haven't set a preference.
+ * Related to GitHub issue #269.
+ */
+- (void)testCheckboxMigrationAppliesWhenPreferenceUnset
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
+    NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    // Simulate existing user without migration: no flag, no explicit preference
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"htmlTaskList"];
+
+    // Trigger preferences loading
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // htmlTaskList should now be enabled
+    XCTAssertTrue(prefs.htmlTaskList,
+                  @"Migration should enable checkbox for users without explicit preference");
+
+    // Restore original values
+    if (originalMigrationFlag)
+        [defaults setObject:originalMigrationFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalTaskList)
+        [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
+    else
+        [defaults removeObjectForKey:@"htmlTaskList"];
+}
+
+/**
+ * Test that user's explicit choice to disable checkboxes is preserved after migration.
+ * Related to GitHub issue #269.
+ */
+- (void)testCheckboxMigrationPreservesUserDisableChoice
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
+    NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    // Simulate user who has already had migration applied AND explicitly disabled
+    [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults setBool:NO forKey:@"htmlTaskList"];
+
+    // Trigger preferences loading
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // User's explicit disable choice should be preserved
+    XCTAssertFalse(prefs.htmlTaskList,
+                   @"User's explicit choice to disable checkbox should be preserved");
+
+    // Restore original values
+    if (originalMigrationFlag)
+        [defaults setObject:originalMigrationFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalTaskList)
+        [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
+    else
+        [defaults removeObjectForKey:@"htmlTaskList"];
+}
+
+/**
+ * Test that migration flag prevents reapplication of defaults.
+ * Related to GitHub issue #269.
+ */
+- (void)testCheckboxMigrationFlagPreventsReapplication
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
+    NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    // Set up: migration already applied, user explicitly enabled, then disabled
+    [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults setBool:NO forKey:@"htmlTaskList"];
+
+    // Trigger preferences loading multiple times
+    MPPreferences *prefs1 = [[MPPreferences alloc] init];
+    XCTAssertFalse(prefs1.htmlTaskList, @"Should remain disabled after first load");
+
+    MPPreferences *prefs2 = [[MPPreferences alloc] init];
+    XCTAssertFalse(prefs2.htmlTaskList, @"Should remain disabled after second load");
+
+    // Restore original values
+    if (originalMigrationFlag)
+        [defaults setObject:originalMigrationFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalTaskList)
+        [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
+    else
+        [defaults removeObjectForKey:@"htmlTaskList"];
+}
+
 @end

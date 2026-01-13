@@ -958,20 +958,30 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         request:(NSURLRequest *)request frame:(WebFrame *)frame
                 decisionListener:(id<WebPolicyDecisionListener>)listener
 {
+    NSURL *url = request.URL;
+
+    // Handle interactive checkbox toggle. Related to GitHub issue #269.
+    if ([url.scheme isEqualToString:@"x-macdown-checkbox"])
+    {
+        [listener ignore];
+        [self handleCheckboxToggle:url];
+        return;
+    }
+
     switch ([information[WebActionNavigationTypeKey] integerValue])
     {
         case WebNavigationTypeLinkClicked:
             // If the target is exactly as the current one, ignore.
-            if ([self.currentBaseUrl isEqual:request.URL])
+            if ([self.currentBaseUrl isEqual:url])
             {
                 [listener ignore];
                 return;
             }
             // If this is a different page, intercept and handle ourselves.
-            else if (![self isCurrentBaseUrl:request.URL])
+            else if (![self isCurrentBaseUrl:url])
             {
                 [listener ignore];
-                [self openOrCreateFileForUrl:request.URL];
+                [self openOrCreateFileForUrl:url];
                 return;
             }
             // Otherwise this is somewhere else on the same page. Jump there.
@@ -2387,6 +2397,183 @@ current file somewhere to enable this feature.", \
             [invocation invoke];
         }
     }
+}
+
+
+#pragma mark - Interactive Checkbox Support (Issue #269)
+
+/**
+ * Handle the checkbox toggle URL from the preview.
+ * URL format: x-macdown-checkbox://toggle/<index>
+ */
+- (void)handleCheckboxToggle:(NSURL *)url
+{
+    if (![url.host isEqualToString:@"toggle"])
+        return;
+
+    NSString *path = url.path;
+    if (path.length < 2)
+        return;
+
+    // Extract index from path (e.g., "/0" -> 0)
+    NSInteger index = [[path substringFromIndex:1] integerValue];
+    if (index < 0)
+        return;
+
+    NSString *newMarkdown = [MPDocument toggleCheckboxAtIndex:(NSUInteger)index
+                                                   inMarkdown:self.editor.string];
+    if (![newMarkdown isEqualToString:self.editor.string])
+    {
+        // Preserve cursor position
+        NSRange selectedRange = self.editor.selectedRange;
+
+        // Replace the editor content
+        [self.editor.textStorage beginEditing];
+        [self.editor.textStorage replaceCharactersInRange:NSMakeRange(0, self.editor.string.length)
+                                               withString:newMarkdown];
+        [self.editor.textStorage endEditing];
+
+        // Restore cursor position (adjust if needed)
+        if (selectedRange.location <= newMarkdown.length)
+        {
+            self.editor.selectedRange = selectedRange;
+        }
+    }
+}
+
+/**
+ * Toggle the checkbox at the specified index in the markdown source.
+ * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
+ * Returns the modified markdown, or the original if index is out of bounds.
+ *
+ * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
+ * rendering behavior. Nested list items get lower indices than their parent.
+ * Related to GitHub issue #269.
+ */
++ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
+{
+    if (!markdown || markdown.length == 0)
+        return markdown;
+
+    // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
+    // Note: Only lowercase [x] is recognized by hoedown, so we only match that.
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ x])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ x])\\]"
+                             options:NSRegularExpressionAnchorsMatchLines
+                               error:&error];
+
+    if (error)
+        return markdown;
+
+    // We need to skip checkboxes inside code blocks.
+    NSMutableIndexSet *codeBlockRanges = [NSMutableIndexSet indexSet];
+
+    // Find fenced code blocks (``` or ~~~)
+    NSRegularExpression *fencedCodeRegex = [NSRegularExpression
+        regularExpressionWithPattern:@"^[ \\t]*(```|~~~).*?\\n[\\s\\S]*?^[ \\t]*\\1[ \\t]*$"
+                             options:NSRegularExpressionAnchorsMatchLines
+                               error:nil];
+    NSArray *fencedMatches = [fencedCodeRegex matchesInString:markdown
+                                                      options:0
+                                                        range:NSMakeRange(0, markdown.length)];
+    for (NSTextCheckingResult *match in fencedMatches)
+    {
+        [codeBlockRanges addIndexesInRange:match.range];
+    }
+
+    // Find all checkbox matches in document order
+    NSArray *matches = [regex matchesInString:markdown
+                                      options:0
+                                        range:NSMakeRange(0, markdown.length)];
+
+    // Build list of valid checkboxes with their indentation levels
+    NSMutableArray *checkboxes = [NSMutableArray array];
+    for (NSTextCheckingResult *match in matches)
+    {
+        // Skip if this match is inside a code block
+        if ([codeBlockRanges containsIndex:match.range.location])
+            continue;
+
+        // Get indentation level (capture group 1 or 3)
+        NSRange indentRange = [match rangeAtIndex:1];
+        if (indentRange.location == NSNotFound)
+            indentRange = [match rangeAtIndex:3];
+        NSUInteger indentLevel = (indentRange.location != NSNotFound) ? indentRange.length : 0;
+
+        // Get checkbox content range (capture group 2 or 4)
+        NSRange contentRange = [match rangeAtIndex:2];
+        if (contentRange.location == NSNotFound)
+            contentRange = [match rangeAtIndex:4];
+
+        if (contentRange.location != NSNotFound)
+        {
+            [checkboxes addObject:@{
+                @"match": match,
+                @"indent": @(indentLevel),
+                @"contentRange": [NSValue valueWithRange:contentRange]
+            }];
+        }
+    }
+
+    if (checkboxes.count == 0)
+        return markdown;
+
+    // Compute depth-first order using a stack-based algorithm.
+    // This matches hoedown's behavior where nested items are rendered before their parent.
+    // Algorithm: For each checkbox, pop stack items with indent >= current indent, then push.
+    NSMutableArray *stack = [NSMutableArray array];
+    NSMutableArray *depthFirstOrder = [NSMutableArray array];
+
+    for (NSUInteger i = 0; i < checkboxes.count; i++)
+    {
+        NSDictionary *current = checkboxes[i];
+        NSUInteger currentIndent = [current[@"indent"] unsignedIntegerValue];
+
+        // Pop items from stack that are NOT parents of this item
+        while (stack.count > 0)
+        {
+            NSDictionary *top = stack.lastObject;
+            NSUInteger topIndent = [top[@"indent"] unsignedIntegerValue];
+            if (topIndent >= currentIndent)
+            {
+                [depthFirstOrder addObject:top];
+                [stack removeLastObject];
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        [stack addObject:current];
+    }
+
+    // Pop remaining items from stack
+    while (stack.count > 0)
+    {
+        [depthFirstOrder addObject:stack.lastObject];
+        [stack removeLastObject];
+    }
+
+    // Check if index is valid
+    if (index >= depthFirstOrder.count)
+        return markdown;
+
+    // Find the target checkbox in depth-first order
+    NSDictionary *target = depthFirstOrder[index];
+    NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
+
+    NSString *currentState = [markdown substringWithRange:checkboxContentRange];
+    NSString *newState;
+    if ([currentState isEqualToString:@" "])
+        newState = @"x";
+    else
+        newState = @" ";
+
+    NSMutableString *result = [markdown mutableCopy];
+    [result replaceCharactersInRange:checkboxContentRange withString:newState];
+    return result;
 }
 
 @end
