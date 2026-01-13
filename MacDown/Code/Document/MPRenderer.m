@@ -627,6 +627,10 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 
 - (void)parseMarkdown:(NSString *)markdown {
     [self.currentLanguages removeAllObjects];
+
+    // Reset checkbox index counter for interactive checkbox support.
+    // Related to GitHub issue #269.
+    hoedown_patch_reset_checkbox_index();
     
     id<MPRendererDelegate> delegate = self.delegate;
     int extensions = [delegate rendererExtensions:self];

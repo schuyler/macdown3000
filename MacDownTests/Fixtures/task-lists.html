@@ -3,11 +3,11 @@
 <h2>Basic Task Lists</h2>
 
 <ul>
-<li class="task-list-item"><input type="checkbox"> Unchecked task
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="0"> Unchecked task
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Checked task
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="1"> Checked task
 </li>
-<li class="task-list-item"><input type="checkbox"> Another unchecked task
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="2"> Another unchecked task
 </li>
 <li>[X] Checked with capital X</li>
 </ul>
@@ -15,18 +15,18 @@
 <h2>Nested Task Lists</h2>
 
 <ul>
-<li class="task-list-item"><input type="checkbox"> Parent task
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="3"> Parent task
 
 <ul>
-<li class="task-list-item"><input type="checkbox" checked> Completed subtask
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="4"> Completed subtask
 </li>
-<li class="task-list-item"><input type="checkbox"> Incomplete subtask
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="5"> Incomplete subtask
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Another completed subtask
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="6"> Another completed subtask
 </li>
 </ul>
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Completed parent
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="7"> Completed parent
 </li>
 </ul>
 
@@ -34,10 +34,10 @@
 
 <ul>
 <li>Regular list item</li>
-<li class="task-list-item"><input type="checkbox"> Task item
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="8"> Task item
 </li>
 <li>Another regular item</li>
-<li class="task-list-item"><input type="checkbox" checked> Completed task
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="9"> Completed task
 </li>
 <li>Final regular item</li>
 </ul>
@@ -45,24 +45,24 @@
 <h2>Tasks with Inline Formatting</h2>
 
 <ul>
-<li class="task-list-item"><input type="checkbox"> Task with <strong>bold text</strong>
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="10"> Task with <strong>bold text</strong>
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Task with <em>italic text</em>
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="11"> Task with <em>italic text</em>
 </li>
-<li class="task-list-item"><input type="checkbox"> Task with <code>code</code>
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="12"> Task with <code>code</code>
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Task with <a href="https://example.com">link</a>
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="13"> Task with <a href="https://example.com">link</a>
 </li>
 </ul>
 
 <h2>Numbered Task Lists</h2>
 
 <ol>
-<li class="task-list-item"><input type="checkbox"> First task
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="14"> First task
 </li>
-<li class="task-list-item"><input type="checkbox" checked> Second task (completed)
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="15"> Second task (completed)
 </li>
-<li class="task-list-item"><input type="checkbox"> Third task
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="16"> Third task
 </li>
 </ol>
 
@@ -70,7 +70,7 @@
 
 <ul>
 <li>[] Invalid (no space)</li>
-<li class="task-list-item"><p><input type="checkbox"> Valid unchecked
+<li class="task-list-item"><p><input type="checkbox" data-checkbox-index="17"> Valid unchecked
 -[ ] Invalid (no space after dash)</p>
 </li>
 <li><p>[x ] Invalid (space before X)</p></li>

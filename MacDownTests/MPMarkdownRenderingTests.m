@@ -279,6 +279,118 @@
              rendererFlags:rendFlags];
 }
 
+#pragma mark - Interactive Checkbox Tests (Issue #269)
+
+/**
+ * Test that checkboxes include data-checkbox-index attributes for interactivity.
+ * Related to GitHub issue #269.
+ */
+- (void)testCheckboxHasDataIndex
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Task one\n- [x] Task two";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"First checkbox should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"Second checkbox should have index 1");
+}
+
+/**
+ * Test that multiple checkboxes get sequential indices.
+ * Related to GitHub issue #269.
+ */
+- (void)testMultipleCheckboxesHaveSequentialIndices
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] First\n- [x] Second\n- [ ] Third\n- [x] Fourth";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"First checkbox should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"Second checkbox should have index 1");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"2\""],
+                  @"Third checkbox should have index 2");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"3\""],
+                  @"Fourth checkbox should have index 3");
+}
+
+/**
+ * Test that nested checkboxes maintain correct sequential indices.
+ * Related to GitHub issue #269.
+ */
+- (void)testNestedCheckboxesHaveCorrectIndices
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Parent\n  - [x] Child 1\n  - [ ] Child 2\n- [x] Another parent";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    // Indices should be sequential regardless of nesting
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"Parent checkbox should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"First child checkbox should have index 1");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"2\""],
+                  @"Second child checkbox should have index 2");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"3\""],
+                  @"Another parent checkbox should have index 3");
+}
+
+/**
+ * Test that regular list items don't get checkbox indices.
+ * Related to GitHub issue #269.
+ */
+- (void)testMixedListsOnlyTaskItemsGetIndices
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- Regular item\n- [ ] Task item\n- Another regular\n- [x] Another task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    // Only task items should have indices (0 and 1)
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"First task item should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"Second task item should have index 1");
+    // Should not have index 2 (only 2 checkboxes)
+    XCTAssertFalse([html containsString:@"data-checkbox-index=\"2\""],
+                   @"Should only have indices 0 and 1 for the two checkboxes");
+}
+
+/**
+ * Test that numbered task lists get checkbox indices.
+ * Related to GitHub issue #269.
+ */
+- (void)testNumberedTaskListsGetIndices
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"1. [ ] First task\n2. [x] Second task\n3. [ ] Third task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"First numbered task should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"Second numbered task should have index 1");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"2\""],
+                  @"Third numbered task should have index 2");
+}
+
 - (void)testStrikethrough
 {
     // Strikethrough requires the STRIKETHROUGH extension

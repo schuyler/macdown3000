@@ -17,6 +17,20 @@
     (opt->flags & HOEDOWN_HTML_BLOCKCODE_INFORMATION)
 #define USE_TASK_LIST(opt) (opt->flags & HOEDOWN_HTML_USE_TASK_LIST)
 
+// Global checkbox index counter for interactive checkbox support.
+// Related to GitHub issue #269.
+static int g_checkbox_index = 0;
+
+void hoedown_patch_reset_checkbox_index(void)
+{
+    g_checkbox_index = 0;
+}
+
+int hoedown_patch_get_checkbox_index(void)
+{
+    return g_checkbox_index;
+}
+
 // rndr_blockcode from HEAD. The "language-" prefix in class in needed to make
 // the HTML compatible with Prism.
 void hoedown_patch_render_blockcode(
@@ -89,7 +103,8 @@ void hoedown_patch_render_blockcode(
 }
 
 // Supports task list syntax if HOEDOWN_HTML_USE_TASK_LIST is on.
-// Implementation based on hoextdown.
+// Implementation based on hoextdown, with interactive checkbox support.
+// Related to GitHub issue #269.
 void hoedown_patch_render_listitem(
     hoedown_buffer *ob, const hoedown_buffer *text, hoedown_list_flags flags,
     const hoedown_renderer_data *data)
@@ -108,20 +123,20 @@ void hoedown_patch_render_listitem(
             {
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
-                if (USE_XHTML(state))
-                    HOEDOWN_BUFPUTSL(ob, "<input type=\"checkbox\" />");
-                else
-                    HOEDOWN_BUFPUTSL(ob, "<input type=\"checkbox\">");
+                // Include data-checkbox-index for interactive checkbox support
+                hoedown_buffer_printf(ob,
+                    "<input type=\"checkbox\" data-checkbox-index=\"%d\">",
+                    g_checkbox_index++);
 				offset += 3;
             }
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0)
             {
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
-                if (USE_XHTML(state))
-                    HOEDOWN_BUFPUTSL(ob, "<input type=\"checkbox\" checked />");
-                else
-                    HOEDOWN_BUFPUTSL(ob, "<input type=\"checkbox\" checked>");
+                // Include data-checkbox-index for interactive checkbox support
+                hoedown_buffer_printf(ob,
+                    "<input type=\"checkbox\" checked data-checkbox-index=\"%d\">",
+                    g_checkbox_index++);
 				offset += 3;
             }
             else

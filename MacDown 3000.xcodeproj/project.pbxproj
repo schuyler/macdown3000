@@ -104,6 +104,7 @@
 		A30E1B2D2D3E4F5A6B7C8D9F /* MPHTMLExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */; };
 		B5C5C1666A506FEA86435D25 /* libPods-macdown-cmd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */; };
 		B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */; };
+		CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */; };
 		CCD97578A2886FFE73BD96F7 /* MPMathJaxRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */; };
 		D3877A6637DE48017448C8DB /* MPRendererTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */; };
 		EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */; };
@@ -507,6 +508,7 @@
 		9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSyntaxHighlightingTests.m; sourceTree = "<group>"; };
 		A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLExportTests.m; sourceTree = "<group>"; };
 		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
+		CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPCheckboxToggleTests.m; sourceTree = "<group>"; };
 		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
 		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
 		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
@@ -879,6 +881,7 @@
 				35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */,
 				197TESTS0F00000000197RSTF /* MPRendererStateTests.m */,
 				C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */,
+				CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */,
 				1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */,
 				1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */,
 				6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */,
@@ -1303,6 +1306,7 @@
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
+				CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */,
 				1F51C9A5194565050015A96F /* MPPreferencesTests.m in Sources */,
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
 				1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */,

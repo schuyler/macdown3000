@@ -19,4 +19,12 @@
 @property (nonatomic, readwrite) NSString *markdown;
 @property (nonatomic, readonly) NSString *html;
 
+/**
+ * Toggle the checkbox at the specified index in the markdown source.
+ * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
+ * Returns the modified markdown, or the original if index is out of bounds.
+ * Related to GitHub issue #269.
+ */
++ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown;
+
 @end

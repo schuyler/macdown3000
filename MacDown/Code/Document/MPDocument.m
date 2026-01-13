@@ -958,20 +958,30 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         request:(NSURLRequest *)request frame:(WebFrame *)frame
                 decisionListener:(id<WebPolicyDecisionListener>)listener
 {
+    NSURL *url = request.URL;
+
+    // Handle interactive checkbox toggle. Related to GitHub issue #269.
+    if ([url.scheme isEqualToString:@"x-macdown-checkbox"])
+    {
+        [listener ignore];
+        [self handleCheckboxToggle:url];
+        return;
+    }
+
     switch ([information[WebActionNavigationTypeKey] integerValue])
     {
         case WebNavigationTypeLinkClicked:
             // If the target is exactly as the current one, ignore.
-            if ([self.currentBaseUrl isEqual:request.URL])
+            if ([self.currentBaseUrl isEqual:url])
             {
                 [listener ignore];
                 return;
             }
             // If this is a different page, intercept and handle ourselves.
-            else if (![self isCurrentBaseUrl:request.URL])
+            else if (![self isCurrentBaseUrl:url])
             {
                 [listener ignore];
-                [self openOrCreateFileForUrl:request.URL];
+                [self openOrCreateFileForUrl:url];
                 return;
             }
             // Otherwise this is somewhere else on the same page. Jump there.
@@ -2387,6 +2397,131 @@ current file somewhere to enable this feature.", \
             [invocation invoke];
         }
     }
+}
+
+
+#pragma mark - Interactive Checkbox Support (Issue #269)
+
+/**
+ * Handle the checkbox toggle URL from the preview.
+ * URL format: x-macdown-checkbox://toggle/<index>
+ */
+- (void)handleCheckboxToggle:(NSURL *)url
+{
+    if (![url.host isEqualToString:@"toggle"])
+        return;
+
+    NSString *path = url.path;
+    if (path.length < 2)
+        return;
+
+    // Extract index from path (e.g., "/0" -> 0)
+    NSInteger index = [[path substringFromIndex:1] integerValue];
+    if (index < 0)
+        return;
+
+    NSString *newMarkdown = [MPDocument toggleCheckboxAtIndex:(NSUInteger)index
+                                                   inMarkdown:self.editor.string];
+    if (![newMarkdown isEqualToString:self.editor.string])
+    {
+        // Preserve cursor position
+        NSRange selectedRange = self.editor.selectedRange;
+
+        // Replace the editor content
+        [self.editor.textStorage beginEditing];
+        [self.editor.textStorage replaceCharactersInRange:NSMakeRange(0, self.editor.string.length)
+                                               withString:newMarkdown];
+        [self.editor.textStorage endEditing];
+
+        // Restore cursor position (adjust if needed)
+        if (selectedRange.location <= newMarkdown.length)
+        {
+            self.editor.selectedRange = selectedRange;
+        }
+    }
+}
+
+/**
+ * Toggle the checkbox at the specified index in the markdown source.
+ * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
+ * Returns the modified markdown, or the original if index is out of bounds.
+ * Related to GitHub issue #269.
+ */
++ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
+{
+    if (!markdown || markdown.length == 0)
+        return markdown;
+
+    // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
+    // We need to match checkboxes that are NOT inside code blocks.
+    // For simplicity, we match all checkbox patterns and count them.
+    NSError *error = nil;
+    NSRegularExpression *regex = [NSRegularExpression
+        regularExpressionWithPattern:@"^[ \\t]*[-*+][ \\t]+\\[([ xX])\\]|^[ \\t]*\\d+\\.[ \\t]+\\[([ xX])\\]"
+                             options:NSRegularExpressionAnchorsMatchLines
+                               error:&error];
+
+    if (error)
+        return markdown;
+
+    // We need to skip checkboxes inside code blocks.
+    // First, find all code block ranges (fenced and indented).
+    NSMutableIndexSet *codeBlockRanges = [NSMutableIndexSet indexSet];
+
+    // Find fenced code blocks (``` or ~~~)
+    NSRegularExpression *fencedCodeRegex = [NSRegularExpression
+        regularExpressionWithPattern:@"^[ \\t]*(```|~~~).*?\\n[\\s\\S]*?^[ \\t]*\\1[ \\t]*$"
+                             options:NSRegularExpressionAnchorsMatchLines
+                               error:nil];
+    NSArray *fencedMatches = [fencedCodeRegex matchesInString:markdown
+                                                      options:0
+                                                        range:NSMakeRange(0, markdown.length)];
+    for (NSTextCheckingResult *match in fencedMatches)
+    {
+        [codeBlockRanges addIndexesInRange:match.range];
+    }
+
+    // Find all checkbox matches
+    NSArray *matches = [regex matchesInString:markdown
+                                      options:0
+                                        range:NSMakeRange(0, markdown.length)];
+
+    // Filter out matches inside code blocks and find the target
+    NSUInteger currentIndex = 0;
+    for (NSTextCheckingResult *match in matches)
+    {
+        // Skip if this match is inside a code block
+        if ([codeBlockRanges containsIndex:match.range.location])
+            continue;
+
+        if (currentIndex == index)
+        {
+            // Found the target checkbox
+            // Determine which capture group matched ([ ] vs [x])
+            NSRange checkboxContentRange;
+            if ([match rangeAtIndex:1].location != NSNotFound)
+                checkboxContentRange = [match rangeAtIndex:1];
+            else if ([match rangeAtIndex:2].location != NSNotFound)
+                checkboxContentRange = [match rangeAtIndex:2];
+            else
+                return markdown;
+
+            NSString *currentState = [markdown substringWithRange:checkboxContentRange];
+            NSString *newState;
+            if ([currentState isEqualToString:@" "])
+                newState = @"x";
+            else
+                newState = @" ";
+
+            NSMutableString *result = [markdown mutableCopy];
+            [result replaceCharactersInRange:checkboxContentRange withString:newState];
+            return result;
+        }
+        currentIndex++;
+    }
+
+    // Index out of bounds - return original
+    return markdown;
 }
 
 @end

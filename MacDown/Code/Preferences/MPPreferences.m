@@ -471,6 +471,18 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         [defaults setBool:NO forKey:@"editorGrammarCheckingEnabled"];
         [defaults setBool:YES forKey:kMPDidApplySubstitutionDefaultsFix];
     }
+
+    // One-time migration to enable checkbox/task list support by default.
+    // This enables the htmlTaskList preference for all users who haven't
+    // explicitly set it, making checkboxes render in the preview.
+    // Related to GitHub issue #269.
+    static NSString * const kMPDidApplyTaskListDefaultFix =
+        @"MPDidApplyTaskListDefaultFix";
+    if (![defaults boolForKey:kMPDidApplyTaskListDefaultFix])
+    {
+        self.htmlTaskList = YES;
+        [defaults setBool:YES forKey:kMPDidApplyTaskListDefaultFix];
+    }
 }
 
 @end
