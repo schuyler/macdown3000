@@ -94,58 +94,85 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
 }
 
 /**
- * Issue #254: Preprocess markdown to allow lists after paragraphs without
- * requiring a blank line (CommonMark/GFM behavior).
+ * Preprocess markdown to work around Hoedown parser limitations.
  *
- * This simple regex-based fix inserts a blank line before list markers
- * when they immediately follow a non-blank line.
+ * Handles:
+ * - Issue #254: Lists immediately after paragraphs (insert blank line)
+ * - Issue #36: Fenced code blocks immediately after text (insert blank line)
+ * - Issue #37: Square brackets in code blocks parsed as reference links
  *
  * KNOWN EDGE CASES (intentionally not handled for simplicity):
- * - Lists inside fenced code blocks may be incorrectly modified
- * - Lists inside indented code blocks may be incorrectly modified
+ * - Block elements inside existing code blocks may be incorrectly modified
  * - Blockquotes may need special handling
- *
- * A more comprehensive solution would require a state machine to track
- * code blocks and blockquotes, but this simple approach handles the
- * common case correctly.
  */
-NS_INLINE NSString *MPPreprocessMarkdownForLists(NSString *text)
+NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
 {
     if (!text.length)
         return text;
 
+    // Lists after paragraphs (Issue #254)
     static NSRegularExpression *listRegex = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        // Match paragraph lines (NOT list items) followed by list markers.
-        // Uses negative lookahead to exclude lines starting with list markers.
-        // Pattern breakdown:
-        //   ^                           - start of line (multiline mode)
-        //   (?![ \t]*[-*+][ \t])        - NOT unordered list item
-        //   (?![ \t]*\d+\.[ \t])        - NOT ordered list item
-        //   (.+)                        - capture paragraph content
-        //   \n                          - newline
-        //   ([-*+]|\d+\.)[ \t]          - list marker with trailing space
+    static dispatch_once_t listToken;
+    dispatch_once(&listToken, ^{
         NSString *pattern = @"^(?![ \\t]*[-*+][ \\t])(?![ \\t]*\\d+\\.[ \\t])(.+)\\n([-*+]|\\d+\\.)[ \\t]";
         listRegex = [[NSRegularExpression alloc] initWithPattern:pattern
                                                          options:NSRegularExpressionAnchorsMatchLines
                                                            error:NULL];
     });
 
-    NSRange range = NSMakeRange(0, text.length);
-    NSString *result = [listRegex stringByReplacingMatchesInString:text
-                                                           options:0
-                                                             range:range
-                                                      withTemplate:@"$1\n\n$2 "];
-    return result;
+    // Fenced code blocks after text (Issue #36)
+    // Lookahead ensures we only match OPENING fences (followed by content),
+    // not closing fences (followed by end of string or blank line).
+    static NSRegularExpression *fenceRegex = nil;
+    static dispatch_once_t fenceToken;
+    dispatch_once(&fenceToken, ^{
+        NSString *pattern = @"^(\\S.*)\\n(`{3,}|~{3,})(?=\\S|\\n.)";
+        fenceRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                          options:NSRegularExpressionAnchorsMatchLines
+                                                            error:NULL];
+    });
+
+    // Fenced code block content (Issue #37)
+    // Matches fence, optional language, content, closing fence.
+    static NSRegularExpression *blockRegex = nil;
+    static dispatch_once_t blockToken;
+    dispatch_once(&blockToken, ^{
+        NSString *pattern = @"(`{3,}|~{3,})([^\\n]*)\\n([\\s\\S]*?)\\n\\1";
+        blockRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                          options:0
+                                                            error:NULL];
+    });
+
+    NSString *result = text;
+    result = [listRegex stringByReplacingMatchesInString:result options:0
+                                                   range:NSMakeRange(0, result.length)
+                                            withTemplate:@"$1\n\n$2 "];
+    result = [fenceRegex stringByReplacingMatchesInString:result options:0
+                                                    range:NSMakeRange(0, result.length)
+                                             withTemplate:@"$1\n\n$2"];
+
+    // Issue #37: Break reference link pattern inside fenced code blocks.
+    // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
+    // Insert zero-width space between ] and : to prevent matching.
+    NSMutableString *mut = [result mutableCopy];
+    NSArray *blocks = [blockRegex matchesInString:mut options:0
+                                            range:NSMakeRange(0, mut.length)];
+    for (NSTextCheckingResult *match in [blocks reverseObjectEnumerator]) {
+        NSRange contentRange = [match rangeAtIndex:3];
+        NSString *content = [mut substringWithRange:contentRange];
+        content = [content stringByReplacingOccurrencesOfString:@"]: "
+                                                     withString:@"]\u200B: "];
+        [mut replaceCharactersInRange:contentRange withString:content];
+    }
+    return mut;
 }
 
 NS_INLINE NSString *MPHTMLFromMarkdown(
     NSString *text, int flags, BOOL smartypants, NSString *frontMatter,
     hoedown_renderer *htmlRenderer, hoedown_renderer *tocRenderer)
 {
-    // Preprocess markdown to allow lists after paragraphs (Issue #254)
-    text = MPPreprocessMarkdownForLists(text);
+    // Preprocess markdown for Hoedown compatibility (Issues #254, #36, #37)
+    text = MPPreprocessMarkdown(text);
 
     NSData *inputData = [text dataUsingEncoding:NSUTF8StringEncoding];
     hoedown_document *document = hoedown_document_new(

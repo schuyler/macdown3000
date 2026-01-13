@@ -490,13 +490,9 @@
 /**
  * Regression test for Issue #36: Code blocks without blank lines
  *
- * NOTE: This issue is NOT currently fixed. Hoedown requires blank lines
- * before fenced code blocks. This test documents the current (non-ideal)
- * behavior. Will be resolved by parser modernization (#77).
- *
- * Current behavior: Fenced code blocks immediately following text without
- * blank lines render as inline code or malformed blocks instead of proper
- * <pre><code> elements.
+ * FIXED: The markdown preprocessor now inserts blank lines before fenced
+ * code blocks that immediately follow text, ensuring Hoedown recognizes
+ * them correctly.
  *
  * Related: Issue #36
  */
@@ -505,8 +501,6 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = 0;
 
-    // This currently produces broken output (code blocks don't render correctly)
-    // The golden file documents the current behavior, not the desired behavior
     [self verifyGoldenFile:@"regression-issue36"
             withExtensions:extFlags
              rendererFlags:rendFlags];
@@ -515,14 +509,9 @@
 /**
  * Regression test for Issue #37: Square brackets in code blocks
  *
- * NOTE: This issue is NOT currently fixed. Hoedown's is_ref() function
- * runs before code blocks are identified, matching patterns like [text]:
- * and removing them. This test documents the current (broken) behavior.
- * Will be resolved by parser modernization (#77).
- *
- * Current behavior: Lines containing [identifier: type] patterns inside
- * fenced code blocks get incorrectly interpreted as reference links and
- * disappear from the rendered output.
+ * FIXED: The markdown preprocessor inserts a zero-width space between
+ * ] and : inside fenced code blocks, preventing Hoedown's is_ref() from
+ * matching these patterns as reference links.
  *
  * Related: Issue #37
  */
@@ -531,8 +520,6 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
 
-    // This currently produces broken output (square bracket patterns vanish)
-    // The golden file documents the current behavior, not the desired behavior
     [self verifyGoldenFile:@"regression-issue37"
             withExtensions:extFlags
              rendererFlags:rendFlags];

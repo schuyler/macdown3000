@@ -16,7 +16,7 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 
 **Rendering Engine** (MPMarkdownRenderingTests, MPMathJaxRenderingTests, MPRendererEdgeCaseTests):
 - Markdown → HTML conversion with golden files
-- Known Hoedown bugs (#34, #36, #37) documented
+- Hoedown bugs #34, #36, #37 fixed via preprocessor
 - MathJax syntax preservation
 - Syntax highlighting CSS classes
 - HTML export structure
