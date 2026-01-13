@@ -30,7 +30,7 @@ em {
 
 strong {
     color: #f99157;
-    font-style: bold;
+    font-weight: bold;
 }
 
 em strong,
@@ -222,9 +222,9 @@ dl dd > :last-child {
 }
 
 blockquote {
-    border-left: 4px solid #cc99cc;
+    border-left: 4px solid #f2777a;
     padding: 0 15px;
-    color: #cc99cc;
+    color: #f2777a;
 }
 
 blockquote > :first-child {
@@ -373,7 +373,6 @@ code, tt {
     font-size: 85%;
     border-radius: 6px;
     white-space: nowrap;
-    border-radius: 6px;
 }
 
 a code,
