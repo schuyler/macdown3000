@@ -94,14 +94,15 @@
 
 /**
  * Test toggling a nested checkbox.
+ * Depth-first order: Child(0), Another child(1), Parent(2)
  */
 - (void)testToggleNestedCheckbox
 {
     NSString *markdown = @"- [ ] Parent\n  - [ ] Child\n  - [ ] Another child";
     NSString *expected = @"- [ ] Parent\n  - [x] Child\n  - [ ] Another child";
 
-    // Child is index 1
-    NSString *result = [MPDocument toggleCheckboxAtIndex:1 inMarkdown:markdown];
+    // Child is depth-first index 0 (nested items come before parent)
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
 
     XCTAssertEqualObjects(result, expected,
                           @"Nested checkbox should be toggled correctly");
@@ -109,17 +110,54 @@
 
 /**
  * Test toggling in deeply nested lists.
+ * Depth-first order: Level3(0), Level2(1), Level1(2)
  */
 - (void)testToggleDeeplyNestedCheckbox
 {
     NSString *markdown = @"- [ ] Level 1\n  - [ ] Level 2\n    - [ ] Level 3";
     NSString *expected = @"- [ ] Level 1\n  - [ ] Level 2\n    - [x] Level 3";
 
-    // Level 3 is index 2
-    NSString *result = [MPDocument toggleCheckboxAtIndex:2 inMarkdown:markdown];
+    // Level 3 is depth-first index 0 (deepest nested items come first)
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
 
     XCTAssertEqualObjects(result, expected,
                           @"Deeply nested checkbox should be toggled correctly");
+}
+
+/**
+ * Test toggling the parent checkbox in a nested list.
+ * Depth-first order: Child(0), Another child(1), Parent(2)
+ */
+- (void)testToggleParentCheckboxInNestedList
+{
+    NSString *markdown = @"- [ ] Parent\n  - [ ] Child\n  - [ ] Another child";
+    NSString *expected = @"- [x] Parent\n  - [ ] Child\n  - [ ] Another child";
+
+    // Parent is depth-first index 2 (comes after all children)
+    NSString *result = [MPDocument toggleCheckboxAtIndex:2 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Parent checkbox should be toggled with correct depth-first index");
+}
+
+/**
+ * Test that depth-first ordering works with multiple sibling parents.
+ * Structure:
+ *   - [ ] Parent1
+ *     - [ ] Child1
+ *   - [ ] Parent2
+ * Depth-first order: Child1(0), Parent1(1), Parent2(2)
+ */
+- (void)testToggleWithMultipleSiblingParents
+{
+    NSString *markdown = @"- [ ] Parent1\n  - [ ] Child1\n- [ ] Parent2";
+    NSString *expected = @"- [x] Parent1\n  - [ ] Child1\n- [ ] Parent2";
+
+    // Parent1 is depth-first index 1 (after Child1, before Parent2)
+    NSString *result = [MPDocument toggleCheckboxAtIndex:1 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Parent1 should be at depth-first index 1");
 }
 
 #pragma mark - Edge Cases

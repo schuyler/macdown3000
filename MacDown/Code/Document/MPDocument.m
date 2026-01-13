@@ -2445,6 +2445,9 @@ current file somewhere to enable this feature.", \
  * Toggle the checkbox at the specified index in the markdown source.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
  * Returns the modified markdown, or the original if index is out of bounds.
+ *
+ * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
+ * rendering behavior. Nested list items get lower indices than their parent.
  * Related to GitHub issue #269.
  */
 + (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
@@ -2453,11 +2456,10 @@ current file somewhere to enable this feature.", \
         return markdown;
 
     // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
-    // We need to match checkboxes that are NOT inside code blocks.
-    // For simplicity, we match all checkbox patterns and count them.
+    // Note: Only lowercase [x] is recognized by hoedown, so we only match that.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^[ \\t]*[-*+][ \\t]+\\[([ xX])\\]|^[ \\t]*\\d+\\.[ \\t]+\\[([ xX])\\]"
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ x])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ x])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
                                error:&error];
 
@@ -2465,7 +2467,6 @@ current file somewhere to enable this feature.", \
         return markdown;
 
     // We need to skip checkboxes inside code blocks.
-    // First, find all code block ranges (fenced and indented).
     NSMutableIndexSet *codeBlockRanges = [NSMutableIndexSet indexSet];
 
     // Find fenced code blocks (``` or ~~~)
@@ -2481,47 +2482,98 @@ current file somewhere to enable this feature.", \
         [codeBlockRanges addIndexesInRange:match.range];
     }
 
-    // Find all checkbox matches
+    // Find all checkbox matches in document order
     NSArray *matches = [regex matchesInString:markdown
                                       options:0
                                         range:NSMakeRange(0, markdown.length)];
 
-    // Filter out matches inside code blocks and find the target
-    NSUInteger currentIndex = 0;
+    // Build list of valid checkboxes with their indentation levels
+    NSMutableArray *checkboxes = [NSMutableArray array];
     for (NSTextCheckingResult *match in matches)
     {
         // Skip if this match is inside a code block
         if ([codeBlockRanges containsIndex:match.range.location])
             continue;
 
-        if (currentIndex == index)
+        // Get indentation level (capture group 1 or 3)
+        NSRange indentRange = [match rangeAtIndex:1];
+        if (indentRange.location == NSNotFound)
+            indentRange = [match rangeAtIndex:3];
+        NSUInteger indentLevel = (indentRange.location != NSNotFound) ? indentRange.length : 0;
+
+        // Get checkbox content range (capture group 2 or 4)
+        NSRange contentRange = [match rangeAtIndex:2];
+        if (contentRange.location == NSNotFound)
+            contentRange = [match rangeAtIndex:4];
+
+        if (contentRange.location != NSNotFound)
         {
-            // Found the target checkbox
-            // Determine which capture group matched ([ ] vs [x])
-            NSRange checkboxContentRange;
-            if ([match rangeAtIndex:1].location != NSNotFound)
-                checkboxContentRange = [match rangeAtIndex:1];
-            else if ([match rangeAtIndex:2].location != NSNotFound)
-                checkboxContentRange = [match rangeAtIndex:2];
-            else
-                return markdown;
-
-            NSString *currentState = [markdown substringWithRange:checkboxContentRange];
-            NSString *newState;
-            if ([currentState isEqualToString:@" "])
-                newState = @"x";
-            else
-                newState = @" ";
-
-            NSMutableString *result = [markdown mutableCopy];
-            [result replaceCharactersInRange:checkboxContentRange withString:newState];
-            return result;
+            [checkboxes addObject:@{
+                @"match": match,
+                @"indent": @(indentLevel),
+                @"contentRange": [NSValue valueWithRange:contentRange]
+            }];
         }
-        currentIndex++;
     }
 
-    // Index out of bounds - return original
-    return markdown;
+    if (checkboxes.count == 0)
+        return markdown;
+
+    // Compute depth-first order using a stack-based algorithm.
+    // This matches hoedown's behavior where nested items are rendered before their parent.
+    // Algorithm: For each checkbox, pop stack items with indent >= current indent, then push.
+    NSMutableArray *stack = [NSMutableArray array];
+    NSMutableArray *depthFirstOrder = [NSMutableArray array];
+
+    for (NSUInteger i = 0; i < checkboxes.count; i++)
+    {
+        NSDictionary *current = checkboxes[i];
+        NSUInteger currentIndent = [current[@"indent"] unsignedIntegerValue];
+
+        // Pop items from stack that are NOT parents of this item
+        while (stack.count > 0)
+        {
+            NSDictionary *top = stack.lastObject;
+            NSUInteger topIndent = [top[@"indent"] unsignedIntegerValue];
+            if (topIndent >= currentIndent)
+            {
+                [depthFirstOrder addObject:top];
+                [stack removeLastObject];
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        [stack addObject:current];
+    }
+
+    // Pop remaining items from stack
+    while (stack.count > 0)
+    {
+        [depthFirstOrder addObject:stack.lastObject];
+        [stack removeLastObject];
+    }
+
+    // Check if index is valid
+    if (index >= depthFirstOrder.count)
+        return markdown;
+
+    // Find the target checkbox in depth-first order
+    NSDictionary *target = depthFirstOrder[index];
+    NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
+
+    NSString *currentState = [markdown substringWithRange:checkboxContentRange];
+    NSString *newState;
+    if ([currentState isEqualToString:@" "])
+        newState = @"x";
+    else
+        newState = @" ";
+
+    NSMutableString *result = [markdown mutableCopy];
+    [result replaceCharactersInRange:checkboxContentRange withString:newState];
+    return result;
 }
 
 @end

@@ -18,6 +18,8 @@
 #define USE_TASK_LIST(opt) (opt->flags & HOEDOWN_HTML_USE_TASK_LIST)
 
 // Global checkbox index counter for interactive checkbox support.
+// NOTE: This counter is NOT thread-safe. Markdown rendering must be serialized
+// on a single thread (which MacDown does via the main thread).
 // Related to GitHub issue #269.
 static int g_checkbox_index = 0;
 
