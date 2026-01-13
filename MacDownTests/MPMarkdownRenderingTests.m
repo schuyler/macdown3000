@@ -509,14 +509,9 @@
 /**
  * Regression test for Issue #37: Square brackets in code blocks
  *
- * NOTE: This issue is NOT currently fixed. Hoedown's is_ref() function
- * runs before code blocks are identified, matching patterns like [text]:
- * and removing them. This test documents the current (broken) behavior.
- * Will be resolved by parser modernization (#77).
- *
- * Current behavior: Lines containing [identifier: type] patterns inside
- * fenced code blocks get incorrectly interpreted as reference links and
- * disappear from the rendered output.
+ * FIXED: The markdown preprocessor inserts a zero-width space between
+ * ] and : inside fenced code blocks, preventing Hoedown's is_ref() from
+ * matching these patterns as reference links.
  *
  * Related: Issue #37
  */
@@ -525,8 +520,6 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
 
-    // This currently produces broken output (square bracket patterns vanish)
-    // The golden file documents the current behavior, not the desired behavior
     [self verifyGoldenFile:@"regression-issue37"
             withExtensions:extFlags
              rendererFlags:rendFlags];

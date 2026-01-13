@@ -3,25 +3,25 @@
 <h2>Test Case 1: TypeScript index signature</h2>
 
 <div><pre><code class="language-typescript">interface MyType {
-
+  [key: string]​: any;
 }</code></pre></div>
 
 <h2>Test Case 2: JavaScript array access</h2>
 
 <div><pre><code class="language-javascript">const value = array[index];
 const obj = {
-
+  [computed]​: &#39;value&#39;
 };</code></pre></div>
 
 <h2>Test Case 3: Multiple bracket patterns</h2>
 
 <div><pre><code class="language-typescript">type Dict = {
-
+  [id: number]​: string;
 }
 
 interface Config {
-
-    [nested: string]: boolean;
+  [key: string]​: {
+    [nested: string]​: boolean;
   };
 }</code></pre></div>
 

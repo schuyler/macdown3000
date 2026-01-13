@@ -94,12 +94,12 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
 }
 
 /**
- * Preprocess markdown to insert blank lines before block elements that
- * Hoedown requires but CommonMark/GFM does not.
+ * Preprocess markdown to work around Hoedown parser limitations.
  *
  * Handles:
- * - Issue #254: Lists immediately after paragraphs
- * - Issue #36/#37: Fenced code blocks immediately after text
+ * - Issue #254: Lists immediately after paragraphs (insert blank line)
+ * - Issue #36: Fenced code blocks immediately after text (insert blank line)
+ * - Issue #37: Square brackets in code blocks parsed as reference links
  *
  * KNOWN EDGE CASES (intentionally not handled for simplicity):
  * - Block elements inside existing code blocks may be incorrectly modified
@@ -120,7 +120,7 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
                                                            error:NULL];
     });
 
-    // Fenced code blocks after text (Issues #36, #37)
+    // Fenced code blocks after text (Issue #36)
     // Lookahead ensures we only match OPENING fences (followed by content),
     // not closing fences (followed by end of string or blank line).
     static NSRegularExpression *fenceRegex = nil;
@@ -132,6 +132,17 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
                                                             error:NULL];
     });
 
+    // Fenced code block content (Issue #37)
+    // Matches fence, optional language, content, closing fence.
+    static NSRegularExpression *blockRegex = nil;
+    static dispatch_once_t blockToken;
+    dispatch_once(&blockToken, ^{
+        NSString *pattern = @"(`{3,}|~{3,})([^\\n]*)\\n([\\s\\S]*?)\\n\\1";
+        blockRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                          options:0
+                                                            error:NULL];
+    });
+
     NSString *result = text;
     result = [listRegex stringByReplacingMatchesInString:result options:0
                                                    range:NSMakeRange(0, result.length)
@@ -139,7 +150,21 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     result = [fenceRegex stringByReplacingMatchesInString:result options:0
                                                     range:NSMakeRange(0, result.length)
                                              withTemplate:@"$1\n\n$2"];
-    return result;
+
+    // Issue #37: Break reference link pattern inside fenced code blocks.
+    // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
+    // Insert zero-width space between ] and : to prevent matching.
+    NSMutableString *mut = [result mutableCopy];
+    NSArray *blocks = [blockRegex matchesInString:mut options:0
+                                            range:NSMakeRange(0, mut.length)];
+    for (NSTextCheckingResult *match in [blocks reverseObjectEnumerator]) {
+        NSRange contentRange = [match rangeAtIndex:3];
+        NSString *content = [mut substringWithRange:contentRange];
+        content = [content stringByReplacingOccurrencesOfString:@"]: "
+                                                     withString:@"]\u200B: "];
+        [mut replaceCharactersInRange:contentRange withString:content];
+    }
+    return mut;
 }
 
 NS_INLINE NSString *MPHTMLFromMarkdown(
