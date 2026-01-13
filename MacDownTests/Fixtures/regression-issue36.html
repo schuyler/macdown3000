@@ -2,23 +2,22 @@
 
 <h2>Test Case 1: Fenced code block immediately after text</h2>
 
-<p>Here is some code:
-<code>
-function test() {
+<p>Here is some code:</p>
+
+<div><pre><code class="language-none">function test() {
   return true;
-}
-</code></p>
+}</code></pre></div>
 
 <h2>Test Case 2: Multiple code blocks in sequence</h2>
 
-<p>First block:
-<code>javascript
-const x = 42;
-</code>
-Second block:
-<code>python
-y = 100
-</code></p>
+<p>First block:</p>
+
+<div><pre><code class="language-javascript">const x = 42;
+</code></pre></div>
+
+<p>Second block:</p>
+
+<div><pre><code class="language-python">y = 100</code></pre></div>
 
 <h2>Test Case 3: Code block with proper blank line (works correctly)</h2>
 
@@ -34,9 +33,11 @@ y = 100
 
 <ul>
 <li>First step</li>
-<li><p>Run this code:
-<code>
-npm install
-</code></p></li>
-<li><p>Last step</p></li>
+<li>Run this code:</li>
+</ul>
+
+<div><pre><code class="language-none">npm install</code></pre></div>
+
+<ul>
+<li>Last step</li>
 </ul>

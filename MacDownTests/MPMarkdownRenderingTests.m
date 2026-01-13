@@ -490,13 +490,9 @@
 /**
  * Regression test for Issue #36: Code blocks without blank lines
  *
- * NOTE: This issue is NOT currently fixed. Hoedown requires blank lines
- * before fenced code blocks. This test documents the current (non-ideal)
- * behavior. Will be resolved by parser modernization (#77).
- *
- * Current behavior: Fenced code blocks immediately following text without
- * blank lines render as inline code or malformed blocks instead of proper
- * <pre><code> elements.
+ * FIXED: The markdown preprocessor now inserts blank lines before fenced
+ * code blocks that immediately follow text, ensuring Hoedown recognizes
+ * them correctly.
  *
  * Related: Issue #36
  */
@@ -505,8 +501,6 @@
     int extFlags = HOEDOWN_EXT_FENCED_CODE;
     int rendFlags = 0;
 
-    // This currently produces broken output (code blocks don't render correctly)
-    // The golden file documents the current behavior, not the desired behavior
     [self verifyGoldenFile:@"regression-issue36"
             withExtensions:extFlags
              rendererFlags:rendFlags];
