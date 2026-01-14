@@ -203,7 +203,6 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) MPRenderer *renderer;
 @property CGFloat previousSplitRatio;
 @property BOOL manualRender;
-@property BOOL copying;
 @property BOOL printing;
 @property BOOL shouldHandleBoundsChange;
 @property BOOL shouldHandlePreviewBoundsChange;
@@ -225,6 +224,9 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) BOOL inLiveScroll;
+
+// Completion handlers for deferred operations when preview is hidden (issue #16)
+@property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
 
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
@@ -270,6 +272,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                 [window flushWindow];
             }
         }
+
+        // Issue #16: Invoke deferred operation handlers after render completes
+        // (This is called for MathJax rendering completion path)
+        [weakObj invokeRenderCompletionHandlers];
     };
 }
 
@@ -662,21 +668,31 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                    showPrintPanel:(BOOL)showPrintPanel delegate:(id)delegate
                  didPrintSelector:(SEL)selector contextInfo:(void *)contextInfo
 {
-    self.printing = YES;
-    NSInvocation *invocation = nil;
-    if (delegate && selector)
-    {
-        NSMethodSignature *signature =
-            [NSMethodSignature methodSignatureForSelector:selector];
-        invocation = [NSInvocation invocationWithMethodSignature:signature];
-        invocation.target = delegate;
-        if (contextInfo)
-            [invocation setArgument:&contextInfo atIndex:2];
-    }
-    [super printDocumentWithSettings:printSettings
-                      showPrintPanel:showPrintPanel delegate:self
-                    didPrintSelector:@selector(document:didPrint:context:)
-                         contextInfo:(void *)invocation];
+    // Issue #16: Ensure WebView content is up-to-date before printing.
+    // Capture all parameters for use in the deferred block.
+    NSDictionary *settings = [printSettings copy];
+    BOOL showPanel = showPrintPanel;
+    id printDelegate = delegate;
+    SEL printSelector = selector;
+    void *context = contextInfo;
+
+    [self performAfterRender:^{
+        self.printing = YES;
+        NSInvocation *invocation = nil;
+        if (printDelegate && printSelector)
+        {
+            NSMethodSignature *signature =
+                [NSMethodSignature methodSignatureForSelector:printSelector];
+            invocation = [NSInvocation invocationWithMethodSignature:signature];
+            invocation.target = printDelegate;
+            if (context)
+                [invocation setArgument:&context atIndex:2];
+        }
+        [super printDocumentWithSettings:settings
+                          showPrintPanel:showPanel delegate:self
+                        didPrintSelector:@selector(document:didPrint:context:)
+                             contextInfo:(void *)invocation];
+    }];
 }
 
 - (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
@@ -935,6 +951,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self.renderer parseAndRenderNow];
 
     self.renderToWebPending = NO;
+
+    // Issue #16: Invoke deferred operation handlers after render completes
+    [self invokeRenderCompletionHandlers];
 }
 
 - (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error
@@ -1136,15 +1155,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         return;
     
     self.alreadyRenderingInWeb = YES;
-
-    // Delayed copying for -copyHtml.
-    if (self.copying)
-    {
-        self.copying = NO;
-        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-        [pasteboard clearContents];
-        [pasteboard writeObjects:@[self.renderer.currentHtml]];
-    }
 
     NSURL *baseUrl = self.fileURL;
     if (!baseUrl)   // Unsaved doument; just use the default URL.
@@ -1355,18 +1365,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // respecting the selection range.
     [self.preview setSelectedDOMRange:nil affinity:NSSelectionAffinityUpstream];
 
-    // If the preview is hidden, the HTML are not updating on text change.
-    // Perform one extra rendering so that the HTML is up to date, and do the
-    // copy in the rendering callback.
-    if (!self.needsHtml)
-    {
-        self.copying = YES;
-        [self.renderer parseAndRenderNow];
-        return;
-    }
-    NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    [pasteboard clearContents];
-    [pasteboard writeObjects:@[self.renderer.currentHtml]];
+    // Issue #16: Use performAfterRender: to ensure HTML is up-to-date
+    // even when preview pane is hidden.
+    [self performAfterRender:^{
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        [pasteboard writeObjects:@[self.renderer.currentHtml]];
+    }];
 }
 
 - (IBAction)exportHtml:(id)sender
@@ -1388,10 +1393,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             return;
         BOOL styles = controller.stylesIncluded;
         BOOL highlighting = controller.highlightingIncluded;
-        NSString *html = [self.renderer HTMLForExportWithStyles:styles
-                                                   highlighting:highlighting];
-        [html writeToURL:panel.URL atomically:NO encoding:NSUTF8StringEncoding
-                   error:NULL];
+        NSURL *url = panel.URL;
+
+        // Issue #16: Ensure HTML is up-to-date before export
+        [self performAfterRender:^{
+            NSString *html = [self.renderer HTMLForExportWithStyles:styles
+                                                       highlighting:highlighting];
+            [html writeToURL:url atomically:NO encoding:NSUTF8StringEncoding
+                       error:NULL];
+        }];
     }];
 }
 
@@ -1401,7 +1411,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     panel.allowedFileTypes = @[@"pdf"];
     if (self.presumedFileName)
         panel.nameFieldStringValue = self.presumedFileName;
-    
+
     NSWindow *w = nil;
     NSArray *windowControllers = self.windowControllers;
     if (windowControllers.count > 0)
@@ -1411,6 +1421,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         if (result != NSFileHandlingPanelOKButton)
             return;
 
+        // Issue #16: printDocumentWithSettings: already handles render deferral
         NSDictionary *settings = @{
             NSPrintJobDisposition: NSPrintSaveJob,
             NSPrintJobSavingURL: panel.URL,
@@ -1614,6 +1625,57 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
 #pragma mark - Private
+
+/**
+ * Defers an operation until after the WebView finishes rendering.
+ * Issue #16: When preview is hidden, HTML/PDF export and print operations
+ * would use stale content. This method queues the handler and triggers
+ * a render if needed, executing the handler once rendering completes.
+ *
+ * If preview is visible (needsHtml = YES), the handler executes immediately.
+ * If preview is hidden (needsHtml = NO), the handler is queued and render triggered.
+ */
+- (void)performAfterRender:(void (^)(void))handler
+{
+    if (!handler)
+        return;
+
+    // If preview is visible, HTML is already up-to-date. Execute immediately.
+    if (self.needsHtml)
+    {
+        handler();
+        return;
+    }
+
+    // Preview is hidden. Queue handler and trigger render.
+    if (!self.renderCompletionHandlers)
+        self.renderCompletionHandlers = [NSMutableArray array];
+
+    [self.renderCompletionHandlers addObject:[handler copy]];
+
+    // Only trigger render if this is the first queued handler
+    // (subsequent handlers will be executed when the render completes)
+    if (self.renderCompletionHandlers.count == 1)
+        [self.renderer parseAndRenderNow];
+}
+
+/**
+ * Invokes all queued render completion handlers and clears the queue.
+ * Called after WebView finishes loading content.
+ */
+- (void)invokeRenderCompletionHandlers
+{
+    if (!self.renderCompletionHandlers || self.renderCompletionHandlers.count == 0)
+        return;
+
+    NSArray *handlers = [self.renderCompletionHandlers copy];
+    [self.renderCompletionHandlers removeAllObjects];
+
+    for (void (^handler)(void) in handlers)
+    {
+        handler();
+    }
+}
 
 - (void)toggleSplitterCollapsingEditorPane:(BOOL)forEditorPane
 {
