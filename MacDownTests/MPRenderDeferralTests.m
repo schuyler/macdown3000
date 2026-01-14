@@ -17,6 +17,11 @@
 @property (nonatomic, strong) NSMutableArray *renderCompletionHandlers;
 @property (nonatomic, readonly) BOOL needsHtml;
 - (void)performAfterRender:(void (^)(void))handler;
+// IBActions used in tests
+- (IBAction)togglePreviewPane:(id)sender;
+- (IBAction)copyHtml:(id)sender;
+- (IBAction)exportHtml:(id)sender;
+- (IBAction)exportPdf:(id)sender;
 @end
 
 

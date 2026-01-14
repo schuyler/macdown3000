@@ -235,6 +235,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
+- (void)invokeRenderCompletionHandlers;
 
 @end
 
