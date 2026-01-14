@@ -683,7 +683,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         if (printDelegate && printSelector)
         {
             NSMethodSignature *signature =
-                [NSMethodSignature methodSignatureForSelector:printSelector];
+                [printDelegate methodSignatureForSelector:printSelector];
             invocation = [NSInvocation invocationWithMethodSignature:signature];
             invocation.target = printDelegate;
             if (context)
@@ -1368,10 +1368,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Issue #16: Use performAfterRender: to ensure HTML is up-to-date
     // even when preview pane is hidden.
+    __weak typeof(self) weakSelf = self;
     [self performAfterRender:^{
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) return;
         NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
         [pasteboard clearContents];
-        [pasteboard writeObjects:@[self.renderer.currentHtml]];
+        [pasteboard writeObjects:@[strongSelf.renderer.currentHtml]];
     }];
 }
 
@@ -1397,9 +1400,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         NSURL *url = panel.URL;
 
         // Issue #16: Ensure HTML is up-to-date before export
+        __weak typeof(self) weakSelf = self;
         [self performAfterRender:^{
-            NSString *html = [self.renderer HTMLForExportWithStyles:styles
-                                                       highlighting:highlighting];
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            if (!strongSelf) return;
+            NSString *html = [strongSelf.renderer HTMLForExportWithStyles:styles
+                                                             highlighting:highlighting];
             [html writeToURL:url atomically:NO encoding:NSUTF8StringEncoding
                        error:NULL];
         }];
