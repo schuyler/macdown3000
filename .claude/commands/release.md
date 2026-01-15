@@ -107,7 +107,63 @@ gh pr list --repo schuyler/macdown3000 --state merged --limit 30 --json number,t
 
 (Note: Get LAST_RELEASE_DATE from `gh release view $LAST_TAG`)
 
-#### 2b. Filter and Display Recent Changes
+#### 2b. Look Up Contributors
+
+**Why we do this:** Recognizing contributors by name builds community. Someone who reported a bug today might contribute a fix tomorrow. Someone who tested a PR might report more issues. Generous attribution encourages future participation - so when in doubt, include the credit.
+
+For each merged PR included in the release, look up contributors to credit in the changelog. Check both `schuyler/macdown3000` and `MacDownApp/macdown` for linked issues.
+
+**Exclude @schuyler from all credits.**
+
+**For each PR, identify:**
+
+1. **Reporter** - The user who opened the linked issue(s)
+   ```bash
+   # Get linked issues from PR body (look for #123 or MacDownApp/macdown#123)
+   gh pr view {PR_NUMBER} --repo schuyler/macdown3000 --json body,title --jq '.body'
+
+   # For each linked issue, get the author
+   gh issue view {ISSUE_NUMBER} --repo schuyler/macdown3000 --json author --jq '.author.login'
+   gh issue view {ISSUE_NUMBER} --repo MacDownApp/macdown --json author --jq '.author.login'
+   ```
+
+2. **Contributor** - The user who authored the PR
+   ```bash
+   gh pr view {PR_NUMBER} --repo schuyler/macdown3000 --json author --jq '.author.login'
+   ```
+
+3. **Tester** - Users who commented on the PR or linked issues indicating they tested the fix. Look for comments containing phrases like:
+   - "confirmed", "verified", "tested"
+   - "works for me", "fixed for me"
+   - "can confirm", "confirmed fixed"
+
+   ```bash
+   # Get PR comments
+   gh pr view {PR_NUMBER} --repo schuyler/macdown3000 --json comments --jq '.comments[].author.login'
+
+   # Get issue comments
+   gh issue view {ISSUE_NUMBER} --repo schuyler/macdown3000 --json comments --jq '.comments[] | select(.body | test("(?i)(confirm|verified|tested|works for me|fixed for me)")) | .author.login'
+   ```
+
+**Attribution format:**
+
+Append credits to each changelog line item using these formats:
+- Reporter: `-- thanks @user for the report!`
+- Contributor (non-maintainer PR author): `-- thanks @user for the contribution!`
+- Tester: `-- thanks @user for the help testing!`
+
+**Multiple roles:** If the same user has multiple roles, credit them for each:
+```
+- Fix foo bar bug (#123, #45) -- thanks @reporter for the report! thanks @contributor for the contribution!
+```
+
+**Examples:**
+```markdown
+- Fix preview pane sync issue (#261, #258) -- thanks @dadvir for the contribution!
+- Fix lists not rendering after paragraphs (#260, #254) -- thanks @userA for the report! thanks @userB for the contribution! thanks @userC for the help testing!
+```
+
+#### 2c. Filter and Display Recent Changes
 
 **Filter out non-app changes:** Only include changes to the desktop application itself. Exclude:
 - Website changes (commits mentioning "website", "docs/", etc.)
@@ -123,7 +179,7 @@ Present the filtered commits and PRs to the user:
 Should we include these in the changelog for version {VERSION}?
 ```
 
-#### 2c. Ask User to Confirm or Exclude
+#### 2d. Ask User to Confirm or Exclude
 
 Use AskUserQuestion to ask which commits to include:
 
@@ -140,7 +196,7 @@ If "Customize": Ask user to provide changelog entries manually for each category
 
 Otherwise, use all shown commits and auto-categorize them as "Fixed" if they mention bug fixes, or group them as general improvements.
 
-#### 2d. Build Changelog Entry
+#### 2e. Build Changelog Entry
 
 Construct the changelog entry with a brief summary:
 ```markdown
@@ -156,7 +212,7 @@ Construct the changelog entry with a brief summary:
 **Summary example:**
 "This release focuses on bug fixes and stability improvements. Several fixes address Markdown parsing edge cases, platform-specific issues, and user-reported bugs with HTML exports."
 
-#### 2e. Display and Confirm Changelog
+#### 2f. Display and Confirm Changelog
 
 Show the complete changelog entry to the user:
 ```
@@ -187,10 +243,10 @@ Use AskUserQuestion with these options.
 - Inform user no changes were made
 
 **If Approve selected:**
-- Proceed to step 2f
+- Proceed to step 2g
 
 
-#### 2f. Update CHANGELOG.md
+#### 2g. Update CHANGELOG.md
 
 Read the current CHANGELOG.md:
 ```bash
@@ -211,7 +267,7 @@ Use Edit tool to make the change.
 Verify the change was applied correctly by reading CHANGELOG.md again.
 
 
-#### 2g. Commit and Push Changelog
+#### 2h. Commit and Push Changelog
 
 Create a commit with the changelog update:
 ```bash
