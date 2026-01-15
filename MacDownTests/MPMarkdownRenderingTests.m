@@ -525,6 +525,25 @@
              rendererFlags:rendFlags];
 }
 
+/**
+ * Regression test for Issue #25: Adjacent shortcut links
+ *
+ * FIXED: The markdown preprocessor converts shortcut-style links [text]
+ * to explicit form [text][] when followed by another [, preventing Hoedown
+ * from misinterpreting the adjacent link syntax.
+ *
+ * Related: Issue #25
+ */
+- (void)testRegressionIssue25_AdjacentShortcutLinks
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    [self verifyGoldenFile:@"regression-issue25"
+            withExtensions:extFlags
+             rendererFlags:rendFlags];
+}
+
 #pragma mark - Edge Case Tests
 
 /**

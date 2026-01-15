@@ -100,6 +100,7 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
  * - Issue #254: Lists immediately after paragraphs (insert blank line)
  * - Issue #36: Fenced code blocks immediately after text (insert blank line)
  * - Issue #37: Square brackets in code blocks parsed as reference links
+ * - Issue #25: Adjacent shortcut-style links not rendering correctly
  *
  * KNOWN EDGE CASES (intentionally not handled for simplicity):
  * - Block elements inside existing code blocks may be incorrectly modified
@@ -143,6 +144,19 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
                                                             error:NULL];
     });
 
+    // Adjacent shortcut links (Issue #25)
+    // Matches [text] followed by whitespace then [, indicating adjacent links.
+    // Converts to explicit form [text][] to disambiguate for Hoedown.
+    // Requires whitespace to avoid matching [text][ref] (explicit reference links).
+    static NSRegularExpression *shortcutRegex = nil;
+    static dispatch_once_t shortcutToken;
+    dispatch_once(&shortcutToken, ^{
+        NSString *pattern = @"\\[([^\\]]+)\\](\\s+)(?=\\[)";
+        shortcutRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                             options:0
+                                                               error:NULL];
+    });
+
     NSString *result = text;
     result = [listRegex stringByReplacingMatchesInString:result options:0
                                                    range:NSMakeRange(0, result.length)
@@ -150,6 +164,11 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     result = [fenceRegex stringByReplacingMatchesInString:result options:0
                                                     range:NSMakeRange(0, result.length)
                                              withTemplate:@"$1\n\n$2"];
+
+    // Issue #25: Convert shortcut links to explicit form when followed by [
+    result = [shortcutRegex stringByReplacingMatchesInString:result options:0
+                                                       range:NSMakeRange(0, result.length)
+                                                withTemplate:@"[$1][]$2"];
 
     // Issue #37: Break reference link pattern inside fenced code blocks.
     // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
