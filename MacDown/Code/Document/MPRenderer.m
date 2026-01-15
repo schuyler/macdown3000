@@ -148,10 +148,12 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     // Matches [text] followed by whitespace then [, indicating adjacent links.
     // Converts to explicit form [text][] to disambiguate for Hoedown.
     // Requires whitespace to avoid matching [text][ref] (explicit reference links).
+    // Uses negative lookbehind (?<!\]) to avoid matching the ref part of [text][ref]
+    // when it appears before another [ on a different line.
     static NSRegularExpression *shortcutRegex = nil;
     static dispatch_once_t shortcutToken;
     dispatch_once(&shortcutToken, ^{
-        NSString *pattern = @"\\[([^\\]]+)\\](\\s+)(?=\\[)";
+        NSString *pattern = @"(?<!\\])\\[([^\\]]+)\\](\\s+)(?=\\[)";
         shortcutRegex = [[NSRegularExpression alloc] initWithPattern:pattern
                                                              options:0
                                                                error:NULL];
