@@ -246,7 +246,9 @@ Use AskUserQuestion with these options.
 - Proceed to step 2g
 
 
-#### 2g. Update CHANGELOG.md
+#### 2g. Update CHANGELOG.md and README.md
+
+**Update CHANGELOG.md:**
 
 Read the current CHANGELOG.md:
 ```bash
@@ -264,18 +266,32 @@ Insert the new entry at the top (after the `# Changelog` title):
 
 Use Edit tool to make the change.
 
-Verify the change was applied correctly by reading CHANGELOG.md again.
+**Update README.md:**
 
-
-#### 2h. Commit and Push Changelog
-
-Create a commit with the changelog update:
-```bash
-git add CHANGELOG.md
-git commit -m "Update CHANGELOG for version {VERSION}"
+Update the version number in README.md. Find and replace the version line:
+```markdown
+**Version X.Y.Z** - Available Now
 ```
 
-Push the changelog commit to the remote repository:
+Replace with:
+```markdown
+**Version {VERSION}** - Available Now
+```
+
+Use Edit tool to make the change.
+
+Verify both changes were applied correctly by reading the files again.
+
+
+#### 2h. Commit and Push Changes
+
+Create a commit with both the changelog and README updates:
+```bash
+git add CHANGELOG.md README.md
+git commit -m "Update CHANGELOG and README for version {VERSION}"
+```
+
+Push the commit to the remote repository:
 ```bash
 git push origin main
 ```
@@ -292,7 +308,8 @@ Display summary and ask for final confirmation:
 
 Changes staged:
 - ✅ CHANGELOG.md updated with release notes
-- ✅ Commit created: "Update CHANGELOG for version {VERSION}"
+- ✅ README.md updated with new version number
+- ✅ Commit created: "Update CHANGELOG and README for version {VERSION}"
 
 Next steps:
 1. Create tag v{VERSION}
@@ -378,7 +395,7 @@ The website will update automatically after the workflow completes.
 **Release v{VERSION} workflow initiated:**
 
 Summary:
-- ✅ CHANGELOG.md updated and committed
+- ✅ CHANGELOG.md and README.md updated and committed
 - ✅ Tag v{VERSION} created and pushed
 - ✅ Build workflow triggered
 
