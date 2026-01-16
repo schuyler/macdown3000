@@ -6,7 +6,6 @@ PODS:
   - hoedown/standard (3.0.7)
   - JJPluralForm (2.1)
   - LibYAML (0.1.4)
-  - M13OrderedDictionary (1.1.0)
   - MASPreferences (1.4.1)
   - PAPreferences (0.5)
 
@@ -16,7 +15,6 @@ DEPENDENCIES:
   - hoedown (~> 3.0.7)
   - JJPluralForm (~> 2.1)
   - LibYAML (~> 0.1)
-  - M13OrderedDictionary (~> 1.1)
   - MASPreferences (~> 1.4)
   - PAPreferences (~> 0.5)
 
@@ -28,7 +26,6 @@ SPEC REPOS:
   trunk:
     - GBCli
     - JJPluralForm
-    - M13OrderedDictionary
     - MASPreferences
     - PAPreferences
 
@@ -38,10 +35,9 @@ SPEC CHECKSUMS:
   hoedown: 8141833441f6430686c06bbc5159d7ce615155fb
   JJPluralForm: 9a6235813990a33a63fb3eff457eb2c633af6acd
   LibYAML: dee5c31dcab47b168425083c2b0a6baeacdf499e
-  M13OrderedDictionary: 6e157fe9c82aa6b3cd7198f5c5c30c7a6834c4a6
   MASPreferences: 1ba2deb14086792857af44d22846fc4aae477fd9
   PAPreferences: 9f0ffb1e67174a0df001af9d3320166ceb9ee6f5
 
-PODFILE CHECKSUM: 9feb752b3e32e9399d9f753e2da9ba974d1f877d
+PODFILE CHECKSUM: b7a03464c7d3517d67f2e665587ff0a5531bf2b1
 
 COCOAPODS: 1.16.2
