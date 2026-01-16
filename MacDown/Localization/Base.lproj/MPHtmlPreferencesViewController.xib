@@ -114,7 +114,7 @@
                         <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="zSJ-H9-kjZ"/>
                     </connections>
                 </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qe1-sK-Yxe">
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="Qe1-sK-Yxe">
                     <rect key="frame" x="247" y="221" width="69" height="18"/>
                     <buttonCell key="cell" type="check" title="Graphviz" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="Lnj-HG-QHi">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -125,7 +125,7 @@
                         <binding destination="-2" name="value" keyPath="self.preferences.htmlGraphviz" id="28T-6A-JOn"/>
                     </connections>
                 </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bWg-uC-6W8">
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="bWg-uC-6W8">
                     <rect key="frame" x="318" y="221" width="68" height="18"/>
                     <buttonCell key="cell" type="check" title="Mermaid" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="bda-Ft-ecb">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -246,7 +246,14 @@
             <constraints>
                 <constraint firstItem="lxX-Pm-dhn" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="0LF-WD-jr9"/>
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="trailing" secondItem="5mI-gS-xH9" secondAttribute="trailing" id="2Au-ZO-sN1"/>
-                <constraint firstItem="ysT-Br-eSf" firstAttribute="trailing" secondItem="Zna-RM-nBO" secondAttribute="trailing" id="2Dv-QD-tU1"/>
+                <!-- Graphviz button vertical alignment with "Show line numbers" -->
+                <constraint firstItem="Qe1-sK-Yxe" firstAttribute="centerY" secondItem="ysT-Br-eSf" secondAttribute="centerY" id="gvz-CY-aln"/>
+                <!-- Graphviz button positioned after "Show line numbers" -->
+                <constraint firstItem="Qe1-sK-Yxe" firstAttribute="leading" secondItem="ysT-Br-eSf" secondAttribute="trailing" constant="8" id="gvz-LD-pos"/>
+                <!-- Mermaid button vertical alignment with "Show line numbers" -->
+                <constraint firstItem="bWg-uC-6W8" firstAttribute="centerY" secondItem="ysT-Br-eSf" secondAttribute="centerY" id="mmd-CY-aln"/>
+                <!-- Mermaid button positioned after Graphviz -->
+                <constraint firstItem="bWg-uC-6W8" firstAttribute="leading" secondItem="Qe1-sK-Yxe" secondAttribute="trailing" constant="8" id="mmd-LD-pos"/>
                 <constraint firstItem="vVI-g8-EhH" firstAttribute="trailing" secondItem="Dd4-T9-cLi" secondAttribute="trailing" id="3CP-t8-TSZ"/>
                 <constraint firstItem="vVI-g8-EhH" firstAttribute="leading" secondItem="Zna-RM-nBO" secondAttribute="leading" id="3e9-8I-C7O"/>
                 <constraint firstItem="5mI-gS-xH9" firstAttribute="top" secondItem="ysT-Br-eSf" secondAttribute="bottom" constant="11" id="4eS-8i-EmI"/>
