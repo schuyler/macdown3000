@@ -14,7 +14,6 @@ target "MacDown" do
   pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
   pod 'JJPluralForm', '~> 2.1'
   pod 'LibYAML', '~> 0.1'
-  pod 'M13OrderedDictionary', '~> 1.1'
   pod 'MASPreferences', '~> 1.4'
   # Temporarily disabled - will upgrade to 2.8.1 later
   # pod 'Sparkle', '~> 1.18', :inhibit_warnings => false

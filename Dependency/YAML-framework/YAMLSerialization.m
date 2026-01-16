@@ -8,7 +8,6 @@
 //
 
 #import "YAMLSerialization.h"
-#import <M13OrderedDictionary/M13OrderedDictionary.h>
 
 NSString *const YAMLErrorDomain = @"com.github.mirek.yaml";
 
@@ -47,11 +46,11 @@ __YAMLSerializationObjectWithYAMLDocument (yaml_document_t *document, YAMLReadOp
 
     // Mutability options
     Class arrayClass = [NSMutableArray class]; // TODO: FIXME:
-    Class dictionaryClass = [M13MutableOrderedDictionary class]; // TODO: FIXME:
+    Class dictionaryClass = [NSMutableDictionary class];
     Class stringClass = [NSString class];
     if (opt & kYAMLReadOptionMutableContainers) {
         arrayClass = [NSMutableArray class];
-        dictionaryClass = [M13MutableOrderedDictionary class];
+        dictionaryClass = [NSMutableDictionary class];
         if (opt & kYAMLReadOptionMutableContainersAndLeaves) {
             stringClass = [NSMutableString class];
         }
