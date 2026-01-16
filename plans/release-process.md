@@ -444,7 +444,7 @@ CloudKit query for MacDown-1.0.0.dmg (2/....) failed due to "Ticket not found"
 - Test on a clean Mac before releasing
 - Provide instructions for users with strict security settings
 
-### Build Fails: CocoaPods Error
+### Build Fails: Missing Dependencies
 
 **Error:**
 ```
@@ -457,6 +457,7 @@ CloudKit query for MacDown-1.0.0.dmg (2/....) failed due to "Ticket not found"
 - Should not happen in CI (workflow installs dependencies)
 - If testing locally: `bundle exec pod install`
 - Check that `Podfile.lock` is committed to git
+- Verify vendored dependencies are present (e.g., `Dependency/LibYAML/`)
 
 ### Release Tag Already Exists
 
