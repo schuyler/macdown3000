@@ -1,5 +1,29 @@
 # Changelog
 
+## [3000.0.3] - 2026-01-15
+
+This release graduates from beta with bug fixes for export, code block rendering, and text substitutions, adds a new dark preview theme, and introduces interactive checkbox support.
+
+### Added
+
+- Add GitHub Tomorrow dark preview theme (#273, #106) -- based on @elsiehupp's contribution to MacDown
+- Enable interactive checkbox support by default (#270, #269) -- thanks @rosmur for the feature request!
+
+### Fixed
+
+- Fix export/print when Preview Pane is hidden (#274, #16)
+- Fix fenced code block rendering without preceding blank line (#272, #36)
+- Fix square brackets vanishing in code blocks (#272, #37)
+- Disable text substitutions by default for all users (#268, #263) -- thanks @5T33Z0 for the report!
+
+### Changed
+
+- Refactor file inlining for drag-and-drop (#248) -- thanks @wltb for the contribution!
+
+### Documentation
+
+- Add documentation for the table of contents token feature (#265) -- thanks @sbeitzel for the contribution!
+
 ## [3000.0.3-beta.1] - 2026-01-09
 
 This beta release upgrades Mermaid to v11.12.1, adds bidirectional scroll sync, and includes several bug fixes for Markdown rendering, drag-and-drop, and settings persistence.
