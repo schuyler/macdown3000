@@ -8,11 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		0319BD8F4A64D9E406448C13 /* MPSyntaxHighlightingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */; };
-		PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */; };
-		PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */; };
-		PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */; };
-		PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */; };
-		PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */; };
 		03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */; };
 		197TESTS0B00000000197RSTB /* MPRendererStateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 197TESTS0F00000000197RSTF /* MPRendererStateTests.m */; };
 		1F002A23195B3DAE008B8D93 /* MPRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F002A22195B3DAE008B8D93 /* MPRenderer.m */; };
@@ -93,23 +88,36 @@
 		1FFEB32C19ABCD1200B2254F /* Fixtures in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB32E19ABCD1400B2254F /* Fixtures */; };
 		1FFEB32D19ABCD1300B2254F /* MPMarkdownRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */; };
 		1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */; };
+		27039AA21C7B25F888014163 /* reader.c in Sources */ = {isa = PBXBuildFile; fileRef = EAD9C462D3B68B2F11732B9C /* reader.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
+		27977FBF01F0D7C38A89E7A8 /* emitter.c in Sources */ = {isa = PBXBuildFile; fileRef = 94F4924920F3F7867598403A /* emitter.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
 		3028039E1FD84EAC0055B0DA /* contribute.md in Resources */ = {isa = PBXBuildFile; fileRef = 3028039D1FD84EAB0055B0DA /* contribute.md */; };
-		A2310231000000000001IMAG /* Images in Resources */ = {isa = PBXBuildFile; fileRef = A2310231000000000000IMAG /* Images */; };
+		4F41A90E4256E10F52B752DF /* parser.c in Sources */ = {isa = PBXBuildFile; fileRef = 4979C81EF804516C481DAE54 /* parser.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
+		60663E9FB780E93FCBCFB88E /* api.c in Sources */ = {isa = PBXBuildFile; fileRef = B46F2A95EA4AB2D703DC79C9 /* api.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
 		770BB49E962A302D0715A6A5 /* libPods-MacDown.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */; };
 		852D523C1E260A6400BA7162 /* MPTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 852D523A1E260A6400BA7162 /* MPTerminalPreferencesViewController.m */; };
 		85E24E5C1E5019C00056E696 /* MPToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85E24E5B1E5019C00056E696 /* MPToolbarController.m */; };
+		8C454A6D453ABE62B8603510 /* writer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC5AF73F530D655DA9037E54 /* writer.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
+		8DE6A3DC2BE1DAA12EE23F1D /* dumper.c in Sources */ = {isa = PBXBuildFile; fileRef = 101F2B854518294859A4B98B /* dumper.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
 		905EF1A9196164CA00FC3CE9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 905EF1A8196164CA00FC3CE9 /* Foundation.framework */; };
 		905EF1B7196164F300FC3CE9 /* macdown in Copy Command Line Utility */ = {isa = PBXBuildFile; fileRef = 905EF1A7196164CA00FC3CE9 /* macdown */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		96D85BA5B006D815BE204172 /* scanner.c in Sources */ = {isa = PBXBuildFile; fileRef = 428F6533E8A118C61BCDE06B /* scanner.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
 		A1DDD72A2F19A20300C407CD /* FileURLInliningTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */; };
 		A1E2BE342F0A754F00DF65A1 /* FileURLInlining.m in Sources */ = {isa = PBXBuildFile; fileRef = A1E2BE332F0A754F00DF65A1 /* FileURLInlining.m */; };
+		A2310231000000000001IMAG /* Images in Resources */ = {isa = PBXBuildFile; fileRef = A2310231000000000000IMAG /* Images */; };
 		A30E1B2D2D3E4F5A6B7C8D9F /* MPHTMLExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */; };
 		B5C5C1666A506FEA86435D25 /* libPods-macdown-cmd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */; };
 		B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */; };
-		CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */; };
-		ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */; };
 		CCD97578A2886FFE73BD96F7 /* MPMathJaxRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */; };
+		CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */; };
 		D3877A6637DE48017448C8DB /* MPRendererTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */; };
+		E55E89BCFC9EB2D2D5190DD9 /* loader.c in Sources */ = {isa = PBXBuildFile; fileRef = 67956F25080B0DB977AB9C22 /* loader.c */; settings = {COMPILER_FLAGS = "-Wno-conversion -Wno-shorten-64-to-32 -Wno-unused-but-set-variable"; }; };
 		EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */; };
+		ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */; };
+		PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */; };
+		PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */; };
+		PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */; };
+		PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */; };
+		PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -168,7 +176,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		016363C2964975B3F2D4707A /* config.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		0D0EC0DE9FEA22F962083921 /* Pods-MacDownTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownTests/Pods-MacDownTests.release.xcconfig"; sourceTree = "<group>"; };
+		101F2B854518294859A4B98B /* dumper.c */ = {isa = PBXFileReference; includeInIndex = 1; path = dumper.c; sourceTree = "<group>"; };
+		123CE7E7E3B1B1F9F57391AF /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
+		156FCE5DB87B38EA1A7BF9C8 /* yaml.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = yaml.h; sourceTree = "<group>"; };
+		197TESTS0F00000000197RSTF /* MPRendererStateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererStateTests.m; sourceTree = "<group>"; };
 		1A198D1BA59D710201DD3BC8 /* Pods-MacDown.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDown.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MacDown/Pods-MacDown.debug.xcconfig"; sourceTree = "<group>"; };
 		1F002A21195B3DAE008B8D93 /* MPRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPRenderer.h; sourceTree = "<group>"; };
 		1F002A22195B3DAE008B8D93 /* MPRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRenderer.m; sourceTree = "<group>"; };
@@ -487,16 +500,18 @@
 		1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPStringLookupTests.m; sourceTree = "<group>"; };
 		263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-macdown-cmd.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3028039D1FD84EAB0055B0DA /* contribute.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = contribute.md; path = Resources/contribute.md; sourceTree = "<group>"; };
-		A2310231000000000000IMAG /* Images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Images; path = Resources/Images; sourceTree = "<group>"; };
-		197TESTS0F00000000197RSTF /* MPRendererStateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererStateTests.m; sourceTree = "<group>"; };
+		357FE31688942AB8C04E8463 /* yaml_private.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = yaml_private.h; sourceTree = "<group>"; };
 		35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentIOTests.m; sourceTree = "<group>"; };
 		39EFCAE04F60154F0C8C5469 /* Pods-MacDown.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDown.release.xcconfig"; path = "Pods/Target Support Files/Pods-MacDown/Pods-MacDown.release.xcconfig"; sourceTree = "<group>"; };
 		3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MacDownTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D175F0F1974282400A5EFE8 /* WebView+WebViewPrivateHeaders.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "WebView+WebViewPrivateHeaders.h"; sourceTree = "<group>"; };
 		3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererTestHelpers.m; sourceTree = "<group>"; };
+		428F6533E8A118C61BCDE06B /* scanner.c */ = {isa = PBXFileReference; includeInIndex = 1; path = scanner.c; sourceTree = "<group>"; };
 		42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MacDown.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4979C81EF804516C481DAE54 /* parser.c */ = {isa = PBXFileReference; includeInIndex = 1; path = parser.c; sourceTree = "<group>"; };
 		4DBAA63927A60EB2150642B3 /* Pods-macdown-cmd.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macdown-cmd.debug.xcconfig"; path = "Pods/Target Support Files/Pods-macdown-cmd/Pods-macdown-cmd.debug.xcconfig"; sourceTree = "<group>"; };
 		5F23020AD4494E700E72C264 /* MPRendererTestHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPRendererTestHelpers.h; sourceTree = "<group>"; };
+		67956F25080B0DB977AB9C22 /* loader.c */ = {isa = PBXFileReference; includeInIndex = 1; path = loader.c; sourceTree = "<group>"; };
 		6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMathJaxRenderingTests.m; sourceTree = "<group>"; };
 		7A8EA75FA95818275755F0B6 /* Pods-macdown-cmd.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-macdown-cmd.release.xcconfig"; path = "Pods/Target Support Files/Pods-macdown-cmd/Pods-macdown-cmd.release.xcconfig"; sourceTree = "<group>"; };
 		852D52391E260A6400BA7162 /* MPTerminalPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPTerminalPreferencesViewController.h; sourceTree = "<group>"; };
@@ -506,19 +521,16 @@
 		8CDC5EA0050D2F722FB1AADD /* Pods-MacDownTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownTests/Pods-MacDownTests.debug.xcconfig"; sourceTree = "<group>"; };
 		905EF1A7196164CA00FC3CE9 /* macdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = macdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		905EF1A8196164CA00FC3CE9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		94F4924920F3F7867598403A /* emitter.c */ = {isa = PBXFileReference; includeInIndex = 1; path = emitter.c; sourceTree = "<group>"; };
 		9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSyntaxHighlightingTests.m; sourceTree = "<group>"; };
 		A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileURLInliningTests.m; sourceTree = "<group>"; };
 		A1E2BE312F0A74E500DF65A1 /* FileURLInlining.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileURLInlining.h; sourceTree = "<group>"; };
 		A1E2BE332F0A754F00DF65A1 /* FileURLInlining.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileURLInlining.m; sourceTree = "<group>"; };
+		A2310231000000000000IMAG /* Images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Images; path = Resources/Images; sourceTree = "<group>"; };
 		A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLExportTests.m; sourceTree = "<group>"; };
+		B46F2A95EA4AB2D703DC79C9 /* api.c */ = {isa = PBXFileReference; includeInIndex = 1; path = api.c; sourceTree = "<group>"; };
 		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
 		CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPCheckboxToggleTests.m; sourceTree = "<group>"; };
-		ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRenderDeferralTests.m; sourceTree = "<group>"; };
-		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
-		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
-		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
-		PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGMarkdownHighlighterTests.m; sourceTree = "<group>"; };
-		PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageExportTests.m; sourceTree = "<group>"; };
 		E70ECDD4241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		E70ECDD5241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MainMenu.strings"; sourceTree = "<group>"; };
 		E70ECDD6241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/MPMarkdownPreferencesViewController.strings"; sourceTree = "<group>"; };
@@ -563,6 +575,14 @@
 		E77E5D72241C935100699B5A /* da-DK */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "da-DK"; path = "Localization/da-DK.lproj/MPDocument.strings"; sourceTree = "<group>"; };
 		E7D458CB241C933800411A36 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = Localization/fi.lproj/MainMenu.strings; sourceTree = "<group>"; };
 		E7DD09F1241C9368008FBC25 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = Localization/da.lproj/MainMenu.strings; sourceTree = "<group>"; };
+		EAD9C462D3B68B2F11732B9C /* reader.c */ = {isa = PBXFileReference; includeInIndex = 1; path = reader.c; sourceTree = "<group>"; };
+		EC5AF73F530D655DA9037E54 /* writer.c */ = {isa = PBXFileReference; includeInIndex = 1; path = writer.c; sourceTree = "<group>"; };
+		ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRenderDeferralTests.m; sourceTree = "<group>"; };
+		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
+		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
+		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
+		PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGMarkdownHighlighterTests.m; sourceTree = "<group>"; };
+		PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageExportTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -739,6 +759,7 @@
 				1FCD70FC1A20B9FD00C028B5 /* version */,
 				1F8A83561953453A00B6BF69 /* peg-markdown-highlight */,
 				1FFEB32819737D6E00B2254F /* YAML-framework */,
+				578109A033E008B06C422B29 /* LibYAML */,
 			);
 			name = Dependency;
 			path = MacDown;
@@ -931,6 +952,35 @@
 			path = "Dependency/YAML-framework";
 			sourceTree = SOURCE_ROOT;
 		};
+		578109A033E008B06C422B29 /* LibYAML */ = {
+			isa = PBXGroup;
+			children = (
+				016363C2964975B3F2D4707A /* config.h */,
+				95FC1B8A22FCE393EA8E8B9F /* include */,
+				7F0A31A18C9401C347E4AE29 /* src */,
+				123CE7E7E3B1B1F9F57391AF /* LICENSE */,
+			);
+			name = LibYAML;
+			path = Dependency/LibYAML;
+			sourceTree = SOURCE_ROOT;
+		};
+		7F0A31A18C9401C347E4AE29 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				357FE31688942AB8C04E8463 /* yaml_private.h */,
+				B46F2A95EA4AB2D703DC79C9 /* api.c */,
+				101F2B854518294859A4B98B /* dumper.c */,
+				94F4924920F3F7867598403A /* emitter.c */,
+				67956F25080B0DB977AB9C22 /* loader.c */,
+				4979C81EF804516C481DAE54 /* parser.c */,
+				EAD9C462D3B68B2F11732B9C /* reader.c */,
+				428F6533E8A118C61BCDE06B /* scanner.c */,
+				EC5AF73F530D655DA9037E54 /* writer.c */,
+			);
+			name = src;
+			path = Dependency/LibYAML/src;
+			sourceTree = SOURCE_ROOT;
+		};
 		905EF1AA196164CA00FC3CE9 /* macdown-cmd */ = {
 			isa = PBXGroup;
 			children = (
@@ -941,6 +991,15 @@
 			);
 			path = "macdown-cmd";
 			sourceTree = "<group>";
+		};
+		95FC1B8A22FCE393EA8E8B9F /* include */ = {
+			isa = PBXGroup;
+			children = (
+				156FCE5DB87B38EA1A7BF9C8 /* yaml.h */,
+			);
+			name = include;
+			path = Dependency/LibYAML/include;
+			sourceTree = SOURCE_ROOT;
 		};
 		AC6D1A361B8B63012D598BC7 /* Pods */ = {
 			isa = PBXGroup;
@@ -1305,6 +1364,14 @@
 				1F8A835D1953454F00B6BF69 /* HGMarkdownHighlighter.m in Sources */,
 				1F847BC61DCC9DB600A47385 /* NSUserDefaults+Suite.m in Sources */,
 				1F3386E61A6B999600FC88C4 /* DOMNode+Text.m in Sources */,
+				60663E9FB780E93FCBCFB88E /* api.c in Sources */,
+				8DE6A3DC2BE1DAA12EE23F1D /* dumper.c in Sources */,
+				27977FBF01F0D7C38A89E7A8 /* emitter.c in Sources */,
+				E55E89BCFC9EB2D2D5190DD9 /* loader.c in Sources */,
+				4F41A90E4256E10F52B752DF /* parser.c in Sources */,
+				27039AA21C7B25F888014163 /* reader.c in Sources */,
+				96D85BA5B006D815BE204172 /* scanner.c in Sources */,
+				8C454A6D453ABE62B8603510 /* writer.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1823,6 +1890,15 @@
 				EXECUTABLE_NAME = "MacDown 3000";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MacDown/Code/MacDown-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HAVE_CONFIG_H=1",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Dependency/LibYAML",
+					"$(SRCROOT)/Dependency/LibYAML/include",
+				);
 				INFOPLIST_FILE = "MacDown/MacDown-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = "0.0.0-dev";
@@ -1844,6 +1920,15 @@
 				EXECUTABLE_NAME = "MacDown 3000";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MacDown/Code/MacDown-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"HAVE_CONFIG_H=1",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Dependency/LibYAML",
+					"$(SRCROOT)/Dependency/LibYAML/include",
+				);
 				INFOPLIST_FILE = "MacDown/MacDown-Info.plist";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = "0.0.0-dev";
