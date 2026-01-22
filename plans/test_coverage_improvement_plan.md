@@ -49,7 +49,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
-- Scroll synchronization (MPDocument.m) - 70 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, and bidirectional scroll sync (Issue #39, Issue #143, Issue #144, Issue #258)
+- Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
 
@@ -138,7 +138,7 @@ GitHub Actions macOS runners are:
 
 **Test Files:**
 - `MPDocumentIOTests.m` - ✅ COMPLETED (12 tests, file I/O, document state, autosave - Issue #90)
-- `MPScrollSyncTests.m` - ✅ COMPLETED (70 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync - Issue #39, Issue #143, Issue #144, Issue #258)
+- `MPScrollSyncTests.m` - ✅ COMPLETED (78 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, editing-state-aware sync - Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - `MPDocumentLifecycleTests.m` - ✅ COMPLETED (Document dirty flags, revert behavior, encoding detection, file conflicts - Issue #234)
 - `MPNotificationTests.m` - ✅ COMPLETED (NSNotificationCenter observer patterns, preference change notifications, theme/font changes - Issue #234)
 
