@@ -224,6 +224,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) BOOL inLiveScroll;
+@property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing to prevent scroll jumping
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
@@ -236,6 +237,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
 - (void)invokeRenderCompletionHandlers;
+- (void)performDelayedSyncScrollers;  // Issue #282: Delayed sync after editing
 
 @end
 
@@ -508,11 +510,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)close
 {
-    if (self.needsToUnregister) 
+    if (self.needsToUnregister)
     {
         // Close can be called multiple times, but this can only be done once.
         // http://www.cocoabuilder.com/archive/cocoa/240166-nsdocument-close-method-calls-itself.html
         self.needsToUnregister = NO;
+
+        // Issue #282: Cancel any pending delayed sync to prevent crash if document
+        // is closed while editing (within 200ms of last keystroke).
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(performDelayedSyncScrollers)
+                                                   object:nil];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
@@ -1249,6 +1257,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     if (self.needsHtml)
         [self.renderer parseAndRenderLater];
+
+    // Issue #282: Mark editing state to prevent scroll jumping during typing.
+    // Schedule delayed sync to run after editing pauses.
+    if (self.preferences.editorSyncScrolling)
+    {
+        _inEditing = YES;
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(performDelayedSyncScrollers)
+                                                   object:nil];
+        [self performSelector:@selector(performDelayedSyncScrollers)
+                   withObject:nil
+                   afterDelay:0.2];
+    }
 }
 
 - (void)userDefaultsDidChange:(NSNotification *)notification
@@ -1297,10 +1318,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         @synchronized(self) {
             self.shouldHandleBoundsChange = NO;
-            if (!_inLiveScroll) {
+            // Issue #282: Skip sync during active editing to prevent scroll jumping.
+            // The sync will be performed after editing pauses via performDelayedSyncScrollers.
+            if (!_inLiveScroll && !_inEditing) {
                 [self updateHeaderLocations];
+                [self syncScrollers];
             }
-            [self syncScrollers];
             self.shouldHandleBoundsChange = YES;
         }
     }
@@ -2115,6 +2138,32 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     _editorHeaderLocations = [locations copy];
+}
+
+/**
+ * Issue #282: Perform delayed scroll synchronization after editing pauses.
+ *
+ * This method is called 200ms after the last text change to synchronize
+ * the preview pane with the editor position. The delay allows the layout
+ * to stabilize after typing, preventing the editor from jumping during
+ * active editing.
+ */
+- (void)performDelayedSyncScrollers
+{
+    _inEditing = NO;
+
+    if (!self.preferences.editorSyncScrolling)
+        return;
+
+    if (!_inLiveScroll)
+    {
+        @synchronized(self) {
+            self.shouldHandleBoundsChange = NO;
+            [self updateHeaderLocations];
+            [self syncScrollers];
+            self.shouldHandleBoundsChange = YES;
+        }
+    }
 }
 
 /**
