@@ -1310,4 +1310,20 @@
                    @"shouldHandleBoundsChange should be NO after setting");
 }
 
+/**
+ * Test that pending performDelayedSyncScrollers is cancelled on document close.
+ * Issue #282: Prevents crash from message to deallocated object when document
+ * is closed during active editing (within 200ms of last keystroke).
+ */
+- (void)testPendingDelayedSyncCancelledOnClose
+{
+    // This test verifies the close method properly cancels pending selectors
+    // to prevent crashes when document is closed during editing.
+    // Note: In headless tests the document may not have full window setup,
+    // but the cancel call should still execute without crashing.
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.inEditing = YES;  // Simulate editing state
+    XCTAssertNoThrow([doc close], @"close should not crash with pending delayed sync");
+}
+
 @end

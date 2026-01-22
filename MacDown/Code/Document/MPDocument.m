@@ -508,11 +508,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)close
 {
-    if (self.needsToUnregister) 
+    if (self.needsToUnregister)
     {
         // Close can be called multiple times, but this can only be done once.
         // http://www.cocoabuilder.com/archive/cocoa/240166-nsdocument-close-method-calls-itself.html
         self.needsToUnregister = NO;
+
+        // Issue #282: Cancel any pending delayed sync to prevent crash if document
+        // is closed while editing (within 200ms of last keystroke).
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(performDelayedSyncScrollers)
+                                                   object:nil];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
