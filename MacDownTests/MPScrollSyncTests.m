@@ -20,9 +20,11 @@
 @property (weak) WebView *preview;
 @property BOOL shouldHandleBoundsChange;
 @property BOOL shouldHandlePreviewBoundsChange;
+@property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing state
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
+- (void)performDelayedSyncScrollers;  // Issue #282: Delayed sync after editing
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1196,6 +1198,116 @@
 
     XCTAssertNoThrow([self.document syncScrollersReverse],
                      @"syncScrollersReverse should handle many headers");
+}
+
+#pragma mark - Issue #282: Editing State Tests
+
+/**
+ * Test that inEditing property is initialized to NO.
+ * Issue #282: Editing state should be NO by default.
+ */
+- (void)testInEditingInitializedToNo
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertFalse(doc.inEditing,
+                   @"inEditing should be NO by default");
+}
+
+/**
+ * Test that performDelayedSyncScrollers method exists and doesn't crash.
+ * Issue #282: Delayed sync method should exist.
+ */
+- (void)testPerformDelayedSyncScrollersExists
+{
+    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
+                     @"performDelayedSyncScrollers should exist and not crash");
+}
+
+/**
+ * Test that performDelayedSyncScrollers clears inEditing flag.
+ * Issue #282: Delayed sync should reset editing state.
+ */
+- (void)testPerformDelayedSyncScrollersClearsInEditing
+{
+    self.document.inEditing = YES;
+    XCTAssertTrue(self.document.inEditing, @"inEditing should be YES before test");
+
+    [self.document performDelayedSyncScrollers];
+
+    XCTAssertFalse(self.document.inEditing,
+                   @"performDelayedSyncScrollers should set inEditing to NO");
+}
+
+/**
+ * Test that inEditing flag can be set and read.
+ * Issue #282: Editing state should be settable.
+ */
+- (void)testInEditingFlagCanBeToggled
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    doc.inEditing = YES;
+    XCTAssertTrue(doc.inEditing, @"inEditing should be YES after setting to YES");
+
+    doc.inEditing = NO;
+    XCTAssertFalse(doc.inEditing, @"inEditing should be NO after setting to NO");
+}
+
+/**
+ * Test that performDelayedSyncScrollers handles empty header locations.
+ * Issue #282: Delayed sync should handle edge cases.
+ */
+- (void)testPerformDelayedSyncScrollersWithEmptyLocations
+{
+    self.document.webViewHeaderLocations = @[];
+    self.document.editorHeaderLocations = @[];
+    self.document.inEditing = YES;
+
+    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
+                     @"performDelayedSyncScrollers should handle empty header locations");
+    XCTAssertFalse(self.document.inEditing,
+                   @"inEditing should be NO after performDelayedSyncScrollers");
+}
+
+/**
+ * Test that performDelayedSyncScrollers handles nil header locations.
+ * Issue #282: Delayed sync should handle nil safely.
+ */
+- (void)testPerformDelayedSyncScrollersWithNilLocations
+{
+    self.document.webViewHeaderLocations = nil;
+    self.document.editorHeaderLocations = nil;
+    self.document.inEditing = YES;
+
+    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
+                     @"performDelayedSyncScrollers should handle nil header locations");
+    XCTAssertFalse(self.document.inEditing,
+                   @"inEditing should be NO after performDelayedSyncScrollers");
+}
+
+/**
+ * Test that inEditing and shouldHandleBoundsChange are independent.
+ * Issue #282: Editing state should not affect loop prevention flags.
+ */
+- (void)testInEditingIndependentFromBoundsChangeFlag
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Initially both should have their default values
+    XCTAssertFalse(doc.inEditing, @"inEditing should be NO initially");
+    XCTAssertTrue(doc.shouldHandleBoundsChange, @"shouldHandleBoundsChange should be YES initially");
+
+    // Setting inEditing should not affect shouldHandleBoundsChange
+    doc.inEditing = YES;
+    XCTAssertTrue(doc.inEditing, @"inEditing should be YES after setting");
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should still be YES");
+
+    // Setting shouldHandleBoundsChange should not affect inEditing
+    doc.shouldHandleBoundsChange = NO;
+    XCTAssertTrue(doc.inEditing, @"inEditing should still be YES");
+    XCTAssertFalse(doc.shouldHandleBoundsChange,
+                   @"shouldHandleBoundsChange should be NO after setting");
 }
 
 @end
