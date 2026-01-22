@@ -406,6 +406,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         rectString = MPRectStringForAutosaveName(kMPDefaultAutosaveName);
     if (rectString)
         [controller.window setFrameFromString:rectString];
+    else
+        [controller.window center];  // No saved position;
 
     self.highlighter =
         [[HGMarkdownHighlighter alloc] initWithTextView:self.editor
@@ -1234,6 +1236,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.currentHighlightingThemeName = newHighlightingTheme;
 }
 
+#pragma mark - Window Controller
+
+- (void)makeWindowControllers
+{
+    [super makeWindowControllers];
+}
 
 #pragma mark - Notification handler
 
@@ -2646,3 +2654,4 @@ current file somewhere to enable this feature.", \
 }
 
 @end
+
