@@ -28,7 +28,9 @@ Present the issue title, body, and any relevant details to the user.
 
 ### Step 2: Gather Requirements
 
-Ask the user clarifying questions about:
+Once you have read and understood the issue, thoroughly research the bug or feature described in the issue. Make sure you understand the context before proceeding. Do NOT attempt to solve the problem yet -- we are just gathering requirements.
+
+Once you have educated yourself on the problem, ask the user clarifying questions about:
 - Scope and boundaries of the work
 - Expected behavior and edge cases
 - Design preferences or constraints
