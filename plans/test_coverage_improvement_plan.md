@@ -36,6 +36,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPRendererEdgeCaseTests.m | Renderer edge cases, nil handling | Good | (Issue #234) |
 | HGMarkdownHighlighterTests.m | Syntax highlighter properties, edge cases | Good | (Issue #234) |
 | MPImageExportTests.m | Image export, base64, alt text | Good | (Issue #234) |
+| MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -402,6 +403,7 @@ MacDownTests/
 ├── MPMarkdownRenderingTests.m ✅ (implemented - Issue #89, Issue #81)
 ├── MPRendererEdgeCaseTests.m ✅ (implemented - Issue #234)
 ├── HGMarkdownHighlighterTests.m ✅ (implemented - Issue #234)
+├── MPSmartQuoteTests.m ✅ (implemented - Issue #285)
 ├── Rendering/ (planned)
 │   └── MPMathJaxRenderingTests.m
 ├── Document/
