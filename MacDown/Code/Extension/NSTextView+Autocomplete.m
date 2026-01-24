@@ -145,6 +145,12 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
     if (location > 0 && location <= contentLength)
         p = [content characterAtIndex:location - 1];
 
+    // When smart quote substitution is enabled, defer quote handling to macOS.
+    // This avoids conflict between our matching-pair behavior and the system's
+    // smart quote conversion. See issue #285.
+    if (self.isAutomaticQuoteSubstitutionEnabled && (c == L'\"' || c == L'\''))
+        return NO;
+
     for (const unichar *cs = kMPMatchingCharactersMap[0]; *cs != 0; cs += 2)
     {
         // Ignore IM input of ASCII charaters.
