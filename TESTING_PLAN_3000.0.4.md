@@ -11,6 +11,7 @@ This document provides a comprehensive manual testing plan for all changes since
 | #286 | — | Fix new document windows opening at bottom-left |
 | #280 | #277 | Fix Graphviz and Mermaid button positioning in Compilation Settings |
 | #275 | #25 | Fix adjacent shortcut-style links not rendering correctly |
+| #268 | #263 | Disable text substitutions by default (smart dashes breaking markdown) |
 
 ---
 
@@ -155,7 +156,47 @@ Here's an image: ![Alt text][img]
 
 ---
 
-## 6. Regression Testing
+## 6. Text Substitutions Disabled by Default (#268)
+
+**Related Issue:** #263
+
+This fix ensures that macOS text substitutions (especially smart dashes) are disabled by default, preventing them from breaking Markdown syntax like `---` horizontal rules and table separators.
+
+### Scenario A: Fresh Installation
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
+|---|----------|-------|-----------------|-----------|
+| 6.1 | Fresh install defaults | 1. Run `defaults delete app.macdown.macdown3000`<br>2. Launch MacDown 3000<br>3. Check **Edit → Substitutions** | All substitution options should be unchecked | ☐ |
+| 6.2 | Horizontal rule works | Type `---` on a blank line | Stays as three dashes, renders as horizontal rule (not converted to em-dash `—`) | ☐ |
+| 6.3 | Table syntax works | Type `| Col1 | Col2 |` then `|---|---|` | Table renders correctly, dashes not converted | ☐ |
+| 6.4 | Multiple dashes preserved | Type `--------` for a table separator | All dashes remain, not converted to en-dash or em-dash | ☐ |
+| 6.5 | Straight quotes preserved | Type `"text"` | Straight quotes remain (not converted to curly quotes) | ☐ |
+
+### Scenario B: Migrated User with Bad Defaults
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
+|---|----------|-------|-----------------|-----------|
+| 6.6 | Migration fixes bad defaults | 1. Run: `defaults write app.macdown.macdown3000 editorAutomaticDashSubstitutionEnabled -bool YES`<br>2. Run: `defaults delete app.macdown.macdown3000 MPDidApplySubstitutionDefaultsFix`<br>3. Launch MacDown 3000<br>4. Check **Edit → Substitutions** | Smart Dashes should now be unchecked | ☐ |
+
+### Scenario C: User Choices Preserved
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
+|---|----------|-------|-----------------|-----------|
+| 6.7 | User can enable substitutions | 1. Enable **Edit → Substitutions → Smart Quotes**<br>2. Quit MacDown<br>3. Relaunch MacDown | Smart Quotes remains enabled (user choice preserved) | ☐ |
+| 6.8 | Enabled substitutions work | With Smart Quotes enabled, type `"hello"` | Curly quotes appear as expected | ☐ |
+
+### Scenario D: All Substitution Types
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
+|---|----------|-------|-----------------|-----------|
+| 6.9 | Smart Dashes OFF | Fresh install, type `--` and `---` | Dashes remain unchanged | ☐ |
+| 6.10 | Smart Quotes OFF | Fresh install, type `"` and `'` | Straight quotes remain | ☐ |
+| 6.11 | Text Replacement OFF | Fresh install, type common replacements | No automatic text replacement | ☐ |
+| 6.12 | Spell Checking OFF | Fresh install, misspell a word | No red underline by default | ☐ |
+
+---
+
+## 7. Regression Testing
 
 Verify that existing functionality still works correctly.
 
@@ -163,31 +204,31 @@ Verify that existing functionality still works correctly.
 
 | # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|----------|-------|-----------------|-----------|
-| 6.1 | Open existing document | File → Open, select a .md file | Document opens and renders correctly | ☐ |
-| 6.2 | Save document | Create new doc, add content, Cmd+S | File saves successfully | ☐ |
-| 6.3 | Export to HTML | File → Export → HTML | HTML file exports correctly | ☐ |
-| 6.4 | Export to PDF | File → Export → PDF | PDF file exports correctly | ☐ |
-| 6.5 | Print | File → Print | Print dialog works, preview correct | ☐ |
+| 7.1 | Open existing document | File → Open, select a .md file | Document opens and renders correctly | ☐ |
+| 7.2 | Save document | Create new doc, add content, Cmd+S | File saves successfully | ☐ |
+| 7.3 | Export to HTML | File → Export → HTML | HTML file exports correctly | ☐ |
+| 7.4 | Export to PDF | File → Export → PDF | PDF file exports correctly | ☐ |
+| 7.5 | Print | File → Print | Print dialog works, preview correct | ☐ |
 
 ### Markdown Rendering
 
 | # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|----------|-------|-----------------|-----------|
-| 6.6 | Headers | Type `# H1` through `###### H6` | All header levels render | ☐ |
-| 6.7 | Bold/Italic | Type `**bold**` and `*italic*` | Formatting renders correctly | ☐ |
-| 6.8 | Code blocks | Type fenced code block with language | Syntax highlighting works | ☐ |
-| 6.9 | Lists | Create ordered and unordered lists | Lists render correctly | ☐ |
-| 6.10 | Tables | Create a markdown table | Table renders correctly | ☐ |
-| 6.11 | Block quotes | Type `> quote text` | Block quote renders | ☐ |
-| 6.12 | Horizontal rules | Type `---` or `***` | Horizontal rule appears | ☐ |
+| 7.6 | Headers | Type `# H1` through `###### H6` | All header levels render | ☐ |
+| 7.7 | Bold/Italic | Type `**bold**` and `*italic*` | Formatting renders correctly | ☐ |
+| 7.8 | Code blocks | Type fenced code block with language | Syntax highlighting works | ☐ |
+| 7.9 | Lists | Create ordered and unordered lists | Lists render correctly | ☐ |
+| 7.10 | Tables | Create a markdown table | Table renders correctly | ☐ |
+| 7.11 | Block quotes | Type `> quote text` | Block quote renders | ☐ |
+| 7.12 | Horizontal rules | Type `---` or `***` | Horizontal rule appears | ☐ |
 
 ### Preferences
 
 | # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|----------|-------|-----------------|-----------|
-| 6.13 | Preferences window | Open Preferences, navigate all tabs | All tabs load without errors | ☐ |
-| 6.14 | Theme changes | Change editor theme | Theme applies immediately | ☐ |
-| 6.15 | Font changes | Change editor font/size | Font applies correctly | ☐ |
+| 7.13 | Preferences window | Open Preferences, navigate all tabs | All tabs load without errors | ☐ |
+| 7.14 | Theme changes | Change editor theme | Theme applies immediately | ☐ |
+| 7.15 | Font changes | Change editor font/size | Font applies correctly | ☐ |
 
 ---
 
@@ -198,7 +239,8 @@ Verify that existing functionality still works correctly.
 - [ ] All Section 3 tests passed (Window Position Fix)
 - [ ] All Section 4 tests passed (Compilation Settings Fix)
 - [ ] All Section 5 tests passed (Adjacent Links Fix)
-- [ ] All Section 6 regression tests passed
+- [ ] All Section 6 tests passed (Text Substitutions Disabled by Default)
+- [ ] All Section 7 regression tests passed
 
 **Tested By:** _________________________
 
