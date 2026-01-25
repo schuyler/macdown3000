@@ -423,4 +423,52 @@
         [defaults removeObjectForKey:@"htmlTaskList"];
 }
 
+#pragma mark - Text Substitution Defaults (Issue #263)
+
+/**
+ * Verify automatic dash substitution is disabled by default.
+ * This prevents --- horizontal rules from being converted to em-dash.
+ * Regression test for Issue #263.
+ */
+- (void)testAutomaticDashSubstitutionDisabledByDefault
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    // If the key doesn't exist, the default in MPEditorKeysToObserve() is @NO
+    BOOL value = [defaults boolForKey:@"editorAutomaticDashSubstitutionEnabled"];
+    XCTAssertFalse(value, @"Smart dashes should be disabled by default to preserve markdown syntax");
+}
+
+/**
+ * Verify automatic quote substitution is disabled by default.
+ * Regression test for Issue #263.
+ */
+- (void)testAutomaticQuoteSubstitutionDisabledByDefault
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL value = [defaults boolForKey:@"editorAutomaticQuoteSubstitutionEnabled"];
+    XCTAssertFalse(value, @"Smart quotes should be disabled by default");
+}
+
+/**
+ * Verify automatic text replacement is disabled by default.
+ * Regression test for Issue #263.
+ */
+- (void)testAutomaticTextReplacementDisabledByDefault
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL value = [defaults boolForKey:@"editorAutomaticTextReplacementEnabled"];
+    XCTAssertFalse(value, @"Text replacement should be disabled by default");
+}
+
+/**
+ * Verify automatic spelling correction is disabled by default.
+ * Regression test for Issue #263.
+ */
+- (void)testAutomaticSpellingCorrectionDisabledByDefault
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    BOOL value = [defaults boolForKey:@"editorAutomaticSpellingCorrectionEnabled"];
+    XCTAssertFalse(value, @"Spelling correction should be disabled by default");
+}
+
 @end
