@@ -37,6 +37,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | HGMarkdownHighlighterTests.m | Syntax highlighter properties, edge cases | Good | (Issue #234) |
 | MPImageExportTests.m | Image export, base64, alt text | Good | (Issue #234) |
 | MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
+| MPEditorViewSubstitutionTests.m | Text substitution preference getters, NSUserDefaults integration | Good | (Issue #263) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -53,6 +54,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
+- Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -213,7 +215,7 @@ GitHub Actions macOS runners are:
 - (void)testExportPathHandling
 ```
 
-### Phase 4: Expanded Utility Tests (MEDIUM PRIORITY)
+### Phase 4: Expanded Utility Tests (MEDIUM PRIORITY) - PARTIALLY COMPLETED
 
 **Goal:** Complete coverage of utility classes
 
@@ -221,6 +223,13 @@ GitHub Actions macOS runners are:
 - Expand `MPPreferencesTests.m`
 - Add `MPAssetLoadingTests.m`
 - Add `MPFileIOTests.m`
+- ✅ `MPEditorViewSubstitutionTests.m` - 30 tests for text substitution preferences (Issue #263)
+
+**Actual Impact (MPEditorViewSubstitutionTests.m):**
+- Tests added: 30 TDD tests covering all 9 text substitution getter overrides
+- Properties tested: automaticDashSubstitution, automaticDataDetection, automaticQuoteSubstitution, automaticSpellingCorrection, automaticTextReplacement, continuousSpellChecking, grammarChecking, smartInsertDelete, enabledTextCheckingTypes
+- Coverage: NSUserDefaults integration for editor preferences
+- Maintenance: Low (straightforward preference tests)
 
 **Estimated Impact:**
 - Coverage: +2-3%
@@ -420,6 +429,7 @@ MacDownTests/
 │   ├── MPPreferencesTests.m
 │   ├── MPLocalizationTests.m (✅ implemented - Issue #40 - localization validation)
 │   ├── MPAssetTests.m
+│   ├── MPEditorViewSubstitutionTests.m (✅ implemented - Issue #263 - text substitution preferences)
 │   └── MPFileIOTests.m (new - planned)
 ├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m
