@@ -283,4 +283,100 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     [self setFrameSize:self.frame.size];    // Force size update.
 }
 
+#pragma mark - Text Substitution Overrides (Issue #263)
+
+/**
+ * Override getters to read from app preferences instead of NSTextView's internal state.
+ *
+ * NSTextView initializes these properties from system-wide settings (System Preferences
+ * → Keyboard → Text) and resets them during view lifecycle events (becoming first
+ * responder, window loading). By overriding the getters to read from NSUserDefaults,
+ * we ensure our app's preferences are always respected.
+ *
+ * The setters are NOT overridden because the existing KVO mechanism in MPDocument.m
+ * handles persisting changes to NSUserDefaults when the user toggles settings via
+ * the Edit → Substitutions menu.
+ */
+
+- (BOOL)isAutomaticDashSubstitutionEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorAutomaticDashSubstitutionEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isAutomaticDataDetectionEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorAutomaticDataDetectionEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isAutomaticQuoteSubstitutionEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorAutomaticQuoteSubstitutionEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isAutomaticSpellingCorrectionEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorAutomaticSpellingCorrectionEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isAutomaticTextReplacementEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorAutomaticTextReplacementEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isContinuousSpellCheckingEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorContinuousSpellCheckingEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)isGrammarCheckingEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorGrammarCheckingEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (BOOL)smartInsertDeleteEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorSmartInsertDeleteEnabled";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults boolForKey:key];
+    return NO;
+}
+
+- (NSTextCheckingTypes)enabledTextCheckingTypes
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *key = @"editorEnabledTextCheckingTypes";
+    if ([defaults objectForKey:key] != nil)
+        return [defaults integerForKey:key];
+    return NSTextCheckingAllTypes;
+}
+
 @end
