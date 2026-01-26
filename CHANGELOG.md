@@ -1,5 +1,19 @@
 # Changelog
 
+## [3000.0.4] - 2026-01-25
+
+This release focuses on editor stability and usability fixes, addressing scroll jumping issues, window positioning, text substitution bugs, and Markdown rendering edge cases.
+
+### Fixed
+
+- Fix smart quote substitution causing unwanted characters (#289, #285) -- thanks @5T33Z0 for the report!
+- Fix editor jumping when typing at end of long documents (#288, #282) -- thanks @rcuisnier for the report!
+- Fix preview scroll jumping during editing (#282) -- thanks @rcuisnier for the report!
+- Fix new document windows opening at bottom-left (#286) -- thanks @mbinkhorst for the contribution!
+- Fix Graphviz and Mermaid button positioning in Compilation Settings (#280, #277) -- thanks @rcuisnier for the report!
+- Fix adjacent shortcut-style links not rendering correctly (#275, #25)
+- Fix text substitution settings not persisting (#263) -- thanks @5T33Z0 for the report!
+
 ## [3000.0.3] - 2026-01-15
 
 This release graduates from beta with bug fixes for export, code block rendering, and text substitutions, adds a new dark preview theme, and introduces interactive checkbox support.

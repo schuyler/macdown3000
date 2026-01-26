@@ -17,7 +17,7 @@ This project honors the original intentions and contributions of both Mou and Ma
 
 ## Download & Install
 
-**Version 3000.0.3** - Available Now
+**Version 3000.0.4** - Available Now
 
 ### Homebrew
 
