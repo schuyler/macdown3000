@@ -286,16 +286,16 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 #pragma mark - Text Substitution Overrides (Issue #263)
 
 /**
- * Override getters to read from app preferences instead of NSTextView's internal state.
+ * Override getters and setters to use app preferences instead of NSTextView's internal state.
  *
  * NSTextView initializes these properties from system-wide settings (System Preferences
  * → Keyboard → Text) and resets them during view lifecycle events (becoming first
- * responder, window loading). By overriding the getters to read from NSUserDefaults,
+ * responder, window loading). By overriding both getters and setters to use NSUserDefaults,
  * we ensure our app's preferences are always respected.
  *
- * The setters are NOT overridden because the existing KVO mechanism in MPDocument.m
- * handles persisting changes to NSUserDefaults when the user toggles settings via
- * the Edit → Substitutions menu.
+ * The setters must also be overridden because KVO captures the "new" value by calling
+ * the getter after the setter runs. If only the getter is overridden, KVO would see
+ * the old value (from NSUserDefaults) instead of the new value being set.
  */
 
 - (BOOL)isAutomaticDashSubstitutionEnabled
@@ -307,6 +307,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return NO;
 }
 
+- (void)setAutomaticDashSubstitutionEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorAutomaticDashSubstitutionEnabled"];
+}
+
 - (BOOL)isAutomaticDataDetectionEnabled
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -314,6 +319,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     if ([defaults objectForKey:key] != nil)
         return [defaults boolForKey:key];
     return NO;
+}
+
+- (void)setAutomaticDataDetectionEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorAutomaticDataDetectionEnabled"];
 }
 
 - (BOOL)isAutomaticQuoteSubstitutionEnabled
@@ -325,6 +335,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return NO;
 }
 
+- (void)setAutomaticQuoteSubstitutionEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorAutomaticQuoteSubstitutionEnabled"];
+}
+
 - (BOOL)isAutomaticSpellingCorrectionEnabled
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -332,6 +347,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     if ([defaults objectForKey:key] != nil)
         return [defaults boolForKey:key];
     return NO;
+}
+
+- (void)setAutomaticSpellingCorrectionEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorAutomaticSpellingCorrectionEnabled"];
 }
 
 - (BOOL)isAutomaticTextReplacementEnabled
@@ -343,6 +363,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return NO;
 }
 
+- (void)setAutomaticTextReplacementEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorAutomaticTextReplacementEnabled"];
+}
+
 - (BOOL)isContinuousSpellCheckingEnabled
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -350,6 +375,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     if ([defaults objectForKey:key] != nil)
         return [defaults boolForKey:key];
     return NO;
+}
+
+- (void)setContinuousSpellCheckingEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorContinuousSpellCheckingEnabled"];
 }
 
 - (BOOL)isGrammarCheckingEnabled
@@ -361,6 +391,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return NO;
 }
 
+- (void)setGrammarCheckingEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorGrammarCheckingEnabled"];
+}
+
 - (BOOL)smartInsertDeleteEnabled
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -370,6 +405,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return NO;
 }
 
+- (void)setSmartInsertDeleteEnabled:(BOOL)flag
+{
+    [[NSUserDefaults standardUserDefaults] setBool:flag forKey:@"editorSmartInsertDeleteEnabled"];
+}
+
 - (NSTextCheckingTypes)enabledTextCheckingTypes
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -377,6 +417,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     if ([defaults objectForKey:key] != nil)
         return [defaults integerForKey:key];
     return NSTextCheckingAllTypes;
+}
+
+- (void)setEnabledTextCheckingTypes:(NSTextCheckingTypes)checkingTypes
+{
+    [[NSUserDefaults standardUserDefaults] setInteger:checkingTypes forKey:@"editorEnabledTextCheckingTypes"];
 }
 
 @end

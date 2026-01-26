@@ -189,22 +189,29 @@ static const NSTextCheckingTypes kTestCheckingTypes = (NSTextCheckingTypeSpellin
 }
 
 /**
- * Test: Getter ignores ivar value and uses preference.
- * Sets the ivar via the setter, then verifies getter returns preference value.
+ * Test: Setter writes to NSUserDefaults, getter reflects the change.
+ * Verifies the setter override correctly persists to preferences.
  */
-- (void)testAutomaticDashSubstitution_IgnoresIvar_ReturnsPreference
+- (void)testAutomaticDashSubstitution_SetterWritesToPreferences
 {
-    // Set preference to NO
+    // Start with preference set to NO
     [self setBoolPreference:NO forKey:@"editorAutomaticDashSubstitutionEnabled"];
+    XCTAssertFalse(self.editorView.isAutomaticDashSubstitutionEnabled,
+        @"Precondition: should start as NO");
 
-    // Set ivar to YES via superclass setter (bypasses our override)
+    // Call setter with YES - this should write to NSUserDefaults
     [self.editorView setAutomaticDashSubstitutionEnabled:YES];
 
-    // Getter should return preference value (NO), not ivar value (YES)
+    // Getter should return YES (the value we just set)
     BOOL result = self.editorView.isAutomaticDashSubstitutionEnabled;
 
-    XCTAssertFalse(result,
-        @"isAutomaticDashSubstitutionEnabled should return preference value, not ivar");
+    XCTAssertTrue(result,
+        @"isAutomaticDashSubstitutionEnabled should return YES after setter called with YES");
+
+    // Verify NSUserDefaults was actually updated
+    BOOL storedValue = [[NSUserDefaults standardUserDefaults] boolForKey:@"editorAutomaticDashSubstitutionEnabled"];
+    XCTAssertTrue(storedValue,
+        @"Setter should have written YES to NSUserDefaults");
 }
 
 #pragma mark - Automatic Data Detection Tests
@@ -537,21 +544,29 @@ static const NSTextCheckingTypes kTestCheckingTypes = (NSTextCheckingTypeSpellin
 }
 
 /**
- * Test: Getter ignores ivar value and uses preference.
+ * Test: Setter writes to NSUserDefaults, getter reflects the change.
+ * Verifies the setter override correctly persists to preferences.
  */
-- (void)testEnabledTextCheckingTypes_IgnoresIvar_ReturnsPreference
+- (void)testEnabledTextCheckingTypes_SetterWritesToPreferences
 {
     // Set preference to a specific value
     [self setIntegerPreference:kTestCheckingTypes forKey:@"editorEnabledTextCheckingTypes"];
+    XCTAssertEqual(self.editorView.enabledTextCheckingTypes, kTestCheckingTypes,
+        @"Precondition: should start with test value");
 
-    // Set ivar to a different value via superclass setter
+    // Call setter with a different value - this should write to NSUserDefaults
     [self.editorView setEnabledTextCheckingTypes:NSTextCheckingAllTypes];
 
-    // Getter should return preference value, not ivar value
+    // Getter should return the new value
     NSTextCheckingTypes result = self.editorView.enabledTextCheckingTypes;
 
-    XCTAssertEqual(result, kTestCheckingTypes,
-        @"enabledTextCheckingTypes should return preference value, not ivar");
+    XCTAssertEqual(result, NSTextCheckingAllTypes,
+        @"enabledTextCheckingTypes should return value set by setter");
+
+    // Verify NSUserDefaults was actually updated
+    NSInteger storedValue = [[NSUserDefaults standardUserDefaults] integerForKey:@"editorEnabledTextCheckingTypes"];
+    XCTAssertEqual((NSTextCheckingTypes)storedValue, NSTextCheckingAllTypes,
+        @"Setter should have written to NSUserDefaults");
 }
 
 #pragma mark - Preference Change Response Tests
