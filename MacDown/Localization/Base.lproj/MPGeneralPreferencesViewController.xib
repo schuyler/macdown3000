@@ -9,6 +9,7 @@
         <customObject id="-2" userLabel="File's Owner" customClass="MPGeneralPreferencesViewController">
             <connections>
                 <outlet property="autoRenderingToggle" destination="6Nz-Ft-FbR" id="tso-oF-dcK"/>
+                <outlet property="includePreReleasesCheckbox" destination="jet-bG-trd" id="pre-release-outlet"/>
                 <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
             </connections>
         </customObject>
