@@ -2150,20 +2150,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
  */
 - (void)performDelayedSyncScrollers
 {
-    _inEditing = NO;
+    // Issue #282: DON'T clear _inEditing here - wait until after sync completes
 
     if (!self.preferences.editorSyncScrolling)
+    {
+        _inEditing = NO;
         return;
+    }
 
     if (!_inLiveScroll)
     {
         @synchronized(self) {
+            // Issue #282: Guard BOTH bounds change handlers to prevent cascade
             self.shouldHandleBoundsChange = NO;
+            self.shouldHandlePreviewBoundsChange = NO;
             [self updateHeaderLocations];
             [self syncScrollers];
             self.shouldHandleBoundsChange = YES;
+            self.shouldHandlePreviewBoundsChange = YES;
         }
     }
+
+    // Issue #282: Clear editing flag AFTER sync block completes
+    _inEditing = NO;
 }
 
 /**

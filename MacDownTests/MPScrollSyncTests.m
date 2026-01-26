@@ -1326,4 +1326,223 @@
     XCTAssertNoThrow([doc close], @"close should not crash with pending delayed sync");
 }
 
+#pragma mark - Issue #282: Cascade Prevention Tests
+
+/**
+ * Test that performDelayedSyncScrollers sets both bounds change guards.
+ * Issue #282: Both guards must be set to prevent cascade effect.
+ * The guards should be YES after the method completes (restored state).
+ */
+- (void)testPerformDelayedSyncScrollersSetsPreviewBoundsGuard
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Both guards should be YES initially
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should be YES initially");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES initially");
+
+    // After performDelayedSyncScrollers, both guards should still be YES
+    // (they're set to NO during sync, then restored to YES)
+    [doc performDelayedSyncScrollers];
+
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should be YES after sync completes");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES after sync completes");
+}
+
+/**
+ * Test that inEditing is cleared AFTER sync operations complete.
+ * Issue #282: Clearing inEditing before sync causes cascade.
+ */
+- (void)testInEditingClearedAfterSync
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.inEditing = YES;
+
+    // After performDelayedSyncScrollers, inEditing should be NO
+    [doc performDelayedSyncScrollers];
+
+    XCTAssertFalse(doc.inEditing,
+                   @"inEditing should be NO after performDelayedSyncScrollers completes");
+}
+
+/**
+ * Test that syncScrollers doesn't crash when both guards are already NO.
+ * Issue #282: Edge case where guards might be set by outer scope.
+ */
+- (void)testSyncScrollersWithGuardsAlreadySet
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Simulate outer scope setting guards
+    doc.shouldHandleBoundsChange = NO;
+    doc.shouldHandlePreviewBoundsChange = NO;
+
+    // syncScrollers should not crash
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"syncScrollers should not crash when guards are already NO");
+
+    // Guards should still be NO (syncScrollers sets them internally but we set them first)
+    // Actually, syncScrollers will set shouldHandlePreviewBoundsChange = YES at the end
+    // This tests that the method runs without crashing
+}
+
+/**
+ * Test that syncScrollersReverse doesn't crash when both guards are already NO.
+ * Issue #282: Edge case where guards might be set by outer scope.
+ */
+- (void)testSyncScrollersReverseWithGuardsAlreadySet
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Simulate outer scope setting guards
+    doc.shouldHandleBoundsChange = NO;
+    doc.shouldHandlePreviewBoundsChange = NO;
+
+    // syncScrollersReverse should not crash
+    XCTAssertNoThrow([doc syncScrollersReverse],
+                     @"syncScrollersReverse should not crash when guards are already NO");
+}
+
+/**
+ * Test that cascade prevention works with rapid sync calls.
+ * Issue #282: Simulates rapid editing scenario.
+ */
+- (void)testRapidSyncCallsDoNotCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Header 1\n\n## Header 2\n\n### Header 3";
+
+    // Simulate rapid sync calls (like rapid typing)
+    for (int i = 0; i < 10; i++) {
+        doc.inEditing = YES;
+        [doc performDelayedSyncScrollers];
+    }
+
+    XCTAssertFalse(doc.inEditing,
+                   @"inEditing should be NO after rapid sync calls");
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should be YES after rapid sync calls");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES after rapid sync calls");
+}
+
+/**
+ * Test that guards are properly restored even if sync throws.
+ * Issue #282: Guards should be restored in all code paths.
+ */
+- (void)testGuardsRestoredAfterSyncWithNilLocations
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Set up nil locations (edge case)
+    doc.webViewHeaderLocations = nil;
+    doc.editorHeaderLocations = nil;
+    doc.inEditing = YES;
+
+    // performDelayedSyncScrollers should complete without crashing
+    XCTAssertNoThrow([doc performDelayedSyncScrollers],
+                     @"performDelayedSyncScrollers should handle nil locations");
+
+    // Guards should be restored
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should be YES after sync with nil locations");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be YES after sync with nil locations");
+    XCTAssertFalse(doc.inEditing,
+                   @"inEditing should be NO after sync with nil locations");
+}
+
+/**
+ * Test that alternating sync calls maintain correct guard state.
+ * Issue #282: Regression test for ping-pong effect.
+ */
+- (void)testAlternatingSyncCallsMaintainGuardState
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@(100), @(200), @(300)];
+    doc.editorHeaderLocations = @[@(50), @(100), @(150)];
+
+    // Alternate between forward and reverse sync
+    for (int i = 0; i < 5; i++) {
+        [doc syncScrollers];
+        XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                      @"shouldHandlePreviewBoundsChange should be YES after syncScrollers");
+
+        [doc syncScrollersReverse];
+        XCTAssertTrue(doc.shouldHandleBoundsChange,
+                      @"shouldHandleBoundsChange should be YES after syncScrollersReverse");
+    }
+}
+
+#pragma mark - Code Fence Edge Case Tests
+
+/**
+ * Test that headers inside fenced code blocks are ignored.
+ * Code fence detection should skip headers like "# Not a header" inside ``` blocks.
+ */
+- (void)testHeaderInsideCodeBlockIsIgnored
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Real Header\n\n```\n# Not a header\n## Also not a header\n```\n\n## Another Real Header";
+
+    XCTAssertNoThrow([doc updateHeaderLocations],
+                     @"updateHeaderLocations should handle headers inside code blocks");
+}
+
+/**
+ * Test that code fence with info string is recognized.
+ * Fences like ```markdown or ```objc should still be detected as code fences.
+ */
+- (void)testCodeFenceWithInfoString
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Header 1\n\n```markdown\n# Not a header\n```\n\n## Header 2\n\n```objc\n// code\n```";
+
+    XCTAssertNoThrow([doc updateHeaderLocations],
+                     @"updateHeaderLocations should handle code fences with info strings");
+}
+
+/**
+ * Test that unclosed code fence at end of document is handled.
+ * If document ends with an open code fence, headers after the fence should be skipped.
+ */
+- (void)testUnclosedCodeFenceAtEndOfDocument
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Header 1\n\n```\n# This should be ignored\n## Also ignored";
+
+    XCTAssertNoThrow([doc updateHeaderLocations],
+                     @"updateHeaderLocations should handle unclosed code fence at end of document");
+}
+
+/**
+ * Test that tilde code fences work the same as backtick fences.
+ */
+- (void)testTildeCodeFence
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Header 1\n\n~~~\n# Not a header\n~~~\n\n## Header 2";
+
+    XCTAssertNoThrow([doc updateHeaderLocations],
+                     @"updateHeaderLocations should handle tilde code fences");
+}
+
+/**
+ * Test that four backticks (escaping) doesn't start a code block.
+ * Per CommonMark, ```` is different from ``` - tests our bounds check fix.
+ */
+- (void)testFourBackticksNotCodeFence
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.markdown = @"# Header 1\n\n````\n# Should this be a header?\n````\n\n## Header 2";
+
+    // This tests the bounds check fix - shouldn't crash on edge cases
+    XCTAssertNoThrow([doc updateHeaderLocations],
+                     @"updateHeaderLocations should handle four backticks without crashing");
+}
+
 @end

@@ -72,9 +72,11 @@
             return 0;  // Same node or disconnected
         });
 
-        // Return y-coordinates
+        // Return y-coordinates (viewport-relative) for all reference points.
+        // No pre-filtering - the syncScrollers algorithm handles end-of-document cases.
         return result.map(function(item) {
-            return item.node.getBoundingClientRect().top;
+            var rect = item.node.getBoundingClientRect();
+            return rect.top;
         });
     } catch (e) {
         return [];
