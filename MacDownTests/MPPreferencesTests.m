@@ -288,9 +288,12 @@
     // Save original values
     NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
     NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
-    // Simulate fresh install: remove the migration flag and preference
+    // Simulate fresh install: remove the migration flag, version, and preference
     [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
     [defaults removeObjectForKey:@"htmlTaskList"];
 
     // Create a new preferences instance to trigger loadDefaultUserDefaults
@@ -302,7 +305,7 @@
     XCTAssertTrue(prefs.htmlTaskList,
                   @"Checkbox/task list should be enabled by default for fresh installs");
 
-    // Migration flag should be set
+    // Migration flag should be set (for backward compatibility)
     XCTAssertTrue([defaults boolForKey:@"MPDidApplyTaskListDefaultFix"],
                   @"Migration flag should be set after first run");
 
@@ -316,6 +319,11 @@
         [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
     else
         [defaults removeObjectForKey:@"htmlTaskList"];
+
+    if (originalMigrationVersion)
+        [defaults setObject:originalMigrationVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
 }
 
 /**
@@ -329,9 +337,12 @@
     // Save original values
     NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
     NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
-    // Simulate existing user without migration: no flag, no explicit preference
+    // Simulate existing user without migration: no flag, no version, no explicit preference
     [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
     [defaults removeObjectForKey:@"htmlTaskList"];
 
     // Trigger preferences loading
@@ -351,6 +362,11 @@
         [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
     else
         [defaults removeObjectForKey:@"htmlTaskList"];
+
+    if (originalMigrationVersion)
+        [defaults setObject:originalMigrationVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
 }
 
 /**
@@ -364,8 +380,11 @@
     // Save original values
     NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
     NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
     // Simulate user who has already had migration applied AND explicitly disabled
+    // Use version 3 to indicate all migrations have been applied
+    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
     [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     [defaults setBool:NO forKey:@"htmlTaskList"];
 
@@ -386,6 +405,11 @@
         [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
     else
         [defaults removeObjectForKey:@"htmlTaskList"];
+
+    if (originalMigrationVersion)
+        [defaults setObject:originalMigrationVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
 }
 
 /**
@@ -399,8 +423,10 @@
     // Save original values
     NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
     NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
-    // Set up: migration already applied, user explicitly enabled, then disabled
+    // Set up: migration already applied (version 3), user explicitly disabled
+    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
     [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     [defaults setBool:NO forKey:@"htmlTaskList"];
 
@@ -421,6 +447,11 @@
         [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
     else
         [defaults removeObjectForKey:@"htmlTaskList"];
+
+    if (originalMigrationVersion)
+        [defaults setObject:originalMigrationVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
 }
 
 #pragma mark - Text Substitution Defaults (Issue #263)
