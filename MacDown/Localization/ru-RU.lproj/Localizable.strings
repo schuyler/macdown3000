@@ -19,3 +19,8 @@
 /* Unordered list toolbar button */
 "Unordered List" = "Маркированный список";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Файл изменён извне";
+"This file has been changed by another application. Do you want to discard your changes?" = "Этот файл был изменён другим приложением. Хотите отменить свои изменения?";
+"Discard" = "Отменить";
+"Keep" = "Сохранить";

@@ -140,3 +140,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ slovo;%@ slov";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Soubor byl externě změněn";
+"This file has been changed by another application. Do you want to discard your changes?" = "Tento soubor byl změněn jinou aplikací. Chcete zahodit své změny?";
+"Discard" = "Zahodit";
+"Keep" = "Ponechat";

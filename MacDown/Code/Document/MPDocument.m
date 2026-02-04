@@ -8,6 +8,7 @@
 
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
+#import <sys/fcntl.h>  // Issue #290: For O_EVTONLY in file watching
 #import <JJPluralForm/JJPluralForm.h>
 #import <hoedown/html.h>
 #import "hoedown_html_patch.h"
@@ -226,6 +227,11 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (nonatomic) BOOL inLiveScroll;
 @property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing to prevent scroll jumping
 @property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
+
+// Issue #290: File watching for auto-reload
+@property (strong) dispatch_source_t fileWatchSource;
+@property (nonatomic) int fileWatchDescriptor;
+@property (nonatomic) BOOL isSelfSaving;
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
@@ -500,6 +506,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self setupEditor:nil];
         [self redrawDivider];
         [self reloadFromLoadedString];
+
+        // Issue #290: Start file watching for auto-reload
+        [self startFileWatching];
     }];
 }
 
@@ -530,6 +539,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
         // Issue #294: Cancel any pending word count updates
         [self.wordCountUpdateQueue cancelAllOperations];
+
+        // Issue #290: Stop file watching to prevent leaks
+        [self stopFileWatching];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
@@ -576,6 +588,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (BOOL)writeToURL:(NSURL *)url ofType:(NSString *)typeName
              error:(NSError *__autoreleasing *)outError
 {
+    // Issue #290: Mark that we're saving to avoid triggering reload
+    self.isSelfSaving = YES;
+
+    // Issue #290: Capture previous URL before super updates it (for Save As detection)
+    NSURL *previousURL = self.fileURL;
+
     if (self.preferences.editorEnsuresNewlineAtEndOfFile)
     {
         NSCharacterSet *newline = [NSCharacterSet newlineCharacterSet];
@@ -588,7 +606,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             self.editor.selectedRange = selection;
         }
     }
-    return [super writeToURL:url ofType:typeName error:outError];
+
+    BOOL result = [super writeToURL:url ofType:typeName error:outError];
+
+    // Issue #290: Clear save flag after a short delay to ensure
+    // the file watcher doesn't trigger (events may be coalesced)
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        self.isSelfSaving = NO;
+    });
+
+    // If URL changed (Save As), restart watching the new file
+    if (result && (!previousURL || ![url isEqual:previousURL]))
+    {
+        // URL was updated by super, restart watching the new file
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self startFileWatching];
+        });
+    }
+
+    return result;
 }
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
@@ -2757,6 +2794,182 @@ current file somewhere to enable this feature.", \
     NSMutableString *result = [markdown mutableCopy];
     [result replaceCharactersInRange:checkboxContentRange withString:newState];
     return result;
+}
+
+
+#pragma mark - File Watching (Issue #290)
+
+- (void)startFileWatching
+{
+    // Only watch if we have a file URL
+    if (!self.fileURL || !self.fileURL.isFileURL)
+        return;
+
+    // Stop any existing watcher first
+    [self stopFileWatching];
+
+    // Open file descriptor for monitoring (O_EVTONLY doesn't prevent deletion)
+    const char *path = self.fileURL.path.fileSystemRepresentation;
+    int fd = open(path, O_EVTONLY);
+    if (fd < 0)
+        return;
+
+    self.fileWatchDescriptor = fd;
+
+    // Create dispatch source for vnode events
+    dispatch_queue_t queue = dispatch_get_main_queue();
+    dispatch_source_t source = dispatch_source_create(
+        DISPATCH_SOURCE_TYPE_VNODE,
+        fd,
+        DISPATCH_VNODE_WRITE | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
+        queue
+    );
+
+    if (!source)
+    {
+        close(fd);
+        self.fileWatchDescriptor = -1;
+        return;
+    }
+
+    __weak MPDocument *weakSelf = self;
+
+    // Event handler
+    dispatch_source_set_event_handler(source, ^{
+        MPDocument *strongSelf = weakSelf;
+        if (!strongSelf)
+            return;
+
+        unsigned long flags = dispatch_source_get_data(source);
+
+        if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME))
+        {
+            // File was deleted or renamed - stop watching
+            [strongSelf stopFileWatching];
+            return;
+        }
+
+        if (flags & DISPATCH_VNODE_WRITE)
+        {
+            [strongSelf handleExternalFileChange];
+        }
+    });
+
+    // Cancel handler - cleanup when source is cancelled
+    // Capture fd directly for more robust cleanup (no dependency on instance state)
+    int fdToClose = fd;
+    dispatch_source_set_cancel_handler(source, ^{
+        if (fdToClose >= 0)
+        {
+            close(fdToClose);
+        }
+    });
+
+    self.fileWatchSource = source;
+    dispatch_resume(source);
+}
+
+- (void)stopFileWatching
+{
+    if (self.fileWatchSource)
+    {
+        dispatch_source_cancel(self.fileWatchSource);
+        self.fileWatchSource = nil;
+    }
+}
+
+- (void)handleExternalFileChange
+{
+    // Ignore if this was our own save
+    if (self.isSelfSaving)
+        return;
+
+    // Verify the file actually changed by checking modification date
+    NSDate *currentModDate = self.fileModificationDate;
+
+    NSError *error = nil;
+    NSDictionary *attrs = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:self.fileURL.path error:&error];
+    if (error)
+        return;
+
+    NSDate *diskModDate = attrs[NSFileModificationDate];
+
+    // If dates match (or disk is older), no real change
+    if (currentModDate && diskModDate &&
+        [diskModDate compare:currentModDate] != NSOrderedDescending)
+    {
+        return;
+    }
+
+    // File has been modified externally
+    if ([self isDocumentEdited])
+    {
+        [self promptForReloadWithExternalChanges];
+    }
+    else
+    {
+        [self reloadFromDisk];
+    }
+}
+
+- (void)promptForReloadWithExternalChanges
+{
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = NSLocalizedString(
+        @"File Modified Externally",
+        @"External file change alert title");
+    alert.informativeText = NSLocalizedString(
+        @"This file has been changed by another application. Do you want to discard your changes?",
+        @"External file change alert message");
+
+    [alert addButtonWithTitle:NSLocalizedString(@"Discard", @"Discard changes button")];
+    [alert addButtonWithTitle:NSLocalizedString(@"Keep", @"Keep local changes button")];
+
+    NSWindow *window = self.windowForSheet;
+    if (window)
+    {
+        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+            if (response == NSAlertFirstButtonReturn)
+            {
+                [self reloadFromDisk];
+            }
+            // If "Keep" - do nothing, user keeps their changes
+        }];
+    }
+    else
+    {
+        // Fallback to modal if no window (shouldn't happen)
+        NSModalResponse response = [alert runModal];
+        if (response == NSAlertFirstButtonReturn)
+        {
+            [self reloadFromDisk];
+        }
+    }
+}
+
+- (void)reloadFromDisk
+{
+    NSError *error = nil;
+    NSData *data = [NSData dataWithContentsOfURL:self.fileURL options:0 error:&error];
+    if (error || !data)
+        return;
+
+    // Read the new content
+    if (![self readFromData:data ofType:self.fileType error:&error])
+        return;
+
+    // Update fileModificationDate to reflect the reloaded content
+    NSDictionary *attrs = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:self.fileURL.path error:nil];
+    if (attrs[NSFileModificationDate])
+        self.fileModificationDate = attrs[NSFileModificationDate];
+
+    // Clear the dirty state since we just loaded fresh content
+    [self updateChangeCount:NSChangeCleared];
+
+    // Restart file watching (descriptor may have become stale)
+    [self startFileWatching];
 }
 
 @end

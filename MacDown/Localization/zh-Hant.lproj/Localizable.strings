@@ -137,3 +137,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ 個字;%@ 個字";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "檔案已被外部修改";
+"This file has been changed by another application. Do you want to discard your changes?" = "此檔案已被其他應用程式修改。是否放棄您的更改？";
+"Discard" = "放棄";
+"Keep" = "保留";

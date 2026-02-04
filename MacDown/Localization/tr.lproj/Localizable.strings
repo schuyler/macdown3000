@@ -62,3 +62,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ kelime;%@ kelime";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Dosya harici olarak değiştirildi";
+"This file has been changed by another application. Do you want to discard your changes?" = "Bu dosya başka bir uygulama tarafından değiştirildi. Değişikliklerinizi iptal etmek istiyor musunuz?";
+"Discard" = "İptal";
+"Keep" = "Sakla";
