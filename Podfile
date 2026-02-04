@@ -32,15 +32,18 @@ target "macdown-cmd" do
 end
 
 # Quick Look extension and shared framework for Issue #284
-target "MacDownCore" do
-  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
-  pod 'handlebars-objc', '~> 1.4'
-end
-
-target "MacDownQuickLook" do
-  # Quick Look extension uses MacDownCore framework
-  # No direct pods needed - dependencies come through the framework
-end
+# NOTE: Uncomment these targets after adding them to the Xcode project
+# See plans/quick-look-xcode-setup.md for setup instructions
+#
+# target "MacDownCore" do
+#   pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
+#   pod 'handlebars-objc', '~> 1.4'
+# end
+#
+# target "MacDownQuickLook" do
+#   # Quick Look extension uses MacDownCore framework
+#   # No direct pods needed - dependencies come through the framework
+# end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|

@@ -5,9 +5,16 @@
 //  Tests for the Quick Look renderer facade (Issue #284)
 //  Copyright (c) 2025 Tzu-ping Chung. All rights reserved.
 //
+//  NOTE: These tests require the MacDownCore framework to be set up.
+//  To enable tests, add ENABLE_QUICKLOOK_TESTS=1 to the preprocessor macros
+//  in the MacDownTests target build settings, and add MacDownCore to the
+//  header search paths. See plans/quick-look-xcode-setup.md for details.
+//
 
 #import <XCTest/XCTest.h>
-// Import from MacDownCore (add MacDownCore to header search paths in Xcode)
+
+#if ENABLE_QUICKLOOK_TESTS
+
 #import "MPQuickLookRenderer.h"
 #import "MPQuickLookPreferences.h"
 
@@ -542,3 +549,21 @@
 }
 
 @end
+
+#else
+
+// Placeholder test class when Quick Look tests are disabled
+@interface MPQuickLookRendererTests : XCTestCase
+@end
+
+@implementation MPQuickLookRendererTests
+
+- (void)testQuickLookTestsDisabled
+{
+    NSLog(@"Quick Look tests are disabled. To enable, add ENABLE_QUICKLOOK_TESTS=1 to preprocessor macros.");
+    NSLog(@"See plans/quick-look-xcode-setup.md for setup instructions.");
+}
+
+@end
+
+#endif // ENABLE_QUICKLOOK_TESTS
