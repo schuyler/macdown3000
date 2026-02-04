@@ -2,7 +2,7 @@
 "(Default)" = "(Standaard)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Niet geïnstalleerd>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Blokcitaat";
@@ -81,7 +81,7 @@
 "Ordered List" = "Geordende lijst";
 
 /* No comment provided by engineer. */
-"Ordered/Unordered List" = "Ongeordende lijst";
+"Ordered/Unordered List" = "Geordende/ongeordende lijst";
 
 /* Preferences window title. */
 "Preferences" = "Voorkeuren";
@@ -102,13 +102,13 @@
 "Shell utility not installed" = "Shell-hulpmiddel is niet geïnstalleerd";
 
 /* Shift text to the left toolbar button */
-"Shift Left" = "Linker shifttoets";
+"Shift Left" = "Inspringing verkleinen";
 
 /* No comment provided by engineer. */
-"Shift Left/Right" = "Linker-/rechtershifttoets";
+"Shift Left/Right" = "Inspringing verkleinen/vergroten";
 
 /* Shift text to the right toolbar button */
-"Shift Right" = "Rechter shifttoets";
+"Shift Right" = "Inspringing vergroten";
 
 /* Toggle reveal toolbar */
 "Show Toolbar" = "Toon werkbalk";
