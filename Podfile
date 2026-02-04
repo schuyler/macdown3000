@@ -24,10 +24,22 @@ end
 
 target "MacDownTests" do
   pod 'PAPreferences', '~> 0.5'
+  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
 end
 
 target "macdown-cmd" do
   pod 'GBCli', '~> 1.1'
+end
+
+# Quick Look extension and shared framework for Issue #284
+target "MacDownCore" do
+  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
+  pod 'handlebars-objc', '~> 1.4'
+end
+
+target "MacDownQuickLook" do
+  # Quick Look extension uses MacDownCore framework
+  # No direct pods needed - dependencies come through the framework
 end
 
 post_install do |installer|
