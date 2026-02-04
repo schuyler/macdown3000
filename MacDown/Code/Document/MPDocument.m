@@ -2920,13 +2920,11 @@ current file somewhere to enable this feature.", \
         @"File Modified Externally",
         @"External file change alert title");
     alert.informativeText = NSLocalizedString(
-        @"The file has been modified by another application. "
-        @"Do you want to reload it and lose your unsaved changes, "
-        @"or keep your version?",
+        @"This file has been changed by another application. Do you want to discard your changes?",
         @"External file change alert message");
 
-    [alert addButtonWithTitle:NSLocalizedString(@"Reload", @"Reload button")];
-    [alert addButtonWithTitle:NSLocalizedString(@"Keep Mine", @"Keep local version button")];
+    [alert addButtonWithTitle:NSLocalizedString(@"Discard", @"Discard changes button")];
+    [alert addButtonWithTitle:NSLocalizedString(@"Keep", @"Keep local changes button")];
 
     NSWindow *window = self.windowForSheet;
     if (window)
@@ -2936,7 +2934,7 @@ current file somewhere to enable this feature.", \
             {
                 [self reloadFromDisk];
             }
-            // If "Keep Mine" - do nothing, user keeps their changes
+            // If "Keep" - do nothing, user keeps their changes
         }];
     }
     else

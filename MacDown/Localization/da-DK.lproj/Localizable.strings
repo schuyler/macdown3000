@@ -140,3 +140,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ ord;%@ ord";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Filen er ændret eksternt";
+"This file has been changed by another application. Do you want to discard your changes?" = "Denne fil er blevet ændret af et andet program. Vil du kassere dine ændringer?";
+"Discard" = "Kassér";
+"Keep" = "Behold";

@@ -80,3 +80,8 @@
 /* default filename if no title can be determined */
 "Untitled" = "제목없음";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "외부에서 파일이 수정됨";
+"This file has been changed by another application. Do you want to discard your changes?" = "이 파일이 다른 응용 프로그램에 의해 변경되었습니다. 변경 사항을 취소하시겠습니까?";
+"Discard" = "취소";
+"Keep" = "유지";

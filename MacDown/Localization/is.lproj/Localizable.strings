@@ -62,3 +62,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ orð;%@ orð";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Skrá breytt utan frá";
+"This file has been changed by another application. Do you want to discard your changes?" = "Þessi skrá hefur verið breytt af öðru forriti. Viltu henda breytingunum þínum?";
+"Discard" = "Henda";
+"Keep" = "Halda";

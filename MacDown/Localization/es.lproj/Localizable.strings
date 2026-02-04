@@ -140,3 +140,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ palabra;%@ palabras";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Archivo modificado externamente";
+"This file has been changed by another application. Do you want to discard your changes?" = "Este archivo ha sido modificado por otra aplicación. ¿Desea descartar sus cambios?";
+"Discard" = "Descartar";
+"Keep" = "Conservar";

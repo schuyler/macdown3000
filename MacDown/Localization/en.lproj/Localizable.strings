@@ -33,6 +33,6 @@
 
 /* External file change detection (Issue #290) */
 "File Modified Externally" = "File Modified Externally";
-"The file has been modified by another application. Do you want to reload it and lose your unsaved changes, or keep your version?" = "The file has been modified by another application. Do you want to reload it and lose your unsaved changes, or keep your version?";
-"Reload" = "Reload";
-"Keep Mine" = "Keep Mine";
+"This file has been changed by another application. Do you want to discard your changes?" = "This file has been changed by another application. Do you want to discard your changes?";
+"Discard" = "Discard";
+"Keep" = "Keep";

@@ -1,0 +1,5 @@
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "تم تعديل الملف خارجياً";
+"This file has been changed by another application. Do you want to discard your changes?" = "تم تعديل هذا الملف بواسطة تطبيق آخر. هل تريد تجاهل تغييراتك؟";
+"Discard" = "تجاهل";
+"Keep" = "احتفظ";

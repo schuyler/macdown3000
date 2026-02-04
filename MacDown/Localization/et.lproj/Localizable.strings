@@ -110,3 +110,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ sõna;%@ sõna";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Fail on väliselt muudetud";
+"This file has been changed by another application. Do you want to discard your changes?" = "Seda faili on muudetud teise rakenduse poolt. Kas soovite oma muudatused tühistada?";
+"Discard" = "Tühista";
+"Keep" = "Säilita";

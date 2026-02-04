@@ -140,3 +140,8 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ word;%@ words";
 
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "ファイルが外部で変更されました";
+"This file has been changed by another application. Do you want to discard your changes?" = "このファイルは他のアプリケーションで変更されました。変更を破棄しますか？";
+"Discard" = "破棄";
+"Keep" = "保持";
