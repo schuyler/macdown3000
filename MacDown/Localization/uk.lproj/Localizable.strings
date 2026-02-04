@@ -140,12 +140,6 @@
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ word;%@ words";
 
-/* External file change detection (Issue #290) */
-"File Modified Externally" = "تم تعديل الملف خارجياً";
-"This file has been changed by another application. Do you want to discard your changes?" = "تم تعديل هذا الملف بواسطة تطبيق آخر. هل تريد تجاهل تغييراتك؟";
-"Discard" = "تجاهل";
-"Keep" = "احتفظ";
-
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Installation Failed";
 "Installation Successful" = "Installation Successful";
@@ -162,3 +156,4 @@
 "Source file does not exist" = "Source file does not exist";
 "A file already exists at the installation path" = "A file already exists at the installation path";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
