@@ -29,13 +29,13 @@
 "JJ_PLURAL_FORM_RULE" = "1";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ word;%@ words";
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слов";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ character;%@ characters";
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символов";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробелов);%@ символов (без пробелов)";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Ошибка установки";

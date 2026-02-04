@@ -2,7 +2,7 @@
 "(Default)" = "(默认)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<未安装>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "引用";

@@ -2,7 +2,7 @@
 "(Default)" = "(Par défaut)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Non installé>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Bloc de citation";

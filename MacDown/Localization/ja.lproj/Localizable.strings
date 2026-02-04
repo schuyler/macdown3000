@@ -138,7 +138,7 @@
 "Untitled" = "名称未設定";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ word;%@ words";
+"WORDS_PLURAL_STRING" = "%@ 語;%@ 語";
 
 /* External file change detection (Issue #290) */
 "File Modified Externally" = "ファイルが外部で変更されました";

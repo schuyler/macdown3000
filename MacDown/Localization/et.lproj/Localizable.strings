@@ -2,7 +2,7 @@
 "(Default)" = "(Vaikeväärtus)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Pole paigaldatud>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Plokktsitaat";

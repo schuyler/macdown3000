@@ -1,5 +1,5 @@
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (inga mellanslag);%@ tecken (inga mellanslag)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tecken (inga mellanslag);%@ tecken (inga mellanslag)";
 
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ tecken;%@ tecken";

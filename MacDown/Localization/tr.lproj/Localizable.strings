@@ -2,7 +2,7 @@
 "(Default)" = "(Varsayılan)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Yüklü değil>";
 
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ karakter;%@ karakter";
@@ -69,7 +69,7 @@
 "Keep" = "Sakla";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ karakter (boşluksuz);%@ karakter (boşluksuz)";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Yükleme Başarısız";

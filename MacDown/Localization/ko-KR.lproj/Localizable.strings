@@ -87,13 +87,13 @@
 "Keep" = "유지";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ word;%@ words";
+"WORDS_PLURAL_STRING" = "%@ 단어;%@ 단어";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ character;%@ characters";
+"CHARACTERS_PLURAL_STRING" = "%@ 문자;%@ 문자";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 문자 (공백 제외);%@ 문자 (공백 제외)";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "설치 실패";

@@ -2,7 +2,7 @@
 "(Default)" = "(Sjálfgefið)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Ekki uppsett>";
 
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ stafur (án bila);%@ stafir (án bila)";

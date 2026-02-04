@@ -2,7 +2,7 @@
 "(Default)" = "(Výchozí)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Nenainstalováno>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Citace";
