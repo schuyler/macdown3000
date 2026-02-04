@@ -471,4 +471,458 @@
     XCTAssertFalse(value, @"Spelling correction should be disabled by default");
 }
 
+
+#pragma mark - Version-Based Migration System Tests (Issue #293)
+
+/**
+ * Test that fresh installations get the current migration version set.
+ * Related to GitHub issue #293.
+ */
+- (void)testFreshInstallGetsCurrentMigrationVersion
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalSubstitutionFlag = [defaults objectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate fresh install: remove all migration-related keys
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+
+    // Create new preferences instance
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Fresh install should set migration version to current (3)
+    NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
+    XCTAssertEqual(version, 3,
+                   @"Fresh installation should set migration version to 3");
+
+    // Intra-emphasis should be disabled
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Fresh install should have intra-emphasis disabled");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalSubstitutionFlag)
+        [defaults setObject:originalSubstitutionFlag forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+
+    if (originalTaskListFlag)
+        [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that users with only substitution flag get inferred version 1.
+ * Migrations 2 and 3 should be applied.
+ * Related to GitHub issue #293.
+ */
+- (void)testMigrationFromLegacySubstitutionFlagOnly
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalSubstitutionFlag = [defaults objectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+    NSNumber *originalTaskList = [defaults objectForKey:@"htmlTaskList"];
+
+    // Simulate user at version 1: only substitution flag set
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // Old default
+    [defaults removeObjectForKey:@"htmlTaskList"];
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Migration version should be updated to 3
+    NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
+    XCTAssertEqual(version, 3,
+                   @"Migration version should be updated to 3");
+
+    // Version 2 migration: task list should be enabled
+    XCTAssertTrue(prefs.htmlTaskList,
+                  @"Task list migration (v2) should be applied");
+
+    // Version 3 migration: intra-emphasis should be disabled
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Intra-emphasis migration (v3) should be applied");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalSubstitutionFlag)
+        [defaults setObject:originalSubstitutionFlag forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+
+    if (originalTaskListFlag)
+        [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+
+    if (originalTaskList)
+        [defaults setObject:originalTaskList forKey:@"htmlTaskList"];
+    else
+        [defaults removeObjectForKey:@"htmlTaskList"];
+}
+
+/**
+ * Test that users with both legacy flags get inferred version 2.
+ * Only migration 3 should be applied.
+ * Related to GitHub issue #293.
+ */
+- (void)testMigrationFromBothLegacyFlags
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalSubstitutionFlag = [defaults objectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate user at version 2: both legacy flags set
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // Old default
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Migration version should be updated to 3
+    NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
+    XCTAssertEqual(version, 3,
+                   @"Migration version should be updated to 3");
+
+    // Version 3 migration: intra-emphasis should be disabled
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Intra-emphasis migration (v3) should be applied");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalSubstitutionFlag)
+        [defaults setObject:originalSubstitutionFlag forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+
+    if (originalTaskListFlag)
+        [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that explicit migration version takes precedence over legacy flags.
+ * Related to GitHub issue #293.
+ */
+- (void)testExplicitMigrationVersionTakesPrecedence
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalSubstitutionFlag = [defaults objectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Set explicit version 3 - should skip all migrations even if legacy flags missing
+    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // User has it enabled
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Version 3 should NOT apply any migrations - user's choice preserved
+    XCTAssertTrue(prefs.extensionIntraEmphasis,
+                  @"Explicit version 3 should not change user's intra-emphasis setting");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalSubstitutionFlag)
+        [defaults setObject:originalSubstitutionFlag forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+
+    if (originalTaskListFlag)
+        [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+
+#pragma mark - Intra-Emphasis Migration Tests (Issue #293)
+
+/**
+ * Test that intra-emphasis is disabled by default for fresh installs.
+ * This prevents underscore filenames from being italicized.
+ * Related to GitHub issue #293.
+ */
+- (void)testIntraEmphasisDisabledByDefaultForFreshInstall
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+
+    // Simulate fresh install
+    [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    // Create new preferences instance
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Fresh install should have intra-emphasis DISABLED
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Fresh install should have intra-emphasis disabled (Issue #293)");
+
+    // Restore originals
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+}
+
+/**
+ * Test that existing users at version 2 get migrated to disabled intra-emphasis.
+ * Related to GitHub issue #293.
+ */
+- (void)testExistingUserAtVersion2GetsMigrated
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate existing user at migration version 2 with intra-emphasis enabled
+    [defaults setInteger:2 forKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Migration should disable intra-emphasis
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Version 3 migration should disable intra-emphasis for existing users");
+
+    // Migration version should be updated to 3
+    NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
+    XCTAssertEqual(version, 3,
+                   @"Migration version should be updated to 3 after migration");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that user can re-enable intra-emphasis after migration and it persists.
+ * Related to GitHub issue #293.
+ */
+- (void)testUserCanReEnableIntraEmphasisAfterMigration
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate fully migrated user who then re-enabled the setting
+    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // User chose to enable
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // User's explicit choice should be preserved
+    XCTAssertTrue(prefs.extensionIntraEmphasis,
+                  @"Already migrated user's choice to enable intra-emphasis should be preserved");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that migration only applies once and doesn't reapply on subsequent launches.
+ * Related to GitHub issue #293.
+ */
+- (void)testMigrationOnlyAppliesOnce
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Set up pre-migration state (version 2)
+    [defaults setInteger:2 forKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];
+
+    // First launch - migration applies
+    MPPreferences *prefs1 = [[MPPreferences alloc] init];
+    XCTAssertFalse(prefs1.extensionIntraEmphasis, @"First launch should migrate");
+
+    // User re-enables
+    prefs1.extensionIntraEmphasis = YES;
+    [prefs1 synchronize];
+
+    // Second launch - migration should NOT reapply
+    MPPreferences *prefs2 = [[MPPreferences alloc] init];
+    XCTAssertTrue(prefs2.extensionIntraEmphasis,
+                  @"Second launch should not reapply migration - user choice preserved");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that migration preserves already disabled intra-emphasis.
+ * Related to GitHub issue #293.
+ */
+- (void)testMigrationPreservesAlreadyDisabledIntraEmphasis
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // User at v2 who already manually disabled intra-emphasis
+    [defaults setInteger:2 forKey:@"MPMigrationVersion"];
+    [defaults setBool:NO forKey:@"extensionIntraEmphasis"];  // Already disabled
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Migration should keep it disabled (not re-enable)
+    XCTAssertFalse(prefs.extensionIntraEmphasis,
+                   @"Migration should not re-enable already disabled intra-emphasis");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that future version numbers are handled gracefully (skip migrations).
+ * Related to GitHub issue #293.
+ */
+- (void)testFutureVersionSkipsMigrations
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate higher version (e.g., downgrade scenario)
+    [defaults setInteger:99 forKey:@"MPMigrationVersion"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Should NOT apply any migrations
+    XCTAssertTrue(prefs.extensionIntraEmphasis,
+                  @"Future version should not apply any migrations");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
 @end

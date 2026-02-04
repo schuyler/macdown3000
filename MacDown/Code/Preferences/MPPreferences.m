@@ -409,7 +409,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)loadDefaultPreferences
 {
-    self.extensionIntraEmphasis = YES;
+    self.extensionIntraEmphasis = NO;
     self.extensionTables = YES;
     self.extensionFencedCode = YES;
     self.extensionFootnotes = YES;
@@ -452,14 +452,67 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (![defaults objectForKey:@"extensionStrikethough"])
         self.extensionStrikethough = YES;
 
-    // One-time fix for users who migrated with incorrect substitution defaults.
-    // Text substitutions (smart dashes, smart quotes, etc.) break Markdown syntax
-    // and should be OFF by default. This resets them for all users, then marks
-    // the fix as applied so future explicit user choices are preserved.
-    // Related to GitHub issue #263.
+    // Apply preference migrations using version-based system.
+    [self applyPreferencesMigrations];
+}
+
+/** Determine the effective migration version.
+ *
+ * If an explicit MPMigrationVersion is set, use it. Otherwise, infer the
+ * version from legacy boolean migration flags for backward compatibility.
+ *
+ * Migration version history:
+ * - Version 0: Pre-migration state (no migrations applied)
+ * - Version 1: Substitution defaults fix (Issue #263)
+ * - Version 2: Task list default fix (Issue #269)
+ * - Version 3: Intra-emphasis default fix (Issue #293)
+ */
+- (NSInteger)effectiveMigrationVersion
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Check if new version key exists
+    if ([defaults objectForKey:@"MPMigrationVersion"])
+    {
+        return [defaults integerForKey:@"MPMigrationVersion"];
+    }
+
+    // Infer version from legacy boolean flags
     static NSString * const kMPDidApplySubstitutionDefaultsFix =
         @"MPDidApplySubstitutionDefaultsFix";
-    if (![defaults boolForKey:kMPDidApplySubstitutionDefaultsFix])
+    static NSString * const kMPDidApplyTaskListDefaultFix =
+        @"MPDidApplyTaskListDefaultFix";
+
+    if ([defaults boolForKey:kMPDidApplyTaskListDefaultFix])
+    {
+        return 2;  // Both v1 and v2 migrations applied
+    }
+
+    if ([defaults boolForKey:kMPDidApplySubstitutionDefaultsFix])
+    {
+        return 1;  // Only v1 migration applied
+    }
+
+    return 0;  // No migrations applied yet
+}
+
+/** Apply all preference migrations.
+ *
+ * Migrations are applied incrementally based on the effective version.
+ * Each migration is applied only once, and user choices made after
+ * migration are preserved on subsequent launches.
+ */
+- (void)applyPreferencesMigrations
+{
+    static NSInteger const kMPCurrentMigrationVersion = 3;
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    NSInteger currentVersion = [self effectiveMigrationVersion];
+
+    // Migration Version 1: Substitution defaults fix (Issue #263)
+    // Text substitutions (smart dashes, smart quotes, etc.) break Markdown syntax
+    // and should be OFF by default.
+    if (currentVersion < 1)
     {
         [defaults setBool:NO forKey:@"editorAutomaticDashSubstitutionEnabled"];
         [defaults setBool:NO forKey:@"editorAutomaticQuoteSubstitutionEnabled"];
@@ -469,20 +522,28 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         [defaults setBool:NO forKey:@"editorAutomaticDataDetectionEnabled"];
         [defaults setBool:NO forKey:@"editorContinuousSpellCheckingEnabled"];
         [defaults setBool:NO forKey:@"editorGrammarCheckingEnabled"];
-        [defaults setBool:YES forKey:kMPDidApplySubstitutionDefaultsFix];
+        // Also set legacy flag for backward compatibility detection
+        [defaults setBool:YES forKey:@"MPDidApplySubstitutionDefaultsFix"];
     }
 
-    // One-time migration to enable checkbox/task list support by default.
-    // This enables the htmlTaskList preference for all users who haven't
-    // explicitly set it, making checkboxes render in the preview.
-    // Related to GitHub issue #269.
-    static NSString * const kMPDidApplyTaskListDefaultFix =
-        @"MPDidApplyTaskListDefaultFix";
-    if (![defaults boolForKey:kMPDidApplyTaskListDefaultFix])
+    // Migration Version 2: Task list default fix (Issue #269)
+    // Enable checkbox/task list support by default.
+    if (currentVersion < 2)
     {
         self.htmlTaskList = YES;
-        [defaults setBool:YES forKey:kMPDidApplyTaskListDefaultFix];
+        // Also set legacy flag for backward compatibility detection
+        [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     }
+
+    // Migration Version 3: Intra-emphasis default fix (Issue #293)
+    // Disable intra-word emphasis so underscores in filenames are not italicized.
+    if (currentVersion < 3)
+    {
+        self.extensionIntraEmphasis = NO;
+    }
+
+    // Update to current version
+    [defaults setInteger:kMPCurrentMigrationVersion forKey:@"MPMigrationVersion"];
 }
 
 @end
