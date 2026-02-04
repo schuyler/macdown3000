@@ -117,18 +117,18 @@
 "Keep" = "Säilita";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "Paigaldamine ebaõnnestus";
+"Installation Successful" = "Paigaldamine õnnestus";
+"Installation Successful - PATH Setup Required" = "Paigaldamine õnnestus - PATH seadistus vajalik";
+"Uninstallation Failed" = "Eemaldamine ebaõnnestus";
+"Uninstallation Successful" = "Eemaldamine õnnestus";
+"The shell utility could not be found in the application bundle." = "Shell-tööriista ei leitud rakenduse paketist.";
+"The macdown shell utility has been installed successfully." = "macdown shell-tööriist on edukalt paigaldatud.";
+"The shell utility could not be installed: %@" = "Shell-tööriista ei saanud paigaldada: %@";
+"The macdown shell utility has been removed successfully." = "macdown shell-tööriist on edukalt eemaldatud.";
+"The shell utility could not be removed: %@" = "Shell-tööriista ei saanud eemaldada: %@";
+"Could not create directory %@: %@" = "Kataloogi %@ ei saanud luua: %@";
+"A file exists at this location" = "Selles asukohas on juba fail";
+"Source file does not exist" = "Lähtefaili ei eksisteeri";
+"A file already exists at the installation path" = "Paigaldamise teel on juba fail";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown shell-tööriist on paigaldatud asukohta %@.\n\nTerminalist kasutamiseks lisa see rida oma shelli konfiguratsioonifaili (~/.zshrc või ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

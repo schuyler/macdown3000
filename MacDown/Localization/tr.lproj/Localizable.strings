@@ -72,18 +72,18 @@
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "Yükleme Başarısız";
+"Installation Successful" = "Yükleme Başarılı";
+"Installation Successful - PATH Setup Required" = "Yükleme Başarılı - PATH Ayarı Gerekli";
+"Uninstallation Failed" = "Kaldırma Başarısız";
+"Uninstallation Successful" = "Kaldırma Başarılı";
+"The shell utility could not be found in the application bundle." = "Kabuk aracı uygulama paketinde bulunamadı.";
+"The macdown shell utility has been installed successfully." = "macdown kabuk aracı başarıyla yüklendi.";
+"The shell utility could not be installed: %@" = "Kabuk aracı yüklenemedi: %@";
+"The macdown shell utility has been removed successfully." = "macdown kabuk aracı başarıyla kaldırıldı.";
+"The shell utility could not be removed: %@" = "Kabuk aracı kaldırılamadı: %@";
+"Could not create directory %@: %@" = "Dizin oluşturulamadı %@: %@";
+"A file exists at this location" = "Bu konumda zaten bir dosya var";
+"Source file does not exist" = "Kaynak dosya mevcut değil";
+"A file already exists at the installation path" = "Yükleme yolunda zaten bir dosya var";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown kabuk aracı %@ konumuna yüklendi.\n\nTerminal'den kullanmak için bu satırı kabuk yapılandırma dosyanıza (~/.zshrc veya ~/.bash_profile) ekleyin:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

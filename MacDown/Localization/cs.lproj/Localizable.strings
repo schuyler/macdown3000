@@ -147,18 +147,18 @@
 "Keep" = "Ponechat";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "Instalace selhala";
+"Installation Successful" = "Instalace úspěšná";
+"Installation Successful - PATH Setup Required" = "Instalace úspěšná - vyžadováno nastavení PATH";
+"Uninstallation Failed" = "Odinstalace selhala";
+"Uninstallation Successful" = "Odinstalace úspěšná";
+"The shell utility could not be found in the application bundle." = "Nástroj pro shell nebyl nalezen v balíčku aplikace.";
+"The macdown shell utility has been installed successfully." = "Nástroj macdown pro shell byl úspěšně nainstalován.";
+"The shell utility could not be installed: %@" = "Nástroj pro shell se nepodařilo nainstalovat: %@";
+"The macdown shell utility has been removed successfully." = "Nástroj macdown pro shell byl úspěšně odstraněn.";
+"The shell utility could not be removed: %@" = "Nástroj pro shell se nepodařilo odstranit: %@";
+"Could not create directory %@: %@" = "Nepodařilo se vytvořit adresář %@: %@";
+"A file exists at this location" = "Na tomto místě již existuje soubor";
+"Source file does not exist" = "Zdrojový soubor neexistuje";
+"A file already exists at the installation path" = "Na cestě instalace již existuje soubor";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Nástroj macdown pro shell byl nainstalován do %@.\n\nPro použití z Terminálu přidejte tento řádek do konfiguračního souboru shellu (~/.zshrc nebo ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

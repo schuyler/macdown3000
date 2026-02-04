@@ -117,18 +117,18 @@
 "Keep" = "Mantieni";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "Installazione fallita";
+"Installation Successful" = "Installazione riuscita";
+"Installation Successful - PATH Setup Required" = "Installazione riuscita - Configurazione PATH richiesta";
+"Uninstallation Failed" = "Disinstallazione fallita";
+"Uninstallation Successful" = "Disinstallazione riuscita";
+"The shell utility could not be found in the application bundle." = "L'utilità shell non è stata trovata nel pacchetto dell'applicazione.";
+"The macdown shell utility has been installed successfully." = "L'utilità shell macdown è stata installata correttamente.";
+"The shell utility could not be installed: %@" = "Impossibile installare l'utilità shell: %@";
+"The macdown shell utility has been removed successfully." = "L'utilità shell macdown è stata rimossa correttamente.";
+"The shell utility could not be removed: %@" = "Impossibile rimuovere l'utilità shell: %@";
+"Could not create directory %@: %@" = "Impossibile creare la directory %@: %@";
+"A file exists at this location" = "Esiste già un file in questa posizione";
+"Source file does not exist" = "Il file sorgente non esiste";
+"A file already exists at the installation path" = "Esiste già un file nel percorso di installazione";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "L'utilità shell macdown è stata installata in %@.\n\nPer usarla dal Terminale, aggiungi questa riga al file di configurazione della shell (~/.zshrc o ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

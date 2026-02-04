@@ -96,18 +96,18 @@
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "설치 실패";
+"Installation Successful" = "설치 성공";
+"Installation Successful - PATH Setup Required" = "설치 성공 - PATH 설정 필요";
+"Uninstallation Failed" = "제거 실패";
+"Uninstallation Successful" = "제거 성공";
+"The shell utility could not be found in the application bundle." = "애플리케이션 번들에서 셸 유틸리티를 찾을 수 없습니다.";
+"The macdown shell utility has been installed successfully." = "macdown 셸 유틸리티가 성공적으로 설치되었습니다.";
+"The shell utility could not be installed: %@" = "셸 유틸리티를 설치할 수 없습니다: %@";
+"The macdown shell utility has been removed successfully." = "macdown 셸 유틸리티가 성공적으로 제거되었습니다.";
+"The shell utility could not be removed: %@" = "셸 유틸리티를 제거할 수 없습니다: %@";
+"Could not create directory %@: %@" = "디렉토리 %@을(를) 생성할 수 없습니다: %@";
+"A file exists at this location" = "이 위치에 파일이 이미 존재합니다";
+"Source file does not exist" = "소스 파일이 존재하지 않습니다";
+"A file already exists at the installation path" = "설치 경로에 파일이 이미 존재합니다";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown 셸 유틸리티가 %@에 설치되었습니다.\n\n터미널에서 사용하려면 셸 설정 파일(~/.zshrc 또는 ~/.bash_profile)에 다음 줄을 추가하세요:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

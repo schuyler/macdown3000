@@ -147,18 +147,18 @@
 "Keep" = "保持";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "インストール失敗";
+"Installation Successful" = "インストール成功";
+"Installation Successful - PATH Setup Required" = "インストール成功 - PATH設定が必要です";
+"Uninstallation Failed" = "アンインストール失敗";
+"Uninstallation Successful" = "アンインストール成功";
+"The shell utility could not be found in the application bundle." = "アプリケーションバンドル内にコマンドラインツールが見つかりませんでした。";
+"The macdown shell utility has been installed successfully." = "macdownコマンドラインツールが正常にインストールされました。";
+"The shell utility could not be installed: %@" = "コマンドラインツールをインストールできませんでした: %@";
+"The macdown shell utility has been removed successfully." = "macdownコマンドラインツールが正常に削除されました。";
+"The shell utility could not be removed: %@" = "コマンドラインツールを削除できませんでした: %@";
+"Could not create directory %@: %@" = "ディレクトリ %@ を作成できませんでした: %@";
+"A file exists at this location" = "この場所にファイルが既に存在します";
+"Source file does not exist" = "ソースファイルが存在しません";
+"A file already exists at the installation path" = "インストールパスにファイルが既に存在します";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdownコマンドラインツールが %@ にインストールされました。\n\nターミナルから使用するには、シェル設定ファイル (~/.zshrc または ~/.bash_profile) に以下の行を追加してください:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

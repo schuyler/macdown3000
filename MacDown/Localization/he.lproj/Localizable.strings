@@ -1,65 +1,65 @@
 /* Prism theme title */
-"(Default)" = "(Default)";
+"(Default)" = "(ברירת מחדל)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<לא מותקן>";
 
 /* Blockquote toolbar button */
-"Blockquote" = "Blockquote";
+"Blockquote" = "ציטוט";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ תו (ללא רווחים);%@ תווים (ללא רווחים)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ character;%@ characters";
+"CHARACTERS_PLURAL_STRING" = "%@ תו;%@ תווים";
 
 /* Comment toolbar button */
-"Comment" = "Comment";
+"Comment" = "הערה";
 
 /* Copy HTML toolbar button */
-"Copy HTML" = "Copy HTML";
+"Copy HTML" = "העתק HTML";
 
 /* Preference pane title. */
-"Editor" = "Editor";
+"Editor" = "עורך";
 
 /* Emphasize toolbar button */
-"Emphasize" = "Emphasize";
+"Emphasize" = "נטוי";
 
 /* Preference pane title. */
-"General" = "General";
+"General" = "כללי";
 
 /* Heading 1 toolbar button */
-"Heading 1" = "Heading 1";
+"Heading 1" = "כותרת 1";
 
 /* Heading 2 toolbar button */
-"Heading 2" = "Heading 2";
+"Heading 2" = "כותרת 2";
 
 /* Heading 3 toolbar button */
-"Heading 3" = "Heading 3";
+"Heading 3" = "כותרת 3";
 
 /* No comment provided by engineer. */
-"Headings" = "Headings";
+"Headings" = "כותרות";
 
 /* Toggle editor pane menu item */
-"Hide Editor Pane" = "Hide Editor Pane";
+"Hide Editor Pane" = "הסתר חלונית עורך";
 
 /* Toggle preview pane menu item */
-"Hide Preview Pane" = "Hide Preview Pane";
+"Hide Preview Pane" = "הסתר חלונית תצוגה מקדימה";
 
 /* Toggle reveal toolbar */
-"Hide Toolbar" = "Hide Toolbar";
+"Hide Toolbar" = "הסתר סרגל כלים";
 
 /* Highlight toolbar button */
-"Highlight" = "Highlight";
+"Highlight" = "הדגשה";
 
 /* Image toolbar button */
-"Image" = "Image";
+"Image" = "תמונה";
 
 /* Inline code toolbar button */
-"Inline Code" = "Inline Code";
+"Inline Code" = "קוד בתוך שורה";
 
 /* Install shell utility button */
-"Install" = "Install";
+"Install" = "התקן";
 
 /* Localizable.strings
   MacDown
@@ -69,91 +69,91 @@
 "JJ_PLURAL_FORM_RULE" = "1";
 
 /* Layout toolbar button */
-"Layout" = "Layout";
+"Layout" = "פריסה";
 
 /* Link toolbar button */
-"Link" = "Link";
+"Link" = "קישור";
 
 /* Preference pane title. */
 "Markdown" = "Markdown";
 
 /* Ordered list toolbar button */
-"Ordered List" = "Ordered List";
+"Ordered List" = "רשימה ממוספרת";
 
 /* No comment provided by engineer. */
-"Ordered/Unordered List" = "Ordered/Unordered List";
+"Ordered/Unordered List" = "רשימה ממוספרת/לא ממוספרת";
 
 /* Preferences window title. */
-"Preferences" = "Preferences";
+"Preferences" = "העדפות";
 
 /* Preference pane title. */
-"Rendering" = "Rendering";
+"Rendering" = "עיבוד";
 
 /* Toggle editor pane menu item */
-"Restore Editor Pane" = "Restore Editor Pane";
+"Restore Editor Pane" = "שחזר חלונית עורך";
 
 /* Toggle preview pane menu item */
-"Restore Preview Pane" = "Restore Preview Pane";
+"Restore Preview Pane" = "שחזר חלונית תצוגה מקדימה";
 
 /* Label stating that shell utility has been installed */
-"Shell utility installed" = "Shell utility installed";
+"Shell utility installed" = "כלי Shell מותקן";
 
 /* Label stating that shell utility has not been installed */
-"Shell utility not installed" = "Shell utility not installed";
+"Shell utility not installed" = "כלי Shell לא מותקן";
 
 /* Shift text to the left toolbar button */
-"Shift Left" = "Shift Left";
+"Shift Left" = "הזז שמאלה";
 
 /* No comment provided by engineer. */
-"Shift Left/Right" = "Shift Left/Right";
+"Shift Left/Right" = "הזז שמאלה/ימינה";
 
 /* Shift text to the right toolbar button */
-"Shift Right" = "Shift Right";
+"Shift Right" = "הזז ימינה";
 
 /* Toggle reveal toolbar */
-"Show Toolbar" = "Show Toolbar";
+"Show Toolbar" = "הצג סרגל כלים";
 
 /* Strikethrough toolbar button */
-"Strikethrough" = "Strikethrough";
+"Strikethrough" = "קו חוצה";
 
 /* Strong toolbar button */
-"Strong" = "Strong";
+"Strong" = "מודגש";
 
 /* Preference pane title. */
-"Terminal" = "Terminal";
+"Terminal" = "מסוף";
 
 /* No comment provided by engineer. */
-"Text Styles" = "Text Styles";
+"Text Styles" = "סגנונות טקסט";
 
 /* Underline toolbar button */
-"Underline" = "Underline";
+"Underline" = "קו תחתון";
 
 /* Uninstall shell utility button */
-"Uninstall" = "Uninstall";
+"Uninstall" = "הסר התקנה";
 
 /* Unordered list toolbar button */
-"Unordered List" = "Unordered List";
+"Unordered List" = "רשימה לא ממוספרת";
 
 /* default filename if no title can be determined */
-"Untitled" = "Untitled";
+"Untitled" = "ללא שם";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ word;%@ words";
+"WORDS_PLURAL_STRING" = "%@ מילה;%@ מילים";
 
 /* Shell utility installation (Issue #38) */
-"Installation Failed" = "Installation Failed";
-"Installation Successful" = "Installation Successful";
-"Installation Successful - PATH Setup Required" = "Installation Successful - PATH Setup Required";
-"Uninstallation Failed" = "Uninstallation Failed";
-"Uninstallation Successful" = "Uninstallation Successful";
-"The shell utility could not be found in the application bundle." = "The shell utility could not be found in the application bundle.";
-"The macdown shell utility has been installed successfully." = "The macdown shell utility has been installed successfully.";
-"The shell utility could not be installed: %@" = "The shell utility could not be installed: %@";
-"The macdown shell utility has been removed successfully." = "The macdown shell utility has been removed successfully.";
-"The shell utility could not be removed: %@" = "The shell utility could not be removed: %@";
-"Could not create directory %@: %@" = "Could not create directory %@: %@";
-"A file exists at this location" = "A file exists at this location";
-"Source file does not exist" = "Source file does not exist";
-"A file already exists at the installation path" = "A file already exists at the installation path";
-"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+"Installation Failed" = "ההתקנה נכשלה";
+"Installation Successful" = "ההתקנה הצליחה";
+"Installation Successful - PATH Setup Required" = "ההתקנה הצליחה - נדרשת הגדרת PATH";
+"Uninstallation Failed" = "הסרת ההתקנה נכשלה";
+"Uninstallation Successful" = "הסרת ההתקנה הצליחה";
+"The shell utility could not be found in the application bundle." = "כלי ה-Shell לא נמצא בחבילת היישום.";
+"The macdown shell utility has been installed successfully." = "כלי ה-Shell של macdown הותקן בהצלחה.";
+"The shell utility could not be installed: %@" = "לא ניתן להתקין את כלי ה-Shell: %@";
+"The macdown shell utility has been removed successfully." = "כלי ה-Shell של macdown הוסר בהצלחה.";
+"The shell utility could not be removed: %@" = "לא ניתן להסיר את כלי ה-Shell: %@";
+"Could not create directory %@: %@" = "לא ניתן ליצור תיקייה %@: %@";
+"A file exists at this location" = "קיים קובץ במיקום זה";
+"Source file does not exist" = "קובץ המקור לא קיים";
+"A file already exists at the installation path" = "קובץ כבר קיים בנתיב ההתקנה";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "כלי ה-Shell של macdown הותקן ב-%@.\n\nכדי להשתמש בו מהמסוף, הוסף שורה זו לקובץ תצורת ה-Shell שלך (~/.zshrc או ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
 
