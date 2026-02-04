@@ -38,6 +38,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPImageExportTests.m | Image export, base64, alt text | Good | (Issue #234) |
 | MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
 | MPEditorViewSubstitutionTests.m | Text substitution preference getters, NSUserDefaults integration | Good | (Issue #263) |
+| MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -55,6 +56,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
+- Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
