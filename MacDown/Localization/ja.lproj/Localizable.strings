@@ -8,10 +8,10 @@
 "Blockquote" = "ブロック引用";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 文字 (スペースなし);%@ 文字列 (スペースなし)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 文字 (スペースなし);%@ 文字 (スペースなし)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ 文字;%@ 文字列";
+"CHARACTERS_PLURAL_STRING" = "%@ 文字;%@ 文字";
 
 /* Comment toolbar button */
 "Comment" = "コメント";
