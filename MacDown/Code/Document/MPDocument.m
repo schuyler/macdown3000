@@ -225,6 +225,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) BOOL inLiveScroll;
 @property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing to prevent scroll jumping
+@property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
@@ -487,6 +488,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     wordCountWidget.hidden = !self.preferences.editorShowWordCount;
     wordCountWidget.enabled = NO;
 
+    // Issue #294: Initialize word count update queue for debouncing
+    self.wordCountUpdateQueue = [[NSOperationQueue alloc] init];
+    self.wordCountUpdateQueue.maxConcurrentOperationCount = 1;
+
     // These needs to be queued until after the window is shown, so that editor
     // can have the correct dimention for size-limiting and stuff. See
     // https://github.com/uranusjr/macdown/issues/236
@@ -521,6 +526,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(performDelayedSyncScrollers)
                                                    object:nil];
+
+        // Issue #294: Cancel any pending word count updates
+        [self.wordCountUpdateQueue cancelAllOperations];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
@@ -1231,6 +1239,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
                 // Mark rendering as complete so next edit will be processed
                 self.alreadyRenderingInWeb = NO;
+
+                // Issue #294: Update word count during DOM replacement
+                [self scheduleWordCountUpdate];
 
                 return;
             }
@@ -2421,6 +2432,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     if (self.isPreviewReady)
         self.wordCountWidget.enabled = YES;
+}
+
+// Issue #294: Schedule word count update with debouncing to avoid
+// performance issues during rapid typing.
+- (void)scheduleWordCountUpdate
+{
+    if (!self.preferences.editorShowWordCount)
+        return;
+
+    // Cancel pending updates (debouncing)
+    [self.wordCountUpdateQueue cancelAllOperations];
+
+    // Schedule update with a small delay
+    __weak MPDocument *weakSelf = self;
+    [self.wordCountUpdateQueue addOperationWithBlock:^{
+        // Small delay to debounce rapid typing (300ms)
+        [NSThread sleepForTimeInterval:0.3];
+
+        // Execute update on main thread
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf updateWordCount];
+        });
+    }];
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another
