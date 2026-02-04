@@ -591,6 +591,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Issue #290: Mark that we're saving to avoid triggering reload
     self.isSelfSaving = YES;
 
+    // Issue #290: Capture previous URL before super updates it (for Save As detection)
+    NSURL *previousURL = self.fileURL;
+
     if (self.preferences.editorEnsuresNewlineAtEndOfFile)
     {
         NSCharacterSet *newline = [NSCharacterSet newlineCharacterSet];
@@ -614,9 +617,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     });
 
     // If URL changed (Save As), restart watching the new file
-    if (result && url && self.fileURL && ![url isEqual:self.fileURL])
+    if (result && (!previousURL || ![url isEqual:previousURL]))
     {
-        // URL will be updated by super, restart watching
+        // URL was updated by super, restart watching the new file
         dispatch_async(dispatch_get_main_queue(), ^{
             [self startFileWatching];
         });
@@ -2853,12 +2856,12 @@ current file somewhere to enable this feature.", \
     });
 
     // Cancel handler - cleanup when source is cancelled
+    // Capture fd directly for more robust cleanup (no dependency on instance state)
+    int fdToClose = fd;
     dispatch_source_set_cancel_handler(source, ^{
-        MPDocument *strongSelf = weakSelf;
-        if (strongSelf && strongSelf.fileWatchDescriptor >= 0)
+        if (fdToClose >= 0)
         {
-            close(strongSelf.fileWatchDescriptor);
-            strongSelf.fileWatchDescriptor = -1;
+            close(fdToClose);
         }
     });
 
@@ -2957,6 +2960,12 @@ current file somewhere to enable this feature.", \
     // Read the new content
     if (![self readFromData:data ofType:self.fileType error:&error])
         return;
+
+    // Update fileModificationDate to reflect the reloaded content
+    NSDictionary *attrs = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:self.fileURL.path error:nil];
+    if (attrs[NSFileModificationDate])
+        self.fileModificationDate = attrs[NSFileModificationDate];
 
     // Clear the dirty state since we just loaded fresh content
     [self updateChangeCount:NSChangeCleared];
