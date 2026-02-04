@@ -491,6 +491,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Issue #294: Initialize word count update queue for debouncing
     self.wordCountUpdateQueue = [[NSOperationQueue alloc] init];
     self.wordCountUpdateQueue.maxConcurrentOperationCount = 1;
+    self.wordCountUpdateQueue.name = @"com.macdown.wordCountUpdate";
 
     // These needs to be queued until after the window is shown, so that editor
     // can have the correct dimention for size-limiting and stuff. See
@@ -2441,20 +2442,33 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!self.preferences.editorShowWordCount)
         return;
 
+    if (!self.wordCountUpdateQueue)
+        return;
+
     // Cancel pending updates (debouncing)
     [self.wordCountUpdateQueue cancelAllOperations];
 
-    // Schedule update with a small delay
+    // Schedule update with a small delay using NSBlockOperation
+    // so we can check isCancelled after the delay
     __weak MPDocument *weakSelf = self;
-    [self.wordCountUpdateQueue addOperationWithBlock:^{
+    NSBlockOperation *operation = [[NSBlockOperation alloc] init];
+    __weak NSBlockOperation *weakOperation = operation;
+
+    [operation addExecutionBlock:^{
         // Small delay to debounce rapid typing (300ms)
         [NSThread sleepForTimeInterval:0.3];
+
+        // Check if cancelled after sleep (handles rapid successive calls)
+        if (weakOperation.isCancelled)
+            return;
 
         // Execute update on main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf updateWordCount];
         });
     }];
+
+    [self.wordCountUpdateQueue addOperation:operation];
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another
