@@ -51,6 +51,7 @@ runs:
             CODE_SIGN_STYLE="Manual" \
             DEVELOPMENT_TEAM="${{ inputs.team-id }}" \
             ENABLE_HARDENED_RUNTIME=YES \
+            CODE_SIGN_ENTITLEMENTS="MacDown/MacDown.entitlements" \
             $VERSION_ARGS \
             | tee build.log
         else
