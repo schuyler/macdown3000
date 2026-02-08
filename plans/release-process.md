@@ -45,25 +45,28 @@ Before using the release workflow, you must have:
 
 Apple requires **Hardened Runtime** to be enabled for all notarized applications. The workflow automatically enables this with the `ENABLE_HARDENED_RUNTIME=YES` build setting.
 
-**If your app requires runtime exceptions** (e.g., for JIT compilation or unsigned code execution), you must:
+MacDown uses an entitlements file at `MacDown/MacDown.entitlements` with the following entitlements:
 
-1. Create an entitlements file (e.g., `MacDown/MacDown.entitlements`) with required exceptions:
+- `com.apple.security.files.user-selected.read-write` — Required for NSSavePanel dialogs (Move To, Save As, Export) to function correctly on macOS Sequoia 15.x and later
+- `com.apple.security.automation.apple-events` — Required for Apple Events automation support
+
+The entitlements file is wired into the Xcode project via `CODE_SIGN_ENTITLEMENTS` for both Debug and Release configurations, and is also passed during signed CI builds in `.github/actions/build-macdown/action.yml`.
+
+**If additional entitlements are needed** (e.g., for JIT compilation or unsigned code execution), add them to `MacDown/MacDown.entitlements`:
+
    ```xml
    <?xml version="1.0" encoding="UTF-8"?>
    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
    <plist version="1.0">
    <dict>
-       <!-- Example: Allow loading of unsigned executable memory -->
-       <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+       <key>com.apple.security.files.user-selected.read-write</key>
        <true/>
+       <key>com.apple.security.automation.apple-events</key>
+       <true/>
+       <!-- Add additional entitlements here as needed -->
    </dict>
    </plist>
    ```
-
-2. Update the workflow to include the entitlements file:
-   - Add `CODE_SIGN_ENTITLEMENTS="MacDown/MacDown.entitlements"` to the xcodebuild command
-
-For most apps (including MacDown), no special entitlements are needed and the default Hardened Runtime settings work fine.
 
 ## GitHub Secrets Setup
 
