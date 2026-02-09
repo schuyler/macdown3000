@@ -35,6 +35,13 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (NSString *)HTMLForExportWithStyles:(BOOL)withStyles
                          highlighting:(BOOL)withHighlighting;
 
+/// Set a cache-busting timestamp for a local resource path.
+/// The timestamp will be appended as ?t=<value> on the next render.
+- (void)setTimestamp:(NSTimeInterval)timestamp forResourcePath:(NSString *)path;
+
+/// Clear all cache-busting timestamps.
+- (void)clearResourceTimestamps;
+
 @end
 
 
@@ -60,5 +67,10 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (BOOL)rendererHasMathJax:(MPRenderer *)renderer;
 - (NSString *)rendererHighlightingThemeName:(MPRenderer *)renderer;
 - (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html;
+
+@optional
+/// Return the base URL for resolving relative resource paths.
+/// Used for cache-busting local resource URLs (issue #110).
+- (NSURL *)rendererBaseURL:(MPRenderer *)renderer;
 
 @end
