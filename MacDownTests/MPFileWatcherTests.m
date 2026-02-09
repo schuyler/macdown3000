@@ -92,7 +92,7 @@
     // Modify the file after a short delay to ensure watcher is active
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-        [@"modified" writeToFile:path atomically:YES
+        [@"modified" writeToFile:path atomically:NO
                         encoding:NSUTF8StringEncoding error:nil];
     });
 
@@ -163,7 +163,7 @@
     [watcher stopWatching];
 
     // Modify after stop
-    [@"changed" writeToFile:path atomically:YES
+    [@"changed" writeToFile:path atomically:NO
                    encoding:NSUTF8StringEncoding error:nil];
 
     // Run the run loop briefly to allow any pending events
@@ -212,7 +212,7 @@
         // watcher goes out of scope here
     }
 
-    [@"changed" writeToFile:path atomically:YES
+    [@"changed" writeToFile:path atomically:NO
                    encoding:NSUTF8StringEncoding error:nil];
 
     [[NSRunLoop currentRunLoop] runUntilDate:
