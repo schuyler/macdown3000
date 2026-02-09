@@ -19,7 +19,7 @@
     NSMutableArray<NSString*> *texts = [NSMutableArray array];
     for (id item in iterable) {
         if(! [item isKindOfClass:[NSURL class]]) continue;
-        FileURLInlining *file = [self withURL:item];
+        FileURLInlining *file = [[self alloc] initWithURL:item];
         if(! file) continue;
         [texts addObject: [file inlineContent]];
     }
@@ -27,10 +27,16 @@
     return texts;
 }
 
-+(instancetype)withURL:(NSURL *)url {
+-(instancetype)initWithURL:(NSURL *) url {
     if(! url.isFileURL) return nil;
+    if (! [super init]) return nil;
+    self.url = url;
+    return self;
+}
 
-    return [[self alloc] initWithURL:url];
+-(id)init {
+    @throw [NSException exceptionWithName:@"BadInit" reason:nil userInfo:nil];
+    return nil;
 }
 
 -(NSString *)inlineContent {
@@ -45,14 +51,6 @@
 }
 
 #pragma mark private
--(instancetype)initWithURL:(NSURL *) url {
-    self = [super init];
-    if (self) {
-        _url = url;
-    }
-    return self;
-}
-
 -(NSString *)imageContent
 {
     NSString *mimeType = [[self class] mimeTypeForFilePath: self.url.path];
