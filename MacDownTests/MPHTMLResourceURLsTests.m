@@ -166,6 +166,15 @@
     XCTAssertTrue([paths containsObject:@"/Users/test/images/photo.png"]);
 }
 
+- (void)testDirectoryBaseURL
+{
+    // Unsaved documents use a directory URL as base
+    NSURL *dirURL = [NSURL fileURLWithPath:@"/Users/test/docs" isDirectory:YES];
+    NSString *html = @"<img src=\"photo.png\">";
+    NSSet *paths = MPLocalFilePathsInHTML(html, dirURL);
+    XCTAssertTrue([paths containsObject:@"/Users/test/docs/photo.png"]);
+}
+
 #pragma mark - MPApplyCacheBusting
 
 - (void)testCacheBustAppendTimestamp

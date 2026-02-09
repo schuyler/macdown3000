@@ -1223,6 +1223,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
+    // Issue #110: Update resource file watchers based on referenced local files.
+    // Run on every render (both DOM replacement and full reload) so that newly
+    // added resource references are watched immediately.
+    if (self.resourceWatcherSet && baseUrl)
+    {
+        NSSet *paths = MPLocalFilePathsInHTML(html, baseUrl);
+        [self.resourceWatcherSet updateWatchedPaths:paths];
+    }
+
     // Check if CSS style or highlighting theme has changed.
     // If either changed, we must do a full reload to update <head> with new CSS links.
     NSString *newStyleName = self.preferences.htmlStyleName;
@@ -1295,13 +1304,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
-
-    // Issue #110: Update resource file watchers based on referenced local files
-    if (self.resourceWatcherSet && baseUrl)
-    {
-        NSSet *paths = MPLocalFilePathsInHTML(html, baseUrl);
-        [self.resourceWatcherSet updateWatchedPaths:paths];
-    }
 }
 
 - (NSURL *)rendererBaseURL:(MPRenderer *)renderer

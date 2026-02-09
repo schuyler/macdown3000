@@ -37,8 +37,12 @@ static NSString *MPResolveLocalPath(NSString *url, NSURL *baseURL)
     if ([url hasPrefix:@"/"])
         return url;
 
-    // Relative path — resolve against base directory
-    NSURL *baseDir = [baseURL URLByDeletingLastPathComponent];
+    // Relative path — resolve against base directory.
+    // If baseURL is already a directory (e.g., unsaved document default),
+    // use it directly; otherwise strip the filename component.
+    NSURL *baseDir = baseURL.hasDirectoryPath
+        ? baseURL
+        : [baseURL URLByDeletingLastPathComponent];
     NSURL *resolved = [NSURL URLWithString:
         [url stringByAddingPercentEncodingWithAllowedCharacters:
             [NSCharacterSet URLPathAllowedCharacterSet]]
