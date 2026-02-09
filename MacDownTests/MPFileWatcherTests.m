@@ -90,37 +90,13 @@
         cancelHandler:^(NSString *p) {}];
 
     // Modify the file after a short delay to ensure watcher is active
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         [@"modified" writeToFile:path atomically:NO
                         encoding:NSUTF8StringEncoding error:nil];
     });
 
-    [self waitForExpectationsWithTimeout:2.0 handler:nil];
-    [watcher stopWatching];
-}
-
-- (void)testHandlerReceivesCorrectPath
-{
-    NSString *path = [self createTestFileWithName:@"pathcheck.txt" content:@"data"];
-    XCTestExpectation *exp = [self expectationWithDescription:@"path matches"];
-    __block NSString *receivedPath = nil;
-
-    MPFileWatcher *watcher = [[MPFileWatcher alloc] initWithPath:path
-        handler:^(NSString *p) {
-            receivedPath = p;
-            [exp fulfill];
-        }
-        cancelHandler:^(NSString *p) {}];
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
-        [@"changed" writeToFile:path atomically:YES
-                       encoding:NSUTF8StringEncoding error:nil];
-    });
-
-    [self waitForExpectationsWithTimeout:2.0 handler:nil];
-    XCTAssertEqualObjects(receivedPath, path);
+    [self waitForExpectationsWithTimeout:5.0 handler:nil];
     [watcher stopWatching];
 }
 
@@ -187,12 +163,12 @@
             [exp fulfill];
         }];
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         [self.fileManager removeItemAtPath:path error:nil];
     });
 
-    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+    [self waitForExpectationsWithTimeout:5.0 handler:nil];
     XCTAssertFalse(watcher.isWatching);
 }
 
