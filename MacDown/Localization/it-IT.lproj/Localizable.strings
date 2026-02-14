@@ -8,10 +8,10 @@
 "Blockquote" = "Blocco citazione";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "Carattere %@ (senza spazi);caratteri %@ (senza spazi)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ carattere (senza spazi);%@ caratteri (senza spazi)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "Carattere %@;%@ Caratteri";
+"CHARACTERS_PLURAL_STRING" = "%@ carattere;%@ caratteri";
 
 /* Comment toolbar button */
 "Comment" = "Commento";
@@ -115,3 +115,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Questo file è stato modificato da un'altra applicazione. Vuoi scartare le tue modifiche?";
 "Discard" = "Scarta";
 "Keep" = "Mantieni";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Installazione fallita";
+"Installation Successful" = "Installazione riuscita";
+"Installation Successful - PATH Setup Required" = "Installazione riuscita - Configurazione PATH richiesta";
+"Uninstallation Failed" = "Disinstallazione fallita";
+"Uninstallation Successful" = "Disinstallazione riuscita";
+"The shell utility could not be found in the application bundle." = "L'utilità shell non è stata trovata nel pacchetto dell'applicazione.";
+"The macdown shell utility has been installed successfully." = "L'utilità shell macdown è stata installata correttamente.";
+"The shell utility could not be installed: %@" = "Impossibile installare l'utilità shell: %@";
+"The macdown shell utility has been removed successfully." = "L'utilità shell macdown è stata rimossa correttamente.";
+"The shell utility could not be removed: %@" = "Impossibile rimuovere l'utilità shell: %@";
+"Could not create directory %@: %@" = "Impossibile creare la directory %@: %@";
+"A file exists at this location" = "Esiste già un file in questa posizione";
+"Source file does not exist" = "Il file sorgente non esiste";
+"A file already exists at the installation path" = "Esiste già un file nel percorso di installazione";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "L'utilità shell macdown è stata installata in %@.\n\nPer usarla dal Terminale, aggiungi questa riga al file di configurazione della shell (~/.zshrc o ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

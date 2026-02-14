@@ -2,7 +2,7 @@
 "(Default)" = "(Standard)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Ikke installert>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Blokksitat";
@@ -145,3 +145,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Denne filen har blitt endret av et annet program. Vil du forkaste endringene dine?";
 "Discard" = "Forkast";
 "Keep" = "Behold";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Installasjon mislyktes";
+"Installation Successful" = "Installasjon vellykket";
+"Installation Successful - PATH Setup Required" = "Installasjon vellykket - PATH-oppsett kreves";
+"Uninstallation Failed" = "Avinstallasjon mislyktes";
+"Uninstallation Successful" = "Avinstallasjon vellykket";
+"The shell utility could not be found in the application bundle." = "Terminalverktøyet ble ikke funnet i programpakken.";
+"The macdown shell utility has been installed successfully." = "macdown terminalverktøyet er installert.";
+"The shell utility could not be installed: %@" = "Terminalverktøyet kunne ikke installeres: %@";
+"The macdown shell utility has been removed successfully." = "macdown terminalverktøyet er fjernet.";
+"The shell utility could not be removed: %@" = "Terminalverktøyet kunne ikke fjernes: %@";
+"Could not create directory %@: %@" = "Kunne ikke opprette mappe %@: %@";
+"A file exists at this location" = "Det finnes allerede en fil på denne plasseringen";
+"Source file does not exist" = "Kildefilen finnes ikke";
+"A file already exists at the installation path" = "Det finnes allerede en fil på installasjonsbanen";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown terminalverktøyet er installert til %@.\n\nFor å bruke det fra Terminal, legg til denne linjen i shell-konfigurasjonsfilen din (~/.zshrc eller ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

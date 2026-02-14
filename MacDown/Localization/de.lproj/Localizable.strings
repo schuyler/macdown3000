@@ -145,3 +145,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Diese Datei wurde von einer anderen Anwendung geändert. Möchten Sie Ihre Änderungen verwerfen?";
 "Discard" = "Verwerfen";
 "Keep" = "Behalten";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Installation fehlgeschlagen";
+"Installation Successful" = "Installation erfolgreich";
+"Installation Successful - PATH Setup Required" = "Installation erfolgreich - PATH-Einrichtung erforderlich";
+"Uninstallation Failed" = "Deinstallation fehlgeschlagen";
+"Uninstallation Successful" = "Deinstallation erfolgreich";
+"The shell utility could not be found in the application bundle." = "Das Shell-Werkzeug konnte im Anwendungspaket nicht gefunden werden.";
+"The macdown shell utility has been installed successfully." = "Das macdown Shell-Werkzeug wurde erfolgreich installiert.";
+"The shell utility could not be installed: %@" = "Das Shell-Werkzeug konnte nicht installiert werden: %@";
+"The macdown shell utility has been removed successfully." = "Das macdown Shell-Werkzeug wurde erfolgreich entfernt.";
+"The shell utility could not be removed: %@" = "Das Shell-Werkzeug konnte nicht entfernt werden: %@";
+"Could not create directory %@: %@" = "Verzeichnis %@ konnte nicht erstellt werden: %@";
+"A file exists at this location" = "An diesem Speicherort existiert bereits eine Datei";
+"Source file does not exist" = "Quelldatei existiert nicht";
+"A file already exists at the installation path" = "Am Installationspfad existiert bereits eine Datei";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Das macdown Shell-Werkzeug wurde in %@ installiert.\n\nUm es im Terminal zu verwenden, fügen Sie diese Zeile zu Ihrer Shell-Konfigurationsdatei (~/.zshrc oder ~/.bash_profile) hinzu:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

@@ -5,7 +5,7 @@
 "<Not installed>" = "<Ikke installeret>";
 
 /* Blockquote toolbar button */
-"Blockquote" = "Citat";
+"Blockquote" = "Citatblok";
 
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tegn (uden mellemrum);%@ tegn (uden mellemrum)";
@@ -17,7 +17,7 @@
 "Comment" = "Kommentar";
 
 /* Copy HTML toolbar button */
-"Copy HTML" = "Kopier HTML";
+"Copy HTML" = "Kopiér HTML";
 
 /* Preference pane title. */
 "Editor" = "Editor";
@@ -41,16 +41,16 @@
 "Headings" = "Overskrifter";
 
 /* Toggle editor pane menu item */
-"Hide Editor Pane" = "Skjul editor";
+"Hide Editor Pane" = "Skjul editorpanel";
 
 /* Toggle preview pane menu item */
-"Hide Preview Pane" = "Skjul preview";
+"Hide Preview Pane" = "Skjul forhåndsvisningspanel";
 
 /* Toggle reveal toolbar */
 "Hide Toolbar" = "Skjul værktøjslinje";
 
 /* Highlight toolbar button */
-"Highlight" = "Fremhæve";
+"Highlight" = "Fremhæv";
 
 /* Image toolbar button */
 "Image" = "Billede";
@@ -59,7 +59,7 @@
 "Inline Code" = "Inline kode";
 
 /* Install shell utility button */
-"Install" = "Installer";
+"Install" = "Installér";
 
 /* Localizable.strings
   MacDown
@@ -81,31 +81,31 @@
 "Ordered List" = "Nummereret liste";
 
 /* No comment provided by engineer. */
-"Ordered/Unordered List" = "Nummereret liste/Punktopstilling";
+"Ordered/Unordered List" = "Nummereret/Unummereret liste";
 
 /* Preferences window title. */
 "Preferences" = "Indstillinger";
 
 /* Preference pane title. */
-"Rendering" = "Genererer";
+"Rendering" = "Gengivelse";
 
 /* Toggle editor pane menu item */
 "Restore Editor Pane" = "Gendan editorpanel";
 
 /* Toggle preview pane menu item */
-"Restore Preview Pane" = "Gendan preview-panel";
+"Restore Preview Pane" = "Gendan forhåndsvisningspanel";
 
 /* Label stating that shell utility has been installed */
-"Shell utility installed" = "Shell utility installeret";
+"Shell utility installed" = "Shell-værktøj installeret";
 
 /* Label stating that shell utility has not been installed */
-"Shell utility not installed" = "Shell utility er ikke installeret";
+"Shell utility not installed" = "Shell-værktøj ikke installeret";
 
 /* Shift text to the left toolbar button */
 "Shift Left" = "Ryk til venstre";
 
 /* No comment provided by engineer. */
-"Shift Left/Right" = "Ryk til venstre/højre";
+"Shift Left/Right" = "Ryk venstre/højre";
 
 /* Shift text to the right toolbar button */
 "Shift Right" = "Ryk til højre";
@@ -123,28 +123,22 @@
 "Terminal" = "Terminal";
 
 /* No comment provided by engineer. */
-"Text Styles" = "Tekstformater";
+"Text Styles" = "Tekststile";
 
 /* Underline toolbar button */
-"Underline" = "Understreg";
+"Underline" = "Understregning";
 
 /* Uninstall shell utility button */
-"Uninstall" = "Afinstaller";
+"Uninstall" = "Afinstallér";
 
 /* Unordered list toolbar button */
-"Unordered List" = "Punktopstilling";
+"Unordered List" = "Unummereret liste";
 
 /* default filename if no title can be determined */
-"Untitled" = "Uden navn";
+"Untitled" = "Uden titel";
 
 /* (No Comment) */
 "WORDS_PLURAL_STRING" = "%@ ord;%@ ord";
-
-/* External file change detection (Issue #290) */
-"File Modified Externally" = "Filen er ændret eksternt";
-"This file has been changed by another application. Do you want to discard your changes?" = "Denne fil er blevet ændret af et andet program. Vil du kassere dine ændringer?";
-"Discard" = "Kassér";
-"Keep" = "Behold";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Installation mislykkedes";
@@ -162,3 +156,4 @@
 "Source file does not exist" = "Kildefilen findes ikke";
 "A file already exists at the installation path" = "Der findes allerede en fil på installationsstien";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Macdown shell-værktøjet er blevet installeret i %@.\n\nFor at bruge det fra Terminal, tilføj denne linje til din shell-konfigurationsfil (~/.zshrc eller ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+

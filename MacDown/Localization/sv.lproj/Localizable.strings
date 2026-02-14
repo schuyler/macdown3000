@@ -1,5 +1,5 @@
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (inga mellanslag);%@ tecken (inga mellanslag)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tecken (inga mellanslag);%@ tecken (inga mellanslag)";
 
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ tecken;%@ tecken";
@@ -42,3 +42,23 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Den här filen har ändrats av ett annat program. Vill du förkasta dina ändringar?";
 "Discard" = "Förkasta";
 "Keep" = "Behåll";
+
+/* (No Comment) */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Installation misslyckades";
+"Installation Successful" = "Installation lyckades";
+"Installation Successful - PATH Setup Required" = "Installation lyckades - PATH-konfiguration krävs";
+"Uninstallation Failed" = "Avinstallation misslyckades";
+"Uninstallation Successful" = "Avinstallation lyckades";
+"The shell utility could not be found in the application bundle." = "Shell-verktyget kunde inte hittas i programpaketet.";
+"The macdown shell utility has been installed successfully." = "macdown shell-verktyget har installerats.";
+"The shell utility could not be installed: %@" = "Shell-verktyget kunde inte installeras: %@";
+"The macdown shell utility has been removed successfully." = "macdown shell-verktyget har tagits bort.";
+"The shell utility could not be removed: %@" = "Shell-verktyget kunde inte tas bort: %@";
+"Could not create directory %@: %@" = "Kunde inte skapa katalog %@: %@";
+"A file exists at this location" = "En fil finns redan på denna plats";
+"Source file does not exist" = "Källfilen finns inte";
+"A file already exists at the installation path" = "En fil finns redan på installationssökvägen";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown shell-verktyget har installerats till %@.\n\nFör att använda det från Terminal, lägg till denna rad i din shell-konfigurationsfil (~/.zshrc eller ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

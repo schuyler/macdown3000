@@ -142,3 +142,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "此檔案已被其他應用程式修改。是否放棄您的更改？";
 "Discard" = "放棄";
 "Keep" = "保留";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "安裝失敗";
+"Installation Successful" = "安裝成功";
+"Installation Successful - PATH Setup Required" = "安裝成功 - 需要設定 PATH";
+"Uninstallation Failed" = "解除安裝失敗";
+"Uninstallation Successful" = "解除安裝成功";
+"The shell utility could not be found in the application bundle." = "在應用程式套件中找不到 Shell 工具。";
+"The macdown shell utility has been installed successfully." = "macdown Shell 工具已成功安裝。";
+"The shell utility could not be installed: %@" = "無法安裝 Shell 工具：%@";
+"The macdown shell utility has been removed successfully." = "macdown Shell 工具已成功移除。";
+"The shell utility could not be removed: %@" = "無法移除 Shell 工具：%@";
+"Could not create directory %@: %@" = "無法建立目錄 %@：%@";
+"A file exists at this location" = "此位置已存在檔案";
+"Source file does not exist" = "來源檔案不存在";
+"A file already exists at the installation path" = "安裝路徑中已存在檔案";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown Shell 工具已安裝至 %@。\n\n若要從終端機使用它，請將此行加入您的 Shell 設定檔（~/.zshrc 或 ~/.bash_profile）：\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

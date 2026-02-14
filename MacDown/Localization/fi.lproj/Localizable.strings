@@ -1,0 +1,159 @@
+/* Prism theme title */
+"(Default)" = "(Oletus)";
+
+/* Displayed when shell utility is not installed */
+"<Not installed>" = "<Ei asennettu>";
+
+/* Blockquote toolbar button */
+"Blockquote" = "Lainaus";
+
+/* (No Comment) */
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ merkki (ilman välilyöntejä);%@ merkkiä (ilman välilyöntejä)";
+
+/* (No Comment) */
+"CHARACTERS_PLURAL_STRING" = "%@ merkki;%@ merkkiä";
+
+/* Comment toolbar button */
+"Comment" = "Kommentti";
+
+/* Copy HTML toolbar button */
+"Copy HTML" = "Kopioi HTML";
+
+/* Preference pane title. */
+"Editor" = "Editori";
+
+/* Emphasize toolbar button */
+"Emphasize" = "Kursivointi";
+
+/* Preference pane title. */
+"General" = "Yleiset";
+
+/* Heading 1 toolbar button */
+"Heading 1" = "Otsikko 1";
+
+/* Heading 2 toolbar button */
+"Heading 2" = "Otsikko 2";
+
+/* Heading 3 toolbar button */
+"Heading 3" = "Otsikko 3";
+
+/* No comment provided by engineer. */
+"Headings" = "Otsikot";
+
+/* Toggle editor pane menu item */
+"Hide Editor Pane" = "Piilota editoripaneeli";
+
+/* Toggle preview pane menu item */
+"Hide Preview Pane" = "Piilota esikatselupaneeli";
+
+/* Toggle reveal toolbar */
+"Hide Toolbar" = "Piilota työkalurivi";
+
+/* Highlight toolbar button */
+"Highlight" = "Korostus";
+
+/* Image toolbar button */
+"Image" = "Kuva";
+
+/* Inline code toolbar button */
+"Inline Code" = "Tekstinsisäinen koodi";
+
+/* Install shell utility button */
+"Install" = "Asenna";
+
+/* Localizable.strings
+  MacDown
+
+  Created by Tzu-ping Chung  on 14/7.
+  Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* Layout toolbar button */
+"Layout" = "Asettelu";
+
+/* Link toolbar button */
+"Link" = "Linkki";
+
+/* Preference pane title. */
+"Markdown" = "Markdown";
+
+/* Ordered list toolbar button */
+"Ordered List" = "Numeroitu lista";
+
+/* No comment provided by engineer. */
+"Ordered/Unordered List" = "Numeroitu/numeroimaton lista";
+
+/* Preferences window title. */
+"Preferences" = "Asetukset";
+
+/* Preference pane title. */
+"Rendering" = "Renderöinti";
+
+/* Toggle editor pane menu item */
+"Restore Editor Pane" = "Palauta editoripaneeli";
+
+/* Toggle preview pane menu item */
+"Restore Preview Pane" = "Palauta esikatselupaneeli";
+
+/* Label stating that shell utility has been installed */
+"Shell utility installed" = "Shell-työkalu asennettu";
+
+/* Label stating that shell utility has not been installed */
+"Shell utility not installed" = "Shell-työkalua ei ole asennettu";
+
+/* Shift text to the left toolbar button */
+"Shift Left" = "Siirrä vasemmalle";
+
+/* No comment provided by engineer. */
+"Shift Left/Right" = "Siirrä vasemmalle/oikealle";
+
+/* Shift text to the right toolbar button */
+"Shift Right" = "Siirrä oikealle";
+
+/* Toggle reveal toolbar */
+"Show Toolbar" = "Näytä työkalurivi";
+
+/* Strikethrough toolbar button */
+"Strikethrough" = "Yliviivaus";
+
+/* Strong toolbar button */
+"Strong" = "Lihavointi";
+
+/* Preference pane title. */
+"Terminal" = "Pääte";
+
+/* No comment provided by engineer. */
+"Text Styles" = "Tekstityylit";
+
+/* Underline toolbar button */
+"Underline" = "Alleviivaus";
+
+/* Uninstall shell utility button */
+"Uninstall" = "Poista asennus";
+
+/* Unordered list toolbar button */
+"Unordered List" = "Numeroimaton lista";
+
+/* default filename if no title can be determined */
+"Untitled" = "Nimetön";
+
+/* (No Comment) */
+"WORDS_PLURAL_STRING" = "%@ sana;%@ sanaa";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Asennus epäonnistui";
+"Installation Successful" = "Asennus onnistui";
+"Installation Successful - PATH Setup Required" = "Asennus onnistui - PATH-asetus vaaditaan";
+"Uninstallation Failed" = "Asennuksen poisto epäonnistui";
+"Uninstallation Successful" = "Asennuksen poisto onnistui";
+"The shell utility could not be found in the application bundle." = "Shell-työkalua ei löytynyt sovelluspaketiista.";
+"The macdown shell utility has been installed successfully." = "Macdown shell-työkalu on asennettu onnistuneesti.";
+"The shell utility could not be installed: %@" = "Shell-työkalua ei voitu asentaa: %@";
+"The macdown shell utility has been removed successfully." = "Macdown shell-työkalu on poistettu onnistuneesti.";
+"The shell utility could not be removed: %@" = "Shell-työkalua ei voitu poistaa: %@";
+"Could not create directory %@: %@" = "Hakemistoa %@ ei voitu luoda: %@";
+"A file exists at this location" = "Tiedosto on jo olemassa tässä sijainnissa";
+"Source file does not exist" = "Lähdetiedostoa ei ole olemassa";
+"A file already exists at the installation path" = "Tiedosto on jo olemassa asennuspolussa";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Macdown shell-työkalu on asennettu sijaintiin %@.\n\nKäyttääksesi sitä päätteestä, lisää tämä rivi shell-asetustiedostoosi (~/.zshrc tai ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+

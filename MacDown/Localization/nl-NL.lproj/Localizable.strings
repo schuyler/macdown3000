@@ -2,7 +2,7 @@
 "(Default)" = "(Standaard)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Niet geïnstalleerd>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Blokcitaat";
@@ -81,7 +81,7 @@
 "Ordered List" = "Geordende lijst";
 
 /* No comment provided by engineer. */
-"Ordered/Unordered List" = "Ongeordende lijst";
+"Ordered/Unordered List" = "Geordende/ongeordende lijst";
 
 /* Preferences window title. */
 "Preferences" = "Voorkeuren";
@@ -102,13 +102,13 @@
 "Shell utility not installed" = "Shell-hulpmiddel is niet geïnstalleerd";
 
 /* Shift text to the left toolbar button */
-"Shift Left" = "Linker shifttoets";
+"Shift Left" = "Inspringing verkleinen";
 
 /* No comment provided by engineer. */
-"Shift Left/Right" = "Linker-/rechtershifttoets";
+"Shift Left/Right" = "Inspringing verkleinen/vergroten";
 
 /* Shift text to the right toolbar button */
-"Shift Right" = "Rechter shifttoets";
+"Shift Right" = "Inspringing vergroten";
 
 /* Toggle reveal toolbar */
 "Show Toolbar" = "Toon werkbalk";
@@ -145,3 +145,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Dit bestand is gewijzigd door een andere applicatie. Wilt u uw wijzigingen annuleren?";
 "Discard" = "Annuleren";
 "Keep" = "Behouden";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Installatie mislukt";
+"Installation Successful" = "Installatie geslaagd";
+"Installation Successful - PATH Setup Required" = "Installatie geslaagd - PATH-configuratie vereist";
+"Uninstallation Failed" = "Deïnstallatie mislukt";
+"Uninstallation Successful" = "Deïnstallatie geslaagd";
+"The shell utility could not be found in the application bundle." = "Het shell-hulpmiddel kon niet worden gevonden in de applicatiebundel.";
+"The macdown shell utility has been installed successfully." = "Het macdown shell-hulpmiddel is succesvol geïnstalleerd.";
+"The shell utility could not be installed: %@" = "Het shell-hulpmiddel kon niet worden geïnstalleerd: %@";
+"The macdown shell utility has been removed successfully." = "Het macdown shell-hulpmiddel is succesvol verwijderd.";
+"The shell utility could not be removed: %@" = "Het shell-hulpmiddel kon niet worden verwijderd: %@";
+"Could not create directory %@: %@" = "Kon map %@ niet aanmaken: %@";
+"A file exists at this location" = "Er bestaat al een bestand op deze locatie";
+"Source file does not exist" = "Bronbestand bestaat niet";
+"A file already exists at the installation path" = "Er bestaat al een bestand op het installatiepad";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Het macdown shell-hulpmiddel is geïnstalleerd in %@.\n\nOm het te gebruiken vanuit Terminal, voeg deze regel toe aan uw shell-configuratiebestand (~/.zshrc of ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
