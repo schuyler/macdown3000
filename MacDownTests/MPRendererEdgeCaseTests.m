@@ -588,6 +588,62 @@
     }, @"Should not crash on invalid front matter");
 }
 
+- (void)testRendererWithFrontMatterDoesNotRenderHTMLTable
+{
+    self.delegate.detectFrontMatter = YES;
+    self.dataSource.markdown = @"---\ntitle: Test\nauthor: Me\n---\n\n# Content";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertFalse([html containsString:@"<table"],
+                   @"Front matter should NOT be rendered as HTML table");
+    XCTAssertTrue([html containsString:@"Content"],
+                  @"Markdown content after front matter should still render");
+}
+
+- (void)testRendererWithFrontMatterHidesFromPreview
+{
+    self.delegate.detectFrontMatter = YES;
+    self.dataSource.markdown = @"---\ntitle: My Document\ntags: [a, b]\n---\n\n# Hello";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertFalse([html containsString:@"My Document"],
+                   @"Front matter content should not appear in preview");
+    XCTAssertFalse([html containsString:@"tags"],
+                   @"Front matter keys should not appear in preview");
+    XCTAssertTrue([html containsString:@"Hello"],
+                  @"Content after front matter should render");
+}
+
+- (void)testRendererWithFrontMatterOffRendersAsMarkdown
+{
+    self.delegate.detectFrontMatter = NO;
+    self.dataSource.markdown = @"---\ntitle: Test\n---\n\n# Content";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"Content"],
+                  @"Content should render when frontmatter detection is off");
+}
+
+- (void)testRendererFrontMatterTrailingNewlineConsumed
+{
+    self.delegate.detectFrontMatter = YES;
+    self.dataSource.markdown = @"---\ntitle: Test\n---\n# Direct heading";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"<h1"],
+                  @"Heading immediately after frontmatter should render as h1");
+    XCTAssertFalse([html containsString:@"<table"],
+                   @"Should not contain front matter table");
+}
+
 
 #pragma mark - Issue #254: Lists After Paragraphs
 

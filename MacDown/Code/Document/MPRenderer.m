@@ -13,7 +13,6 @@
 #import <HBHandlebars/HBHandlebars.h>
 #import "hoedown_html_patch.h"
 #import "NSJSONSerialization+File.h"
-#import "NSObject+HTMLTabularize.h"
 #import "NSString+Lookup.h"
 #import "MPUtilities.h"
 #import "MPAsset.h"
@@ -686,11 +685,10 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     BOOL hasFrontMatter = [delegate rendererDetectsFrontMatter:self];
     BOOL hasTOC = [delegate rendererRendersTOC:self];
     
-    id frontMatter = nil;
     if (hasFrontMatter)
     {
         NSUInteger offset = 0;
-        frontMatter = [markdown frontMatter:&offset];
+        [markdown frontMatter:&offset];
         markdown = [markdown substringFromIndex:offset];
     }
     int tocLevel = hasTOC ? kMPRendererTOCLevel : 0;
@@ -699,7 +697,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     if (hasTOC)
     tocRenderer = MPCreateHTMLTOCRenderer();
     self.currentHtml = MPHTMLFromMarkdown(
-                                          markdown, extensions, smartypants, [frontMatter HTMLTable],
+                                          markdown, extensions, smartypants, nil,
                                           htmlRenderer, tocRenderer);
     if (tocRenderer)
     hoedown_html_renderer_free(tocRenderer);

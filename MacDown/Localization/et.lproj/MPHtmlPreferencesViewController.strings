@@ -19,8 +19,8 @@
 /* Class = "NSTextFieldCell"; title = "Default path:"; ObjectID = "e1A-Mm-svq"; */
 "e1A-Mm-svq.title" = "Vaikimisi asukoht:";
 
-/* Class = "NSButtonCell"; title = "Detect Jekyll front-matter"; ObjectID = "iXi-Pv-mFl"; */
-"iXi-Pv-mFl.title" = "Tuvasta Jekyll front-matter";
+/* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "Hide YAML front matter";
 
 /* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
 "Jmq-wq-Dux.title" = "Kohandatud";

@@ -184,4 +184,66 @@
     XCTAssertFalse([@"foo.csss" hasExtension:@"css"], @"Wrong extension.");
 }
 
+
+#pragma mark - Front Matter Tests (Issue #307)
+
+- (void)testFrontMatterContentOffsetConsumesTrailingNewline
+{
+    NSString *input = @"---\ntitle: Test\n---\n\n# Content";
+    NSUInteger offset = 0;
+    [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"contentOffset should skip trailing newlines after closing ---");
+}
+
+- (void)testFrontMatterContentOffsetWithCRLF
+{
+    NSString *input = @"---\r\ntitle: Test\r\n---\r\n\r\n# Content";
+    NSUInteger offset = 0;
+    [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"Should handle CRLF line endings");
+}
+
+- (void)testFrontMatterContentOffsetWithDotsClosing
+{
+    NSString *input = @"---\ntitle: Test\n...\n\n# Content";
+    NSUInteger offset = 0;
+    [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"Should handle ... closing delimiter");
+}
+
+- (void)testFrontMatterContentOffsetWithMultipleTrailingNewlines
+{
+    NSString *input = @"---\ntitle: Test\n---\n\n\n\n# Content";
+    NSUInteger offset = 0;
+    [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"Should consume all trailing newlines");
+}
+
+- (void)testFrontMatterReturnNilForNoFrontMatter
+{
+    NSString *input = @"# Just a heading\n\nSome content";
+    NSUInteger offset = 0;
+    id result = [input frontMatter:&offset];
+    XCTAssertNil(result, @"Should return nil for content without frontmatter");
+    XCTAssertEqual(offset, (NSUInteger)0, @"Offset should be 0 when no frontmatter");
+}
+
+- (void)testFrontMatterContentOffsetWithSingleTrailingNewline
+{
+    NSString *input = @"---\ntitle: Test\n---\n# Content";
+    NSUInteger offset = 0;
+    [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"Should consume single trailing newline after closing delimiter");
+}
+
 @end

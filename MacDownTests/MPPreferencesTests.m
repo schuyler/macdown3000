@@ -956,4 +956,124 @@
         [defaults removeObjectForKey:@"extensionIntraEmphasis"];
 }
 
+
+#pragma mark - Front Matter Migration Tests (Issue #307)
+
+/**
+ * Test that migration v3 enables htmlDetectFrontMatter for existing users at v2.
+ * Related to GitHub issue #307.
+ */
+- (void)testMigrationV3EnablesFrontMatterDetection
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalFrontMatter = [defaults objectForKey:@"htmlDetectFrontMatter"];
+    NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
+
+    // Simulate existing user at version 2
+    [defaults setInteger:2 forKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"htmlDetectFrontMatter"];
+    [defaults setBool:YES forKey:@"extensionIntraEmphasis"];
+
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    XCTAssertTrue(prefs.htmlDetectFrontMatter,
+                  @"Migration v3 should enable front matter detection");
+
+    // Restore
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalFrontMatter)
+        [defaults setObject:originalFrontMatter forKey:@"htmlDetectFrontMatter"];
+    else
+        [defaults removeObjectForKey:@"htmlDetectFrontMatter"];
+
+    if (originalIntraEmphasis)
+        [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
+    else
+        [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that already-migrated users at version 3 preserve their explicit choice.
+ * Related to GitHub issue #307.
+ */
+- (void)testMigrationPreservesUserFrontMatterDisableChoice
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalFrontMatter = [defaults objectForKey:@"htmlDetectFrontMatter"];
+
+    // Simulate user who was migrated to v3 then disabled the preference
+    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    [defaults setBool:NO forKey:@"htmlDetectFrontMatter"];
+
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    XCTAssertFalse(prefs.htmlDetectFrontMatter,
+                   @"User's choice to disable front matter should be preserved");
+
+    // Restore
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalFrontMatter)
+        [defaults setObject:originalFrontMatter forKey:@"htmlDetectFrontMatter"];
+    else
+        [defaults removeObjectForKey:@"htmlDetectFrontMatter"];
+}
+
+/**
+ * Test that fresh installs get front matter detection enabled.
+ * Related to GitHub issue #307.
+ */
+- (void)testFreshInstallGetsFrontMatterEnabled
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalFrontMatter = [defaults objectForKey:@"htmlDetectFrontMatter"];
+    NSNumber *originalSubstitutionFlag = [defaults objectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
+
+    [defaults removeObjectForKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+    [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+    [defaults removeObjectForKey:@"htmlDetectFrontMatter"];
+
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    XCTAssertTrue(prefs.htmlDetectFrontMatter,
+                  @"Fresh install should have front matter detection enabled via migration");
+
+    // Restore
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalFrontMatter)
+        [defaults setObject:originalFrontMatter forKey:@"htmlDetectFrontMatter"];
+    else
+        [defaults removeObjectForKey:@"htmlDetectFrontMatter"];
+
+    if (originalSubstitutionFlag)
+        [defaults setObject:originalSubstitutionFlag forKey:@"MPDidApplySubstitutionDefaultsFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
+
+    if (originalTaskListFlag)
+        [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
+    else
+        [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+}
+
 @end
