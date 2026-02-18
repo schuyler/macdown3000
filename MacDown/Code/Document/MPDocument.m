@@ -73,7 +73,8 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorHorizontalInset", @"editorVerticalInset",
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
-            @"editorScrollsPastEnd", nil
+            @"editorScrollsPastEnd",
+            @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
         ];
     });
     return keys;
