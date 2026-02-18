@@ -97,10 +97,13 @@ Requirements:
 
 Please analyze the codebase and recommend:
 1. Which files/components need to be modified
-2. Architectural patterns to follow
-3. Any potential risks or considerations
-4. Implementation approach that aligns with project conventions
-5. Where testing gaps can be addressed for new _or_ existing functionality related to the work being done 
+2. Whether the scope can be expanded to address similar issues with related components
+3. Architectural patterns to follow
+4. Any potential risks or considerations
+5. Implementation approach that aligns with project conventions
+6. Where testing gaps can be addressed for new _or_ existing functionality related to the work being done
+
+Scope expansion is acceptable when fixing bugs or writing tests, if it would mitigate related issues elsewhere in the code base.  
 ```
 
 **Review Groucho's response with FRESH EYES:**
