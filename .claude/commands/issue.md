@@ -32,6 +32,8 @@ Once you have read and understood the issue, thoroughly research the bug or feat
 
 Be sure to analyze the extent to which the work can be test-driven. Bias toward test-driven development whenever possible. Unit tests that verify requirements or that extend test coverage for existing functionality are *always* desirable, even if they add to the effort of the changes we are trying to make. 
 
+Consider the scope of the work. Expanding the scope beyond the immediate problem statement is always worth considering, if it would enhance existing and related features, or mitigate related problems elsewhere in the code base. Use sound judgment and don't go overboard.
+
 Once you have educated yourself on the problem, ask the user clarifying questions about:
 - Scope and boundaries of the work
 - Expected behavior and edge cases
@@ -102,8 +104,6 @@ Please analyze the codebase and recommend:
 4. Any potential risks or considerations
 5. Implementation approach that aligns with project conventions
 6. Where testing gaps can be addressed for new _or_ existing functionality related to the work being done
-
-Scope expansion is acceptable when fixing bugs or writing tests, if it would mitigate related issues elsewhere in the code base.  
 ```
 
 **Review Groucho's response with FRESH EYES:**
