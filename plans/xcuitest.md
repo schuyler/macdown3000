@@ -72,7 +72,8 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 - Missing: autosave failure recovery
 
 **5. User Interactions**
-- Zero tests for: menu actions, toolbar, keyboard shortcuts, preferences UI
+- Zero tests for: menu actions, keyboard shortcuts, preferences UI
+- ✅ Toolbar tests added (Issue #313) - 37 unit tests for MPToolbarController covering delegate methods and item identifiers
 - Missing: interactive task lists, link clicks in preview
 
 **6. Error Handling**
