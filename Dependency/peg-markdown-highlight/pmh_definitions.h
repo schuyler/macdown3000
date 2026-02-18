@@ -115,8 +115,10 @@ typedef struct pmh_Element pmh_element;
 enum pmh_extensions
 {
     pmh_EXT_NONE    = 0,        /**< No extensions */
-    pmh_EXT_NOTES   = (1 << 0)  /**< A footnote syntax like that of Pandoc or
+    pmh_EXT_NOTES   = (1 << 0), /**< A footnote syntax like that of Pandoc or
                                      PHP Markdown Extra */
+    pmh_EXT_MATH    = (1 << 1)  /**< Dollar-sign math syntax ($...$ and
+                                     $$...$$) */
 };
 
 #endif
