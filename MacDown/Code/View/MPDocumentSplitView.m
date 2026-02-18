@@ -103,7 +103,7 @@
     CGFloat dividerThickness = self.dividerThickness;
     CGFloat newTotalWidth = self.frame.size.width - dividerThickness;
     CGFloat newHeight = self.frame.size.height;
-    CGFloat newLeftWidth = roundf(newTotalWidth * ratio);
+    CGFloat newLeftWidth = round(newTotalWidth * ratio);
     CGFloat newRightWidth = newTotalWidth - newLeftWidth;
 
     NSView *left = parts[0];
