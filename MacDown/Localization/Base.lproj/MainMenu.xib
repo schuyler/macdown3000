@@ -608,6 +608,13 @@ DQ
                                     <action selector="showContributing:" target="eq0-c4-vgQ" id="kry-sc-poi"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="j7r-4K-Xm1"/>
+                            <menuItem title="MacDown 3000 on GitHub" id="pLw-9G-hNv">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openGitHub:" target="eq0-c4-vgQ" id="nQx-5B-dR3"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
