@@ -30,11 +30,12 @@ Present the issue title, body, and any relevant details to the user.
 
 Once you have read and understood the issue, thoroughly research the bug or feature described in the issue. Make sure you understand the context before proceeding. Do NOT attempt to solve the problem yet -- we are just gathering requirements.
 
+Be sure to analyze the extent to which the work can be test-driven. Bias toward test-driven development whenever possible. Unit tests that verify requirements or that extend test coverage for existing functionality are *always* desirable, even if they add to the effort of the changes we are trying to make. 
+
 Once you have educated yourself on the problem, ask the user clarifying questions about:
 - Scope and boundaries of the work
 - Expected behavior and edge cases
 - Design preferences or constraints
-- Whether test-driven development should be used
 
 **CRITICAL:** Continue asking questions until you have complete clarity. Do NOT proceed to Step 3 until the user explicitly confirms all requirements are addressed.
 
@@ -99,6 +100,7 @@ Please analyze the codebase and recommend:
 2. Architectural patterns to follow
 3. Any potential risks or considerations
 4. Implementation approach that aligns with project conventions
+5. Where testing gaps can be addressed for new _or_ existing functionality related to the work being done 
 ```
 
 **Review Groucho's response with FRESH EYES:**
@@ -119,7 +121,7 @@ Provide a clear summary including:
 1. **Overview:** Brief description of the implementation approach
 2. **Files to be Modified:** List all files that will be changed with a brief description of changes
 3. **Implementation Steps:** High-level outline of what will be done (from Groucho's guidance)
-4. **Testing Approach:** Whether TDD will be used and what will be tested
+4. **Testing Approach:** How TDD will be applied, if so, and what will be tested
 5. **Potential Risks:** Any concerns or edge cases identified by Groucho
 
 **Format your summary clearly and ask:**
