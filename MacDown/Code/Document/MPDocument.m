@@ -785,6 +785,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     else if (action == @selector(toggleEditorPane:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
+        it.hidden = (!self.editorVisible && self.previousSplitRatio < 0.0);
         it.title = self.editorVisible ?
         NSLocalizedString(@"Hide Editor Pane",
                           @"Toggle editor pane menu item") :

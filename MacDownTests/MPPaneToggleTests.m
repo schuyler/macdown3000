@@ -520,4 +520,151 @@
                   @"Restore Editor menu should be enabled when editor is hidden");
 }
 
+
+#pragma mark - Issue #310: Editor Menu Item Hidden Property Tests
+
+/**
+ * Test that editor menu item hidden property is set during validation.
+ * Issue #310: The editor pane case was missing the it.hidden assignment.
+ *
+ * In headless mode without window controllers, both panes are not visible
+ * and previousSplitRatio is -1.0 (initial sentinel). So the expression
+ * (!editorVisible && previousSplitRatio < 0.0) should evaluate to YES,
+ * meaning the menu item should be hidden.
+ */
+- (void)testEditorMenuItemHiddenPropertySetDuringValidation
+{
+    // Before fix: the hidden property is never set for editor menu item.
+    // After fix: hidden = (!editorVisible && previousSplitRatio < 0.0)
+    // In headless: editorVisible=NO, previousSplitRatio=-1.0, so hidden=YES.
+
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Hide Editor Pane"
+                                                      action:@selector(toggleEditorPane:)
+                                               keyEquivalent:@""];
+
+    // Ensure the item starts as not hidden
+    item.hidden = NO;
+
+    [self.document validateUserInterfaceItem:item];
+
+    // In headless mode: editorVisible is NO, previousSplitRatio is -1.0
+    // So hidden should be set to YES
+    XCTAssertTrue(item.hidden,
+                  @"Issue #310: Editor menu item hidden property should be set "
+                  @"when editor is not visible and no previous split ratio exists");
+}
+
+/**
+ * Test that preview menu item hidden property is set during validation.
+ * Issue #310: This is the existing working behavior - test for symmetry.
+ */
+- (void)testPreviewMenuItemHiddenPropertySetDuringValidation
+{
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Hide Preview Pane"
+                                                      action:@selector(togglePreviewPane:)
+                                               keyEquivalent:@""];
+
+    item.hidden = NO;
+
+    [self.document validateUserInterfaceItem:item];
+
+    // Same conditions as above: previewVisible=NO, previousSplitRatio=-1.0
+    XCTAssertTrue(item.hidden,
+                  @"Preview menu item hidden property should be set "
+                  @"when preview is not visible and no previous split ratio exists");
+}
+
+/**
+ * Test that editor menu item is NOT hidden after a toggle has saved a split ratio.
+ * Issue #310: Once previousSplitRatio >= 0, the menu item should be visible.
+ */
+- (void)testEditorMenuItemNotHiddenAfterToggle
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible) {
+        NSLog(@"Skipping testEditorMenuItemNotHiddenAfterToggle - headless mode");
+        return;
+    }
+
+    // Toggle editor pane to save a previousSplitRatio
+    [self.document toggleEditorPane:nil];
+
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Restore Editor Pane"
+                                                      action:@selector(toggleEditorPane:)
+                                               keyEquivalent:@""];
+
+    [self.document validateUserInterfaceItem:item];
+
+    // After toggling, previousSplitRatio should be >= 0, so hidden should be NO
+    XCTAssertFalse(item.hidden,
+                   @"Issue #310: Editor menu item should not be hidden after a toggle "
+                   @"(previousSplitRatio should be saved)");
+}
+
+/**
+ * Test that editor menu title changes to "Restore Editor Pane" after hiding editor.
+ * Issue #310: This is the core behavioral test.
+ */
+- (void)testEditorMenuTitleTogglesAfterHide
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible) {
+        NSLog(@"Skipping testEditorMenuTitleTogglesAfterHide - headless mode");
+        return;
+    }
+
+    // Hide the editor pane
+    [self.document toggleEditorPane:nil];
+
+    XCTAssertFalse(self.document.editorVisible,
+                   @"Editor should be hidden after toggle");
+
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Hide Editor Pane"
+                                                      action:@selector(toggleEditorPane:)
+                                               keyEquivalent:@""];
+
+    [self.document validateUserInterfaceItem:item];
+
+    NSString *expectedTitle = NSLocalizedString(@"Restore Editor Pane",
+                                                @"Toggle editor pane menu item");
+    XCTAssertEqualObjects(item.title, expectedTitle,
+                          @"Issue #310: Menu title should be 'Restore Editor Pane' "
+                          @"after hiding editor pane");
+}
+
+/**
+ * Test that editor menu title changes back to "Hide Editor Pane" after restoring editor.
+ * Issue #310: Verifies the full toggle cycle works.
+ */
+- (void)testEditorMenuTitleTogglesAfterRestore
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible) {
+        NSLog(@"Skipping testEditorMenuTitleTogglesAfterRestore - headless mode");
+        return;
+    }
+
+    // Hide and then restore the editor pane
+    [self.document toggleEditorPane:nil];
+    [self.document toggleEditorPane:nil];
+
+    XCTAssertTrue(self.document.editorVisible,
+                  @"Editor should be visible after hide+restore");
+
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Restore Editor Pane"
+                                                      action:@selector(toggleEditorPane:)
+                                               keyEquivalent:@""];
+
+    [self.document validateUserInterfaceItem:item];
+
+    NSString *expectedTitle = NSLocalizedString(@"Hide Editor Pane",
+                                                @"Toggle editor pane menu item");
+    XCTAssertEqualObjects(item.title, expectedTitle,
+                          @"Issue #310: Menu title should be 'Hide Editor Pane' "
+                          @"after restoring editor pane");
+}
+
 @end
