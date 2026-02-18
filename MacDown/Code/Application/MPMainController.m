@@ -52,14 +52,8 @@ NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
         [manager copyItemAtURL:imagesSource toURL:imagesTarget error:NULL];
     }
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
-    [c openDocumentWithContentsOfURL:target display:YES completionHandler:
-     ^(NSDocument *document, BOOL wasOpen, NSError *error) {
-         if (!document || wasOpen || error)
-             return;
-         NSRect frame = [NSScreen mainScreen].visibleFrame;
-         for (NSWindowController *wc in document.windowControllers)
-             [wc.window setFrame:frame display:YES];
-     }];
+    [c openDocumentWithContentsOfURL:target display:YES
+                   completionHandler:MPDocumentOpenCompletionEmpty];
 }
 
 NS_INLINE void treat()
@@ -163,14 +157,8 @@ NS_INLINE void treat()
         return;
     }
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
-    [c openDocumentWithContentsOfURL:target display:YES completionHandler:
-     ^(NSDocument *document, BOOL wasOpen, NSError *error) {
-         if (!document || wasOpen || error)
-             return;
-         NSRect frame = [NSScreen mainScreen].visibleFrame;
-         for (NSWindowController *wc in document.windowControllers)
-             [wc.window setFrame:frame display:YES];
-     }];
+    [c openDocumentWithContentsOfURL:target display:YES
+                   completionHandler:MPDocumentOpenCompletionEmpty];
 
 }
 
@@ -220,6 +208,12 @@ NS_INLINE void treat()
 - (IBAction)showContributing:(id)sender
 {
     MPOpenBundledFile(@"contribute", @"md");
+}
+
+- (IBAction)openGitHub:(id)sender
+{
+    NSURL *url = [NSURL URLWithString:@"https://github.com/schuyler/macdown3000"];
+    [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
 
