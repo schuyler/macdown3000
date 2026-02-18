@@ -465,7 +465,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  * - Version 0: Pre-migration state (no migrations applied)
  * - Version 1: Substitution defaults fix (Issue #263)
  * - Version 2: Task list default fix (Issue #269)
- * - Version 3: Intra-emphasis default fix (Issue #293)
+ * - Version 3: Intra-emphasis default fix (Issue #293),
+ *              hide YAML front matter by default (Issue #307)
  */
 - (NSInteger)effectiveMigrationVersion
 {
@@ -537,9 +538,11 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
     // Migration Version 3: Intra-emphasis default fix (Issue #293)
     // Disable intra-word emphasis so underscores in filenames are not italicized.
+    // Also enable front matter detection to hide YAML front matter (Issue #307).
     if (currentVersion < 3)
     {
         self.extensionIntraEmphasis = NO;
+        self.htmlDetectFrontMatter = YES;
     }
 
     // Update to current version

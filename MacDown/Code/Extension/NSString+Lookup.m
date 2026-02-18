@@ -82,7 +82,19 @@
         return nil;
     }
     if (contentOffset)
-        *contentOffset = [result rangeAtIndex:0].length;
+    {
+        NSUInteger offset = NSMaxRange([result rangeAtIndex:0]);
+        NSUInteger length = self.length;
+        while (offset < length)
+        {
+            unichar c = [self characterAtIndex:offset];
+            if (c == '\r' || c == '\n')
+                offset++;
+            else
+                break;
+        }
+        *contentOffset = offset;
+    }
     return objects[0];
 }
 

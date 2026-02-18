@@ -31,8 +31,8 @@
 /* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
 "GF9-Dm-IoB.title" = "השתמש בסימן דולר ($) כמפריד מוטמע";
 
-/* Class = "NSButtonCell"; title = "Detect Jekyll front-matter"; ObjectID = "iXi-Pv-mFl"; */
-"iXi-Pv-mFl.title" = "זהה מטא-נתונים של Jekyll";
+/* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "Hide YAML front matter";
 
 /* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
 "Jmq-wq-Dux.title" = "מותאם אישית";
