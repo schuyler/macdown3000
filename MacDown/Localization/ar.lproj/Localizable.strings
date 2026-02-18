@@ -1,5 +1,164 @@
+/* Prism theme title */
+"(Default)" = "(افتراضي)";
+
+/* Displayed when shell utility is not installed */
+"<Not installed>" = "<غير مثبت>";
+
+/* Blockquote toolbar button */
+"Blockquote" = "اقتباس";
+
+/* (No Comment) */
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ حرف (بدون مسافات);%@ أحرف (بدون مسافات)";
+
+/* (No Comment) */
+"CHARACTERS_PLURAL_STRING" = "%@ حرف;%@ أحرف";
+
+/* Comment toolbar button */
+"Comment" = "تعليق";
+
+/* Copy HTML toolbar button */
+"Copy HTML" = "نسخ HTML";
+
+/* Preference pane title. */
+"Editor" = "المحرر";
+
+/* Emphasize toolbar button */
+"Emphasize" = "مائل";
+
+/* Preference pane title. */
+"General" = "عام";
+
+/* Heading 1 toolbar button */
+"Heading 1" = "عنوان 1";
+
+/* Heading 2 toolbar button */
+"Heading 2" = "عنوان 2";
+
+/* Heading 3 toolbar button */
+"Heading 3" = "عنوان 3";
+
+/* No comment provided by engineer. */
+"Headings" = "العناوين";
+
+/* Toggle editor pane menu item */
+"Hide Editor Pane" = "إخفاء لوحة المحرر";
+
+/* Toggle preview pane menu item */
+"Hide Preview Pane" = "إخفاء لوحة المعاينة";
+
+/* Toggle reveal toolbar */
+"Hide Toolbar" = "إخفاء شريط الأدوات";
+
+/* Highlight toolbar button */
+"Highlight" = "تمييز";
+
+/* Image toolbar button */
+"Image" = "صورة";
+
+/* Inline code toolbar button */
+"Inline Code" = "كود سطري";
+
+/* Install shell utility button */
+"Install" = "تثبيت";
+
+/* Localizable.strings
+  MacDown
+
+  Created by Tzu-ping Chung  on 14/7.
+  Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* Layout toolbar button */
+"Layout" = "التخطيط";
+
+/* Link toolbar button */
+"Link" = "رابط";
+
+/* Preference pane title. */
+"Markdown" = "Markdown";
+
+/* Ordered list toolbar button */
+"Ordered List" = "قائمة مرقمة";
+
+/* No comment provided by engineer. */
+"Ordered/Unordered List" = "قائمة مرقمة/غير مرقمة";
+
+/* Preferences window title. */
+"Preferences" = "التفضيلات";
+
+/* Preference pane title. */
+"Rendering" = "العرض";
+
+/* Toggle editor pane menu item */
+"Restore Editor Pane" = "استعادة لوحة المحرر";
+
+/* Toggle preview pane menu item */
+"Restore Preview Pane" = "استعادة لوحة المعاينة";
+
+/* Label stating that shell utility has been installed */
+"Shell utility installed" = "أداة الطرفية مثبتة";
+
+/* Label stating that shell utility has not been installed */
+"Shell utility not installed" = "أداة الطرفية غير مثبتة";
+
+/* Shift text to the left toolbar button */
+"Shift Left" = "إزاحة لليسار";
+
+/* No comment provided by engineer. */
+"Shift Left/Right" = "إزاحة يسار/يمين";
+
+/* Shift text to the right toolbar button */
+"Shift Right" = "إزاحة لليمين";
+
+/* Toggle reveal toolbar */
+"Show Toolbar" = "إظهار شريط الأدوات";
+
+/* Strikethrough toolbar button */
+"Strikethrough" = "يتوسطه خط";
+
+/* Strong toolbar button */
+"Strong" = "عريض";
+
+/* Preference pane title. */
+"Terminal" = "الطرفية";
+
+/* No comment provided by engineer. */
+"Text Styles" = "أنماط النص";
+
+/* Underline toolbar button */
+"Underline" = "تسطير";
+
+/* Uninstall shell utility button */
+"Uninstall" = "إلغاء التثبيت";
+
+/* Unordered list toolbar button */
+"Unordered List" = "قائمة غير مرقمة";
+
+/* default filename if no title can be determined */
+"Untitled" = "بدون عنوان";
+
+/* (No Comment) */
+"WORDS_PLURAL_STRING" = "%@ كلمة;%@ كلمات";
+
 /* External file change detection (Issue #290) */
 "File Modified Externally" = "تم تعديل الملف خارجياً";
 "This file has been changed by another application. Do you want to discard your changes?" = "تم تعديل هذا الملف بواسطة تطبيق آخر. هل تريد تجاهل تغييراتك؟";
 "Discard" = "تجاهل";
 "Keep" = "احتفظ";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "فشل التثبيت";
+"Installation Successful" = "تم التثبيت بنجاح";
+"Installation Successful - PATH Setup Required" = "تم التثبيت بنجاح - يتطلب إعداد PATH";
+"Uninstallation Failed" = "فشل إلغاء التثبيت";
+"Uninstallation Successful" = "تم إلغاء التثبيت بنجاح";
+"The shell utility could not be found in the application bundle." = "تعذر العثور على أداة الطرفية في حزمة التطبيق.";
+"The macdown shell utility has been installed successfully." = "تم تثبيت أداة macdown للطرفية بنجاح.";
+"The shell utility could not be installed: %@" = "تعذر تثبيت أداة الطرفية: %@";
+"The macdown shell utility has been removed successfully." = "تمت إزالة أداة macdown للطرفية بنجاح.";
+"The shell utility could not be removed: %@" = "تعذر إزالة أداة الطرفية: %@";
+"Could not create directory %@: %@" = "تعذر إنشاء المجلد %@: %@";
+"A file exists at this location" = "يوجد ملف في هذا الموقع";
+"Source file does not exist" = "الملف المصدر غير موجود";
+"A file already exists at the installation path" = "يوجد ملف بالفعل في مسار التثبيت";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "تم تثبيت أداة macdown للطرفية في %@.\n\nلاستخدامها من الطرفية، أضف هذا السطر إلى ملف إعدادات الطرفية (~/.zshrc أو ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

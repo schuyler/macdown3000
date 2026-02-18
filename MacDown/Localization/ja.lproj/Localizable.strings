@@ -8,10 +8,10 @@
 "Blockquote" = "ブロック引用";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 文字 (スペースなし);%@ 文字列 (スペースなし)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 文字 (スペースなし);%@ 文字 (スペースなし)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ 文字;%@ 文字列";
+"CHARACTERS_PLURAL_STRING" = "%@ 文字;%@ 文字";
 
 /* Comment toolbar button */
 "Comment" = "コメント";
@@ -138,10 +138,27 @@
 "Untitled" = "名称未設定";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ word;%@ words";
+"WORDS_PLURAL_STRING" = "%@ 語;%@ 語";
 
 /* External file change detection (Issue #290) */
 "File Modified Externally" = "ファイルが外部で変更されました";
 "This file has been changed by another application. Do you want to discard your changes?" = "このファイルは他のアプリケーションで変更されました。変更を破棄しますか？";
 "Discard" = "破棄";
 "Keep" = "保持";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "インストール失敗";
+"Installation Successful" = "インストール成功";
+"Installation Successful - PATH Setup Required" = "インストール成功 - PATH設定が必要です";
+"Uninstallation Failed" = "アンインストール失敗";
+"Uninstallation Successful" = "アンインストール成功";
+"The shell utility could not be found in the application bundle." = "アプリケーションバンドル内にコマンドラインツールが見つかりませんでした。";
+"The macdown shell utility has been installed successfully." = "macdownコマンドラインツールが正常にインストールされました。";
+"The shell utility could not be installed: %@" = "コマンドラインツールをインストールできませんでした: %@";
+"The macdown shell utility has been removed successfully." = "macdownコマンドラインツールが正常に削除されました。";
+"The shell utility could not be removed: %@" = "コマンドラインツールを削除できませんでした: %@";
+"Could not create directory %@: %@" = "ディレクトリ %@ を作成できませんでした: %@";
+"A file exists at this location" = "この場所にファイルが既に存在します";
+"Source file does not exist" = "ソースファイルが存在しません";
+"A file already exists at the installation path" = "インストールパスにファイルが既に存在します";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdownコマンドラインツールが %@ にインストールされました。\n\nターミナルから使用するには、シェル設定ファイル (~/.zshrc または ~/.bash_profile) に以下の行を追加してください:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

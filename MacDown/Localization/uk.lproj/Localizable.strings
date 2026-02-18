@@ -1,0 +1,159 @@
+/* Prism theme title */
+"(Default)" = "(За замовчуванням)";
+
+/* Displayed when shell utility is not installed */
+"<Not installed>" = "<Не встановлено>";
+
+/* Blockquote toolbar button */
+"Blockquote" = "Цитата";
+
+/* (No Comment) */
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символів (без пробілів)";
+
+/* (No Comment) */
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символів";
+
+/* Comment toolbar button */
+"Comment" = "Коментар";
+
+/* Copy HTML toolbar button */
+"Copy HTML" = "Копіювати HTML";
+
+/* Preference pane title. */
+"Editor" = "Редактор";
+
+/* Emphasize toolbar button */
+"Emphasize" = "Курсив";
+
+/* Preference pane title. */
+"General" = "Загальні";
+
+/* Heading 1 toolbar button */
+"Heading 1" = "Заголовок 1";
+
+/* Heading 2 toolbar button */
+"Heading 2" = "Заголовок 2";
+
+/* Heading 3 toolbar button */
+"Heading 3" = "Заголовок 3";
+
+/* No comment provided by engineer. */
+"Headings" = "Заголовки";
+
+/* Toggle editor pane menu item */
+"Hide Editor Pane" = "Сховати панель редактора";
+
+/* Toggle preview pane menu item */
+"Hide Preview Pane" = "Сховати панель попереднього перегляду";
+
+/* Toggle reveal toolbar */
+"Hide Toolbar" = "Сховати панель інструментів";
+
+/* Highlight toolbar button */
+"Highlight" = "Виділення";
+
+/* Image toolbar button */
+"Image" = "Зображення";
+
+/* Inline code toolbar button */
+"Inline Code" = "Вбудований код";
+
+/* Install shell utility button */
+"Install" = "Встановити";
+
+/* Localizable.strings
+  MacDown
+
+  Created by Tzu-ping Chung  on 14/7.
+  Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* Layout toolbar button */
+"Layout" = "Макет";
+
+/* Link toolbar button */
+"Link" = "Посилання";
+
+/* Preference pane title. */
+"Markdown" = "Markdown";
+
+/* Ordered list toolbar button */
+"Ordered List" = "Нумерований список";
+
+/* No comment provided by engineer. */
+"Ordered/Unordered List" = "Нумерований/маркований список";
+
+/* Preferences window title. */
+"Preferences" = "Налаштування";
+
+/* Preference pane title. */
+"Rendering" = "Рендеринг";
+
+/* Toggle editor pane menu item */
+"Restore Editor Pane" = "Відновити панель редактора";
+
+/* Toggle preview pane menu item */
+"Restore Preview Pane" = "Відновити панель попереднього перегляду";
+
+/* Label stating that shell utility has been installed */
+"Shell utility installed" = "Shell-утиліту встановлено";
+
+/* Label stating that shell utility has not been installed */
+"Shell utility not installed" = "Shell-утиліту не встановлено";
+
+/* Shift text to the left toolbar button */
+"Shift Left" = "Зсунути вліво";
+
+/* No comment provided by engineer. */
+"Shift Left/Right" = "Зсунути вліво/вправо";
+
+/* Shift text to the right toolbar button */
+"Shift Right" = "Зсунути вправо";
+
+/* Toggle reveal toolbar */
+"Show Toolbar" = "Показати панель інструментів";
+
+/* Strikethrough toolbar button */
+"Strikethrough" = "Закреслений";
+
+/* Strong toolbar button */
+"Strong" = "Жирний";
+
+/* Preference pane title. */
+"Terminal" = "Термінал";
+
+/* No comment provided by engineer. */
+"Text Styles" = "Стилі тексту";
+
+/* Underline toolbar button */
+"Underline" = "Підкреслений";
+
+/* Uninstall shell utility button */
+"Uninstall" = "Видалити";
+
+/* Unordered list toolbar button */
+"Unordered List" = "Маркований список";
+
+/* default filename if no title can be determined */
+"Untitled" = "Без назви";
+
+/* (No Comment) */
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слів";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Помилка встановлення";
+"Installation Successful" = "Встановлення успішне";
+"Installation Successful - PATH Setup Required" = "Встановлення успішне - потрібне налаштування PATH";
+"Uninstallation Failed" = "Помилка видалення";
+"Uninstallation Successful" = "Видалення успішне";
+"The shell utility could not be found in the application bundle." = "Shell-утиліту не знайдено в пакеті програми.";
+"The macdown shell utility has been installed successfully." = "Shell-утиліту macdown успішно встановлено.";
+"The shell utility could not be installed: %@" = "Не вдалося встановити shell-утиліту: %@";
+"The macdown shell utility has been removed successfully." = "Shell-утиліту macdown успішно видалено.";
+"The shell utility could not be removed: %@" = "Не вдалося видалити shell-утиліту: %@";
+"Could not create directory %@: %@" = "Не вдалося створити каталог %@: %@";
+"A file exists at this location" = "У цьому місці вже існує файл";
+"Source file does not exist" = "Вихідний файл не існує";
+"A file already exists at the installation path" = "Файл вже існує за шляхом встановлення";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Shell-утиліту macdown встановлено в %@.\n\nЩоб використовувати її з Терміналу, додайте цей рядок до файлу конфігурації shell (~/.zshrc або ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+

@@ -2,7 +2,7 @@
 "(Default)" = "(Výchozí)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Nenainstalováno>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Citace";
@@ -145,3 +145,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Tento soubor byl změněn jinou aplikací. Chcete zahodit své změny?";
 "Discard" = "Zahodit";
 "Keep" = "Ponechat";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Instalace selhala";
+"Installation Successful" = "Instalace úspěšná";
+"Installation Successful - PATH Setup Required" = "Instalace úspěšná - vyžadováno nastavení PATH";
+"Uninstallation Failed" = "Odinstalace selhala";
+"Uninstallation Successful" = "Odinstalace úspěšná";
+"The shell utility could not be found in the application bundle." = "Nástroj pro shell nebyl nalezen v balíčku aplikace.";
+"The macdown shell utility has been installed successfully." = "Nástroj macdown pro shell byl úspěšně nainstalován.";
+"The shell utility could not be installed: %@" = "Nástroj pro shell se nepodařilo nainstalovat: %@";
+"The macdown shell utility has been removed successfully." = "Nástroj macdown pro shell byl úspěšně odstraněn.";
+"The shell utility could not be removed: %@" = "Nástroj pro shell se nepodařilo odstranit: %@";
+"Could not create directory %@: %@" = "Nepodařilo se vytvořit adresář %@: %@";
+"A file exists at this location" = "Na tomto místě již existuje soubor";
+"Source file does not exist" = "Zdrojový soubor neexistuje";
+"A file already exists at the installation path" = "Na cestě instalace již existuje soubor";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Nástroj macdown pro shell byl nainstalován do %@.\n\nPro použití z Terminálu přidejte tento řádek do konfiguračního souboru shellu (~/.zshrc nebo ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

@@ -1,0 +1,159 @@
+/* Prism theme title */
+"(Default)" = "(डिफ़ॉल्ट)";
+
+/* Displayed when shell utility is not installed */
+"<Not installed>" = "<इंस्टॉल नहीं है>";
+
+/* Blockquote toolbar button */
+"Blockquote" = "ब्लॉक उद्धरण";
+
+/* (No Comment) */
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ अक्षर (बिना स्पेस);%@ अक्षर (बिना स्पेस)";
+
+/* (No Comment) */
+"CHARACTERS_PLURAL_STRING" = "%@ अक्षर;%@ अक्षर";
+
+/* Comment toolbar button */
+"Comment" = "टिप्पणी";
+
+/* Copy HTML toolbar button */
+"Copy HTML" = "HTML कॉपी करें";
+
+/* Preference pane title. */
+"Editor" = "संपादक";
+
+/* Emphasize toolbar button */
+"Emphasize" = "इटैलिक";
+
+/* Preference pane title. */
+"General" = "सामान्य";
+
+/* Heading 1 toolbar button */
+"Heading 1" = "शीर्षक 1";
+
+/* Heading 2 toolbar button */
+"Heading 2" = "शीर्षक 2";
+
+/* Heading 3 toolbar button */
+"Heading 3" = "शीर्षक 3";
+
+/* No comment provided by engineer. */
+"Headings" = "शीर्षक";
+
+/* Toggle editor pane menu item */
+"Hide Editor Pane" = "संपादक पैनल छुपाएं";
+
+/* Toggle preview pane menu item */
+"Hide Preview Pane" = "पूर्वावलोकन पैनल छुपाएं";
+
+/* Toggle reveal toolbar */
+"Hide Toolbar" = "टूलबार छुपाएं";
+
+/* Highlight toolbar button */
+"Highlight" = "हाइलाइट";
+
+/* Image toolbar button */
+"Image" = "छवि";
+
+/* Inline code toolbar button */
+"Inline Code" = "इनलाइन कोड";
+
+/* Install shell utility button */
+"Install" = "इंस्टॉल करें";
+
+/* Localizable.strings
+  MacDown
+
+  Created by Tzu-ping Chung  on 14/7.
+  Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* Layout toolbar button */
+"Layout" = "लेआउट";
+
+/* Link toolbar button */
+"Link" = "लिंक";
+
+/* Preference pane title. */
+"Markdown" = "Markdown";
+
+/* Ordered list toolbar button */
+"Ordered List" = "क्रमांकित सूची";
+
+/* No comment provided by engineer. */
+"Ordered/Unordered List" = "क्रमांकित/अक्रमांकित सूची";
+
+/* Preferences window title. */
+"Preferences" = "प्राथमिकताएं";
+
+/* Preference pane title. */
+"Rendering" = "रेंडरिंग";
+
+/* Toggle editor pane menu item */
+"Restore Editor Pane" = "संपादक पैनल पुनर्स्थापित करें";
+
+/* Toggle preview pane menu item */
+"Restore Preview Pane" = "पूर्वावलोकन पैनल पुनर्स्थापित करें";
+
+/* Label stating that shell utility has been installed */
+"Shell utility installed" = "शेल उपयोगिता इंस्टॉल है";
+
+/* Label stating that shell utility has not been installed */
+"Shell utility not installed" = "शेल उपयोगिता इंस्टॉल नहीं है";
+
+/* Shift text to the left toolbar button */
+"Shift Left" = "बाएं शिफ्ट करें";
+
+/* No comment provided by engineer. */
+"Shift Left/Right" = "बाएं/दाएं शिफ्ट करें";
+
+/* Shift text to the right toolbar button */
+"Shift Right" = "दाएं शिफ्ट करें";
+
+/* Toggle reveal toolbar */
+"Show Toolbar" = "टूलबार दिखाएं";
+
+/* Strikethrough toolbar button */
+"Strikethrough" = "स्ट्राइकथ्रू";
+
+/* Strong toolbar button */
+"Strong" = "बोल्ड";
+
+/* Preference pane title. */
+"Terminal" = "टर्मिनल";
+
+/* No comment provided by engineer. */
+"Text Styles" = "टेक्स्ट शैलियां";
+
+/* Underline toolbar button */
+"Underline" = "रेखांकित";
+
+/* Uninstall shell utility button */
+"Uninstall" = "अनइंस्टॉल करें";
+
+/* Unordered list toolbar button */
+"Unordered List" = "अक्रमांकित सूची";
+
+/* default filename if no title can be determined */
+"Untitled" = "शीर्षकहीन";
+
+/* (No Comment) */
+"WORDS_PLURAL_STRING" = "%@ शब्द;%@ शब्द";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "इंस्टॉलेशन विफल";
+"Installation Successful" = "इंस्टॉलेशन सफल";
+"Installation Successful - PATH Setup Required" = "इंस्टॉलेशन सफल - PATH सेटअप आवश्यक";
+"Uninstallation Failed" = "अनइंस्टॉलेशन विफल";
+"Uninstallation Successful" = "अनइंस्टॉलेशन सफल";
+"The shell utility could not be found in the application bundle." = "एप्लिकेशन बंडल में शेल उपयोगिता नहीं मिली।";
+"The macdown shell utility has been installed successfully." = "macdown शेल उपयोगिता सफलतापूर्वक इंस्टॉल हो गई।";
+"The shell utility could not be installed: %@" = "शेल उपयोगिता इंस्टॉल नहीं हो सकी: %@";
+"The macdown shell utility has been removed successfully." = "macdown शेल उपयोगिता सफलतापूर्वक हटा दी गई।";
+"The shell utility could not be removed: %@" = "शेल उपयोगिता हटाई नहीं जा सकी: %@";
+"Could not create directory %@: %@" = "डायरेक्टरी %@ नहीं बनाई जा सकी: %@";
+"A file exists at this location" = "इस स्थान पर एक फ़ाइल मौजूद है";
+"Source file does not exist" = "स्रोत फ़ाइल मौजूद नहीं है";
+"A file already exists at the installation path" = "इंस्टॉलेशन पथ पर एक फ़ाइल पहले से मौजूद है";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown शेल उपयोगिता %@ में इंस्टॉल की गई।\n\nटर्मिनल से इसका उपयोग करने के लिए, अपनी शेल कॉन्फ़िगरेशन फ़ाइल (~/.zshrc या ~/.bash_profile) में यह पंक्ति जोड़ें:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+

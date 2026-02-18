@@ -2,7 +2,7 @@
 "(Default)" = "(Vaikeväärtus)";
 
 /* Displayed when shell utility is not installed */
-"<Not installed>" = "<Not installed>";
+"<Not installed>" = "<Pole paigaldatud>";
 
 /* Blockquote toolbar button */
 "Blockquote" = "Plokktsitaat";
@@ -115,3 +115,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Seda faili on muudetud teise rakenduse poolt. Kas soovite oma muudatused tühistada?";
 "Discard" = "Tühista";
 "Keep" = "Säilita";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Paigaldamine ebaõnnestus";
+"Installation Successful" = "Paigaldamine õnnestus";
+"Installation Successful - PATH Setup Required" = "Paigaldamine õnnestus - PATH seadistus vajalik";
+"Uninstallation Failed" = "Eemaldamine ebaõnnestus";
+"Uninstallation Successful" = "Eemaldamine õnnestus";
+"The shell utility could not be found in the application bundle." = "Shell-tööriista ei leitud rakenduse paketist.";
+"The macdown shell utility has been installed successfully." = "macdown shell-tööriist on edukalt paigaldatud.";
+"The shell utility could not be installed: %@" = "Shell-tööriista ei saanud paigaldada: %@";
+"The macdown shell utility has been removed successfully." = "macdown shell-tööriist on edukalt eemaldatud.";
+"The shell utility could not be removed: %@" = "Shell-tööriista ei saanud eemaldada: %@";
+"Could not create directory %@: %@" = "Kataloogi %@ ei saanud luua: %@";
+"A file exists at this location" = "Selles asukohas on juba fail";
+"Source file does not exist" = "Lähtefaili ei eksisteeri";
+"A file already exists at the installation path" = "Paigaldamise teel on juba fail";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown shell-tööriist on paigaldatud asukohta %@.\n\nTerminalist kasutamiseks lisa see rida oma shelli konfiguratsioonifaili (~/.zshrc või ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

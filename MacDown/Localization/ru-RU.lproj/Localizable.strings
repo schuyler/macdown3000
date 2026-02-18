@@ -24,3 +24,32 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Этот файл был изменён другим приложением. Хотите отменить свои изменения?";
 "Discard" = "Отменить";
 "Keep" = "Сохранить";
+
+/* (No Comment) */
+"JJ_PLURAL_FORM_RULE" = "1";
+
+/* (No Comment) */
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слов";
+
+/* (No Comment) */
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символов";
+
+/* (No Comment) */
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробелов);%@ символов (без пробелов)";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Ошибка установки";
+"Installation Successful" = "Установка успешна";
+"Installation Successful - PATH Setup Required" = "Установка успешна - требуется настройка PATH";
+"Uninstallation Failed" = "Ошибка удаления";
+"Uninstallation Successful" = "Удаление успешно";
+"The shell utility could not be found in the application bundle." = "Утилита командной строки не найдена в пакете приложения.";
+"The macdown shell utility has been installed successfully." = "Утилита командной строки macdown успешно установлена.";
+"The shell utility could not be installed: %@" = "Не удалось установить утилиту командной строки: %@";
+"The macdown shell utility has been removed successfully." = "Утилита командной строки macdown успешно удалена.";
+"The shell utility could not be removed: %@" = "Не удалось удалить утилиту командной строки: %@";
+"Could not create directory %@: %@" = "Не удалось создать каталог %@: %@";
+"A file exists at this location" = "В этом месте уже существует файл";
+"Source file does not exist" = "Исходный файл не существует";
+"A file already exists at the installation path" = "Файл уже существует по пути установки";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Утилита командной строки macdown установлена в %@.\n\nДля использования из Терминала добавьте эту строку в файл конфигурации shell (~/.zshrc или ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";

@@ -94,3 +94,20 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "Tento súbor bol zmenený inou aplikáciou. Chcete zahodiť svoje zmeny?";
 "Discard" = "Zahodiť";
 "Keep" = "Ponechať";
+
+/* Shell utility installation (Issue #38) */
+"Installation Failed" = "Inštalácia zlyhala";
+"Installation Successful" = "Inštalácia úspešná";
+"Installation Successful - PATH Setup Required" = "Inštalácia úspešná - vyžaduje sa nastavenie PATH";
+"Uninstallation Failed" = "Odinštalácia zlyhala";
+"Uninstallation Successful" = "Odinštalácia úspešná";
+"The shell utility could not be found in the application bundle." = "Terminálový nástroj sa nenašiel v balíku aplikácie.";
+"The macdown shell utility has been installed successfully." = "Terminálový nástroj macdown bol úspešne nainštalovaný.";
+"The shell utility could not be installed: %@" = "Terminálový nástroj sa nepodarilo nainštalovať: %@";
+"The macdown shell utility has been removed successfully." = "Terminálový nástroj macdown bol úspešne odstránený.";
+"The shell utility could not be removed: %@" = "Terminálový nástroj sa nepodarilo odstrániť: %@";
+"Could not create directory %@: %@" = "Nepodarilo sa vytvoriť priečinok %@: %@";
+"A file exists at this location" = "Na tomto mieste už existuje súbor";
+"Source file does not exist" = "Zdrojový súbor neexistuje";
+"A file already exists at the installation path" = "V inštalačnej ceste už existuje súbor";
+"The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Terminálový nástroj macdown bol nainštalovaný do %@.\n\nAk ho chcete používať z Terminálu, pridajte tento riadok do konfiguračného súboru shellu (~/.zshrc alebo ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
