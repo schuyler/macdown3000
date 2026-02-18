@@ -73,6 +73,50 @@
     [self setPosition:leftWidth ofDividerAtIndex:0];
 }
 
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize
+{
+    NSArray *parts = self.subviews;
+    if (parts.count != 2)
+    {
+        [super resizeSubviewsWithOldSize:oldSize];
+        return;
+    }
+
+    CGFloat oldTotalWidth = oldSize.width - self.dividerThickness;
+    CGFloat oldLeftWidth = [parts[0] frame].size.width;
+
+    if (oldTotalWidth <= 0.0)
+    {
+        [super resizeSubviewsWithOldSize:oldSize];
+        return;
+    }
+
+    CGFloat ratio = oldLeftWidth / oldTotalWidth;
+
+    // If either pane is collapsed, defer to default NSSplitView behavior.
+    if (ratio <= 0.0 || ratio >= 1.0)
+    {
+        [super resizeSubviewsWithOldSize:oldSize];
+        return;
+    }
+
+    CGFloat dividerThickness = self.dividerThickness;
+    CGFloat newTotalWidth = self.frame.size.width - dividerThickness;
+    CGFloat newHeight = self.frame.size.height;
+    CGFloat newLeftWidth = roundf(newTotalWidth * ratio);
+    CGFloat newRightWidth = newTotalWidth - newLeftWidth;
+
+    NSView *left = parts[0];
+    NSView *right = parts[1];
+    left.frame = NSMakeRect(0.0, 0.0, newLeftWidth, newHeight);
+    right.frame = NSMakeRect(newLeftWidth + dividerThickness, 0.0,
+                             newRightWidth, newHeight);
+}
+
+// Note: If the NSSplitViewDelegate ever implements
+// splitView:resizeSubviewsWithOldSize:, it will shadow this override.
+// In that case, move this logic into the delegate method.
+
 - (void)swapViews
 {
     NSArray *parts = self.subviews;
