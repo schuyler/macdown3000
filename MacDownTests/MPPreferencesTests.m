@@ -585,10 +585,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 3
+    // Migration version should be updated to 4
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 3,
-                   @"Migration version should be updated to 3");
+    XCTAssertEqual(version, 4,
+                   @"Migration version should be updated to 4");
 
     // Version 2 migration: task list should be enabled
     XCTAssertTrue(prefs.htmlTaskList,
@@ -649,10 +649,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 3
+    // Migration version should be updated to 4
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 3,
-                   @"Migration version should be updated to 3");
+    XCTAssertEqual(version, 4,
+                   @"Migration version should be updated to 4");
 
     // Version 3 migration: intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
