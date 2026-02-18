@@ -1807,11 +1807,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     [self.highlighter deactivate];
 
-    if (!changedKey || [changedKey isEqualToString:@"extensionFootnotes"])
+    if (!changedKey || [changedKey isEqualToString:@"extensionFootnotes"]
+            || [changedKey isEqualToString:@"htmlMathJax"]
+            || [changedKey isEqualToString:@"htmlMathJaxInlineDollar"])
     {
         int extensions = pmh_EXT_NOTES;
         if (self.preferences.extensionFootnotes)
             extensions = pmh_EXT_NONE;
+        if (self.preferences.htmlMathJax && self.preferences.htmlMathJaxInlineDollar)
+            extensions |= pmh_EXT_MATH;
         self.highlighter.extensions = extensions;
     }
 

@@ -389,7 +389,7 @@
 
 - (void)testAllExtensionsCombined
 {
-    int allExtensions = pmh_EXT_NOTES;  // Add more as available
+    int allExtensions = pmh_EXT_NOTES | pmh_EXT_MATH;
     self.highlighter.extensions = allExtensions;
     XCTAssertEqual(self.highlighter.extensions, allExtensions,
                    @"Should store all extensions");
