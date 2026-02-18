@@ -528,10 +528,10 @@
     // Create new preferences instance
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Fresh install should set migration version to current (3)
+    // Fresh install should set migration version to current (4)
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 3,
-                   @"Fresh installation should set migration version to 3");
+    XCTAssertEqual(version, 4,
+                   @"Fresh installation should set migration version to 4");
 
     // Intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
@@ -793,10 +793,10 @@
     XCTAssertFalse(prefs.extensionIntraEmphasis,
                    @"Version 3 migration should disable intra-emphasis for existing users");
 
-    // Migration version should be updated to 3
+    // Migration version should be updated to 4
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 3,
-                   @"Migration version should be updated to 3 after migration");
+    XCTAssertEqual(version, 4,
+                   @"Migration version should be updated to 4 after migration");
 
     // Restore original values
     if (originalVersion)
