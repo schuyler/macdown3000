@@ -157,14 +157,8 @@ NS_INLINE void treat()
         return;
     }
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
-    [c openDocumentWithContentsOfURL:target display:YES completionHandler:
-     ^(NSDocument *document, BOOL wasOpen, NSError *error) {
-         if (!document || wasOpen || error)
-             return;
-         NSRect frame = [NSScreen mainScreen].visibleFrame;
-         for (NSWindowController *wc in document.windowControllers)
-             [wc.window setFrame:frame display:YES];
-     }];
+    [c openDocumentWithContentsOfURL:target display:YES
+                   completionHandler:MPDocumentOpenCompletionEmpty];
 
 }
 
