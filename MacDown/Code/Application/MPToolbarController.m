@@ -177,12 +177,16 @@ static CGFloat itemWidth = 37;
 
 - (NSArray<NSString *> *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
 {
-    return self->toolbarItemIdentifiers;
+    return [self->toolbarItemIdentifiers arrayByAddingObjectsFromArray:@[
+        NSToolbarFlexibleSpaceItemIdentifier,
+        NSToolbarSpaceItemIdentifier,
+        NSToolbarSeparatorItemIdentifier,
+    ]];
 }
 
 - (NSArray<NSString *> *)toolbarSelectableItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [self toolbarAllowedItemIdentifiers:toolbar];
+    return self->toolbarItemIdentifiers;
 }
 
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag

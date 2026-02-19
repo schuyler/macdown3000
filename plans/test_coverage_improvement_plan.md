@@ -39,15 +39,15 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
 | MPEditorViewSubstitutionTests.m | Text substitution preference getters, NSUserDefaults integration | Good | (Issue #263) |
 | MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
+| MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing | Good | (Issue #313) |
 
 ### What We're Missing (Critical Gaps)
 
 **Zero Coverage:**
 - Application controller logic
-- Export functionality
 - Plugin system
 - Most extension categories
-- Most UI components
+- Most UI components (toolbar testing added - Issue #313)
 
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
@@ -57,6 +57,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 - Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
+- Toolbar controller (MPToolbarController.m) - 37 tests for NSToolbarDelegate methods, flexible space/separator support, item groups (Issue #313)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -432,7 +433,8 @@ MacDownTests/
 │   ├── MPLocalizationTests.m (✅ implemented - Issue #40 - localization validation)
 │   ├── MPAssetTests.m
 │   ├── MPEditorViewSubstitutionTests.m (✅ implemented - Issue #263 - text substitution preferences)
-│   └── MPFileIOTests.m (new - planned)
+│   ├── MPFileIOTests.m (new - planned)
+│   └── MPToolbarControllerTests.m (✅ implemented - Issue #313 - toolbar item identifiers, groups, delegate methods)
 ├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m
 │   └── MPDocumentIntegrationTests.m

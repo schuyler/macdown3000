@@ -113,6 +113,7 @@
 		PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */; };
 		PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */; };
 		PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */; };
+		ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -569,6 +570,7 @@
 		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
 		PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGMarkdownHighlighterTests.m; sourceTree = "<group>"; };
 		PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageExportTests.m; sourceTree = "<group>"; };
+		ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPToolbarControllerTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -913,6 +915,7 @@
 				ISSUE294WRDCNTFILEREF /* MPWordCountUpdateTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
+				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1346,6 +1349,7 @@
 				ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */,
 				ISSUE294WRDCNTBUILDFILE /* MPWordCountUpdateTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
+				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
