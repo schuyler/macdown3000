@@ -515,4 +515,40 @@
     XCTAssertTrue(isMainThread, @"Notification should be received on main thread");
 }
 
+// Issue #320: Verify NSUserDefaultsDidChangeNotification posted from a background
+// thread is delivered on the main thread when using block-based observer with mainQueue.
+- (void)testUserDefaultsNotificationFromBackgroundThreadDeliveredOnMainThread
+{
+    XCTestExpectation *expectation =
+        [self expectationWithDescription:@"Defaults notification on main thread"];
+
+    __block BOOL isMainThread = NO;
+    __block BOOL fulfilled = NO;
+    self.notificationToken = [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSUserDefaultsDidChangeNotification
+                    object:nil
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(NSNotification *notification) {
+        // Guard against multiple fulfillment - NSUserDefaultsDidChangeNotification
+        // can fire multiple times
+        if (!fulfilled) {
+            fulfilled = YES;
+            isMainThread = [NSThread isMainThread];
+            [expectation fulfill];
+        }
+    }];
+
+    // Post from background thread to simulate macOS 15 / XCTest bootstrap behavior
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        [[NSNotificationCenter defaultCenter]
+            postNotificationName:NSUserDefaultsDidChangeNotification
+                          object:[NSUserDefaults standardUserDefaults]];
+    });
+
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+    XCTAssertTrue(isMainThread,
+                  @"NSUserDefaultsDidChangeNotification should be delivered on main thread "
+                   "even when posted from a background thread");
+}
+
 @end

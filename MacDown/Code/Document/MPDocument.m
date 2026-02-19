@@ -234,6 +234,9 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (nonatomic) int fileWatchDescriptor;
 @property (nonatomic) BOOL isSelfSaving;
 
+// Issue #320: Block-based observer token for main-thread-safe defaults notification
+@property (strong) id userDefaultsObserverToken;
+
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
 
@@ -447,9 +450,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(editorTextDidChange:)
                    name:NSTextDidChangeNotification object:self.editor];
-    [center addObserver:self selector:@selector(userDefaultsDidChange:)
-                   name:NSUserDefaultsDidChangeNotification
-                 object:[NSUserDefaults standardUserDefaults]];
+    // Issue #320: Use block-based observer with mainQueue to guarantee
+    // main-thread delivery of NSUserDefaultsDidChangeNotification.
+    __weak typeof(self) weakSelf = self;
+    self.userDefaultsObserverToken = [center
+        addObserverForName:NSUserDefaultsDidChangeNotification
+                    object:[NSUserDefaults standardUserDefaults]
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(NSNotification *notification) {
+        [weakSelf userDefaultsDidChange:notification];
+    }];
     [center addObserver:self selector:@selector(editorBoundsDidChange:)
                    name:NSViewBoundsDidChangeNotification
                  object:self.editor.enclosingScrollView.contentView];
@@ -552,6 +562,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.preview.frameLoadDelegate = nil;
         self.preview.policyDelegate = nil;
         self.preview.UIDelegate = nil;
+
+        // Issue #320: Remove block-based defaults observer token
+        if (self.userDefaultsObserverToken) {
+            [[NSNotificationCenter defaultCenter]
+                removeObserver:self.userDefaultsObserverToken];
+            self.userDefaultsObserverToken = nil;
+        }
 
         [[NSNotificationCenter defaultCenter] removeObserver:self];
 
