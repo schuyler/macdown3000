@@ -567,7 +567,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 + (BOOL)autosavesInPlace
 {
-    return YES;
+    return [MPPreferences sharedInstance].editorAutoSave;
 }
 
 + (NSArray *)writableTypes
@@ -2902,8 +2902,10 @@ current file somewhere to enable this feature.", \
         return;
     }
 
-    // File has been modified externally
-    if ([self isDocumentEdited])
+    // File has been modified externally.
+    // When autosave is off, always prompt instead of silently reloading,
+    // so the user stays in control of what's in their editor.
+    if ([self isDocumentEdited] || !self.preferences.editorAutoSave)
     {
         [self promptForReloadWithExternalChanges];
     }

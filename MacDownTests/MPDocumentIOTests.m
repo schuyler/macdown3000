@@ -164,12 +164,23 @@
                  @"Setting markdown to nil should not crash");
 }
 
-- (void)testAutosavesInPlace
+- (void)testAutosavesInPlaceRespectsPreference
 {
-    // Test class method returns YES
-    BOOL autosaves = [MPDocument autosavesInPlace];
-    XCTAssertTrue(autosaves,
-                  @"MPDocument should autosave in place");
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorAutoSave;
+
+    // When preference is YES, autosave should be enabled
+    prefs.editorAutoSave = YES;
+    XCTAssertTrue([MPDocument autosavesInPlace],
+                  @"MPDocument should autosave when editorAutoSave is YES");
+
+    // When preference is NO, autosave should be disabled
+    prefs.editorAutoSave = NO;
+    XCTAssertFalse([MPDocument autosavesInPlace],
+                   @"MPDocument should not autosave when editorAutoSave is NO");
+
+    // Restore
+    prefs.editorAutoSave = original;
 }
 
 #pragma mark - File Operations Tests

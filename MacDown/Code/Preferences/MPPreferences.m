@@ -263,6 +263,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorOnRight;
 @dynamic editorShowWordCount;
 @dynamic editorWordCountType;
+@dynamic editorAutoSave;
 @dynamic editorScrollsPastEnd;
 @dynamic editorEnsuresNewlineAtEndOfFile;
 @dynamic editorUnorderedListMarkerType;
@@ -451,6 +452,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.htmlTemplateName = @"Default";
     if (![defaults objectForKey:@"extensionStrikethough"])
         self.extensionStrikethough = YES;
+    if (![defaults objectForKey:@"editorAutoSave"])
+        self.editorAutoSave = YES;
 
     // Apply preference migrations using version-based system.
     [self applyPreferencesMigrations];
@@ -466,6 +469,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  * - Version 1: Substitution defaults fix (Issue #263)
  * - Version 2: Task list default fix (Issue #269)
  * - Version 3: Intra-emphasis default fix (Issue #293)
+ * - Version 4: Auto-save preference default
  */
 - (NSInteger)effectiveMigrationVersion
 {
@@ -504,7 +508,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)applyPreferencesMigrations
 {
-    static NSInteger const kMPCurrentMigrationVersion = 3;
+    static NSInteger const kMPCurrentMigrationVersion = 4;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
     NSInteger currentVersion = [self effectiveMigrationVersion];
@@ -540,6 +544,13 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (currentVersion < 3)
     {
         self.extensionIntraEmphasis = NO;
+    }
+
+    // Migration Version 4: Auto-save preference default
+    // Ensure existing users get editorAutoSave = YES to preserve existing behavior.
+    if (currentVersion < 4)
+    {
+        self.editorAutoSave = YES;
     }
 
     // Update to current version

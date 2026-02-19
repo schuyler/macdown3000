@@ -16,7 +16,7 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="Hz6-mo-xeY">
-            <rect key="frame" x="0.0" y="0.0" width="353" height="249"/>
+            <rect key="frame" x="0.0" y="0.0" width="353" height="269"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <box autoresizesSubviews="NO" title="Update" borderType="line" translatesAutoresizingMaskIntoConstraints="NO" id="eLn-fW-Agu">
@@ -50,9 +50,9 @@
                     <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                 </box>
                 <box autoresizesSubviews="NO" title="Behavior" borderType="line" translatesAutoresizingMaskIntoConstraints="NO" id="Nma-PL-ZvX">
-                    <rect key="frame" x="17" y="74" width="319" height="155"/>
+                    <rect key="frame" x="17" y="74" width="319" height="175"/>
                     <view key="contentView" id="onQ-1i-oQ0">
-                        <rect key="frame" x="1" y="1" width="317" height="139"/>
+                        <rect key="frame" x="1" y="1" width="317" height="159"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="6Nz-Ft-FbR">
@@ -145,6 +145,19 @@
                                     <binding destination="-2" name="value" keyPath="self.preferences.createFileForLinkTarget" id="MLt-T7-Cm3"/>
                                 </connections>
                             </button>
+                            <button translatesAutoresizingMaskIntoConstraints="NO" id="aSv-Qd-7kR">
+                                <rect key="frame" x="16" y="133" width="285" height="18"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="14" id="aSv-Ht-con"/>
+                                </constraints>
+                                <buttonCell key="cell" type="check" title="Auto-save and auto-reload documents" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aSv-Bc-cel">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="-2" name="value" keyPath="self.preferences.editorAutoSave" id="aSv-Bd-val"/>
+                                </connections>
+                            </button>
                         </subviews>
                     </view>
                     <constraints>
@@ -164,7 +177,10 @@
                         <constraint firstItem="UZT-HE-EaK" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="mGA-Ss-CKp"/>
                         <constraint firstItem="Vab-4T-IU5" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="n6U-m7-4Zo"/>
                         <constraint firstItem="Vab-4T-IU5" firstAttribute="top" secondItem="6Nz-Ft-FbR" secondAttribute="bottom" constant="6" id="sAw-YS-Rbv"/>
-                        <constraint firstItem="6Nz-Ft-FbR" firstAttribute="top" secondItem="hqr-gd-6gi" secondAttribute="bottom" constant="6" id="tnU-Pf-heR"/>
+                        <constraint firstItem="aSv-Qd-7kR" firstAttribute="top" secondItem="hqr-gd-6gi" secondAttribute="bottom" constant="6" id="aSv-Tp-chn"/>
+                        <constraint firstItem="aSv-Qd-7kR" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="aSv-Ld-chn"/>
+                        <constraint firstAttribute="trailing" secondItem="aSv-Qd-7kR" secondAttribute="trailing" constant="16" id="aSv-Tr-chn"/>
+                        <constraint firstItem="6Nz-Ft-FbR" firstAttribute="top" secondItem="aSv-Qd-7kR" secondAttribute="bottom" constant="6" id="tnU-Pf-heR"/>
                         <constraint firstAttribute="trailing" secondItem="fjb-tU-1Kw" secondAttribute="trailing" constant="16" id="uQJ-Jy-vPP"/>
                     </constraints>
                     <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
