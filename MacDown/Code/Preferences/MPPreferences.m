@@ -505,7 +505,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)applyPreferencesMigrations
 {
-    static NSInteger const kMPCurrentMigrationVersion = 3;
+    static NSInteger const kMPCurrentMigrationVersion = 4;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
     NSInteger currentVersion = [self effectiveMigrationVersion];
@@ -543,6 +543,16 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     {
         self.extensionIntraEmphasis = NO;
         self.htmlDetectFrontMatter = YES;
+    }
+
+    // Migration Version 4: Clear stale split view autosave (Issue #309)
+    // The XIB had asymmetric initial frames (509/514 instead of 511/512).
+    // NSSplitView autosave stored those absolute widths, so maximizing a
+    // window would not maintain a 1:1 ratio. Clear the "Untitled" autosave
+    // so new windows pick up the corrected XIB frames.
+    if (currentVersion < 4)
+    {
+        [defaults removeObjectForKey:@"NSSplitView Subview Frames Untitled"];
     }
 
     // Update to current version

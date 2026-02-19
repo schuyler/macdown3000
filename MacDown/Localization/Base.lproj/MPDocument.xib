@@ -39,17 +39,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="1024" height="578"/>
                         <subviews>
                             <customView wantsLayer="YES" id="WJx-Xb-9af">
-                                <rect key="frame" x="0.0" y="0.0" width="509" height="578"/>
+                                <rect key="frame" x="0.0" y="0.0" width="511" height="578"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                 <subviews>
                                     <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5HT-Up-YAd">
-                                        <rect key="frame" x="0.0" y="0.0" width="509" height="578"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="511" height="578"/>
                                         <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="5eJ-HC-3WM">
-                                            <rect key="frame" x="0.0" y="0.0" width="509" height="578"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="511" height="578"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" findStyle="bar" allowsDocumentBackgroundColorChange="YES" allowsUndo="YES" id="VLv-r5-dZU" customClass="MPEditorView">
-                                                    <rect key="frame" x="0.0" y="0.0" width="509" height="578"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="511" height="578"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <touchBar key="touchBar" id="uyf-zu-EdK">
                                                         <touchBarItems>
@@ -378,7 +378,7 @@
                                                         </touchBarItems>
                                                     </touchBar>
                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                    <size key="minSize" width="509" height="578"/>
+                                                    <size key="minSize" width="511" height="578"/>
                                                     <size key="maxSize" width="771" height="10000000"/>
                                                     <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                                     <connections>
@@ -428,7 +428,7 @@
                                 </constraints>
                             </customView>
                             <webView fixedFrame="YES" id="XJO-AS-uPd">
-                                <rect key="frame" x="510" y="0.0" width="514" height="578"/>
+                                <rect key="frame" x="512" y="0.0" width="512" height="578"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <webPreferences key="preferences" defaultFontSize="12" defaultFixedFontSize="12">
                                     <nil key="identifier"/>
