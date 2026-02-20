@@ -78,11 +78,6 @@
 
 - (void)testHighlightingThemeURLReturnsBundleURLWhenNoUserTheme
 {
-    // Empty user directory, use the test bundle's Prism/themes as the
-    // bundle directory.
-    NSBundle *testBundle = [NSBundle bundleForClass:[self class]];
-    NSString *bundlePath = testBundle.resourcePath;
-
     // Create a fake bundle theme directory
     NSString *bundleThemeDir = [self.tempDir
         stringByAppendingPathComponent:@"bundle/Prism/themes"];
