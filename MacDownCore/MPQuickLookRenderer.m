@@ -93,6 +93,8 @@ NS_INLINE NSString *MPStylePathForName(NSString *name)
 
 /**
  * Get URL for Prism highlighting theme.
+ * Checks Application Support directory first (user themes),
+ * then falls back to bundle resources.
  */
 NS_INLINE NSURL *MPHighlightingThemeURLForName(NSString *name)
 {
@@ -100,7 +102,25 @@ NS_INLINE NSURL *MPHighlightingThemeURLForName(NSString *name)
     if ([[themeName pathExtension] isEqualToString:@"css"]) {
         themeName = [themeName stringByDeletingPathExtension];
     }
+    NSString *fileName = [themeName stringByAppendingPathExtension:@"css"];
 
+    NSFileManager *manager = [NSFileManager defaultManager];
+
+    // Check Application Support first (user themes)
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    if (paths.count > 0) {
+        NSString *userThemePath = [paths[0]
+            stringByAppendingPathComponent:
+                [@"MacDown 3000" stringByAppendingPathComponent:
+                    [kMPPrismThemeDirectory stringByAppendingPathComponent:
+                        fileName]]];
+        if ([manager fileExistsAtPath:userThemePath]) {
+            return [NSURL fileURLWithPath:userThemePath];
+        }
+    }
+
+    // Fall back to bundle resources
     NSBundle *bundle = MPQuickLookBundle();
     NSURL *url = [bundle URLForResource:themeName
                           withExtension:@"css"

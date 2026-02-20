@@ -8,6 +8,7 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="MPHtmlPreferencesViewController">
             <connections>
+                <outlet property="highlightingThemeFunctions" destination="311-HC-seg" id="311-HC-out"/>
                 <outlet property="highlightingThemeSelect" destination="2I4-c8-jan" id="mJf-rt-Jfr"/>
                 <outlet property="stylesheetFunctions" destination="IJe-cc-YKn" id="8M2-zc-OfV"/>
                 <outlet property="stylesheetSelect" destination="Wgm-Sy-7mr" id="Yis-7d-dn6"/>
@@ -84,7 +85,7 @@
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="2I4-c8-jan">
-                    <rect key="frame" x="202" y="268" width="186" height="22"/>
+                    <rect key="frame" x="202" y="268" width="110" height="22"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="dvX-w7-kuE">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -95,6 +96,20 @@
                         <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="i0o-0b-t8K"/>
                     </connections>
                 </popUpButton>
+                <segmentedControl horizontalHuggingPriority="300" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="311-HC-seg">
+                    <rect key="frame" x="320" y="269" width="67" height="20"/>
+                    <segmentedCell key="cell" borderStyle="border" alignment="left" controlSize="small" style="rounded" trackingMode="momentary" id="311-HC-cel">
+                        <font key="font" metaFont="smallSystem"/>
+                        <segments>
+                            <segment label="Reveal"/>
+                            <segment label="Reload" tag="1"/>
+                        </segments>
+                    </segmentedCell>
+                    <connections>
+                        <action selector="invokeHighlightingThemeFunction:" target="-2" id="311-HC-act"/>
+                        <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="311-HC-bnd"/>
+                    </connections>
+                </segmentedControl>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Dd4-T9-cLi">
                     <rect key="frame" x="106" y="273" width="93" height="14"/>
                     <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Theme:" id="a6o-qD-AIp">
@@ -279,7 +294,7 @@
                 <constraint firstItem="hfI-Rf-3Cr" firstAttribute="top" secondItem="P7Z-ag-nPR" secondAttribute="bottom" constant="6" id="OGT-fb-Ew7"/>
                 <constraint firstItem="Zna-RM-nBO" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="Oa3-yq-qOv"/>
                 <constraint firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" constant="20" id="Q1D-XI-CR5"/>
-                <constraint firstItem="2I4-c8-jan" firstAttribute="trailing" secondItem="M0W-YD-Ouk" secondAttribute="trailing" id="QN5-O3-vvG"/>
+                <constraint firstItem="M0W-YD-Ouk" firstAttribute="trailing" secondItem="Zna-RM-nBO" secondAttribute="trailing" id="311-AA-acc"/>
                 <constraint firstItem="6BB-rh-ZwZ" firstAttribute="top" secondItem="hfI-Rf-3Cr" secondAttribute="bottom" constant="6" id="SAM-fN-Kr3"/>
                 <constraint firstItem="Zna-RM-nBO" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="SMv-cO-fbm"/>
                 <constraint firstItem="Wgm-Sy-7mr" firstAttribute="centerY" secondItem="0ez-nk-c3q" secondAttribute="centerY" id="WPn-24-Lkv"/>
@@ -301,7 +316,9 @@
                 <constraint firstItem="0ez-nk-c3q" firstAttribute="top" secondItem="Hz6-mo-xeY" secondAttribute="top" constant="22" id="s6P-0T-Rbv"/>
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="trailing" secondItem="P7Z-ag-nPR" secondAttribute="trailing" id="sJX-lU-vtN"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="centerY" secondItem="Dd4-T9-cLi" secondAttribute="centerY" id="sZr-Uf-qAE"/>
-                <constraint firstItem="2I4-c8-jan" firstAttribute="trailing" secondItem="Zna-RM-nBO" secondAttribute="trailing" id="vP3-IV-zCA"/>
+                <constraint firstItem="311-HC-seg" firstAttribute="centerY" secondItem="2I4-c8-jan" secondAttribute="centerY" id="311-CY-ctr"/>
+                <constraint firstItem="311-HC-seg" firstAttribute="leading" secondItem="2I4-c8-jan" secondAttribute="trailing" constant="8" id="311-LD-gap"/>
+                <constraint firstItem="311-HC-seg" firstAttribute="trailing" secondItem="Zna-RM-nBO" secondAttribute="trailing" id="311-TR-zna"/>
                 <constraint firstItem="lxX-Pm-dhn" firstAttribute="top" secondItem="6BB-rh-ZwZ" secondAttribute="bottom" constant="6" id="vhB-Js-Nn0"/>
                 <constraint firstItem="ysT-Br-eSf" firstAttribute="top" secondItem="M0W-YD-Ouk" secondAttribute="bottom" constant="8" id="ynM-S2-BhS"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="top" secondItem="Zna-RM-nBO" secondAttribute="bottom" constant="8" id="ywP-o9-FOM"/>

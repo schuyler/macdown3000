@@ -21,6 +21,7 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
 @property (weak) IBOutlet NSPopUpButton *stylesheetSelect;
 @property (weak) IBOutlet NSSegmentedControl *stylesheetFunctions;
 @property (weak) IBOutlet NSPopUpButton *highlightingThemeSelect;
+@property (weak) IBOutlet NSSegmentedControl *highlightingThemeFunctions;
 @end
 
 
@@ -100,6 +101,41 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     }
 }
 
+- (IBAction)invokeHighlightingThemeFunction:(NSSegmentedControl *)sender
+{
+    switch (sender.selectedSegment)
+    {
+        case 0:     // Reveal
+        {
+            NSString *dirPath =
+                MPDataDirectory(kMPPrismThemesDirectoryName);
+            NSFileManager *manager = [NSFileManager defaultManager];
+            if (![manager fileExistsAtPath:dirPath])
+            {
+                [manager createDirectoryAtPath:dirPath
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:nil];
+            }
+            NSURL *url = [NSURL fileURLWithPath:dirPath];
+            NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+            [workspace activateFileViewerSelectingURLs:@[url]];
+            break;
+        }
+        case 1:     // Reload
+        {
+            [self loadHighlightingThemes];
+            NSNotificationCenter *center =
+                [NSNotificationCenter defaultCenter];
+            [center postNotificationName:MPDidRequestPreviewRenderNotification
+                                  object:self];
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 
 #pragma mark - Private
 
@@ -128,18 +164,10 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     self.highlightingThemeSelect.enabled = NO;
     [self.highlightingThemeSelect removeAllItems];
 
-    NSBundle *bundle = [NSBundle mainBundle];
-    NSArray *urls = [bundle URLsForResourcesWithExtension:@"css"
-                                             subdirectory:@"Prism/themes"];
-    NSMutableArray *titles = [NSMutableArray arrayWithCapacity:urls.count];
-    for (NSURL *url in urls)
-    {
-        NSString *name = url.lastPathComponent;
-        if (name.length <= 10)
-            continue;
-        name = [name substringWithRange:NSMakeRange(6, name.length - 10)];
-        [titles addObject:[name capitalizedString]];
-    }
+    NSString *userDataRoot = MPDataDirectory(nil);
+    NSString *bundleResourceRoot = [NSBundle mainBundle].resourcePath;
+    NSArray *titles = MPListHighlightingThemesInPaths(userDataRoot,
+                                                       bundleResourceRoot);
 
     [self.highlightingThemeSelect addItemWithTitle:MPPrismDefaultThemeName()];
     [self.highlightingThemeSelect addItemsWithTitles:titles];
