@@ -14,6 +14,7 @@ NSString * const kMPStylesDirectoryName = @"Styles";
 NSString * const kMPStyleFileExtension = @"css";
 NSString * const kMPThemesDirectoryName = @"Themes";
 NSString * const kMPThemeFileExtension = @"style";
+NSString * const kMPPrismThemesDirectoryName = @"Prism/themes";
 
 static NSString *MPDataRootDirectory()
 {
@@ -208,5 +209,19 @@ id MPGetObjectFromJavaScript(NSString *code, NSString *variableName)
     if (js)
         JSStringRelease(js);
     return object;
+}
+
+NSURL *MPHighlightingThemeURLForNameInPaths(
+    NSString *name, NSString *userDataRoot, NSString *bundleResourceRoot)
+{
+    // TODO: Implement — stub returns nil to make tests fail
+    return nil;
+}
+
+NSArray *MPListHighlightingThemesInPaths(
+    NSString *userDataRoot, NSString *bundleResourceRoot)
+{
+    // TODO: Implement — stub returns empty array to make tests fail
+    return @[];
 }
 
