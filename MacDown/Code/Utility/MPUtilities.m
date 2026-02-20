@@ -126,19 +126,17 @@ NSString *MPThemePathForName(NSString *name)
 
 NSURL *MPHighlightingThemeURLForName(NSString *name)
 {
-    name = [NSString stringWithFormat:@"prism-%@", [name lowercaseString]];
-    if ([name hasExtension:@"css"])
-        name = name.stringByDeletingPathExtension;
+    NSString *userDataRoot = MPDataDirectory(nil);
+    NSString *bundleResourceRoot = [NSBundle mainBundle].resourcePath;
+    NSURL *url = MPHighlightingThemeURLForNameInPaths(
+        name, userDataRoot, bundleResourceRoot);
 
-    NSBundle *bundle = [NSBundle mainBundle];
-    NSURL *url = [bundle URLForResource:name withExtension:@"css"
-                           subdirectory:@"Prism/themes"];
-
-    // Safty net: file not found, use default.
+    // Final fallback via NSBundle lookup for bundled resources
     if (!url)
     {
+        NSBundle *bundle = [NSBundle mainBundle];
         url = [bundle URLForResource:@"prism" withExtension:@"css"
-                        subdirectory:@"Prism/themes"];
+                        subdirectory:kMPPrismThemesDirectoryName];
     }
     return url;
 }
@@ -211,17 +209,112 @@ id MPGetObjectFromJavaScript(NSString *code, NSString *variableName)
     return object;
 }
 
+static NSString *MPPrismThemeFileName(NSString *name)
+{
+    name = [NSString stringWithFormat:@"prism-%@", [name lowercaseString]];
+    if ([name hasExtension:@"css"])
+        name = name.stringByDeletingPathExtension;
+    return [name stringByAppendingPathExtension:@"css"];
+}
+
+static NSString *MPPrismThemeDisplayName(NSString *fileName)
+{
+    // prism-<name>.css -> <Name> (capitalized)
+    // prism.css (default) -> nil (skipped)
+    if (!fileName || ![fileName hasExtension:@"css"])
+        return nil;
+    NSString *base = fileName.stringByDeletingPathExtension;
+    if ([base isEqualToString:@"prism"])
+        return nil;  // Default theme; handled separately
+    if (base.length <= 6)
+        return nil;  // Too short to have "prism-" prefix
+    if (![base hasPrefix:@"prism-"])
+        return nil;
+    NSString *name = [base substringFromIndex:6];
+    return [name capitalizedString];
+}
+
 NSURL *MPHighlightingThemeURLForNameInPaths(
     NSString *name, NSString *userDataRoot, NSString *bundleResourceRoot)
 {
-    // TODO: Implement — stub returns nil to make tests fail
+    NSString *fileName = MPPrismThemeFileName(name);
+    NSFileManager *manager = [NSFileManager defaultManager];
+
+    // Check user Application Support directory first
+    if (userDataRoot)
+    {
+        NSString *userPath = [NSString pathWithComponents:@[
+            userDataRoot, kMPPrismThemesDirectoryName, fileName]];
+        if ([manager fileExistsAtPath:userPath])
+            return [NSURL fileURLWithPath:userPath];
+    }
+
+    // Fall back to bundle resources
+    if (bundleResourceRoot)
+    {
+        NSString *bundlePath = [NSString pathWithComponents:@[
+            bundleResourceRoot, kMPPrismThemesDirectoryName, fileName]];
+        if ([manager fileExistsAtPath:bundlePath])
+            return [NSURL fileURLWithPath:bundlePath];
+
+        // Safety net: fall back to default theme (prism.css)
+        NSString *defaultPath = [NSString pathWithComponents:@[
+            bundleResourceRoot, kMPPrismThemesDirectoryName, @"prism.css"]];
+        if ([manager fileExistsAtPath:defaultPath])
+            return [NSURL fileURLWithPath:defaultPath];
+    }
+
     return nil;
+}
+
+static NSArray *MPListThemeFilesInDirectory(NSString *dirPath)
+{
+    if (!dirPath)
+        return @[];
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSError *error = nil;
+    NSArray *files = [manager contentsOfDirectoryAtPath:dirPath error:&error];
+    if (error || !files.count)
+        return @[];
+    NSMutableArray *cssFiles = [NSMutableArray array];
+    for (NSString *file in files)
+    {
+        if ([file hasExtension:@"css"])
+            [cssFiles addObject:file];
+    }
+    return cssFiles;
 }
 
 NSArray *MPListHighlightingThemesInPaths(
     NSString *userDataRoot, NSString *bundleResourceRoot)
 {
-    // TODO: Implement — stub returns empty array to make tests fail
-    return @[];
+    NSString *bundleThemeDir = nil;
+    if (bundleResourceRoot)
+        bundleThemeDir = [NSString pathWithComponents:@[
+            bundleResourceRoot, kMPPrismThemesDirectoryName]];
+
+    NSString *userThemeDir = nil;
+    if (userDataRoot)
+        userThemeDir = [NSString pathWithComponents:@[
+            userDataRoot, kMPPrismThemesDirectoryName]];
+
+    // Collect theme names; user themes override bundle themes
+    NSMutableOrderedSet *names = [NSMutableOrderedSet orderedSet];
+
+    for (NSString *file in MPListThemeFilesInDirectory(bundleThemeDir))
+    {
+        NSString *displayName = MPPrismThemeDisplayName(file);
+        if (displayName)
+            [names addObject:displayName];
+    }
+
+    for (NSString *file in MPListThemeFilesInDirectory(userThemeDir))
+    {
+        NSString *displayName = MPPrismThemeDisplayName(file);
+        if (displayName)
+            [names addObject:displayName];
+    }
+
+    return [[names array] sortedArrayUsingSelector:@selector(compare:)];
 }
 
