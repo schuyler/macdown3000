@@ -107,6 +107,7 @@
 		EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */; };
 		ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */; };
 		ISSUE294WRDCNTBUILDFILE /* MPWordCountUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE294WRDCNTFILEREF /* MPWordCountUpdateTests.m */; };
+		ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */; };
 		ISSUE285SMARTQTBUILDFILE /* MPSmartQuoteTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE285SMARTQTFILEREF /* MPSmartQuoteTests.m */; };
 		PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */; };
 		PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */; };
@@ -571,6 +572,7 @@
 		E7DD09F1241C9368008FBC25 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = Localization/da.lproj/MainMenu.strings; sourceTree = "<group>"; };
 		ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRenderDeferralTests.m; sourceTree = "<group>"; };
 		ISSUE294WRDCNTFILEREF /* MPWordCountUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPWordCountUpdateTests.m; sourceTree = "<group>"; };
+		ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMathJaxScrollTests.m; sourceTree = "<group>"; };
 		ISSUE285SMARTQTFILEREF /* MPSmartQuoteTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSmartQuoteTests.m; sourceTree = "<group>"; };
 		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
 		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
@@ -939,6 +941,7 @@
 				779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */,
 				8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */,
 				8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */,
+				ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
 				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
@@ -1378,6 +1381,7 @@
 				PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */,
 				ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */,
 				ISSUE294WRDCNTBUILDFILE /* MPWordCountUpdateTests.m in Sources */,
+				ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
 				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
 				EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */,
