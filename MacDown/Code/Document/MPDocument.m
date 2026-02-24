@@ -1315,6 +1315,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
                 // Issue #325: Set up MathJax completion callback to update header
                 // locations after typesetting, which may change document height.
+                // This overwrites the initial-load "End" listener, which is safe
+                // because isPreviewReady guarantees the initial load completed.
                 if (self.preferences.htmlMathJax)
                 {
                     MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];

@@ -6,13 +6,14 @@
 //  Verifies that MathJax rendering uses DOM replacement path to preserve scroll
 //  position, and that post-typesetting header location updates handle height changes.
 //
-//  Copyright (c) 2025 Tzu-ping Chung. All rights reserved.
+//  Copyright (c) 2026 Tzu-ping Chung. All rights reserved.
 //
 
 #import <XCTest/XCTest.h>
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "MPDocument.h"
+#import "MPRenderer.h"
 #import "MPPreferences.h"
 #import "MPMathJaxListener.h"
 
