@@ -120,6 +120,7 @@
 		EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */; };
 		B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */; };
 		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
+		ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -586,6 +587,7 @@
 		779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFileWatcherTests.m; sourceTree = "<group>"; };
 		8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPResourceWatcherSetTests.m; sourceTree = "<group>"; };
 		8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLsTests.m; sourceTree = "<group>"; };
+		ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentStyleUpdateTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -940,6 +942,7 @@
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
 				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
+				ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1380,6 +1383,7 @@
 				EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */,
 				B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */,
 				E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */,
+				ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

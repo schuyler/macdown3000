@@ -1145,6 +1145,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)reloadPreview:(id)sender
 {
+    // Issue #318: Force CSS refresh from disk on explicit reload
+    [self invalidateStyleCaches];
     [self.renderer parseAndRenderNow];
 }
 
@@ -1437,6 +1439,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)didRequestPreviewReload:(NSNotification *)notification
 {
+    // Issue #318: Force CSS refresh from disk on explicit reload
+    [self invalidateStyleCaches];
     [self render:nil];
 }
 
@@ -1762,6 +1766,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
 #pragma mark - Private
+
+/**
+ * Invalidates cached CSS styles and the WebView URL cache to force a full
+ * HTML reload on the next render cycle. Called when the user explicitly
+ * requests a style or theme reload (context menu or Settings).
+ *
+ * Related to GitHub issue #318.
+ */
+- (void)invalidateStyleCaches
+{
+    // Issue #318: Clear WebView's URL cache so edited CSS/JS files are
+    // re-read from disk instead of served from the in-memory cache.
+    [[NSURLCache sharedURLCache] removeAllCachedResponses];
+
+    // Issue #318: Reset cached names so renderer:didProduceHTMLOutput:
+    // sees a "change" (nil != currentPref) and takes the full HTML reload
+    // path instead of body-only DOM replacement.
+    self.currentStyleName = nil;
+    self.currentHighlightingThemeName = nil;
+}
 
 /**
  * Defers an operation until after the WebView finishes rendering.
