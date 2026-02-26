@@ -1257,10 +1257,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                          !MPAreNilableStringsEqual(self.currentHighlightingThemeName, newHighlightingTheme);
 
     // Try DOM replacement to preserve scroll position.
-    // Avoid DOM replacement when MathJax is enabled to prevent race conditions with
-    // async MathJax rendering. Full reload has proper completion handlers.
-    // Also skip DOM replacement if styles changed, since <head> CSS links need updating.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !self.preferences.htmlMathJax && !stylesChanged)
+    // MathJax re-typesetting is handled via MathJax.Hub.Queue, which serializes
+    // the async typesetting correctly. Scroll is restored after typesetting completes.
+    // Skip DOM replacement if styles changed, since <head> CSS links need updating.
+    // Related to issue #325.
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !stylesChanged)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -1296,14 +1297,48 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"  if(window.Prism){Prism.highlightAll();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
-                    @"    MathJax.Hub.Queue(function(){window.scrollTo(0,scrollY);});"
+                    @"    MathJax.Hub.Queue(function(){"
+                    @"      window.scrollTo(0,scrollY);"
+                    @"      if(typeof MathJaxListener!=='undefined'){"
+                    @"        MathJaxListener.invokeCallbackForKey_('DOMReplacementDone');"
+                    @"      }"
+                    @"    });"
                     @"  } else {"
                     @"    window.scrollTo(0,scrollY);"
                     @"  }"
                     @"})();",
                     scrollBefore];
 
+                // Issue #325: Set up MathJax completion callback to update header
+                // locations after typesetting, which may change document height.
+                // This overwrites the initial-load "End" listener, which is safe
+                // because isPreviewReady guarantees the initial load completed.
+                if (self.preferences.htmlMathJax)
+                {
+                    MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
+                    __weak MPDocument *weakSelf = self;
+                    [listener addCallback:^{
+                        [weakSelf updateHeaderLocations];
+                        if (weakSelf.preferences.editorSyncScrolling)
+                        {
+                            [weakSelf syncScrollers];
+                        }
+                        CGFloat newScrollY = NSMinY(
+                            weakSelf.preview.enclosingScrollView.contentView.bounds);
+                        weakSelf.lastPreviewScrollTop = newScrollY;
+                    } forKey:@"DOMReplacementDone"];
+                    [self.preview.windowScriptObject setValue:listener
+                                                      forKey:@"MathJaxListener"];
+                }
+
                 [context evaluateScript:updateScript];
+
+                // Save scroll position for non-MathJax DOM replacement.
+                // MathJax case is handled in the completion callback above.
+                if (!self.preferences.htmlMathJax)
+                {
+                    self.lastPreviewScrollTop = scrollBefore;
+                }
 
                 // Mark rendering as complete so next edit will be processed
                 self.alreadyRenderingInWeb = NO;
