@@ -8,7 +8,6 @@
 
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
-#import <sys/fcntl.h>  // Issue #290: For O_EVTONLY in file watching
 #import <JJPluralForm/JJPluralForm.h>
 #import <hoedown/html.h>
 #import "hoedown_html_patch.h"
@@ -31,6 +30,9 @@
 #import "MPMathJaxListener.h"
 #import "WebView+WebViewPrivateHeaders.h"
 #import "MPToolbarController.h"
+#import "MPFileWatcher.h"
+#import "MPResourceWatcherSet.h"
+#import "MPHTMLResourceURLs.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
@@ -184,7 +186,7 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
      WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
 #endif
-     MPAutosaving, MPRendererDataSource, MPRendererDelegate>
+     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate>
 
 typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeWord,
@@ -230,12 +232,14 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
 
 // Issue #290: File watching for auto-reload
-@property (strong) dispatch_source_t fileWatchSource;
-@property (nonatomic) int fileWatchDescriptor;
+@property (strong) MPFileWatcher *fileWatcher;
 @property (nonatomic) BOOL isSelfSaving;
 
 // Issue #320: Block-based observer token for main-thread-safe defaults notification
 @property (strong) id userDefaultsObserverToken;
+
+// Issue #110: Watch local resources for cache-busting
+@property (strong) MPResourceWatcherSet *resourceWatcherSet;
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
@@ -1238,6 +1242,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     self.manualRender = self.preferences.markdownManualRender;
 
+    // Issue #110: Update resource file watchers based on referenced local files.
+    // Run on every render (both DOM replacement and full reload) so that newly
+    // added resource references are watched immediately.
+    if (self.resourceWatcherSet && baseUrl)
+    {
+        NSSet *paths = MPLocalFilePathsInHTML(html, baseUrl);
+        [self.resourceWatcherSet updateWatchedPaths:paths];
+    }
+
     // Check if CSS style or highlighting theme has changed.
     // If either changed, we must do a full reload to update <head> with new CSS links.
     NSString *newStyleName = self.preferences.htmlStyleName;
@@ -1310,6 +1323,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
+}
+
+- (NSURL *)rendererBaseURL:(MPRenderer *)renderer
+{
+    NSURL *baseUrl = self.fileURL;
+    if (!baseUrl)
+        baseUrl = self.preferences.htmlDefaultDirectoryUrl;
+    return baseUrl;
+}
+
+#pragma mark - Resource Watcher Delegate (Issue #110)
+
+- (void)resourceWatcherSet:(MPResourceWatcherSet *)set
+     didDetectChangeAtPath:(NSString *)path
+{
+    [self.renderer setTimestamp:[[NSDate date] timeIntervalSince1970]
+               forResourcePath:path];
+    [self.renderer render];
 }
 
 #pragma mark - Window Controller
@@ -2824,81 +2855,34 @@ current file somewhere to enable this feature.", \
 
 - (void)startFileWatching
 {
-    // Only watch if we have a file URL
     if (!self.fileURL || !self.fileURL.isFileURL)
         return;
 
-    // Stop any existing watcher first
     [self stopFileWatching];
 
-    // Open file descriptor for monitoring (O_EVTONLY doesn't prevent deletion)
-    const char *path = self.fileURL.path.fileSystemRepresentation;
-    int fd = open(path, O_EVTONLY);
-    if (fd < 0)
-        return;
-
-    self.fileWatchDescriptor = fd;
-
-    // Create dispatch source for vnode events
-    dispatch_queue_t queue = dispatch_get_main_queue();
-    dispatch_source_t source = dispatch_source_create(
-        DISPATCH_SOURCE_TYPE_VNODE,
-        fd,
-        DISPATCH_VNODE_WRITE | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME,
-        queue
-    );
-
-    if (!source)
-    {
-        close(fd);
-        self.fileWatchDescriptor = -1;
-        return;
-    }
-
     __weak MPDocument *weakSelf = self;
+    self.fileWatcher = [[MPFileWatcher alloc]
+        initWithPath:self.fileURL.path
+             handler:^(NSString *path) {
+                 [weakSelf handleExternalFileChange];
+             }
+       cancelHandler:^(NSString *path) {
+                 // File was deleted or renamed — watcher auto-stopped
+       }];
 
-    // Event handler
-    dispatch_source_set_event_handler(source, ^{
-        MPDocument *strongSelf = weakSelf;
-        if (!strongSelf)
-            return;
-
-        unsigned long flags = dispatch_source_get_data(source);
-
-        if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME))
-        {
-            // File was deleted or renamed - stop watching
-            [strongSelf stopFileWatching];
-            return;
-        }
-
-        if (flags & DISPATCH_VNODE_WRITE)
-        {
-            [strongSelf handleExternalFileChange];
-        }
-    });
-
-    // Cancel handler - cleanup when source is cancelled
-    // Capture fd directly for more robust cleanup (no dependency on instance state)
-    int fdToClose = fd;
-    dispatch_source_set_cancel_handler(source, ^{
-        if (fdToClose >= 0)
-        {
-            close(fdToClose);
-        }
-    });
-
-    self.fileWatchSource = source;
-    dispatch_resume(source);
+    // Initialize resource watcher set
+    if (!self.resourceWatcherSet)
+    {
+        self.resourceWatcherSet = [[MPResourceWatcherSet alloc] init];
+        self.resourceWatcherSet.delegate = self;
+    }
 }
 
 - (void)stopFileWatching
 {
-    if (self.fileWatchSource)
-    {
-        dispatch_source_cancel(self.fileWatchSource);
-        self.fileWatchSource = nil;
-    }
+    [self.fileWatcher stopWatching];
+    self.fileWatcher = nil;
+    [self.resourceWatcherSet stopAll];
 }
 
 - (void)handleExternalFileChange

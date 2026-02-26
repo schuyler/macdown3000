@@ -114,6 +114,12 @@
 		PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */; };
 		PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */; };
 		ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */; };
+		D29776CC6E7EB5B4AA2E0537 /* MPFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A81247E840EB5C07669FF165 /* MPFileWatcher.m */; };
+		BA2B9EC2E95175092A97B41E /* MPResourceWatcherSet.m in Sources */ = {isa = PBXBuildFile; fileRef = E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */; };
+		1F13B5E1110695033F2B57AE /* MPHTMLResourceURLs.m in Sources */ = {isa = PBXBuildFile; fileRef = 7EDA4DCB8E20B177D4704F77 /* MPHTMLResourceURLs.m */; };
+		EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */; };
+		B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */; };
+		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -571,6 +577,15 @@
 		PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HGMarkdownHighlighterTests.m; sourceTree = "<group>"; };
 		PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageExportTests.m; sourceTree = "<group>"; };
 		ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPToolbarControllerTests.m; sourceTree = "<group>"; };
+		DDDB87873110C02114439C2C /* MPFileWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPFileWatcher.h; sourceTree = "<group>"; };
+		A81247E840EB5C07669FF165 /* MPFileWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFileWatcher.m; sourceTree = "<group>"; };
+		615588251EB35DEE6204B94E /* MPResourceWatcherSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPResourceWatcherSet.h; sourceTree = "<group>"; };
+		E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPResourceWatcherSet.m; sourceTree = "<group>"; };
+		5162FB5F85C6B4B09403BE65 /* MPHTMLResourceURLs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPHTMLResourceURLs.h; sourceTree = "<group>"; };
+		7EDA4DCB8E20B177D4704F77 /* MPHTMLResourceURLs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLs.m; sourceTree = "<group>"; };
+		779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFileWatcherTests.m; sourceTree = "<group>"; };
+		8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPResourceWatcherSetTests.m; sourceTree = "<group>"; };
+		8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLsTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -650,6 +665,12 @@
 				1F0D9D64194AC7CF008E1856 /* MPUtilities.m */,
 				A1E2BE312F0A74E500DF65A1 /* FileURLInlining.h */,
 				A1E2BE332F0A754F00DF65A1 /* FileURLInlining.m */,
+				DDDB87873110C02114439C2C /* MPFileWatcher.h */,
+				A81247E840EB5C07669FF165 /* MPFileWatcher.m */,
+				615588251EB35DEE6204B94E /* MPResourceWatcherSet.h */,
+				E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */,
+				5162FB5F85C6B4B09403BE65 /* MPHTMLResourceURLs.h */,
+				7EDA4DCB8E20B177D4704F77 /* MPHTMLResourceURLs.m */,
 			);
 			name = Utility;
 			path = Code/Utility;
@@ -913,6 +934,9 @@
 				PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */,
 				ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */,
 				ISSUE294WRDCNTFILEREF /* MPWordCountUpdateTests.m */,
+				779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */,
+				8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */,
+				8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
 				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
@@ -1317,6 +1341,9 @@
 				1F8A835D1953454F00B6BF69 /* HGMarkdownHighlighter.m in Sources */,
 				1F847BC61DCC9DB600A47385 /* NSUserDefaults+Suite.m in Sources */,
 				1F3386E61A6B999600FC88C4 /* DOMNode+Text.m in Sources */,
+				D29776CC6E7EB5B4AA2E0537 /* MPFileWatcher.m in Sources */,
+				BA2B9EC2E95175092A97B41E /* MPResourceWatcherSet.m in Sources */,
+				1F13B5E1110695033F2B57AE /* MPHTMLResourceURLs.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1350,6 +1377,9 @@
 				ISSUE294WRDCNTBUILDFILE /* MPWordCountUpdateTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
 				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
+				EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */,
+				B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */,
+				E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

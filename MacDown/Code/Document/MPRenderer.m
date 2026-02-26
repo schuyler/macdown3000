@@ -17,6 +17,7 @@
 #import "MPUtilities.h"
 #import "MPAsset.h"
 #import "MPPreferences.h"
+#import "MPHTMLResourceURLs.h"
 
 // Warning: If the version of MathJax is ever updated, please check the status
 // of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
@@ -323,6 +324,9 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 @property BOOL manualRender;
 @property (copy) NSString *highlightingThemeName;
 
+// Issue #110: Cache-busting timestamps for local resources
+@property (strong) NSMutableDictionary<NSString *, NSNumber *> *resourceTimestamps;
+
 @end
 
 
@@ -445,6 +449,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 
     self.currentHtml = @"";
     self.currentLanguages = [NSMutableArray array];
+    self.resourceTimestamps = [NSMutableDictionary dictionary];
     self.parseQueue = [[NSOperationQueue alloc] init];
     self.parseQueue.maxConcurrentOperationCount = 1; // Serial queue
 
@@ -736,9 +741,19 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 {
     id<MPRendererDelegate> delegate = self.delegate;
 
+    NSString *body = self.currentHtml;
+    if (self.resourceTimestamps.count > 0)
+    {
+        NSURL *baseURL = nil;
+        if ([delegate respondsToSelector:@selector(rendererBaseURL:)])
+            baseURL = [delegate rendererBaseURL:self];
+        if (baseURL)
+            body = MPApplyCacheBusting(body, self.resourceTimestamps, baseURL);
+    }
+
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     NSString *html = MPGetHTML(
-        title, self.currentHtml, self.stylesheets, MPAssetFullLink,
+        title, body, self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
     [delegate renderer:self didProduceHTMLOutput:html];
 
@@ -748,6 +763,19 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     self.graphviz = [delegate rendererHasGraphviz:self];
     self.highlightingThemeName = [delegate rendererHighlightingThemeName:self];
     self.codeBlockAccesory = [delegate rendererCodeBlockAccesory:self];
+}
+
+#pragma mark - Resource Cache-Busting (Issue #110)
+
+- (void)setTimestamp:(NSTimeInterval)timestamp forResourcePath:(NSString *)path
+{
+    if (path)
+        self.resourceTimestamps[path] = @(timestamp);
+}
+
+- (void)clearResourceTimestamps
+{
+    [self.resourceTimestamps removeAllObjects];
 }
 
 - (NSString *)HTMLForExportWithStyles:(BOOL)withStyles
