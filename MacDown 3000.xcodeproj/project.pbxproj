@@ -123,6 +123,7 @@
 		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
 		ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */; };
 		ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */; };
+		UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UITEST000001SWIFTFILE /* MacDownUITests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -153,6 +154,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 905EF1A6196164CA00FC3CE9;
 			remoteInfo = "MacDown-cmd";
+		};
+		UITEST000005CONTPROXY /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1FA6DE191941CC9E000409FB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1FA6DE201941CC9E000409FB;
+			remoteInfo = MacDown;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -592,6 +600,9 @@
 		8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLsTests.m; sourceTree = "<group>"; };
 		ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentStyleUpdateTests.m; sourceTree = "<group>"; };
 		ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMermaidRenderingTests.m; sourceTree = "<group>"; };
+		UITEST000001SWIFTFILE /* MacDownUITests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MacDownUITests.swift; sourceTree = "<group>"; };
+		UITEST000002INFOPLIST /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		UITEST000003XCTEST /* MacDownUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacDownUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -623,6 +634,13 @@
 			files = (
 				905EF1A9196164CA00FC3CE9 /* Foundation.framework in Frameworks */,
 				B5C5C1666A506FEA86435D25 /* libPods-macdown-cmd.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		UITEST000006FRAMEWORKS /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -824,6 +842,7 @@
 				1F8A83551953453100B6BF69 /* Dependency */,
 				1FCDC9EB1944F89B00B1F966 /* MacDown */,
 				1FCDCA2F1944F96E00B1F966 /* MacDownTests */,
+				UITEST000007GROUP /* MacDownUITests */,
 				905EF1AA196164CA00FC3CE9 /* macdown-cmd */,
 				1FA6DE231941CC9E000409FB /* Frameworks */,
 				1FA6DE221941CC9E000409FB /* Products */,
@@ -837,6 +856,7 @@
 			children = (
 				1FA6DE211941CC9E000409FB /* MacDown 3000.app */,
 				1FA6DE451941CC9E000409FB /* MacDownTests.xctest */,
+				UITEST000003XCTEST /* MacDownUITests.xctest */,
 				905EF1A7196164CA00FC3CE9 /* macdown */,
 			);
 			name = Products;
@@ -1000,6 +1020,15 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		UITEST000007GROUP /* MacDownUITests */ = {
+			isa = PBXGroup;
+			children = (
+				UITEST000001SWIFTFILE /* MacDownUITests.swift */,
+				UITEST000002INFOPLIST /* Info.plist */,
+			);
+			path = MacDownUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1066,6 +1095,24 @@
 			productReference = 905EF1A7196164CA00FC3CE9 /* macdown */;
 			productType = "com.apple.product-type.tool";
 		};
+		UITEST000008TARGET /* MacDownUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = UITEST00000ECFGLIST /* Build configuration list for PBXNativeTarget "MacDownUITests" */;
+			buildPhases = (
+				UITEST000009SOURCES /* Sources */,
+				UITEST000006FRAMEWORKS /* Frameworks */,
+				UITEST00000ARESOURCES /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				UITEST00000BTARGETDEP /* PBXTargetDependency */,
+			);
+			name = MacDownUITests;
+			productName = MacDownUITests;
+			productReference = UITEST000003XCTEST /* MacDownUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1077,6 +1124,9 @@
 				ORGANIZATIONNAME = "Tzu-ping Chung ";
 				TargetAttributes = {
 					1FA6DE441941CC9E000409FB = {
+						TestTargetID = 1FA6DE201941CC9E000409FB;
+					};
+					UITEST000008TARGET = {
 						TestTargetID = 1FA6DE201941CC9E000409FB;
 					};
 				};
@@ -1133,6 +1183,7 @@
 			targets = (
 				1FA6DE201941CC9E000409FB /* MacDown */,
 				1FA6DE441941CC9E000409FB /* MacDownTests */,
+				UITEST000008TARGET /* MacDownUITests */,
 				905EF1A6196164CA00FC3CE9 /* macdown-cmd */,
 			);
 		};
@@ -1182,6 +1233,13 @@
 				1FFEB3201972B04D00B2254F /* test.txt in Resources */,
 				1FFEB31E1972A28400B2254F /* test.js in Resources */,
 				1FFEB32C19ABCD1200B2254F /* Fixtures in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		UITEST00000ARESOURCES /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1405,6 +1463,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		UITEST000009SOURCES /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -1427,6 +1493,11 @@
 			isa = PBXTargetDependency;
 			target = 905EF1A6196164CA00FC3CE9 /* macdown-cmd */;
 			targetProxy = 905EF1B4196164DD00FC3CE9 /* PBXContainerItemProxy */;
+		};
+		UITEST00000BTARGETDEP /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1FA6DE201941CC9E000409FB /* MacDown */;
+			targetProxy = UITEST000005CONTPROXY /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1996,6 +2067,46 @@
 			};
 			name = Release;
 		};
+		UITEST00000CCFGDEBUG /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MacDownUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.macdown.macdown3000.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MacDown;
+			};
+			name = Debug;
+		};
+		UITEST00000DCFGRELEASE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = MacDownUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.macdown.macdown3000.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = MacDown;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2031,6 +2142,15 @@
 			buildConfigurations = (
 				905EF1B1196164CA00FC3CE9 /* Debug */,
 				905EF1B2196164CA00FC3CE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		UITEST00000ECFGLIST /* Build configuration list for PBXNativeTarget "MacDownUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				UITEST00000CCFGDEBUG /* Debug */,
+				UITEST00000DCFGRELEASE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
