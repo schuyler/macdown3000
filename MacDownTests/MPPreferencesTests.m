@@ -116,6 +116,23 @@
     [self.preferences synchronize];
 }
 
+- (void)testAutoSaveToggle
+{
+    BOOL original = self.preferences.editorAutoSave;
+
+    self.preferences.editorAutoSave = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.editorAutoSave, @"Auto-save should be ON");
+
+    self.preferences.editorAutoSave = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.editorAutoSave, @"Auto-save should be OFF");
+
+    // Restore
+    self.preferences.editorAutoSave = original;
+    [self.preferences synchronize];
+}
+
 - (void)testExtensionFlags
 {
     // Save originals
@@ -383,8 +400,8 @@
     NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
     // Simulate user who has already had migration applied AND explicitly disabled
-    // Use version 3 to indicate all migrations have been applied
-    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    // Use version 5 to indicate all migrations have been applied
+    [defaults setInteger:5 forKey:@"MPMigrationVersion"];
     [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     [defaults setBool:NO forKey:@"htmlTaskList"];
 
@@ -425,8 +442,8 @@
     NSNumber *originalMigrationFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
     NSNumber *originalMigrationVersion = [defaults objectForKey:@"MPMigrationVersion"];
 
-    // Set up: migration already applied (version 3), user explicitly disabled
-    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    // Set up: migration already applied (version 5), user explicitly disabled
+    [defaults setInteger:5 forKey:@"MPMigrationVersion"];
     [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     [defaults setBool:NO forKey:@"htmlTaskList"];
 
@@ -528,10 +545,10 @@
     // Create new preferences instance
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Fresh install should set migration version to current (4)
+    // Fresh install should set migration version to current (5)
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 4,
-                   @"Fresh installation should set migration version to 4");
+    XCTAssertEqual(version, 5,
+                   @"Fresh installation should set migration version to 5");
 
     // Intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
@@ -585,10 +602,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 4
+    // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 4,
-                   @"Migration version should be updated to 4");
+    XCTAssertEqual(version, 5,
+                   @"Migration version should be updated to 5");
 
     // Version 2 migration: task list should be enabled
     XCTAssertTrue(prefs.htmlTaskList,
@@ -649,10 +666,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 4
+    // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 4,
-                   @"Migration version should be updated to 4");
+    XCTAssertEqual(version, 5,
+                   @"Migration version should be updated to 5");
 
     // Version 3 migration: intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
@@ -694,8 +711,8 @@
     NSNumber *originalTaskListFlag = [defaults objectForKey:@"MPDidApplyTaskListDefaultFix"];
     NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
 
-    // Set explicit version 3 - should skip all migrations even if legacy flags missing
-    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    // Set explicit version 5 - should skip all migrations even if legacy flags missing
+    [defaults setInteger:5 forKey:@"MPMigrationVersion"];
     [defaults removeObjectForKey:@"MPDidApplySubstitutionDefaultsFix"];
     [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
     [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // User has it enabled
@@ -705,7 +722,7 @@
 
     // Version 3 should NOT apply any migrations - user's choice preserved
     XCTAssertTrue(prefs.extensionIntraEmphasis,
-                  @"Explicit version 3 should not change user's intra-emphasis setting");
+                  @"Explicit version 5 should not change user's intra-emphasis setting");
 
     // Restore original values
     if (originalVersion)
@@ -793,10 +810,10 @@
     XCTAssertFalse(prefs.extensionIntraEmphasis,
                    @"Version 3 migration should disable intra-emphasis for existing users");
 
-    // Migration version should be updated to 4
+    // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 4,
-                   @"Migration version should be updated to 4 after migration");
+    XCTAssertEqual(version, 5,
+                   @"Migration version should be updated to 5 after migration");
 
     // Restore original values
     if (originalVersion)
@@ -823,7 +840,7 @@
     NSNumber *originalIntraEmphasis = [defaults objectForKey:@"extensionIntraEmphasis"];
 
     // Simulate fully migrated user who then re-enabled the setting
-    [defaults setInteger:3 forKey:@"MPMigrationVersion"];
+    [defaults setInteger:5 forKey:@"MPMigrationVersion"];
     [defaults setBool:YES forKey:@"extensionIntraEmphasis"];  // User chose to enable
 
     // Trigger initialization
@@ -919,6 +936,45 @@
         [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
     else
         [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+/**
+ * Test that existing users at version 4 get editorAutoSave defaulted to YES.
+ */
+- (void)testAutoSaveMigrationDefaultsToYes
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    // Save original values
+    NSNumber *originalVersion = [defaults objectForKey:@"MPMigrationVersion"];
+    NSNumber *originalAutoSave = [defaults objectForKey:@"editorAutoSave"];
+
+    // Simulate user at version 4 (pre-autosave preference)
+    [defaults setInteger:4 forKey:@"MPMigrationVersion"];
+    [defaults removeObjectForKey:@"editorAutoSave"];
+
+    // Trigger initialization
+    MPPreferences *prefs = [[MPPreferences alloc] init];
+
+    // Migration 5 should set editorAutoSave to YES
+    XCTAssertTrue(prefs.editorAutoSave,
+                  @"Migration should default editorAutoSave to YES for existing users");
+
+    // Migration version should be updated to 5
+    NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
+    XCTAssertEqual(version, 5,
+                   @"Migration version should be updated to 5");
+
+    // Restore original values
+    if (originalVersion)
+        [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
+    else
+        [defaults removeObjectForKey:@"MPMigrationVersion"];
+
+    if (originalAutoSave)
+        [defaults setObject:originalAutoSave forKey:@"editorAutoSave"];
+    else
+        [defaults removeObjectForKey:@"editorAutoSave"];
 }
 
 /**

@@ -263,6 +263,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorOnRight;
 @dynamic editorShowWordCount;
 @dynamic editorWordCountType;
+@dynamic editorAutoSave;
 @dynamic editorScrollsPastEnd;
 @dynamic editorEnsuresNewlineAtEndOfFile;
 @dynamic editorUnorderedListMarkerType;
@@ -451,6 +452,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.htmlTemplateName = @"Default";
     if (![defaults objectForKey:@"extensionStrikethough"])
         self.extensionStrikethough = YES;
+    if (![defaults objectForKey:@"editorAutoSave"])
+        self.editorAutoSave = YES;
 
     // Apply preference migrations using version-based system.
     [self applyPreferencesMigrations];
@@ -467,6 +470,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  * - Version 2: Task list default fix (Issue #269)
  * - Version 3: Intra-emphasis default fix (Issue #293),
  *              hide YAML front matter by default (Issue #307)
+ * - Version 4: Clear stale split view autosave (Issue #309)
+ * - Version 5: Auto-save preference default
  */
 - (NSInteger)effectiveMigrationVersion
 {
@@ -505,7 +510,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)applyPreferencesMigrations
 {
-    static NSInteger const kMPCurrentMigrationVersion = 4;
+    static NSInteger const kMPCurrentMigrationVersion = 5;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
     NSInteger currentVersion = [self effectiveMigrationVersion];
@@ -553,6 +558,13 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (currentVersion < 4)
     {
         [defaults removeObjectForKey:@"NSSplitView Subview Frames Untitled"];
+    }
+
+    // Migration Version 5: Auto-save preference default
+    // Ensure existing users get editorAutoSave = YES to preserve existing behavior.
+    if (currentVersion < 5)
+    {
+        self.editorAutoSave = YES;
     }
 
     // Update to current version
