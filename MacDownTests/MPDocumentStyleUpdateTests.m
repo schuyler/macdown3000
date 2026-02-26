@@ -268,4 +268,178 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
     XCTAssertEqualObjects(self.preferences.htmlStyleName, @"Solarized (Light)");
 }
 
+#pragma mark - Style Reload Cache Invalidation Tests (Issue #318)
+
+- (void)testCacheInvalidationForcesStyleReloadWithNonNilPreferences
+{
+    // Simulate invalidateStyleCaches: cached names set to nil
+    NSString *cachedStyle = nil;
+    NSString *cachedTheme = nil;
+    // Preferences still have their configured values
+    NSString *prefStyle = @"GitHub2";
+    NSString *prefTheme = @"tomorrow";
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    XCTAssertTrue(stylesChanged,
+                  @"Cache invalidation (nil caches) with non-nil preferences "
+                   "should force stylesChanged to YES for full reload");
+}
+
+- (void)testCacheInvalidationForcesReloadEvenWithEmptyTheme
+{
+    // Edge case: user selected "None" for highlighting theme, stored as @""
+    NSString *cachedStyle = nil;
+    NSString *cachedTheme = nil;
+    NSString *prefStyle = @"GitHub2";
+    NSString *prefTheme = @"";  // "None" selected in UI
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    XCTAssertTrue(stylesChanged,
+                  @"Cache invalidation should force reload even when theme is empty string");
+}
+
+- (void)testCacheInvalidationWithNilPreferencesDoesNotForceReload
+{
+    // Guard: if both cached and preference values are nil, no reload needed
+    NSString *cachedStyle = nil;
+    NSString *cachedTheme = nil;
+    NSString *prefStyle = nil;
+    NSString *prefTheme = nil;
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    XCTAssertFalse(stylesChanged,
+                   @"Should not force reload when both caches and preferences are nil");
+}
+
+- (void)testCacheInvalidationOnlyStyleSetForcesReload
+{
+    // Only style cache is nil; theme cache still matches
+    NSString *cachedStyle = nil;
+    NSString *prefStyle = @"GitHub2";
+    NSString *cachedTheme = @"tomorrow";
+    NSString *prefTheme = @"tomorrow";
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    XCTAssertTrue(stylesChanged,
+                  @"Nil style cache alone should force reload via OR logic");
+}
+
+- (void)testCacheInvalidationOnlyThemeSetForcesReload
+{
+    // Only theme cache is nil; style cache still matches
+    NSString *cachedStyle = @"GitHub2";
+    NSString *prefStyle = @"GitHub2";
+    NSString *cachedTheme = nil;
+    NSString *prefTheme = @"tomorrow";
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    XCTAssertTrue(stylesChanged,
+                  @"Nil theme cache alone should force reload via OR logic");
+}
+
+- (void)testFullReloadPathWhenCachesInvalidatedAndPreviewReady
+{
+    // Full gate condition from renderer:didProduceHTMLOutput:
+    BOOL isPreviewReady = YES;
+    BOOL baseUrlMatches = YES;
+    BOOL mathJaxEnabled = NO;
+
+    // Simulate cache invalidation
+    NSString *cachedStyle = nil;
+    NSString *prefStyle = @"GitHub2";
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle);
+
+    BOOL canUseDOMReplacement = isPreviewReady && baseUrlMatches
+                                && !mathJaxEnabled && !stylesChanged;
+
+    XCTAssertFalse(canUseDOMReplacement,
+                   @"After cache invalidation, should take full reload path, not DOM replacement");
+}
+
+- (void)testDOMReplacementWhenCachesMatchAndNoMathJax
+{
+    // No-regression: normal renders should still use DOM replacement
+    BOOL isPreviewReady = YES;
+    BOOL baseUrlMatches = YES;
+    BOOL mathJaxEnabled = NO;
+
+    NSString *cachedStyle = @"GitHub2";
+    NSString *prefStyle = @"GitHub2";
+    NSString *cachedTheme = @"tomorrow";
+    NSString *prefTheme = @"tomorrow";
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    BOOL canUseDOMReplacement = isPreviewReady && baseUrlMatches
+                                && !mathJaxEnabled && !stylesChanged;
+
+    XCTAssertTrue(canUseDOMReplacement,
+                  @"Normal render with matching caches should use DOM replacement");
+}
+
+- (void)testSequentialReloadAfterCacheInvalidation
+{
+    // Models the complete lifecycle: normal -> invalidate -> full reload -> normal
+    NSString *prefStyle = @"GitHub2";
+    NSString *prefTheme = @"tomorrow";
+
+    // Step 1: Normal state - caches match preferences
+    NSString *cachedStyle = @"GitHub2";
+    NSString *cachedTheme = @"tomorrow";
+    BOOL stylesChanged1 = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                          !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+    XCTAssertFalse(stylesChanged1, @"Before invalidation: caches match, no change");
+
+    // Step 2: invalidateStyleCaches called
+    cachedStyle = nil;
+    cachedTheme = nil;
+    BOOL stylesChanged2 = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                          !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+    XCTAssertTrue(stylesChanged2, @"After invalidation: nil caches force change");
+
+    // Step 3: Full reload completes, re-caches current values
+    cachedStyle = prefStyle;
+    cachedTheme = prefTheme;
+    BOOL stylesChanged3 = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                          !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+    XCTAssertFalse(stylesChanged3, @"After reload: caches match again, no change");
+}
+
+- (void)testCacheInvalidationSimulationWithRealPreferences
+{
+    // Integration: use actual preference values from the singleton
+    NSString *prefStyle = self.preferences.htmlStyleName;
+    NSString *prefTheme = self.preferences.htmlHighlightingThemeName;
+
+    // Simulate cache invalidation
+    NSString *cachedStyle = nil;
+    NSString *cachedTheme = nil;
+
+    BOOL stylesChanged = !MPAreNilableStringsEqual(cachedStyle, prefStyle) ||
+                         !MPAreNilableStringsEqual(cachedTheme, prefTheme);
+
+    // At least one preference should be non-nil, forcing stylesChanged
+    if (prefStyle != nil || prefTheme != nil)
+    {
+        XCTAssertTrue(stylesChanged,
+                      @"With real non-nil preferences, cache invalidation "
+                       "should force stylesChanged to YES");
+    }
+    else
+    {
+        XCTAssertFalse(stylesChanged,
+                       @"If both preferences are nil, no change detected");
+    }
+}
+
 @end

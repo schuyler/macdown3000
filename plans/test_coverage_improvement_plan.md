@@ -54,7 +54,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
 - Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
-- Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219)
+- Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219); style reload cache invalidation tests added (Issue #318)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 - Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
 - Toolbar controller (MPToolbarController.m) - 37 tests for NSToolbarDelegate methods, flexible space/separator support, item groups (Issue #313)
