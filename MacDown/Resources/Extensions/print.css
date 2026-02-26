@@ -65,8 +65,9 @@
         overflow-wrap: break-word !important;
     }
 
-    /* Body margins - consistent across all themes */
+    /* Body margins - zeroed out so NSPrintInfo (File > Page Setup) is the
+     * single source of truth for PDF/print margins. */
     body {
-        padding: 2cm;
+        padding: 0;
     }
 }
