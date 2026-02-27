@@ -14,13 +14,14 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 
 ### What We Test Well ✓
 
-**Rendering Engine** (MPMarkdownRenderingTests, MPMathJaxRenderingTests, MPRendererEdgeCaseTests):
+**Rendering Engine** (MPMarkdownRenderingTests, MPMathJaxRenderingTests, MPRendererEdgeCaseTests, MPMermaidRenderingTests):
 - Markdown → HTML conversion with golden files
 - Hoedown bugs #34, #36, #37 fixed via preprocessor
 - MathJax syntax preservation
 - Syntax highlighting CSS classes
 - HTML export structure
 - Renderer edge cases: nil handling, concurrent rendering, extension combinations (Issue #234)
+- Mermaid diagram rendering: MutationObserver re-rendering on DOM replacement, full-width SVG sizing (Issue #331)
 
 **Utilities**:
 - String operations (MPStringLookupTests)
