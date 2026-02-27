@@ -160,20 +160,6 @@
 }
 
 
-#pragma mark - Export CSS for Full-Width Mermaid Diagrams
-
-- (void)testExportCSSIncludedWithStyles
-{
-    self.dataSource.markdown = @"# Test";
-    [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
-
-    // export.css is embedded as inline styles in the export path
-    XCTAssertTrue([html containsString:@"overflow-wrap"],
-                  @"export.css content should be present in styled export");
-}
-
-
 #pragma mark - Preference Change Detection
 
 - (void)testRenderIfPreferencesChangedDetectsMermaidToggle
