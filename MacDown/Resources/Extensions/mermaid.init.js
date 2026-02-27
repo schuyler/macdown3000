@@ -27,7 +27,10 @@
   var renderCount = 0;
   var sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 
-  // Guard against re-entrant calls (e.g. MutationObserver firing during render)
+  // Guard against re-entrant calls (e.g. MutationObserver firing during render).
+  // The primary safety net is the domAll.length === 0 check below, which prevents
+  // unnecessary re-renders once all .language-mermaid elements have been replaced
+  // with SVGs. This flag is an additional belt-and-suspenders measure.
   var rendering = false;
 
   var init = async function() {
