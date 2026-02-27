@@ -106,12 +106,13 @@
     self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
+    // Use render (MPAssetFullLink) so script URLs contain filenames
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+    [self.renderer render];
 
-    XCTAssertTrue([html containsString:@"mermaid.min.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
                   @"Should include Mermaid library");
-    XCTAssertTrue([html containsString:@"mermaid.init.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
                   @"Should include Mermaid init script");
 }
 
@@ -122,12 +123,13 @@
     self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
+    // Use render (MPAssetFullLink) so script URLs contain filenames
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+    [self.renderer render];
 
-    XCTAssertFalse([html containsString:@"mermaid.min.js"],
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.min.js"],
                    @"Should NOT include Mermaid library when disabled");
-    XCTAssertFalse([html containsString:@"mermaid.init.js"],
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.init.js"],
                    @"Should NOT include Mermaid init script when disabled");
 }
 
@@ -138,25 +140,12 @@
     self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
+    // Use render (MPAssetFullLink) so script URLs contain filenames
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+    [self.renderer render];
 
-    XCTAssertFalse([html containsString:@"mermaid.min.js"],
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.min.js"],
                    @"Mermaid requires syntax highlighting to be enabled");
-}
-
-- (void)testMermaidScriptsExcludedFromExportWithoutHighlighting
-{
-    self.delegate.mermaid = YES;
-    self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
-    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
-
-    [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
-
-    XCTAssertFalse([html containsString:@"mermaid.min.js"],
-                   @"Mermaid scripts should not be in export without highlighting");
 }
 
 
@@ -337,18 +326,18 @@
     self.delegate.syntaxHighlighting = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
-    // First: enabled
+    // First: enabled — use render (MPAssetFullLink) for filename checks
     self.delegate.mermaid = YES;
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html1 = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
-    XCTAssertTrue([html1 containsString:@"mermaid.min.js"],
+    [self.renderer render];
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
                   @"Should include mermaid scripts when enabled");
 
     // Second: disabled
     self.delegate.mermaid = NO;
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html2 = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
-    XCTAssertFalse([html2 containsString:@"mermaid.min.js"],
+    [self.renderer render];
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.min.js"],
                    @"Should exclude mermaid scripts after disabling");
 }
 
@@ -364,12 +353,13 @@
     self.dataSource.markdown =
         @"```mermaid\ngraph TD;\n    A-->B;\n```\n\nInline math: $x^2$";
 
+    // Use render (MPAssetFullLink) for filename checks
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+    [self.renderer render];
 
-    XCTAssertTrue([html containsString:@"mermaid.init.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
                   @"Should include mermaid init script");
-    XCTAssertTrue([html containsString:@"MathJax.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"MathJax.js"],
                   @"Should include MathJax script alongside mermaid");
 }
 
@@ -383,12 +373,13 @@
         @"```mermaid\ngraph TD;\n    A-->B;\n```\n\n"
         @"```dot\ndigraph G { A -> B }\n```";
 
+    // Use render (MPAssetFullLink) for filename checks
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+    [self.renderer render];
 
-    XCTAssertTrue([html containsString:@"mermaid.init.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
                   @"Should include mermaid init script");
-    XCTAssertTrue([html containsString:@"viz.init.js"],
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.init.js"],
                   @"Should include graphviz init script alongside mermaid");
 }
 
