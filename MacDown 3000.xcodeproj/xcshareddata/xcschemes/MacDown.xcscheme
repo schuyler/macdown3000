@@ -47,6 +47,16 @@
                ReferencedContainer = "container:MacDown 3000.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "UITEST000008TARGET"
+               BuildableName = "MacDownUITests.xctest"
+               BlueprintName = "MacDownUITests"
+               ReferencedContainer = "container:MacDown 3000.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
