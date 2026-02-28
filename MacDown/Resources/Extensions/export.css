@@ -53,3 +53,13 @@ body {
  * For screen preview and HTML export, code blocks maintain their
  * natural overflow behavior with horizontal scrolling.
  */
+
+/* Mermaid diagram full-width rendering (Issue #331)
+ * Rendered Mermaid SVGs replace the original <pre><code> container.
+ * The SVG id uses the 'mermaid_' prefix from mermaid.init.js.
+ */
+svg[id^="mermaid_"] {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+}
