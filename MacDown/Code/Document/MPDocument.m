@@ -301,6 +301,9 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
 
+// Transient per-document zoom level (not saved to preferences)
+@property CGFloat zoomMultiplier;
+
 - (void)scaleWebview;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
@@ -583,6 +586,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.volumeLocalityChecker = ^BOOL(NSString *path) {
         return [MPFileWatcher pathIsOnLocalVolume:path];
     };
+    self.zoomMultiplier = 1.0;
 
     return self;
 }
@@ -1051,7 +1055,23 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     BOOL result = [super validateUserInterfaceItem:item];
     SEL action = item.action;
-    if (action == @selector(toggleToolbar:))
+    
+    // Zoom menu validation
+    if (action == @selector(zoomIn:))
+    {
+        static const CGFloat kMaxZoom = 3.0;
+        return self.zoomMultiplier < kMaxZoom;
+    }
+    else if (action == @selector(zoomOut:))
+    {
+        static const CGFloat kMinZoom = 0.5;
+        return self.zoomMultiplier > kMinZoom;
+    }
+    else if (action == @selector(resetZoom:))
+    {
+        return self.zoomMultiplier != 1.0;
+    }
+    else if (action == @selector(toggleToolbar:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
         it.title = self.toolbarVisible ?
@@ -2892,7 +2912,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return;
 
     static const CGFloat defaultSize = 14.0;
-    CGFloat scale = fontSize / defaultSize;
+    CGFloat scale = (fontSize / defaultSize) * self.zoomMultiplier;
     
 #if 0
     // Sadly, this doesn’t work correctly.
@@ -2906,6 +2926,45 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Warning: this is private webkit API and NOT App Store-safe!
     [self.preview setPageSizeMultiplier:scale];
 #endif
+}
+
+- (IBAction)zoomIn:(id)sender
+{
+    static const CGFloat kMaxZoom = 3.0;
+    if (self.zoomMultiplier >= kMaxZoom)
+        return;
+    
+    self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMaxZoom);
+    [self applyCurrentZoom];
+}
+
+- (IBAction)zoomOut:(id)sender
+{
+    static const CGFloat kMinZoom = 0.5;
+    if (self.zoomMultiplier <= kMinZoom)
+        return;
+    
+    self.zoomMultiplier = MAX(self.zoomMultiplier - 0.1, kMinZoom);
+    [self applyCurrentZoom];
+}
+
+- (IBAction)resetZoom:(id)sender
+{
+    self.zoomMultiplier = 1.0;
+    [self applyCurrentZoom];
+}
+
+- (void)applyCurrentZoom
+{
+    NSFont *baseFont = self.preferences.editorBaseFont;
+    CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
+    
+    // Apply zoom to editor (transient, not saved to preferences)
+    [self.editor setFont:[NSFont fontWithName:baseFont.fontName
+                                         size:zoomedSize]];
+    
+    // Apply zoom to preview
+    [self scaleWebview];
 }
 
 /**
