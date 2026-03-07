@@ -521,6 +521,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self setupEditor:nil];
         [self redrawDivider];
         [self reloadFromLoadedString];
+        if (self.preferences.layoutStartViewerOnly) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self toggleSplitterCollapsingEditorPane:YES];
+            });
+        }
 
         // Issue #290: Start file watching for auto-reload
         [self startFileWatching];

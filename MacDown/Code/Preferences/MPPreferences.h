@@ -52,6 +52,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL editorShowWordCount;
 @property (assign) NSInteger editorWordCountType;
 @property (assign) BOOL editorAutoSave;
+@property (assign) BOOL layoutStartViewerOnly;
 @property (assign) BOOL editorScrollsPastEnd;
 @property (assign) BOOL editorEnsuresNewlineAtEndOfFile;
 @property (assign) NSInteger editorUnorderedListMarkerType;
