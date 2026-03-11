@@ -25,6 +25,7 @@
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)performDelayedSyncScrollers;  // Issue #282: Delayed sync after editing
+- (void)previewBoundsDidChange:(NSNotification *)notification;  // Issue #342
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1543,6 +1544,75 @@
     // This tests the bounds check fix - shouldn't crash on edge cases
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle four backticks without crashing");
+}
+
+#pragma mark - Issue #342: Preview bounds change during editing
+
+/**
+ * Test that previewBoundsDidChange: does NOT call syncScrollersReverse when
+ * _inEditing is YES. This is the primary fix for issue #342: preview scroll
+ * restoration during DOM replacement was feeding back into the editor via
+ * syncScrollersReverse, causing the editor to jump.
+ *
+ * We verify indirectly: shouldHandleBoundsChange on the editor side should
+ * remain untouched (syncScrollersReverse temporarily sets it to NO then YES).
+ * If syncScrollersReverse is skipped, shouldHandleBoundsChange stays at its
+ * initial value throughout.
+ */
+- (void)testPreviewBoundsDidChangeSkipsSyncWhenInEditing
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.shouldHandlePreviewBoundsChange = YES;
+    doc.shouldHandleBoundsChange = YES;
+    doc.inEditing = YES;
+
+    // Simulate a preview bounds change notification (as would be triggered by
+    // window.scrollTo() during DOM replacement)
+    [doc previewBoundsDidChange:nil];
+
+    // shouldHandleBoundsChange should be untouched because syncScrollersReverse
+    // was never called (it temporarily toggles this flag)
+    XCTAssertTrue(doc.shouldHandleBoundsChange,
+                  @"shouldHandleBoundsChange should remain YES when inEditing prevents reverse sync");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be restored to YES after handler completes");
+}
+
+/**
+ * Test that previewBoundsDidChange: DOES call syncScrollersReverse when
+ * _inEditing is NO. This ensures the guard doesn't over-suppress —
+ * user-initiated preview scrolling should still sync back to the editor.
+ */
+- (void)testPreviewBoundsDidChangeSyncsWhenNotInEditing
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.shouldHandlePreviewBoundsChange = YES;
+    doc.shouldHandleBoundsChange = YES;
+    doc.inEditing = NO;
+
+    // Should not crash; syncScrollersReverse should be called
+    XCTAssertNoThrow([doc previewBoundsDidChange:nil],
+                     @"previewBoundsDidChange: should work normally when not in editing");
+    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
+                  @"shouldHandlePreviewBoundsChange should be restored to YES");
+}
+
+/**
+ * Test that previewBoundsDidChange: respects the shouldHandlePreviewBoundsChange
+ * guard even when inEditing is NO. This verifies the early-return path.
+ */
+- (void)testPreviewBoundsDidChangeRespectsGuardFlag
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.shouldHandlePreviewBoundsChange = NO;
+    doc.shouldHandleBoundsChange = YES;
+    doc.inEditing = NO;
+
+    XCTAssertNoThrow([doc previewBoundsDidChange:nil],
+                     @"previewBoundsDidChange: should early-return when guard is NO");
+    // shouldHandlePreviewBoundsChange should remain NO (handler returned early)
+    XCTAssertFalse(doc.shouldHandlePreviewBoundsChange,
+                   @"shouldHandlePreviewBoundsChange should remain NO after early return");
 }
 
 @end
