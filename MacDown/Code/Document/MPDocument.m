@@ -38,6 +38,9 @@
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+static const CGFloat kMPMinZoom = 0.5;
+static const CGFloat kMPMaxZoom = 3.0;
+
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
@@ -1059,17 +1062,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Zoom menu validation
     if (action == @selector(zoomIn:))
     {
-        static const CGFloat kMaxZoom = 3.0;
-        return self.zoomMultiplier < kMaxZoom;
+        return self.zoomMultiplier < kMPMaxZoom;
     }
     else if (action == @selector(zoomOut:))
     {
-        static const CGFloat kMinZoom = 0.5;
-        return self.zoomMultiplier > kMinZoom;
+        return self.zoomMultiplier > kMPMinZoom;
     }
     else if (action == @selector(resetZoom:))
     {
-        return self.zoomMultiplier != 1.0;
+        return fabs(self.zoomMultiplier - 1.0) > 0.001;
     }
     else if (action == @selector(toggleToolbar:))
     {
@@ -2904,16 +2905,19 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (void)scaleWebview
 {
-    if (!self.preferences.previewZoomRelativeToBaseFontSize)
-        return;
+    CGFloat scale = self.zoomMultiplier;
 
-    CGFloat fontSize = self.preferences.editorBaseFontSize;
-    if (fontSize <= 0.0)
-        return;
+    if (self.preferences.previewZoomRelativeToBaseFontSize)
+    {
+        CGFloat fontSize = self.preferences.editorBaseFontSize;
+        if (fontSize > 0.0)
+        {
+            static const CGFloat defaultSize = 14.0;
+            scale = (fontSize / defaultSize)
+                    * self.zoomMultiplier;
+        }
+    }
 
-    static const CGFloat defaultSize = 14.0;
-    CGFloat scale = (fontSize / defaultSize) * self.zoomMultiplier;
-    
 #if 0
     // Sadly, this doesn’t work correctly.
     // It looks fine, but selections are offset relative to the mouse cursor.
@@ -2930,21 +2934,19 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)zoomIn:(id)sender
 {
-    static const CGFloat kMaxZoom = 3.0;
-    if (self.zoomMultiplier >= kMaxZoom)
+    if (self.zoomMultiplier >= kMPMaxZoom)
         return;
     
-    self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMaxZoom);
+    self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMPMaxZoom);
     [self applyCurrentZoom];
 }
 
 - (IBAction)zoomOut:(id)sender
 {
-    static const CGFloat kMinZoom = 0.5;
-    if (self.zoomMultiplier <= kMinZoom)
+    if (self.zoomMultiplier <= kMPMinZoom)
         return;
     
-    self.zoomMultiplier = MAX(self.zoomMultiplier - 0.1, kMinZoom);
+    self.zoomMultiplier = MAX(self.zoomMultiplier - 0.1, kMPMinZoom);
     [self applyCurrentZoom];
 }
 
