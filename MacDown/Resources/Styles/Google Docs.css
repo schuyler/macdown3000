@@ -22,7 +22,8 @@
  *   Color choices:
  *     #1155cc — Google's standard hyperlink blue (Docs, Gmail, Sheets)
  *     #000000 — Google Docs default body text color
- *     #f1f3f4 — Google's light gray surface color (used for code backgrounds)
+ *     #e8eaed — Google's code background gray (Docs code add-on style)
+ *     #1e8e3e — Google's green for code text (Docs code add-on style)
  *     #dadce0 — Google's standard border color (Material Design neutral)
  *     #666666 — H6 muted text, from Google Docs "Subtitle" style
  */
@@ -239,15 +240,16 @@ table tr th :last-child, table tr td :last-child {
   margin-bottom: 0;
 }
 
-/* Inline code */
+/* Inline code — grey background, matches Google Docs "code" add-on style */
 code, tt {
   margin: 0 2px;
-  padding: 1px 4px;
+  padding: 2px 6px;
   white-space: nowrap;
-  background-color: #f1f3f4;
-  border-radius: 3px;
+  background-color: #e8eaed;
+  border-radius: 4px;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
-  font-size: 10pt;
+  font-size: 0.85em;
+  color: #1e8e3e;
 }
 
 /* Code blocks */
@@ -260,7 +262,7 @@ pre code {
 }
 
 pre {
-  background-color: #f1f3f4;
+  background-color: #e8eaed;
   border: 1px solid #dadce0;
   font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
   font-size: 10pt;
@@ -268,20 +270,66 @@ pre {
   overflow: auto;
   padding: 8px 12px;
   border-radius: 4px;
+  color: #1e8e3e;
 }
 pre code, pre tt {
   background-color: transparent;
   border: none;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
 }
 
 .highlight pre {
-  background-color: #f1f3f4;
+  background-color: #e8eaed;
   border: 1px solid #dadce0;
   font-size: 10pt;
   line-height: 1.4;
   overflow: auto;
+  color: #1e8e3e;
   padding: 8px 12px;
   border-radius: 4px;
+}
+
+/*
+ * Override Prism syntax highlighting so code blocks show uniform
+ * green text in the MacDown preview, matching what appears when
+ * pasted into Google Docs (which strips Prism's token classes).
+ */
+pre .token,
+pre .token.comment,
+pre .token.prolog,
+pre .token.doctype,
+pre .token.cdata,
+pre .token.punctuation,
+pre .token.property,
+pre .token.tag,
+pre .token.boolean,
+pre .token.number,
+pre .token.constant,
+pre .token.symbol,
+pre .token.deleted,
+pre .token.selector,
+pre .token.attr-name,
+pre .token.string,
+pre .token.char,
+pre .token.builtin,
+pre .token.inserted,
+pre .token.operator,
+pre .token.entity,
+pre .token.url,
+pre .token.atrule,
+pre .token.attr-value,
+pre .token.keyword,
+pre .token.function,
+pre .token.class-name,
+pre .token.regex,
+pre .token.important,
+pre .token.variable {
+  color: #1e8e3e !important;
+  background: none !important;
+  text-shadow: none !important;
 }
 
 /* Images */
