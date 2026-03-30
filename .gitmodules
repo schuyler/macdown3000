@@ -3,4 +3,5 @@
 	url = https://github.com/PrismJS/prism.git
 [submodule "Dependency/cmark-gfm"]
 	path = Dependency/cmark-gfm
-	url = https://github.com/github/cmark-gfm.git
+	url = https://github.com/richrice/cmark-gfm.git
+	branch = macdown-integration
