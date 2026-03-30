@@ -8,8 +8,9 @@
 
 #import "MPQuickLookRenderer.h"
 #import "MPQuickLookPreferences.h"
-#import <hoedown/html.h>
-#import <hoedown/document.h>
+#import <cmark-gfm/cmark-gfm.h>
+#import <cmark-gfm/cmark-gfm-extension_api.h>
+#import <cmark-gfm/cmark-gfm-core-extensions.h>
 
 // Error domain for Quick Look renderer
 NSString * const MPQuickLookRendererErrorDomain = @"MPQuickLookRendererErrorDomain";
@@ -17,10 +18,6 @@ NSString * const MPQuickLookRendererErrorDomain = @"MPQuickLookRendererErrorDoma
 // Constants
 static NSString * const kMPPrismScriptDirectory = @"Prism/components";
 static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
-static size_t kMPRendererNestingLevel = SIZE_MAX;
-
-// Renderer flags from hoedown_html_patch.h
-static unsigned int HOEDOWN_HTML_BLOCKCODE_INFORMATION = (1 << 6);
 
 
 #pragma mark - Private Helper Functions
@@ -136,84 +133,6 @@ NS_INLINE NSURL *MPHighlightingThemeURLForName(NSString *name)
     return url;
 }
 
-/**
- * Preprocess markdown to work around Hoedown parser limitations.
- */
-NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
-{
-    if (!text.length) return text;
-
-    // Fenced code blocks after text (Issue #36)
-    static NSRegularExpression *fenceRegex = nil;
-    static dispatch_once_t fenceToken;
-    dispatch_once(&fenceToken, ^{
-        NSString *pattern = @"^(\\S.*)\\n(`{3,}|~{3,})(?=\\S|\\n.)";
-        fenceRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                          options:NSRegularExpressionAnchorsMatchLines
-                                                            error:NULL];
-    });
-
-    NSString *result = text;
-    result = [fenceRegex stringByReplacingMatchesInString:result
-                                                  options:0
-                                                    range:NSMakeRange(0, result.length)
-                                             withTemplate:@"$1\n\n$2"];
-
-    return result;
-}
-
-
-#pragma mark - Hoedown Renderer Callbacks
-
-// Extra state for language tracking
-typedef struct {
-    void *owner;
-    NSMutableArray *languages;
-} MPQuickLookRendererState;
-
-/**
- * Custom blockcode renderer that tracks languages for Prism.
- */
-static void mp_quicklook_render_blockcode(
-    hoedown_buffer *ob,
-    const hoedown_buffer *text,
-    const hoedown_buffer *lang,
-    const hoedown_renderer_data *data)
-{
-    hoedown_html_renderer_state *state = data->opaque;
-    MPQuickLookRendererState *extra = state->opaque;
-
-    if (ob->size) hoedown_buffer_putc(ob, '\n');
-
-    HOEDOWN_BUFPUTSL(ob, "<pre><code");
-
-    if (lang && lang->size) {
-        NSString *language = [[NSString alloc] initWithBytes:lang->data
-                                                      length:lang->size
-                                                    encoding:NSUTF8StringEncoding];
-
-        // Track language for Prism script inclusion
-        if (extra && extra->languages && language.length > 0) {
-            if (![extra->languages containsObject:language]) {
-                [extra->languages addObject:language];
-            }
-        }
-
-        // Add language class for Prism
-        HOEDOWN_BUFPUTSL(ob, " class=\"language-");
-        hoedown_buffer_put(ob, lang->data, lang->size);
-        HOEDOWN_BUFPUTSL(ob, "\"");
-    }
-
-    HOEDOWN_BUFPUTSL(ob, ">");
-
-    if (text) {
-        hoedown_escape_html(ob, text->data, text->size, 0);
-    }
-
-    HOEDOWN_BUFPUTSL(ob, "</code></pre>\n");
-}
-
 
 @interface MPQuickLookRenderer ()
 @property (nonatomic, strong) MPQuickLookPreferences *preferences;
@@ -248,11 +167,8 @@ static void mp_quicklook_render_blockcode(
     // Clear detected languages
     [self.detectedLanguages removeAllObjects];
 
-    // Preprocess markdown
-    NSString *preprocessed = MPPreprocessMarkdown(markdown);
-
-    // Parse markdown to HTML body
-    NSString *body = [self parseMarkdownToHTML:preprocessed];
+    // Parse markdown to HTML body using cmark-gfm
+    NSString *body = [self parseMarkdownToHTML:markdown];
 
     // Wrap in complete HTML document
     return [self wrapBodyInHTML:body];
@@ -288,43 +204,85 @@ static void mp_quicklook_render_blockcode(
 
 - (NSString *)parseMarkdownToHTML:(NSString *)markdown
 {
-    int extensions = [self.preferences extensionFlags];
-    int flags = [self.preferences rendererFlags];
+    int options = CMARK_OPT_DEFAULT | CMARK_OPT_UNSAFE;
 
-    // Create HTML renderer
-    hoedown_renderer *renderer = hoedown_html_renderer_new(flags, 0);
+    // Register extensions once
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cmark_gfm_core_extensions_ensure_registered();
+    });
 
-    // Set up custom blockcode handler for language tracking
-    renderer->blockcode = mp_quicklook_render_blockcode;
+    // Create parser
+    cmark_parser *parser = cmark_parser_new(options);
 
-    // Set up extra state for language tracking
-    MPQuickLookRendererState extra;
-    extra.owner = (__bridge void *)self;
-    extra.languages = self.detectedLanguages;
-    ((hoedown_html_renderer_state *)renderer->opaque)->opaque = &extra;
+    // Attach extensions based on preferences
+    cmark_llist *extensions = NULL;
+    cmark_mem *mem = cmark_get_default_mem_allocator();
 
-    // Create document
-    hoedown_document *document = hoedown_document_new(
-        renderer, extensions, kMPRendererNestingLevel);
-
-    // Render
-    NSData *inputData = [markdown dataUsingEncoding:NSUTF8StringEncoding];
-    hoedown_buffer *ob = hoedown_buffer_new(64);
-    hoedown_document_render(document, ob, inputData.bytes, inputData.length);
-
-    NSString *result = @"";
-    if (ob->size > 0) {
-        result = [[NSString alloc] initWithBytes:ob->data
-                                          length:ob->size
-                                        encoding:NSUTF8StringEncoding];
+    if ([self.preferences extensionTables]) {
+        cmark_syntax_extension *ext = cmark_find_syntax_extension("table");
+        if (ext) {
+            cmark_parser_attach_syntax_extension(parser, ext);
+            extensions = cmark_llist_append(mem, extensions, ext);
+        }
+    }
+    if ([self.preferences extensionAutolink]) {
+        cmark_syntax_extension *ext = cmark_find_syntax_extension("autolink");
+        if (ext) {
+            cmark_parser_attach_syntax_extension(parser, ext);
+            extensions = cmark_llist_append(mem, extensions, ext);
+        }
+    }
+    if ([self.preferences extensionStrikethrough]) {
+        cmark_syntax_extension *ext = cmark_find_syntax_extension("strikethrough");
+        if (ext) {
+            cmark_parser_attach_syntax_extension(parser, ext);
+            extensions = cmark_llist_append(mem, extensions, ext);
+        }
     }
 
-    // Cleanup
-    hoedown_buffer_free(ob);
-    hoedown_document_free(document);
-    hoedown_html_renderer_free(renderer);
+    // Parse
+    NSData *data = [markdown dataUsingEncoding:NSUTF8StringEncoding];
+    cmark_parser_feed(parser, data.bytes, data.length);
+    cmark_node *document = cmark_parser_finish(parser);
 
-    return result ?: @"";
+    // Track languages from code blocks
+    [self extractLanguagesFromDocument:document];
+
+    // Render to HTML
+    char *html_cstr = cmark_render_html(document, options, extensions);
+    NSString *result = html_cstr ? [NSString stringWithUTF8String:html_cstr] : @"";
+
+    // Free resources
+    free(html_cstr);
+    cmark_node_free(document);
+    cmark_parser_free(parser);
+    if (extensions)
+        cmark_llist_free(mem, extensions);
+
+    return result;
+}
+
+- (void)extractLanguagesFromDocument:(cmark_node *)document
+{
+    cmark_iter *iter = cmark_iter_new(document);
+    cmark_event_type ev_type;
+    while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
+        cmark_node *node = cmark_iter_get_node(iter);
+        if (cmark_node_get_type(node) == CMARK_NODE_CODE_BLOCK && ev_type == CMARK_EVENT_ENTER) {
+            const char *fence_info = cmark_node_get_fence_info(node);
+            if (fence_info && strlen(fence_info) > 0) {
+                NSString *language = [NSString stringWithUTF8String:fence_info];
+                // Take first word (language) if info string has additional text
+                NSRange spaceRange = [language rangeOfString:@" "];
+                if (spaceRange.location != NSNotFound)
+                    language = [language substringToIndex:spaceRange.location];
+                if (![self.detectedLanguages containsObject:language])
+                    [self.detectedLanguages addObject:language];
+            }
+        }
+    }
+    cmark_iter_free(iter);
 }
 
 - (NSString *)wrapBodyInHTML:(NSString *)body

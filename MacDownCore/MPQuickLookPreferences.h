@@ -69,12 +69,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)extensionStrikethrough;
 
 /**
- * Returns the combined extension flags as a bitmask for Hoedown.
+ * Returns the combined extension flags as a bitmask.
  */
 - (int)extensionFlags;
 
 /**
- * Returns the renderer flags as a bitmask for Hoedown.
+ * Returns the renderer flags as a bitmask.
  */
 - (int)rendererFlags;
 

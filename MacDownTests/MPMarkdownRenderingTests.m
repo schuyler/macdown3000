@@ -7,9 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <hoedown/document.h>
 #import "MPRendererTestHelpers.h"
-#import "hoedown_html_patch.h"
+#import "MPMarkdownParser.h"
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -203,7 +202,7 @@
 - (void)testCodeFenced
 {
     // Fenced code blocks require the FENCED_CODE extension
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MPExtensionFencedCode;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"code-fenced"
@@ -215,8 +214,8 @@
 {
     // Test fenced code blocks with language tags
     // MacDown adds Prism CSS classes like "language-python"
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     [self verifyGoldenFile:@"code-languages"
             withExtensions:extFlags
@@ -260,7 +259,7 @@
 - (void)testTables
 {
     // Tables require the TABLES extension
-    int extFlags = HOEDOWN_EXT_TABLES;
+    int extFlags = MPExtensionTables;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"tables"
@@ -272,7 +271,7 @@
 {
     // Task lists are MacDown's custom rendering feature
     int extFlags = 0;
-    int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    int rendFlags = MPRendererTaskList;
 
     [self verifyGoldenFile:@"task-lists"
             withExtensions:extFlags
@@ -288,7 +287,7 @@
 - (void)testCheckboxHasDataIndex
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MPRendererTaskList;
     self.dataSource.markdown = @"- [ ] Task one\n- [x] Task two";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -307,7 +306,7 @@
 - (void)testMultipleCheckboxesHaveSequentialIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MPRendererTaskList;
     self.dataSource.markdown = @"- [ ] First\n- [x] Second\n- [ ] Third\n- [x] Fourth";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -330,7 +329,7 @@
 - (void)testNestedCheckboxesHaveCorrectIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MPRendererTaskList;
     self.dataSource.markdown = @"- [ ] Parent\n  - [x] Child 1\n  - [ ] Child 2\n- [x] Another parent";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -354,7 +353,7 @@
 - (void)testMixedListsOnlyTaskItemsGetIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MPRendererTaskList;
     self.dataSource.markdown = @"- Regular item\n- [ ] Task item\n- Another regular\n- [x] Another task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -377,7 +376,7 @@
 - (void)testNumberedTaskListsGetIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MPRendererTaskList;
     self.dataSource.markdown = @"1. [ ] First task\n2. [x] Second task\n3. [ ] Third task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -394,7 +393,7 @@
 - (void)testStrikethrough
 {
     // Strikethrough requires the STRIKETHROUGH extension
-    int extFlags = HOEDOWN_EXT_STRIKETHROUGH;
+    int extFlags = MPExtensionStrikethrough;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"strikethrough"
@@ -405,7 +404,7 @@
 - (void)testAutolinks
 {
     // Autolinks require the AUTOLINK extension
-    int extFlags = HOEDOWN_EXT_AUTOLINK;
+    int extFlags = MPExtensionAutolink;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"autolinks"
@@ -438,11 +437,11 @@
 - (void)testMixedComplex
 {
     // Complex document with multiple GFM features enabled
-    int extFlags = HOEDOWN_EXT_TABLES |
-                   HOEDOWN_EXT_FENCED_CODE |
-                   HOEDOWN_EXT_AUTOLINK |
-                   HOEDOWN_EXT_STRIKETHROUGH;
-    int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    int extFlags = MPExtensionTables |
+                   MPExtensionFencedCode |
+                   MPExtensionAutolink |
+                   MPExtensionStrikethrough;
+    int rendFlags = MPRendererTaskList;
 
     [self verifyGoldenFile:@"mixed-complex"
             withExtensions:extFlags
@@ -452,8 +451,8 @@
 - (void)testEdgeCases
 {
     // Test edge cases like empty input, special characters, etc.
-    int extFlags = HOEDOWN_EXT_TABLES |
-                   HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MPExtensionTables |
+                   MPExtensionFencedCode;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"edge-cases"
@@ -498,7 +497,7 @@
  */
 - (void)testRegressionIssue36_CodeBlocksWithoutBlankLines
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MPExtensionFencedCode;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"regression-issue36"
@@ -517,8 +516,8 @@
  */
 - (void)testRegressionIssue37_SquareBracketsInCode
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     [self verifyGoldenFile:@"regression-issue37"
             withExtensions:extFlags
@@ -602,7 +601,7 @@
  */
 - (void)testUnicodeComprehensive
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MPExtensionFencedCode;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"unicode"
@@ -615,7 +614,7 @@
  */
 - (void)testMalformedMarkdown
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int extFlags = MPExtensionFencedCode | MPExtensionTables;
     int rendFlags = 0;
 
     // Unclosed code block
@@ -646,7 +645,7 @@
  */
 - (void)testVeryLargeDocument
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int extFlags = MPExtensionFencedCode | MPExtensionTables;
     int rendFlags = 0;
 
     // Generate a large markdown document (10,000 lines)

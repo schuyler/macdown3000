@@ -9,8 +9,7 @@
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
 #import <JJPluralForm/JJPluralForm.h>
-#import <hoedown/html.h>
-#import "hoedown_html_patch.h"
+#import "MPMarkdownParser.h"
 #import "HGMarkdownHighlighter.h"
 #import "MPUtilities.h"
 #import "MPAutosaving.h"
@@ -134,34 +133,37 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @end
 
 
-@implementation MPPreferences (Hoedown)
+@implementation MPPreferences (CmarkGFM)
 - (int)extensionFlags
 {
     int flags = 0;
     if (self.extensionAutolink)
-        flags |= HOEDOWN_EXT_AUTOLINK;
-    if (self.extensionFencedCode)
-        flags |= HOEDOWN_EXT_FENCED_CODE;
-    if (self.extensionFootnotes)
-        flags |= HOEDOWN_EXT_FOOTNOTES;
-    if (self.extensionHighlight)
-        flags |= HOEDOWN_EXT_HIGHLIGHT;
-    if (!self.extensionIntraEmphasis)
-        flags |= HOEDOWN_EXT_NO_INTRA_EMPHASIS;
-    if (self.extensionQuote)
-        flags |= HOEDOWN_EXT_QUOTE;
-    if (self.extensionStrikethough)
-        flags |= HOEDOWN_EXT_STRIKETHROUGH;
-    if (self.extensionSuperscript)
-        flags |= HOEDOWN_EXT_SUPERSCRIPT;
+        flags |= MPExtensionAutolink;
     if (self.extensionTables)
-        flags |= HOEDOWN_EXT_TABLES;
-    if (self.extensionUnderline)
-        flags |= HOEDOWN_EXT_UNDERLINE;
+        flags |= MPExtensionTables;
+    if (self.extensionStrikethough)
+        flags |= MPExtensionStrikethrough;
+    if (self.extensionFootnotes)
+        flags |= MPExtensionFootnotes;
+    if (self.extensionHighlight)
+        flags |= MPExtensionHighlight;
+    if (self.extensionSuperscript)
+        flags |= MPExtensionSuperscript;
     if (self.htmlMathJax)
-        flags |= HOEDOWN_EXT_MATH;
+        flags |= MPExtensionMath;
     if (self.htmlMathJaxInlineDollar)
-        flags |= HOEDOWN_EXT_MATH_EXPLICIT;
+        flags |= MPExtensionMathExplicit;
+    // Fenced code is always enabled in CommonMark (no-op flag).
+    if (self.extensionFencedCode)
+        flags |= MPExtensionFencedCode;
+    // Intra-emphasis is handled natively by CommonMark (no-op flag).
+    if (!self.extensionIntraEmphasis)
+        flags |= MPExtensionNoIntraEmphasis;
+    // Underline and quote conflict with CommonMark spec; kept as no-op flags.
+    if (self.extensionUnderline)
+        flags |= MPExtensionUnderline;
+    if (self.extensionQuote)
+        flags |= MPExtensionQuote;
     return flags;
 }
 
@@ -169,13 +171,13 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     int flags = 0;
     if (self.htmlTaskList)
-        flags |= HOEDOWN_HTML_USE_TASK_LIST;
+        flags |= MPRendererTaskList;
     if (self.htmlLineNumbers)
-        flags |= HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS;
+        flags |= MPRendererLineNumbers;
     if (self.htmlHardWrap)
-        flags |= HOEDOWN_HTML_HARD_WRAP;
+        flags |= MPRendererHardWrap;
     if (self.htmlCodeBlockAccessory == MPCodeBlockAccessoryCustom)
-        flags |= HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+        flags |= MPRendererBlockcodeInfo;
     return flags;
 }
 @end
@@ -2775,9 +2777,8 @@ current file somewhere to enable this feature.", \
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
  * Returns the modified markdown, or the original if index is out of bounds.
  *
- * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
- * rendering behavior. Nested list items get lower indices than their parent.
- * Related to GitHub issue #269.
+ * Indices are assigned in document order (top-to-bottom) to match cmark-gfm's
+ * rendering behavior. Related to GitHub issue #269.
  */
 + (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
 {
@@ -2785,7 +2786,7 @@ current file somewhere to enable this feature.", \
         return markdown;
 
     // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
-    // Note: Only lowercase [x] is recognized by hoedown, so we only match that.
+    // Note: Only lowercase [x] is recognized by cmark-gfm, so we only match that.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
         regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ x])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ x])\\]"
@@ -2816,19 +2817,13 @@ current file somewhere to enable this feature.", \
                                       options:0
                                         range:NSMakeRange(0, markdown.length)];
 
-    // Build list of valid checkboxes with their indentation levels
+    // Build list of valid checkboxes in document order
     NSMutableArray *checkboxes = [NSMutableArray array];
     for (NSTextCheckingResult *match in matches)
     {
         // Skip if this match is inside a code block
         if ([codeBlockRanges containsIndex:match.range.location])
             continue;
-
-        // Get indentation level (capture group 1 or 3)
-        NSRange indentRange = [match rangeAtIndex:1];
-        if (indentRange.location == NSNotFound)
-            indentRange = [match rangeAtIndex:3];
-        NSUInteger indentLevel = (indentRange.location != NSNotFound) ? indentRange.length : 0;
 
         // Get checkbox content range (capture group 2 or 4)
         NSRange contentRange = [match rangeAtIndex:2];
@@ -2837,61 +2832,18 @@ current file somewhere to enable this feature.", \
 
         if (contentRange.location != NSNotFound)
         {
-            [checkboxes addObject:@{
-                @"match": match,
-                @"indent": @(indentLevel),
-                @"contentRange": [NSValue valueWithRange:contentRange]
-            }];
+            [checkboxes addObject:[NSValue valueWithRange:contentRange]];
         }
     }
 
     if (checkboxes.count == 0)
         return markdown;
 
-    // Compute depth-first order using a stack-based algorithm.
-    // This matches hoedown's behavior where nested items are rendered before their parent.
-    // Algorithm: For each checkbox, pop stack items with indent >= current indent, then push.
-    NSMutableArray *stack = [NSMutableArray array];
-    NSMutableArray *depthFirstOrder = [NSMutableArray array];
-
-    for (NSUInteger i = 0; i < checkboxes.count; i++)
-    {
-        NSDictionary *current = checkboxes[i];
-        NSUInteger currentIndent = [current[@"indent"] unsignedIntegerValue];
-
-        // Pop items from stack that are NOT parents of this item
-        while (stack.count > 0)
-        {
-            NSDictionary *top = stack.lastObject;
-            NSUInteger topIndent = [top[@"indent"] unsignedIntegerValue];
-            if (topIndent >= currentIndent)
-            {
-                [depthFirstOrder addObject:top];
-                [stack removeLastObject];
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        [stack addObject:current];
-    }
-
-    // Pop remaining items from stack
-    while (stack.count > 0)
-    {
-        [depthFirstOrder addObject:stack.lastObject];
-        [stack removeLastObject];
-    }
-
-    // Check if index is valid
-    if (index >= depthFirstOrder.count)
+    // cmark-gfm renders checkboxes in document order (top-to-bottom).
+    if (index >= checkboxes.count)
         return markdown;
 
-    // Find the target checkbox in depth-first order
-    NSDictionary *target = depthFirstOrder[index];
-    NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
+    NSRange checkboxContentRange = [checkboxes[index] rangeValue];
 
     NSString *currentState = [markdown substringWithRange:checkboxContentRange];
     NSString *newState;

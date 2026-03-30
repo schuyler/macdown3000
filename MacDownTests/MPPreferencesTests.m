@@ -547,7 +547,7 @@
 
     // Fresh install should set migration version to current (5)
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
+    XCTAssertEqual(version, 6,
                    @"Fresh installation should set migration version to 5");
 
     // Intra-emphasis should be disabled
@@ -604,7 +604,7 @@
 
     // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
+    XCTAssertEqual(version, 6,
                    @"Migration version should be updated to 5");
 
     // Version 2 migration: task list should be enabled
@@ -668,7 +668,7 @@
 
     // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
+    XCTAssertEqual(version, 6,
                    @"Migration version should be updated to 5");
 
     // Version 3 migration: intra-emphasis should be disabled
@@ -812,7 +812,7 @@
 
     // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
+    XCTAssertEqual(version, 6,
                    @"Migration version should be updated to 5 after migration");
 
     // Restore original values
@@ -962,7 +962,7 @@
 
     // Migration version should be updated to 5
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
+    XCTAssertEqual(version, 6,
                    @"Migration version should be updated to 5");
 
     // Restore original values

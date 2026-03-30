@@ -7,9 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <hoedown/document.h>
 #import "MPRendererTestHelpers.h"
-#import "hoedown_html_patch.h"
+#import "MPMarkdownParser.h"
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -157,8 +156,8 @@
  */
 - (void)testLanguageClassGeneration
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     [self verifyGoldenFile:@"syntax-highlighting-languages"
             withExtensions:extFlags
@@ -171,8 +170,8 @@
  */
 - (void)testLanguageAliases
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     [self verifyGoldenFile:@"syntax-highlighting-aliases"
             withExtensions:extFlags
@@ -185,8 +184,8 @@
  */
 - (void)testUnlabeledCodeBlock
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     NSString *markdown = @"```\nSome code without a language\n```";
     NSString *html = [self renderMarkdown:markdown
@@ -243,18 +242,18 @@
 
 /**
  * Test that language classes are added to fenced code blocks when syntax highlighting is enabled.
- * Note: MacDown adds language classes when syntaxHighlighting is enabled, regardless of hoedown flags.
+ * Note: MacDown adds language classes when syntaxHighlighting is enabled, regardless of parser flags.
  */
 - (void)testBlockcodeInformationFlag
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MPExtensionFencedCode;
 
     NSString *markdown = @"```python\nprint('hello')\n```";
 
     // With BLOCKCODE_INFORMATION flag
     NSString *htmlWithFlag = [self renderMarkdown:markdown
                                    withExtensions:extFlags
-                                    rendererFlags:HOEDOWN_HTML_BLOCKCODE_INFORMATION];
+                                    rendererFlags:MPRendererBlockcodeInfo];
 
     XCTAssertTrue([htmlWithFlag containsString:@"class=\"language-python\""],
                   @"With syntax highlighting enabled, language class should be added");
@@ -273,8 +272,8 @@
  */
 - (void)testMixedCodeBlocks
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     [self verifyGoldenFile:@"syntax-highlighting-mixed"
             withExtensions:extFlags
@@ -286,8 +285,8 @@
  */
 - (void)testSyntaxHighlightingWithSpecialCharacters
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     NSString *markdown = @"```html\n<div class=\"test\" data-value=\"foo & bar\">Hello</div>\n```";
     NSString *html = [self renderMarkdown:markdown
@@ -309,8 +308,8 @@
  */
 - (void)testLanguageNameCaseInsensitivity
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = MPExtensionFencedCode;
+    int rendFlags = MPRendererBlockcodeInfo;
 
     // Test uppercase
     NSString *markdownUpper = @"```JAVASCRIPT\nvar x = 1;\n```";

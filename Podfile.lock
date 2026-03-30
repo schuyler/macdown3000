@@ -1,9 +1,7 @@
 PODS:
+  - cmark-gfm (0.29.0.gfm.13)
   - GBCli (1.1)
   - handlebars-objc (1.4.5)
-  - hoedown (3.0.7):
-    - hoedown/standard (= 3.0.7)
-  - hoedown/standard (3.0.7)
   - JJPluralForm (2.1)
   - LibYAML (0.1.4)
   - M13OrderedDictionary (1.1.0)
@@ -11,9 +9,9 @@ PODS:
   - PAPreferences (0.5)
 
 DEPENDENCIES:
+  - cmark-gfm (from `Dependency/cmark-gfm`)
   - GBCli (~> 1.1)
   - handlebars-objc (~> 1.4)
-  - hoedown (~> 3.0.7)
   - JJPluralForm (~> 2.1)
   - LibYAML (~> 0.1)
   - M13OrderedDictionary (~> 1.1)
@@ -21,27 +19,30 @@ DEPENDENCIES:
   - PAPreferences (~> 0.5)
 
 SPEC REPOS:
-  https://github.com/MacDownApp/cocoapods-specs.git:
-    - handlebars-objc
-    - hoedown
-    - LibYAML
-  trunk:
+  https://github.com/CocoaPods/Specs.git:
     - GBCli
     - JJPluralForm
     - M13OrderedDictionary
     - MASPreferences
     - PAPreferences
+  https://github.com/MacDownApp/cocoapods-specs.git:
+    - handlebars-objc
+    - LibYAML
+
+EXTERNAL SOURCES:
+  cmark-gfm:
+    :path: Dependency/cmark-gfm
 
 SPEC CHECKSUMS:
+  cmark-gfm: 22dd087c1e09cd1c95ea3eb43ed8f5bd3fc8687a
   GBCli: e5f988fadb68e1e3c01919f134009fed9796fde0
   handlebars-objc: dde09557cfee1dd0f34ab39595bd5eae7e17cb8b
-  hoedown: 8141833441f6430686c06bbc5159d7ce615155fb
   JJPluralForm: 9a6235813990a33a63fb3eff457eb2c633af6acd
   LibYAML: dee5c31dcab47b168425083c2b0a6baeacdf499e
   M13OrderedDictionary: 6e157fe9c82aa6b3cd7198f5c5c30c7a6834c4a6
   MASPreferences: 1ba2deb14086792857af44d22846fc4aae477fd9
   PAPreferences: 9f0ffb1e67174a0df001af9d3320166ceb9ee6f5
 
-PODFILE CHECKSUM: 9feb752b3e32e9399d9f753e2da9ba974d1f877d
+PODFILE CHECKSUM: 6f65f479a194d23ce23bcd6bac575320464deec8
 
 COCOAPODS: 1.16.2

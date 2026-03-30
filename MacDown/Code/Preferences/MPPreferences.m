@@ -472,6 +472,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  *              hide YAML front matter by default (Issue #307)
  * - Version 4: Clear stale split view autosave (Issue #309)
  * - Version 5: Auto-save preference default
+ * - Version 6: CommonMark migration (disable underline/quote extensions)
  */
 - (NSInteger)effectiveMigrationVersion
 {
@@ -510,7 +511,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)applyPreferencesMigrations
 {
-    static NSInteger const kMPCurrentMigrationVersion = 5;
+    static NSInteger const kMPCurrentMigrationVersion = 6;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
     NSInteger currentVersion = [self effectiveMigrationVersion];
@@ -565,6 +566,16 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (currentVersion < 5)
     {
         self.editorAutoSave = YES;
+    }
+
+    // Migration Version 6: CommonMark migration
+    // Switched from Hoedown to cmark-gfm for full CommonMark 0.31.2 compliance.
+    // Underline and Quote extensions conflict with CommonMark and are disabled.
+    // Fenced code and intra-emphasis are now handled natively by CommonMark.
+    if (currentVersion < 6)
+    {
+        self.extensionUnderline = NO;
+        self.extensionQuote = NO;
     }
 
     // Update to current version

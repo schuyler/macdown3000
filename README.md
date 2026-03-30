@@ -46,7 +46,7 @@ Download the latest release from the [GitHub Releases](https://github.com/schuyl
 
 ### Live Preview & Markdown Rendering
 
-MacDown 3000 uses Hoedown to convert Markdown to HTML with live preview as you type. It supports:
+MacDown 3000 uses [cmark-gfm](https://github.com/github/cmark-gfm) (the CommonMark reference implementation with GitHub extensions) to convert Markdown to HTML with live preview as you type. It fully supports the [CommonMark 0.31.2 spec](https://spec.commonmark.org/0.31.2/). Features include:
 
 - **Fenced code blocks** with language identifiers
 - **GitHub Flavored Markdown** including tables, strikethrough (enabled by default), and autolinks

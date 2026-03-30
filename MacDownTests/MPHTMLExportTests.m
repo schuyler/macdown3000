@@ -14,7 +14,7 @@
 #import "MPAsset.h"
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import "MPMarkdownParser.h"
 
 // Category to expose private methods for testing
 @interface MPRenderer (ExportTesting)
@@ -350,7 +350,7 @@
 - (void)testExportCSSHandlesLongTextInTables
 {
     // Enable tables extension for this test
-    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.delegate.extensions = MPExtensionTables;
 
     // Create markdown with long text in table cells
     self.dataSource.markdown = @"| Header | Description |\n|--------|-------------|\n| Key | ThisIsAVeryLongWordWithoutSpacesThatShouldWrapProperly |";

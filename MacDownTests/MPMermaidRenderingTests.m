@@ -13,7 +13,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import "MPMarkdownParser.h"
 
 
 #pragma mark - Test Class
@@ -51,7 +51,7 @@
 
 - (void)testMermaidCodeBlockProducesLanguageClass
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -65,7 +65,7 @@
 
 - (void)testMermaidCodeBlockPreservesGraphSource
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -82,9 +82,10 @@
                   @"Graph edges should be preserved (escaped or literal)");
 }
 
-- (void)testMermaidCodeBlockWithoutFencedCodeExtension
+- (void)testMermaidCodeBlockAlwaysWorksInCommonMark
 {
-    self.delegate.extensions = 0;  // No fenced code extension
+    // In CommonMark, fenced code blocks are always enabled regardless of flags.
+    self.delegate.extensions = 0;  // No explicit fenced code extension
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -92,8 +93,8 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer currentHtml];
 
-    XCTAssertFalse([html containsString:@"language-mermaid"],
-                   @"Without fenced code extension, no language-mermaid class");
+    XCTAssertTrue([html containsString:@"language-mermaid"],
+                  @"CommonMark always supports fenced code blocks");
 }
 
 
@@ -103,7 +104,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -120,7 +121,7 @@
 {
     self.delegate.mermaid = NO;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -137,7 +138,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -154,7 +155,7 @@
 - (void)testRenderIfPreferencesChangedDetectsMermaidToggle
 {
     self.delegate.mermaid = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Initial render to cache state
@@ -173,7 +174,7 @@
 - (void)testRenderIfPreferencesChangedIgnoresWhenMermaidUnchanged
 {
     self.delegate.mermaid = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Initial render to cache state
@@ -192,7 +193,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.styleName = @"GitHub2";
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
@@ -214,7 +215,7 @@
 
 - (void)testMultipleMermaidDiagramsInSameDocument
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -244,7 +245,7 @@
 
 - (void)testMermaidWithOtherFencedCodeBlocks
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -262,7 +263,7 @@
 
 - (void)testMermaidDiagramTypesPreserved
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -286,7 +287,7 @@
 
 - (void)testEmptyMermaidCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\n\n```";
@@ -301,7 +302,7 @@
 
 - (void)testMermaidAfterReparse
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
 
@@ -322,7 +323,7 @@
 
 - (void)testMermaidDisabledAfterBeingEnabled
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
@@ -346,7 +347,7 @@
 
 - (void)testMermaidWithMathJax
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.delegate.mathJax = YES;
@@ -365,7 +366,7 @@
 
 - (void)testMermaidWithGraphviz
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.delegate.graphviz = YES;

@@ -12,7 +12,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import "MPMarkdownParser.h"
 
 
 #pragma mark - Test Class
@@ -139,7 +139,7 @@
 
 - (void)testRendererExtensionTablesOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.delegate.extensions = MPExtensionTables;
     self.dataSource.markdown = @"| A | B |\n|---|---|\n| 1 | 2 |";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -150,7 +150,7 @@
 
 - (void)testRendererExtensionFencedCodeOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```\ncode here\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -162,7 +162,7 @@
 
 - (void)testRendererExtensionStrikethroughOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_STRIKETHROUGH;
+    self.delegate.extensions = MPExtensionStrikethrough;
     self.dataSource.markdown = @"~~deleted~~";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -174,7 +174,7 @@
 
 - (void)testRendererExtensionFootnotesOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_FOOTNOTES;
+    self.delegate.extensions = MPExtensionFootnotes;
     self.dataSource.markdown = @"Text with footnote[^1].\n\n[^1]: Footnote content.";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -185,7 +185,7 @@
 
 - (void)testRendererExtensionTablesAndFencedCode
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionTables | MPExtensionFencedCode;
     self.dataSource.markdown = @"| Header |\n|---|\n| Cell |\n\n```js\ncode\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -198,7 +198,7 @@
 
 - (void)testRendererExtensionTablesAndStrikethrough
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES | HOEDOWN_EXT_STRIKETHROUGH;
+    self.delegate.extensions = MPExtensionTables | MPExtensionStrikethrough;
     self.dataSource.markdown = @"| ~~A~~ | B |\n|---|---|\n| 1 | 2 |";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -211,11 +211,11 @@
 
 - (void)testRendererExtensionAllCombined
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES |
-                               HOEDOWN_EXT_FENCED_CODE |
-                               HOEDOWN_EXT_STRIKETHROUGH |
-                               HOEDOWN_EXT_FOOTNOTES |
-                               HOEDOWN_EXT_AUTOLINK;
+    self.delegate.extensions = MPExtensionTables |
+                               MPExtensionFencedCode |
+                               MPExtensionStrikethrough |
+                               MPExtensionFootnotes |
+                               MPExtensionAutolink;
 
     self.dataSource.markdown = @"# Heading\n\n"
                                @"| A | B |\n|---|---|\n| 1 | 2 |\n\n"
@@ -247,7 +247,7 @@
 
 - (void)testRendererWithScriptTagInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```html\n<script>alert('xss')</script>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -263,7 +263,7 @@
 
 - (void)testRendererWithStyleTagInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```css\n</style><script>bad()</script>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -274,7 +274,7 @@
 
 - (void)testRendererWithBrokenHTMLInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```html\n<div><span>unclosed\n</div>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -285,7 +285,7 @@
 
 - (void)testRendererWithHTMLEntitiesInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```\n&lt; &gt; &amp; &quot;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -296,7 +296,7 @@
 
 - (void)testRendererWithDeepNestedTagsInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     NSMutableString *nested = [NSMutableString string];
     for (int i = 0; i < 100; i++) {
         [nested appendString:@"<div>"];
@@ -516,7 +516,7 @@
 - (void)testRendererWithMermaidEnabled
 {
     self.delegate.mermaid = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -528,7 +528,7 @@
 - (void)testRendererWithGraphvizEnabled
 {
     self.delegate.graphviz = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];

@@ -8,10 +8,8 @@
 
 #import "MPRenderer.h"
 #import <limits.h>
-#import <hoedown/html.h>
-#import <hoedown/document.h>
 #import <HBHandlebars/HBHandlebars.h>
-#import "hoedown_html_patch.h"
+#import "MPMarkdownParser.h"
 #import "NSJSONSerialization+File.h"
 #import "NSString+Lookup.h"
 #import "MPUtilities.h"
@@ -29,7 +27,6 @@ static NSString * const kMPMathJaxCDN =
 static NSString * const kMPPrismScriptDirectory = @"Prism/components";
 static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
-static size_t kMPRendererNestingLevel = SIZE_MAX;
 static int kMPRendererTOCLevel = 6;  // h1 to h6.
 
 
@@ -93,154 +90,6 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
     return urls;
 }
 
-/**
- * Preprocess markdown to work around Hoedown parser limitations.
- *
- * Handles:
- * - Issue #254: Lists immediately after paragraphs (insert blank line)
- * - Issue #36: Fenced code blocks immediately after text (insert blank line)
- * - Issue #37: Square brackets in code blocks parsed as reference links
- * - Issue #25: Adjacent shortcut-style links not rendering correctly
- *
- * KNOWN EDGE CASES (intentionally not handled for simplicity):
- * - Block elements inside existing code blocks may be incorrectly modified
- * - Blockquotes may need special handling
- */
-NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
-{
-    if (!text.length)
-        return text;
-
-    // Lists after paragraphs (Issue #254)
-    static NSRegularExpression *listRegex = nil;
-    static dispatch_once_t listToken;
-    dispatch_once(&listToken, ^{
-        NSString *pattern = @"^(?![ \\t]*[-*+][ \\t])(?![ \\t]*\\d+\\.[ \\t])(.+)\\n([-*+]|\\d+\\.)[ \\t]";
-        listRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                         options:NSRegularExpressionAnchorsMatchLines
-                                                           error:NULL];
-    });
-
-    // Fenced code blocks after text (Issue #36)
-    // Lookahead ensures we only match OPENING fences (followed by content),
-    // not closing fences (followed by end of string or blank line).
-    static NSRegularExpression *fenceRegex = nil;
-    static dispatch_once_t fenceToken;
-    dispatch_once(&fenceToken, ^{
-        NSString *pattern = @"^(\\S.*)\\n(`{3,}|~{3,})(?=\\S|\\n.)";
-        fenceRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                          options:NSRegularExpressionAnchorsMatchLines
-                                                            error:NULL];
-    });
-
-    // Fenced code block content (Issue #37)
-    // Matches fence, optional language, content, closing fence.
-    static NSRegularExpression *blockRegex = nil;
-    static dispatch_once_t blockToken;
-    dispatch_once(&blockToken, ^{
-        NSString *pattern = @"(`{3,}|~{3,})([^\\n]*)\\n([\\s\\S]*?)\\n\\1";
-        blockRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                          options:0
-                                                            error:NULL];
-    });
-
-    // Adjacent shortcut links (Issue #25)
-    // Matches [text] followed by whitespace then [, indicating adjacent links.
-    // Converts to explicit form [text][] to disambiguate for Hoedown.
-    // Requires whitespace to avoid matching [text][ref] (explicit reference links).
-    // Uses negative lookbehind (?<!\]) to avoid matching the ref part of [text][ref]
-    // when it appears before another [ on a different line.
-    static NSRegularExpression *shortcutRegex = nil;
-    static dispatch_once_t shortcutToken;
-    dispatch_once(&shortcutToken, ^{
-        NSString *pattern = @"(?<!\\])\\[([^\\]]+)\\](\\s+)(?=\\[)";
-        shortcutRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                             options:0
-                                                               error:NULL];
-    });
-
-    NSString *result = text;
-    result = [listRegex stringByReplacingMatchesInString:result options:0
-                                                   range:NSMakeRange(0, result.length)
-                                            withTemplate:@"$1\n\n$2 "];
-    result = [fenceRegex stringByReplacingMatchesInString:result options:0
-                                                    range:NSMakeRange(0, result.length)
-                                             withTemplate:@"$1\n\n$2"];
-
-    // Issue #25: Convert shortcut links to explicit form when followed by [
-    result = [shortcutRegex stringByReplacingMatchesInString:result options:0
-                                                       range:NSMakeRange(0, result.length)
-                                                withTemplate:@"[$1][]$2"];
-
-    // Issue #37: Break reference link pattern inside fenced code blocks.
-    // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
-    // Insert zero-width space between ] and : to prevent matching.
-    NSMutableString *mut = [result mutableCopy];
-    NSArray *blocks = [blockRegex matchesInString:mut options:0
-                                            range:NSMakeRange(0, mut.length)];
-    for (NSTextCheckingResult *match in [blocks reverseObjectEnumerator]) {
-        NSRange contentRange = [match rangeAtIndex:3];
-        NSString *content = [mut substringWithRange:contentRange];
-        content = [content stringByReplacingOccurrencesOfString:@"]: "
-                                                     withString:@"]\u200B: "];
-        [mut replaceCharactersInRange:contentRange withString:content];
-    }
-    return mut;
-}
-
-NS_INLINE NSString *MPHTMLFromMarkdown(
-    NSString *text, int flags, BOOL smartypants, NSString *frontMatter,
-    hoedown_renderer *htmlRenderer, hoedown_renderer *tocRenderer)
-{
-    // Preprocess markdown for Hoedown compatibility (Issues #254, #36, #37)
-    text = MPPreprocessMarkdown(text);
-
-    NSData *inputData = [text dataUsingEncoding:NSUTF8StringEncoding];
-    hoedown_document *document = hoedown_document_new(
-        htmlRenderer, flags, kMPRendererNestingLevel);
-    hoedown_buffer *ob = hoedown_buffer_new(64);
-    hoedown_document_render(document, ob, inputData.bytes, inputData.length);
-    if (smartypants)
-    {
-        hoedown_buffer *ib = ob;
-        ob = hoedown_buffer_new(64);
-        hoedown_html_smartypants(ob, ib->data, ib->size);
-        hoedown_buffer_free(ib);
-    }
-    NSString *result = [NSString stringWithUTF8String:hoedown_buffer_cstr(ob)];
-    hoedown_document_free(document);
-    hoedown_buffer_free(ob);
-
-    if (tocRenderer)
-    {
-        document = hoedown_document_new(
-            tocRenderer, flags, kMPRendererNestingLevel);
-        ob = hoedown_buffer_new(64);
-        hoedown_document_render(
-            document, ob, inputData.bytes, inputData.length);
-        NSString *toc = [NSString stringWithUTF8String:hoedown_buffer_cstr(ob)];
-
-        static NSRegularExpression *tocRegex = nil;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            NSString *pattern = @"<p.*?>\\s*\\[TOC\\]\\s*</p>";
-            NSRegularExpressionOptions ops = NSRegularExpressionCaseInsensitive;
-            tocRegex = [[NSRegularExpression alloc] initWithPattern:pattern
-                                                            options:ops
-                                                              error:NULL];
-        });
-        NSRange replaceRange = NSMakeRange(0, result.length);
-        result = [tocRegex stringByReplacingMatchesInString:result options:0
-                                                      range:replaceRange
-                                               withTemplate:toc];
-        hoedown_document_free(document);
-        hoedown_buffer_free(ob);
-    }
-    if (frontMatter)
-        result = [NSString stringWithFormat:@"%@\n%@", frontMatter, result];
-    
-    return result;
-}
 
 NS_INLINE NSString *MPGetHTML(
     NSString *title, NSString *body, NSArray *styles, MPAssetOption styleopt,
@@ -358,87 +207,6 @@ NS_INLINE void add_to_languages(
 }
 
 
-NS_INLINE hoedown_buffer *language_addition(
-    const hoedown_buffer *language, void *owner)
-{
-    MPRenderer *renderer = (__bridge MPRenderer *)owner;
-    NSString *lang = [[NSString alloc] initWithBytes:language->data
-                                              length:language->size
-                                            encoding:NSUTF8StringEncoding];
-
-    static NSDictionary *aliasMap = nil;
-    static NSDictionary *languageMap = nil;
-    static dispatch_once_t token;
-    dispatch_once(&token, ^{
-        NSBundle *bundle = [NSBundle mainBundle];
-        NSURL *url = [bundle URLForResource:@"syntax_highlighting"
-                              withExtension:@"json"];
-        NSDictionary *info =
-            [NSJSONSerialization JSONObjectWithFileAtURL:url options:0
-                                                   error:NULL];
-
-        aliasMap = info[@"aliases"];
-
-        url = [bundle URLForResource:@"components" withExtension:@"js"
-                        subdirectory:@"Prism"];
-        NSString *code = [NSString stringWithContentsOfURL:url
-                                                  encoding:NSUTF8StringEncoding
-                                                     error:NULL];
-        NSDictionary *comp = MPGetObjectFromJavaScript(code, @"components");
-        languageMap = comp[@"languages"];
-    });
-
-    // Try to identify alias and point it to the "real" language name.
-    hoedown_buffer *mapped = NULL;
-    if ([aliasMap objectForKey:lang])
-    {
-        lang = [aliasMap objectForKey:lang];
-        NSData *data = [lang dataUsingEncoding:NSUTF8StringEncoding];
-        mapped = hoedown_buffer_new(64);
-        hoedown_buffer_put(mapped, data.bytes, data.length);
-    }
-
-    // Walk dependencies to include all required scripts.
-    add_to_languages(lang, renderer.currentLanguages, languageMap);
-    
-    return mapped;
-}
-
-NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLevel)
-{
-    int flags = renderer.rendererFlags;
-    hoedown_renderer *htmlRenderer = hoedown_html_renderer_new(
-        flags, tocLevel);
-    htmlRenderer->blockcode = hoedown_patch_render_blockcode;
-    htmlRenderer->listitem = hoedown_patch_render_listitem;
-
-    hoedown_html_renderer_state_extra *extra =
-        hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
-    extra->language_addition = language_addition;
-    extra->owner = (__bridge void *)renderer;
-
-    ((hoedown_html_renderer_state *)htmlRenderer->opaque)->opaque = extra;
-    return htmlRenderer;
-}
-
-NS_INLINE hoedown_renderer *MPCreateHTMLTOCRenderer(void)
-{
-    hoedown_renderer *tocRenderer =
-        hoedown_html_toc_renderer_new(kMPRendererTOCLevel);
-    tocRenderer->header = hoedown_patch_render_toc_header;
-    return tocRenderer;
-}
-
-NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
-{
-    hoedown_html_renderer_state_extra *extra =
-        ((hoedown_html_renderer_state *)htmlRenderer->opaque)->opaque;
-    if (extra)
-        free(extra);
-    hoedown_html_renderer_free(htmlRenderer);
-}
-
-
 @implementation MPRenderer
 
 - (instancetype)init
@@ -478,7 +246,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 
     NSMutableArray *stylesheets = [NSMutableArray arrayWithObject:stylesheet];
 
-    if (self.rendererFlags & HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS)
+    if (self.rendererFlags & MPRendererLineNumbers)
     {
         NSURL *url = MPPrismPluginURL(@"line-numbers", @"css");
         [stylesheets addObject:[MPStyleSheet CSSWithURL:url]];
@@ -506,7 +274,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
             [scripts addObject:[MPScript javaScriptWithURL:url]];
     }
 
-    if (self.rendererFlags & HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS)
+    if (self.rendererFlags & MPRendererLineNumbers)
     {
         NSURL *url = MPPrismPluginURL(@"line-numbers", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
@@ -548,7 +316,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         NSURL *url = MPExtensionURL(@"mermaid.init", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
     }
-    
+
     return scripts;
 }
 
@@ -565,7 +333,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         NSURL *url = MPExtensionURL(@"viz.init", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
     }
-    
+
     return scripts;
 }
 
@@ -600,7 +368,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 {
     id<MPRendererDelegate> d = self.delegate;
     NSMutableArray *scripts = [NSMutableArray array];
-    if (self.rendererFlags & HOEDOWN_HTML_USE_TASK_LIST)
+    if (self.rendererFlags & MPRendererTaskList)
     {
         NSURL *url = MPExtensionURL(@"tasklist", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
@@ -625,7 +393,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 }
 
 #pragma mark - Public
-    
+
 - (void)parseAndRenderWithMaxDelay:(NSTimeInterval)maxDelay {
     [self.parseQueue cancelAllOperations];
     [self.parseQueue addOperationWithBlock:^{
@@ -637,7 +405,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 
         // Parse in backgound
         [self parseMarkdown:markdown];
-        
+
         // Wait untils is renderer has finished loading OR until the maxDelay has passed
         // This should result in overall faster update times
         NSDate *start = [NSDate date];
@@ -647,7 +415,7 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
                 rendererIsLoading = [self.dataSource rendererLoading];
             });
         }
-        
+
         // Render on main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             [self render];
@@ -680,34 +448,90 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 - (void)parseMarkdown:(NSString *)markdown {
     [self.currentLanguages removeAllObjects];
 
-    // Reset checkbox index counter for interactive checkbox support.
-    // Related to GitHub issue #269.
-    hoedown_patch_reset_checkbox_index();
-    
     id<MPRendererDelegate> delegate = self.delegate;
     int extensions = [delegate rendererExtensions:self];
     BOOL smartypants = [delegate rendererHasSmartyPants:self];
     BOOL hasFrontMatter = [delegate rendererDetectsFrontMatter:self];
     BOOL hasTOC = [delegate rendererRendersTOC:self];
-    
+
     if (hasFrontMatter)
     {
         NSUInteger offset = 0;
         [markdown frontMatter:&offset];
         markdown = [markdown substringFromIndex:offset];
     }
-    int tocLevel = hasTOC ? kMPRendererTOCLevel : 0;
-    hoedown_renderer *htmlRenderer = MPCreateHTMLRenderer(self, tocLevel);
-    hoedown_renderer *tocRenderer = NULL;
-    if (hasTOC)
-    tocRenderer = MPCreateHTMLTOCRenderer();
-    self.currentHtml = MPHTMLFromMarkdown(
-                                          markdown, extensions, smartypants, nil,
-                                          htmlRenderer, tocRenderer);
-    if (tocRenderer)
-    hoedown_html_renderer_free(tocRenderer);
-    MPFreeHTMLRenderer(htmlRenderer);
-    
+
+    // Configure the cmark-gfm parser
+    MPMarkdownParser *parser = [[MPMarkdownParser alloc] init];
+    parser.extensionFlags = extensions;
+    parser.rendererFlags = self.rendererFlags;
+    parser.smartyPants = smartypants;
+    parser.codeBlockAccessory = [delegate rendererCodeBlockAccesory:self];
+
+    // Set up language tracking for Prism syntax highlighting
+    static NSDictionary *aliasMap = nil;
+    static NSDictionary *languageMap = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        NSBundle *bundle = [NSBundle mainBundle];
+        NSURL *url = [bundle URLForResource:@"syntax_highlighting"
+                              withExtension:@"json"];
+        NSDictionary *info =
+            [NSJSONSerialization JSONObjectWithFileAtURL:url options:0
+                                                   error:NULL];
+        aliasMap = info[@"aliases"];
+
+        url = [bundle URLForResource:@"components" withExtension:@"js"
+                        subdirectory:@"Prism"];
+        NSString *code = [NSString stringWithContentsOfURL:url
+                                                  encoding:NSUTF8StringEncoding
+                                                     error:NULL];
+        NSDictionary *comp = MPGetObjectFromJavaScript(code, @"components");
+        languageMap = comp[@"languages"];
+    });
+
+    __weak typeof(self) weakSelf = self;
+    parser.languageCallback = ^NSString *(NSString *language) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf)
+            return nil;
+
+        // Try to identify alias and point it to the "real" language name.
+        NSString *lang = language;
+        NSString *mapped = aliasMap[lang];
+        if (mapped)
+            lang = mapped;
+
+        // Walk dependencies to include all required scripts.
+        add_to_languages(lang, strongSelf.currentLanguages, languageMap);
+
+        // Return the mapped language name (or nil if no mapping)
+        return mapped;
+    };
+
+    // Render markdown to HTML
+    NSString *result = [parser renderMarkdown:markdown];
+
+    // Handle TOC
+    if (hasTOC) {
+        NSString *toc = [parser renderTOC:markdown maxLevel:kMPRendererTOCLevel];
+
+        static NSRegularExpression *tocRegex = nil;
+        static dispatch_once_t tocToken;
+        dispatch_once(&tocToken, ^{
+            NSString *pattern = @"<p.*?>\\s*\\[TOC\\]\\s*</p>";
+            NSRegularExpressionOptions ops = NSRegularExpressionCaseInsensitive;
+            tocRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                            options:ops
+                                                              error:NULL];
+        });
+        NSRange replaceRange = NSMakeRange(0, result.length);
+        result = [tocRegex stringByReplacingMatchesInString:result options:0
+                                                      range:replaceRange
+                                               withTemplate:toc];
+    }
+
+    self.currentHtml = result;
     self.extensions = extensions;
     self.smartypants = smartypants;
     self.TOC = hasTOC;

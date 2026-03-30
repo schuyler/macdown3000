@@ -7,7 +7,6 @@
 //
 
 #import "MPQuickLookPreferences.h"
-#import <hoedown/document.h>
 
 // MacDown's preference suite name
 static NSString * const kMPPreferenceSuiteName = @"app.macdown.macdown3000";
@@ -109,6 +108,7 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 
 - (BOOL)extensionFencedCode
 {
+    // Always enabled in CommonMark - this preference is a no-op
     return [self boolPreferenceForKey:kMPExtensionFencedCodeKey
                          defaultValue:YES];
 }
@@ -127,40 +127,15 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 
 - (int)extensionFlags
 {
-    int flags = 0;
-
-    if ([self extensionTables]) {
-        flags |= HOEDOWN_EXT_TABLES;
-    }
-    if ([self extensionFencedCode]) {
-        flags |= HOEDOWN_EXT_FENCED_CODE;
-    }
-    if ([self extensionAutolink]) {
-        flags |= HOEDOWN_EXT_AUTOLINK;
-    }
-    if ([self extensionStrikethrough]) {
-        flags |= HOEDOWN_EXT_STRIKETHROUGH;
-    }
-
-    return flags;
+    // Quick Look uses the same extension flag constants as the main app.
+    // These are no longer used directly by the renderer (cmark-gfm uses
+    // a different configuration mechanism), but kept for API compatibility.
+    return 0;
 }
 
 - (int)rendererFlags
 {
-    int flags = 0;
-
-    // Enable task lists if configured
-    BOOL taskList = [self boolPreferenceForKey:kMPHtmlTaskListKey defaultValue:YES];
-    if (taskList) {
-        // HOEDOWN_HTML_USE_TASK_LIST is defined as (1 << 4) in hoedown_html_patch.h
-        flags |= (1 << 4);
-    }
-
-    // Enable block code information for language tags
-    // HOEDOWN_HTML_BLOCKCODE_INFORMATION is (1 << 6)
-    flags |= (1 << 6);
-
-    return flags;
+    return 0;
 }
 
 #pragma mark - Feature Availability (Always Disabled for Quick Look)

@@ -11,7 +11,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import "MPMarkdownParser.h"
 
 
 @interface MPImageExportTests : XCTestCase
@@ -423,7 +423,7 @@
 
 - (void)testExportWithImageInTable
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.delegate.extensions = MPExtensionTables;
     self.dataSource.markdown = @"| Image | Description |\n"
                                @"|-------|-------------|\n"
                                @"| ![Img](https://example.com/img.png) | A photo |";

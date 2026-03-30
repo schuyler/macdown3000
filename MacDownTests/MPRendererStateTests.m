@@ -11,7 +11,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import "MPMarkdownParser.h"
 
 
 #pragma mark - Extended Mock Delegate for Tracking Calls
@@ -170,7 +170,7 @@
 
 - (void)testRendererWithTablesExtension
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.delegate.extensions = MPExtensionTables;
     self.dataSource.markdown = @"| A | B |\n|---|---|\n| 1 | 2 |";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -194,7 +194,7 @@
 
 - (void)testRendererWithStrikethroughExtension
 {
-    self.delegate.extensions = HOEDOWN_EXT_STRIKETHROUGH;
+    self.delegate.extensions = MPExtensionStrikethrough;
     self.dataSource.markdown = @"This is ~~deleted~~ text.";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -206,7 +206,7 @@
 
 - (void)testRendererWithFencedCodeExtension
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.dataSource.markdown = @"```javascript\nconst x = 1;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -252,7 +252,7 @@
 
 - (void)testRendererWithSyntaxHighlighting
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MPExtensionFencedCode;
     self.delegate.syntaxHighlighting = YES;
     self.dataSource.markdown = @"```javascript\nconst x = 1;\n```";
 
