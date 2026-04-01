@@ -14,7 +14,6 @@
                 <outlet property="editor" destination="VLv-r5-dZU" id="D9p-hw-Xin"/>
                 <outlet property="editorContainer" destination="WJx-Xb-9af" id="9qh-OF-9px"/>
                 <outlet property="editorPaddingBottom" destination="iWt-0N-ePd" id="wxP-ap-5qc"/>
-                <outlet property="preview" destination="XJO-AS-uPd" id="0ZO-ec-vWJ"/>
                 <outlet property="splitView" destination="0kv-p9-H4b" id="1EO-mS-VKN"/>
                 <outlet property="toolbar" destination="owf-WR-5UO" id="UvE-4c-Uho"/>
                 <outlet property="toolbarController" destination="3i0-CY-DlB" id="HXv-vH-M0h"/>
@@ -427,16 +426,10 @@
                                     <constraint firstAttribute="centerX" secondItem="kfG-Fe-ode" secondAttribute="centerX" id="ynw-y8-yAH"/>
                                 </constraints>
                             </customView>
-                            <webView fixedFrame="YES" id="XJO-AS-uPd">
+                            <customView id="preview-container">
                                 <rect key="frame" x="512" y="0.0" width="512" height="578"/>
-                                <autoresizingMask key="autoresizingMask"/>
-                                <webPreferences key="preferences" defaultFontSize="12" defaultFixedFontSize="12">
-                                    <nil key="identifier"/>
-                                </webPreferences>
-                                <connections>
-                                    <outlet property="UIDelegate" destination="-2" id="5Ky-Oy-jNW"/>
-                                </connections>
-                            </webView>
+                                <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
+                            </customView>
                         </subviews>
                         <holdingPriorities>
                             <real value="250"/>

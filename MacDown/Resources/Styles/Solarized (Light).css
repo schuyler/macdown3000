@@ -194,3 +194,56 @@ kbd {
     margin: 0;
   }
 }
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    a {
+        color: #58a6ff;
+    }
+    a code, a:link code, a:visited code {
+        color: #58a6ff;
+    }
+    code {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+    pre {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+    pre code {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+    h1 {
+        border-top-color: #444;
+    }
+    h2 {
+        border-top-color: #333;
+    }
+    hr {
+        border-color: #333;
+    }
+    blockquote {
+        border-left-color: #444;
+        color: #aaa;
+    }
+    table th {
+        border-bottom-color: #444;
+    }
+    table td {
+        border-bottom-color: #333;
+    }
+    kbd {
+        background-color: #2d2d2d;
+        color: #aaa;
+        border-color: #404040;
+        box-shadow: inset 0 -1px 0 #404040;
+    }
+}

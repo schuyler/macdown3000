@@ -18,7 +18,6 @@
 #import "NSPasteboard+Types.h"
 #import "NSString+Lookup.h"
 #import "NSTextView+Autocomplete.h"
-#import "DOMNode+Text.h"
 #import "MPPreferences.h"
 #import "MPDocumentSplitView.h"
 #import "MPEditorView.h"
@@ -27,7 +26,6 @@
 #import "MPEditorPreferencesViewController.h"
 #import "MPExportPanelAccessoryViewController.h"
 #import "MPMathJaxListener.h"
-#import "WebView+WebViewPrivateHeaders.h"
 #import "MPToolbarController.h"
 #import "MPFileWatcher.h"
 #import "MPResourceWatcherSet.h"
@@ -95,17 +93,14 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
     return ([s1 isEqualToString:s2] || s1 == s2);
 }
 
-NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
+NS_INLINE NSColor *MPGetWebViewBackgroundColor(WKWebView *webview)
 {
-    DOMDocument *doc = webview.mainFrameDocument;
-    DOMNodeList *nodes = [doc getElementsByTagName:@"body"];
-    if (!nodes.length)
-        return nil;
-
-    id bodyNode = [nodes item:0];
-    DOMCSSStyleDeclaration *style = [doc getComputedStyle:bodyNode
-                                            pseudoElement:nil];
-    return [NSColor colorWithHTMLName:[style backgroundColor]];
+    // For WKWebView, we use system colors instead of extracting from DOM
+    // This will be refined in dark mode implementation
+    if (@available(macOS 10.14, *)) {
+        return [NSColor windowBackgroundColor];
+    }
+    return [NSColor whiteColor];
 }
 
 
@@ -123,14 +118,6 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @end
 
 
-@implementation WebView (Shortcut)
-
-- (NSScrollView *)enclosingScrollView
-{
-    return self.mainFrame.frameView.documentView.enclosingScrollView;
-}
-
-@end
 
 
 @implementation MPPreferences (CmarkGFM)
@@ -185,9 +172,7 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 
 @interface MPDocument ()
     <NSSplitViewDelegate, NSTextViewDelegate,
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-     WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
-#endif
+     WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler,
      MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate>
 
 typedef NS_ENUM(NSUInteger, MPWordCountType) {
@@ -201,7 +186,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (weak) IBOutlet NSView *editorContainer;
 @property (unsafe_unretained) IBOutlet MPEditorView *editor;
 @property (weak) IBOutlet NSLayoutConstraint *editorPaddingBottom;
-@property (weak) IBOutlet WebView *preview;
+@property (weak) IBOutlet WKWebView *preview;
 @property (weak) IBOutlet NSPopUpButton *wordCountWidget;
 @property (strong) IBOutlet MPToolbarController *toolbarController;
 @property (copy, nonatomic) NSString *autosaveName;
@@ -262,7 +247,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     __weak MPDocument *weakObj = doc;
     return ^{
-        WebView *webView = weakObj.preview;
+        WKWebView *webView = weakObj.preview;
         NSWindow *window = webView.window;
 
         // Set initial scroll position BEFORE scaling to prevent flash to top
@@ -447,10 +432,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     self.editor.postsFrameChangedNotifications = YES;
-    self.preview.frameLoadDelegate = self;
-    self.preview.policyDelegate = self;
-    self.preview.editingDelegate = self;
-    self.preview.resourceLoadDelegate = self;
+
+    // Create WKWebView (never from XIB)
+    [self setupWKWebView];
+
+    // Set up WKWebView delegates
+    self.preview.navigationDelegate = self;
     self.preview.UIDelegate = self;
 
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
@@ -529,6 +516,48 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }];
 }
 
+- (void)setupWKWebView
+{
+    // Create WKWebView configuration
+    WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+
+    // Allow JavaScript execution (needed for MathJax, Mermaid, syntax highlighting)
+    config.preferences.javaScriptEnabled = YES;
+
+    // Register message handler for MathJax callbacks
+    [config.userContentController addScriptMessageHandler:self name:@"MathJaxListener"];
+
+    // Create the WKWebView
+    WKWebView *webView = [[WKWebView alloc] initWithFrame:NSZeroRect configuration:config];
+
+    // Disable autoresizing masks BEFORE adding constraints
+    webView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    // Add WKWebView to the split view's preview pane
+    if (self.splitView && self.splitView.subviews.count > 1) {
+        NSView *previewPane = self.splitView.subviews[1];
+        [previewPane addSubview:webView];
+
+        // Add constraints to fill the preview pane
+        [previewPane addConstraints:@[
+            [NSLayoutConstraint constraintWithItem:webView attribute:NSLayoutAttributeTop
+                                         relatedBy:NSLayoutRelationEqual toItem:previewPane
+                                         attribute:NSLayoutAttributeTop multiplier:1.0 constant:0],
+            [NSLayoutConstraint constraintWithItem:webView attribute:NSLayoutAttributeBottom
+                                         relatedBy:NSLayoutRelationEqual toItem:previewPane
+                                         attribute:NSLayoutAttributeBottom multiplier:1.0 constant:0],
+            [NSLayoutConstraint constraintWithItem:webView attribute:NSLayoutAttributeLeading
+                                         relatedBy:NSLayoutRelationEqual toItem:previewPane
+                                         attribute:NSLayoutAttributeLeading multiplier:1.0 constant:0],
+            [NSLayoutConstraint constraintWithItem:webView attribute:NSLayoutAttributeTrailing
+                                         relatedBy:NSLayoutRelationEqual toItem:previewPane
+                                         attribute:NSLayoutAttributeTrailing multiplier:1.0 constant:0],
+        ]];
+    }
+
+    self.preview = webView;
+}
+
 - (void)reloadFromLoadedString
 {
     if (self.loadedString && self.editor && self.renderer && self.highlighter)
@@ -565,8 +594,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.highlighter.targetTextView = nil;
         self.highlighter = nil;
         self.renderer = nil;
-        self.preview.frameLoadDelegate = nil;
-        self.preview.policyDelegate = nil;
+        // WKWebView cleanup
+        self.preview.navigationDelegate = nil;
         self.preview.UIDelegate = nil;
 
         // Issue #320: Remove block-based defaults observer token
@@ -736,8 +765,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSPrintInfo *info = [self.printInfo copy];
     [info.dictionary addEntriesFromDictionary:printSettings];
 
-    WebFrameView *view = self.preview.mainFrame.frameView;
-    NSPrintOperation *op = [view printOperationWithPrintInfo:info];
+    // For WKWebView, use the built-in print operation
+    NSPrintOperation *op = [self.preview printOperationWithPrintInfo:info];
     return op;
 }
 
@@ -965,28 +994,47 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 }
 
 
-#pragma mark - WebResourceLoadDelegate
+#pragma mark - WKNavigationDelegate
 
-- (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse fromDataSource:(WebDataSource *)dataSource
+- (void)webView:(WKWebView *)webView
+    decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
+    decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
+    NSURL *url = navigationAction.request.URL;
 
-    if ([[request.URL lastPathComponent] isEqualToString:@"MathJax.js"])
+    // Handle custom checkbox toggle scheme. Related to GitHub issue #269.
+    if ([url.scheme isEqualToString:@"x-macdown-checkbox"])
     {
-        NSURLComponents *origComps = [NSURLComponents componentsWithURL:[request URL] resolvingAgainstBaseURL:YES];
-        NSURLComponents *updatedComps = [NSURLComponents componentsWithURL:[[NSBundle mainBundle] URLForResource:@"MathJax" withExtension:@"js" subdirectory:@"MathJax"] resolvingAgainstBaseURL:NO];
-        [updatedComps setQueryItems:[origComps queryItems]];
-
-        request = [NSURLRequest requestWithURL:[updatedComps URL]];
+        decisionHandler(WKNavigationActionPolicyCancel);
+        [self handleCheckboxToggle:url];
+        return;
     }
 
-    return request;
+    // Handle link navigation in the preview
+    if (navigationAction.navigationType == WKNavigationTypeLinkActivated)
+    {
+        // If the target is exactly as the current one, ignore.
+        if ([self.currentBaseUrl isEqual:url])
+        {
+            decisionHandler(WKNavigationActionPolicyCancel);
+            return;
+        }
+        // If this is a different page, intercept and handle ourselves.
+        else if (![self isCurrentBaseUrl:url])
+        {
+            decisionHandler(WKNavigationActionPolicyCancel);
+            [self openOrCreateFileForUrl:url];
+            return;
+        }
+        // Otherwise this is somewhere else on the same page. Allow navigation.
+    }
+
+    decisionHandler(WKNavigationActionPolicyAllow);
 }
 
-#pragma mark - WebFrameLoadDelegate
-
-- (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame
+- (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
 {
-    NSWindow *window = sender.window;
+    NSWindow *window = webView.window;
 
     @synchronized(window) {
         if (!window.isFlushWindowDisabled)
@@ -995,21 +1043,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
     }
 
-    // If MathJax is off, the on-completion callback will be invoked directly
-    // when loading is done (in -webView:didFinishLoadForFrame:).
+    // If MathJax is enabled, register the message handler for callbacks
     if (self.preferences.htmlMathJax)
     {
-        MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
-        [listener addCallback:MPGetPreviewLoadingCompletionHandler(self)
-                       forKey:@"End"];
-        [sender.windowScriptObject setValue:listener forKey:@"MathJaxListener"];
+        // The message handler was registered during setupWKWebView
+        // Inject script to handle MathJax completion
+        NSString *script = @"window.MathJaxListenerRegistered = true;";
+        [webView evaluateJavaScript:script completionHandler:nil];
     }
 }
 
-- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
-    // If MathJax is on, the on-completion callback will be invoked by the
-    // JavaScript handler injected in -webView:didCommitLoadForFrame:.
+    // If MathJax is off, invoke the completion handler immediately
     if (!self.preferences.htmlMathJax)
     {
         id callback = MPGetPreviewLoadingCompletionHandler(self);
@@ -1022,7 +1068,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Update word count
     if (self.preferences.editorShowWordCount)
         [self updateWordCount];
-    
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)
@@ -1034,11 +1080,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self invokeRenderCompletionHandlers];
 }
 
-- (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error
-       forFrame:(WebFrame *)frame
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation
+       withError:(NSError *)error
 {
-    [self webView:sender didFinishLoadForFrame:frame];
-    
+    // Treat failure same as completion
+    [self webView:webView didFinishNavigation:navigation];
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)
@@ -1047,105 +1094,34 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.renderToWebPending = NO;
 }
 
+#pragma mark - WKUIDelegate
 
-#pragma mark - WebPolicyDelegate
-
-- (void)webView:(WebView *)webView
-                decidePolicyForNavigationAction:(NSDictionary *)information
-        request:(NSURLRequest *)request frame:(WebFrame *)frame
-                decisionListener:(id<WebPolicyDecisionListener>)listener
+- (void)webView:(WKWebView *)webView
+    runJavaScriptAlertPanelWithMessage:(NSString *)message
+    initiatedByFrame:(WKFrameInfo *)frame
+    completionHandler:(void (^)(void))completionHandler
 {
-    NSURL *url = request.URL;
-
-    // Handle interactive checkbox toggle. Related to GitHub issue #269.
-    if ([url.scheme isEqualToString:@"x-macdown-checkbox"])
-    {
-        [listener ignore];
-        [self handleCheckboxToggle:url];
-        return;
-    }
-
-    switch ([information[WebActionNavigationTypeKey] integerValue])
-    {
-        case WebNavigationTypeLinkClicked:
-            // If the target is exactly as the current one, ignore.
-            if ([self.currentBaseUrl isEqual:url])
-            {
-                [listener ignore];
-                return;
-            }
-            // If this is a different page, intercept and handle ourselves.
-            else if (![self isCurrentBaseUrl:url])
-            {
-                [listener ignore];
-                [self openOrCreateFileForUrl:url];
-                return;
-            }
-            // Otherwise this is somewhere else on the same page. Jump there.
-            break;
-        default:
-            break;
-    }
-    [listener use];
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = message;
+    [alert runModal];
+    completionHandler();
 }
 
+#pragma mark - WKScriptMessageHandler
 
-#pragma mark - WebEditingDelegate
-
-- (BOOL)webView:(WebView *)webView doCommandBySelector:(SEL)selector
+- (void)userContentController:(WKUserContentController *)userContentController
+    didReceiveScriptMessage:(WKScriptMessage *)message
 {
-    if (selector == @selector(copy:))
+    if ([message.name isEqualToString:@"MathJaxListener"])
     {
-        NSString *html = webView.selectedDOMRange.markupString;
-
-        // Inject the HTML content later so that it doesn't get cleared during
-        // the native copy operation.
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
-            NSPasteboard *pb = [NSPasteboard generalPasteboard];
-            if (![pb stringForType:@"public.html"])
-                [pb setString:html forType:@"public.html"];
-        }];
-    }
-    return NO;
-}
-
-#pragma mark - WebUIDelegate
-
-- (NSUInteger)webView:(WebView *)webView
-        dragDestinationActionMaskForDraggingInfo:(id<NSDraggingInfo>)info
-{
-    return WebDragDestinationActionNone;
-}
-
-- (NSArray *)webView:(WebView *)sender
-        contextMenuItemsForElement:(NSDictionary *)element
-        defaultMenuItems:(NSArray *)defaultMenuItems
-{
-    NSMutableArray *items = [NSMutableArray arrayWithArray:defaultMenuItems];
-
-    for (NSInteger i = 0; i < items.count; i++)
-    {
-        NSMenuItem *item = items[i];
-        if (item.tag == WebMenuItemTagReload)
+        // Handle MathJax completion callback
+        if ([message.body isEqualToString:@"End"])
         {
-            NSMenuItem *reloadItem = [[NSMenuItem alloc]
-                initWithTitle:item.title
-                action:@selector(reloadPreview:)
-                keyEquivalent:@""];
-            reloadItem.target = self;
-            [items replaceObjectAtIndex:i withObject:reloadItem];
-            break;
+            id callback = MPGetPreviewLoadingCompletionHandler(self);
+            NSOperationQueue *queue = [NSOperationQueue mainQueue];
+            [queue addOperationWithBlock:callback];
         }
     }
-
-    return items;
-}
-
-- (void)reloadPreview:(id)sender
-{
-    // Issue #318: Force CSS refresh from disk on explicit reload
-    [self invalidateStyleCaches];
-    [self.renderer parseAndRenderNow];
 }
 
 #pragma mark - MPRendererDataSource
@@ -1263,98 +1239,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // the async typesetting correctly. Scroll is restored after typesetting completes.
     // Skip DOM replacement if styles changed, since <head> CSS links need updating.
     // Related to issue #325.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !stylesChanged)
-    {
-        DOMDocument *doc = self.preview.mainFrame.DOMDocument;
-        DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
-        if (bodyNodes.length >= 1)
-        {
-            // Extract just the body content, not head or html tags
-            static NSString *pattern = @"<body[^>]*>(.*)</body>";
-            static int opts = NSRegularExpressionDotMatchesLineSeparators;
-
-            NSRegularExpression *regex =
-                [[NSRegularExpression alloc] initWithPattern:pattern
-                                                     options:opts error:NULL];
-            NSTextCheckingResult *result =
-                [regex firstMatchInString:html options:0
-                                    range:NSMakeRange(0, html.length)];
-            if (result && [result rangeAtIndex:1].location != NSNotFound)
-            {
-                NSString *bodyContent = [html substringWithRange:[result rangeAtIndex:1]];
-
-                CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-
-                // Only replace body content, preserving head (CSS, scripts)
-                JSContext *context = self.preview.mainFrame.javaScriptContext;
-                context[@"window"][@"__macdownTempHtml"] = bodyContent;
-
-                NSString *updateScript = [NSString stringWithFormat:
-                    @"(function(){"
-                    @"  var scrollY = %.0f;"
-                    @"  var html = window.__macdownTempHtml;"
-                    @"  delete window.__macdownTempHtml;"
-                    @"  var body = document.body;"
-                    @"  body.innerHTML = html;"
-                    @"  if(window.Prism){Prism.highlightAll();}"
-                    @"  if(window.MathJax&&MathJax.Hub){"
-                    @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
-                    @"    MathJax.Hub.Queue(function(){"
-                    @"      window.scrollTo(0,scrollY);"
-                    @"      if(typeof MathJaxListener!=='undefined'){"
-                    @"        MathJaxListener.invokeCallbackForKey_('DOMReplacementDone');"
-                    @"      }"
-                    @"    });"
-                    @"  } else {"
-                    @"    window.scrollTo(0,scrollY);"
-                    @"  }"
-                    @"})();",
-                    scrollBefore];
-
-                // Issue #325: Set up MathJax completion callback to update header
-                // locations after typesetting, which may change document height.
-                // This overwrites the initial-load "End" listener, which is safe
-                // because isPreviewReady guarantees the initial load completed.
-                if (self.preferences.htmlMathJax)
-                {
-                    MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
-                    __weak MPDocument *weakSelf = self;
-                    [listener addCallback:^{
-                        [weakSelf updateHeaderLocations];
-                        if (weakSelf.preferences.editorSyncScrolling)
-                        {
-                            [weakSelf syncScrollers];
-                        }
-                        CGFloat newScrollY = NSMinY(
-                            weakSelf.preview.enclosingScrollView.contentView.bounds);
-                        weakSelf.lastPreviewScrollTop = newScrollY;
-                    } forKey:@"DOMReplacementDone"];
-                    [self.preview.windowScriptObject setValue:listener
-                                                      forKey:@"MathJaxListener"];
-                }
-
-                [context evaluateScript:updateScript];
-
-                // Save scroll position for non-MathJax DOM replacement.
-                // MathJax case is handled in the completion callback above.
-                if (!self.preferences.htmlMathJax)
-                {
-                    self.lastPreviewScrollTop = scrollBefore;
-                }
-
-                // Mark rendering as complete so next edit will be processed
-                self.alreadyRenderingInWeb = NO;
-
-                // Issue #294: Update word count during DOM replacement
-                [self scheduleWordCountUpdate];
-
-                return;
-            }
-        }
-    }
+    // TODO: WKWebView migration - DOM replacement optimization
+    // The old WebView used DOM and JSContext for efficient DOM replacement.
+    // WKWebView uses async JavaScript evaluation which requires refactoring.
+    // For MVP, we'll always do full reload. Can be optimized later.
 
     // Fall back to full reload
-    [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
+    [self.preview loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
@@ -1529,10 +1420,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (IBAction)copyHtml:(id)sender
 {
-    // Dis-select things in WebView so that it's more obvious we're NOT
-    // respecting the selection range.
-    [self.preview setSelectedDOMRange:nil affinity:NSSelectionAffinityUpstream];
-
     // Issue #16: Use performAfterRender: to ensure HTML is up-to-date
     // even when preview pane is hidden.
     __weak typeof(self) weakSelf = self;
@@ -2112,18 +1999,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     static const CGFloat defaultSize = 14.0;
     CGFloat scale = fontSize / defaultSize;
     
-#if 0
-    // Sadly, this doesn’t work correctly.
-    // It looks fine, but selections are offset relative to the mouse cursor.
-    NSScrollView *previewScrollView =
-    self.preview.mainFrame.frameView.documentView.enclosingScrollView;
-    NSClipView *previewContentView = previewScrollView.contentView;
-    [previewContentView scaleUnitSquareToSize:NSMakeSize(scale, scale)];
-    [previewContentView setNeedsDisplay:YES];
-#else
-    // Warning: this is private webkit API and NOT App Store-safe!
-    [self.preview setPageSizeMultiplier:scale];
-#endif
+    // WKWebView uses magnification property for zoom
+    self.preview.magnification = scale;
 }
 
 /**
@@ -2167,8 +2044,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
  */
 -(void) updateHeaderLocations
 {
+    // Extract web view header locations asynchronously
+    [self updateWebViewHeaderLocations];
+
+    // Extract editor header locations synchronously
+    [self updateEditorHeaderLocations];
+}
+
+-(void) updateWebViewHeaderLocations
+{
     CGFloat offset = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
-    NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
     // Load JavaScript from resource file for better maintainability
     static NSString *script = nil;
@@ -2181,21 +2066,32 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     });
 
     if (script) {
-        _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+        __weak typeof(self) weakSelf = self;
+        [self.preview evaluateJavaScript:script completionHandler:^(id result, NSError *error) {
+            if (error) {
+                NSLog(@"Error extracting header locations: %@", error);
+                weakSelf.webViewHeaderLocations = @[];
+                return;
+            }
+
+            if (result && [result isKindOfClass:[NSArray class]]) {
+                // Add offset to all header positions
+                NSMutableArray<NSNumber *> *offsetLocations = [NSMutableArray array];
+                for (NSNumber *location in result) {
+                    [offsetLocations addObject:@([location doubleValue] + offset)];
+                }
+                weakSelf.webViewHeaderLocations = [offsetLocations copy];
+            } else {
+                weakSelf.webViewHeaderLocations = @[];
+            }
+        }];
     } else {
-        _webViewHeaderLocations = @[];
+        self.webViewHeaderLocations = @[];
     }
+}
 
-    // add offset to all numbers
-    for (NSNumber *location in _webViewHeaderLocations)
-    {
-        [locations addObject:@([location floatValue] + offset)];
-    }
-
-    _webViewHeaderLocations = [locations copy];
-    
-
-    // Next, cache the locations of all of the reference nodes in the editor view.
+-(void) updateEditorHeaderLocations
+{
     NSInteger characterCount = 0;
     NSLayoutManager *layoutManager = [self.editor layoutManager];
     NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
@@ -2573,14 +2469,40 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)updateWordCount
 {
-    DOMNodeTextCount count = self.preview.mainFrame.DOMDocument.textCount;
+    if (!self.isPreviewReady || !self.preferences.editorShowWordCount) {
+        self.wordCountWidget.enabled = NO;
+        return;
+    }
 
-    self.totalWords = count.words;
-    self.totalCharacters = count.characters;
-    self.totalCharactersNoSpaces = count.characterWithoutSpaces;
+    // Count words from the rendered HTML
+    NSString *wordCountScript = @"(function() {"
+        "var text = document.body.innerText || '';"
+        "var words = text.trim().split(/\\s+/).filter(function(w) { return w.length > 0; }).length;"
+        "var chars = text.length;"
+        "var charsNoSpaces = text.replace(/\\s/g, '').length;"
+        "return [words, chars, charsNoSpaces];"
+    "})()";
 
-    if (self.isPreviewReady)
-        self.wordCountWidget.enabled = YES;
+    __weak typeof(self) weakSelf = self;
+    [self.preview evaluateJavaScript:wordCountScript completionHandler:^(id result, NSError *error) {
+        if (error) {
+            NSLog(@"Error evaluating word count: %@", error);
+            return;
+        }
+
+        if (result && [result isKindOfClass:[NSArray class]] && [result count] >= 3) {
+            NSArray *counts = (NSArray *)result;
+            weakSelf.totalWords = [counts[0] unsignedIntegerValue];
+            weakSelf.totalCharacters = [counts[1] unsignedIntegerValue];
+            weakSelf.totalCharactersNoSpaces = [counts[2] unsignedIntegerValue];
+            weakSelf.wordCountWidget.enabled = YES;
+        } else {
+            weakSelf.totalWords = 0;
+            weakSelf.totalCharacters = 0;
+            weakSelf.totalCharactersNoSpaces = 0;
+            weakSelf.wordCountWidget.enabled = YES;
+        }
+    }];
 }
 
 // Issue #294: Schedule word count update with debouncing to avoid

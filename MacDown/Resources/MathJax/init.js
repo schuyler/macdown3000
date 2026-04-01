@@ -5,9 +5,10 @@ MathJax.Hub.Config({
 	'messageStyle': 'none'
 });
 
-if (typeof MathJaxListener !== 'undefined') {
+// WKWebView compatibility: Check for webkit message handlers
+if (typeof webkit !== 'undefined' && webkit.messageHandlers && webkit.messageHandlers.MathJaxListener) {
 	MathJax.Hub.Register.StartupHook('End', function () {
-		MathJaxListener.invokeCallbackForKey_('End');
+		webkit.messageHandlers.MathJaxListener.postMessage('End');
 	});
 }
 
