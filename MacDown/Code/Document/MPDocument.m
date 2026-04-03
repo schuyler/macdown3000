@@ -1319,7 +1319,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
                         [weakSelf updateHeaderLocations];
-                        if (weakSelf.preferences.editorSyncScrolling)
+                        // Issue #342: Skip sync during active editing to prevent
+                        // scroll jumping after MathJax typesetting completes.
+                        if (weakSelf.preferences.editorSyncScrolling
+                            && !weakSelf.inEditing)
                         {
                             [weakSelf syncScrollers];
                         }
@@ -1490,10 +1493,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         @synchronized(self) {
             self.shouldHandlePreviewBoundsChange = NO;
-            if (!_inLiveScroll) {
+            // Issue #342: Skip reverse sync during active editing to prevent
+            // scroll jumping. When typing triggers a preview re-render, the DOM
+            // replacement's window.scrollTo() fires this notification. Without
+            // this guard, syncScrollersReverse moves the editor to the wrong
+            // position. The sync will happen after editing pauses via
+            // performDelayedSyncScrollers.
+            if (!_inLiveScroll && !_inEditing) {
                 [self updateHeaderLocations];
+                [self syncScrollersReverse];
             }
-            [self syncScrollersReverse];
             self.shouldHandlePreviewBoundsChange = YES;
         }
     }
