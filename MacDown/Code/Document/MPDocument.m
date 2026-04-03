@@ -2922,7 +2922,20 @@ current file somewhere to enable this feature.", \
                  [weakSelf handleExternalFileChange];
              }
        cancelHandler:^(NSString *path) {
-                 // File was deleted or renamed — watcher auto-stopped
+                 // File was deleted or renamed (e.g. atomic save by external editor).
+                 // Wait briefly for the rename to complete, then restart watching
+                 // the new inode at the same path.
+                 dispatch_after(
+                     dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
+                     dispatch_get_main_queue(), ^{
+                     MPDocument *s = weakSelf;
+                     if (!s) return;                                       // document closed
+                     if (![s.fileURL.path isEqualToString:path]) return;  // Save As changed URL
+                     if (s.fileWatcher.isWatching) return;                // already restarted
+                     if (![[NSFileManager defaultManager] fileExistsAtPath:path]) return;
+                     [s startFileWatching];
+                     [s handleExternalFileChange];
+                 });
        }];
 
     // Initialize resource watcher set
