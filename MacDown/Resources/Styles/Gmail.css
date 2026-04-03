@@ -1,0 +1,441 @@
+/*
+ * Gmail theme for MacDown
+ *
+ * Matches Gmail's default compose/reading typography so that
+ * copy-paste from MacDown preview into Gmail "just works."
+ *
+ * References:
+ *   Gmail CSS support (official):
+ *     https://developers.google.com/workspace/gmail/design/css
+ *
+ *   Gmail supported CSS properties & media queries:
+ *     https://www.htmlemailcheck.com/knowledge-base/list-of-gmail-supported-css-properties-media-queries/
+ *
+ *   Gmail rendering guide:
+ *     https://www.emailonacid.com/blog/article/email-development/12-things-you-must-know-when-developing-for-gmail-and-gmail-mobile-apps-2/
+ *
+ *   Gmail constraints respected:
+ *     - Web-safe fonts only (no @font-face / Google Fonts)
+ *     - No CSS animations, transitions, or transforms
+ *     - No pseudo-elements (::before, ::after)
+ *     - No external stylesheets (irrelevant for MacDown, but
+ *       informs the "keep it simple" approach)
+ *     - Supported: inline <style>, class/element/id selectors,
+ *       media queries (min-width, max-width, orientation)
+ *
+ *   Color choices:
+ *     #1155cc — Google's standard hyperlink blue (same in Docs and Gmail)
+ *     #222222 — Gmail default body text color (slightly softer than pure black)
+ *     #555555 — Gmail quoted-reply text color
+ *     #cccccc — Gmail quoted-reply left border color
+ *     #f0f0f0 — Light gray for code backgrounds (web-safe neutral)
+ *     #e0e0e0 — Code border color (web-safe neutral, light enough not to dominate)
+ *     #f2f2f2 — Table header background (subtle differentiation)
+ *     #777777 — H6 muted text (de-emphasized heading level)
+ *
+ *   Layout choices:
+ *     600px max-width — Standard email body width
+ *       https://www.emailonacid.com/blog/article/email-development/12-things-you-must-know-when-developing-for-gmail-and-gmail-mobile-apps-2/
+ *     10pt base font — Gmail compose window default "Normal" size
+ *     1.5 line-height — Gmail default line spacing
+ *     36px list indent — Gmail default list indentation
+ */
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: #222222;
+  background-color: #ffffff;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+body > *:first-child {
+  margin-top: 0 !important;
+}
+body > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Links — Gmail blue, always underlined */
+a {
+  color: #1155cc;
+  text-decoration: underline;
+}
+a.absent {
+  color: #cc0000;
+}
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+/*
+ * Headings — Gmail compose has no heading styles, so we use
+ * a simple bold size scale that looks natural in an email context.
+ * Sizes are conservative to match email conventions.
+ */
+h1, h2, h3, h4, h5, h6 {
+  margin: 16px 0 8px;
+  padding: 0;
+  font-weight: bold;
+  color: #222222;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative;
+}
+
+h1 {
+  font-size: 18pt;
+}
+
+h2 {
+  font-size: 14pt;
+}
+
+h3 {
+  font-size: 12pt;
+}
+
+h4 {
+  font-size: 10pt;
+  font-weight: bold;
+}
+
+h5 {
+  font-size: 10pt;
+  font-weight: bold;
+  color: #555555;
+}
+
+h6 {
+  font-size: 10pt;
+  font-style: italic;
+  color: #777777;
+}
+
+h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code,
+h4 tt, h4 code, h5 tt, h5 code, h6 tt, h6 code {
+  font-size: inherit;
+}
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor,
+h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  text-decoration: none;
+}
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0;
+}
+
+body > h1:first-child, body > h2:first-child, body > h3:first-child,
+body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body > h1:first-child + h2 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+a:first-child h1, a:first-child h2, a:first-child h3,
+a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Block elements — tighter spacing for email */
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 10px 0;
+}
+
+/* Horizontal rule */
+hr {
+  border: 0 none;
+  border-top: 1px solid #cccccc;
+  height: 0;
+  margin: 16px 0;
+  padding: 0;
+}
+
+/* Lists — 36px indent matches Gmail */
+li {
+  margin: 0;
+}
+li p.first {
+  display: inline-block;
+}
+ul, ol {
+  padding-left: 36px;
+}
+ul :first-child, ol :first-child {
+  margin-top: 0;
+}
+
+/* Definition lists */
+dl {
+  padding: 0;
+}
+dl dt {
+  font-size: 10pt;
+  font-weight: bold;
+  padding: 0;
+  margin: 10px 0 4px;
+}
+dl dt:first-child {
+  padding: 0;
+}
+dl dt > :first-child {
+  margin-top: 0;
+}
+dl dt > :last-child {
+  margin-bottom: 0;
+}
+dl dd {
+  margin: 0 0 10px;
+  padding: 0 15px;
+}
+dl dd > :first-child {
+  margin-top: 0;
+}
+dl dd > :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * Blockquote — Gmail's quoted reply style:
+ * left border in gray, slight indent, muted text
+ */
+blockquote {
+  border-left: 2px solid #cccccc;
+  padding: 0 10px;
+  margin-left: 0;
+  color: #555555;
+}
+blockquote > :first-child {
+  margin-top: 0;
+}
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Tables — light borders (Gmail strips heavy styling) */
+table {
+  padding: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+table tr {
+  border-top: 1px solid #cccccc;
+  background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+table tr:nth-child(2n) {
+  background-color: #f8f8f8;
+}
+table tr th {
+  font-weight: bold;
+  border: 1px solid #cccccc;
+  margin: 0;
+  padding: 4px 8px;
+  background-color: #f2f2f2;
+}
+table tr td {
+  border: 1px solid #cccccc;
+  margin: 0;
+  padding: 4px 8px;
+}
+table tr th :first-child, table tr td :first-child {
+  margin-top: 0;
+}
+table tr th :last-child, table tr td :last-child {
+  margin-bottom: 0;
+}
+
+/*
+ * Inline code — Gmail has no native code styling, so we use a
+ * subtle background with web-safe monospace fonts only.
+ * No border-radius in Gmail so kept minimal.
+ */
+code, tt {
+  margin: 0 2px;
+  padding: 1px 4px;
+  white-space: nowrap;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9pt;
+}
+
+/* Code blocks */
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent;
+}
+
+pre {
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9pt;
+  line-height: 1.4;
+  overflow: auto;
+  padding: 8px 12px;
+  border-radius: 3px;
+}
+pre code, pre tt {
+  background-color: transparent;
+  border: none;
+}
+
+.highlight pre {
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  font-size: 9pt;
+  line-height: 1.4;
+  overflow: auto;
+  padding: 8px 12px;
+  border-radius: 3px;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+}
+
+/* Image alignment */
+span.frame {
+  display: block;
+  overflow: hidden;
+}
+span.frame > span {
+  border: 1px solid #dddddd;
+  display: block;
+  float: left;
+  overflow: hidden;
+  margin: 13px 0 0;
+  padding: 7px;
+  width: auto;
+}
+span.frame span img {
+  display: block;
+  float: left;
+}
+span.frame span span {
+  clear: both;
+  color: #333333;
+  display: block;
+  padding: 5px 0 0;
+}
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+span.align-center > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: center;
+}
+span.align-center span img {
+  margin: 0 auto;
+  text-align: center;
+}
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+span.align-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px 0 0;
+  text-align: right;
+}
+span.align-right span img {
+  margin: 0;
+  text-align: right;
+}
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left;
+}
+span.float-left span {
+  margin: 13px 0 0;
+}
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right;
+}
+span.float-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: right;
+}
+
+/* Superscript */
+sup {
+  font-size: 0.83em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+/* Keyboard shortcut styling */
+kbd {
+  display: inline-block;
+  padding: 2px 4px;
+  font-size: 8pt;
+  line-height: 10px;
+  color: #555;
+  vertical-align: middle;
+  background-color: #fcfcfc;
+  border: solid 1px #ccc;
+  border-bottom-color: #bbb;
+  border-radius: 3px;
+}
+
+/* Print color fidelity */
+* {
+  -webkit-print-color-adjust: exact;
+}
+
+/* Responsive — email body width */
+@media screen and (min-width: 700px) {
+  body {
+    width: 600px;
+    margin: 0 auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  table, pre {
+    page-break-inside: avoid;
+  }
+  pre {
+    word-wrap: break-word;
+  }
+  body {
+    padding: 0;
+  }
+}

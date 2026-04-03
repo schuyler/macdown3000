@@ -1,0 +1,462 @@
+/*
+ * Google Docs / Gmail theme for MacDown
+ *
+ * Approximates Google Docs default formatting so that copy-paste
+ * into Google Docs or Gmail requires minimal cleanup.
+ *
+ * References:
+ *   Google Docs default styles (inspected from docs.google.com):
+ *     - Font: Arial 11pt, line-height ~1.15
+ *     - Text color: #000000
+ *     - Link color: #1155cc (underlined)
+ *     - Heading sizes: H1=20pt, H2=16pt, H3=14pt, H4=12pt
+ *     - Page width: ~816px (8.5in letter with margins)
+ *     - List indent: 36px
+ *
+ *   Gmail CSS support:
+ *     https://developers.google.com/workspace/gmail/design/css
+ *
+ *   Gmail supported CSS properties reference:
+ *     https://www.htmlemailcheck.com/knowledge-base/list-of-gmail-supported-css-properties-media-queries/
+ *
+ *   Color choices:
+ *     #1155cc — Google's standard hyperlink blue (Docs, Gmail, Sheets)
+ *     #000000 — Google Docs default body text color
+ *     #e8eaed — Google's code background gray (Docs code add-on style)
+ *     #1e8e3e — Google's green for code text (Docs code add-on style)
+ *     #dadce0 — Google's standard border color (Material Design neutral)
+ *     #666666 — H6 muted text, from Google Docs "Subtitle" style
+ */
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.15;
+  color: #000000;
+  background-color: #ffffff;
+  padding: 30px;
+  max-width: 816px;
+  margin: 0 auto;
+}
+
+body > *:first-child {
+  margin-top: 0 !important;
+}
+body > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Links — Google Docs/Gmail blue */
+a {
+  color: #1155cc;
+  text-decoration: underline;
+}
+a.absent {
+  color: #cc0000;
+}
+a.anchor {
+  display: block;
+  padding-left: 30px;
+  margin-left: -30px;
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+/* Headings — match Google Docs heading sizes */
+h1, h2, h3, h4, h5, h6 {
+  margin: 20px 0 8px;
+  padding: 0;
+  font-weight: bold;
+  color: #000000;
+  -webkit-font-smoothing: antialiased;
+  cursor: text;
+  position: relative;
+}
+
+h1 {
+  font-size: 20pt;
+}
+
+h2 {
+  font-size: 16pt;
+}
+
+h3 {
+  font-size: 14pt;
+}
+
+h4 {
+  font-size: 12pt;
+}
+
+h5 {
+  font-size: 11pt;
+  font-weight: bold;
+}
+
+h6 {
+  font-size: 11pt;
+  font-style: italic;
+  color: #666666;
+}
+
+h1 tt, h1 code, h2 tt, h2 code, h3 tt, h3 code,
+h4 tt, h4 code, h5 tt, h5 code, h6 tt, h6 code {
+  font-size: inherit;
+}
+
+h1:hover a.anchor, h2:hover a.anchor, h3:hover a.anchor,
+h4:hover a.anchor, h5:hover a.anchor, h6:hover a.anchor {
+  text-decoration: none;
+}
+
+h1 p, h2 p, h3 p, h4 p, h5 p, h6 p {
+  margin-top: 0;
+}
+
+body > h1:first-child, body > h2:first-child, body > h3:first-child,
+body > h4:first-child, body > h5:first-child, body > h6:first-child {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+body > h1:first-child + h2 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+a:first-child h1, a:first-child h2, a:first-child h3,
+a:first-child h4, a:first-child h5, a:first-child h6 {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Block elements */
+p, blockquote, ul, ol, dl, li, table, pre {
+  margin: 12px 0;
+}
+
+/* Horizontal rule */
+hr {
+  border: 0 none;
+  border-top: 1px solid #cccccc;
+  height: 0;
+  margin: 24px 0;
+  padding: 0;
+}
+
+/* Lists — 36px indent like Google Docs */
+li {
+  margin: 0;
+}
+li p.first {
+  display: inline-block;
+}
+ul, ol {
+  padding-left: 36px;
+}
+ul :first-child, ol :first-child {
+  margin-top: 0;
+}
+
+/* Definition lists */
+dl {
+  padding: 0;
+}
+dl dt {
+  font-size: 11pt;
+  font-weight: bold;
+  padding: 0;
+  margin: 12px 0 4px;
+}
+dl dt:first-child {
+  padding: 0;
+}
+dl dt > :first-child {
+  margin-top: 0;
+}
+dl dt > :last-child {
+  margin-bottom: 0;
+}
+dl dd {
+  margin: 0 0 12px;
+  padding: 0 15px;
+}
+dl dd > :first-child {
+  margin-top: 0;
+}
+dl dd > :last-child {
+  margin-bottom: 0;
+}
+
+/* Blockquote — Gmail-style left border */
+blockquote {
+  border-left: 3px solid #cccccc;
+  padding: 0 12px;
+  margin-left: 0;
+  color: #555555;
+}
+blockquote > :first-child {
+  margin-top: 0;
+}
+blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* Tables — clean borders */
+table {
+  padding: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+table tr {
+  border-top: 1px solid #000000;
+  background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+table tr:nth-child(2n) {
+  background-color: #f9f9f9;
+}
+table tr th {
+  font-weight: bold;
+  border: 1px solid #000000;
+  margin: 0;
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+}
+table tr td {
+  border: 1px solid #000000;
+  margin: 0;
+  padding: 5px 10px;
+}
+table tr th :first-child, table tr td :first-child {
+  margin-top: 0;
+}
+table tr th :last-child, table tr td :last-child {
+  margin-bottom: 0;
+}
+
+/* Inline code — grey background, matches Google Docs "code" add-on style */
+code, tt {
+  margin: 0 2px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  background-color: #e8eaed;
+  border-radius: 4px;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 0.85em;
+  color: #1e8e3e;
+}
+
+/* Code blocks */
+pre code {
+  margin: 0;
+  padding: 0;
+  white-space: pre;
+  border: none;
+  background: transparent;
+}
+
+pre {
+  background-color: #e8eaed;
+  border: 1px solid #dadce0;
+  font-family: 'Roboto Mono', 'Courier New', Courier, monospace;
+  font-size: 10pt;
+  line-height: 1.4;
+  overflow: auto;
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: #1e8e3e;
+}
+pre code, pre tt {
+  background-color: transparent;
+  border: none;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
+}
+
+.highlight pre {
+  background-color: #e8eaed;
+  border: 1px solid #dadce0;
+  font-size: 10pt;
+  line-height: 1.4;
+  overflow: auto;
+  color: #1e8e3e;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+/*
+ * Override Prism syntax highlighting so code blocks show uniform
+ * green text in the MacDown preview, matching what appears when
+ * pasted into Google Docs (which strips Prism's token classes).
+ */
+pre .token,
+pre .token.comment,
+pre .token.prolog,
+pre .token.doctype,
+pre .token.cdata,
+pre .token.punctuation,
+pre .token.property,
+pre .token.tag,
+pre .token.boolean,
+pre .token.number,
+pre .token.constant,
+pre .token.symbol,
+pre .token.deleted,
+pre .token.selector,
+pre .token.attr-name,
+pre .token.string,
+pre .token.char,
+pre .token.builtin,
+pre .token.inserted,
+pre .token.operator,
+pre .token.entity,
+pre .token.url,
+pre .token.atrule,
+pre .token.attr-value,
+pre .token.keyword,
+pre .token.function,
+pre .token.class-name,
+pre .token.regex,
+pre .token.important,
+pre .token.variable {
+  color: #1e8e3e !important;
+  background: none !important;
+  text-shadow: none !important;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+}
+
+/* Image alignment (same as GitHub2 theme) */
+span.frame {
+  display: block;
+  overflow: hidden;
+}
+span.frame > span {
+  border: 1px solid #dddddd;
+  display: block;
+  float: left;
+  overflow: hidden;
+  margin: 13px 0 0;
+  padding: 7px;
+  width: auto;
+}
+span.frame span img {
+  display: block;
+  float: left;
+}
+span.frame span span {
+  clear: both;
+  color: #333333;
+  display: block;
+  padding: 5px 0 0;
+}
+span.align-center {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+span.align-center > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: center;
+}
+span.align-center span img {
+  margin: 0 auto;
+  text-align: center;
+}
+span.align-right {
+  display: block;
+  overflow: hidden;
+  clear: both;
+}
+span.align-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px 0 0;
+  text-align: right;
+}
+span.align-right span img {
+  margin: 0;
+  text-align: right;
+}
+span.float-left {
+  display: block;
+  margin-right: 13px;
+  overflow: hidden;
+  float: left;
+}
+span.float-left span {
+  margin: 13px 0 0;
+}
+span.float-right {
+  display: block;
+  margin-left: 13px;
+  overflow: hidden;
+  float: right;
+}
+span.float-right > span {
+  display: block;
+  overflow: hidden;
+  margin: 13px auto 0;
+  text-align: right;
+}
+
+/* Superscript */
+sup {
+  font-size: 0.83em;
+  vertical-align: super;
+  line-height: 0;
+}
+
+/* Keyboard shortcut styling */
+kbd {
+  display: inline-block;
+  padding: 3px 5px;
+  font-size: 9pt;
+  line-height: 10px;
+  color: #555;
+  vertical-align: middle;
+  background-color: #fcfcfc;
+  border: solid 1px #ccc;
+  border-bottom-color: #bbb;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #bbb;
+}
+
+/* Print color fidelity */
+* {
+  -webkit-print-color-adjust: exact;
+}
+
+/* Responsive centering */
+@media screen and (min-width: 914px) {
+  body {
+    width: 816px;
+    margin: 0 auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  table, pre {
+    page-break-inside: avoid;
+  }
+  pre {
+    word-wrap: break-word;
+  }
+  body {
+    padding: 0;
+  }
+}
