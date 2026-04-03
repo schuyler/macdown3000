@@ -10,6 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "sass": "^1.97.3",
-    "@primer/css": "^22.1.0"
+    "@primer/css": "^22.1.1"
   }
 }
