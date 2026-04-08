@@ -591,8 +591,11 @@
 // the loadedString != nil check.  The two "New document" tests are RED before
 // the fix — they assert behaviour the current code does not yet provide.
 
-// Helper: returns a document pre-wired with spy renderer, editor, and
-// highlighter so reloadFromLoadedString's outer guard is satisfied.
+// Helper: wires spy renderer, editor, and highlighter into `doc` so that
+// reloadFromLoadedString's outer guard (editor && renderer && highlighter) is
+// satisfied.  All three objects are ALWAYS assigned to `doc` regardless of
+// which output pointers the caller provides; the output params are purely
+// convenience references for callers that need to inspect them afterward.
 - (void)wireDocument:(MPDocument *)doc
          intoRenderer:(MPSpyRenderer **)rendererOut
           highlighter:(MPSpyHighlighter **)highlighterOut
@@ -612,8 +615,8 @@
     if (editorOut)      *editorOut      = editor;
 }
 
-// RED: New document should trigger a render even with nil loadedString.
-// Fails on current code; passes after the fix.
+// Regression test for issue #358: new documents must trigger a render so the
+// preview WebView is initialised before the user starts typing.
 - (void)testNewDocumentTriggersRenderOnReload
 {
     MPSpyRenderer *renderer = nil;
@@ -633,8 +636,7 @@
                    "WebView is initialised before the user starts typing (issue #358)");
 }
 
-// RED: New document should also trigger syntax highlighting on reload.
-// Fails on current code; passes after the fix.
+// Regression test for issue #358: syntax highlighting must also fire for new documents.
 - (void)testNewDocumentTriggersHighlightOnReload
 {
     MPSpyHighlighter *highlighter = nil;
@@ -703,6 +705,28 @@
 
     XCTAssertEqualObjects(editor.string, @"# Hello World",
                           @"Editor must contain the loaded string after reload");
+}
+
+// Guard path: reloadFromLoadedString must be a safe no-op when the document's
+// dependencies (editor / renderer / highlighter) are not yet wired up.  This
+// is the state during readFromData:ofType:error:, before the window controller
+// nib has loaded.  Calling it must not crash and must not trigger a render.
+- (void)testReloadIsNoOpWhenDependenciesNotReady
+{
+    // Document is freshly allocated — editor, renderer, highlighter are all nil.
+    XCTAssertNil(self.document.editor,    @"Precondition: editor is nil");
+    XCTAssertNil(self.document.renderer,  @"Precondition: renderer is nil");
+    XCTAssertNil(self.document.highlighter, @"Precondition: highlighter is nil");
+
+    // Must not crash.
+    XCTAssertNoThrow([self.document reloadFromLoadedString],
+                     @"reloadFromLoadedString must not crash when dependencies are absent");
+
+    // loadedString, if any, must be untouched (guard failed before consuming it).
+    self.document.loadedString = @"# Not yet";
+    [self.document reloadFromLoadedString];
+    XCTAssertEqualObjects(self.document.loadedString, @"# Not yet",
+                          @"loadedString must not be consumed when the guard fails");
 }
 
 // Regression: editor.string must stay empty for new documents (no loadedString).
