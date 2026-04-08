@@ -33,6 +33,7 @@
 #import "MPFileWatcher.h"
 #import "MPResourceWatcherSet.h"
 #import "MPHTMLResourceURLs.h"
+#import "MPURLSecurityPolicy.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
@@ -1082,6 +1083,30 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // Otherwise this is somewhere else on the same page. Jump there.
             break;
         default:
+            // CVE-2019-12173: Block file:// navigations from non-user-initiated
+            // actions (e.g., JavaScript auto-click) unless they target the
+            // current document scope and are not executable.
+            //
+            // Note: WebKit may classify JS element.click() as
+            // WebNavigationTypeLinkClicked, routing it through
+            // openOrCreateFileForUrl: instead. That path has its own
+            // executable guard, so the CVE is closed either way.
+            //
+            // User-clicked file:// links intentionally skip the scope check —
+            // opening local documents (PDFs, images) from Markdown links is a
+            // legitimate use case. Only executables are blocked for user clicks.
+            if (url.isFileURL)
+            {
+                NSURL *baseURL = self.currentBaseUrl ?: self.fileURL;
+                if (!baseURL || !baseURL.isFileURL
+                    || ![MPURLSecurityPolicy url:url isWithinScopeOfBaseURL:baseURL]
+                    || [MPURLSecurityPolicy isExecutableOrAppBundleAtURL:url])
+                {
+                    NSLog(@"MacDown: Blocked file:// navigation for security: %@", url);
+                    [listener ignore];
+                    return;
+                }
+            }
             break;
     }
     [listener use];
@@ -2667,6 +2692,24 @@ current file somewhere to enable this feature.", \
     
     if (reachable)
     {
+        if (file && [MPURLSecurityPolicy isExecutableOrAppBundleAtURL:url])
+        {
+            NSLog(@"MacDown: Blocked opening executable from Markdown link: %@", url);
+            NSAlert *alert = [[NSAlert alloc] init];
+            alert.alertStyle = NSAlertStyleWarning;
+            alert.messageText = NSLocalizedString(
+                @"Blocked: Link target is an executable",
+                @"security alert title for blocked executable link");
+            alert.informativeText = [NSString stringWithFormat:
+                NSLocalizedString(
+                    @"The link points to an executable or application bundle "
+                    "at:\n%@\n\nOpening executables from Markdown links is "
+                    "not allowed for security reasons.",
+                    @"security alert information for blocked executable link"),
+                url.path];
+            [alert runModal];
+            return;
+        }
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
     }
