@@ -1,10 +1,46 @@
 # Changelog
 
-## [Unreleased]
+## [3000.0.5] - 2026-04-07
+
+Highlights include Quick Look support for Markdown files, new preview themes for GitHub Dark, Google Docs, and Gmail, improved file watching, and resolutions for many user-reported issues.
 
 ### Security
 
-- Fix CVE-2019-12138 (directory traversal) and CVE-2019-12173 (RCE via app bundle links) in the preview pane's file:// navigation handler (#351)
+- Fix CVE-2019-12138 (directory traversal) and CVE-2019-12173 (RCE via app bundle links) in the preview pane's file:// navigation handler (#356, #351) — reported by @jhengels
+
+### Fixed
+
+- Fix file watcher dropping after atomic save by external editors (#354) — reported by @btsai, contributed by @BenCello
+- Fix editor scroll jump during typing at end of long documents (#343)
+- Fix Mermaid diagrams not rendering during live preview (#333) — reported by @rcuisnier
+- Fix preview scroll jump when MathJax is enabled (#330) — reported by @causalcat
+- Fix PDF/print margins to respect Page Setup and remove double margins (#329)
+- Fix style reload not updating Preview pane (#328) — reported by @gregwillits
+- Fix main thread crash in userDefaultsDidChange (#323)
+- Fix split view not maintaining 1:1 ratio on resize or maximize (#321) — reported by @5T33Z0
+- Fix Help Menu document window sizing behavior (#319) — reported by @gregwillits
+- Fix dollar-sign math highlighting being applied unconditionally (#317)
+- Fix editor pane menu item not toggling to Restore (#316) — reported by @gregwillits
+- Fix "Move To" failing on macOS Sequoia with ViewBridge error 14 (#303) — reported by @whispersnowleopard
+- Fix word count not updating during typing (#296) — reported by @benel
+- Disable intra-word emphasis by default to prevent underscore false positives (#295) — reported by @pringshia
+
+### Added
+
+- GitHub2 (Dark) preview theme (#350) — contributed by @withakay
+- Google Docs and Gmail preview themes (#348) — contributed by @petems
+- Watch local CSS/JS resources and refresh Preview automatically on change (#327)
+- Auto-save preference to control automatic document saving (#326)
+- Support for user-provided Prism syntax highlighting themes (#324) — reported by @gregwillits
+- Allow flexible space, space, and separator items in toolbar customization (#322) — reported by @gregwillits
+- Quick Look preview extension for Markdown files (#299) — reported by @caius
+- Complete i18n/localization coverage for shell utility strings (#298)
+- Hide YAML front matter in Preview instead of rendering as an HTML table (#312) — reported by @whispersnowleopard
+- Automatic file reload when a document is modified by an external editor (#297) — reported by @btsai
+
+### Changed
+
+- FileURLInlining code cleanup using more idiomatic Objective-C (#304) — contributed by @wltb
 
 ## [3000.0.4] - 2026-01-25
 
