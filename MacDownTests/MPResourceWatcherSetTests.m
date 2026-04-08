@@ -7,6 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <stdio.h>
 #import "MPResourceWatcherSet.h"
 
 @interface MPResourceWatcherSetTests : XCTestCase <MPResourceWatcherSetDelegate>
@@ -48,6 +49,16 @@
     NSString *path = [self.testDirectory stringByAppendingPathComponent:name];
     [@"content" writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
     return path;
+}
+
+// Simulate an atomic save: write to a temp file, then use rename(2) to atomically
+// replace the target. This is exactly what image editors (Preview, Photoshop, etc.)
+// do, and it fires VNODE_DELETE/VNODE_RENAME on the original inode.
+- (void)atomicallySaveContent:(NSString *)content toPath:(NSString *)path
+{
+    NSString *tempPath = [path stringByAppendingString:@".tmp"];
+    [content writeToFile:tempPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    rename(tempPath.fileSystemRepresentation, path.fileSystemRepresentation);
 }
 
 #pragma mark - MPResourceWatcherSetDelegate
@@ -143,6 +154,87 @@
     [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
     XCTAssertNoThrow([self.watcherSet stopAll]);
     XCTAssertNoThrow([self.watcherSet stopAll]);
+}
+
+// Tests for GitHub issue #349: atomic-save recovery and initial timestamp seeding.
+
+- (void)testDelegateCalledOnAtomicSave
+{
+    // Create the watched file and register it.
+    NSString *path = [self createTestFileWithName:@"atomic.png"];
+    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
+
+    self.changeExpectation = [self expectationWithDescription:@"delegate called after atomic save"];
+
+    // After a short delay, simulate an atomic save: write to a temp file then
+    // rename it over the watched path. This is exactly what editors like vim
+    // and many frameworks do — it fires RENAME/DELETE on the original inode.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self atomicallySaveContent:@"updated content" toPath:path];
+    });
+
+    // 2.0s timeout: atomic save fires at 0.1s, recovery has a 300ms delay,
+    // leaving over 1.6s of buffer.
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+
+    XCTAssertTrue([self.changedPaths containsObject:path],
+                  @"Delegate should have been called with the watched path after atomic save");
+}
+
+- (void)testWatcherReestablishedAfterAtomicSave
+{
+    // Create the watched file and register it.
+    NSString *path = [self createTestFileWithName:@"rewatch.png"];
+    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
+
+    // Phase 1: simulate an atomic save and wait for the recovery notification.
+    self.changeExpectation = [self expectationWithDescription:@"first notification: atomic save recovery"];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self atomicallySaveContent:@"updated content" toPath:path];
+    });
+
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+
+    // Phase 2: perform a direct (non-atomic) write and verify the watcher
+    // fires again, proving it was re-established after recovery.
+    self.changeExpectation = [self expectationWithDescription:@"second notification: direct write after recovery"];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [@"second update" writeToFile:path
+                           atomically:NO
+                             encoding:NSUTF8StringEncoding
+                                error:nil];
+    });
+
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+
+    // changedPaths accumulates across both phases; path should appear at least twice.
+    NSUInteger count = [[self.changedPaths filteredArrayUsingPredicate:
+                         [NSPredicate predicateWithFormat:@"SELF == %@", path]] count];
+    XCTAssertGreaterThanOrEqual(count, 2u,
+        @"Watcher should have fired at least twice — once on recovery, once on subsequent write");
+}
+
+- (void)testDelegateSeededOnNewWatcher
+{
+    // Create the file BEFORE setting up any watcher.
+    NSString *path = [self createTestFileWithName:@"seed.png"];
+
+    // Expect the delegate to be called when the watcher is first installed,
+    // seeding the initial timestamp without waiting for a file change.
+    self.changeExpectation = [self expectationWithDescription:@"delegate seeded on watcher installation"];
+
+    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
+
+    // Notification should be synchronous or near-immediate — 1.0s is generous.
+    [self waitForExpectationsWithTimeout:1.0 handler:nil];
+
+    XCTAssertTrue([self.changedPaths containsObject:path],
+                  @"Delegate should be called immediately when a new watcher is installed");
 }
 
 @end

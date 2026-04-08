@@ -68,14 +68,32 @@
                                   didDetectChangeAtPath:p];
         }
         cancelHandler:^(NSString *p) {
-            MPResourceWatcherSet *strongSelf = weakSelf;
-            if (strongSelf)
-                [strongSelf.watchers removeObjectForKey:watchedPath];
+            MPResourceWatcherSet *cancelSelf = weakSelf;
+            if (!cancelSelf)
+                return;
+            [cancelSelf.watchers removeObjectForKey:watchedPath];
+            // File was deleted or renamed (e.g. atomic save by external editor).
+            // Wait briefly for the rename to complete, then restart watching the
+            // new inode at the same path. addWatcherForPath: will notify the
+            // delegate, which updates the timestamp and triggers a re-render.
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
+                           dispatch_get_main_queue(), ^{
+                MPResourceWatcherSet *strongSelf = weakSelf;
+                if (!strongSelf)
+                    return;
+                if (![[NSFileManager defaultManager] fileExistsAtPath:watchedPath])
+                    return;
+                [strongSelf addWatcherForPath:watchedPath];
+            });
         }];
 
     // Only store if watcher successfully started
     if (watcher.isWatching)
+    {
         self.watchers[path] = watcher;
+        if (self.delegate)
+            [self.delegate resourceWatcherSet:self didDetectChangeAtPath:path];
+    }
 }
 
 - (void)stopAll
