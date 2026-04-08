@@ -41,6 +41,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
 | MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing | Good | (Issue #313) |
 | MPMermaidRenderingTests.m | Mermaid diagram rendering, MutationObserver re-rendering, SVG sizing | Good | (Issue #331) |
+| MPURLSecurityPolicyTests.m | URL security policy: executable/bundle detection, directory scope checking | Good | (Issue #351) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -56,6 +57,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219); style reload cache invalidation tests added (Issue #318)
+- Security policy (MPURLSecurityPolicy.m) - 16 tests covering executable/bundle detection and directory scope enforcement for CVE-2019-12138 and CVE-2019-12173 (Issue #351)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 - Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
 - Toolbar controller (MPToolbarController.m) - 37 tests for NSToolbarDelegate methods, flexible space/separator support, item groups (Issue #313)
@@ -437,7 +439,8 @@ MacDownTests/
 │   ├── MPAssetTests.m
 │   ├── MPEditorViewSubstitutionTests.m (✅ implemented - Issue #263 - text substitution preferences)
 │   ├── MPFileIOTests.m (new - planned)
-│   └── MPToolbarControllerTests.m (✅ implemented - Issue #313 - toolbar item identifiers, groups, delegate methods)
+│   ├── MPToolbarControllerTests.m (✅ implemented - Issue #313 - toolbar item identifiers, groups, delegate methods)
+│   └── MPURLSecurityPolicyTests.m (✅ implemented - Issue #351 - CVE-2019-12138, CVE-2019-12173: executable/bundle detection, scope checks)
 ├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m
 │   └── MPDocumentIntegrationTests.m

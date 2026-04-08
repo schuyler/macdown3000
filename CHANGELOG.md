@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- Fix CVE-2019-12138 (directory traversal) and CVE-2019-12173 (RCE via app bundle links) in the preview pane's file:// navigation handler (#351)
+
 ## [3000.0.4] - 2026-01-25
 
 This release focuses on editor stability and usability fixes, addressing scroll jumping issues, window positioning, text substitution bugs, and Markdown rendering edge cases.
