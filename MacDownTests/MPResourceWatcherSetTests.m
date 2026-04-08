@@ -7,6 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <stdio.h>
 #import "MPResourceWatcherSet.h"
 
 @interface MPResourceWatcherSetTests : XCTestCase <MPResourceWatcherSetDelegate>
@@ -48,6 +49,16 @@
     NSString *path = [self.testDirectory stringByAppendingPathComponent:name];
     [@"content" writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
     return path;
+}
+
+// Simulate an atomic save: write to a temp file, then use rename(2) to atomically
+// replace the target. This is exactly what image editors (Preview, Photoshop, etc.)
+// do, and it fires VNODE_DELETE/VNODE_RENAME on the original inode.
+- (void)atomicallySaveContent:(NSString *)content toPath:(NSString *)path
+{
+    NSString *tempPath = [path stringByAppendingString:@".tmp"];
+    [content writeToFile:tempPath atomically:NO encoding:NSUTF8StringEncoding error:nil];
+    rename(tempPath.fileSystemRepresentation, path.fileSystemRepresentation);
 }
 
 #pragma mark - MPResourceWatcherSetDelegate
@@ -160,13 +171,7 @@
     // and many frameworks do — it fires RENAME/DELETE on the original inode.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-        NSString *tempPath = [self.testDirectory
-                              stringByAppendingPathComponent:@"atomic.png.tmp"];
-        [@"updated content" writeToFile:tempPath
-                             atomically:NO
-                               encoding:NSUTF8StringEncoding
-                                  error:nil];
-        [self.fileManager moveItemAtPath:tempPath toPath:path error:nil];
+        [self atomicallySaveContent:@"updated content" toPath:path];
     });
 
     // 2.0s timeout: atomic save fires at 0.1s, recovery has a 300ms delay,
@@ -188,13 +193,7 @@
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-        NSString *tempPath = [self.testDirectory
-                              stringByAppendingPathComponent:@"rewatch.png.tmp"];
-        [@"updated content" writeToFile:tempPath
-                             atomically:NO
-                               encoding:NSUTF8StringEncoding
-                                  error:nil];
-        [self.fileManager moveItemAtPath:tempPath toPath:path error:nil];
+        [self atomicallySaveContent:@"updated content" toPath:path];
     });
 
     [self waitForExpectationsWithTimeout:2.0 handler:nil];
