@@ -125,6 +125,7 @@
 		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
 		ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */; };
 		ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */; };
+		ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -597,6 +598,7 @@
 		8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLsTests.m; sourceTree = "<group>"; };
 		ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentStyleUpdateTests.m; sourceTree = "<group>"; };
 		ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMermaidRenderingTests.m; sourceTree = "<group>"; };
+		ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPGraphvizRenderingTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -957,6 +959,7 @@
 				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
 				ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */,
 				ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */,
+				ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1402,6 +1405,7 @@
 				E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */,
 				ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */,
 				ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */,
+				ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
