@@ -58,11 +58,20 @@
     if (!targetURL.isFileURL || !baseURL.isFileURL)
         return NO;
 
-    targetURL = targetURL.URLByResolvingSymlinksInPath;
-    baseURL = baseURL.URLByResolvingSymlinksInPath;
+    // Resolve symlinks on the parent directory of each URL, then re-append
+    // the last component. URLByResolvingSymlinksInPath uses realpath()
+    // internally, which fails when the final component doesn't exist —
+    // leaving intermediate symlinks unresolved. Resolving the parent
+    // separately catches symlink escapes like docs/evil-link/payload
+    // where evil-link points outside the document directory.
+    NSURL *targetParent = targetURL.URLByDeletingLastPathComponent
+                                   .URLByResolvingSymlinksInPath;
+    NSString *targetPath = [targetParent.path
+        stringByAppendingPathComponent:targetURL.lastPathComponent];
 
-    NSString *baseDir = baseURL.URLByDeletingLastPathComponent.path;
-    NSString *targetPath = targetURL.path;
+    NSURL *baseParent = baseURL.URLByDeletingLastPathComponent
+                                .URLByResolvingSymlinksInPath;
+    NSString *baseDir = baseParent.path;
 
     // Ensure baseDir ends with '/' to prevent prefix collision
     // e.g. /tmp/docs matching /tmp/docs-evil/file
