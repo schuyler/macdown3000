@@ -12,7 +12,47 @@
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
 #import "MPPreferences.h"
+#import "MPRenderer.h"
+#import "MPEditorView.h"
+#import "HGMarkdownHighlighter.h"
 #import <sys/stat.h>
+
+
+#pragma mark - Test Infrastructure for Issue #358
+
+// Expose private MPDocument properties needed by the reload tests.
+@interface MPDocument (ReloadTesting)
+@property (strong) MPRenderer *renderer;
+@property (strong) HGMarkdownHighlighter *highlighter;
+@property (unsafe_unretained) MPEditorView *editor;
+@property (copy) NSString *loadedString;
+- (void)reloadFromLoadedString;
+@end
+
+// Spy renderer: records whether parseAndRenderNow was called without
+// performing actual background work.
+@interface MPSpyRenderer : MPRenderer
+@property (nonatomic) BOOL parseAndRenderNowCalled;
+@end
+
+@implementation MPSpyRenderer
+- (void)parseAndRenderNow {
+    self.parseAndRenderNowCalled = YES;
+    // Do not call super — avoids enqueuing background parse/render ops in tests.
+}
+@end
+
+// Spy highlighter: records whether parseAndHighlightNow was called.
+@interface MPSpyHighlighter : HGMarkdownHighlighter
+@property (nonatomic) BOOL parseAndHighlightNowCalled;
+@end
+
+@implementation MPSpyHighlighter
+- (void)parseAndHighlightNow {
+    self.parseAndHighlightNowCalled = YES;
+    // Do not call super — avoids actual text-view work in tests.
+}
+@end
 
 
 @interface MPDocumentLifecycleTests : XCTestCase
@@ -541,6 +581,147 @@
                                                               error:&error];
         XCTAssertNotNil(doc, @"Should handle Unicode filename");
     }
+}
+
+
+#pragma mark - reloadFromLoadedString Tests (Issue #358)
+//
+// These tests cover the bug where new (untitled) documents never receive an
+// initial render because reloadFromLoadedString guarded all rendering behind
+// the loadedString != nil check.  The two "New document" tests are RED before
+// the fix — they assert behaviour the current code does not yet provide.
+
+// Helper: returns a document pre-wired with spy renderer, editor, and
+// highlighter so reloadFromLoadedString's outer guard is satisfied.
+- (void)wireDocument:(MPDocument *)doc
+         intoRenderer:(MPSpyRenderer **)rendererOut
+          highlighter:(MPSpyHighlighter **)highlighterOut
+               editor:(MPEditorView *__strong *)editorOut
+{
+    MPSpyRenderer *renderer = [[MPSpyRenderer alloc] init];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+    MPSpyHighlighter *highlighter =
+        [[MPSpyHighlighter alloc] initWithTextView:editor waitInterval:0.0];
+
+    doc.renderer = renderer;
+    doc.editor = editor;
+    doc.highlighter = highlighter;
+
+    if (rendererOut)    *rendererOut    = renderer;
+    if (highlighterOut) *highlighterOut = highlighter;
+    if (editorOut)      *editorOut      = editor;
+}
+
+// RED: New document should trigger a render even with nil loadedString.
+// Fails on current code; passes after the fix.
+- (void)testNewDocumentTriggersRenderOnReload
+{
+    MPSpyRenderer *renderer = nil;
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:&renderer
+            highlighter:nil
+                 editor:&editor];
+
+    XCTAssertNil(self.document.loadedString,
+                 @"Precondition: new document has no loadedString");
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertTrue(renderer.parseAndRenderNowCalled,
+                  @"parseAndRenderNow must fire for new documents so the preview "
+                   "WebView is initialised before the user starts typing (issue #358)");
+}
+
+// RED: New document should also trigger syntax highlighting on reload.
+// Fails on current code; passes after the fix.
+- (void)testNewDocumentTriggersHighlightOnReload
+{
+    MPSpyHighlighter *highlighter = nil;
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:nil
+            highlighter:&highlighter
+                 editor:&editor];
+
+    XCTAssertNil(self.document.loadedString,
+                 @"Precondition: new document has no loadedString");
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertTrue(highlighter.parseAndHighlightNowCalled,
+                  @"parseAndHighlightNow must fire for new documents (issue #358)");
+}
+
+// Regression: existing-document path must still trigger a render after the fix.
+- (void)testExistingDocumentTriggersRenderOnReload
+{
+    MPSpyRenderer *renderer = nil;
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:&renderer
+            highlighter:nil
+                 editor:&editor];
+
+    self.document.loadedString = @"# Existing content";
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertTrue(renderer.parseAndRenderNowCalled,
+                  @"parseAndRenderNow must fire for documents opened from a file");
+}
+
+// Regression: loadedString must be consumed (nil-ed) after reload.
+- (void)testReloadConsumesLoadedString
+{
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:nil
+            highlighter:nil
+                 editor:&editor];
+
+    self.document.loadedString = @"# Content to consume";
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertNil(self.document.loadedString,
+                 @"loadedString must be nil-ed out after it is applied to the editor");
+}
+
+// Regression: editor.string must reflect the loaded content after reload.
+- (void)testReloadSetsEditorStringFromLoadedString
+{
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:nil
+            highlighter:nil
+                 editor:&editor];
+
+    self.document.loadedString = @"# Hello World";
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertEqualObjects(editor.string, @"# Hello World",
+                          @"Editor must contain the loaded string after reload");
+}
+
+// Regression: editor.string must stay empty for new documents (no loadedString).
+- (void)testReloadDoesNotModifyEditorStringForNewDocument
+{
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:nil
+            highlighter:nil
+                 editor:&editor];
+
+    XCTAssertEqualObjects(editor.string, @"",
+                          @"Precondition: new document editor starts empty");
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertEqualObjects(editor.string, @"",
+                          @"Editor string must not change for new documents "
+                           "when there is no loadedString to apply");
 }
 
 @end
