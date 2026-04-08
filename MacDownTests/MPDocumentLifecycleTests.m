@@ -718,12 +718,14 @@
     XCTAssertNil(self.document.renderer,  @"Precondition: renderer is nil");
     XCTAssertNil(self.document.highlighter, @"Precondition: highlighter is nil");
 
-    // Must not crash.
+    // Must not crash with no loadedString set.
     XCTAssertNoThrow([self.document reloadFromLoadedString],
                      @"reloadFromLoadedString must not crash when dependencies are absent");
 
     // loadedString, if any, must be untouched (guard failed before consuming it).
+    // Re-assert the precondition so the guard's state is explicit for this second call.
     self.document.loadedString = @"# Not yet";
+    XCTAssertNil(self.document.editor, @"Precondition still holds: editor is nil");
     [self.document reloadFromLoadedString];
     XCTAssertEqualObjects(self.document.loadedString, @"# Not yet",
                           @"loadedString must not be consumed when the guard fails");
