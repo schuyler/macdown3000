@@ -530,10 +530,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)reloadFromLoadedString
 {
-    if (self.loadedString && self.editor && self.renderer && self.highlighter)
+    if (self.editor && self.renderer && self.highlighter)
     {
-        self.editor.string = self.loadedString;
-        self.loadedString = nil;
+        if (self.loadedString)
+        {
+            self.editor.string = self.loadedString;
+            self.loadedString = nil;
+        }
         [self.renderer parseAndRenderNow];
         [self.highlighter parseAndHighlightNow];
     }
