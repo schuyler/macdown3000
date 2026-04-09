@@ -339,28 +339,23 @@ git push --force-with-lease origin {branch-name}
 
 If network errors occur, retry up to 4 times with exponential backoff.
 
-### Step 15: Verify CI Passes
+### Step 15: Check CI Status (Non-Blocking)
 
-Check the status of the CI run triggered in Step 10 (and again after the rebase push if history changed). Use the run ID noted in Step 10c. If the run is still in progress, wait for it now:
+Check the current status of the CI run — do NOT wait for it:
 
 ```bash
-gh run watch $RUN_ID --repo schuyler/macdown3000 --exit-status
+gh run view $RUN_ID --repo schuyler/macdown3000
 ```
 
-**Check results:**
-
-- **success**: Tests passed. Proceed to Step 16.
-- **cancelled** or **skipped**: Report to user for guidance.
-- **failure**: Tests failed. You MUST enter a fix-review loop using subagents and repeat until CI passes. NEVER diagnose or fix CI failures yourself.
-  1. Launch Zeppo to diagnose: provide the failure logs and ask Zeppo to identify the root cause and recommend a fix
-  2. Implement Zeppo's recommended fix
-  3. Launch Chico to review the fix
-  4. If Chico approves: commit, push, wait for CI
-  5. If CI fails again: repeat from step 1
-  6. If the loop cycles more than twice without progress, stop and surface the problem to the user
-  **Do NOT proceed to Step 16 until CI is green.**
-
-If a new run was triggered by the rebase push, wait for that one instead.
+- **completed / success**: Tests passed. Proceed to Step 16.
+- **completed / failure**: Tests failed. You MUST enter a fix-review loop using subagents. NEVER diagnose or fix CI failures yourself:
+  1. Fetch logs: `gh run view $RUN_ID --repo schuyler/macdown3000 --log`
+  2. Launch Zeppo (background) to diagnose: provide logs, ask for root cause and fix recommendation
+  3. Implement Zeppo's fix
+  4. Launch Chico (background) to review the fix
+  5. If Chico approves: commit, push, note the new run ID, loop back to step 1 of this list with the new run
+  6. If the loop cycles more than twice without progress, stop and surface to the user
+- **in_progress / queued**: Do NOT wait. Proceed to Step 16 and create the PR. GitHub will show CI status on the PR. Monitor the run in the background and apply the fix-review loop above if it fails.
 
 ### Step 16: Create Pull Request
 
