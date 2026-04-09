@@ -1355,12 +1355,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
                         // Issue #342: Sync at render completion, then transition ownership to Neither.
-                        if (weakSelf.preferences.editorSyncScrolling)
+                        typeof(self) strongSelf = weakSelf;
+                        if (!strongSelf)
+                            return;
+                        if (strongSelf.preferences.editorSyncScrolling)
                         {
-                            [weakSelf updateHeaderLocations];
-                            [weakSelf syncScrollers];
+                            [strongSelf updateHeaderLocations];
+                            [strongSelf syncScrollers];
                         }
-                        weakSelf->_scrollOwner = MPScrollOwnerNeither;
+                        strongSelf->_scrollOwner = MPScrollOwnerNeither;
                     } forKey:@"DOMReplacementDone"];
                     [self.preview.windowScriptObject setValue:listener
                                                       forKey:@"MathJaxListener"];
@@ -1432,10 +1435,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.needsHtml)
         [self.renderer parseAndRenderLater];
 
-    // Issue #342: Claim editor ownership so that deferred WebKit notifications
-    // from DOM replacement do not trigger syncScrollersReverse while typing.
-    if (self.preferences.editorSyncScrolling)
-        _scrollOwner = MPScrollOwnerEditor;
+    // Issue #342: Claim editor ownership unconditionally so that deferred WebKit
+    // notifications from DOM replacement do not trigger syncScrollersReverse
+    // while typing. Sync calls are separately gated by the pref.
+    _scrollOwner = MPScrollOwnerEditor;
 }
 
 - (void)userDefaultsDidChange:(NSNotification *)notification
