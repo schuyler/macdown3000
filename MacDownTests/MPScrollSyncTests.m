@@ -12,20 +12,26 @@
 #import "MPDocument.h"
 #import "MPPreferences.h"
 
+// Issue #342: Scroll ownership enum constants (must match MPScrollOwner in MPDocument.m)
+static const NSUInteger MPScrollOwnerEditor  = 0;
+static const NSUInteger MPScrollOwnerPreview = 1;
+static const NSUInteger MPScrollOwnerNeither = 2;
+
 // Category to expose private properties/methods for testing
 @interface MPDocument (ScrollSyncTesting)
 @property (nonatomic) CGFloat lastPreviewScrollTop;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (weak) WebView *preview;
-@property BOOL shouldHandleBoundsChange;
-@property BOOL shouldHandlePreviewBoundsChange;
-@property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing state
+@property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
-- (void)performDelayedSyncScrollers;  // Issue #282: Delayed sync after editing
-- (void)previewBoundsDidChange:(NSNotification *)notification;  // Issue #342
+- (void)editorTextDidChange:(NSNotification *)notification;
+- (void)previewBoundsDidChange:(NSNotification *)notification;
+- (void)editorBoundsDidChange:(NSNotification *)notification;
+- (void)willStartPreviewLiveScroll:(NSNotification *)notification;
+- (void)didEndPreviewLiveScroll:(NSNotification *)notification;
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1091,43 +1097,6 @@
 }
 
 /**
- * Test that shouldHandlePreviewBoundsChange property is initialized correctly.
- * Regression test for Issue #258 - loop prevention flag.
- */
-- (void)testPreviewBoundsChangeFlagInitialized
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES by default");
-}
-
-/**
- * Test that both loop prevention flags are independent.
- * Regression test for Issue #258 - ensures bidirectional sync doesn't loop.
- */
-- (void)testLoopPreventionFlagsAreIndependent
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Initially both should be YES
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should be YES initially");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES initially");
-
-    // Setting one should not affect the other
-    doc.shouldHandleBoundsChange = NO;
-    XCTAssertFalse(doc.shouldHandleBoundsChange,
-                   @"shouldHandleBoundsChange should be NO after setting");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should still be YES");
-
-    doc.shouldHandlePreviewBoundsChange = NO;
-    XCTAssertFalse(doc.shouldHandlePreviewBoundsChange,
-                   @"shouldHandlePreviewBoundsChange should be NO after setting");
-}
-
-/**
  * Test that syncScrollersReverse handles empty header locations gracefully.
  * Regression test for Issue #258 - edge case handling.
  */
@@ -1201,284 +1170,6 @@
                      @"syncScrollersReverse should handle many headers");
 }
 
-#pragma mark - Issue #282: Editing State Tests
-
-/**
- * Test that inEditing property is initialized to NO.
- * Issue #282: Editing state should be NO by default.
- */
-- (void)testInEditingInitializedToNo
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    XCTAssertFalse(doc.inEditing,
-                   @"inEditing should be NO by default");
-}
-
-/**
- * Test that performDelayedSyncScrollers method exists and doesn't crash.
- * Issue #282: Delayed sync method should exist.
- */
-- (void)testPerformDelayedSyncScrollersExists
-{
-    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
-                     @"performDelayedSyncScrollers should exist and not crash");
-}
-
-/**
- * Test that performDelayedSyncScrollers clears inEditing flag.
- * Issue #282: Delayed sync should reset editing state.
- */
-- (void)testPerformDelayedSyncScrollersClearsInEditing
-{
-    self.document.inEditing = YES;
-    XCTAssertTrue(self.document.inEditing, @"inEditing should be YES before test");
-
-    [self.document performDelayedSyncScrollers];
-
-    XCTAssertFalse(self.document.inEditing,
-                   @"performDelayedSyncScrollers should set inEditing to NO");
-}
-
-/**
- * Test that inEditing flag can be set and read.
- * Issue #282: Editing state should be settable.
- */
-- (void)testInEditingFlagCanBeToggled
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    doc.inEditing = YES;
-    XCTAssertTrue(doc.inEditing, @"inEditing should be YES after setting to YES");
-
-    doc.inEditing = NO;
-    XCTAssertFalse(doc.inEditing, @"inEditing should be NO after setting to NO");
-}
-
-/**
- * Test that performDelayedSyncScrollers handles empty header locations.
- * Issue #282: Delayed sync should handle edge cases.
- */
-- (void)testPerformDelayedSyncScrollersWithEmptyLocations
-{
-    self.document.webViewHeaderLocations = @[];
-    self.document.editorHeaderLocations = @[];
-    self.document.inEditing = YES;
-
-    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
-                     @"performDelayedSyncScrollers should handle empty header locations");
-    XCTAssertFalse(self.document.inEditing,
-                   @"inEditing should be NO after performDelayedSyncScrollers");
-}
-
-/**
- * Test that performDelayedSyncScrollers handles nil header locations.
- * Issue #282: Delayed sync should handle nil safely.
- */
-- (void)testPerformDelayedSyncScrollersWithNilLocations
-{
-    self.document.webViewHeaderLocations = nil;
-    self.document.editorHeaderLocations = nil;
-    self.document.inEditing = YES;
-
-    XCTAssertNoThrow([self.document performDelayedSyncScrollers],
-                     @"performDelayedSyncScrollers should handle nil header locations");
-    XCTAssertFalse(self.document.inEditing,
-                   @"inEditing should be NO after performDelayedSyncScrollers");
-}
-
-/**
- * Test that inEditing and shouldHandleBoundsChange are independent.
- * Issue #282: Editing state should not affect loop prevention flags.
- */
-- (void)testInEditingIndependentFromBoundsChangeFlag
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Initially both should have their default values
-    XCTAssertFalse(doc.inEditing, @"inEditing should be NO initially");
-    XCTAssertTrue(doc.shouldHandleBoundsChange, @"shouldHandleBoundsChange should be YES initially");
-
-    // Setting inEditing should not affect shouldHandleBoundsChange
-    doc.inEditing = YES;
-    XCTAssertTrue(doc.inEditing, @"inEditing should be YES after setting");
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should still be YES");
-
-    // Setting shouldHandleBoundsChange should not affect inEditing
-    doc.shouldHandleBoundsChange = NO;
-    XCTAssertTrue(doc.inEditing, @"inEditing should still be YES");
-    XCTAssertFalse(doc.shouldHandleBoundsChange,
-                   @"shouldHandleBoundsChange should be NO after setting");
-}
-
-/**
- * Test that pending performDelayedSyncScrollers is cancelled on document close.
- * Issue #282: Prevents crash from message to deallocated object when document
- * is closed during active editing (within 200ms of last keystroke).
- */
-- (void)testPendingDelayedSyncCancelledOnClose
-{
-    // This test verifies the close method properly cancels pending selectors
-    // to prevent crashes when document is closed during editing.
-    // Note: In headless tests the document may not have full window setup,
-    // but the cancel call should still execute without crashing.
-    MPDocument *doc = [[MPDocument alloc] init];
-    doc.inEditing = YES;  // Simulate editing state
-    XCTAssertNoThrow([doc close], @"close should not crash with pending delayed sync");
-}
-
-#pragma mark - Issue #282: Cascade Prevention Tests
-
-/**
- * Test that performDelayedSyncScrollers sets both bounds change guards.
- * Issue #282: Both guards must be set to prevent cascade effect.
- * The guards should be YES after the method completes (restored state).
- */
-- (void)testPerformDelayedSyncScrollersSetsPreviewBoundsGuard
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Both guards should be YES initially
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should be YES initially");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES initially");
-
-    // After performDelayedSyncScrollers, both guards should still be YES
-    // (they're set to NO during sync, then restored to YES)
-    [doc performDelayedSyncScrollers];
-
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should be YES after sync completes");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES after sync completes");
-}
-
-/**
- * Test that inEditing is cleared AFTER sync operations complete.
- * Issue #282: Clearing inEditing before sync causes cascade.
- */
-- (void)testInEditingClearedAfterSync
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    doc.inEditing = YES;
-
-    // After performDelayedSyncScrollers, inEditing should be NO
-    [doc performDelayedSyncScrollers];
-
-    XCTAssertFalse(doc.inEditing,
-                   @"inEditing should be NO after performDelayedSyncScrollers completes");
-}
-
-/**
- * Test that syncScrollers doesn't crash when both guards are already NO.
- * Issue #282: Edge case where guards might be set by outer scope.
- */
-- (void)testSyncScrollersWithGuardsAlreadySet
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Simulate outer scope setting guards
-    doc.shouldHandleBoundsChange = NO;
-    doc.shouldHandlePreviewBoundsChange = NO;
-
-    // syncScrollers should not crash
-    XCTAssertNoThrow([doc syncScrollers],
-                     @"syncScrollers should not crash when guards are already NO");
-
-    // Guards should still be NO (syncScrollers sets them internally but we set them first)
-    // Actually, syncScrollers will set shouldHandlePreviewBoundsChange = YES at the end
-    // This tests that the method runs without crashing
-}
-
-/**
- * Test that syncScrollersReverse doesn't crash when both guards are already NO.
- * Issue #282: Edge case where guards might be set by outer scope.
- */
-- (void)testSyncScrollersReverseWithGuardsAlreadySet
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Simulate outer scope setting guards
-    doc.shouldHandleBoundsChange = NO;
-    doc.shouldHandlePreviewBoundsChange = NO;
-
-    // syncScrollersReverse should not crash
-    XCTAssertNoThrow([doc syncScrollersReverse],
-                     @"syncScrollersReverse should not crash when guards are already NO");
-}
-
-/**
- * Test that cascade prevention works with rapid sync calls.
- * Issue #282: Simulates rapid editing scenario.
- */
-- (void)testRapidSyncCallsDoNotCrash
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Header 1\n\n## Header 2\n\n### Header 3";
-
-    // Simulate rapid sync calls (like rapid typing)
-    for (int i = 0; i < 10; i++) {
-        doc.inEditing = YES;
-        [doc performDelayedSyncScrollers];
-    }
-
-    XCTAssertFalse(doc.inEditing,
-                   @"inEditing should be NO after rapid sync calls");
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should be YES after rapid sync calls");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES after rapid sync calls");
-}
-
-/**
- * Test that guards are properly restored even if sync throws.
- * Issue #282: Guards should be restored in all code paths.
- */
-- (void)testGuardsRestoredAfterSyncWithNilLocations
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-
-    // Set up nil locations (edge case)
-    doc.webViewHeaderLocations = nil;
-    doc.editorHeaderLocations = nil;
-    doc.inEditing = YES;
-
-    // performDelayedSyncScrollers should complete without crashing
-    XCTAssertNoThrow([doc performDelayedSyncScrollers],
-                     @"performDelayedSyncScrollers should handle nil locations");
-
-    // Guards should be restored
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should be YES after sync with nil locations");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be YES after sync with nil locations");
-    XCTAssertFalse(doc.inEditing,
-                   @"inEditing should be NO after sync with nil locations");
-}
-
-/**
- * Test that alternating sync calls maintain correct guard state.
- * Issue #282: Regression test for ping-pong effect.
- */
-- (void)testAlternatingSyncCallsMaintainGuardState
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    doc.webViewHeaderLocations = @[@(100), @(200), @(300)];
-    doc.editorHeaderLocations = @[@(50), @(100), @(150)];
-
-    // Alternate between forward and reverse sync
-    for (int i = 0; i < 5; i++) {
-        [doc syncScrollers];
-        XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                      @"shouldHandlePreviewBoundsChange should be YES after syncScrollers");
-
-        [doc syncScrollersReverse];
-        XCTAssertTrue(doc.shouldHandleBoundsChange,
-                      @"shouldHandleBoundsChange should be YES after syncScrollersReverse");
-    }
-}
-
 #pragma mark - Code Fence Edge Case Tests
 
 /**
@@ -1546,73 +1237,485 @@
                      @"updateHeaderLocations should handle four backticks without crashing");
 }
 
-#pragma mark - Issue #342: Preview bounds change during editing
+#pragma mark - Issue #342: Group A — Ownership State Machine
 
 /**
- * Test that previewBoundsDidChange: does NOT call syncScrollersReverse when
- * _inEditing is YES. This is the primary fix for issue #342: preview scroll
- * restoration during DOM replacement was feeding back into the editor via
- * syncScrollersReverse, causing the editor to jump.
- *
- * We verify indirectly: shouldHandleBoundsChange on the editor side should
- * remain untouched (syncScrollersReverse temporarily sets it to NO then YES).
- * If syncScrollersReverse is skipped, shouldHandleBoundsChange stays at its
- * initial value throughout.
+ * A1 — Initial scrollOwner is MPScrollOwnerNeither (2).
+ * Issue #342: Document starts in quiescent state.
  */
-- (void)testPreviewBoundsDidChangeSkipsSyncWhenInEditing
+- (void)testScrollOwnerInitializedToNeither
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.shouldHandlePreviewBoundsChange = YES;
-    doc.shouldHandleBoundsChange = YES;
-    doc.inEditing = YES;
-
-    // Simulate a preview bounds change notification (as would be triggered by
-    // window.scrollTo() during DOM replacement)
-    [doc previewBoundsDidChange:nil];
-
-    // shouldHandleBoundsChange should be untouched because syncScrollersReverse
-    // was never called (it temporarily toggles this flag)
-    XCTAssertTrue(doc.shouldHandleBoundsChange,
-                  @"shouldHandleBoundsChange should remain YES when inEditing prevents reverse sync");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be restored to YES after handler completes");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"scrollOwner should be MPScrollOwnerNeither (2) at init");
 }
 
 /**
- * Test that previewBoundsDidChange: DOES call syncScrollersReverse when
- * _inEditing is NO. This ensures the guard doesn't over-suppress —
- * user-initiated preview scrolling should still sync back to the editor.
+ * A2 — editorTextDidChange: sets scrollOwner to MPScrollOwnerEditor.
+ * Issue #342: Typing must claim editor ownership.
  */
-- (void)testPreviewBoundsDidChangeSyncsWhenNotInEditing
+- (void)testEditorTextDidChangeSetsEditorOwnership
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.shouldHandlePreviewBoundsChange = YES;
-    doc.shouldHandleBoundsChange = YES;
-    doc.inEditing = NO;
+    doc.scrollOwner = MPScrollOwnerNeither;
 
-    // Should not crash; syncScrollersReverse should be called
-    XCTAssertNoThrow([doc previewBoundsDidChange:nil],
-                     @"previewBoundsDidChange: should work normally when not in editing");
-    XCTAssertTrue(doc.shouldHandlePreviewBoundsChange,
-                  @"shouldHandlePreviewBoundsChange should be restored to YES");
+    [doc editorTextDidChange:nil];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"editorTextDidChange: should set scrollOwner to MPScrollOwnerEditor (0)");
 }
 
 /**
- * Test that previewBoundsDidChange: respects the shouldHandlePreviewBoundsChange
- * guard even when inEditing is NO. This verifies the early-return path.
+ * A3 — willStartPreviewLiveScroll: sets scrollOwner to MPScrollOwnerPreview.
+ * Issue #342: User-initiated preview scroll must claim preview ownership.
  */
-- (void)testPreviewBoundsDidChangeRespectsGuardFlag
+- (void)testWillStartPreviewLiveScrollSetsPreviewOwnership
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.shouldHandlePreviewBoundsChange = NO;
-    doc.shouldHandleBoundsChange = YES;
-    doc.inEditing = NO;
+    doc.scrollOwner = MPScrollOwnerNeither;
+
+    [doc willStartPreviewLiveScroll:nil];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerPreview,
+                   @"willStartPreviewLiveScroll: should set scrollOwner to MPScrollOwnerPreview (1)");
+}
+
+/**
+ * A4 — didEndPreviewLiveScroll: resets scrollOwner to MPScrollOwnerNeither.
+ * Issue #342: End of live scroll returns to quiescent state.
+ */
+- (void)testDidEndPreviewLiveScrollResetsToNeither
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+
+    [doc didEndPreviewLiveScroll:nil];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"didEndPreviewLiveScroll: should set scrollOwner to MPScrollOwnerNeither (2)");
+}
+
+/**
+ * A5 — Repeated editorTextDidChange: calls keep scrollOwner as MPScrollOwnerEditor.
+ * Issue #342: Multiple keystrokes must not change ownership away from Editor.
+ */
+- (void)testRepeatedEditorTextDidChangeStaysEditor
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    [doc editorTextDidChange:nil];
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"scrollOwner should be Editor after first call");
+
+    [doc editorTextDidChange:nil];
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"scrollOwner should remain Editor after second call");
+}
+
+/**
+ * A6 — editorTextDidChange: overrides MPScrollOwnerPreview.
+ * Issue #342: Typing while preview-owned must transfer ownership to editor.
+ */
+- (void)testEditorTextDidChangeOverridesPreviewOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+
+    [doc editorTextDidChange:nil];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"editorTextDidChange: should override MPScrollOwnerPreview with MPScrollOwnerEditor");
+}
+
+#pragma mark - Issue #342: Group B — Guard Logic
+
+/**
+ * B1 — previewBoundsDidChange: is suppressed when scrollOwner is Editor.
+ * Issue #342: Deferred WebKit notification during editing must not trigger reverse sync.
+ */
+- (void)testPreviewBoundsDidChangeSuppressedDuringEditorOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerEditor;
+
+    // Must not crash; scrollOwner must remain Editor (reverse sync was suppressed)
+    XCTAssertNoThrow([doc previewBoundsDidChange:nil],
+                     @"previewBoundsDidChange: should not crash when scrollOwner is Editor");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"scrollOwner should remain Editor after suppressed previewBoundsDidChange:");
+}
+
+/**
+ * B2 — previewBoundsDidChange: is passed through when scrollOwner is Preview.
+ * Issue #342: Live preview scroll must trigger reverse sync.
+ */
+- (void)testPreviewBoundsDidChangePassesDuringPreviewOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+    doc.webViewHeaderLocations = @[];
+    doc.editorHeaderLocations = @[];
 
     XCTAssertNoThrow([doc previewBoundsDidChange:nil],
-                     @"previewBoundsDidChange: should early-return when guard is NO");
-    // shouldHandlePreviewBoundsChange should remain NO (handler returned early)
-    XCTAssertFalse(doc.shouldHandlePreviewBoundsChange,
-                   @"shouldHandlePreviewBoundsChange should remain NO after early return");
+                     @"previewBoundsDidChange: should not crash when scrollOwner is Preview");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerPreview,
+                   @"scrollOwner should remain Preview after previewBoundsDidChange: with Preview ownership");
+}
+
+/**
+ * B3 — editorBoundsDidChange: is suppressed when scrollOwner is Editor.
+ * Issue #342: Editor scroll during typing must not re-trigger forward sync.
+ */
+- (void)testEditorBoundsDidChangeSuppressedDuringEditorOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerEditor;
+
+    XCTAssertNoThrow([doc editorBoundsDidChange:nil],
+                     @"editorBoundsDidChange: should not crash when scrollOwner is Editor");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                   @"scrollOwner should remain Editor after suppressed editorBoundsDidChange:");
+}
+
+/**
+ * B4 — editorBoundsDidChange: is passed through when scrollOwner is Neither.
+ * Issue #342: Manual editor scroll in quiescent state must trigger forward sync.
+ */
+- (void)testEditorBoundsDidChangePassesDuringNeitherOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerNeither;
+    doc.webViewHeaderLocations = @[];
+    doc.editorHeaderLocations = @[];
+
+    XCTAssertNoThrow([doc editorBoundsDidChange:nil],
+                     @"editorBoundsDidChange: should not crash when scrollOwner is Neither");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"scrollOwner should remain Neither after editorBoundsDidChange: with Neither ownership");
+}
+
+/**
+ * B5 — editorBoundsDidChange: is suppressed when scrollOwner is Preview.
+ * Issue #342: The guard is scrollOwner == MPScrollOwnerNeither, so Preview
+ * ownership must also suppress forward sync (not just Editor ownership).
+ */
+- (void)testEditorBoundsDidChangeSuppressedDuringPreviewOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+
+    XCTAssertNoThrow([doc editorBoundsDidChange:nil],
+                     @"editorBoundsDidChange: should not crash when scrollOwner is Preview");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerPreview,
+                   @"scrollOwner should remain Preview after suppressed editorBoundsDidChange:");
+}
+
+#pragma mark - Issue #342: Group C — JS Coordinate Fix
+
+/**
+ * Helper: loads updateHeaderLocations.js source from the main bundle.
+ */
+- (NSString *)loadUpdateHeaderLocationsScript
+{
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSString *path = [bundle pathForResource:@"updateHeaderLocations" ofType:@"js"];
+    if (!path) return nil;
+    return [NSString stringWithContentsOfFile:path encoding:NSUTF8StringEncoding error:NULL];
+}
+
+/**
+ * Helper: constructs a JSContext with a mock DOM for testing the JS script.
+ * scrollY:      simulated window.scrollY
+ * headerTops:   array of NSNumber; each becomes a header with that rect.top
+ */
+- (JSContext *)jsContextWithScrollY:(CGFloat)scrollY headerTops:(NSArray<NSNumber *> *)headerTops
+{
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    NSMutableString *headersJS = [NSMutableString stringWithString:@"["];
+    for (NSUInteger i = 0; i < headerTops.count; i++) {
+        CGFloat top = [headerTops[i] floatValue];
+        [headersJS appendFormat:
+            @"{getBoundingClientRect:function(){return {top:%g};}"
+            @",compareDocumentPosition:function(o){return 4;}"
+            @",tagName:'H1',parentElement:null}",
+            top];
+        if (i + 1 < headerTops.count) [headersJS appendString:@","];
+    }
+    [headersJS appendString:@"]"];
+
+    NSString *setup = [NSString stringWithFormat:
+        @"var window = {scrollY: %g};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var _headers = %@;\n"
+        @"var document = {\n"
+        @"    body: {},\n"
+        @"    querySelectorAll: function(sel) {\n"
+        @"        if (sel === 'h1, h2, h3, h4, h5, h6') return _headers;\n"
+        @"        return [];\n"
+        @"    }\n"
+        @"};\n",
+        scrollY, headersJS];
+
+    [context evaluateScript:setup];
+    return context;
+}
+
+/**
+ * C1 — Scrolled page: result is window.scrollY + rect.top (document-absolute).
+ * Issue #342: After JS fix, header at viewport top 100 with scrollY 200 = 300.
+ */
+- (void)testJSHeaderLocationScrolledPage
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [self jsContextWithScrollY:200 headerTops:@[@100]];
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result toArray];
+
+    XCTAssertEqual(locations.count, 1U, @"Should return one location");
+    XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 300.0, 0.5,
+                               @"Scrolled page: scrollY(200) + rect.top(100) should equal 300");
+}
+
+/**
+ * C2 — Unscrolled page: result equals rect.top directly.
+ * Issue #342: At scrollY=0, document-absolute equals viewport-relative.
+ */
+- (void)testJSHeaderLocationUnscrolledPage
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [self jsContextWithScrollY:0 headerTops:@[@150]];
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result toArray];
+
+    XCTAssertEqual(locations.count, 1U, @"Should return one location");
+    XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 150.0, 0.5,
+                               @"Unscrolled page: scrollY(0) + rect.top(150) should equal 150");
+}
+
+/**
+ * C3 — Multiple headers: each gets scrollY added.
+ * Issue #342: All returned values must be document-absolute.
+ */
+- (void)testJSHeaderLocationsMultipleHeaders
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    [context evaluateScript:
+        @"var window = {scrollY: 500};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var h0 = {getBoundingClientRect:function(){return {top:50};},  tagName:'H1', parentElement:null,\n"
+        @"          compareDocumentPosition:function(o){return o===h1?4:(o===h2?4:0);}};\n"
+        @"var h1 = {getBoundingClientRect:function(){return {top:100};}, tagName:'H2', parentElement:null,\n"
+        @"          compareDocumentPosition:function(o){return o===h0?2:(o===h2?4:0);}};\n"
+        @"var h2 = {getBoundingClientRect:function(){return {top:300};}, tagName:'H3', parentElement:null,\n"
+        @"          compareDocumentPosition:function(o){return o===h0?2:(o===h1?2:0);}};\n"
+        @"var document = {\n"
+        @"    body: {},\n"
+        @"    querySelectorAll: function(sel) {\n"
+        @"        if (sel === 'h1, h2, h3, h4, h5, h6') return [h0, h1, h2];\n"
+        @"        return [];\n"
+        @"    }\n"
+        @"};\n"];
+
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result toArray];
+
+    XCTAssertEqual(locations.count, 3U, @"Should return three locations");
+    XCTAssertEqualWithAccuracy([locations[0] floatValue], 550.0, 0.5,
+                               @"First header: 500+50=550");
+    XCTAssertEqualWithAccuracy([locations[1] floatValue], 600.0, 0.5,
+                               @"Second header: 500+100=600");
+    XCTAssertEqualWithAccuracy([locations[2] floatValue], 800.0, 0.5,
+                               @"Third header: 500+300=800");
+}
+
+/**
+ * C4 — Empty body (no headers, no images): returns empty array.
+ * Issue #342: Script must handle documents with no reference points.
+ */
+- (void)testJSHeaderLocationsEmptyBody
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    [context evaluateScript:
+        @"var window = {scrollY: 100};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var document = {\n"
+        @"    body: {},\n"
+        @"    querySelectorAll: function(sel) { return []; }\n"
+        @"};\n"];
+
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result toArray];
+
+    XCTAssertNotNil(locations, @"Result should not be nil for empty body");
+    XCTAssertEqual(locations.count, 0U, @"Empty body should return empty array");
+}
+
+/**
+ * C5 — Null document.body: returns empty array without crashing.
+ * Issue #342: Script must guard against missing body gracefully.
+ */
+- (void)testJSHeaderLocationsNullBody
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    [context evaluateScript:
+        @"var window = {scrollY: 0};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var document = {body: null, querySelectorAll: function(s){return [];}};\n"];
+
+    JSValue *result = [context evaluateScript:script];
+    XCTAssertNoThrow((void)[result toArray],
+                     @"Script with null document.body should not throw");
+    NSArray *locations = [result toArray];
+    XCTAssertEqual(locations.count, 0U, @"Null body should return empty array");
+}
+
+#pragma mark - Issue #342: Group D — Header Array Alignment Safety
+
+/**
+ * D1 — syncScrollers with equal-length arrays does not crash.
+ * Issue #342: Arrays of equal length must not produce out-of-bounds access.
+ */
+- (void)testSyncScrollersWithEqualLengthArraysDoesNotCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@100, @300, @600];
+    doc.editorHeaderLocations  = @[@100, @300, @600];
+
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"syncScrollers should not crash with equal-length header arrays");
+}
+
+/**
+ * D2 — syncScrollersReverse with equal-length arrays does not crash.
+ * Issue #342: Reverse sync must also be safe with aligned arrays.
+ */
+- (void)testSyncScrollersReverseWithEqualLengthArraysDoesNotCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@100, @300, @600];
+    doc.editorHeaderLocations  = @[@100, @300, @600];
+
+    XCTAssertNoThrow([doc syncScrollersReverse],
+                     @"syncScrollersReverse should not crash with equal-length header arrays");
+}
+
+/**
+ * D3 — syncScrollers with empty arrays does not crash.
+ * Issue #342: Edge case with no reference points must not crash.
+ */
+- (void)testSyncScrollersWithEmptyArraysDoesNotCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[];
+    doc.editorHeaderLocations  = @[];
+
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"syncScrollers should not crash with empty header arrays");
+}
+
+#pragma mark - Issue #342: Group E — lastPreviewScrollTop Save Point
+
+/**
+ * E2 — syncScrollers overwrites lastPreviewScrollTop.
+ * Issue #342: syncScrollers must save its computed preview position,
+ * not preserve a stale value from a previous render cycle.
+ */
+- (void)testSyncScrollersOverwritesLastPreviewScrollTop
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.lastPreviewScrollTop = 999.0;
+    doc.webViewHeaderLocations = @[];
+    doc.editorHeaderLocations  = @[];
+
+    [doc syncScrollers];
+
+    // With no scroll view, syncScrollers writes 0.0 — the point is it overwrites the stale value
+    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, 0.0, 0.01,
+                               @"syncScrollers should overwrite stale lastPreviewScrollTop with computed value");
+}
+
+#pragma mark - Issue #342: Group F — Handler Method Existence
+
+/**
+ * F1 — willStartPreviewLiveScroll: method exists on MPDocument.
+ * Issue #342: New observer handler must be present after implementation.
+ */
+- (void)testWillStartPreviewLiveScrollMethodExists
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertTrue([doc respondsToSelector:@selector(willStartPreviewLiveScroll:)],
+                  @"MPDocument should respond to willStartPreviewLiveScroll:");
+}
+
+/**
+ * F2 — didEndPreviewLiveScroll: method exists on MPDocument.
+ * Issue #342: New observer handler must be present after implementation.
+ */
+- (void)testDidEndPreviewLiveScrollMethodExists
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertTrue([doc respondsToSelector:@selector(didEndPreviewLiveScroll:)],
+                  @"MPDocument should respond to didEndPreviewLiveScroll:");
+}
+
+#pragma mark - Issue #342: Group G — performDelayedSyncScrollers Removal
+
+/**
+ * G1 — performDelayedSyncScrollers method no longer exists.
+ * Issue #342: Delayed sync must be removed entirely; timer-based sync is the bug.
+ */
+- (void)testPerformDelayedSyncScrollersMethodRemoved
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertFalse([doc respondsToSelector:@selector(performDelayedSyncScrollers)],
+                   @"performDelayedSyncScrollers should not exist after Issue #342 fix");
+}
+
+/**
+ * G2 — close does not crash without performDelayedSyncScrollers cancellation.
+ * Issue #342: The cancelPreviousPerformRequests call must be removed along with
+ * the method itself; close must not crash.
+ */
+- (void)testCloseDoesNotCrashAfterDelayedSyncRemoval
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertNoThrow([doc close],
+                     @"close should not crash after performDelayedSyncScrollers is removed");
 }
 
 @end
