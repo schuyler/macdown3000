@@ -273,8 +273,12 @@ static void mp_quicklook_render_blockcode(
     NSString *markdown = [NSString stringWithContentsOfURL:url
                                                   encoding:NSUTF8StringEncoding
                                                      error:&readError];
+    if (!markdown) {
+        readError = nil;
+        markdown = [NSString stringWithContentsOfURL:url usedEncoding:NULL error:&readError];
+    }
 
-    if (readError) {
+    if (!markdown) {
         if (error) {
             *error = readError;
         }

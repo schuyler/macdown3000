@@ -8,7 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Quartz/Quartz.h>
+#import <WebKit/WebKit.h>
 
-@interface PreviewViewController : NSViewController <QLPreviewingController>
+@interface PreviewViewController : NSViewController <QLPreviewingController, WKNavigationDelegate>
 
 @end

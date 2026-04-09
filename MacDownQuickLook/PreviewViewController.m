@@ -13,6 +13,7 @@
 @interface PreviewViewController ()
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) MPQuickLookRenderer *renderer;
+@property (nonatomic, copy) void (^pendingHandler)(NSError * _Nullable);
 @end
 
 
@@ -33,11 +34,14 @@
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
 
     // Create web view
-    self.webView = [[WKWebView alloc] initWithFrame:NSZeroRect configuration:config];
+    NSRect frame = NSMakeRect(0, 0, 800, 600);
+    self.webView = [[WKWebView alloc] initWithFrame:frame configuration:config];
+    self.webView.navigationDelegate = self;
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
     // Set as the view
     self.view = self.webView;
+    self.preferredContentSize = frame.size;
 }
 
 #pragma mark - QLPreviewingController
@@ -57,14 +61,43 @@
         return;
     }
 
-    // Load HTML in web view
-    [self.webView loadHTMLString:html baseURL:url.URLByDeletingLastPathComponent];
+    // Load HTML in web view. Use nil baseURL: the extension sandbox only grants access
+    // to the specific file URL, not its parent directory. The completion handler is
+    // deferred until didFinishNavigation: so Quick Look snapshots a rendered page.
+    self.pendingHandler = handler;
+    [self.webView loadHTMLString:html baseURL:nil];
+}
 
-    // Signal completion
-    if (handler) {
-        handler(nil);
+#pragma mark - WKNavigationDelegate
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(nil);
     }
 }
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(error);
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(error);
+    }
+}
+
+#pragma mark - QLPreviewingController (searchable items)
 
 - (void)preparePreviewOfSearchableItemWithIdentifier:(NSString *)identifier
                                     queryString:(NSString *)queryString
