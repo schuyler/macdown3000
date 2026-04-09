@@ -19,8 +19,13 @@
       // The old code set innerHTML on the shared wrapper two levels up,
       // which removed all subsequent diagrams from the DOM on the first
       // iteration (GitHub issue #332).
+      var pre = dom.parentElement;
+      if (!pre || pre.tagName !== "PRE") {
+        console.warn('Graphviz: unexpected DOM structure, skipping element');
+        continue;
+      }
       try {
-        dom.parentElement.outerHTML = Viz(graphSource, {engine: engine});
+        pre.outerHTML = Viz(graphSource, {engine: engine});
       } catch (e) {
         console.error("Error when parsing node:", dom, e);
       }
