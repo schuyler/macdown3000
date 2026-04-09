@@ -133,6 +133,7 @@
 		QLBLD00004RNDRTESTSRC /* MPQuickLookRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00001RNDR00000M /* MPQuickLookRendererTests.m */; };
 		QLBLD00005PREFTESTSRC /* MPQuickLookPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */; };
 		QLBLD00006PVCTESTSRC0 /* MPPreviewViewControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */; };
+		QLBLD00007WEBKITTESTFW /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FF207621941CF22005B5654 /* WebKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -640,6 +641,7 @@
 				1FA6DE481941CC9E000409FB /* Cocoa.framework in Frameworks */,
 				1FC29F5C1944FC2600D616C7 /* XCTest.framework in Frameworks */,
 				1FF1420519A8987600CF8A6A /* JavaScriptCore.framework in Frameworks */,
+				QLBLD00007WEBKITTESTFW /* WebKit.framework in Frameworks */,
 				EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
