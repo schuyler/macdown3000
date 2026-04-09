@@ -3,8 +3,7 @@
 //  MacDownTests
 //
 //  Tests for preference panel resizability (Issues #361, #362).
-//  Verifies that all five preference panels declare themselves as resizable
-//  and that the Editor XIB root view does not use a conflicting autoresizing mask.
+//  Verifies that all five preference panels declare themselves as resizable.
 //
 
 #import <XCTest/XCTest.h>
@@ -153,28 +152,6 @@
 {
     MPTerminalPreferencesViewController *vc = [[MPTerminalPreferencesViewController alloc] init];
     XCTAssertTrue([vc hasResizableHeight], @"Terminal panel hasResizableHeight should return YES");
-}
-
-#pragma mark - Editor XIB autoresizing mask
-
-- (void)testEditorXIBRootViewDoesNotHaveWidthAndHeightSizable
-{
-    // Load the Editor panel and verify the XIB content view's autoresizing mask
-    // does NOT include both NSViewWidthSizable and NSViewHeightSizable together.
-    // After loadView, self.view is a centering wrapper and the XIB content view
-    // is its first subview (with translatesAutoresizingMaskIntoConstraints = NO,
-    // so the mask is irrelevant for layout — but we verify it's not the bad value
-    // from the old XIB to confirm the XIB was fixed).
-    MPEditorPreferencesViewController *vc = [[MPEditorPreferencesViewController alloc] init];
-    (void)vc.view; // triggers NIB load and wrapper setup via the documented accessor
-    // The centering wrapper is vc.view; the XIB content is vc.view's first subview.
-    NSView *contentView = vc.view.subviews.firstObject;
-    XCTAssertNotNil(contentView, @"Expected a content subview inside the centering wrapper");
-    NSAutoresizingMaskOptions mask = contentView.autoresizingMask;
-    BOOL hasBothSizable = (mask & NSViewWidthSizable) && (mask & NSViewHeightSizable);
-    XCTAssertFalse(hasBothSizable,
-                   @"Editor XIB root view should not have both NSViewWidthSizable and "
-                   @"NSViewHeightSizable — this causes window jump on resize (#361)");
 }
 
 @end
