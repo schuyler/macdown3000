@@ -1355,7 +1355,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
                         // Issue #342: Sync at render completion, then transition ownership to Neither.
-                        typeof(self) strongSelf = weakSelf;
+                        __strong typeof(weakSelf) strongSelf = weakSelf;
                         if (!strongSelf)
                             return;
                         if (strongSelf.preferences.editorSyncScrolling)
