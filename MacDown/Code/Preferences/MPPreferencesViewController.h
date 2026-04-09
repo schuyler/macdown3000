@@ -19,4 +19,9 @@ extern NSString * const MPDidRequestPreviewRenderNotification;
 
 @property (nonatomic, readonly) MPPreferences *preferences;
 
+// Partial MASPreferencesViewController conformance — inherited by all subclasses.
+// MASPreferences checks these before falling back to the view's autoresizingMask.
+- (BOOL)hasResizableWidth;
+- (BOOL)hasResizableHeight;
+
 @end
