@@ -10,6 +10,7 @@
 #import "MPQuickLookPreferences.h"
 #import <hoedown/html.h>
 #import <hoedown/document.h>
+#import <hoedown/escape.h>
 
 // Error domain for Quick Look renderer
 NSString * const MPQuickLookRendererErrorDomain = @"MPQuickLookRendererErrorDomain";
