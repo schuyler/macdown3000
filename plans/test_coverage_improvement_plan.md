@@ -41,6 +41,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
 | MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing | Good | (Issue #313) |
 | MPMermaidRenderingTests.m | Mermaid diagram rendering, MutationObserver re-rendering, SVG sizing | Good | (Issue #331) |
+| MPGraphvizRenderingTests.m | Graphviz diagram rendering, MutationObserver re-rendering, script inclusion | Good | (Issue #332) |
 | MPURLSecurityPolicyTests.m | URL security policy: executable/bundle detection, directory scope checking | Good | (Issue #351) |
 
 ### What We're Missing (Critical Gaps)
@@ -109,6 +110,7 @@ GitHub Actions macOS runners are:
 - ✅ `HGMarkdownHighlighterTests.m` - Syntax highlighter property tests and edge cases (Issue #234)
 - ✅ `MPRendererEdgeCaseTests.m` - Nil handling, extension combinations, malformed HTML, concurrent rendering (Issue #234)
 - ✅ `MPMermaidRenderingTests.m` - 17 tests for Mermaid diagram rendering, MutationObserver re-rendering on DOM replacement, full-width SVG sizing (Issue #331)
+- ✅ `MPGraphvizRenderingTests.m` - 17 tests for Graphviz diagram rendering, MutationObserver re-rendering on DOM replacement, script inclusion/exclusion (Issue #332)
 - ⏳ `MPMathJaxRenderingTests.m` - Math formula rendering (planned)
 
 **Actual Impact (MPMarkdownRenderingTests.m):**
@@ -422,6 +424,7 @@ MacDownTests/
 ├── MPSmartQuoteTests.m ✅ (implemented - Issue #285)
 ├── Rendering/
 │   ├── MPMermaidRenderingTests.m (✅ implemented - Issue #331 - Mermaid re-rendering, SVG sizing)
+│   ├── MPGraphvizRenderingTests.m (✅ implemented - Issue #332 - Graphviz re-rendering, script inclusion)
 │   └── MPMathJaxRenderingTests.m (planned)
 ├── Document/
 │   ├── MPDocumentIOTests.m (✅ implemented - Issue #90 - file I/O and state)

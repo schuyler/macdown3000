@@ -197,15 +197,15 @@ Following Groucho's architectural guidance, implement the feature.
 
 If tests exist, run them frequently during implementation.
 
-### Step 10: Commit and Verify Tests via GitHub Actions
+### Step 10: Commit and Push to Trigger CI
 
-Since this is a macOS project and tests can only run on macOS, we'll push to GitHub and let CI run the tests.
+Since this is a macOS project and tests can only run on macOS, we push to GitHub and let CI run. **CI runs in the background — do NOT wait for it.** Proceed immediately to Steps 11 and 12 in parallel while CI runs.
 
 #### 10a. Commit Changes
 
-Stage all changes:
+Stage all changes by name (never `git add -A` or `git add .`):
 ```bash
-git add .
+git add {file1} {file2} ...
 ```
 
 Create a descriptive commit message that references the issue but does NOT auto-close it:
@@ -226,56 +226,20 @@ Push the branch to remote to trigger GitHub Actions:
 git push -u origin {branch-name}
 ```
 
-**IMPORTANT:** If push fails with 403, verify the branch name starts with `claude/` and ends with the session ID.
+**IMPORTANT:** If push fails with 403, verify the branch name starts with `claude/`.
 
 If network errors occur, retry up to 4 times with exponential backoff (2s, 4s, 8s, 16s).
 
-#### 10c. Monitor Workflow Run
+#### 10c. Note the Run ID, Then Immediately Proceed
 
-Wait 10 seconds for the workflow to start, then monitor it:
+Wait 10 seconds for the workflow to start, grab the run ID, then move on — do NOT block:
 
 ```bash
 sleep 10
-
-# List recent workflow runs for this branch
-/tmp/gh/bin/gh run list --repo schuyler/macdown3000 --branch {branch-name} --limit 1
+gh run list --repo schuyler/macdown3000 --branch {branch-name} --limit 1
 ```
 
-#### 10d. Monitor Workflow Status
-
-Use `gh run watch` to monitor the workflow run until completion:
-
-```bash
-/tmp/gh/bin/gh run watch $RUN_ID --repo schuyler/macdown3000 --exit-status
-```
-
-This command will automatically poll the workflow status and display updates until it completes or fails.
-
-#### 10e. Check Results
-
-Once the workflow completes, check the conclusion:
-
-- **success**: Tests passed! Proceed to Step 11.
-- **failure**: Tests failed. Analyze the logs and fix the issues.
-- **cancelled** or **skipped**: Report to user for guidance.
-
-To get logs if tests fail:
-
-```bash
-/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log
-```
-
-#### 10f. Handle Test Failures
-
-If tests fail:
-1. Review the job logs
-2. Identify the specific test failures
-3. Return to Step 9 to fix the issues
-4. Commit the fixes
-5. Push again (which triggers a new workflow run)
-6. Return to 10c to monitor the new run
-
-Iterate until all tests pass.
+Note the run ID. **Do not wait for it to finish.** Proceed immediately to Steps 11 and 12.
 
 ### Step 11: Consult Chico (Code Reviewer)
 
@@ -375,9 +339,28 @@ git push --force-with-lease origin {branch-name}
 
 If network errors occur, retry up to 4 times with exponential backoff.
 
-### Step 15: Re-verify Tests After Rebase
+### Step 15: Verify CI Passes
 
-After rebasing and pushing, monitor the new workflow run and verify tests pass.
+Check the status of the CI run triggered in Step 10 (and again after the rebase push if history changed). Use the run ID noted in Step 10c. If the run is still in progress, wait for it now:
+
+```bash
+gh run watch $RUN_ID --repo schuyler/macdown3000 --exit-status
+```
+
+**Check results:**
+
+- **success**: Tests passed. Proceed to Step 16.
+- **cancelled** or **skipped**: Report to user for guidance.
+- **failure**: Tests failed. You MUST enter a fix-review loop using subagents and repeat until CI passes. NEVER diagnose or fix CI failures yourself.
+  1. Launch Zeppo to diagnose: provide the failure logs and ask Zeppo to identify the root cause and recommend a fix
+  2. Implement Zeppo's recommended fix
+  3. Launch Chico to review the fix
+  4. If Chico approves: commit, push, wait for CI
+  5. If CI fails again: repeat from step 1
+  6. If the loop cycles more than twice without progress, stop and surface the problem to the user
+  **Do NOT proceed to Step 16 until CI is green.**
+
+If a new run was triggered by the rebase push, wait for that one instead.
 
 ### Step 16: Create Pull Request
 

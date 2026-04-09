@@ -45,10 +45,16 @@
         var codeElement = domAll[i];
         var graphSource = codeElement.innerText || codeElement.textContent;
 
-        // Navigate to the container element (parent of <pre> or <code>)
-        var container = codeElement.parentElement;
-        if (container.tagName === "PRE") {
-          container = container.parentElement;
+        // The <code> element is always inside a <pre>. Replace the <pre>
+        // directly using outerHTML so that sibling <pre> elements (other
+        // diagrams in the same document) are not destroyed. The old code
+        // navigated to parentElement.parentElement and set innerHTML on the
+        // shared wrapper, which removed all subsequent diagrams from the DOM
+        // on the first iteration (GitHub issue #331).
+        var pre = codeElement.parentElement;
+        if (!pre || pre.tagName !== "PRE") {
+          console.warn('Mermaid: unexpected DOM structure, skipping element');
+          continue;
         }
 
         // Generate unique ID to prevent collisions on document re-renders
@@ -57,12 +63,12 @@
         try {
           // Mermaid 11.x uses Promise-based API
           var result = await mermaid.render(uniqueId, graphSource);
-          container.innerHTML = result.svg;
+          pre.outerHTML = result.svg;
         } catch (error) {
           console.error('Mermaid rendering error:', error);
-          // Display error message in the container
-          container.innerHTML = '<pre style="color: red; padding: 10px; background: #fee;">' +
-            'Mermaid Error: ' + error.message + '</pre>';
+          // Display error message in place of the <pre>
+          pre.outerHTML = '<pre style="color: red; padding: 10px; background: #fee;">' +
+            'Mermaid Error: ' + (error.message || error) + '</pre>';
         }
       }
     } finally {
