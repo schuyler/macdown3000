@@ -198,6 +198,24 @@ If you type three asterisks `***` or three dashes `---` on a line, I'll display 
 
 ***
 
+### Inline HTML
+
+Standard Markdown passes raw HTML through to the rendered output, so you can use HTML tags for things Markdown doesn't natively support.
+
+For example, to insert a **page break** (useful when printing or exporting to PDF):
+
+```html
+<div style="page-break-after: always;"></div>
+```
+
+To **center text**:
+
+```html
+<div style="text-align: center;">
+  This text will be centered.
+</div>
+```
+
 ## <a name="markdown-pane"></a>The Markdown Preference Pane
 
 This is where I keep all preferences related to how I parse markdown into html.  
