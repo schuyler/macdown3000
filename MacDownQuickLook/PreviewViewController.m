@@ -13,6 +13,7 @@
 @interface PreviewViewController ()
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) MPQuickLookRenderer *renderer;
+@property (nonatomic, copy) void (^pendingHandler)(NSError * _Nullable);
 @end
 
 
@@ -32,12 +33,15 @@
     // Create web view configuration
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
 
-    // Create web view
-    self.webView = [[WKWebView alloc] initWithFrame:NSZeroRect configuration:config];
+    // Create web view with a meaningful initial size
+    NSRect frame = NSMakeRect(0, 0, 800, 600);
+    self.webView = [[WKWebView alloc] initWithFrame:frame configuration:config];
+    self.webView.navigationDelegate = self;
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
 
     // Set as the view
     self.view = self.webView;
+    self.preferredContentSize = frame.size;
 }
 
 #pragma mark - QLPreviewingController
@@ -57,13 +61,12 @@
         return;
     }
 
-    // Load HTML in web view
-    [self.webView loadHTMLString:html baseURL:url.URLByDeletingLastPathComponent];
-
-    // Signal completion
-    if (handler) {
-        handler(nil);
-    }
+    // Store the handler. It will be called from -webView:didFinishNavigation:
+    // instead of synchronously, so Quick Look snapshots a rendered page rather
+    // than a blank WKWebView. Use nil baseURL because the extension sandbox
+    // only grants access to the specific file URL, not its parent directory.
+    self.pendingHandler = handler;
+    [self.webView loadHTMLString:html baseURL:nil];
 }
 
 - (void)preparePreviewOfSearchableItemWithIdentifier:(NSString *)identifier
@@ -75,6 +78,35 @@
         handler([NSError errorWithDomain:@"MPQuickLookError"
                                     code:2
                                 userInfo:@{NSLocalizedDescriptionKey: @"Searchable item preview not supported"}]);
+    }
+}
+
+#pragma mark - WKNavigationDelegate
+
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(nil);
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(error);
+    }
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
+{
+    if (self.pendingHandler) {
+        void (^h)(NSError * _Nullable) = self.pendingHandler;
+        self.pendingHandler = nil;
+        h(error);
     }
 }
 

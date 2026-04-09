@@ -274,7 +274,15 @@ static void mp_quicklook_render_blockcode(
                                                   encoding:NSUTF8StringEncoding
                                                      error:&readError];
 
-    if (readError) {
+    // Fall back to auto-detected encoding if UTF-8 fails (e.g. Latin-1, UTF-16)
+    if (!markdown) {
+        readError = nil;
+        markdown = [NSString stringWithContentsOfURL:url
+                                        usedEncoding:NULL
+                                               error:&readError];
+    }
+
+    if (!markdown) {
         if (error) {
             *error = readError;
         }
