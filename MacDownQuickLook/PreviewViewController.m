@@ -83,6 +83,17 @@
 
 #pragma mark - WKNavigationDelegate
 
+- (void)dealloc
+{
+    if (_pendingHandler) {
+        void (^h)(NSError * _Nullable) = _pendingHandler;
+        _pendingHandler = nil;
+        h([NSError errorWithDomain:@"MPQuickLookError"
+                              code:3
+                          userInfo:@{NSLocalizedDescriptionKey: @"Preview was cancelled"}]);
+    }
+}
+
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
     if (self.pendingHandler) {
