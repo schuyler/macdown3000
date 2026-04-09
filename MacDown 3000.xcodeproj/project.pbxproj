@@ -126,6 +126,7 @@
 		ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */; };
 		ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */; };
 		ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */; };
+		ISSUE362PREFRESIZBUILDF /* MPPreferencesViewControllerResizabilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -599,6 +600,7 @@
 		ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentStyleUpdateTests.m; sourceTree = "<group>"; };
 		ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMermaidRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPGraphvizRenderingTests.m; sourceTree = "<group>"; };
+		ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreferencesViewControllerResizabilityTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -960,6 +962,7 @@
 				ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */,
 				ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */,
 				ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */,
+				ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1406,6 +1409,7 @@
 				ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */,
 				ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */,
 				ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */,
+				ISSUE362PREFRESIZBUILDF /* MPPreferencesViewControllerResizabilityTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

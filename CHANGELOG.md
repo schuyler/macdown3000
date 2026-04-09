@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fix Editor preferences window jumping upward when resized (#361)
+- Allow all preference panels to be resized; content stays centered (#362)
+
 ## [3000.0.5] - 2026-04-07
 
 Highlights include Quick Look support for Markdown files, new preview themes for GitHub Dark, Google Docs, and Gmail, improved file watching, and resolutions for many user-reported issues.
