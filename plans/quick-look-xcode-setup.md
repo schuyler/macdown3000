@@ -97,9 +97,23 @@ This will set up the dependencies for the new targets.
 
 ## Testing
 
-The test files (`MPQuickLookRendererTests.m` and `MPQuickLookPreferencesTests.m`) should be added to the MacDownTests target.
+The test files have been added to the MacDownTests target:
+- `MPQuickLookRendererTests.m` - 37 tests for renderer functionality
+- `MPQuickLookPreferencesTests.m` - 19 tests for preferences integration
+- `MPPreviewViewControllerTests.m` - Tests for the Quick Look preview controller
 
-The test fixtures (`quicklook-*.md`) should be added to the test bundle's Fixtures directory.
+Tests are enabled via the `ENABLE_QUICKLOOK_TESTS` build setting, which is already configured in the Xcode project:
+- Debug configuration: `GCC_PREPROCESSOR_DEFINITIONS = ENABLE_QUICKLOOK_TESTS=1`
+- Release configuration: `GCC_PREPROCESSOR_DEFINITIONS = ENABLE_QUICKLOOK_TESTS=1`
+
+**Running Tests:**
+
+Run Quick Look tests using Xcode (Cmd+U) or from command line:
+```bash
+xcodebuild test -workspace MacDown\ 3000.xcworkspace \
+  -scheme MacDownTests \
+  -configuration Debug
+```
 
 ## Verification
 
@@ -108,4 +122,4 @@ After setup, verify:
 1. MacDownCore framework builds successfully
 2. MacDownQuickLook extension builds and links to MacDownCore
 3. MacDown app builds and embeds both the framework and extension
-4. Tests compile and can be run (they should fail until implementations are complete)
+4. Tests compile and run successfully with all 55+ Quick Look tests passing

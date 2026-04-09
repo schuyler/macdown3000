@@ -43,6 +43,9 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPMermaidRenderingTests.m | Mermaid diagram rendering, MutationObserver re-rendering, SVG sizing | Good | (Issue #331) |
 | MPGraphvizRenderingTests.m | Graphviz diagram rendering, MutationObserver re-rendering, script inclusion | Good | (Issue #332) |
 | MPURLSecurityPolicyTests.m | URL security policy: executable/bundle detection, directory scope checking | Good | (Issue #351) |
+| MPQuickLookRendererTests.m | Quick Look preview rendering, encoding fallback, extension support, syntax highlighting, style embedding, excluded features | Good | 37 tests (Issue #367) |
+| MPQuickLookPreferencesTests.m | Quick Look preferences integration, singleton access, feature flags, defaults | Good | 19 tests (Issue #367) |
+| MPPreviewViewControllerTests.m | Quick Look preview controller, WKNavigationDelegate, deferred completion handler | Good | 9 tests (Issue #367) |
 
 ### What We're Missing (Critical Gaps)
 
@@ -69,6 +72,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - ✅ Runs on macOS-14, macOS-15, and macOS-15-intel (Intel-specific testing)
 - ✅ Runtime launch tests (detects hang-on-launch issues)
 - ✅ Code coverage reporting configured
+- ✅ Quick Look extension tests enabled (ENABLE_QUICKLOOK_TESTS - Issue #367)
 - ❌ No integration tests
 - ❌ Minimal UI testing
 
@@ -425,7 +429,10 @@ MacDownTests/
 ├── Rendering/
 │   ├── MPMermaidRenderingTests.m (✅ implemented - Issue #331 - Mermaid re-rendering, SVG sizing)
 │   ├── MPGraphvizRenderingTests.m (✅ implemented - Issue #332 - Graphviz re-rendering, script inclusion)
-│   └── MPMathJaxRenderingTests.m (planned)
+│   ├── MPMathJaxRenderingTests.m (planned)
+│   ├── MPQuickLookRendererTests.m (✅ implemented - Issue #367 - Quick Look preview rendering, encoding fallback)
+│   ├── MPQuickLookPreferencesTests.m (✅ implemented - Issue #367 - Quick Look preferences integration)
+│   └── MPPreviewViewControllerTests.m (✅ implemented - Issue #367 - Quick Look preview controller, deferred completion handler)
 ├── Document/
 │   ├── MPDocumentIOTests.m (✅ implemented - Issue #90 - file I/O and state)
 │   ├── MPDocumentLifecycleTests.m (✅ implemented - Issue #234 - lifecycle and edge cases)
