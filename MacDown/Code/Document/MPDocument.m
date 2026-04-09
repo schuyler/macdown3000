@@ -195,6 +195,14 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeCharacterNoSpaces,
 };
 
+// Issue #342: Scroll ownership model — replaces four boolean flags.
+// Controls which pane is authoritative for the current scroll operation.
+typedef NS_ENUM(NSUInteger, MPScrollOwner) {
+    MPScrollOwnerEditor  = 0,  // Editor is authoritative; preview follows
+    MPScrollOwnerPreview = 1,  // User is live-scrolling preview; editor follows
+    MPScrollOwnerNeither = 2,  // Quiescent; sync in either direction is valid
+};
+
 @property (weak) IBOutlet NSToolbar *toolbar;
 @property (weak) IBOutlet MPDocumentSplitView *splitView;
 @property (weak) IBOutlet NSView *editorContainer;
@@ -209,8 +217,6 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property CGFloat previousSplitRatio;
 @property BOOL manualRender;
 @property BOOL printing;
-@property BOOL shouldHandleBoundsChange;
-@property BOOL shouldHandlePreviewBoundsChange;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
 @property (copy) NSString *currentStyleName;
@@ -228,8 +234,7 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 @property (nonatomic) BOOL renderToWebPending;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
-@property (nonatomic) BOOL inLiveScroll;
-@property (nonatomic) BOOL inEditing;  // Issue #282: Track active editing to prevent scroll jumping
+@property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
 @property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
 
 // Issue #290: File watching for auto-reload
@@ -253,7 +258,8 @@ typedef NS_ENUM(NSUInteger, MPWordCountType) {
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
 - (void)invokeRenderCompletionHandlers;
-- (void)performDelayedSyncScrollers;  // Issue #282: Delayed sync after editing
+- (void)willStartPreviewLiveScroll:(NSNotification *)notification;
+- (void)didEndPreviewLiveScroll:(NSNotification *)notification;
 
 @end
 
@@ -272,8 +278,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
         [weakObj scaleWebview];
 
-        // If sync scrolling is enabled, refine position based on current editor scroll
-        if (weakObj.preferences.editorSyncScrolling)
+        // Issue #342: Only sync if editor is not currently authoritative.
+        // A full reload during active typing must not overwrite the editor's position.
+        if (weakObj.preferences.editorSyncScrolling
+            && weakObj.scrollOwner != MPScrollOwnerEditor)
         {
             [weakObj updateHeaderLocations];
             [weakObj syncScrollers];
@@ -392,8 +400,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         return nil;
 
     self.isPreviewReady = NO;
-    self.shouldHandleBoundsChange = YES;
-    self.shouldHandlePreviewBoundsChange = YES;
+    _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
     
     return self;
@@ -480,6 +487,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [center addObserver:self selector:@selector(didEndLiveScroll:)
                    name:NSScrollViewDidEndLiveScrollNotification
                  object:self.editor.enclosingScrollView];
+    // Issue #342: Observers for preview live-scroll ownership model
+    [center addObserver:self selector:@selector(willStartPreviewLiveScroll:)
+                   name:NSScrollViewWillStartLiveScrollNotification
+                 object:self.preview.enclosingScrollView];
+    [center addObserver:self selector:@selector(didEndPreviewLiveScroll:)
+                   name:NSScrollViewDidEndLiveScrollNotification
+                 object:self.preview.enclosingScrollView];
     if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_9)
     {
         [center addObserver:self selector:@selector(previewDidLiveScroll:)
@@ -549,12 +563,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Close can be called multiple times, but this can only be done once.
         // http://www.cocoabuilder.com/archive/cocoa/240166-nsdocument-close-method-calls-itself.html
         self.needsToUnregister = NO;
-
-        // Issue #282: Cancel any pending delayed sync to prevent crash if document
-        // is closed while editing (within 200ms of last keystroke).
-        [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                                 selector:@selector(performDelayedSyncScrollers)
-                                                   object:nil];
 
         // Issue #294: Cancel any pending word count updates
         [self.wordCountUpdateQueue cancelAllOperations];
@@ -1346,17 +1354,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
-                        [weakSelf updateHeaderLocations];
-                        // Issue #342: Skip sync during active editing to prevent
-                        // scroll jumping after MathJax typesetting completes.
-                        if (weakSelf.preferences.editorSyncScrolling
-                            && !weakSelf.inEditing)
+                        // Issue #342: Sync at render completion, then transition ownership to Neither.
+                        __strong typeof(weakSelf) strongSelf = weakSelf;
+                        if (!strongSelf)
+                            return;
+                        if (strongSelf.preferences.editorSyncScrolling)
                         {
-                            [weakSelf syncScrollers];
+                            [strongSelf updateHeaderLocations];
+                            [strongSelf syncScrollers];
                         }
-                        CGFloat newScrollY = NSMinY(
-                            weakSelf.preview.enclosingScrollView.contentView.bounds);
-                        weakSelf.lastPreviewScrollTop = newScrollY;
+                        strongSelf->_scrollOwner = MPScrollOwnerNeither;
                     } forKey:@"DOMReplacementDone"];
                     [self.preview.windowScriptObject setValue:listener
                                                       forKey:@"MathJaxListener"];
@@ -1364,11 +1371,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
                 [context evaluateScript:updateScript];
 
-                // Save scroll position for non-MathJax DOM replacement.
-                // MathJax case is handled in the completion callback above.
+                // Issue #342: For non-MathJax, sync at render completion and
+                // transition ownership to Neither. The deferred window.scrollTo
+                // notification will arrive while scrollOwner is Editor (if user
+                // typed again) or Neither (if not) — both suppress syncScrollersReverse.
                 if (!self.preferences.htmlMathJax)
                 {
-                    self.lastPreviewScrollTop = scrollBefore;
+                    if (self.preferences.editorSyncScrolling)
+                    {
+                        [self updateHeaderLocations];
+                        [self syncScrollers];
+                    }
+                    _scrollOwner = MPScrollOwnerNeither;
                 }
 
                 // Mark rendering as complete so next edit will be processed
@@ -1421,18 +1435,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.needsHtml)
         [self.renderer parseAndRenderLater];
 
-    // Issue #282: Mark editing state to prevent scroll jumping during typing.
-    // Schedule delayed sync to run after editing pauses.
-    if (self.preferences.editorSyncScrolling)
-    {
-        _inEditing = YES;
-        [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                                 selector:@selector(performDelayedSyncScrollers)
-                                                   object:nil];
-        [self performSelector:@selector(performDelayedSyncScrollers)
-                   withObject:nil
-                   afterDelay:0.2];
-    }
+    // Issue #342: Claim editor ownership unconditionally so that deferred WebKit
+    // notifications from DOM replacement do not trigger syncScrollersReverse
+    // while typing. Sync calls are separately gated by the pref.
+    _scrollOwner = MPScrollOwnerEditor;
 }
 
 - (void)userDefaultsDidChange:(NSNotification *)notification
@@ -1464,31 +1470,43 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (void)willStartLiveScroll:(NSNotification *)notification
 {
     [self updateHeaderLocations];
-    _inLiveScroll = YES;
 }
 
 -(void)didEndLiveScroll:(NSNotification *)notification
 {
-    _inLiveScroll = NO;
+    // No ownership change needed: editor live-scroll runs while scrollOwner == Neither,
+    // and editorBoundsDidChange: handles syncing in that state.
+}
+
+// Issue #342: Preview live-scroll handlers for ownership model (Gap 1).
+
+- (void)willStartPreviewLiveScroll:(NSNotification *)notification
+{
+    // Update header locations before claiming ownership so that
+    // syncScrollersReverse (called at end of live-scroll) uses current positions.
+    [self updateHeaderLocations];
+    _scrollOwner = MPScrollOwnerPreview;
+}
+
+- (void)didEndPreviewLiveScroll:(NSNotification *)notification
+{
+    // Perform one final reverse sync at scroll-end, then return to quiescent state.
+    if (self.preferences.editorSyncScrolling)
+        [self syncScrollersReverse];
+    _scrollOwner = MPScrollOwnerNeither;
 }
 
 - (void)editorBoundsDidChange:(NSNotification *)notification
 {
-    if (!self.shouldHandleBoundsChange)
+    // Issue #342: Only sync in quiescent state. Editor ownership means the render
+    // pipeline is active (typing); preview ownership means the user is live-scrolling
+    // the preview. Both cases must not trigger forward sync here.
+    if (_scrollOwner != MPScrollOwnerNeither)
         return;
 
     if (self.preferences.editorSyncScrolling)
     {
-        @synchronized(self) {
-            self.shouldHandleBoundsChange = NO;
-            // Issue #282: Skip sync during active editing to prevent scroll jumping.
-            // The sync will be performed after editing pauses via performDelayedSyncScrollers.
-            if (!_inLiveScroll && !_inEditing) {
-                [self updateHeaderLocations];
-                [self syncScrollers];
-            }
-            self.shouldHandleBoundsChange = YES;
-        }
+        [self syncScrollers];
     }
 }
 
@@ -1514,25 +1532,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)previewBoundsDidChange:(NSNotification *)notification
 {
-    if (!self.shouldHandlePreviewBoundsChange)
+    // Issue #342: Only trigger reverse sync when the user is explicitly scrolling
+    // the preview. Editor ownership and Neither ownership both suppress this to
+    // prevent deferred WebKit notifications (from DOM replacement window.scrollTo)
+    // from causing the editor to jump.
+    if (_scrollOwner != MPScrollOwnerPreview)
         return;
 
     if (self.preferences.editorSyncScrolling)
     {
-        @synchronized(self) {
-            self.shouldHandlePreviewBoundsChange = NO;
-            // Issue #342: Skip reverse sync during active editing to prevent
-            // scroll jumping. When typing triggers a preview re-render, the DOM
-            // replacement's window.scrollTo() fires this notification. Without
-            // this guard, syncScrollersReverse moves the editor to the wrong
-            // position. The sync will happen after editing pauses via
-            // performDelayedSyncScrollers.
-            if (!_inLiveScroll && !_inEditing) {
-                [self updateHeaderLocations];
-                [self syncScrollersReverse];
-            }
-            self.shouldHandlePreviewBoundsChange = YES;
-        }
+        [self syncScrollersReverse];
     }
 }
 
@@ -2202,7 +2211,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
  */
 -(void) updateHeaderLocations
 {
-    CGFloat offset = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
 
     // Load JavaScript from resource file for better maintainability
@@ -2215,20 +2223,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
     });
 
+    // Issue #342 (Bug B): JS now returns document-absolute coordinates via
+    // window.scrollY + rect.top. No ObjC-side offset correction is needed.
     if (script) {
         _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
     } else {
         _webViewHeaderLocations = @[];
     }
 
-    // add offset to all numbers
-    for (NSNumber *location in _webViewHeaderLocations)
-    {
-        [locations addObject:@([location floatValue] + offset)];
-    }
 
-    _webViewHeaderLocations = [locations copy];
-    
 
     // Next, cache the locations of all of the reference nodes in the editor view.
     NSInteger characterCount = 0;
@@ -2280,9 +2283,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     //   2. If no previous content OR current line matches HR pattern
     //      → It's a horizontal rule (or standalone dashes)
     BOOL previousLineHadContent = NO;
-    
-    CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
-    CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
 
     // We start by splitting our document into lines, and then searching
     // line by line for headers or images.
@@ -2315,9 +2315,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             NSRect topRect = [layoutManager boundingRectForGlyphRange:glyphRange inTextContainer:[self.editor textContainer]];
             CGFloat headerY = NSMidY(topRect);
 
-            if(headerY <= editorContentHeight - editorVisibleHeight){
-                [locations addObject:@(headerY)];
-            }
+            // Issue #342 (Bug D): Add all headers unconditionally to keep
+            // _editorHeaderLocations and _webViewHeaderLocations aligned.
+            // The runtime filters in syncScrollers/syncScrollersReverse already
+            // handle end-of-document interpolation.
+            [locations addObject:@(headerY)];
         }
 
         // Update previousLineHadContent flag for next iteration.
@@ -2333,41 +2335,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     _editorHeaderLocations = [locations copy];
-}
-
-/**
- * Issue #282: Perform delayed scroll synchronization after editing pauses.
- *
- * This method is called 200ms after the last text change to synchronize
- * the preview pane with the editor position. The delay allows the layout
- * to stabilize after typing, preventing the editor from jumping during
- * active editing.
- */
-- (void)performDelayedSyncScrollers
-{
-    // Issue #282: DON'T clear _inEditing here - wait until after sync completes
-
-    if (!self.preferences.editorSyncScrolling)
-    {
-        _inEditing = NO;
-        return;
-    }
-
-    if (!_inLiveScroll)
-    {
-        @synchronized(self) {
-            // Issue #282: Guard BOTH bounds change handlers to prevent cascade
-            self.shouldHandleBoundsChange = NO;
-            self.shouldHandlePreviewBoundsChange = NO;
-            [self updateHeaderLocations];
-            [self syncScrollers];
-            self.shouldHandleBoundsChange = YES;
-            self.shouldHandlePreviewBoundsChange = YES;
-        }
-    }
-
-    // Issue #282: Clear editing flag AFTER sync block completes
-    _inEditing = NO;
 }
 
 /**
@@ -2462,10 +2429,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
     contentBounds.origin.y = previewY;
 
-    // Prevent reverse sync from triggering while we programmatically scroll preview
-    self.shouldHandlePreviewBoundsChange = NO;
+    // Issue #342: No flag toggles needed — previewBoundsDidChange: is guarded
+    // by scrollOwner != MPScrollOwnerPreview, which suppresses the synchronous
+    // NSViewBoundsDidChangeNotification fired by this bounds assignment.
     self.preview.enclosingScrollView.contentView.bounds = contentBounds;
-    self.shouldHandlePreviewBoundsChange = YES;
 
     // Save this scroll position so it persists across preview refreshes
     self.lastPreviewScrollTop = previewY;
@@ -2561,10 +2528,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSRect contentBounds = self.editor.enclosingScrollView.contentView.bounds;
     contentBounds.origin.y = editorY;
 
-    // Prevent forward sync from triggering while we programmatically scroll editor
-    self.shouldHandleBoundsChange = NO;
+    // Issue #342: No flag toggles needed — editorBoundsDidChange: is guarded
+    // by scrollOwner == MPScrollOwnerNeither, which suppresses the synchronous
+    // NSViewBoundsDidChangeNotification fired by this bounds assignment
+    // (scroll owner is Preview while this runs).
     self.editor.enclosingScrollView.contentView.bounds = contentBounds;
-    self.shouldHandleBoundsChange = YES;
 }
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio

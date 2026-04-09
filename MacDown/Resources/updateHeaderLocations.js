@@ -72,11 +72,12 @@
             return 0;  // Same node or disconnected
         });
 
-        // Return y-coordinates (viewport-relative) for all reference points.
+        // Return y-coordinates (document-absolute) for all reference points.
+        // Uses window.scrollY + rect.top so the result is independent of current scroll position.
         // No pre-filtering - the syncScrollers algorithm handles end-of-document cases.
         return result.map(function(item) {
             var rect = item.node.getBoundingClientRect();
-            return rect.top;
+            return window.scrollY + rect.top;
         });
     } catch (e) {
         return [];
