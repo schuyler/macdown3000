@@ -10,6 +10,7 @@
 #import "MPQuickLookPreferences.h"
 #import <hoedown/html.h>
 #import <hoedown/document.h>
+#import <hoedown/escape.h>
 
 // Error domain for Quick Look renderer
 NSString * const MPQuickLookRendererErrorDomain = @"MPQuickLookRendererErrorDomain";
@@ -274,7 +275,24 @@ static void mp_quicklook_render_blockcode(
                                                   encoding:NSUTF8StringEncoding
                                                      error:&readError];
 
-    if (readError) {
+    // Fall back to auto-detected encoding if UTF-8 fails (e.g. UTF-16 with BOM)
+    if (!markdown) {
+        readError = nil;
+        markdown = [NSString stringWithContentsOfURL:url
+                                        usedEncoding:NULL
+                                               error:&readError];
+    }
+
+    // Last resort: ISO Latin-1 can decode any byte sequence, so it never fails.
+    // This handles single-byte encodings that lack a BOM for auto-detection.
+    if (!markdown) {
+        readError = nil;
+        markdown = [NSString stringWithContentsOfURL:url
+                                            encoding:NSISOLatin1StringEncoding
+                                               error:&readError];
+    }
+
+    if (!markdown) {
         if (error) {
             *error = readError;
         }

@@ -127,6 +127,13 @@
 		ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */; };
 		ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */; };
 		ISSUE362PREFRESIZBUILDF /* MPPreferencesViewControllerResizabilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */; };
+		QLBLD00001RNDRMSOURCE /* MPQuickLookRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = QLCORE0001RNDR00000M /* MPQuickLookRenderer.m */; };
+		QLBLD00002PREFMSOURCE /* MPQuickLookPreferences.m in Sources */ = {isa = PBXBuildFile; fileRef = QLCORE0002PREF00000M /* MPQuickLookPreferences.m */; };
+		QLBLD00003PVCMSOURCE /* PreviewViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = QLEXT00001PVCM000000 /* PreviewViewController.m */; };
+		QLBLD00004RNDRTESTSRC /* MPQuickLookRendererTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00001RNDR00000M /* MPQuickLookRendererTests.m */; };
+		QLBLD00005PREFTESTSRC /* MPQuickLookPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */; };
+		QLBLD00006PVCTESTSRC0 /* MPPreviewViewControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */; };
+		QLBLD00007WEBKITTESTFW /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FF207621941CF22005B5654 /* WebKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -601,6 +608,18 @@
 		ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMermaidRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPGraphvizRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreferencesViewControllerResizabilityTests.m; sourceTree = "<group>"; };
+		QLCORE0001RNDR00000H /* MPQuickLookRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPQuickLookRenderer.h; sourceTree = "<group>"; };
+		QLCORE0001RNDR00000M /* MPQuickLookRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPQuickLookRenderer.m; sourceTree = "<group>"; };
+		QLCORE0002PREF00000H /* MPQuickLookPreferences.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPQuickLookPreferences.h; sourceTree = "<group>"; };
+		QLCORE0002PREF00000M /* MPQuickLookPreferences.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPQuickLookPreferences.m; sourceTree = "<group>"; };
+		QLCORE0003HEAD000000 /* MacDownCore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MacDownCore.h; sourceTree = "<group>"; };
+		QLEXT00001PVCH000000 /* PreviewViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PreviewViewController.h; sourceTree = "<group>"; };
+		QLEXT00001PVCM000000 /* PreviewViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PreviewViewController.m; sourceTree = "<group>"; };
+		QLEXT00002INFO000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		QLEXT00003ENTL000000 /* MacDownQuickLook.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MacDownQuickLook.entitlements; sourceTree = "<group>"; };
+		QLTST00001RNDR00000M /* MPQuickLookRendererTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPQuickLookRendererTests.m; sourceTree = "<group>"; };
+		QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPQuickLookPreferencesTests.m; sourceTree = "<group>"; };
+		QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPPreviewViewControllerTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -622,6 +641,7 @@
 				1FA6DE481941CC9E000409FB /* Cocoa.framework in Frameworks */,
 				1FC29F5C1944FC2600D616C7 /* XCTest.framework in Frameworks */,
 				1FF1420519A8987600CF8A6A /* JavaScriptCore.framework in Frameworks */,
+				QLBLD00007WEBKITTESTFW /* WebKit.framework in Frameworks */,
 				EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -839,7 +859,9 @@
 				1FA6DE231941CC9E000409FB /* Frameworks */,
 				1FA6DE221941CC9E000409FB /* Products */,
 				AC6D1A361B8B63012D598BC7 /* Pods */,
-			);
+							QLCORE0000GRP0000000 /* MacDownCore */,
+				QLEXT00000GRP0000000 /* MacDownQuickLook */,
+);
 			sourceTree = "<group>";
 			usesTabs = 0;
 		};
@@ -963,6 +985,9 @@
 				ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */,
 				ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */,
 				ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */,
+				QLTST00001RNDR00000M /* MPQuickLookRendererTests.m */,
+				QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */,
+				QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1012,6 +1037,29 @@
 				7A8EA75FA95818275755F0B6 /* Pods-macdown-cmd.release.xcconfig */,
 			);
 			name = Pods;
+			sourceTree = "<group>";
+		};
+		QLCORE0000GRP0000000 /* MacDownCore */ = {
+			isa = PBXGroup;
+			children = (
+				QLCORE0003HEAD000000 /* MacDownCore.h */,
+				QLCORE0001RNDR00000H /* MPQuickLookRenderer.h */,
+				QLCORE0001RNDR00000M /* MPQuickLookRenderer.m */,
+				QLCORE0002PREF00000H /* MPQuickLookPreferences.h */,
+				QLCORE0002PREF00000M /* MPQuickLookPreferences.m */,
+			);
+			path = MacDownCore;
+			sourceTree = "<group>";
+		};
+		QLEXT00000GRP0000000 /* MacDownQuickLook */ = {
+			isa = PBXGroup;
+			children = (
+				QLEXT00001PVCH000000 /* PreviewViewController.h */,
+				QLEXT00001PVCM000000 /* PreviewViewController.m */,
+				QLEXT00002INFO000000 /* Info.plist */,
+				QLEXT00003ENTL000000 /* MacDownQuickLook.entitlements */,
+			);
+			path = MacDownQuickLook;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1410,6 +1458,12 @@
 				ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */,
 				ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */,
 				ISSUE362PREFRESIZBUILDF /* MPPreferencesViewControllerResizabilityTests.m in Sources */,
+				QLBLD00001RNDRMSOURCE /* MPQuickLookRenderer.m in Sources */,
+				QLBLD00002PREFMSOURCE /* MPQuickLookPreferences.m in Sources */,
+				QLBLD00003PVCMSOURCE /* PreviewViewController.m in Sources */,
+				QLBLD00004RNDRTESTSRC /* MPQuickLookRendererTests.m in Sources */,
+				QLBLD00005PREFTESTSRC /* MPQuickLookPreferencesTests.m in Sources */,
+				QLBLD00006PVCTESTSRC0 /* MPPreviewViewControllerTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1947,7 +2001,13 @@
 				GCC_PREFIX_HEADER = "MacDown/Code/MacDown-Prefix.pch";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
+					"ENABLE_QUICKLOOK_TESTS=1",
 					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/MacDownCore",
+					"$(SRCROOT)/MacDownQuickLook",
 				);
 				INFOPLIST_FILE = "MacDownTests/MacDownTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
@@ -1975,6 +2035,15 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "MacDown/Code/MacDown-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"ENABLE_QUICKLOOK_TESTS=1",
+					"$(inherited)",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/MacDownCore",
+					"$(SRCROOT)/MacDownQuickLook",
+				);
 				INFOPLIST_FILE = "MacDownTests/MacDownTests-Info.plist";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
