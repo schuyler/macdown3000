@@ -10,6 +10,7 @@
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "MPDocument.h"
+#import "MPEditorView.h"
 #import "MPPreferences.h"
 
 // Issue #342: Scroll ownership enum constants (must match MPScrollOwner in MPDocument.m)
@@ -22,6 +23,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (nonatomic) CGFloat lastPreviewScrollTop;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
+@property (unsafe_unretained) MPEditorView *editor;  // Issue #294: expose for maxY sign test
 @property (weak) WebView *preview;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
@@ -1716,6 +1718,115 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     MPDocument *doc = [[MPDocument alloc] init];
     XCTAssertNoThrow([doc close],
                      @"close should not crash after performDelayedSyncScrollers is removed");
+}
+
+#pragma mark - Issue #294: End-of-Document maxY Adjustment Sign Bug
+
+/**
+ * Regression test for the end-of-document interpolation path in syncScrollers.
+ *
+ * When there is no header after the current editor scroll position, syncScrollers
+ * falls through to the end-of-document path and sets:
+ *
+ *   maxY = editorContentHeight - editorVisibleHeight [+/-] adjustmentForScroll
+ *
+ * The correct sign is MINUS. Adding adjustmentForScroll instead of subtracting
+ * it inflates maxY, which compresses percentScrolledBetweenHeaders, causing the
+ * preview to lag behind the editor near the bottom of the document.
+ *
+ * The normal header path subtracts adjustmentForScroll from every headerY:
+ *   headerY -= adjustmentForScroll
+ * The end-of-document maxY must be consistent and also subtract.
+ *
+ * Setup:
+ *   editorContentHeight = 1000, editorVisibleHeight = 500, currY = 400
+ *   → topTaper = 0.8, bottomTaper = 0.2, adjustmentForScroll = 40
+ *
+ * With subtraction (correct):  maxY = 460 → percent = 400/460 ≈ 0.8696
+ * With addition (buggy):       maxY = 540 → percent = 400/540 ≈ 0.7407
+ *
+ * Preview: contentHeight = 2000, visibleHeight = 500 → bottomHeaderY = 1500
+ *   Correct: lastPreviewScrollTop ≈ 1500 × 0.8696 ≈ 1304.35
+ *   Buggy:   lastPreviewScrollTop ≈ 1500 × 0.7407 ≈ 1111.11
+ *
+ * This test FAILS until the `+` on line 2407 of MPDocument.m is changed to `-`.
+ */
+- (void)testSyncScrollersEndOfDocumentMaxYUsesSubtraction
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // --- Editor setup ---
+    // editorContentHeight = 1000, editorVisibleHeight = 500, currY = 400.
+    //
+    // Use a plain NSView as the documentView proxy; syncScrollers only calls
+    // enclosingScrollView and geometry methods on it, so no NSTextView needed.
+    // Assign via KVC to bypass the MPEditorView* static type.
+    NSView *editorProxy = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 500, 1000)];
+    NSScrollView *editorScrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 500, 500)];
+    [editorScrollView setHasHorizontalScroller:NO];
+    [editorScrollView setHasVerticalScroller:NO];
+    [editorScrollView setDocumentView:editorProxy];
+    // Restore the proxy's frame after NSScrollView potentially resizes it.
+    [editorProxy setFrame:NSMakeRect(0, 0, 500, 1000)];
+    // Scroll to currY = 400.
+    [editorScrollView.contentView scrollToPoint:NSMakePoint(0, 400)];
+
+    // --- Preview setup ---
+    // previewContentHeight = 2000, previewVisibleHeight = 500.
+    //
+    // Same NSView proxy trick for the preview.  Assign via KVC so we can use
+    // NSView instead of WebView without static-type mismatch.
+    NSView *previewProxy = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 500, 2000)];
+    NSScrollView *previewScrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 500, 500)];
+    [previewScrollView setHasHorizontalScroller:NO];
+    [previewScrollView setHasVerticalScroller:NO];
+    [previewScrollView setDocumentView:previewProxy];
+    [previewProxy setFrame:NSMakeRect(0, 0, 500, 2000)];
+
+    // Wire both proxies into the document via KVC (bypasses static type checks).
+    [doc setValue:editorProxy  forKey:@"editor"];
+    [doc setValue:previewProxy forKey:@"preview"];
+
+    // No headers → forces the end-of-document interpolation path (maxY == 0 initially).
+    doc.editorHeaderLocations = @[];
+    doc.webViewHeaderLocations = @[];
+
+    [doc syncScrollers];
+
+    // Expected computation with CORRECT subtraction:
+    //   editorContentHeight = ceilf(1000) = 1000
+    //   editorVisibleHeight = ceilf(500)  = 500
+    //   currY               = 400
+    //   topTaper     = MAX(0, MIN(1.0, 400/500)) = 0.8
+    //   bottomTaper  = 1 - MAX(0, MIN(1.0, (400-1000+1000)/500)) = 1 - 0.8 = 0.2
+    //   adjustment   = 0.8 * 0.2 * 500/2 = 40
+    //   maxY_correct = 1000 - 500 - 40 = 460   ← subtraction (the fix)
+    //   maxY_buggy   = 1000 - 500 + 40 = 540   ← addition (the bug)
+    //   percent_correct = 400/460 ≈ 0.8696
+    //   percent_buggy   = 400/540 ≈ 0.7407
+    //   bottomHeaderY   = 2000 - 500 = 1500
+    //   previewY_correct ≈ 1500 × 0.8696 ≈ 1304
+    //   previewY_buggy   ≈ 1500 × 0.7407 ≈ 1111
+    //
+    // The two results differ by ~193 px; ±50 tolerance distinguishes them while
+    // absorbing any minor floating-point or frame-rounding variance.
+    CGFloat editorContentHeight = 1000.0;
+    CGFloat editorVisibleHeight = 500.0;
+    CGFloat currY = 400.0;
+    CGFloat topTaper = MAX(0.0f, MIN(1.0f, (CGFloat)(currY / editorVisibleHeight)));
+    CGFloat bottomTaper = 1.0f - MAX(0.0f, MIN(1.0f, (CGFloat)(
+        (currY - editorContentHeight + 2 * editorVisibleHeight) / editorVisibleHeight)));
+    CGFloat adjustment = topTaper * bottomTaper * editorVisibleHeight / 2.0f;
+    CGFloat maxYCorrect = editorContentHeight - editorVisibleHeight - adjustment;
+    CGFloat percentCorrect = MAX(0.0f, MIN(1.0f, (CGFloat)(currY / maxYCorrect)));
+    CGFloat bottomHeaderY = 2000.0f - 500.0f;   // previewContentHeight - previewVisibleHeight
+    CGFloat expectedPreviewY = bottomHeaderY * percentCorrect;  // ≈ 1304
+
+    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, expectedPreviewY, 50.0,
+        @"syncScrollers end-of-document path must subtract adjustmentForScroll from maxY "
+        @"(Issue #294). Expected ≈%.1f (correct subtraction); got %.1f. "
+        @"This assertion fails when '+' is used instead of '-' on the maxY line.",
+        expectedPreviewY, doc.lastPreviewScrollTop);
 }
 
 @end

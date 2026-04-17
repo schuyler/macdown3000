@@ -2404,7 +2404,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         // We only have a reference node before our current position,
         // but not after, so we'll use the end of the document.
-        maxY = editorContentHeight - editorVisibleHeight + adjustmentForScroll;
+        maxY = editorContentHeight - editorVisibleHeight - adjustmentForScroll;
         interpolateToEndOfDocument = YES;
     }
 
