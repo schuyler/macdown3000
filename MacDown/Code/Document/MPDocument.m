@@ -1259,15 +1259,22 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html
 {
-    if (self.alreadyRenderingInWeb)
+    // Issue #358: Only gate on alreadyRenderingInWeb when the preview has
+    // completed its first load (isPreviewReady == YES).  Before the first
+    // successful load, WebView frame-load delegate callbacks may not fire,
+    // which leaves alreadyRenderingInWeb stuck at YES forever, blocking all
+    // subsequent renders.  Allowing renders through before isPreviewReady
+    // is safe because each call to loadHTMLString: simply replaces the
+    // previous in-flight load.
+    if (self.isPreviewReady && self.alreadyRenderingInWeb)
     {
         self.renderToWebPending = YES;
         return;
     }
-    
+
     if (self.printing)
         return;
-    
+
     self.alreadyRenderingInWeb = YES;
 
     NSURL *baseUrl = self.fileURL;
