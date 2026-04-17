@@ -235,7 +235,6 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
-@property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -524,11 +523,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     wordCountWidget.hidden = !self.preferences.editorShowWordCount;
     wordCountWidget.enabled = NO;
 
-    // Issue #294: Initialize word count update queue for debouncing
-    self.wordCountUpdateQueue = [[NSOperationQueue alloc] init];
-    self.wordCountUpdateQueue.maxConcurrentOperationCount = 1;
-    self.wordCountUpdateQueue.name = @"com.macdown.wordCountUpdate";
-
     // These needs to be queued until after the window is shown, so that editor
     // can have the correct dimention for size-limiting and stuff. See
     // https://github.com/uranusjr/macdown/issues/236
@@ -565,7 +559,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.needsToUnregister = NO;
 
         // Issue #294: Cancel any pending word count updates
-        [self.wordCountUpdateQueue cancelAllOperations];
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(updateWordCount)
+                                                   object:nil];
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
@@ -1032,7 +1028,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Update word count
     if (self.preferences.editorShowWordCount)
         [self updateWordCount];
-    
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)
@@ -2583,7 +2579,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)updateWordCount
 {
-    DOMNodeTextCount count = self.preview.mainFrame.DOMDocument.textCount;
+    DOMDocument *domDoc = self.preview.mainFrame.DOMDocument;
+    DOMNodeTextCount count = domDoc.textCount;
 
     self.totalWords = count.words;
     self.totalCharacters = count.characters;
@@ -2600,33 +2597,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!self.preferences.editorShowWordCount)
         return;
 
-    if (!self.wordCountUpdateQueue)
-        return;
-
-    // Cancel pending updates (debouncing)
-    [self.wordCountUpdateQueue cancelAllOperations];
-
-    // Schedule update with a small delay using NSBlockOperation
-    // so we can check isCancelled after the delay
-    __weak MPDocument *weakSelf = self;
-    NSBlockOperation *operation = [[NSBlockOperation alloc] init];
-    __weak NSBlockOperation *weakOperation = operation;
-
-    [operation addExecutionBlock:^{
-        // Small delay to debounce rapid typing (300ms)
-        [NSThread sleepForTimeInterval:0.3];
-
-        // Check if cancelled after sleep (handles rapid successive calls)
-        if (weakOperation.isCancelled)
-            return;
-
-        // Execute update on main thread
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf updateWordCount];
-        });
-    }];
-
-    [self.wordCountUpdateQueue addOperation:operation];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(updateWordCount)
+                                               object:nil];
+    [self performSelector:@selector(updateWordCount)
+               withObject:nil
+               afterDelay:0.3];
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another
