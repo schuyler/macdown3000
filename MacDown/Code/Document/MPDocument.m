@@ -235,7 +235,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
-@property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
+@property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -524,11 +524,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     wordCountWidget.hidden = !self.preferences.editorShowWordCount;
     wordCountWidget.enabled = NO;
 
-    // Issue #294: Initialize word count update queue for debouncing
-    self.wordCountUpdateQueue = [[NSOperationQueue alloc] init];
-    self.wordCountUpdateQueue.maxConcurrentOperationCount = 1;
-    self.wordCountUpdateQueue.name = @"com.macdown.wordCountUpdate";
-
     // These needs to be queued until after the window is shown, so that editor
     // can have the correct dimention for size-limiting and stuff. See
     // https://github.com/uranusjr/macdown/issues/236
@@ -565,7 +560,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.needsToUnregister = NO;
 
         // Issue #294: Cancel any pending word count updates
-        [self.wordCountUpdateQueue cancelAllOperations];
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                                 selector:@selector(updateWordCount)
+                                                   object:nil];
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
@@ -1032,7 +1029,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Update word count
     if (self.preferences.editorShowWordCount)
         [self updateWordCount];
-    
+
     self.alreadyRenderingInWeb = NO;
 
     if (self.renderToWebPending)
@@ -1441,6 +1438,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     if (self.needsHtml)
         [self.renderer parseAndRenderLater];
+
+    // Issue #294: Throttled word count update on every text change
+    [self scheduleWordCountUpdate];
 
     // Issue #342: Claim editor ownership unconditionally so that deferred WebKit
     // notifications from DOM replacement do not trigger syncScrollersReverse
@@ -2583,50 +2583,47 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)updateWordCount
 {
-    DOMNodeTextCount count = self.preview.mainFrame.DOMDocument.textCount;
+    DOMDocument *domDoc = self.preview.mainFrame.DOMDocument;
+    DOMNodeTextCount count = domDoc.textCount;
 
     self.totalWords = count.words;
     self.totalCharacters = count.characters;
     self.totalCharactersNoSpaces = count.characterWithoutSpaces;
 
+    self.lastWordCountUpdate = [NSDate timeIntervalSinceReferenceDate];
+
     if (self.isPreviewReady)
         self.wordCountWidget.enabled = YES;
 }
 
-// Issue #294: Schedule word count update with debouncing to avoid
-// performance issues during rapid typing.
+// Issue #294: Throttled word count update. Fires immediately if enough
+// time has elapsed, otherwise schedules a trailing update so the final
+// state is always captured after typing stops.
+static const NSTimeInterval kWordCountThrottleInterval = 0.25;
+
 - (void)scheduleWordCountUpdate
 {
     if (!self.preferences.editorShowWordCount)
         return;
 
-    if (!self.wordCountUpdateQueue)
-        return;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(updateWordCount)
+                                               object:nil];
 
-    // Cancel pending updates (debouncing)
-    [self.wordCountUpdateQueue cancelAllOperations];
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval elapsed = now - self.lastWordCountUpdate;
 
-    // Schedule update with a small delay using NSBlockOperation
-    // so we can check isCancelled after the delay
-    __weak MPDocument *weakSelf = self;
-    NSBlockOperation *operation = [[NSBlockOperation alloc] init];
-    __weak NSBlockOperation *weakOperation = operation;
-
-    [operation addExecutionBlock:^{
-        // Small delay to debounce rapid typing (300ms)
-        [NSThread sleepForTimeInterval:0.3];
-
-        // Check if cancelled after sleep (handles rapid successive calls)
-        if (weakOperation.isCancelled)
-            return;
-
-        // Execute update on main thread
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf updateWordCount];
-        });
-    }];
-
-    [self.wordCountUpdateQueue addOperation:operation];
+    if (elapsed >= kWordCountThrottleInterval)
+    {
+        [self updateWordCount];
+    }
+    else
+    {
+        NSTimeInterval delay = kWordCountThrottleInterval - elapsed;
+        [self performSelector:@selector(updateWordCount)
+                   withObject:nil
+                   afterDelay:delay];
+    }
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another
