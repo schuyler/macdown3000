@@ -235,6 +235,8 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
+@property (nonatomic) CGFloat cachedPreviewContentHeight;
+@property (nonatomic) CGFloat cachedPreviewVisibleHeight;
 @property (strong) NSOperationQueue *wordCountUpdateQueue;  // Issue #294: Debounced word count updates
 
 // Issue #290: File watching for auto-reload
@@ -2232,10 +2234,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Issue #342 (Bug B): JS now returns document-absolute coordinates via
     // window.scrollY + rect.top. No ObjC-side offset correction is needed.
+    // Issue #366: JS now returns {locations, contentHeight, visibleHeight}.
+    // pageSizeMultiplier converts CSS pixels → NSView points.
     if (script) {
-        _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+        JSValue *result = [self.preview.mainFrame.javaScriptContext evaluateScript:script];
+        CGFloat scale = [self.preview pageSizeMultiplier];
+
+        // Parse header locations, converting CSS pixels → NSView points
+        NSMutableArray<NSNumber *> *jsLocations = [NSMutableArray array];
+        for (NSNumber *loc in [[result valueForProperty:@"locations"] toArray]) {
+            [jsLocations addObject:@([loc doubleValue] * scale)];
+        }
+        _webViewHeaderLocations = jsLocations;
+
+        // Cache preview dimensions (post-layout, from JS)
+        _cachedPreviewContentHeight = [[result valueForProperty:@"contentHeight"] toDouble] * scale;
+        _cachedPreviewVisibleHeight = [[result valueForProperty:@"visibleHeight"] toDouble] * scale;
     } else {
         _webViewHeaderLocations = @[];
+        _cachedPreviewContentHeight = 0;
+        _cachedPreviewVisibleHeight = 0;
     }
 
 
@@ -2362,8 +2380,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
     CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
-    CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
-    CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
+    CGFloat previewContentHeight = ceilf(_cachedPreviewContentHeight);
+    CGFloat previewVisibleHeight = ceilf(_cachedPreviewVisibleHeight);
     NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
     CGFloat currY = NSMinY(self.editor.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
@@ -2460,8 +2478,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
  */
 - (void)syncScrollersReverse
 {
-    CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
-    CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
+    CGFloat previewContentHeight = ceilf(_cachedPreviewContentHeight);
+    CGFloat previewVisibleHeight = ceilf(_cachedPreviewVisibleHeight);
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
     CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
     NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header

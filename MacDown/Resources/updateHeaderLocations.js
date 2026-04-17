@@ -1,17 +1,20 @@
 /**
  * Detects reference points (headers and standalone images) in the preview document.
- * Returns an array of y-coordinates (relative to document top) for scroll synchronization.
+ * Returns reference point y-coordinates and preview geometry for scroll synchronization.
  *
  * Standalone images are defined as:
  * - An image alone in a paragraph
  * - An image wrapped in a link that's alone in a paragraph
  * - An image that's the only child of its parent element
  *
- * @returns {Array<number>} Array of y-coordinates for reference points, in document order
+ * @returns {{locations: number[], contentHeight: number, visibleHeight: number}}
+ *   locations: document-absolute y-coordinates of reference points;
+ *   contentHeight: document.body.scrollHeight in CSS pixels;
+ *   visibleHeight: window.innerHeight in CSS pixels.
  */
 (function() {
     try {
-        if (!document.body) return [];
+        if (!document.body) return {locations: [], contentHeight: 0, visibleHeight: 0};
 
         var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
         var images = document.querySelectorAll('img');
@@ -75,11 +78,16 @@
         // Return y-coordinates (document-absolute) for all reference points.
         // Uses window.scrollY + rect.top so the result is independent of current scroll position.
         // No pre-filtering - the syncScrollers algorithm handles end-of-document cases.
-        return result.map(function(item) {
+        var locations = result.map(function(item) {
             var rect = item.node.getBoundingClientRect();
             return window.scrollY + rect.top;
         });
+        return {
+            locations: locations,
+            contentHeight: document.body.scrollHeight,
+            visibleHeight: window.innerHeight
+        };
     } catch (e) {
-        return [];
+        return {locations: [], contentHeight: 0, visibleHeight: 0};
     }
 })()

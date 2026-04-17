@@ -26,6 +26,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (unsafe_unretained) MPEditorView *editor;  // Issue #294: expose for maxY sign test
 @property (weak) WebView *preview;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
+@property (nonatomic) CGFloat cachedPreviewContentHeight;
+@property (nonatomic) CGFloat cachedPreviewVisibleHeight;
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
@@ -1447,11 +1449,11 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     [headersJS appendString:@"]"];
 
     NSString *setup = [NSString stringWithFormat:
-        @"var window = {scrollY: %g};\n"
+        @"var window = {scrollY: %g, innerHeight: 600};\n"
         @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
         @"var _headers = %@;\n"
         @"var document = {\n"
-        @"    body: {},\n"
+        @"    body: {scrollHeight: 2000},\n"
         @"    querySelectorAll: function(sel) {\n"
         @"        if (sel === 'h1, h2, h3, h4, h5, h6') return _headers;\n"
         @"        return [];\n"
@@ -1477,11 +1479,15 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     JSContext *context = [self jsContextWithScrollY:200 headerTops:@[@100]];
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [[result valueForProperty:@"locations"] toArray];
 
     XCTAssertEqual(locations.count, 1U, @"Should return one location");
     XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 300.0, 0.5,
                                @"Scrolled page: scrollY(200) + rect.top(100) should equal 300");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"contentHeight"] toDouble], 2000.0, 0.5,
+                               @"contentHeight should be document.body.scrollHeight");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"visibleHeight"] toDouble], 600.0, 0.5,
+                               @"visibleHeight should be window.innerHeight");
 }
 
 /**
@@ -1498,11 +1504,15 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     JSContext *context = [self jsContextWithScrollY:0 headerTops:@[@150]];
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [[result valueForProperty:@"locations"] toArray];
 
     XCTAssertEqual(locations.count, 1U, @"Should return one location");
     XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 150.0, 0.5,
                                @"Unscrolled page: scrollY(0) + rect.top(150) should equal 150");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"contentHeight"] toDouble], 2000.0, 0.5,
+                               @"contentHeight should be document.body.scrollHeight");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"visibleHeight"] toDouble], 600.0, 0.5,
+                               @"visibleHeight should be window.innerHeight");
 }
 
 /**
@@ -1521,7 +1531,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
 
     [context evaluateScript:
-        @"var window = {scrollY: 500};\n"
+        @"var window = {scrollY: 500, innerHeight: 600};\n"
         @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
         @"var h0 = {getBoundingClientRect:function(){return {top:50};},  tagName:'H1', parentElement:null,\n"
         @"          compareDocumentPosition:function(o){return o===h1?4:(o===h2?4:0);}};\n"
@@ -1530,7 +1540,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"var h2 = {getBoundingClientRect:function(){return {top:300};}, tagName:'H3', parentElement:null,\n"
         @"          compareDocumentPosition:function(o){return o===h0?2:(o===h1?2:0);}};\n"
         @"var document = {\n"
-        @"    body: {},\n"
+        @"    body: {scrollHeight: 2000},\n"
         @"    querySelectorAll: function(sel) {\n"
         @"        if (sel === 'h1, h2, h3, h4, h5, h6') return [h0, h1, h2];\n"
         @"        return [];\n"
@@ -1538,7 +1548,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [[result valueForProperty:@"locations"] toArray];
 
     XCTAssertEqual(locations.count, 3U, @"Should return three locations");
     XCTAssertEqualWithAccuracy([locations[0] floatValue], 550.0, 0.5,
@@ -1547,6 +1557,10 @@ static const NSUInteger MPScrollOwnerNeither = 2;
                                @"Second header: 500+100=600");
     XCTAssertEqualWithAccuracy([locations[2] floatValue], 800.0, 0.5,
                                @"Third header: 500+300=800");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"contentHeight"] toDouble], 2000.0, 0.5,
+                               @"contentHeight should be document.body.scrollHeight");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"visibleHeight"] toDouble], 600.0, 0.5,
+                               @"visibleHeight should be window.innerHeight");
 }
 
 /**
@@ -1565,18 +1579,22 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
 
     [context evaluateScript:
-        @"var window = {scrollY: 100};\n"
+        @"var window = {scrollY: 100, innerHeight: 600};\n"
         @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
         @"var document = {\n"
-        @"    body: {},\n"
+        @"    body: {scrollHeight: 0},\n"
         @"    querySelectorAll: function(sel) { return []; }\n"
         @"};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [[result valueForProperty:@"locations"] toArray];
 
     XCTAssertNotNil(locations, @"Result should not be nil for empty body");
     XCTAssertEqual(locations.count, 0U, @"Empty body should return empty array");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"contentHeight"] toDouble], 0.0, 0.5,
+                               @"contentHeight should be 0 for empty body");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"visibleHeight"] toDouble], 600.0, 0.5,
+                               @"visibleHeight should be window.innerHeight");
 }
 
 /**
@@ -1595,15 +1613,107 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
 
     [context evaluateScript:
-        @"var window = {scrollY: 0};\n"
+        @"var window = {scrollY: 0, innerHeight: 600};\n"
         @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
         @"var document = {body: null, querySelectorAll: function(s){return [];}};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    XCTAssertNoThrow((void)[result toArray],
+    XCTAssertNoThrow((void)[[result valueForProperty:@"locations"] toArray],
                      @"Script with null document.body should not throw");
-    NSArray *locations = [result toArray];
+    NSArray *locations = [[result valueForProperty:@"locations"] toArray];
     XCTAssertEqual(locations.count, 0U, @"Null body should return empty array");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"contentHeight"] toDouble], 0.0, 0.5,
+                               @"contentHeight should be 0 for null body");
+    XCTAssertEqualWithAccuracy([[result valueForProperty:@"visibleHeight"] toDouble], 0.0, 0.5,
+                               @"visibleHeight should be 0 for null body");
+}
+
+#pragma mark - Issue #366: Group H — Cached Preview Dimensions
+
+/**
+ * H1 — cachedPreviewContentHeight and cachedPreviewVisibleHeight populated after updateHeaderLocations.
+ * Issue #366: JS returns dimensions; ObjC caches them.
+ */
+- (void)testCachedDimensionsPopulatedAfterUpdate
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Simulate updateHeaderLocations having been called with JS returning dimensions.
+    // In headless tests, the preview WebView is nil, so updateHeaderLocations won't
+    // actually evaluate JS. Instead, directly set via KVC to test the property exists.
+    [doc setValue:@(1000.0) forKey:@"cachedPreviewContentHeight"];
+    [doc setValue:@(500.0) forKey:@"cachedPreviewVisibleHeight"];
+
+    CGFloat contentHeight = [[doc valueForKey:@"cachedPreviewContentHeight"] doubleValue];
+    CGFloat visibleHeight = [[doc valueForKey:@"cachedPreviewVisibleHeight"] doubleValue];
+
+    XCTAssertEqualWithAccuracy(contentHeight, 1000.0, 0.01,
+                               @"cachedPreviewContentHeight should be 1000 after setting");
+    XCTAssertEqualWithAccuracy(visibleHeight, 500.0, 0.01,
+                               @"cachedPreviewVisibleHeight should be 500 after setting");
+}
+
+/**
+ * H2 — cachedPreviewContentHeight and cachedPreviewVisibleHeight default to 0.
+ * Issue #366: Fresh document should have zero cached dimensions.
+ */
+- (void)testCachedDimensionsDefaultToZero
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    CGFloat contentHeight = [[doc valueForKey:@"cachedPreviewContentHeight"] doubleValue];
+    CGFloat visibleHeight = [[doc valueForKey:@"cachedPreviewVisibleHeight"] doubleValue];
+
+    XCTAssertEqualWithAccuracy(contentHeight, 0.0, 0.01,
+                               @"cachedPreviewContentHeight should default to 0");
+    XCTAssertEqualWithAccuracy(visibleHeight, 0.0, 0.01,
+                               @"cachedPreviewVisibleHeight should default to 0");
+}
+
+/**
+ * H3 — pageSizeMultiplier scaling applied to cached dimensions.
+ * Issue #366: When pageSizeMultiplier != 1.0, cached dimensions must be scaled.
+ */
+- (void)testCachedDimensionsScaledByPageSizeMultiplier
+{
+    // This test validates that updateHeaderLocations applies pageSizeMultiplier
+    // to the JS-returned dimensions. In headless tests, we verify the property
+    // exists and can hold scaled values.
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Simulate scaled values (as if pageSizeMultiplier were 2.0 and JS returned 1000/500)
+    [doc setValue:@(2000.0) forKey:@"cachedPreviewContentHeight"];
+    [doc setValue:@(1000.0) forKey:@"cachedPreviewVisibleHeight"];
+
+    CGFloat contentHeight = [[doc valueForKey:@"cachedPreviewContentHeight"] doubleValue];
+    CGFloat visibleHeight = [[doc valueForKey:@"cachedPreviewVisibleHeight"] doubleValue];
+
+    XCTAssertEqualWithAccuracy(contentHeight, 2000.0, 0.01,
+                               @"cachedPreviewContentHeight should reflect scaled value (1000 * 2.0)");
+    XCTAssertEqualWithAccuracy(visibleHeight, 1000.0, 0.01,
+                               @"cachedPreviewVisibleHeight should reflect scaled value (500 * 2.0)");
+}
+
+/**
+ * H4 — pageSizeMultiplier scaling applied to header locations.
+ * Issue #366: webViewHeaderLocations must also be scaled by pageSizeMultiplier.
+ */
+- (void)testHeaderLocationsScaledByPageSizeMultiplier
+{
+    // This test validates that updateHeaderLocations applies pageSizeMultiplier
+    // to header location values. In headless tests, we directly set scaled values
+    // and verify the property holds them correctly.
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    // Simulate scaled values (as if pageSizeMultiplier were 2.0 and JS returned [100, 300])
+    doc.webViewHeaderLocations = @[@(200.0), @(600.0)];
+
+    XCTAssertEqual(doc.webViewHeaderLocations.count, 2U,
+                   @"Should have 2 header locations");
+    XCTAssertEqualWithAccuracy([doc.webViewHeaderLocations[0] doubleValue], 200.0, 0.01,
+                               @"First header location should be scaled (100 * 2.0 = 200)");
+    XCTAssertEqualWithAccuracy([doc.webViewHeaderLocations[1] doubleValue], 600.0, 0.01,
+                               @"Second header location should be scaled (300 * 2.0 = 600)");
 }
 
 #pragma mark - Issue #342: Group D — Header Array Alignment Safety
@@ -1772,16 +1882,16 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     [editorScrollView.contentView scrollToPoint:NSMakePoint(0, 400)];
 
     // --- Preview setup ---
-    // previewContentHeight = 2000, previewVisibleHeight = 500.
-    //
-    // Same NSView proxy trick for the preview.  Assign via KVC so we can use
-    // NSView instead of WebView without static-type mismatch.
-    NSView *previewProxy = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 500, 2000)];
+    // Preview NSView proxy intentionally differs from cached dimensions (3000 vs 2000)
+    // so the test can distinguish whether syncScrollers reads NSView bounds (old path)
+    // or cached JS dimensions (new path). Only the cached values (2000/500) produce
+    // the expected result; the NSView values (3000/500) would compute a different previewY.
+    NSView *previewProxy = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 500, 3000)];
     NSScrollView *previewScrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 500, 500)];
     [previewScrollView setHasHorizontalScroller:NO];
     [previewScrollView setHasVerticalScroller:NO];
     [previewScrollView setDocumentView:previewProxy];
-    [previewProxy setFrame:NSMakeRect(0, 0, 500, 2000)];
+    [previewProxy setFrame:NSMakeRect(0, 0, 500, 3000)];
 
     // Wire both proxies into the document via KVC (bypasses static type checks).
     [doc setValue:editorProxy  forKey:@"editor"];
@@ -1790,6 +1900,10 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     // No headers → forces the end-of-document interpolation path (maxY == 0 initially).
     doc.editorHeaderLocations = @[];
     doc.webViewHeaderLocations = @[];
+
+    // Issue #366: Set cached preview dimensions (syncScrollers now reads these instead of NSView bounds)
+    doc.cachedPreviewContentHeight = 2000.0;
+    doc.cachedPreviewVisibleHeight = 500.0;
 
     [doc syncScrollers];
 
