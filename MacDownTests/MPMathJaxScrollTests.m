@@ -227,6 +227,7 @@
  */
 - (void)testRenderToWebPendingDefersDuringRendering
 {
+    self.document.isPreviewReady = YES;
     self.document.alreadyRenderingInWeb = YES;
     self.document.renderToWebPending = NO;
 

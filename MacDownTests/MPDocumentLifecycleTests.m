@@ -27,6 +27,9 @@
 @property (unsafe_unretained) MPEditorView *editor;
 @property (copy) NSString *loadedString;
 - (void)reloadFromLoadedString;
+@property (nonatomic) BOOL isPreviewReady;
+@property (nonatomic) BOOL alreadyRenderingInWeb;
+@property (nonatomic) BOOL renderToWebPending;
 @end
 
 // Spy renderer: records whether parseAndRenderNow was called without
@@ -748,6 +751,117 @@
     XCTAssertEqualObjects(editor.string, @"",
                           @"Editor string must not change for new documents "
                            "when there is no loadedString to apply");
+}
+
+
+#pragma mark - Preview Rendering Gate Tests (Issue #358 follow-up)
+
+// When isPreviewReady is NO, the alreadyRenderingInWeb flag must NOT block the
+// render.  The method should proceed past the gate and set alreadyRenderingInWeb
+// to YES.  renderToWebPending must remain NO (no deferral occurred).
+// We start alreadyRenderingInWeb at NO so the assertion that it becomes YES
+// proves line 1278 actually executed (the gate was not triggered).
+- (void)testPreReadyRendersNotBlockedByAlreadyRenderingInWeb
+{
+    MPSpyRenderer *renderer = nil;
+    [self wireDocument:self.document
+           intoRenderer:&renderer
+            highlighter:nil
+                 editor:nil];
+
+    self.document.isPreviewReady = NO;
+    self.document.alreadyRenderingInWeb = NO;
+    self.document.renderToWebPending = NO;
+
+    [(id<MPRendererDelegate>)self.document renderer:renderer
+                               didProduceHTMLOutput:@"<p>test</p>"];
+
+    XCTAssertFalse(self.document.renderToWebPending,
+                   @"renderToWebPending must remain NO — render should not be "
+                    "deferred when isPreviewReady is NO (issue #358)");
+    XCTAssertTrue(self.document.alreadyRenderingInWeb,
+                  @"alreadyRenderingInWeb must be YES — method must proceed past "
+                   "the gate and set the flag when isPreviewReady is NO");
+}
+
+// When isPreviewReady is YES and alreadyRenderingInWeb is YES, the method must
+// defer the render by setting renderToWebPending and returning early.
+// alreadyRenderingInWeb must remain YES (the in-flight load is still active).
+- (void)testPostReadyRendersBlockedByAlreadyRenderingInWeb
+{
+    MPSpyRenderer *renderer = nil;
+    [self wireDocument:self.document
+           intoRenderer:&renderer
+            highlighter:nil
+                 editor:nil];
+
+    self.document.isPreviewReady = YES;
+    self.document.alreadyRenderingInWeb = YES;
+    self.document.renderToWebPending = NO;
+
+    [(id<MPRendererDelegate>)self.document renderer:renderer
+                               didProduceHTMLOutput:@"<p>test</p>"];
+
+    XCTAssertTrue(self.document.renderToWebPending,
+                  @"renderToWebPending must be YES — render must be deferred when "
+                   "isPreviewReady is YES and alreadyRenderingInWeb is YES");
+    XCTAssertTrue(self.document.alreadyRenderingInWeb,
+                  @"alreadyRenderingInWeb must remain YES — the in-flight load is "
+                   "still active; the method returned early without clearing it");
+}
+
+// When alreadyRenderingInWeb is NO the method must always proceed past the gate,
+// regardless of isPreviewReady.  After the call, alreadyRenderingInWeb must be
+// YES and renderToWebPending must remain NO.
+- (void)testRendersNotBlockedWhenAlreadyRenderingInWebIsNO
+{
+    // Sub-case 1: isPreviewReady = NO
+    {
+        MPSpyRenderer *renderer = nil;
+        MPDocument *doc = [[MPDocument alloc] init];
+        [self wireDocument:doc
+               intoRenderer:&renderer
+                highlighter:nil
+                     editor:nil];
+
+        doc.isPreviewReady = NO;
+        doc.alreadyRenderingInWeb = NO;
+        doc.renderToWebPending = NO;
+
+        [(id<MPRendererDelegate>)doc renderer:renderer
+                          didProduceHTMLOutput:@"<p>test</p>"];
+
+        XCTAssertTrue(doc.alreadyRenderingInWeb,
+                      @"alreadyRenderingInWeb must be YES after render proceeds "
+                       "(isPreviewReady=NO, alreadyRenderingInWeb=NO)");
+        XCTAssertFalse(doc.renderToWebPending,
+                       @"renderToWebPending must remain NO — no deferral should "
+                        "occur when alreadyRenderingInWeb starts as NO");
+    }
+
+    // Sub-case 2: isPreviewReady = YES
+    {
+        MPSpyRenderer *renderer = nil;
+        MPDocument *doc = [[MPDocument alloc] init];
+        [self wireDocument:doc
+               intoRenderer:&renderer
+                highlighter:nil
+                     editor:nil];
+
+        doc.isPreviewReady = YES;
+        doc.alreadyRenderingInWeb = NO;
+        doc.renderToWebPending = NO;
+
+        [(id<MPRendererDelegate>)doc renderer:renderer
+                          didProduceHTMLOutput:@"<p>test</p>"];
+
+        XCTAssertTrue(doc.alreadyRenderingInWeb,
+                      @"alreadyRenderingInWeb must be YES after render proceeds "
+                       "(isPreviewReady=YES, alreadyRenderingInWeb=NO)");
+        XCTAssertFalse(doc.renderToWebPending,
+                       @"renderToWebPending must remain NO — no deferral should "
+                        "occur when alreadyRenderingInWeb starts as NO");
+    }
 }
 
 @end
