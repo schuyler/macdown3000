@@ -235,6 +235,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
+@property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -1438,6 +1439,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.needsHtml)
         [self.renderer parseAndRenderLater];
 
+    // Issue #294: Throttled word count update on every text change
+    [self scheduleWordCountUpdate];
+
     // Issue #342: Claim editor ownership unconditionally so that deferred WebKit
     // notifications from DOM replacement do not trigger syncScrollersReverse
     // while typing. Sync calls are separately gated by the pref.
@@ -2586,12 +2590,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.totalCharacters = count.characters;
     self.totalCharactersNoSpaces = count.characterWithoutSpaces;
 
+    self.lastWordCountUpdate = [NSDate timeIntervalSinceReferenceDate];
+
     if (self.isPreviewReady)
         self.wordCountWidget.enabled = YES;
 }
 
-// Issue #294: Schedule word count update with debouncing to avoid
-// performance issues during rapid typing.
+// Issue #294: Throttled word count update. Fires immediately if enough
+// time has elapsed, otherwise schedules a trailing update so the final
+// state is always captured after typing stops.
+static const NSTimeInterval kWordCountThrottleInterval = 0.25;
+
 - (void)scheduleWordCountUpdate
 {
     if (!self.preferences.editorShowWordCount)
@@ -2600,9 +2609,21 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [NSObject cancelPreviousPerformRequestsWithTarget:self
                                              selector:@selector(updateWordCount)
                                                object:nil];
-    [self performSelector:@selector(updateWordCount)
-               withObject:nil
-               afterDelay:0.3];
+
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval elapsed = now - self.lastWordCountUpdate;
+
+    if (elapsed >= kWordCountThrottleInterval)
+    {
+        [self updateWordCount];
+    }
+    else
+    {
+        NSTimeInterval delay = kWordCountThrottleInterval - elapsed;
+        [self performSelector:@selector(updateWordCount)
+                   withObject:nil
+                   afterDelay:delay];
+    }
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another

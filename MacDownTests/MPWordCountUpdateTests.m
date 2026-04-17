@@ -3,7 +3,7 @@
 //  MacDownTests
 //
 //  Tests for Issue #294: Word count update during DOM replacement.
-//  Verifies scheduleWordCountUpdate debouncing logic.
+//  Verifies scheduleWordCountUpdate throttling logic.
 //
 //  Copyright (c) 2025 Tzu-ping Chung. All rights reserved.
 //
@@ -18,6 +18,7 @@
 @property (nonatomic) NSUInteger totalWords;
 @property (nonatomic) NSUInteger totalCharacters;
 @property (nonatomic) NSUInteger totalCharactersNoSpaces;
+@property (nonatomic) NSTimeInterval lastWordCountUpdate;
 - (void)updateWordCount;
 - (void)scheduleWordCountUpdate;
 @end
@@ -83,84 +84,82 @@
 }
 
 
-#pragma mark - Debouncing Tests
+#pragma mark - Throttling Tests
 
 /**
- * Test that rapid calls to scheduleWordCountUpdate result in debouncing.
- * Issue #294: The update should not fire during the debounce window.
+ * Test that rapid calls to scheduleWordCountUpdate result in throttling.
+ * Issue #294: The first call fires immediately; subsequent calls within
+ * the 0.25s throttle window should not fire immediately but schedule
+ * a trailing update instead.
  *
- * Calls scheduleWordCountUpdate multiple times rapidly, then runs the run
- * loop for less than the 0.3s debounce delay. Verifies that updateWordCount
- * has not yet fired (totalWords remains 0 since there is no real WebView).
+ * Calls scheduleWordCountUpdate once (fires immediately since
+ * lastWordCountUpdate starts at 0), then simulates that immediate fire
+ * by setting lastWordCountUpdate to now, then calls scheduleWordCountUpdate
+ * again. The second call should not fire immediately. Verifies that
+ * totalWords is still 0 (no real WebView) and no crash occurs.
  */
-- (void)testScheduleWordCountUpdateDebounces
+- (void)testScheduleWordCountUpdateThrottles
 {
     MPPreferences *prefs = [MPPreferences sharedInstance];
     BOOL originalValue = prefs.editorShowWordCount;
     prefs.editorShowWordCount = YES;
 
     @try {
-        // Call scheduleWordCountUpdate multiple times rapidly
-        [self.document scheduleWordCountUpdate];
-        [self.document scheduleWordCountUpdate];
-        [self.document scheduleWordCountUpdate];
-        [self.document scheduleWordCountUpdate];
+        // First call fires immediately because lastWordCountUpdate is 0
         [self.document scheduleWordCountUpdate];
 
-        // Run the run loop for less than the 0.3s debounce delay
-        [[NSRunLoop currentRunLoop] runUntilDate:
-            [NSDate dateWithTimeIntervalSinceNow:0.1]];
+        // Record the timestamp that updateWordCount just set
+        NSTimeInterval stampAfterFirst = self.document.lastWordCountUpdate;
+        XCTAssertGreaterThan(stampAfterFirst, 0,
+                             @"First call should fire immediately and stamp lastWordCountUpdate");
 
-        // updateWordCount should not have fired yet; totalWords stays 0
-        // (without a real WebView, updateWordCount won't change totalWords,
-        // but if it had fired, the code path would still have been exercised)
-        XCTAssertEqual(self.document.totalWords, (NSUInteger)0,
-                       @"totalWords should still be 0 within the debounce window");
+        // Second call within the 0.25s throttle window should NOT fire
+        // immediately — it should schedule a trailing update instead
+        [self.document scheduleWordCountUpdate];
+
+        // lastWordCountUpdate should be unchanged (trailing hasn't fired yet)
+        XCTAssertEqual(self.document.lastWordCountUpdate, stampAfterFirst,
+                       @"Second call within throttle window should not fire immediately");
     }
     @finally {
-        // Cancel pending requests before restoring preferences, ensuring no
-        // deferred updateWordCount fires after this test ends.
         [NSObject cancelPreviousPerformRequestsWithTarget:self.document
                                                  selector:@selector(updateWordCount)
                                                    object:nil];
         prefs.editorShowWordCount = originalValue;
     }
-
-    // Run the run loop past the debounce delay and confirm the cancelled
-    // requests did not fire (totalWords remains 0).
-    [[NSRunLoop currentRunLoop] runUntilDate:
-        [NSDate dateWithTimeIntervalSinceNow:0.5]];
-    XCTAssertEqual(self.document.totalWords, (NSUInteger)0,
-                   @"totalWords should remain 0 after cancelled requests — debounced updates must not fire");
 }
 
 /**
- * Test that scheduleWordCountUpdate fires updateWordCount after the delay.
- * Issue #294: Verify the performSelector-based timer actually fires.
+ * Test that scheduleWordCountUpdate fires a trailing update after the delay.
+ * Issue #294: Verify the trailing performSelector-based timer actually fires.
  *
- * Calls scheduleWordCountUpdate with editorShowWordCount=YES, then runs the
- * run loop for more than 0.3s. The method should fire without crashing.
- * totalWords will remain 0 without a real WebView, but the code path is
- * exercised.
+ * Sets lastWordCountUpdate to now so the call goes to the trailing path,
+ * then calls scheduleWordCountUpdate and runs the run loop for more than
+ * 0.25s. The trailing update should fire without crashing. totalWords will
+ * remain 0 without a real WebView, but the code path is exercised.
  */
-- (void)testDebounceFiresAfterDelay
+- (void)testThrottleTrailingUpdateFires
 {
     MPPreferences *prefs = [MPPreferences sharedInstance];
     BOOL originalValue = prefs.editorShowWordCount;
     prefs.editorShowWordCount = YES;
 
     @try {
-        XCTAssertNoThrow([self.document scheduleWordCountUpdate],
-                         @"scheduleWordCountUpdate should not crash");
+        // Stamp lastWordCountUpdate to now so the call goes to the trailing path
+        NSTimeInterval stamped = [NSDate timeIntervalSinceReferenceDate];
+        self.document.lastWordCountUpdate = stamped;
 
-        // Run the run loop past the 0.3s debounce delay so the scheduled
-        // updateWordCount fires. Without a WebView, updateWordCount sends
-        // messages to nil (safe in ObjC) and totalWords stays 0.
+        [self.document scheduleWordCountUpdate];
+
+        // Run the run loop past the 0.25s throttle interval so the trailing
+        // updateWordCount fires. Verify it actually ran by checking that
+        // lastWordCountUpdate was updated (the only observable side effect
+        // without a WebView).
         [[NSRunLoop currentRunLoop] runUntilDate:
             [NSDate dateWithTimeIntervalSinceNow:0.5]];
 
-        XCTAssertEqual(self.document.totalWords, (NSUInteger)0,
-                       @"totalWords should remain 0 without a real WebView");
+        XCTAssertGreaterThan(self.document.lastWordCountUpdate, stamped,
+                             @"Trailing updateWordCount should have fired and updated lastWordCountUpdate");
     }
     @finally {
         [NSObject cancelPreviousPerformRequestsWithTarget:self.document
@@ -177,7 +176,7 @@
  * Test that scheduleWordCountUpdate respects editorShowWordCount preference.
  * Issue #294: Should be a no-op when word count is disabled.
  *
- * With the performSelector-based implementation, nothing is scheduled when
+ * With the throttle-based implementation, nothing is scheduled or fired when
  * the preference is off, so running the run loop should not trigger any
  * word count work and should not crash.
  */
@@ -213,8 +212,8 @@
  *
  * We can't call -close on a bare MPDocument (it requires full nib
  * initialization for KVO teardown), so we test the cancellation
- * primitive directly: schedule an update, cancel it, run past the
- * debounce delay, and verify the update never fired.
+ * primitive directly: schedule a trailing update, cancel it, run past
+ * the throttle interval, and verify the update never fired.
  */
 - (void)testPendingUpdatesCancelledOnClose
 {
@@ -223,7 +222,11 @@
     prefs.editorShowWordCount = YES;
 
     @try {
-        // Schedule an update
+        // Stamp lastWordCountUpdate to now so the call goes to the trailing
+        // path rather than firing immediately
+        self.document.lastWordCountUpdate = [NSDate timeIntervalSinceReferenceDate];
+
+        // Schedule a trailing update
         [self.document scheduleWordCountUpdate];
 
         // Cancel the pending request (same call that -close makes)
@@ -231,7 +234,7 @@
                                                  selector:@selector(updateWordCount)
                                                    object:nil];
 
-        // Run past the debounce delay; the cancelled update should not fire
+        // Run past the throttle interval; the cancelled update should not fire
         [[NSRunLoop currentRunLoop] runUntilDate:
             [NSDate dateWithTimeIntervalSinceNow:0.5]];
 
