@@ -2476,8 +2476,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (editorCount != previewCount)
     {
         NSUInteger minCount = MIN(editorCount, previewCount);
+#ifdef DEBUG
         NSLog(@"[ScrollSync] Header location count mismatch: editor=%lu preview=%lu, truncating to %lu",
               (unsigned long)editorCount, (unsigned long)previewCount, (unsigned long)minCount);
+#endif
         if (editorCount > minCount)
             _editorHeaderLocations = [_editorHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
         if (previewCount > minCount)
