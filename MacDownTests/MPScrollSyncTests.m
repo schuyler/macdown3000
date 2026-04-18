@@ -49,12 +49,6 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (NSUInteger)mathJaxRenderGeneration;
 @end
 
-// Commit 8 (gap 9): Category implementation for test-only getters.
-// `->` ivar access works because @private visibility is not enforced at runtime.
-@implementation MPDocument (ScrollSyncTesting)
-- (NSUInteger)mathJaxRenderGeneration { return self->_mathJaxRenderGeneration; }
-@end
-
 @interface MPScrollSyncTests : XCTestCase
 @property (strong) MPDocument *document;
 @end

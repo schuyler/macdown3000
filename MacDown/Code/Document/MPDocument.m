@@ -265,7 +265,17 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)refreshHeaderCacheAfterResize;
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
+// Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
+- (NSUInteger)mathJaxRenderGeneration;
 
+@end
+
+// Commit 8 (gap 9): ivar declared in a separate class extension to keep it private
+// while still making -mathJaxRenderGeneration accessible via a compiled method.
+@interface MPDocument ()
+{
+    NSUInteger _mathJaxRenderGeneration;
+}
 @end
 
 static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
@@ -406,6 +416,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     _autosaveName = autosaveName;
     self.splitView.autosaveName = autosaveName;
+}
+
+// Commit 8 (gap 9): Accessor for test introspection. The ivar itself is private
+// (declared in a class extension); this method is the exposed interface.
+- (NSUInteger)mathJaxRenderGeneration
+{
+    return _mathJaxRenderGeneration;
 }
 
 
