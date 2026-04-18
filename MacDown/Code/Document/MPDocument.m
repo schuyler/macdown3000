@@ -261,6 +261,10 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)invokeRenderCompletionHandlers;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
+// Commit 6 (gaps 1+3): layout-change sync
+- (void)refreshHeaderCacheAfterResize;
+- (void)windowDidEndLiveResize:(NSNotification *)notification;
+- (void)windowDidChangeFullScreen:(NSNotification *)notification;
 
 @end
 
@@ -542,6 +546,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
         // Issue #290: Start file watching for auto-reload
         [self startFileWatching];
+
+        // Commit 6 (gaps 1+3): Register for window resize/fullscreen notifications.
+        // Registered here (not in the main setup block) because self.editor.window
+        // may be nil before the window is shown.
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(windowDidEndLiveResize:)
+                       name:NSWindowDidEndLiveResizeNotification object:self.editor.window];
+        [center addObserver:self selector:@selector(windowDidChangeFullScreen:)
+                       name:NSWindowDidEnterFullScreenNotification object:self.editor.window];
+        [center addObserver:self selector:@selector(windowDidChangeFullScreen:)
+                       name:NSWindowDidExitFullScreenNotification object:self.editor.window];
     }];
 }
 
@@ -588,6 +603,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(updateWordCount)
                                                    object:nil];
+
+        // Commit 6 (gaps 1+3): Cancel any pending coalesced header cache refresh.
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                    selector:@selector(refreshHeaderCacheAfterResize) object:nil];
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
@@ -861,6 +880,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     [self redrawDivider];
     self.editor.editable = self.editorVisible;
+    // Commit 6 (gaps 1+3): Coalesce header cache refresh to next run loop iteration,
+    // after layout manager reflows. Split-divider drags fire many notifications rapidly.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self performSelector:@selector(refreshHeaderCacheAfterResize)
+               withObject:nil afterDelay:0];
 }
 
 
@@ -1497,6 +1522,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     if (self.preferences.editorWidthLimited)
         [self adjustEditorInsets];
+    // Commit 6 (gap 3): Coalesce header cache refresh after editor frame changes.
+    // Covers editorWidthLimited toggle and other frame changes not captured above.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self performSelector:@selector(refreshHeaderCacheAfterResize)
+               withObject:nil afterDelay:0];
 }
 
 - (void)willStartLiveScroll:(NSNotification *)notification
@@ -1532,6 +1563,35 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (self.preferences.editorSyncScrolling)
         [self syncScrollersReverse];
     _scrollOwner = MPScrollOwnerNeither;
+}
+
+// Commit 6 (gaps 1+3): Shared handler for all layout-change triggers.
+// Called after window edge resize, split-divider drag (coalesced), full-screen
+// enter/exit, and editor frame changes (coalesced via performSelector:afterDelay:0).
+
+- (void)refreshHeaderCacheAfterResize
+{
+    if (!self.renderer || !self.preferences.editorSyncScrolling)
+        return;
+    [self updateHeaderLocations];
+    if (_scrollOwner == MPScrollOwnerNeither)
+        [self syncScrollers];
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification
+{
+    // Cancel any pending coalesced refresh; do the refresh immediately now.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self refreshHeaderCacheAfterResize];
+}
+
+- (void)windowDidChangeFullScreen:(NSNotification *)notification
+{
+    // Cancel any pending coalesced refresh; do the refresh immediately now.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self refreshHeaderCacheAfterResize];
 }
 
 - (void)editorBoundsDidChange:(NSNotification *)notification
