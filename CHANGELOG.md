@@ -2,10 +2,24 @@
 
 ## [Unreleased]
 
+## [3000.0.6] - 2026-04-18
+
+This release rebuilds scroll sync around an ownership model that eliminates timing-based race conditions, and fixes several user-reported bugs with preview rendering, Quick Look, and diagram support. The deep dive into the long history of the editor / preview panel scroll synchronization took about a day of persistent work. Hopefully it was worth it!
+
 ### Fixed
 
-- Fix Editor preferences window jumping upward when resized (#361)
-- Allow all preference panels to be resized; content stays centered (#362)
+- Fix view menu "Hide/Restore" pane labels not updating (#377, #310) -- thanks @gregwillits for the report!
+- Fix scroll sync jump during typing and remaining sync gaps (#342)
+- Fix preview rendering stuck blank on new documents (#358) -- thanks @rcuisnier for the report!
+- Fix multiple Mermaid/Graphviz diagrams not rendering (#331, #332) -- thanks @rcuisnier and @gino-santerre-telus for the reports!
+- Fix stale image preview after external atomic save (#349) -- thanks @bh18-nuff for the report!
+- Fix Quick Look extension: blank preview, missing entitlements (#367)
+- Fix word count throttle for smoother updates (#294) -- thanks @benel for the report!
+- Fix preference panels to be resizable with centered content (#361, #362) -- thanks @rcuisnier for the reports!
+
+### Added
+
+- Live-edit Graphviz re-rendering via MutationObserver (#332)
 
 ## [3000.0.5] - 2026-04-07
 
