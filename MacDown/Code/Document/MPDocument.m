@@ -257,6 +257,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
+- (void)validateHeaderLocationAlignment;
 - (void)invokeRenderCompletionHandlers;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
@@ -2336,6 +2337,36 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     _editorHeaderLocations = [locations copy];
+
+    // Gap 5: Validate that editor and preview header arrays are aligned.
+    // Mismatches cause cross-indexing to wrong reference points.
+    [self validateHeaderLocationAlignment];
+}
+
+/**
+ * Validates that _editorHeaderLocations and _webViewHeaderLocations have the
+ * same count. When they diverge (e.g. because the editor regex matches headers
+ * inside fenced code blocks that the JS DOM query ignores), truncates both to
+ * MIN(editorCount, previewCount) so syncScrollers/syncScrollersReverse always
+ * cross-index aligned arrays. Trailing unmatched headers are dropped; the sync
+ * algorithms interpolate to end-of-document for those sections.
+ *
+ * Gap 5: editor regex vs JS DOM divergence.
+ */
+- (void)validateHeaderLocationAlignment
+{
+    NSUInteger editorCount = _editorHeaderLocations.count;
+    NSUInteger previewCount = _webViewHeaderLocations.count;
+    if (editorCount != previewCount)
+    {
+        NSUInteger minCount = MIN(editorCount, previewCount);
+        NSLog(@"[ScrollSync] Header location count mismatch: editor=%lu preview=%lu, truncating to %lu",
+              (unsigned long)editorCount, (unsigned long)previewCount, (unsigned long)minCount);
+        if (editorCount > minCount)
+            _editorHeaderLocations = [_editorHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
+        if (previewCount > minCount)
+            _webViewHeaderLocations = [_webViewHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
+    }
 }
 
 /**
