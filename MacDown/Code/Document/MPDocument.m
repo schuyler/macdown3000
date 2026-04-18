@@ -438,6 +438,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.isPreviewReady = NO;
     _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
+    self.lastNonCollapsedRatio = -1.0;
     
     return self;
 }
@@ -876,10 +877,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         NSMenuItem *it = ((NSMenuItem *)item);
         it.hidden = (!self.editorVisible && self.previousSplitRatio < 0.0);
         it.title = self.editorVisible ?
-        NSLocalizedString(@"Hide Editor Pane",
-                          @"Toggle editor pane menu item") :
-        NSLocalizedString(@"Restore Editor Pane",
-                          @"Toggle editor pane menu item");
+            NSLocalizedString(@"Hide Editor Pane",
+                              @"Toggle editor pane menu item") :
+            NSLocalizedString(@"Restore Editor Pane",
+                              @"Toggle editor pane menu item");
 
         // Issue #23: Disable "Hide Editor" when preview is not visible
         // (hiding editor would leave no visible panes)

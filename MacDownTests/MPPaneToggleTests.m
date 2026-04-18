@@ -531,11 +531,11 @@
 }
 
 
-#pragma mark - Issue #310: Editor Menu Item Hidden Property Tests
+#pragma mark - Issue #377: Editor Menu Item Hidden Property Tests
 
 /**
  * Test that editor menu item hidden property is set during validation.
- * Issue #310: The editor pane case was missing the it.hidden assignment.
+ * Issue #377: The editor pane case was missing the it.hidden assignment.
  *
  * In headless mode without window controllers, both panes are not visible
  * and previousSplitRatio is -1.0 (initial sentinel). So the expression
@@ -560,13 +560,13 @@
     // In headless mode: editorVisible is NO, previousSplitRatio is -1.0
     // So hidden should be set to YES
     XCTAssertTrue(item.hidden,
-                  @"Issue #310: Editor menu item hidden property should be set "
+                  @"Issue #377: Editor menu item hidden property should be set "
                   @"when editor is not visible and no previous split ratio exists");
 }
 
 /**
  * Test that preview menu item hidden property is set during validation.
- * Issue #310: This is the existing working behavior - test for symmetry.
+ * Issue #377: This is the existing working behavior - test for symmetry.
  */
 - (void)testPreviewMenuItemHiddenPropertySetDuringValidation
 {
@@ -586,7 +586,7 @@
 
 /**
  * Test that editor menu item is NOT hidden after a toggle has saved a split ratio.
- * Issue #310: Once previousSplitRatio >= 0, the menu item should be visible.
+ * Issue #377: Once previousSplitRatio >= 0, the menu item should be visible.
  */
 - (void)testEditorMenuItemNotHiddenAfterToggle
 {
@@ -608,13 +608,13 @@
 
     // After toggling, previousSplitRatio should be >= 0, so hidden should be NO
     XCTAssertFalse(item.hidden,
-                   @"Issue #310: Editor menu item should not be hidden after a toggle "
+                   @"Issue #377: Editor menu item should not be hidden after a toggle "
                    @"(previousSplitRatio should be saved)");
 }
 
 /**
  * Test that editor menu title changes to "Restore Editor Pane" after hiding editor.
- * Issue #310: This is the core behavioral test.
+ * Issue #377: This is the core behavioral test.
  */
 - (void)testEditorMenuTitleTogglesAfterHide
 {
@@ -640,13 +640,13 @@
     NSString *expectedTitle = NSLocalizedString(@"Restore Editor Pane",
                                                 @"Toggle editor pane menu item");
     XCTAssertEqualObjects(item.title, expectedTitle,
-                          @"Issue #310: Menu title should be 'Restore Editor Pane' "
+                          @"Issue #377: Menu title should be 'Restore Editor Pane' "
                           @"after hiding editor pane");
 }
 
 /**
  * Test that editor menu title changes back to "Hide Editor Pane" after restoring editor.
- * Issue #310: Verifies the full toggle cycle works.
+ * Issue #377: Verifies the full toggle cycle works.
  */
 - (void)testEditorMenuTitleTogglesAfterRestore
 {
@@ -673,7 +673,7 @@
     NSString *expectedTitle = NSLocalizedString(@"Hide Editor Pane",
                                                 @"Toggle editor pane menu item");
     XCTAssertEqualObjects(item.title, expectedTitle,
-                          @"Issue #310: Menu title should be 'Hide Editor Pane' "
+                          @"Issue #377: Menu title should be 'Hide Editor Pane' "
                           @"after restoring editor pane");
 }
 
