@@ -494,12 +494,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [center addObserver:self selector:@selector(didEndPreviewLiveScroll:)
                    name:NSScrollViewDidEndLiveScrollNotification
                  object:self.preview.enclosingScrollView];
-    if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_9)
-    {
-        [center addObserver:self selector:@selector(previewDidLiveScroll:)
-                       name:NSScrollViewDidEndLiveScrollNotification
-                     object:self.preview.enclosingScrollView];
-    }
     [center addObserver:self selector:@selector(previewBoundsDidChange:)
                    name:NSViewBoundsDidChangeNotification
                  object:self.preview.enclosingScrollView.contentView];
@@ -1497,6 +1491,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification
 {
+    // Gap 4: Save lastPreviewScrollTop here (consolidated from the now-deleted
+    // previewDidLiveScroll: observer, which was a second NSScrollViewDidEndLiveScroll
+    // registration on the same object — fragile registration-order coupling).
+    NSClipView *contentView = self.preview.enclosingScrollView.contentView;
+    self.lastPreviewScrollTop = contentView.bounds.origin.y;
+
     // Perform one final reverse sync at scroll-end, then return to quiescent state.
     if (self.preferences.editorSyncScrolling)
         [self syncScrollersReverse];
@@ -1529,12 +1529,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Issue #318: Force CSS refresh from disk on explicit reload
     [self invalidateStyleCaches];
     [self render:nil];
-}
-
-- (void)previewDidLiveScroll:(NSNotification *)notification
-{
-    NSClipView *contentView = self.preview.enclosingScrollView.contentView;
-    self.lastPreviewScrollTop = contentView.bounds.origin.y;
 }
 
 - (void)previewBoundsDidChange:(NSNotification *)notification
