@@ -32,6 +32,21 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)editorBoundsDidChange:(NSNotification *)notification;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
+// Commit 3 (gap 5): array alignment validation
+- (void)validateHeaderLocationAlignment;
+// Commit 4 (gap 8): file revert scroll ownership
+- (void)reloadFromLoadedString;
+@property (nonatomic, readonly) BOOL isPreviewReady;
+// Commit 5 (gap 10): checkbox toggle
+- (void)handleCheckboxToggle:(NSURL *)url;
+// Commit 6 (gaps 1+3): layout-change sync
+- (void)refreshHeaderCacheAfterResize;
+- (void)windowDidEndLiveResize:(NSNotification *)notification;
+- (void)windowDidChangeFullScreen:(NSNotification *)notification;
+// Commit 7 (gap 2): editor-reveal sync
+- (void)setSplitViewDividerLocation:(CGFloat)ratio;
+// Commit 8 (gap 9): MathJax render generation counter getter
+- (NSUInteger)mathJaxRenderGeneration;
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1717,5 +1732,294 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     XCTAssertNoThrow([doc close],
                      @"close should not crash after performDelayedSyncScrollers is removed");
 }
+
+#pragma mark - Group H — Division-by-zero guard in syncScrollers/syncScrollersReverse (Commit 1, gaps 6+7)
+
+/**
+ * H1 — syncScrollers with a single header at y=0 does not crash.
+ * Exercises the `maxY==0` sentinel path (gap 6): when the only header is at 0
+ * after taper adjustment, maxY stays 0 and the division guard must fire.
+ */
+- (void)testSyncScrollersSingleHeaderAtYZeroNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@0];
+    doc.editorHeaderLocations  = @[@0];
+
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"H1: syncScrollers should not crash when the only header is at y=0");
+}
+
+/**
+ * H2 — syncScrollersReverse with a single header at y=0 does not crash.
+ * Mirror of H1 in the reverse direction.
+ */
+- (void)testSyncScrollersReverseSingleHeaderAtYZeroNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@0];
+    doc.editorHeaderLocations  = @[@0];
+
+    XCTAssertNoThrow([doc syncScrollersReverse],
+                     @"H2: syncScrollersReverse should not crash when the only header is at y=0");
+}
+
+/**
+ * H3 — syncScrollers with two headers at the same y does not crash.
+ * Exercises gap 7: foundMaxY becomes YES but maxY - minY collapses to 0
+ * post-normalization, so the division guard must fire.
+ */
+- (void)testSyncScrollersTwoHeadersSameYNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@100, @100];
+    doc.editorHeaderLocations  = @[@100, @100];
+
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"H3: syncScrollers should not crash when two headers share the same y");
+}
+
+/**
+ * H4 — syncScrollersReverse with two headers at the same y does not crash.
+ * Mirror of H3 in the reverse direction.
+ */
+- (void)testSyncScrollersReverseTwoHeadersSameYNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@100, @100];
+    doc.editorHeaderLocations  = @[@100, @100];
+
+    XCTAssertNoThrow([doc syncScrollersReverse],
+                     @"H4: syncScrollersReverse should not crash when two headers share the same y");
+}
+
+/**
+ * H5 — syncScrollers with a single header at y=0 and a non-zero scroll position does not crash.
+ * Header is below currY=0 but y=0 means it enters the minY branch; foundMaxY stays NO,
+ * triggering interpolateToEndOfDocument and the division guard.
+ */
+- (void)testSyncScrollersSingleHeaderAtYZeroWithScrollNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    // Place the header at 0 — after taper subtraction it may still land in minY branch
+    doc.webViewHeaderLocations = @[@0];
+    doc.editorHeaderLocations  = @[@0];
+    // lastPreviewScrollTop is not the editor scroll, but we use it as a proxy.
+    // The actual scroll view is nil (headless), so currY = 0 regardless.
+    // This test verifies crash-freedom; behavioral verification requires a window.
+    doc.lastPreviewScrollTop = 100.0;
+
+    XCTAssertNoThrow([doc syncScrollers],
+                     @"H5: syncScrollers should not crash with header at y=0 and non-zero scroll");
+}
+
+/**
+ * H6 — syncScrollersReverse with a single header at y=0 and a non-zero scroll position does not crash.
+ * Mirror of H5 in the reverse direction.
+ */
+- (void)testSyncScrollersReverseSingleHeaderAtYZeroWithScrollNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.webViewHeaderLocations = @[@0];
+    doc.editorHeaderLocations  = @[@0];
+    doc.lastPreviewScrollTop = 100.0;
+
+    XCTAssertNoThrow([doc syncScrollersReverse],
+                     @"H6: syncScrollersReverse should not crash with header at y=0 and non-zero scroll");
+}
+
+#pragma mark - Group L — Array alignment validation (Commit 3, gap 5)
+
+/**
+ * L1 — validateHeaderLocationAlignment truncates the longer array to MIN count.
+ * When editor has 3 entries and webView has 2, both should end up with 2 entries.
+ */
+- (void)testValidateHeaderLocationAlignmentTruncatesToMin
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.editorHeaderLocations  = @[@50, @150, @300];
+    doc.webViewHeaderLocations = @[@100, @250];
+
+    [doc validateHeaderLocationAlignment];
+
+    XCTAssertEqual(doc.editorHeaderLocations.count, 2U,
+                   @"L1: editorHeaderLocations should be truncated to 2 (the MIN count)");
+    XCTAssertEqual(doc.webViewHeaderLocations.count, 2U,
+                   @"L1: webViewHeaderLocations should remain at 2");
+}
+
+/**
+ * L2 — validateHeaderLocationAlignment leaves equal-length arrays unchanged.
+ */
+- (void)testValidateHeaderLocationAlignmentEqualArraysUnchanged
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.editorHeaderLocations  = @[@50, @150];
+    doc.webViewHeaderLocations = @[@100, @250];
+
+    [doc validateHeaderLocationAlignment];
+
+    XCTAssertEqual(doc.editorHeaderLocations.count, 2U,
+                   @"L2: editorHeaderLocations should be unchanged when counts match");
+    XCTAssertEqual(doc.webViewHeaderLocations.count, 2U,
+                   @"L2: webViewHeaderLocations should be unchanged when counts match");
+}
+
+/**
+ * L3 — validateHeaderLocationAlignment with one empty array results in both empty.
+ * MIN(3, 0) == 0, so the non-empty array must be truncated to empty.
+ */
+- (void)testValidateHeaderLocationAlignmentOneEmptyResultsBothEmpty
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.editorHeaderLocations  = @[@50, @150, @300];
+    doc.webViewHeaderLocations = @[];
+
+    [doc validateHeaderLocationAlignment];
+
+    XCTAssertEqual(doc.editorHeaderLocations.count, 0U,
+                   @"L3: editorHeaderLocations should be truncated to empty when webView array is empty");
+    XCTAssertEqual(doc.webViewHeaderLocations.count, 0U,
+                   @"L3: webViewHeaderLocations should remain empty");
+}
+
+#pragma mark - Group I — Scroll ownership on file revert (Commit 4, gap 8)
+
+/**
+ * I1 — reloadFromLoadedString on a fresh (headless) document does not crash,
+ * and scrollOwner remains Neither because isPreviewReady is NO.
+ *
+ * Headless limitation: the `if (self.editor && self.renderer && self.highlighter)`
+ * guard prevents body execution, so the ownership transition (`if (self.isPreviewReady)
+ * _scrollOwner = MPScrollOwnerEditor`) is not reachable in this environment.
+ * This test verifies crash-freedom and the pre-condition (Neither ownership on init).
+ */
+- (void)testReloadFromLoadedStringFreshDocumentNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertNoThrow([doc reloadFromLoadedString],
+                     @"I1: reloadFromLoadedString should not crash on a fresh headless document");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"I1: scrollOwner should remain Neither after reloadFromLoadedString on fresh document (isPreviewReady is NO)");
+}
+
+#pragma mark - Group M — Checkbox toggle ownership (Commit 5, gap 10)
+
+/**
+ * M1 — handleCheckboxToggle: with a well-formed URL does not crash.
+ * Headless: self.editor is nil, so the body does not execute.
+ */
+- (void)testHandleCheckboxToggleValidURLNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    NSURL *url = [NSURL URLWithString:@"x-macdown-checkbox://toggle/0"];
+
+    XCTAssertNoThrow([doc handleCheckboxToggle:url],
+                     @"M1: handleCheckboxToggle: should not crash with a valid toggle URL");
+}
+
+/**
+ * M2 — handleCheckboxToggle: with an unrecognized host returns early without crashing.
+ * The method guards on `url.host == "toggle"` and returns early otherwise.
+ */
+- (void)testHandleCheckboxToggleInvalidURLNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    NSURL *url = [NSURL URLWithString:@"x-macdown-checkbox://notacommand/0"];
+
+    XCTAssertNoThrow([doc handleCheckboxToggle:url],
+                     @"M2: handleCheckboxToggle: should not crash with an unrecognized host");
+}
+
+#pragma mark - Group J — Sync after layout changes (Commit 6, gaps 1+3)
+
+/**
+ * J1 — refreshHeaderCacheAfterResize does not crash when renderer is nil.
+ * The method should return early when `!self.renderer`.
+ */
+- (void)testRefreshHeaderCacheAfterResizeNilRendererNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    // renderer is nil on a fresh headless document
+
+    XCTAssertNoThrow([doc refreshHeaderCacheAfterResize],
+                     @"J1: refreshHeaderCacheAfterResize should not crash when renderer is nil");
+}
+
+/**
+ * J2 — windowDidEndLiveResize: does not crash.
+ */
+- (void)testWindowDidEndLiveResizeNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertNoThrow([doc windowDidEndLiveResize:nil],
+                     @"J2: windowDidEndLiveResize: should not crash");
+}
+
+/**
+ * J3 — windowDidChangeFullScreen: does not crash.
+ */
+- (void)testWindowDidChangeFullScreenNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertNoThrow([doc windowDidChangeFullScreen:nil],
+                     @"J3: windowDidChangeFullScreen: should not crash");
+}
+
+/**
+ * J4 — refreshHeaderCacheAfterResize does not change scrollOwner when it is Preview.
+ * The method may call syncScrollers only when scrollOwner == Neither; Preview
+ * ownership must be preserved.
+ */
+- (void)testRefreshHeaderCachePreservesPreviewOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+
+    [doc refreshHeaderCacheAfterResize];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerPreview,
+                   @"J4: refreshHeaderCacheAfterResize should not change scrollOwner when it is Preview");
+}
+
+#pragma mark - Group K — Editor-reveal sync (Commit 7, gap 2)
+
+/**
+ * K1 — setSplitViewDividerLocation:0.5 does not crash.
+ * splitView is nil in headless tests; the method must handle that gracefully.
+ */
+- (void)testSetSplitViewDividerLocationNoCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertNoThrow([doc setSplitViewDividerLocation:0.5],
+                     @"K1: setSplitViewDividerLocation: should not crash in a headless document");
+}
+
+#pragma mark - Group N — MathJax render generation counter (Commit 8, gap 9)
+
+// NOTE: Group N tests require the `_mathJaxRenderGeneration` ivar added in Commit 8
+// and the `mathJaxRenderGeneration` getter in the test category above.
+// Until that ivar is added to MPDocument.m, these tests will not compile.
+// They are wrapped in #if 0 so the rest of the test suite compiles and runs (red state).
+// Remove the #if 0 / #endif when Commit 8 lands.
+#if 0
+
+/**
+ * N1 — _mathJaxRenderGeneration ivar starts at 0 (implicitly zero-initialized by runtime).
+ * Verifies the counter exists and has the expected initial value before any render.
+ */
+- (void)testMathJaxRenderGenerationInitialValueIsZero
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertEqual([doc mathJaxRenderGeneration], (NSUInteger)0,
+                   @"N1: _mathJaxRenderGeneration should be 0 on a fresh document");
+}
+
+#endif  // Group N — enable after Commit 8 adds _mathJaxRenderGeneration ivar
 
 @end
