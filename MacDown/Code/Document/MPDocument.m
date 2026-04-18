@@ -326,12 +326,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
 @implementation MPDocument
-{
-    // Commit 8 (gap 9): Generation counter to discard stale MathJax render callbacks.
-    // Incremented before each new MathJax listener setup; captured in the block.
-    // If generation differs at callback time, the render was superseded — skip it.
-    NSUInteger _mathJaxRenderGeneration;
-}
 
 #pragma mark - Accessor
 

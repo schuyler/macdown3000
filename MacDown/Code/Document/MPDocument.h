@@ -11,6 +11,12 @@
 
 
 @interface MPDocument : NSDocument
+{
+    @package
+    // Commit 8 (gap 9): Generation counter for MathJax render callbacks.
+    // Exposed here (not @interface ()) so that the test category can access it via ->.
+    NSUInteger _mathJaxRenderGeneration;
+}
 
 @property (nonatomic, readonly) MPPreferences *preferences;
 @property (readonly) BOOL previewVisible;
