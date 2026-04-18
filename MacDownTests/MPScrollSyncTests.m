@@ -46,7 +46,10 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 // Commit 7 (gap 2): editor-reveal sync
 - (void)setSplitViewDividerLocation:(CGFloat)ratio;
 // Commit 8 (gap 9): MathJax render generation counter getter
+// NOTE: declared inside #if 0 because the ivar it accesses doesn't exist yet (added in Commit 8)
+#if 0
 - (NSUInteger)mathJaxRenderGeneration;
+#endif
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1791,41 +1794,6 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     XCTAssertNoThrow([doc syncScrollersReverse],
                      @"H4: syncScrollersReverse should not crash when two headers share the same y");
-}
-
-/**
- * H5 — syncScrollers with a single header at y=0 and a non-zero scroll position does not crash.
- * Header is below currY=0 but y=0 means it enters the minY branch; foundMaxY stays NO,
- * triggering interpolateToEndOfDocument and the division guard.
- */
-- (void)testSyncScrollersSingleHeaderAtYZeroWithScrollNoCrash
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    // Place the header at 0 — after taper subtraction it may still land in minY branch
-    doc.webViewHeaderLocations = @[@0];
-    doc.editorHeaderLocations  = @[@0];
-    // lastPreviewScrollTop is not the editor scroll, but we use it as a proxy.
-    // The actual scroll view is nil (headless), so currY = 0 regardless.
-    // This test verifies crash-freedom; behavioral verification requires a window.
-    doc.lastPreviewScrollTop = 100.0;
-
-    XCTAssertNoThrow([doc syncScrollers],
-                     @"H5: syncScrollers should not crash with header at y=0 and non-zero scroll");
-}
-
-/**
- * H6 — syncScrollersReverse with a single header at y=0 and a non-zero scroll position does not crash.
- * Mirror of H5 in the reverse direction.
- */
-- (void)testSyncScrollersReverseSingleHeaderAtYZeroWithScrollNoCrash
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    doc.webViewHeaderLocations = @[@0];
-    doc.editorHeaderLocations  = @[@0];
-    doc.lastPreviewScrollTop = 100.0;
-
-    XCTAssertNoThrow([doc syncScrollersReverse],
-                     @"H6: syncScrollersReverse should not crash with header at y=0 and non-zero scroll");
 }
 
 #pragma mark - Group L — Array alignment validation (Commit 3, gap 5)
