@@ -70,7 +70,12 @@
     left.frame = NSMakeRect(0.0, 0.0, leftWidth, left.frame.size.height);
     right.frame = NSMakeRect(leftWidth + dividerThickness, 0.0,
                              rightWidth, right.frame.size.height);
-    [self setPosition:leftWidth ofDividerAtIndex:0];
+    // Issue #377: Don't call setPosition: for collapsed states (ratio 0 or 1).
+    // The manual frame-setting above is sufficient, and setPosition: may
+    // override the zero-width frame when canCollapseSubview: was not implemented.
+    // This mirrors resizeSubviewsWithOldSize: which defers to super at ratio 0/1.
+    if (ratio > 0.0 && ratio < 1.0)
+        [self setPosition:leftWidth ofDividerAtIndex:0];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize

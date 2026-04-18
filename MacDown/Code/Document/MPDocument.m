@@ -215,6 +215,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) HGMarkdownHighlighter *highlighter;
 @property (strong) MPRenderer *renderer;
 @property CGFloat previousSplitRatio;
+@property CGFloat lastNonCollapsedRatio;
 @property BOOL manualRender;
 @property BOOL printing;
 @property BOOL isPreviewReady;
@@ -897,12 +898,35 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     [self redrawDivider];
     self.editor.editable = self.editorVisible;
+    // Issue #377: Track divider-drag collapses. When the ratio transitions from
+    // a non-collapsed value to 0 or 1, save the pre-collapse ratio to
+    // previousSplitRatio so the menu item remains visible (not hidden).
+    CGFloat ratio = self.splitView.dividerLocation;
+    if (ratio > 0.0 && ratio < 1.0)
+    {
+        self.lastNonCollapsedRatio = ratio;
+    }
+    else if (self.previousSplitRatio < 0.0 && self.lastNonCollapsedRatio > 0.0)
+    {
+        // Pane collapsed (ratio is 0 or 1) and previousSplitRatio was never set
+        // by the menu toggle path — this is a divider-drag collapse.
+        self.previousSplitRatio = self.lastNonCollapsedRatio;
+    }
     // Commit 6 (gaps 1+3): Coalesce header cache refresh to next run loop iteration,
     // after layout manager reflows. Split-divider drags fire many notifications rapidly.
     [NSObject cancelPreviousPerformRequestsWithTarget:self
                 selector:@selector(refreshHeaderCacheAfterResize) object:nil];
     [self performSelector:@selector(refreshHeaderCacheAfterResize)
                withObject:nil afterDelay:0];
+}
+
+// Issue #377: Allow NSSplitView to collapse subviews to zero width during
+// divider drags. Without this, dragging the divider to the edge may not
+// fully collapse the pane. Returns YES for both subviews unconditionally
+// (regardless of editorOnRight preference) since either pane can be hidden.
+- (BOOL)splitView:(NSSplitView *)splitView canCollapseSubview:(NSView *)subview
+{
+    return YES;
 }
 
 
