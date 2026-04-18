@@ -257,34 +257,54 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
+- (void)validateHeaderLocationAlignment;
 - (void)invokeRenderCompletionHandlers;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
+// Commit 6 (gaps 1+3): layout-change sync
+- (void)refreshHeaderCacheAfterResize;
+- (void)windowDidEndLiveResize:(NSNotification *)notification;
+- (void)windowDidChangeFullScreen:(NSNotification *)notification;
+// Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
+- (NSUInteger)mathJaxRenderGeneration;
 
+@end
+
+// Commit 8 (gap 9): ivar declared in a separate class extension to keep it private
+// while still making -mathJaxRenderGeneration accessible via a compiled method.
+@interface MPDocument ()
+{
+    NSUInteger _mathJaxRenderGeneration;
+}
 @end
 
 static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     __weak MPDocument *weakObj = doc;
     return ^{
-        WebView *webView = weakObj.preview;
+        // Gap 8: weak→strong dance to avoid repeated weakObj dereferences and
+        // to ensure the object is not released mid-block.
+        __strong MPDocument *strongObj = weakObj;
+        if (!strongObj) return;
+
+        WebView *webView = strongObj.preview;
         NSWindow *window = webView.window;
 
         // Set initial scroll position BEFORE scaling to prevent flash to top
         NSClipView *contentView = webView.enclosingScrollView.contentView;
         NSRect bounds = contentView.bounds;
-        bounds.origin.y = weakObj.lastPreviewScrollTop;
+        bounds.origin.y = strongObj.lastPreviewScrollTop;
         contentView.bounds = bounds;
 
-        [weakObj scaleWebview];
+        [strongObj scaleWebview];
 
         // Issue #342: Only sync if editor is not currently authoritative.
         // A full reload during active typing must not overwrite the editor's position.
-        if (weakObj.preferences.editorSyncScrolling
-            && weakObj.scrollOwner != MPScrollOwnerEditor)
+        if (strongObj.preferences.editorSyncScrolling
+            && strongObj.scrollOwner != MPScrollOwnerEditor)
         {
-            [weakObj updateHeaderLocations];
-            [weakObj syncScrollers];
+            [strongObj updateHeaderLocations];
+            [strongObj syncScrollers];
         }
 
         // Force display update before enabling window flushing to ensure scroll position is applied
@@ -300,9 +320,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             }
         }
 
+        // Gap 8: Reset ownership to Neither after the full-reload completion path.
+        // The DOM-replacement path already resets ownership (lines ~1389, ~1370).
+        // This closes the stuck-ownership gap on the full-reload path: if reloadFromLoadedString
+        // set ownership to Editor, this handler restores quiescent state after rendering
+        // completes, allowing forward sync to resume on the next user-initiated scroll.
+        // Placed before invokeRenderCompletionHandlers so completion handlers see reset state.
+        strongObj.scrollOwner = MPScrollOwnerNeither;
+
         // Issue #16: Invoke deferred operation handlers after render completes
         // (This is called for MathJax rendering completion path)
-        [weakObj invokeRenderCompletionHandlers];
+        [strongObj invokeRenderCompletionHandlers];
     };
 }
 
@@ -388,6 +416,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     _autosaveName = autosaveName;
     self.splitView.autosaveName = autosaveName;
+}
+
+// Commit 8 (gap 9): Accessor for test introspection. The ivar itself is private
+// (declared in a class extension); this method is the exposed interface.
+- (NSUInteger)mathJaxRenderGeneration
+{
+    return _mathJaxRenderGeneration;
 }
 
 
@@ -494,12 +529,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [center addObserver:self selector:@selector(didEndPreviewLiveScroll:)
                    name:NSScrollViewDidEndLiveScrollNotification
                  object:self.preview.enclosingScrollView];
-    if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_9)
-    {
-        [center addObserver:self selector:@selector(previewDidLiveScroll:)
-                       name:NSScrollViewDidEndLiveScrollNotification
-                     object:self.preview.enclosingScrollView];
-    }
     [center addObserver:self selector:@selector(previewBoundsDidChange:)
                    name:NSViewBoundsDidChangeNotification
                  object:self.preview.enclosingScrollView.contentView];
@@ -534,6 +563,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
         // Issue #290: Start file watching for auto-reload
         [self startFileWatching];
+
+        // Commit 6 (gaps 1+3): Register for window resize/fullscreen notifications.
+        // Registered here (not in the main setup block) because self.editor.window
+        // may be nil before the window is shown.
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center addObserver:self selector:@selector(windowDidEndLiveResize:)
+                       name:NSWindowDidEndLiveResizeNotification object:self.editor.window];
+        [center addObserver:self selector:@selector(windowDidChangeFullScreen:)
+                       name:NSWindowDidEnterFullScreenNotification object:self.editor.window];
+        [center addObserver:self selector:@selector(windowDidChangeFullScreen:)
+                       name:NSWindowDidExitFullScreenNotification object:self.editor.window];
     }];
 }
 
@@ -546,6 +586,23 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             self.editor.string = self.loadedString;
             self.loadedString = nil;
         }
+
+        // Gap 8: Claim editor ownership before rendering so that the full-reload
+        // completion handler's sync guard (scrollOwner != MPScrollOwnerEditor) skips
+        // syncScrollers. This is correct — after a revert, the editor content changed
+        // and the preview is about to re-render to match. The completion handler restores
+        // lastPreviewScrollTop and resets ownership to Neither; forward sync resumes on
+        // the next user-initiated scroll.
+        //
+        // isPreviewReady == NO during initial load (only YES after the first successful
+        // frame load), so this only fires for revert-triggered calls, not the initial load.
+        //
+        // Note: if the user was mid-preview-scroll when an external change triggers reload,
+        // MPScrollOwnerPreview gets overwritten to Editor. This is intentional — external
+        // file changes take priority.
+        if (self.isPreviewReady)
+            _scrollOwner = MPScrollOwnerEditor;
+
         [self.renderer parseAndRenderNow];
         [self.highlighter parseAndHighlightNow];
     }
@@ -563,6 +620,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [NSObject cancelPreviousPerformRequestsWithTarget:self
                                                  selector:@selector(updateWordCount)
                                                    object:nil];
+
+        // Commit 6 (gaps 1+3): Cancel any pending coalesced header cache refresh.
+        [NSObject cancelPreviousPerformRequestsWithTarget:self
+                    selector:@selector(refreshHeaderCacheAfterResize) object:nil];
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
@@ -836,6 +897,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     [self redrawDivider];
     self.editor.editable = self.editorVisible;
+    // Commit 6 (gaps 1+3): Coalesce header cache refresh to next run loop iteration,
+    // after layout manager reflows. Split-divider drags fire many notifications rapidly.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self performSelector:@selector(refreshHeaderCacheAfterResize)
+               withObject:nil afterDelay:0];
 }
 
 
@@ -1349,18 +1416,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"})();",
                     scrollBefore];
 
-                // Issue #325: Set up MathJax completion callback to update header
-                // locations after typesetting, which may change document height.
-                // This overwrites the initial-load "End" listener, which is safe
-                // because isPreviewReady guarantees the initial load completed.
+                // Issue #325 / Commit 8 (gap 9): Set up MathJax completion callback to
+                // update header locations after typesetting, which may change document height.
+                // This overwrites the initial-load "End" listener, which is safe because
+                // isPreviewReady guarantees the initial load completed.
+                //
+                // Generation counter: increment before capturing so that stale callbacks
+                // from a superseded render are no-ops. Only the most recent render's
+                // callback resets ownership and syncs.
                 if (self.preferences.htmlMathJax)
                 {
+                    _mathJaxRenderGeneration++;
+                    NSUInteger expectedGeneration = _mathJaxRenderGeneration;
                     MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
-                        // Issue #342: Sync at render completion, then transition ownership to Neither.
                         __strong typeof(weakSelf) strongSelf = weakSelf;
                         if (!strongSelf)
+                            return;
+                        // Commit 8 (gap 9): If generation differs, this callback is stale —
+                        // a newer render was started before MathJax finished. Skip entirely.
+                        if (strongSelf->_mathJaxRenderGeneration != expectedGeneration)
                             return;
                         if (strongSelf.preferences.editorSyncScrolling)
                         {
@@ -1472,6 +1548,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     if (self.preferences.editorWidthLimited)
         [self adjustEditorInsets];
+    // Commit 6 (gap 3): Coalesce header cache refresh after editor frame changes.
+    // Covers editorWidthLimited toggle and other frame changes not captured above.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self performSelector:@selector(refreshHeaderCacheAfterResize)
+               withObject:nil afterDelay:0];
 }
 
 - (void)willStartLiveScroll:(NSNotification *)notification
@@ -1497,10 +1579,45 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification
 {
+    // Gap 4: Save lastPreviewScrollTop here (consolidated from the now-deleted
+    // previewDidLiveScroll: observer, which was a second NSScrollViewDidEndLiveScroll
+    // registration on the same object — fragile registration-order coupling).
+    NSClipView *contentView = self.preview.enclosingScrollView.contentView;
+    self.lastPreviewScrollTop = contentView.bounds.origin.y;
+
     // Perform one final reverse sync at scroll-end, then return to quiescent state.
     if (self.preferences.editorSyncScrolling)
         [self syncScrollersReverse];
     _scrollOwner = MPScrollOwnerNeither;
+}
+
+// Commit 6 (gaps 1+3): Shared handler for all layout-change triggers.
+// Called after window edge resize, split-divider drag (coalesced), full-screen
+// enter/exit, and editor frame changes (coalesced via performSelector:afterDelay:0).
+
+- (void)refreshHeaderCacheAfterResize
+{
+    if (!self.renderer || !self.preferences.editorSyncScrolling)
+        return;
+    [self updateHeaderLocations];
+    if (_scrollOwner == MPScrollOwnerNeither)
+        [self syncScrollers];
+}
+
+- (void)windowDidEndLiveResize:(NSNotification *)notification
+{
+    // Cancel any pending coalesced refresh; do the refresh immediately now.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self refreshHeaderCacheAfterResize];
+}
+
+- (void)windowDidChangeFullScreen:(NSNotification *)notification
+{
+    // Cancel any pending coalesced refresh; do the refresh immediately now.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                selector:@selector(refreshHeaderCacheAfterResize) object:nil];
+    [self refreshHeaderCacheAfterResize];
 }
 
 - (void)editorBoundsDidChange:(NSNotification *)notification
@@ -1529,12 +1646,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Issue #318: Force CSS refresh from disk on explicit reload
     [self invalidateStyleCaches];
     [self render:nil];
-}
-
-- (void)previewDidLiveScroll:(NSNotification *)notification
-{
-    NSClipView *contentView = self.preview.enclosingScrollView.contentView;
-    self.lastPreviewScrollTop = contentView.bounds.origin.y;
 }
 
 - (void)previewBoundsDidChange:(NSNotification *)notification
@@ -2342,6 +2453,38 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     _editorHeaderLocations = [locations copy];
+
+    // Gap 5: Validate that editor and preview header arrays are aligned.
+    // Mismatches cause cross-indexing to wrong reference points.
+    [self validateHeaderLocationAlignment];
+}
+
+/**
+ * Validates that _editorHeaderLocations and _webViewHeaderLocations have the
+ * same count. When they diverge (e.g. because the editor regex matches headers
+ * inside fenced code blocks that the JS DOM query ignores), truncates both to
+ * MIN(editorCount, previewCount) so syncScrollers/syncScrollersReverse always
+ * cross-index aligned arrays. Trailing unmatched headers are dropped; the sync
+ * algorithms interpolate to end-of-document for those sections.
+ *
+ * Gap 5: editor regex vs JS DOM divergence.
+ */
+- (void)validateHeaderLocationAlignment
+{
+    NSUInteger editorCount = _editorHeaderLocations.count;
+    NSUInteger previewCount = _webViewHeaderLocations.count;
+    if (editorCount != previewCount)
+    {
+        NSUInteger minCount = MIN(editorCount, previewCount);
+#ifdef DEBUG
+        NSLog(@"[ScrollSync] Header location count mismatch: editor=%lu preview=%lu, truncating to %lu",
+              (unsigned long)editorCount, (unsigned long)previewCount, (unsigned long)minCount);
+#endif
+        if (editorCount > minCount)
+            _editorHeaderLocations = [_editorHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
+        if (previewCount > minCount)
+            _webViewHeaderLocations = [_webViewHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
+    }
 }
 
 /**
@@ -2368,7 +2511,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat currY = NSMinY(self.editor.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
     CGFloat maxY = 0;
-    
+    BOOL foundMaxY = NO;  // Gap 6: replace maxY==0 sentinel with explicit flag
+
     // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
     // Taper values: 0 at document edges, 1.0 in the middle of the document.
     CGFloat topTaper = MAX(0, MIN(1.0, currY / editorVisibleHeight));
@@ -2381,26 +2525,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     for (NSNumber *headerYNum in _editorHeaderLocations) {
         CGFloat headerY = [headerYNum floatValue];
         headerY -= adjustmentForScroll;
-        
+
         if (headerY < currY)
         {
             // The header is before our current scroll position. the closest
             // of these will be our first reference node
             relativeHeaderIndex += 1;
             minY = headerY;
-        } else if (maxY == 0 && headerY < editorContentHeight - editorVisibleHeight)
+        } else if (!foundMaxY && headerY < editorContentHeight - editorVisibleHeight)
         {
             // Skip any headers that are within the last screen of the editor.
             // we'll interpolate to the end of the document in that case.
             maxY = headerY;
+            foundMaxY = YES;  // Gap 6: mark that we found a real maxY
         }
     }
-    
+
     // Usually, we'll be scrolling between two reference nodes, but toward the end
     // of the document we'll ignore nodes and reference the end of the document instead
     BOOL interpolateToEndOfDocument = NO;
-    
-    if (maxY == 0)
+
+    if (!foundMaxY)
     {
         // We only have a reference node before our current position,
         // but not after, so we'll use the end of the document.
@@ -2413,7 +2558,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     currY = MAX(0, currY - minY);
     maxY -= minY;
     minY -= minY;
-    CGFloat percentScrolledBetweenHeaders = MAX(0, MIN(1.0, currY / maxY));
+    // Gap 7: guard against division by zero when two headers share the same
+    // taper-adjusted y (maxY - minY == 0) or very short documents collapse all points.
+    CGFloat percentScrolledBetweenHeaders = (maxY - minY < 0.001) ? 0 : MAX(0, MIN(1.0, currY / maxY));
     
     // Now that we know where the editor position is relative to two reference nodes,
     // we need to find the positions of those nodes in the HTML preview
@@ -2468,6 +2615,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat currY = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
     CGFloat maxY = 0;
+    BOOL foundMaxY = NO;  // Gap 6: replace maxY==0 sentinel with explicit flag
 
     // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
     // Taper values: 0 at document edges, 1.0 in the middle of the document.
@@ -2487,11 +2635,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // of these will be our first reference node
             relativeHeaderIndex += 1;
             minY = headerY;
-        } else if (maxY == 0 && headerY < previewContentHeight - previewVisibleHeight)
+        } else if (!foundMaxY && headerY < previewContentHeight - previewVisibleHeight)
         {
             // Skip any headers that are within the last screen of the preview.
             // we'll interpolate to the end of the document in that case.
             maxY = headerY;
+            foundMaxY = YES;  // Gap 6: mark that we found a real maxY
         }
     }
 
@@ -2499,7 +2648,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // of the document we'll ignore nodes and reference the end of the document instead
     BOOL interpolateToEndOfDocument = NO;
 
-    if (maxY == 0)
+    if (!foundMaxY)
     {
         // We only have a reference node before our current position,
         // but not after, so we'll use the end of the document.
@@ -2512,7 +2661,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     currY = MAX(0, currY - minY);
     maxY -= minY;
     minY -= minY;
-    CGFloat percentScrolledBetweenHeaders = MAX(0, MIN(1.0, currY / maxY));
+    // Gap 7: guard against division by zero when two headers share the same
+    // taper-adjusted y (maxY - minY == 0) or very short documents collapse all points.
+    CGFloat percentScrolledBetweenHeaders = (maxY - minY < 0.001) ? 0 : MAX(0, MIN(1.0, currY / maxY));
 
     // Now that we know where the preview position is relative to two reference nodes,
     // we need to find the positions of those nodes in the editor
@@ -2544,11 +2695,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio
 {
-    BOOL wasVisible = self.previewVisible;
+    BOOL wasPreviewVisible = self.previewVisible;
+    BOOL wasEditorVisible = self.editorVisible;
     [self.splitView setDividerLocation:ratio];
-    if (!wasVisible && self.previewVisible
+    if (!wasPreviewVisible && self.previewVisible
             && !self.preferences.markdownManualRender)
         [self.renderer parseAndRenderNow];
+
+    // Commit 7 (gap 2): When the editor pane becomes visible, reverse-sync from the
+    // preview to the editor so the editor starts at the same position as the preview.
+    // Temporary MPScrollOwnerPreview suppresses editorBoundsDidChange: during the sync.
+    if (!wasEditorVisible && self.editorVisible
+            && self.preferences.editorSyncScrolling
+            && !self.preferences.markdownManualRender
+            && _scrollOwner == MPScrollOwnerNeither)
+    {
+        _scrollOwner = MPScrollOwnerPreview;
+        [self updateHeaderLocations];
+        [self syncScrollersReverse];
+        _scrollOwner = MPScrollOwnerNeither;
+    }
+
     [self setupEditor:NSStringFromSelector(@selector(editorHorizontalInset))];
 }
 
@@ -2788,6 +2955,14 @@ current file somewhere to enable this feature.", \
         [self.editor.textStorage replaceCharactersInRange:NSMakeRange(0, self.editor.string.length)
                                                withString:newMarkdown];
         [self.editor.textStorage endEditing];
+
+        // Gap 10: textStorage editing doesn't fire NSTextDidChangeNotification.
+        // Mirror editorTextDidChange: — trigger render and claim ownership.
+        if (self.needsHtml)
+        {
+            [self.renderer parseAndRenderLater];
+            _scrollOwner = MPScrollOwnerEditor;
+        }
 
         // Restore cursor position (adjust if needed)
         if (selectedRange.location <= newMarkdown.length)
