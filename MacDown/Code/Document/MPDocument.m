@@ -268,24 +268,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     __weak MPDocument *weakObj = doc;
     return ^{
-        WebView *webView = weakObj.preview;
+        // Gap 8: weak→strong dance to avoid repeated weakObj dereferences and
+        // to ensure the object is not released mid-block.
+        __strong MPDocument *strongObj = weakObj;
+        if (!strongObj) return;
+
+        WebView *webView = strongObj.preview;
         NSWindow *window = webView.window;
 
         // Set initial scroll position BEFORE scaling to prevent flash to top
         NSClipView *contentView = webView.enclosingScrollView.contentView;
         NSRect bounds = contentView.bounds;
-        bounds.origin.y = weakObj.lastPreviewScrollTop;
+        bounds.origin.y = strongObj.lastPreviewScrollTop;
         contentView.bounds = bounds;
 
-        [weakObj scaleWebview];
+        [strongObj scaleWebview];
 
         // Issue #342: Only sync if editor is not currently authoritative.
         // A full reload during active typing must not overwrite the editor's position.
-        if (weakObj.preferences.editorSyncScrolling
-            && weakObj.scrollOwner != MPScrollOwnerEditor)
+        if (strongObj.preferences.editorSyncScrolling
+            && strongObj.scrollOwner != MPScrollOwnerEditor)
         {
-            [weakObj updateHeaderLocations];
-            [weakObj syncScrollers];
+            [strongObj updateHeaderLocations];
+            [strongObj syncScrollers];
         }
 
         // Force display update before enabling window flushing to ensure scroll position is applied
@@ -301,9 +306,17 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             }
         }
 
+        // Gap 8: Reset ownership to Neither after the full-reload completion path.
+        // The DOM-replacement path already resets ownership (lines ~1389, ~1370).
+        // This closes the stuck-ownership gap on the full-reload path: if reloadFromLoadedString
+        // set ownership to Editor, this handler restores quiescent state after rendering
+        // completes, allowing forward sync to resume on the next user-initiated scroll.
+        // Placed before invokeRenderCompletionHandlers so completion handlers see reset state.
+        strongObj.scrollOwner = MPScrollOwnerNeither;
+
         // Issue #16: Invoke deferred operation handlers after render completes
         // (This is called for MathJax rendering completion path)
-        [weakObj invokeRenderCompletionHandlers];
+        [strongObj invokeRenderCompletionHandlers];
     };
 }
 
@@ -541,6 +554,23 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             self.editor.string = self.loadedString;
             self.loadedString = nil;
         }
+
+        // Gap 8: Claim editor ownership before rendering so that the full-reload
+        // completion handler's sync guard (scrollOwner != MPScrollOwnerEditor) skips
+        // syncScrollers. This is correct — after a revert, the editor content changed
+        // and the preview is about to re-render to match. The completion handler restores
+        // lastPreviewScrollTop and resets ownership to Neither; forward sync resumes on
+        // the next user-initiated scroll.
+        //
+        // isPreviewReady == NO during initial load (only YES after the first successful
+        // frame load), so this only fires for revert-triggered calls, not the initial load.
+        //
+        // Note: if the user was mid-preview-scroll when an external change triggers reload,
+        // MPScrollOwnerPreview gets overwritten to Editor. This is intentional — external
+        // file changes take priority.
+        if (self.isPreviewReady)
+            _scrollOwner = MPScrollOwnerEditor;
+
         [self.renderer parseAndRenderNow];
         [self.highlighter parseAndHighlightNow];
     }
