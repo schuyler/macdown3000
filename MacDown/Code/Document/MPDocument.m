@@ -2667,11 +2667,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)setSplitViewDividerLocation:(CGFloat)ratio
 {
-    BOOL wasVisible = self.previewVisible;
+    BOOL wasPreviewVisible = self.previewVisible;
+    BOOL wasEditorVisible = self.editorVisible;
     [self.splitView setDividerLocation:ratio];
-    if (!wasVisible && self.previewVisible
+    if (!wasPreviewVisible && self.previewVisible
             && !self.preferences.markdownManualRender)
         [self.renderer parseAndRenderNow];
+
+    // Commit 7 (gap 2): When the editor pane becomes visible, reverse-sync from the
+    // preview to the editor so the editor starts at the same position as the preview.
+    // Temporary MPScrollOwnerPreview suppresses editorBoundsDidChange: during the sync.
+    if (!wasEditorVisible && self.editorVisible
+            && self.preferences.editorSyncScrolling
+            && !self.preferences.markdownManualRender
+            && _scrollOwner == MPScrollOwnerNeither)
+    {
+        _scrollOwner = MPScrollOwnerPreview;
+        [self updateHeaderLocations];
+        [self syncScrollersReverse];
+        _scrollOwner = MPScrollOwnerNeither;
+    }
+
     [self setupEditor:NSStringFromSelector(@selector(editorHorizontalInset))];
 }
 
