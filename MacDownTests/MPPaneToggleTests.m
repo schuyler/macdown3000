@@ -15,6 +15,8 @@
 @interface MPDocument (PaneToggleTesting)
 @property (weak) MPDocumentSplitView *splitView;
 @property CGFloat previousSplitRatio;
+- (IBAction)toggleEditorPane:(id)sender;
+- (IBAction)togglePreviewPane:(id)sender;
 @end
 
 #pragma mark - Mock Menu Item
@@ -739,21 +741,37 @@
     XCTAssertTrue([self.document respondsToSelector:@selector(splitView:canCollapseSubview:)],
                   @"Issue #377: MPDocument should implement splitView:canCollapseSubview:");
 
-    // If split view is available, test with actual subviews
+    // If the method exists and split view is available, test with actual subviews.
+    // Use NSInvocation since the method may not exist yet (red test).
     MPDocumentSplitView *splitView = self.document.splitView;
     if (splitView && splitView.subviews.count == 2) {
-        for (NSView *subview in splitView.subviews) {
-            BOOL canCollapse = [self.document splitView:splitView canCollapseSubview:subview];
-            XCTAssertTrue(canCollapse,
-                          @"Issue #377: canCollapseSubview: should return YES for all subviews");
+        SEL sel = @selector(splitView:canCollapseSubview:);
+        NSMethodSignature *sig = [self.document methodSignatureForSelector:sel];
+        if (sig) {
+            for (NSView *subview in splitView.subviews) {
+                NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+                inv.selector = sel;
+                inv.target = self.document;
+                [inv setArgument:&splitView atIndex:2];
+                [inv setArgument:&subview atIndex:3];
+                [inv invoke];
+                BOOL canCollapse = NO;
+                [inv getReturnValue:&canCollapse];
+                XCTAssertTrue(canCollapse,
+                              @"Issue #377: canCollapseSubview: should return YES for all subviews");
+            }
         }
     }
 }
 
 /**
- * Test that previousSplitRatio is set when a pane is collapsed via divider drag
- * (simulated by directly setting the split view divider location without going
- * through toggleSplitterCollapsingEditorPane:).
+ * Test that previousSplitRatio is set when a pane is collapsed via divider drag.
+ * Simulates a drag by manually collapsing the split view subview frames and then
+ * posting NSSplitViewDidResizeSubviewsNotification (which triggers
+ * splitViewDidResizeSubviews: on the delegate).
+ *
+ * This is a RED test — it fails until splitViewDidResizeSubviews: is updated to
+ * detect collapse transitions and set previousSplitRatio.
  *
  * Issue #377: When a user drags the divider to the edge, the menu item should
  * remain visible (not hidden) so the pane can be restored via menu.
@@ -777,9 +795,19 @@
     XCTAssertLessThan(self.document.previousSplitRatio, 0.0,
                       @"previousSplitRatio should start at sentinel value (-1.0)");
 
-    // Simulate a divider drag by directly setting the split view divider location.
-    // This bypasses toggleSplitterCollapsingEditorPane: which is the menu toggle path.
-    [splitView setDividerLocation:0.0];
+    // Simulate a divider drag by manually collapsing the left subview to zero width
+    // and posting the resize notification (as NSSplitView does during a real drag).
+    NSView *left = splitView.subviews[0];
+    NSView *right = splitView.subviews[1];
+    CGFloat totalWidth = splitView.frame.size.width - splitView.dividerThickness;
+    left.frame = NSMakeRect(0, 0, 0, left.frame.size.height);
+    right.frame = NSMakeRect(splitView.dividerThickness, 0, totalWidth,
+                             right.frame.size.height);
+
+    // Post the notification that NSSplitView sends during a drag resize.
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
 
     // After collapse, previousSplitRatio should have been set (>= 0)
     // so the menu item remains visible (not hidden).
@@ -790,6 +818,8 @@
 
 /**
  * Test that the editor menu item is NOT hidden after a simulated divider-drag collapse.
+ * This is a RED test — it fails until the divider-drag collapse tracking is implemented.
+ *
  * Issue #377: This verifies the end-to-end behavior — the menu item should be visible
  * with a "Restore" title, not hidden.
  */
@@ -809,7 +839,15 @@
     }
 
     // Simulate divider drag to collapse editor (left pane)
-    [splitView setDividerLocation:0.0];
+    NSView *left = splitView.subviews[0];
+    NSView *right = splitView.subviews[1];
+    CGFloat totalWidth = splitView.frame.size.width - splitView.dividerThickness;
+    left.frame = NSMakeRect(0, 0, 0, left.frame.size.height);
+    right.frame = NSMakeRect(splitView.dividerThickness, 0, totalWidth,
+                             right.frame.size.height);
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
 
     MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Hide Editor Pane"
                                                       action:@selector(toggleEditorPane:)
