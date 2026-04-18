@@ -8,6 +8,16 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import "MPDocumentSplitView.h"
+
+#pragma mark - Testing Category
+
+@interface MPDocument (PaneToggleTesting)
+@property (weak) MPDocumentSplitView *splitView;
+@property CGFloat previousSplitRatio;
+- (IBAction)toggleEditorPane:(id)sender;
+- (IBAction)togglePreviewPane:(id)sender;
+@end
 
 #pragma mark - Mock Menu Item
 
@@ -521,11 +531,11 @@
 }
 
 
-#pragma mark - Issue #310: Editor Menu Item Hidden Property Tests
+#pragma mark - Issue #377: Editor Menu Item Hidden Property Tests
 
 /**
  * Test that editor menu item hidden property is set during validation.
- * Issue #310: The editor pane case was missing the it.hidden assignment.
+ * Issue #377: The editor pane case was missing the it.hidden assignment.
  *
  * In headless mode without window controllers, both panes are not visible
  * and previousSplitRatio is -1.0 (initial sentinel). So the expression
@@ -550,13 +560,13 @@
     // In headless mode: editorVisible is NO, previousSplitRatio is -1.0
     // So hidden should be set to YES
     XCTAssertTrue(item.hidden,
-                  @"Issue #310: Editor menu item hidden property should be set "
+                  @"Issue #377: Editor menu item hidden property should be set "
                   @"when editor is not visible and no previous split ratio exists");
 }
 
 /**
  * Test that preview menu item hidden property is set during validation.
- * Issue #310: This is the existing working behavior - test for symmetry.
+ * Issue #377: This is the existing working behavior - test for symmetry.
  */
 - (void)testPreviewMenuItemHiddenPropertySetDuringValidation
 {
@@ -576,7 +586,7 @@
 
 /**
  * Test that editor menu item is NOT hidden after a toggle has saved a split ratio.
- * Issue #310: Once previousSplitRatio >= 0, the menu item should be visible.
+ * Issue #377: Once previousSplitRatio >= 0, the menu item should be visible.
  */
 - (void)testEditorMenuItemNotHiddenAfterToggle
 {
@@ -598,13 +608,13 @@
 
     // After toggling, previousSplitRatio should be >= 0, so hidden should be NO
     XCTAssertFalse(item.hidden,
-                   @"Issue #310: Editor menu item should not be hidden after a toggle "
+                   @"Issue #377: Editor menu item should not be hidden after a toggle "
                    @"(previousSplitRatio should be saved)");
 }
 
 /**
  * Test that editor menu title changes to "Restore Editor Pane" after hiding editor.
- * Issue #310: This is the core behavioral test.
+ * Issue #377: This is the core behavioral test.
  */
 - (void)testEditorMenuTitleTogglesAfterHide
 {
@@ -630,13 +640,13 @@
     NSString *expectedTitle = NSLocalizedString(@"Restore Editor Pane",
                                                 @"Toggle editor pane menu item");
     XCTAssertEqualObjects(item.title, expectedTitle,
-                          @"Issue #310: Menu title should be 'Restore Editor Pane' "
+                          @"Issue #377: Menu title should be 'Restore Editor Pane' "
                           @"after hiding editor pane");
 }
 
 /**
  * Test that editor menu title changes back to "Hide Editor Pane" after restoring editor.
- * Issue #310: Verifies the full toggle cycle works.
+ * Issue #377: Verifies the full toggle cycle works.
  */
 - (void)testEditorMenuTitleTogglesAfterRestore
 {
@@ -663,8 +673,190 @@
     NSString *expectedTitle = NSLocalizedString(@"Hide Editor Pane",
                                                 @"Toggle editor pane menu item");
     XCTAssertEqualObjects(item.title, expectedTitle,
-                          @"Issue #310: Menu title should be 'Hide Editor Pane' "
+                          @"Issue #377: Menu title should be 'Hide Editor Pane' "
                           @"after restoring editor pane");
+}
+
+
+#pragma mark - Issue #377: Collapse Detection Tests
+
+/**
+ * Test that MPDocumentSplitView.setDividerLocation:0.0 collapses the left subview
+ * to zero width. This test creates a standalone split view (no document, no window)
+ * to verify the frame-setting behavior directly.
+ *
+ * Issue #377: If setPosition:ofDividerAtIndex: overrides the manual frame-setting,
+ * the left subview may retain a non-zero width after setDividerLocation:0.0.
+ */
+- (void)testSetDividerLocationZeroCollapsesLeftSubview
+{
+    MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc]
+        initWithFrame:NSMakeRect(0, 0, 800, 600)];
+    splitView.vertical = YES;
+
+    NSView *left = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 399, 600)];
+    NSView *right = [[NSView alloc] initWithFrame:NSMakeRect(400, 0, 400, 600)];
+    [splitView addSubview:left];
+    [splitView addSubview:right];
+
+    [splitView setDividerLocation:0.0];
+
+    XCTAssertEqual(left.frame.size.width, 0.0,
+                   @"Issue #377: Left subview width should be 0 after setDividerLocation:0.0");
+}
+
+/**
+ * Test that MPDocumentSplitView.setDividerLocation:1.0 collapses the right subview
+ * to zero width.
+ *
+ * Issue #377: Symmetry test — hiding preview (ratio 1.0) should also work.
+ */
+- (void)testSetDividerLocationOneCollapsesRightSubview
+{
+    MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc]
+        initWithFrame:NSMakeRect(0, 0, 800, 600)];
+    splitView.vertical = YES;
+
+    NSView *left = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 399, 600)];
+    NSView *right = [[NSView alloc] initWithFrame:NSMakeRect(400, 0, 400, 600)];
+    [splitView addSubview:left];
+    [splitView addSubview:right];
+
+    [splitView setDividerLocation:1.0];
+
+    XCTAssertEqual(right.frame.size.width, 0.0,
+                   @"Issue #377: Right subview width should be 0 after setDividerLocation:1.0");
+}
+
+/**
+ * Test that MPDocument implements splitView:canCollapseSubview: and returns YES.
+ * Issue #377: This delegate method is needed for NSSplitView to allow divider-drag
+ * collapse of subviews.
+ */
+- (void)testCanCollapseSubviewReturnsYes
+{
+    [self.document makeWindowControllers];
+
+    // Check that the document responds to the delegate method
+    XCTAssertTrue([self.document respondsToSelector:@selector(splitView:canCollapseSubview:)],
+                  @"Issue #377: MPDocument should implement splitView:canCollapseSubview:");
+
+    // If the method exists and split view is available, test with actual subviews.
+    // Use NSInvocation since the method may not exist yet (red test).
+    MPDocumentSplitView *splitView = self.document.splitView;
+    if (splitView && splitView.subviews.count == 2) {
+        SEL sel = @selector(splitView:canCollapseSubview:);
+        NSMethodSignature *sig = [self.document methodSignatureForSelector:sel];
+        if (sig) {
+            for (NSView *subview in splitView.subviews) {
+                NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+                inv.selector = sel;
+                inv.target = self.document;
+                [inv setArgument:&splitView atIndex:2];
+                [inv setArgument:&subview atIndex:3];
+                [inv invoke];
+                BOOL canCollapse = NO;
+                [inv getReturnValue:&canCollapse];
+                XCTAssertTrue(canCollapse,
+                              @"Issue #377: canCollapseSubview: should return YES for all subviews");
+            }
+        }
+    }
+}
+
+/**
+ * Test that previousSplitRatio is set when a pane is collapsed via divider drag.
+ * Simulates a drag by manually collapsing the split view subview frames and then
+ * posting NSSplitViewDidResizeSubviewsNotification (which triggers
+ * splitViewDidResizeSubviews: on the delegate).
+ *
+ * This is a RED test — it fails until splitViewDidResizeSubviews: is updated to
+ * detect collapse transitions and set previousSplitRatio.
+ *
+ * Issue #377: When a user drags the divider to the edge, the menu item should
+ * remain visible (not hidden) so the pane can be restored via menu.
+ */
+- (void)testPreviousSplitRatioSetOnDividerDragCollapse
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible) {
+        NSLog(@"Skipping testPreviousSplitRatioSetOnDividerDragCollapse - headless mode");
+        return;
+    }
+
+    MPDocumentSplitView *splitView = self.document.splitView;
+    if (!splitView) {
+        NSLog(@"Skipping testPreviousSplitRatioSetOnDividerDragCollapse - no split view");
+        return;
+    }
+
+    // Verify initial state: previousSplitRatio should be -1.0 (sentinel)
+    XCTAssertLessThan(self.document.previousSplitRatio, 0.0,
+                      @"previousSplitRatio should start at sentinel value (-1.0)");
+
+    // Simulate a divider drag by manually collapsing the left subview to zero width
+    // and posting the resize notification (as NSSplitView does during a real drag).
+    NSView *left = splitView.subviews[0];
+    NSView *right = splitView.subviews[1];
+    CGFloat totalWidth = splitView.frame.size.width - splitView.dividerThickness;
+    left.frame = NSMakeRect(0, 0, 0, left.frame.size.height);
+    right.frame = NSMakeRect(splitView.dividerThickness, 0, totalWidth,
+                             right.frame.size.height);
+
+    // Post the notification that NSSplitView sends during a drag resize.
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
+
+    // After collapse, previousSplitRatio should have been set (>= 0)
+    // so the menu item remains visible (not hidden).
+    XCTAssertGreaterThanOrEqual(self.document.previousSplitRatio, 0.0,
+                                @"Issue #377: previousSplitRatio should be set after "
+                                @"divider-drag collapse so menu item remains visible");
+}
+
+/**
+ * Test that the editor menu item is NOT hidden after a simulated divider-drag collapse.
+ * This is a RED test — it fails until the divider-drag collapse tracking is implemented.
+ *
+ * Issue #377: This verifies the end-to-end behavior — the menu item should be visible
+ * with a "Restore" title, not hidden.
+ */
+- (void)testEditorMenuItemVisibleAfterDividerDragCollapse
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible) {
+        NSLog(@"Skipping testEditorMenuItemVisibleAfterDividerDragCollapse - headless mode");
+        return;
+    }
+
+    MPDocumentSplitView *splitView = self.document.splitView;
+    if (!splitView) {
+        NSLog(@"Skipping testEditorMenuItemVisibleAfterDividerDragCollapse - no split view");
+        return;
+    }
+
+    // Simulate divider drag to collapse editor (left pane)
+    NSView *left = splitView.subviews[0];
+    NSView *right = splitView.subviews[1];
+    CGFloat totalWidth = splitView.frame.size.width - splitView.dividerThickness;
+    left.frame = NSMakeRect(0, 0, 0, left.frame.size.height);
+    right.frame = NSMakeRect(splitView.dividerThickness, 0, totalWidth,
+                             right.frame.size.height);
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
+
+    MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Hide Editor Pane"
+                                                      action:@selector(toggleEditorPane:)
+                                               keyEquivalent:@""];
+
+    [self.document validateUserInterfaceItem:item];
+
+    XCTAssertFalse(item.hidden,
+                   @"Issue #377: Editor menu item should NOT be hidden after divider-drag collapse");
 }
 
 @end
