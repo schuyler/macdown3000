@@ -2368,7 +2368,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat currY = NSMinY(self.editor.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
     CGFloat maxY = 0;
-    
+    BOOL foundMaxY = NO;  // Gap 6: replace maxY==0 sentinel with explicit flag
+
     // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
     // Taper values: 0 at document edges, 1.0 in the middle of the document.
     CGFloat topTaper = MAX(0, MIN(1.0, currY / editorVisibleHeight));
@@ -2381,26 +2382,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     for (NSNumber *headerYNum in _editorHeaderLocations) {
         CGFloat headerY = [headerYNum floatValue];
         headerY -= adjustmentForScroll;
-        
+
         if (headerY < currY)
         {
             // The header is before our current scroll position. the closest
             // of these will be our first reference node
             relativeHeaderIndex += 1;
             minY = headerY;
-        } else if (maxY == 0 && headerY < editorContentHeight - editorVisibleHeight)
+        } else if (!foundMaxY && headerY < editorContentHeight - editorVisibleHeight)
         {
             // Skip any headers that are within the last screen of the editor.
             // we'll interpolate to the end of the document in that case.
             maxY = headerY;
+            foundMaxY = YES;  // Gap 6: mark that we found a real maxY
         }
     }
-    
+
     // Usually, we'll be scrolling between two reference nodes, but toward the end
     // of the document we'll ignore nodes and reference the end of the document instead
     BOOL interpolateToEndOfDocument = NO;
-    
-    if (maxY == 0)
+
+    if (!foundMaxY)
     {
         // We only have a reference node before our current position,
         // but not after, so we'll use the end of the document.
@@ -2413,7 +2415,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     currY = MAX(0, currY - minY);
     maxY -= minY;
     minY -= minY;
-    CGFloat percentScrolledBetweenHeaders = MAX(0, MIN(1.0, currY / maxY));
+    // Gap 7: guard against division by zero when two headers share the same
+    // taper-adjusted y (maxY - minY == 0) or very short documents collapse all points.
+    CGFloat percentScrolledBetweenHeaders = (maxY - minY < 0.001) ? 0 : MAX(0, MIN(1.0, currY / maxY));
     
     // Now that we know where the editor position is relative to two reference nodes,
     // we need to find the positions of those nodes in the HTML preview
@@ -2468,6 +2472,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     CGFloat currY = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
     CGFloat maxY = 0;
+    BOOL foundMaxY = NO;  // Gap 6: replace maxY==0 sentinel with explicit flag
 
     // Align documents at screen center for smooth sync, tapering to edges at document boundaries.
     // Taper values: 0 at document edges, 1.0 in the middle of the document.
@@ -2487,11 +2492,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // of these will be our first reference node
             relativeHeaderIndex += 1;
             minY = headerY;
-        } else if (maxY == 0 && headerY < previewContentHeight - previewVisibleHeight)
+        } else if (!foundMaxY && headerY < previewContentHeight - previewVisibleHeight)
         {
             // Skip any headers that are within the last screen of the preview.
             // we'll interpolate to the end of the document in that case.
             maxY = headerY;
+            foundMaxY = YES;  // Gap 6: mark that we found a real maxY
         }
     }
 
@@ -2499,7 +2505,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // of the document we'll ignore nodes and reference the end of the document instead
     BOOL interpolateToEndOfDocument = NO;
 
-    if (maxY == 0)
+    if (!foundMaxY)
     {
         // We only have a reference node before our current position,
         // but not after, so we'll use the end of the document.
@@ -2512,7 +2518,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     currY = MAX(0, currY - minY);
     maxY -= minY;
     minY -= minY;
-    CGFloat percentScrolledBetweenHeaders = MAX(0, MIN(1.0, currY / maxY));
+    // Gap 7: guard against division by zero when two headers share the same
+    // taper-adjusted y (maxY - minY == 0) or very short documents collapse all points.
+    CGFloat percentScrolledBetweenHeaders = (maxY - minY < 0.001) ? 0 : MAX(0, MIN(1.0, currY / maxY));
 
     // Now that we know where the preview position is relative to two reference nodes,
     // we need to find the positions of those nodes in the editor
