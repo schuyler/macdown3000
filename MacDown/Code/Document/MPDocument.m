@@ -2852,6 +2852,14 @@ current file somewhere to enable this feature.", \
                                                withString:newMarkdown];
         [self.editor.textStorage endEditing];
 
+        // Gap 10: textStorage editing doesn't fire NSTextDidChangeNotification.
+        // Mirror editorTextDidChange: — trigger render and claim ownership.
+        if (self.needsHtml)
+        {
+            [self.renderer parseAndRenderLater];
+            _scrollOwner = MPScrollOwnerEditor;
+        }
+
         // Restore cursor position (adjust if needed)
         if (selectedRange.location <= newMarkdown.length)
         {
