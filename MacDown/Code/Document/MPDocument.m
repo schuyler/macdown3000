@@ -326,6 +326,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
 @implementation MPDocument
+{
+    // Commit 8 (gap 9): Generation counter to discard stale MathJax render callbacks.
+    // Incremented before each new MathJax listener setup; captured in the block.
+    // If generation differs at callback time, the render was superseded — skip it.
+    NSUInteger _mathJaxRenderGeneration;
+}
 
 #pragma mark - Accessor
 
@@ -1399,18 +1405,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"})();",
                     scrollBefore];
 
-                // Issue #325: Set up MathJax completion callback to update header
-                // locations after typesetting, which may change document height.
-                // This overwrites the initial-load "End" listener, which is safe
-                // because isPreviewReady guarantees the initial load completed.
+                // Issue #325 / Commit 8 (gap 9): Set up MathJax completion callback to
+                // update header locations after typesetting, which may change document height.
+                // This overwrites the initial-load "End" listener, which is safe because
+                // isPreviewReady guarantees the initial load completed.
+                //
+                // Generation counter: increment before capturing so that stale callbacks
+                // from a superseded render are no-ops. Only the most recent render's
+                // callback resets ownership and syncs.
                 if (self.preferences.htmlMathJax)
                 {
+                    _mathJaxRenderGeneration++;
+                    NSUInteger expectedGeneration = _mathJaxRenderGeneration;
                     MPMathJaxListener *listener = [[MPMathJaxListener alloc] init];
                     __weak MPDocument *weakSelf = self;
                     [listener addCallback:^{
-                        // Issue #342: Sync at render completion, then transition ownership to Neither.
                         __strong typeof(weakSelf) strongSelf = weakSelf;
                         if (!strongSelf)
+                            return;
+                        // Commit 8 (gap 9): If generation differs, this callback is stale —
+                        // a newer render was started before MathJax finished. Skip entirely.
+                        if (strongSelf->_mathJaxRenderGeneration != expectedGeneration)
                             return;
                         if (strongSelf.preferences.editorSyncScrolling)
                         {

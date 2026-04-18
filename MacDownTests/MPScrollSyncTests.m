@@ -46,10 +46,13 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 // Commit 7 (gap 2): editor-reveal sync
 - (void)setSplitViewDividerLocation:(CGFloat)ratio;
 // Commit 8 (gap 9): MathJax render generation counter getter
-// NOTE: declared inside #if 0 because the ivar it accesses doesn't exist yet (added in Commit 8)
-#if 0
 - (NSUInteger)mathJaxRenderGeneration;
-#endif
+@end
+
+// Commit 8 (gap 9): Category implementation for test-only getters.
+// `->` ivar access works because @private visibility is not enforced at runtime.
+@implementation MPDocument (ScrollSyncTesting)
+- (NSUInteger)mathJaxRenderGeneration { return self->_mathJaxRenderGeneration; }
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1969,13 +1972,6 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 #pragma mark - Group N — MathJax render generation counter (Commit 8, gap 9)
 
-// NOTE: Group N tests require the `_mathJaxRenderGeneration` ivar added in Commit 8
-// and the `mathJaxRenderGeneration` getter in the test category above.
-// Until that ivar is added to MPDocument.m, these tests will not compile.
-// They are wrapped in #if 0 so the rest of the test suite compiles and runs (red state).
-// Remove the #if 0 / #endif when Commit 8 lands.
-#if 0
-
 /**
  * N1 — _mathJaxRenderGeneration ivar starts at 0 (implicitly zero-initialized by runtime).
  * Verifies the counter exists and has the expected initial value before any render.
@@ -1987,7 +1983,5 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     XCTAssertEqual([doc mathJaxRenderGeneration], (NSUInteger)0,
                    @"N1: _mathJaxRenderGeneration should be 0 on a fresh document");
 }
-
-#endif  // Group N — enable after Commit 8 adds _mathJaxRenderGeneration ivar
 
 @end
