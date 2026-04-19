@@ -7,6 +7,8 @@
  * Related to GitHub issue #269.
  */
 (function () {
+  var tokenMeta = document.querySelector('meta[name="macdown-checkbox-token"]');
+  var checkboxToken = tokenMeta ? tokenMeta.getAttribute('content') : '';
   var taskListItems = document.getElementsByClassName('task-list-item');
   for (var i = 0; i < taskListItems.length; i++) {
     var inputs = taskListItems[i].getElementsByTagName('input');
@@ -21,7 +23,11 @@
         var index = checkbox.getAttribute('data-checkbox-index');
         if (index !== null) {
           // Navigate to custom URL scheme to trigger Objective-C handler
-          window.location = 'x-macdown-checkbox://toggle/' + index;
+          var url = 'x-macdown-checkbox://toggle/' + index;
+          if (checkboxToken) {
+            url += '?token=' + encodeURIComponent(checkboxToken);
+          }
+          window.location = url;
         }
       });
       break;

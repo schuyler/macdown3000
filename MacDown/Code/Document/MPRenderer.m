@@ -243,8 +243,8 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
 }
 
 NS_INLINE NSString *MPGetHTML(
-    NSString *title, NSString *body, NSArray *styles, MPAssetOption styleopt,
-    NSArray *scripts, MPAssetOption scriptopt)
+    NSString *title, NSString *headTags, NSString *body, NSArray *styles,
+    MPAssetOption styleopt, NSArray *scripts, MPAssetOption scriptopt)
 {
     NSMutableArray *styleTags = [NSMutableArray array];
     NSMutableArray *scriptTags = [NSMutableArray array];
@@ -277,11 +277,13 @@ NS_INLINE NSString *MPGetHTML(
 
     NSString *titleTag = @"";
     if (title.length)
-        titleTag = [NSString stringWithFormat:@"<title>%@</title>", title];
+        titleTag = [NSString stringWithFormat:@"<title>%@</title>",
+                    MPEscapeHTMLText(title)];
 
     NSDictionary *context = @{
         @"title": title ? title : @"",
         @"titleTag": titleTag ? titleTag : @"",
+        @"headTags": headTags ? headTags : @"",
         @"styleTags": styleTags ? styleTags : @[],
         @"body": body ? body : @"",
         @"scriptTags": scriptTags ? scriptTags : @[],
@@ -323,6 +325,7 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 @property BOOL lineNumbers;
 @property BOOL manualRender;
 @property (copy) NSString *highlightingThemeName;
+@property (nonatomic, copy, readwrite) NSString *checkboxBridgeToken;
 
 // Issue #110: Cache-busting timestamps for local resources
 @property (strong) NSMutableDictionary<NSString *, NSNumber *> *resourceTimestamps;
@@ -436,6 +439,65 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     if (extra)
         free(extra);
     hoedown_html_renderer_free(htmlRenderer);
+}
+
+NS_INLINE NSString *MPEscapeHTMLAttribute(NSString *value)
+{
+    if (!value.length)
+        return @"";
+
+    NSMutableString *escaped = [value mutableCopy];
+    [escaped replaceOccurrencesOfString:@"&" withString:@"&amp;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@"\"" withString:@"&quot;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@"'" withString:@"&#39;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@"<" withString:@"&lt;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@">" withString:@"&gt;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    return escaped;
+}
+
+NS_INLINE NSString *MPEscapeHTMLText(NSString *value)
+{
+    if (!value.length)
+        return @"";
+
+    NSMutableString *escaped = [value mutableCopy];
+    [escaped replaceOccurrencesOfString:@"&" withString:@"&amp;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@"<" withString:@"&lt;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    [escaped replaceOccurrencesOfString:@">" withString:@"&gt;"
+                                options:0 range:NSMakeRange(0, escaped.length)];
+    return escaped;
+}
+
+NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
+{
+    return @"default-src 'none'; "
+           @"base-uri 'none'; "
+           @"form-action 'none'; "
+           @"object-src 'none'; "
+           @"frame-src 'none'; "
+           @"img-src data: file: http: https:; "
+           @"media-src data: file: http: https:; "
+           @"style-src 'self' 'unsafe-inline' file:; "
+           @"font-src data: file:; "
+           @"connect-src http: https:; "
+           @"script-src 'self' file: https://cdnjs.cloudflare.com 'unsafe-eval'";
+}
+
+NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
+{
+    NSString *csp = MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy());
+    NSString *token = MPEscapeHTMLAttribute(checkboxBridgeToken);
+    return [NSString stringWithFormat:
+        @"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n"
+         "<meta name=\"macdown-checkbox-token\" content=\"%@\">",
+        csp, token];
 }
 
 
@@ -752,8 +814,10 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     }
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
+    self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
+    NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
     NSString *html = MPGetHTML(
-        title, body, self.stylesheets, MPAssetFullLink,
+        title, headTags, body, self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
     [delegate renderer:self didProduceHTMLOutput:html];
 
@@ -825,7 +889,8 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     if (!title)
         title = @"";
     NSString *html = MPGetHTML(
-        title, self.currentHtml, styles, stylesOption, scripts, scriptsOption);
+        title, nil, self.currentHtml, styles, stylesOption, scripts,
+        scriptsOption);
     return html;
 }
 
