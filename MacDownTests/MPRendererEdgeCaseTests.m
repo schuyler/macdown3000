@@ -150,7 +150,7 @@
     XCTAssertNotNil(html, @"Preview render should produce HTML");
     XCTAssertTrue([html containsString:@"Content-Security-Policy"],
                   @"Preview HTML should include a CSP meta tag");
-    XCTAssertTrue([html containsString:@"script-src 'self' file: https://cdnjs.cloudflare.com 'unsafe-eval'"],
+    XCTAssertTrue([html containsString:@"script-src &#39;self&#39; file: https://cdnjs.cloudflare.com &#39;unsafe-eval&#39;"],
                   @"CSP should whitelist only bundled scripts and the MathJax CDN");
     XCTAssertTrue([html containsString:@"name=\"macdown-checkbox-token\""],
                   @"Preview HTML should include a checkbox bridge token");
