@@ -266,6 +266,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)refreshHeaderCacheAfterResize;
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
+- (void)applyEditorStartInPreviewModePreference;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -565,6 +566,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
         // Issue #290: Start file watching for auto-reload
         [self startFileWatching];
+
+        // Force layout before reading dividerLocation. The startup preference
+        // path depends on current subview widths, and split-view autosave may
+        // not have pushed those frames into the content view hierarchy yet.
+        [controller.window.contentView layoutSubtreeIfNeeded];
+        [self applyEditorStartInPreviewModePreference];
 
         // Commit 6 (gaps 1+3): Register for window resize/fullscreen notifications.
         // Registered here (not in the main setup block) because self.editor.window
@@ -2096,6 +2103,27 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 }
 
+- (void)applyEditorStartInPreviewModePreference
+{
+    if (!self.preferences.editorStartInPreviewMode || !self.editorVisible)
+        return;
+
+    CGFloat ratio = self.splitView.dividerLocation;
+    if (ratio > 0.0 && ratio < 1.0)
+    {
+        self.previousSplitRatio = ratio;
+    }
+    else if (!self.previewVisible && self.previousSplitRatio < 0.0)
+    {
+        // An editor-only autosaved layout has no restorable split ratio, so
+        // fall back to an even split when the user later restores the editor.
+        self.previousSplitRatio = 0.5;
+    }
+
+    CGFloat targetRatio = self.preferences.editorOnRight ? 1.0 : 0.0;
+    [self setSplitViewDividerLocation:targetRatio];
+}
+
 - (void)setupEditor:(NSString *)changedKey
 {
     [self.highlighter deactivate];
@@ -3277,4 +3305,3 @@ current file somewhere to enable this feature.", \
 }
 
 @end
-

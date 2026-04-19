@@ -7,16 +7,21 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <WebKit/WebKit.h>
 #import "MPDocument.h"
 #import "MPDocumentSplitView.h"
+#import "MPPreferences.h"
 
 #pragma mark - Testing Category
 
 @interface MPDocument (PaneToggleTesting)
 @property (weak) MPDocumentSplitView *splitView;
+@property (weak) NSView *editorContainer;
+@property (weak) WebView *preview;
 @property CGFloat previousSplitRatio;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
+- (void)applyEditorStartInPreviewModePreference;
 @end
 
 #pragma mark - Mock Menu Item
@@ -172,6 +177,43 @@
     // Both should be NO in headless mode
     XCTAssertFalse(editorVisible, @"Editor should not be visible in headless mode");
     XCTAssertFalse(previewVisible, @"Preview should not be visible in headless mode");
+}
+
+- (void)testStartInPreviewModeRestoresPreviewFromEditorOnlyLayout
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        [self.document makeWindowControllers];
+
+        if (!self.document.editorVisible || !self.document.previewVisible) {
+            NSLog(@"Skipping testStartInPreviewModeRestoresPreviewFromEditorOnlyLayout - panes not initialized");
+            return;
+        }
+
+        preferences.editorStartInPreviewMode = YES;
+        preferences.editorOnRight = NO;
+        CGFloat oldRatio = self.document.splitView.dividerLocation;
+        self.document.previousSplitRatio = -1.0;
+
+        [self.document applyEditorStartInPreviewModePreference];
+
+        XCTAssertFalse(self.document.editorVisible,
+                       @"Startup preview mode should collapse the editor pane");
+        XCTAssertTrue(self.document.previewVisible,
+                      @"Startup preview mode should make the preview visible");
+        XCTAssertEqualWithAccuracy(self.document.splitView.dividerLocation, 0.0, 0.001,
+                                   @"Startup preview mode should collapse the divider to the preview-only edge");
+        XCTAssertGreaterThan(oldRatio, 0.0,
+                             @"The precondition for this test is a visible editor split");
+    }
+    @finally {
+        preferences.editorStartInPreviewMode = originalStartInPreviewMode;
+        preferences.editorOnRight = originalEditorOnRight;
+        [preferences synchronize];
+    }
 }
 
 
