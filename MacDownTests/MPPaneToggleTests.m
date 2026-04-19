@@ -7,16 +7,21 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <WebKit/WebKit.h>
 #import "MPDocument.h"
 #import "MPDocumentSplitView.h"
+#import "MPPreferences.h"
 
 #pragma mark - Testing Category
 
 @interface MPDocument (PaneToggleTesting)
 @property (weak) MPDocumentSplitView *splitView;
+@property (weak) NSView *editorContainer;
+@property (weak) WebView *preview;
 @property CGFloat previousSplitRatio;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
+- (void)applyEditorStartInPreviewModePreference;
 @end
 
 #pragma mark - Mock Menu Item
@@ -172,6 +177,42 @@
     // Both should be NO in headless mode
     XCTAssertFalse(editorVisible, @"Editor should not be visible in headless mode");
     XCTAssertFalse(previewVisible, @"Preview should not be visible in headless mode");
+}
+
+- (void)testStartInPreviewModeRestoresPreviewFromEditorOnlyLayout
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        preferences.editorStartInPreviewMode = YES;
+        preferences.editorOnRight = NO;
+
+        MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc] initWithFrame:NSMakeRect(0, 0, 400, 300)];
+        NSView *editorContainer = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 399, 300)];
+        WebView *preview = [[WebView alloc] initWithFrame:NSMakeRect(400, 0, 0, 300)];
+        splitView.subviews = @[editorContainer, preview];
+
+        self.document.splitView = splitView;
+        self.document.editorContainer = editorContainer;
+        self.document.preview = preview;
+        self.document.previousSplitRatio = -1.0;
+
+        [self.document applyEditorStartInPreviewModePreference];
+
+        XCTAssertFalse(self.document.editorVisible,
+                       @"Startup preview mode should collapse the editor pane");
+        XCTAssertTrue(self.document.previewVisible,
+                      @"Startup preview mode should make the preview visible");
+        XCTAssertEqualWithAccuracy(self.document.previousSplitRatio, 0.5, 0.001,
+                                   @"Editor-only startup layouts should restore to a sane split");
+    }
+    @finally {
+        preferences.editorStartInPreviewMode = originalStartInPreviewMode;
+        preferences.editorOnRight = originalEditorOnRight;
+        [preferences synchronize];
+    }
 }
 
 

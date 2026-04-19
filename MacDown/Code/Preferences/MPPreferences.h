@@ -49,6 +49,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL editorWidthLimited;
 @property (assign) CGFloat editorMaximumWidth;
 @property (assign) BOOL editorOnRight;
+@property (assign) BOOL editorStartInPreviewMode;
 @property (assign) BOOL editorShowWordCount;
 @property (assign) NSInteger editorWordCountType;
 @property (assign) BOOL editorAutoSave;

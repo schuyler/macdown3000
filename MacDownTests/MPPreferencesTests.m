@@ -133,6 +133,25 @@
     [self.preferences synchronize];
 }
 
+- (void)testStartInPreviewModeToggle
+{
+    BOOL original = self.preferences.editorStartInPreviewMode;
+
+    self.preferences.editorStartInPreviewMode = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.editorStartInPreviewMode,
+                  @"Start in preview mode should be ON");
+
+    self.preferences.editorStartInPreviewMode = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.editorStartInPreviewMode,
+                   @"Start in preview mode should be OFF");
+
+    // Restore
+    self.preferences.editorStartInPreviewMode = original;
+    [self.preferences synchronize];
+}
+
 - (void)testExtensionFlags
 {
     // Save originals
