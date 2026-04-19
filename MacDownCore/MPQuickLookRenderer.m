@@ -163,6 +163,21 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     return result;
 }
 
+NS_INLINE NSString *MPQuickLookContentSecurityPolicy(void)
+{
+    return @"default-src 'none'; "
+           @"base-uri 'none'; "
+           @"form-action 'none'; "
+           @"object-src 'none'; "
+           @"frame-src 'none'; "
+           @"connect-src 'none'; "
+           @"img-src data: file:; "
+           @"media-src data: file:; "
+           @"font-src data: file:; "
+           @"style-src 'unsafe-inline'; "
+           @"script-src 'none'";
+}
+
 
 #pragma mark - Hoedown Renderer Callbacks
 
@@ -354,6 +369,8 @@ static void mp_quicklook_render_blockcode(
     [html appendString:@"<html>\n<head>\n"];
     [html appendString:@"<meta charset=\"utf-8\">\n"];
     [html appendString:@"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"];
+    [html appendFormat:@"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n",
+                       MPQuickLookContentSecurityPolicy()];
 
     // Embed CSS styles
     [html appendString:[self embeddedStyles]];
@@ -362,11 +379,6 @@ static void mp_quicklook_render_blockcode(
 
     // Body content
     [html appendString:body ?: @""];
-
-    // Embed scripts (Prism for syntax highlighting)
-    if ([self.preferences syntaxHighlightingEnabled] && self.detectedLanguages.count > 0) {
-        [html appendString:[self embeddedScripts]];
-    }
 
     [html appendString:@"\n</body>\n</html>"];
 

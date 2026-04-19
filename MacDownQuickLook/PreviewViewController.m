@@ -32,6 +32,11 @@
 {
     // Create web view configuration
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+    config.preferences.javaScriptEnabled = NO;
+    config.preferences.javaScriptCanOpenWindowsAutomatically = NO;
+    if (@available(macOS 11.0, *)) {
+        config.defaultWebpagePreferences.allowsContentJavaScript = NO;
+    }
 
     // Create web view with a meaningful initial size
     NSRect frame = NSMakeRect(0, 0, 800, 600);
@@ -119,6 +124,21 @@
         self.pendingHandler = nil;
         h(error);
     }
+}
+
+- (void)webView:(WKWebView *)webView
+decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction
+decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
+{
+    NSURL *url = navigationAction.request.URL;
+    NSString *scheme = url.scheme.lowercaseString;
+
+    if ([scheme isEqualToString:@"about"] || [scheme isEqualToString:@"data"]) {
+        decisionHandler(WKNavigationActionPolicyAllow);
+        return;
+    }
+
+    decisionHandler(WKNavigationActionPolicyCancel);
 }
 
 @end

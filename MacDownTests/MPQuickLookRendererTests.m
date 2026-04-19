@@ -148,6 +148,19 @@
                   @"Should include closing </html> tag");
 }
 
+- (void)testRenderIncludesContentSecurityPolicy
+{
+    NSString *markdown = @"# Test";
+    NSString *html = [self.renderer renderMarkdown:markdown];
+
+    XCTAssertTrue([html containsString:@"Content-Security-Policy"],
+                  @"Quick Look HTML should include a CSP meta tag");
+    XCTAssertTrue([html containsString:@"script-src 'none'"],
+                  @"Quick Look CSP should block all script execution");
+    XCTAssertTrue([html containsString:@"connect-src 'none'"],
+                  @"Quick Look CSP should block outbound network connections");
+}
+
 - (void)testRenderIncludesCSSStyles
 {
     NSString *markdown = @"# Test";
@@ -245,15 +258,15 @@
                   @"Should add language-python class for Prism");
 }
 
-- (void)testPrismScriptsIncluded
+- (void)testQuickLookDoesNotEmbedPrismScripts
 {
     NSString *markdown = @"```javascript\nconsole.log('test');\n```";
     NSString *html = [self.renderer renderMarkdown:markdown];
 
-    // Prism scripts are only included when the bundle has the Prism resource files.
-    // In the test bundle they may be absent, so check for language class instead.
     XCTAssertTrue([html containsString:@"language-javascript"],
                   @"Should tag code blocks with Prism language class");
+    XCTAssertFalse([html containsString:@"<script type=\"text/javascript\">"],
+                   @"Quick Look should not embed executable Prism scripts");
 }
 
 - (void)testLanguageAliasesMapped
