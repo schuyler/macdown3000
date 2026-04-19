@@ -39,24 +39,11 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 - (instancetype)init
 {
-    NSLog(@"[MPPreferences] Initializing MPPreferences (thread: %@)", [NSThread currentThread]);
-    NSDate *startTime = [NSDate date];
-
     self = [super init];
     if (!self)
         return nil;
 
-    NSLog(@"[MPPreferences] Calling cleanupObsoleteAutosaveValues...");
-    NSDate *cleanupStart = [NSDate date];
-    [self cleanupObsoleteAutosaveValues];
-    NSTimeInterval cleanupDuration = [[NSDate date] timeIntervalSinceDate:cleanupStart];
-    NSLog(@"[MPPreferences] cleanupObsoleteAutosaveValues completed in %.3f seconds", cleanupDuration);
-
-    NSLog(@"[MPPreferences] Calling migratePreferencesFromLegacyBundleIdentifierIfNeeded...");
-    NSDate *migrationStart = [NSDate date];
     [self migratePreferencesFromLegacyBundleIdentifierIfNeeded];
-    NSTimeInterval migrationDuration = [[NSDate date] timeIntervalSinceDate:migrationStart];
-    NSLog(@"[MPPreferences] migratePreferencesFromLegacyBundleIdentifierIfNeeded completed in %.3f seconds", migrationDuration);
 
     NSString *version =
         [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
@@ -64,7 +51,6 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // This is a fresh install. Set default preferences.
     if (!self.firstVersionInstalled)
     {
-        NSLog(@"[MPPreferences] Fresh installation detected, loading default preferences");
         self.firstVersionInstalled = version;
         [self loadDefaultPreferences];
 
@@ -77,12 +63,13 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         }];
     }
 
-    NSLog(@"[MPPreferences] Loading default user defaults...");
     [self loadDefaultUserDefaults];
     self.latestVersionInstalled = version;
 
-    NSTimeInterval totalDuration = [[NSDate date] timeIntervalSinceDate:startTime];
-    NSLog(@"[MPPreferences] Initialization completed successfully in %.3f seconds", totalDuration);
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        [self cleanupObsoleteAutosaveValues];
+    });
+
     return self;
 }
 
@@ -360,13 +347,10 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 - (void)cleanupObsoleteAutosaveValues
 {
-    NSLog(@"[MPPreferences] cleanupObsoleteAutosaveValues: Starting cleanup (thread: %@)", [NSThread currentThread]);
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSMutableArray *keysToRemove = [NSMutableArray array];
 
-    NSLog(@"[MPPreferences] cleanupObsoleteAutosaveValues: Calling dictionaryRepresentation...");
     NSDictionary *allDefaults = defaults.dictionaryRepresentation;
-    NSLog(@"[MPPreferences] cleanupObsoleteAutosaveValues: Got %lu preferences", (unsigned long)allDefaults.count);
 
     for (NSString *key in allDefaults)
     {
@@ -387,8 +371,6 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     }
     for (NSString *key in keysToRemove)
         [defaults removeObjectForKey:key];
-
-    NSLog(@"[MPPreferences] cleanupObsoleteAutosaveValues: Cleanup completed, removed %lu obsolete keys", (unsigned long)keysToRemove.count);
 }
 
 /** Load app-default preferences on first launch.

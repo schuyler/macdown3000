@@ -31,6 +31,7 @@ static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
 static size_t kMPRendererNestingLevel = SIZE_MAX;
 static int kMPRendererTOCLevel = 6;  // h1 to h6.
+static const NSTimeInterval kMPRendererLoadingPollInterval = 0.01;
 
 
 NS_INLINE NSURL *MPExtensionURL(NSString *name, NSString *extension)
@@ -697,31 +698,46 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     
 - (void)parseAndRenderWithMaxDelay:(NSTimeInterval)maxDelay {
     [self.parseQueue cancelAllOperations];
-    [self.parseQueue addOperationWithBlock:^{
+    __block NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+
         // Fetch the markdown (from the main thread)
         __block NSString *markdown;
         dispatch_sync(dispatch_get_main_queue(), ^{
             markdown = [[self.dataSource rendererMarkdown:self] copy];
         });
+        if (operation.isCancelled)
+            return;
 
         // Parse in backgound
         [self parseMarkdown:markdown];
-        
-        // Wait untils is renderer has finished loading OR until the maxDelay has passed
-        // This should result in overall faster update times
-        NSDate *start = [NSDate date];
-        __block BOOL rendererIsLoading = true;
-        while (rendererIsLoading || [start timeIntervalSinceNow] >= maxDelay) {
+
+        // Wait until the current preview load finishes, but never spin the CPU
+        // indefinitely while waiting for WebKit to settle.
+        NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:MAX(0, maxDelay)];
+        while (!operation.isCancelled) {
+            __block BOOL rendererIsLoading = NO;
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
             });
+            if (!rendererIsLoading)
+                break;
+
+            NSTimeInterval remaining = [deadline timeIntervalSinceNow];
+            if (remaining <= 0)
+                break;
+
+            [NSThread sleepForTimeInterval:
+                MIN(kMPRendererLoadingPollInterval, remaining)];
         }
-        
+        if (operation.isCancelled)
+            return;
+
         // Render on main thread
         dispatch_async(dispatch_get_main_queue(), ^{
             [self render];
         });
     }];
+    [self.parseQueue addOperation:operation];
 }
 
 - (void)parseAndRenderNow

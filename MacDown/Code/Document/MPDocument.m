@@ -97,6 +97,14 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
     return ([s1 isEqualToString:s2] || s1 == s2);
 }
 
+NS_INLINE BOOL MPHTMLContainsHighlightableCode(NSString *html)
+{
+    if (!html.length)
+        return NO;
+    return [html rangeOfString:@"class=\"language-"].location != NSNotFound
+        || [html rangeOfString:@"class='language-"].location != NSNotFound;
+}
+
 NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     DOMDocument *doc = webview.mainFrameDocument;
@@ -1409,16 +1417,20 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // Extract just the body content, not head or html tags
             static NSString *pattern = @"<body[^>]*>(.*)</body>";
             static int opts = NSRegularExpressionDotMatchesLineSeparators;
+            static NSRegularExpression *regex = nil;
+            static dispatch_once_t onceToken;
 
-            NSRegularExpression *regex =
-                [[NSRegularExpression alloc] initWithPattern:pattern
-                                                     options:opts error:NULL];
+            dispatch_once(&onceToken, ^{
+                regex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                             options:opts error:NULL];
+            });
             NSTextCheckingResult *result =
                 [regex firstMatchInString:html options:0
                                     range:NSMakeRange(0, html.length)];
             if (result && [result rangeAtIndex:1].location != NSNotFound)
             {
                 NSString *bodyContent = [html substringWithRange:[result rangeAtIndex:1]];
+                BOOL hasHighlightableCode = MPHTMLContainsHighlightableCode(html);
 
                 CGFloat scrollBefore = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 
@@ -1433,7 +1445,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"  delete window.__macdownTempHtml;"
                     @"  var body = document.body;"
                     @"  body.innerHTML = html;"
-                    @"  if(window.Prism){Prism.highlightAll();}"
+                    @"  if(%@&&window.Prism){Prism.highlightAll();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
@@ -1446,6 +1458,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"    window.scrollTo(0,scrollY);"
                     @"  }"
                     @"})();",
+                    hasHighlightableCode ? @"true" : @"false",
                     scrollBefore];
 
                 // Issue #325 / Commit 8 (gap 9): Set up MathJax completion callback to
@@ -2405,9 +2418,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 
     // Next, cache the locations of all of the reference nodes in the editor view.
-    NSInteger characterCount = 0;
+    __block NSInteger characterCount = 0;
     NSLayoutManager *layoutManager = [self.editor layoutManager];
-    NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
+    NSString *documentString = self.editor.string ?: @"";
     [locations removeAllObjects];
 
     // Cache regex patterns for markdown headers and images.
@@ -2453,13 +2466,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     //      → It's a setext header underline
     //   2. If no previous content OR current line matches HR pattern
     //      → It's a horizontal rule (or standalone dashes)
-    BOOL previousLineHadContent = NO;
+    __block BOOL previousLineHadContent = NO;
 
     // We start by splitting our document into lines, and then searching
     // line by line for headers or images.
-    for (NSInteger lineNumber = 0; lineNumber < [documentLines count]; lineNumber++)
-    {
-        NSString *line = documentLines[lineNumber];
+    [documentString enumerateSubstringsInRange:NSMakeRange(0, documentString.length)
+                                       options:NSStringEnumerationByLines
+                                    usingBlock:^(NSString *line, __unused NSRange lineRange,
+                                                 NSRange enclosingRange, __unused BOOL *stop) {
+        line = line ?: @"";
 
         // Check if line is a horizontal rule (3+ matching characters).
         // Per CommonMark: 0-3 leading spaces allowed, spaces between characters allowed.
@@ -2502,8 +2517,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // as a setext header underline.
         previousLineHadContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
 
-        characterCount += [line length] + 1;
-    }
+        characterCount = NSMaxRange(enclosingRange);
+    }];
 
     _editorHeaderLocations = [locations copy];
 

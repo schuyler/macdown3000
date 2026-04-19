@@ -12,6 +12,7 @@
 // Category to expose private methods for testing
 @interface MPRenderer (Testing)
 - (void)parseMarkdown:(NSString *)markdown;
+- (void)parseAndRenderWithMaxDelay:(NSTimeInterval)maxDelay;
 - (NSArray *)mathjaxScripts;
 @end
 

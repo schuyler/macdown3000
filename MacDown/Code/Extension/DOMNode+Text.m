@@ -8,74 +8,87 @@
 
 #import "DOMNode+Text.h"
 
-typedef NS_ENUM(NSUInteger, DOMNodeTextCountingOption)
+typedef struct
 {
-    DOMNodeTextCountWords,
-    DOMNodeTextCountCharacters,
-    DOMNodeTextCountCharactersWithoutWhiteSpaces,
-};
+    NSUInteger words;
+    NSUInteger characters;
+    NSUInteger charactersWithoutSpaces;
+} MPAccumulatedTextCount;
 
-NS_INLINE NSUInteger MPGetNodeTextCount(DOMNode *, DOMNodeTextCountingOption);
+NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *);
 
-@implementation NSString (WordCount)
-
-- (NSUInteger)numberOfWords
+NS_INLINE MPAccumulatedTextCount MPAccumulatedTextCountMake(
+    NSUInteger words, NSUInteger characters, NSUInteger charactersWithoutSpaces)
 {
-    __block NSUInteger count = 0;
+    MPAccumulatedTextCount count;
+    count.words = words;
+    count.characters = characters;
+    count.charactersWithoutSpaces = charactersWithoutSpaces;
+    return count;
+}
+
+NS_INLINE MPAccumulatedTextCount MPAccumulatedTextCountZero(void)
+{
+    return MPAccumulatedTextCountMake(0, 0, 0);
+}
+
+NS_INLINE MPAccumulatedTextCount MPAccumulatedTextCountAdd(
+    MPAccumulatedTextCount lhs, MPAccumulatedTextCount rhs)
+{
+    return MPAccumulatedTextCountMake(lhs.words + rhs.words,
+                                      lhs.characters + rhs.characters,
+                                      lhs.charactersWithoutSpaces + rhs.charactersWithoutSpaces);
+}
+
+NS_INLINE MPAccumulatedTextCount MPGetStringAccumulatedTextCount(NSString *string)
+{
+    if (!string.length)
+        return MPAccumulatedTextCountZero();
+
+    __block NSUInteger words = 0;
     NSStringEnumerationOptions options =
-    NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired;
-    [self enumerateSubstringsInRange:NSMakeRange(0, self.length)
-                             options:options usingBlock:
-     ^(NSString *str, NSRange strRange, NSRange enclosingRange, BOOL *stop) {
-         count++;
-     }];
-    return count;
-}
+        NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired;
+    [string enumerateSubstringsInRange:NSMakeRange(0, string.length)
+                               options:options
+                            usingBlock:^(__unused NSString *substring,
+                                         __unused NSRange substringRange,
+                                         __unused NSRange enclosingRange,
+                                         __unused BOOL *stop) {
+        words++;
+    }];
 
-- (NSUInteger)lengthWithoutNewlines
-{
-    static NSCharacterSet *sp = nil;
+    static NSCharacterSet *newlineSet = nil;
+    static NSCharacterSet *whitespaceAndNewlineSet = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sp = [NSCharacterSet newlineCharacterSet];
+        newlineSet = [NSCharacterSet newlineCharacterSet];
+        whitespaceAndNewlineSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
     });
 
-    NSUInteger length = 0;
-    for (NSString *comp in [self componentsSeparatedByCharactersInSet:sp])
-        length += comp.length;
-    return length;
+    NSUInteger characters = 0;
+    NSUInteger charactersWithoutSpaces = 0;
+    for (NSUInteger i = 0; i < string.length; i++)
+    {
+        unichar character = [string characterAtIndex:i];
+        if (![newlineSet characterIsMember:character])
+            characters++;
+        if (![whitespaceAndNewlineSet characterIsMember:character])
+            charactersWithoutSpaces++;
+    }
+
+    return MPAccumulatedTextCountMake(words, characters,
+                                      charactersWithoutSpaces);
 }
 
-
-- (NSUInteger)lengthWithoutWhitespacesAndNewlines
+NS_INLINE MPAccumulatedTextCount MPGetChildrenAccumulatedTextCount(DOMNode *node)
 {
-    static NSCharacterSet *sp = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sp = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    });
-
-    NSUInteger length = 0;
-    for (NSString *comp in [self componentsSeparatedByCharactersInSet:sp])
-        length += comp.length;
-    return length;
-}
-
-@end
-
-
-NS_INLINE NSUInteger MPGetChildrenNodetextCount(
-    DOMNode *node, DOMNodeTextCountingOption opt)
-{
-    NSUInteger count = 0;
+    MPAccumulatedTextCount count = MPAccumulatedTextCountZero();
     for (DOMNode *c = node.firstChild; c; c = c.nextSibling)
-        count += MPGetNodeTextCount(c, opt);
+        count = MPAccumulatedTextCountAdd(count, MPGetNodeAccumulatedTextCount(c));
     return count;
 }
 
-
-NS_INLINE NSUInteger MPGetNodeTextCount(
-    DOMNode *node, DOMNodeTextCountingOption opt)
+NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *node)
 {
     switch (node.nodeType)
     {
@@ -88,33 +101,25 @@ NS_INLINE NSUInteger MPGetNodeTextCount(
                 if ([tagName isEqualToString:@"SCRIPT"]
                         || [tagName isEqualToString:@"STYLE"]
                         || [tagName isEqualToString:@"HEAD"])
-                    return 0;
-                if (opt == DOMNodeTextCountWords
-                    && [tagName isEqualToString:@"CODE"])
+                    return MPAccumulatedTextCountZero();
+                if ([tagName isEqualToString:@"CODE"])
                 {
-                    // A PRE-CODE combo, i.e. a code block. Exclude.
                     if ([node.parentElement.tagName isEqualToString:@"PRE"])
-                        return 0;
-                    // An inline code counts as ONE word if it has content.
-                    return MPGetChildrenNodetextCount(node, opt) ? 1 : 0;
+                        return MPAccumulatedTextCountZero();
+                    MPAccumulatedTextCount childCount =
+                        MPGetChildrenAccumulatedTextCount(node);
+                    childCount.words = childCount.words ? 1 : 0;
+                    return childCount;
                 }
             }
-            return MPGetChildrenNodetextCount(node, opt);
+            return MPGetChildrenAccumulatedTextCount(node);
         case 3:
         case 4:
-            switch (opt)
-            {
-                case DOMNodeTextCountWords:
-                    return node.nodeValue.numberOfWords;
-                case DOMNodeTextCountCharacters:
-                    return node.nodeValue.lengthWithoutNewlines;
-                case DOMNodeTextCountCharactersWithoutWhiteSpaces:
-                    return node.nodeValue.lengthWithoutWhitespacesAndNewlines;
-            }
+            return MPGetStringAccumulatedTextCount(node.nodeValue);
         default:
             break;
     }
-    return 0;
+    return MPAccumulatedTextCountZero();
 }
 
 
@@ -122,11 +127,11 @@ NS_INLINE NSUInteger MPGetNodeTextCount(
 
 - (DOMNodeTextCount)textCount
 {
+    MPAccumulatedTextCount accumulatedCount = MPGetNodeAccumulatedTextCount(self);
     DOMNodeTextCount count;
-    count.words = MPGetNodeTextCount(self, DOMNodeTextCountWords);
-    count.characters = MPGetNodeTextCount(self, DOMNodeTextCountCharacters);
-    count.characterWithoutSpaces =
-        MPGetNodeTextCount(self, DOMNodeTextCountCharactersWithoutWhiteSpaces);
+    count.words = accumulatedCount.words;
+    count.characters = accumulatedCount.characters;
+    count.characterWithoutSpaces = accumulatedCount.charactersWithoutSpaces;
     return count;
 }
 
