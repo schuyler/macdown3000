@@ -16,7 +16,6 @@
 NSString * const MPQuickLookRendererErrorDomain = @"MPQuickLookRendererErrorDomain";
 
 // Constants
-static NSString * const kMPPrismScriptDirectory = @"Prism/components";
 static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static size_t kMPRendererNestingLevel = SIZE_MAX;
 
@@ -181,14 +180,8 @@ NS_INLINE NSString *MPQuickLookContentSecurityPolicy(void)
 
 #pragma mark - Hoedown Renderer Callbacks
 
-// Extra state for language tracking
-typedef struct {
-    void *owner;
-    NSMutableArray *languages;
-} MPQuickLookRendererState;
-
 /**
- * Custom blockcode renderer that tracks languages for Prism.
+ * Custom blockcode renderer that adds Prism language classes without scripts.
  */
 static void mp_quicklook_render_blockcode(
     hoedown_buffer *ob,
@@ -196,9 +189,6 @@ static void mp_quicklook_render_blockcode(
     const hoedown_buffer *lang,
     const hoedown_renderer_data *data)
 {
-    hoedown_html_renderer_state *state = data->opaque;
-    MPQuickLookRendererState *extra = state->opaque;
-
     if (ob->size) hoedown_buffer_putc(ob, '\n');
 
     HOEDOWN_BUFPUTSL(ob, "<pre><code");
@@ -207,13 +197,6 @@ static void mp_quicklook_render_blockcode(
         NSString *language = [[NSString alloc] initWithBytes:lang->data
                                                       length:lang->size
                                                     encoding:NSUTF8StringEncoding];
-
-        // Track language for Prism script inclusion
-        if (extra && extra->languages && language.length > 0) {
-            if (![extra->languages containsObject:language]) {
-                [extra->languages addObject:language];
-            }
-        }
 
         // Add language class for Prism
         HOEDOWN_BUFPUTSL(ob, " class=\"language-");
@@ -233,7 +216,6 @@ static void mp_quicklook_render_blockcode(
 
 @interface MPQuickLookRenderer ()
 @property (nonatomic, strong) MPQuickLookPreferences *preferences;
-@property (nonatomic, strong) NSMutableArray *detectedLanguages;
 @end
 
 
@@ -244,7 +226,6 @@ static void mp_quicklook_render_blockcode(
     self = [super init];
     if (self) {
         _preferences = [MPQuickLookPreferences sharedPreferences];
-        _detectedLanguages = [NSMutableArray array];
     }
     return self;
 }
@@ -260,9 +241,6 @@ static void mp_quicklook_render_blockcode(
     if (markdown.length == 0) {
         return [self wrapBodyInHTML:@""];
     }
-
-    // Clear detected languages
-    [self.detectedLanguages removeAllObjects];
 
     // Preprocess markdown
     NSString *preprocessed = MPPreprocessMarkdown(markdown);
@@ -327,14 +305,8 @@ static void mp_quicklook_render_blockcode(
     // Create HTML renderer
     hoedown_renderer *renderer = hoedown_html_renderer_new(flags, 0);
 
-    // Set up custom blockcode handler for language tracking
+    // Preserve Prism language classes, but Quick Look never executes Prism JS.
     renderer->blockcode = mp_quicklook_render_blockcode;
-
-    // Set up extra state for language tracking
-    MPQuickLookRendererState extra;
-    extra.owner = (__bridge void *)self;
-    extra.languages = self.detectedLanguages;
-    ((hoedown_html_renderer_state *)renderer->opaque)->opaque = &extra;
 
     // Create document
     hoedown_document *document = hoedown_document_new(
@@ -415,51 +387,4 @@ static void mp_quicklook_render_blockcode(
 
     return styles;
 }
-
-- (NSString *)embeddedScripts
-{
-    NSMutableString *scripts = [NSMutableString string];
-    NSBundle *bundle = MPQuickLookBundle();
-
-    // Prism core
-    NSURL *coreURL = [bundle URLForResource:@"prism-core.min"
-                              withExtension:@"js"
-                               subdirectory:kMPPrismScriptDirectory];
-    if (!coreURL) {
-        coreURL = [bundle URLForResource:@"prism-core"
-                           withExtension:@"js"
-                            subdirectory:kMPPrismScriptDirectory];
-    }
-
-    NSString *coreContent = MPReadFileContents(coreURL.path);
-    if (coreContent.length > 0) {
-        [scripts appendString:@"<script type=\"text/javascript\">\n"];
-        [scripts appendString:coreContent];
-        [scripts appendString:@"\n</script>\n"];
-    }
-
-    // Language-specific Prism components
-    for (NSString *language in self.detectedLanguages) {
-        NSString *langFile = [NSString stringWithFormat:@"prism-%@.min", [language lowercaseString]];
-        NSURL *langURL = [bundle URLForResource:langFile
-                                  withExtension:@"js"
-                                   subdirectory:kMPPrismScriptDirectory];
-        if (!langURL) {
-            langFile = [NSString stringWithFormat:@"prism-%@", [language lowercaseString]];
-            langURL = [bundle URLForResource:langFile
-                               withExtension:@"js"
-                                subdirectory:kMPPrismScriptDirectory];
-        }
-
-        NSString *langContent = MPReadFileContents(langURL.path);
-        if (langContent.length > 0) {
-            [scripts appendString:@"<script type=\"text/javascript\">\n"];
-            [scripts appendString:langContent];
-            [scripts appendString:@"\n</script>\n"];
-        }
-    }
-
-    return scripts;
-}
-
 @end

@@ -32,10 +32,11 @@
 {
     // Create web view configuration
     WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
-    config.preferences.javaScriptEnabled = NO;
     config.preferences.javaScriptCanOpenWindowsAutomatically = NO;
     if (@available(macOS 11.0, *)) {
         config.defaultWebpagePreferences.allowsContentJavaScript = NO;
+    } else {
+        config.preferences.javaScriptEnabled = NO;
     }
 
     // Create web view with a meaningful initial size
@@ -133,6 +134,8 @@ decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
     NSURL *url = navigationAction.request.URL;
     NSString *scheme = url.scheme.lowercaseString;
 
+    // `loadHTMLString:` may produce `about:` or `data:` navigations for the rendered
+    // document and embedded data URI assets. The CSP still blocks script execution.
     if ([scheme isEqualToString:@"about"] || [scheme isEqualToString:@"data"]) {
         decisionHandler(WKNavigationActionPolicyAllow);
         return;
