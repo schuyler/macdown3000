@@ -11,6 +11,8 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 #import "MPDocument.h"
 #import "MPPreferences.h"
+#import "MPRenderer.h"
+#import "MPEditorView.h"
 
 // Issue #342: Scroll ownership enum constants (must match MPScrollOwner in MPDocument.m)
 static const NSUInteger MPScrollOwnerEditor  = 0;
@@ -23,6 +25,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (weak) WebView *preview;
+@property (strong) MPRenderer *renderer;
+@property (unsafe_unretained) MPEditorView *editor;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
@@ -1895,6 +1899,48 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     XCTAssertNoThrow([doc handleCheckboxToggle:url],
                      @"M2: handleCheckboxToggle: should not crash with an unrecognized host");
+}
+
+/**
+ * M3 — handleCheckboxToggle: ignores mismatched checkbox bridge tokens.
+ */
+- (void)testHandleCheckboxToggleRejectsMismatchedToken
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+    doc.renderer = renderer;
+    doc.editor = editor;
+    editor.string = @"- [ ] Task";
+    [renderer setValue:@"expected-token" forKey:@"checkboxBridgeToken"];
+
+    NSURL *url = [NSURL URLWithString:
+                  @"x-macdown-checkbox://toggle/0?token=wrong-token"];
+    [doc handleCheckboxToggle:url];
+
+    XCTAssertEqualObjects(editor.string, @"- [ ] Task",
+                          @"Checkbox toggles with a mismatched token must be ignored");
+}
+
+/**
+ * M4 — handleCheckboxToggle: applies authorized checkbox toggles.
+ */
+- (void)testHandleCheckboxToggleAcceptsMatchingToken
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+    doc.renderer = renderer;
+    doc.editor = editor;
+    editor.string = @"- [ ] Task";
+    [renderer setValue:@"expected-token" forKey:@"checkboxBridgeToken"];
+
+    NSURL *url = [NSURL URLWithString:
+                  @"x-macdown-checkbox://toggle/0?token=expected-token"];
+    [doc handleCheckboxToggle:url];
+
+    XCTAssertEqualObjects(editor.string, @"- [x] Task",
+                          @"Checkbox toggles with the active bridge token should update the source document");
 }
 
 #pragma mark - Group J — Sync after layout changes (Commit 6, gaps 1+3)

@@ -2987,6 +2987,24 @@ current file somewhere to enable this feature.", \
     if (![url.host isEqualToString:@"toggle"])
         return;
 
+    NSURLComponents *components =
+        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSString *token = nil;
+    for (NSURLQueryItem *item in components.queryItems)
+    {
+        if ([item.name isEqualToString:@"token"])
+        {
+            token = item.value;
+            break;
+        }
+    }
+    if (!token.length
+        || ![token isEqualToString:self.renderer.checkboxBridgeToken])
+    {
+        NSLog(@"MacDown: Ignored unauthorized checkbox toggle: %@", url);
+        return;
+    }
+
     NSString *path = url.path;
     if (path.length < 2)
         return;

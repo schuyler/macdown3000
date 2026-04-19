@@ -13,6 +13,7 @@
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
 #import "hoedown/document.h"
+#import "hoedown_html_patch.h"
 
 
 #pragma mark - Test Class
@@ -132,6 +133,62 @@
     NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle single newline");
+}
+
+
+#pragma mark - Preview Security Tests
+
+- (void)testPreviewRenderIncludesContentSecurityPolicyAndCheckboxToken
+{
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    NSString *html = self.delegate.lastHTML;
+    XCTAssertNotNil(html, @"Preview render should produce HTML");
+    XCTAssertTrue([html containsString:@"Content-Security-Policy"],
+                  @"Preview HTML should include a CSP meta tag");
+    XCTAssertTrue([html containsString:@"script-src &#39;self&#39; file: https://cdnjs.cloudflare.com &#39;unsafe-eval&#39;"],
+                  @"CSP should whitelist only bundled scripts and the MathJax CDN");
+    XCTAssertTrue([html containsString:@"name=\"macdown-checkbox-token\""],
+                  @"Preview HTML should include a checkbox bridge token");
+    XCTAssertTrue(self.renderer.checkboxBridgeToken.length > 0,
+                  @"Renderer should expose the active checkbox bridge token");
+}
+
+- (void)testPreviewRenderKeepsCheckboxBridgeTokenStableAcrossRenders
+{
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+    NSString *firstToken = [self.renderer.checkboxBridgeToken copy];
+
+    [self.renderer render];
+    NSString *secondToken = [self.renderer.checkboxBridgeToken copy];
+
+    XCTAssertEqualObjects(firstToken, secondToken,
+                          @"DOM-only preview refreshes keep the original head meta tags, so the checkbox bridge token must remain stable across renders");
+    XCTAssertTrue([self.delegate.lastHTML containsString:firstToken],
+                  @"Rendered preview HTML should continue to expose the active checkbox bridge token");
+}
+
+- (void)testHTMLExportDoesNotIncludePreviewOnlySecurityMetaTags
+{
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertNotNil(html, @"Export should produce HTML");
+    XCTAssertFalse([html containsString:@"Content-Security-Policy"],
+                   @"Preview-only CSP should not be embedded into exports");
+    XCTAssertFalse([html containsString:@"macdown-checkbox-token"],
+                   @"Preview-only checkbox tokens should not leak into exports");
 }
 
 

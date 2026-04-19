@@ -24,6 +24,7 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 @property (nonatomic) int rendererFlags;
 @property (weak) id<MPRendererDataSource> dataSource;
 @property (weak) id<MPRendererDelegate> delegate;
+@property (nonatomic, copy, readonly) NSString *checkboxBridgeToken;
 
 - (void)parseAndRenderNow;
 - (void)parseAndRenderLater;
