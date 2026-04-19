@@ -10,6 +10,11 @@
 #import "MPPreferences.h"
 #import <sys/stat.h>
 
+@interface MPDocument (LinkTargetTesting)
+@property (strong) NSURL *currentBaseUrl;
+- (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
+@end
+
 @interface MPDocumentIOTests : XCTestCase
 @property (strong) MPDocument *document;
 @property (strong) NSURL *testFileURL;
@@ -421,6 +426,91 @@
 
     XCTAssertNil(doc, @"Should not create document from nonexistent file");
     XCTAssertNotNil(error, @"Should return error for nonexistent file");
+}
+
+#pragma mark - Link Target Auto-Creation Security Tests
+
+- (void)testCanAutomaticallyCreateLinkedFileInSameDirectory
+{
+    NSURL *targetURL = [NSURL fileURLWithPath:
+        [self.testDirectory stringByAppendingPathComponent:@"notes.md"]];
+
+    self.document.fileURL = self.testFileURL;
+
+    XCTAssertTrue([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
+                  @"Missing file links in the same directory should be auto-creatable");
+}
+
+- (void)testCanAutomaticallyCreateLinkedFileInSubdirectory
+{
+    NSString *subdirectory = [self.testDirectory stringByAppendingPathComponent:@"assets"];
+    [self.fileManager createDirectoryAtPath:subdirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:nil];
+    NSURL *targetURL = [NSURL fileURLWithPath:
+        [subdirectory stringByAppendingPathComponent:@"diagram.md"]];
+
+    self.document.fileURL = self.testFileURL;
+
+    XCTAssertTrue([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
+                  @"Missing file links in a subdirectory should remain auto-creatable");
+}
+
+- (void)testCanAutomaticallyCreateLinkedFileRejectsUnsavedDocument
+{
+    NSURL *targetURL = [NSURL fileURLWithPath:
+        [self.testDirectory stringByAppendingPathComponent:@"notes.md"]];
+
+    XCTAssertFalse([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
+                   @"Untitled documents should not auto-create link targets");
+}
+
+- (void)testCanAutomaticallyCreateLinkedFileRejectsOutOfScopeTarget
+{
+    NSString *outsideDirectory = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
+    [self.fileManager createDirectoryAtPath:outsideDirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:nil];
+    [self addTeardownBlock:^{
+        [self.fileManager removeItemAtPath:outsideDirectory error:nil];
+    }];
+
+    NSURL *targetURL = [NSURL fileURLWithPath:
+        [outsideDirectory stringByAppendingPathComponent:@"outside.md"]];
+    self.document.fileURL = self.testFileURL;
+
+    XCTAssertFalse([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
+                   @"Auto-created link targets must stay within the current document scope");
+}
+
+- (void)testCanAutomaticallyCreateLinkedFileRejectsSymlinkEscape
+{
+    NSString *docsDirectory = [self.testDirectory stringByAppendingPathComponent:@"docs"];
+    NSString *outsideDirectory = [self.testDirectory stringByAppendingPathComponent:@"outside"];
+    [self.fileManager createDirectoryAtPath:docsDirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:nil];
+    [self.fileManager createDirectoryAtPath:outsideDirectory
+                withIntermediateDirectories:YES
+                                 attributes:nil
+                                      error:nil];
+
+    NSString *symlinkPath = [docsDirectory stringByAppendingPathComponent:@"escape"];
+    [self.fileManager createSymbolicLinkAtPath:symlinkPath
+                           withDestinationPath:outsideDirectory
+                                         error:nil];
+
+    self.document.fileURL = [NSURL fileURLWithPath:
+        [docsDirectory stringByAppendingPathComponent:@"source.md"]];
+    NSURL *targetURL = [NSURL fileURLWithPath:
+        [symlinkPath stringByAppendingPathComponent:@"payload.md"]];
+
+    XCTAssertFalse([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
+                   @"Symlink escapes must not be auto-created");
 }
 
 @end
