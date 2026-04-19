@@ -242,6 +242,11 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
     return result;
 }
 
+NS_INLINE NSString *MPEscapeHTMLAttribute(NSString *value);
+NS_INLINE NSString *MPEscapeHTMLText(NSString *value);
+NS_INLINE NSString *MPPreviewContentSecurityPolicy(void);
+NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken);
+
 NS_INLINE NSString *MPGetHTML(
     NSString *title, NSString *headTags, NSString *body, NSArray *styles,
     MPAssetOption styleopt, NSArray *scripts, MPAssetOption scriptopt)
