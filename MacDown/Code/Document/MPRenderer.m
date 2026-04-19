@@ -698,14 +698,16 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     
 - (void)parseAndRenderWithMaxDelay:(NSTimeInterval)maxDelay {
     [self.parseQueue cancelAllOperations];
-    __block NSBlockOperation *operation = [NSBlockOperation blockOperationWithBlock:^{
+    NSBlockOperation *operation = [[NSBlockOperation alloc] init];
+    __weak NSBlockOperation *weakOp = operation;
+    [operation addExecutionBlock:^{
 
         // Fetch the markdown (from the main thread)
         __block NSString *markdown;
         dispatch_sync(dispatch_get_main_queue(), ^{
             markdown = [[self.dataSource rendererMarkdown:self] copy];
         });
-        if (operation.isCancelled)
+        if (weakOp.isCancelled)
             return;
 
         // Parse in backgound
@@ -714,7 +716,7 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         // Wait until the current preview load finishes, but never spin the CPU
         // indefinitely while waiting for WebKit to settle.
         NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:MAX(0, maxDelay)];
-        while (!operation.isCancelled) {
+        while (!weakOp.isCancelled) {
             __block BOOL rendererIsLoading = NO;
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
@@ -729,7 +731,7 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
             [NSThread sleepForTimeInterval:
                 MIN(kMPRendererLoadingPollInterval, remaining)];
         }
-        if (operation.isCancelled)
+        if (weakOp.isCancelled)
             return;
 
         // Render on main thread

@@ -66,9 +66,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     [self loadDefaultUserDefaults];
     self.latestVersionInstalled = version;
 
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
-        [self cleanupObsoleteAutosaveValues];
-    });
+    [self cleanupObsoleteAutosaveValues];
 
     return self;
 }
