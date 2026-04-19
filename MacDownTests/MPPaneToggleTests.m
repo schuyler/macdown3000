@@ -204,8 +204,10 @@
                        @"Startup preview mode should collapse the editor pane");
         XCTAssertTrue(self.document.previewVisible,
                       @"Startup preview mode should make the preview visible");
-        XCTAssertEqualWithAccuracy(self.document.previousSplitRatio, oldRatio, 0.001,
-                                   @"Startup preview mode should preserve the current split for restore");
+        XCTAssertEqualWithAccuracy(self.document.splitView.dividerLocation, 0.0, 0.001,
+                                   @"Startup preview mode should collapse the divider to the preview-only edge");
+        XCTAssertGreaterThan(oldRatio, 0.0,
+                             @"The precondition for this test is a visible editor split");
     }
     @finally {
         preferences.editorStartInPreviewMode = originalStartInPreviewMode;

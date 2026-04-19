@@ -567,8 +567,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Issue #290: Start file watching for auto-reload
         [self startFileWatching];
 
-        // Apply the startup pane preference after split-view autosave and the
-        // initial window layout have produced stable geometry.
+        // Force layout before reading dividerLocation. The startup preference
+        // path depends on current subview widths, and split-view autosave may
+        // not have pushed those frames into the content view hierarchy yet.
         [controller.window.contentView layoutSubtreeIfNeeded];
         [self applyEditorStartInPreviewModePreference];
 
@@ -2112,8 +2113,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     {
         self.previousSplitRatio = ratio;
     }
-    else if (self.previousSplitRatio < 0.0)
+    else if (!self.previewVisible && self.previousSplitRatio < 0.0)
     {
+        // An editor-only autosaved layout has no restorable split ratio, so
+        // fall back to an even split when the user later restores the editor.
         self.previousSplitRatio = 0.5;
     }
 

@@ -104,7 +104,7 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="14" id="N9w-Rv-p6t"/>
                                 </constraints>
-                                <buttonCell key="cell" type="check" title="Start in preview mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aYQ-0c-EOQ">
+                                <buttonCell key="cell" type="check" title="Start in preview mode" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="aYQ-0c-EOQ">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
