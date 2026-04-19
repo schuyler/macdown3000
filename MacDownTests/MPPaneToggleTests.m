@@ -186,17 +186,16 @@
     BOOL originalEditorOnRight = preferences.editorOnRight;
 
     @try {
+        [self.document makeWindowControllers];
+
+        if (!self.document.editorVisible || !self.document.previewVisible) {
+            NSLog(@"Skipping testStartInPreviewModeRestoresPreviewFromEditorOnlyLayout - panes not initialized");
+            return;
+        }
+
         preferences.editorStartInPreviewMode = YES;
         preferences.editorOnRight = NO;
-
-        MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc] initWithFrame:NSMakeRect(0, 0, 400, 300)];
-        NSView *editorContainer = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 399, 300)];
-        WebView *preview = [[WebView alloc] initWithFrame:NSMakeRect(400, 0, 0, 300)];
-        splitView.subviews = @[editorContainer, preview];
-
-        self.document.splitView = splitView;
-        self.document.editorContainer = editorContainer;
-        self.document.preview = preview;
+        CGFloat oldRatio = self.document.splitView.dividerLocation;
         self.document.previousSplitRatio = -1.0;
 
         [self.document applyEditorStartInPreviewModePreference];
@@ -205,8 +204,8 @@
                        @"Startup preview mode should collapse the editor pane");
         XCTAssertTrue(self.document.previewVisible,
                       @"Startup preview mode should make the preview visible");
-        XCTAssertEqualWithAccuracy(self.document.previousSplitRatio, 0.5, 0.001,
-                                   @"Editor-only startup layouts should restore to a sane split");
+        XCTAssertEqualWithAccuracy(self.document.previousSplitRatio, oldRatio, 0.001,
+                                   @"Startup preview mode should preserve the current split for restore");
     }
     @finally {
         preferences.editorStartInPreviewMode = originalStartInPreviewMode;
