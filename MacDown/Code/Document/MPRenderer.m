@@ -482,6 +482,8 @@ NS_INLINE NSString *MPEscapeHTMLText(NSString *value)
 
 NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
 {
+    // MathJax 2.x relies on eval/new Function during startup, and bundled
+    // preview libraries inject inline styles while rendering annotated output.
     return @"default-src 'none'; "
            @"base-uri 'none'; "
            @"form-action 'none'; "
@@ -819,7 +821,8 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     }
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
-    self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
+    if (!self.checkboxBridgeToken.length)
+        self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
     NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
     NSString *html = MPGetHTML(
         title, headTags, body, self.stylesheets, MPAssetFullLink,

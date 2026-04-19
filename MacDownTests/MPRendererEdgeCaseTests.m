@@ -158,7 +158,7 @@
                   @"Renderer should expose the active checkbox bridge token");
 }
 
-- (void)testPreviewRenderRotatesCheckboxBridgeToken
+- (void)testPreviewRenderKeepsCheckboxBridgeTokenStableAcrossRenders
 {
     self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Task";
@@ -170,8 +170,10 @@
     [self.renderer render];
     NSString *secondToken = [self.renderer.checkboxBridgeToken copy];
 
-    XCTAssertNotEqualObjects(firstToken, secondToken,
-                             @"Each preview render should mint a fresh checkbox bridge token");
+    XCTAssertEqualObjects(firstToken, secondToken,
+                          @"DOM-only preview refreshes keep the original head meta tags, so the checkbox bridge token must remain stable across renders");
+    XCTAssertTrue([self.delegate.lastHTML containsString:firstToken],
+                  @"Rendered preview HTML should continue to expose the active checkbox bridge token");
 }
 
 - (void)testHTMLExportDoesNotIncludePreviewOnlySecurityMetaTags
