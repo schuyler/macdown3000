@@ -43,8 +43,9 @@
 
     // Create web view with a meaningful initial size
     NSRect frame = NSMakeRect(0, 0, 800, 600);
-    self.webView = self.webViewFactory
-        ? self.webViewFactory(config, frame)
+    WKWebView *(^factory)(WKWebViewConfiguration *, NSRect) = self.webViewFactory;
+    self.webView = factory
+        ? factory(config, frame)
         : [[WKWebView alloc] initWithFrame:frame configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
