@@ -247,31 +247,33 @@ Chico's bucket assignments are authoritative for what appears in the posted revi
 Construct the Markdown review from Chico's bucket 1 and bucket 2 only. Use this template:
 
 ```markdown
-Thanks for this contribution, @{author}! Really appreciate you taking the time to {brief, specific acknowledgment of what the PR does}.
+Thanks for the PR, @{author}!
 
-{Optional: 1-sentence overall assessment}
+## Issues
 
-## Must-fix before merge
-
-{Chico bucket 1, or "None — nice work." if empty}
+{Chico bucket 1 items — one bullet per issue, format: "**Short label:** one-sentence explanation of why it matters." If empty, omit this section entirely.}
 
 ## Suggestions
 
-{Chico bucket 2, framed as suggestions, not commands}
-
----
-
-{Closing line thanking them again and stating recommended disposition}
+{Chico bucket 2 items — one bullet per suggestion, at most one sentence each. If empty, omit this section entirely.}
 ```
+
+**Conciseness rules (strict):**
+- No effusive praise, no "Really appreciate you taking the time…", no closing pleasantries beyond the opening thanks line
+- Each issue: a short bold label + one sentence max explaining why it matters. No imperative language ("you must", "please fix", "make sure to").
+- Each suggestion: one sentence max. No imperative language.
+- No overall assessment paragraph
+- If both sections are empty, just post the thanks line plus "Looks good to me!"
 
 Bucket 3 items are NOT included in the posted review. They become an internal follow-up note shown only to the user in Step 7.
 
-**Tone enforcement checklist** — verify before showing the draft:
+**Tone/quality checklist** — verify before showing the draft:
 
-- [ ] Opens with sincere thanks naming the author by handle
+- [ ] Opens with brief thanks naming the author by handle
 - [ ] No dismissive language ("obviously", "just", "simply", "you should have", "why didn't you")
-- [ ] Suggestions phrased as suggestions, not commands
-- [ ] Closes warmly
+- [ ] No imperative language ("must", "need to", "have to", "please fix")
+- [ ] Each item is one sentence or fewer
+- [ ] No closing pleasantries beyond the opening line
 - [ ] Posted review contains nothing from bucket 3
 
 If any box is unchecked, revise the draft before proceeding.
