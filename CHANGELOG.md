@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Security
+
+- Restrict auto-created link targets to the current document's folder to prevent unauthorized file creation (#386)
+
 ### Fixed
 
 - Improve render-path responsiveness: single-pass word/character counting, cached body-extraction regex, and bounded renderer polling with cancellation (#388)

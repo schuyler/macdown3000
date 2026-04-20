@@ -2866,6 +2866,23 @@ the current file is not saved anywhere yet. Save the \
 current file somewhere to enable this feature.", \
 @"preview navigation error information")
 
+#define AUTO_CREATE_SCOPE_FAIL_ALERT_INFORMATIVE NSLocalizedString( \
+@"MacDown only auto-creates missing file links inside the current \
+document folder. Save or create the target manually if you want \
+to link outside that scope.", \
+@"preview navigation error information")
+
+
+- (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url
+{
+    if (!url.isFileURL || !self.fileURL.isFileURL)
+        return NO;
+
+    // Fall back to the document file URL if a rendering base URL isn't set.
+    NSURL *baseURL = self.currentBaseUrl ?: self.fileURL;
+    return [MPURLSecurityPolicy url:url isWithinScopeOfBaseURL:baseURL];
+}
+
 
 - (void)openOrCreateFileForUrl:(NSURL *)url
 {
@@ -2932,6 +2949,20 @@ current file somewhere to enable this feature.", \
                              url.lastPathComponent];
         alert.informativeText = AUTO_CREATE_FAIL_ALERT_INFORMATIVE;
         [alert runModal];
+        return;
+    }
+
+    if (![self canAutomaticallyCreateLinkedFileAtURL:url])
+    {
+        NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
+        NSString *template = NSLocalizedString(
+            @"Blocked file creation:\n%@",
+            @"preview navigation error message");
+        alert.messageText = [NSString stringWithFormat:template, url.path];
+        alert.informativeText = AUTO_CREATE_SCOPE_FAIL_ALERT_INFORMATIVE;
+        [alert runModal];
+        return;
     }
 
     // Try to created the file.
