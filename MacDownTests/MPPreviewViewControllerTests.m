@@ -22,7 +22,7 @@
 
 // Expose the test-only factory property without touching the public header.
 @interface PreviewViewController (Testing)
-@property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config);
+@property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config, NSRect frame);
 @end
 
 
@@ -38,10 +38,9 @@
     // Skip [super ...] — that would launch the XPC web content process.
     // Fire the navigation callback on the next run-loop turn, preserving the
     // async contract the real WKWebView provides.
-    id<WKNavigationDelegate> delegate = self.navigationDelegate;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if ([delegate respondsToSelector:@selector(webView:didFinishNavigation:)])
-            [delegate webView:self didFinishNavigation:nil];
+        if ([self.navigationDelegate respondsToSelector:@selector(webView:didFinishNavigation:)])
+            [self.navigationDelegate webView:self didFinishNavigation:nil];
     });
     return nil;
 }
@@ -57,9 +56,8 @@
 - (PreviewViewController *)makeViewController
 {
     PreviewViewController *vc = [[PreviewViewController alloc] init];
-    vc.webViewFactory = ^WKWebView *(WKWebViewConfiguration *config) {
-        return [[MPTestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)
-                                        configuration:config];
+    vc.webViewFactory = ^WKWebView *(WKWebViewConfiguration *config, NSRect frame) {
+        return [[MPTestWKWebView alloc] initWithFrame:frame configuration:config];
     };
     return vc;
 }

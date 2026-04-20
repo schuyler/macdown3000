@@ -15,7 +15,7 @@
 @property (nonatomic, strong) MPQuickLookRenderer *renderer;
 @property (nonatomic, copy) void (^pendingHandler)(NSError * _Nullable);
 // Allows tests to substitute a synchronous WKWebView without starting the XPC web content process.
-@property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config);
+@property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config, NSRect frame);
 @end
 
 
@@ -44,7 +44,7 @@
     // Create web view with a meaningful initial size
     NSRect frame = NSMakeRect(0, 0, 800, 600);
     self.webView = self.webViewFactory
-        ? self.webViewFactory(config)
+        ? self.webViewFactory(config, frame)
         : [[WKWebView alloc] initWithFrame:frame configuration:config];
     self.webView.navigationDelegate = self;
     self.webView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
