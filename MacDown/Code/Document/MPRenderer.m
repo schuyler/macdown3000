@@ -31,7 +31,7 @@ static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
 static size_t kMPRendererNestingLevel = SIZE_MAX;
 static int kMPRendererTOCLevel = 6;  // h1 to h6.
-static const NSTimeInterval kMPRendererLoadingPollInterval = 0.01;
+static const NSTimeInterval kMPRendererLoadingPollInterval = 0.01;  // 10ms between polls
 
 
 NS_INLINE NSURL *MPExtensionURL(NSString *name, NSString *extension)
@@ -701,13 +701,16 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     NSBlockOperation *operation = [[NSBlockOperation alloc] init];
     __weak NSBlockOperation *weakOp = operation;
     [operation addExecutionBlock:^{
+        NSBlockOperation *strongOp = weakOp;
+        if (!strongOp || strongOp.isCancelled)
+            return;
 
         // Fetch the markdown (from the main thread)
         __block NSString *markdown;
         dispatch_sync(dispatch_get_main_queue(), ^{
             markdown = [[self.dataSource rendererMarkdown:self] copy];
         });
-        if (weakOp.isCancelled)
+        if (strongOp.isCancelled)
             return;
 
         // Parse in backgound
@@ -716,7 +719,7 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         // Wait until the current preview load finishes, but never spin the CPU
         // indefinitely while waiting for WebKit to settle.
         NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:MAX(0, maxDelay)];
-        while (!weakOp.isCancelled) {
+        while (!strongOp.isCancelled) {
             __block BOOL rendererIsLoading = NO;
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
@@ -731,7 +734,7 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
             [NSThread sleepForTimeInterval:
                 MIN(kMPRendererLoadingPollInterval, remaining)];
         }
-        if (weakOp.isCancelled)
+        if (strongOp.isCancelled)
             return;
 
         // Render on main thread

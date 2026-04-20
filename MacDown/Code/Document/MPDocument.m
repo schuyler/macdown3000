@@ -1414,7 +1414,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
         if (bodyNodes.length >= 1)
         {
-            // Extract just the body content, not head or html tags
+            // Extract just the body content, not head or html tags.
+            // Compiled once and reused across renders to avoid repeated
+            // NSRegularExpression allocation on every preview update.
             static NSString *pattern = @"<body[^>]*>(.*)</body>";
             static int opts = NSRegularExpressionDotMatchesLineSeparators;
             static NSRegularExpression *regex = nil;
@@ -2468,8 +2470,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     //      → It's a horizontal rule (or standalone dashes)
     __block BOOL previousLineHadContent = NO;
 
-    // We start by splitting our document into lines, and then searching
-    // line by line for headers or images.
+    // Enumerate the document line by line (handles \n, \r\n, and bare \r)
+    // searching for headers or images.
     [documentString enumerateSubstringsInRange:NSMakeRange(0, documentString.length)
                                        options:NSStringEnumerationByLines
                                     usingBlock:^(NSString *line, __unused NSRange lineRange,
