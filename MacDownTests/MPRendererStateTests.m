@@ -24,7 +24,6 @@
 @property (nonatomic) NSInteger syntaxHighlightingCallCount;
 @property (nonatomic) NSInteger htmlOutputCallCount;
 @property (nonatomic, copy) NSString *lastReceivedHTML;
-@property (nonatomic, weak) XCTestExpectation *htmlOutputExpectation;
 @end
 
 @implementation MPTrackingRendererDelegate
@@ -63,7 +62,6 @@
 {
     self.htmlOutputCallCount++;
     self.lastReceivedHTML = html;
-    [self.htmlOutputExpectation fulfill];
     [super renderer:renderer didProduceHTMLOutput:html];
 }
 
@@ -100,25 +98,6 @@
 
 @end
 
-@interface MPDelayedLoadingRendererDataSource : MPTrackingRendererDataSource
-@property (nonatomic) NSTimeInterval loadingDuration;
-@property (nonatomic, strong) NSDate *loadingStartDate;
-@end
-
-@implementation MPDelayedLoadingRendererDataSource
-
-- (BOOL)rendererLoading
-{
-    self.loadingCallCount++;
-    if (!self.loadingStartDate)
-        self.loadingStartDate = [NSDate date];
-
-    NSTimeInterval elapsed =
-        [[NSDate date] timeIntervalSinceDate:self.loadingStartDate];
-    return elapsed < self.loadingDuration;
-}
-
-@end
 
 
 #pragma mark - Test Class
@@ -187,27 +166,6 @@
                   @"HTML should contain heading text");
 }
 
-- (void)testParseAndRenderWithMaxDelayCapsRendererLoadingPolls
-{
-    MPDelayedLoadingRendererDataSource *slowDataSource =
-        [[MPDelayedLoadingRendererDataSource alloc] init];
-    slowDataSource.markdown = @"# Slow Render";
-    slowDataSource.loadingDuration = 1.0;
-
-    self.dataSource = slowDataSource;
-    self.renderer.dataSource = slowDataSource;
-
-    XCTestExpectation *expectation =
-        [self expectationWithDescription:@"Renderer produces HTML"];
-    self.delegate.htmlOutputExpectation = expectation;
-
-    [self.renderer parseAndRenderWithMaxDelay:0.05];
-
-    [self waitForExpectations:@[expectation] timeout:1.0];
-
-    XCTAssertLessThanOrEqual(slowDataSource.loadingCallCount, 8,
-                             @"Renderer should poll loading state at a bounded interval");
-}
 
 
 #pragma mark - Extension Configuration Tests

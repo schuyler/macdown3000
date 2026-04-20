@@ -66,6 +66,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     [self loadDefaultUserDefaults];
     self.latestVersionInstalled = version;
 
+    // Run after migration and defaults are loaded so cleanup does not
+    // remove keys that were just migrated or set as defaults.
     [self cleanupObsoleteAutosaveValues];
 
     return self;
