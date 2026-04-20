@@ -2878,6 +2878,7 @@ to link outside that scope.", \
     if (!url.isFileURL || !self.fileURL.isFileURL)
         return NO;
 
+    // Fall back to the document file URL if a rendering base URL isn't set.
     NSURL *baseURL = self.currentBaseUrl ?: self.fileURL;
     return [MPURLSecurityPolicy url:url isWithinScopeOfBaseURL:baseURL];
 }
@@ -2954,6 +2955,7 @@ to link outside that scope.", \
     if (![self canAutomaticallyCreateLinkedFileAtURL:url])
     {
         NSAlert *alert = [[NSAlert alloc] init];
+        alert.alertStyle = NSAlertStyleWarning;
         NSString *template = NSLocalizedString(
             @"Blocked file creation:\n%@",
             @"preview navigation error message");

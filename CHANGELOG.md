@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Security
+
+- Restrict auto-created link targets to the current document's folder to prevent unauthorized file creation (#386)
+
 ## [3000.0.6] - 2026-04-18
 
 This release rebuilds scroll sync around an ownership model that eliminates timing-based race conditions, and fixes several user-reported bugs with preview rendering, Quick Look, and diagram support. The deep dive into the long history of the editor / preview panel scroll synchronization took about a day of persistent work. Hopefully it was worth it!
