@@ -20,10 +20,47 @@
 #import "PreviewViewController.h"
 
 
+// Expose the test-only factory property without touching the public header.
+@interface PreviewViewController (Testing)
+@property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config, NSRect frame);
+@end
+
+
+// Synchronous stand-in for WKWebView: fires didFinishNavigation: on the next
+// run-loop turn without starting the XPC web content process.
+@interface MPTestWKWebView : WKWebView
+@end
+
+@implementation MPTestWKWebView
+
+- (WKNavigation *)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL
+{
+    // Skip [super ...] — that would launch the XPC web content process.
+    // Fire the navigation callback on the next run-loop turn, preserving the
+    // async contract the real WKWebView provides.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([self.navigationDelegate respondsToSelector:@selector(webView:didFinishNavigation:)])
+            [self.navigationDelegate webView:self didFinishNavigation:nil];
+    });
+    return nil;
+}
+
+@end
+
+
 @interface MPPreviewViewControllerTests : XCTestCase
 @end
 
 @implementation MPPreviewViewControllerTests
+
+- (PreviewViewController *)makeViewController
+{
+    PreviewViewController *vc = [[PreviewViewController alloc] init];
+    vc.webViewFactory = ^WKWebView *(WKWebViewConfiguration *config, NSRect frame) {
+        return [[MPTestWKWebView alloc] initWithFrame:frame configuration:config];
+    };
+    return vc;
+}
 
 
 #pragma mark - WKNavigationDelegate Conformance Tests (Bug 1, Bug 4)
@@ -88,7 +125,7 @@
                                      encoding:NSUTF8StringEncoding
                                         error:nil];
 
-    PreviewViewController *vc = [[PreviewViewController alloc] init];
+    PreviewViewController *vc = [self makeViewController];
     [vc loadView];
 
     __block BOOL handlerCalled = NO;
@@ -108,6 +145,9 @@
 {
     // Verify the handler IS called, just not synchronously.
     // This confirms the deferred path (WKWebView navigation + delegate callback) works end-to-end.
+    //
+    // MPTestWKWebView fires didFinishNavigation: via dispatch_async, so this completes
+    // in one run-loop turn without requiring the XPC web content process.
 
     NSString *tempDir = NSTemporaryDirectory();
     NSString *tempFile = [tempDir stringByAppendingPathComponent:@"test_ql_async.md"];
@@ -119,7 +159,7 @@
                                       encoding:NSUTF8StringEncoding
                                          error:nil];
 
-    PreviewViewController *vc = [[PreviewViewController alloc] init];
+    PreviewViewController *vc = [self makeViewController];
     [vc loadView];
 
     XCTestExpectation *expectation = [self expectationWithDescription:@"QL completion handler called"];
@@ -129,12 +169,7 @@
         [expectation fulfill];
     }];
 
-    // Allow up to 10 seconds for WKWebView to load the HTML and fire the delegate callback.
-    [self waitForExpectationsWithTimeout:10.0 handler:^(NSError * _Nullable error) {
-        if (error) {
-            XCTFail(@"Completion handler was never called within 10 seconds: %@", error);
-        }
-    }];
+    [self waitForExpectations:@[expectation] timeout:2.0];
 }
 
 
@@ -148,7 +183,7 @@
     // FAILS on current code: navigationDelegate is nil (not set in loadView).
     // PASSES after fix: self.webView.navigationDelegate = self.
 
-    PreviewViewController *vc = [[PreviewViewController alloc] init];
+    PreviewViewController *vc = [self makeViewController];
     [vc loadView];
 
     XCTAssertTrue([vc.view isKindOfClass:[WKWebView class]],
@@ -167,7 +202,7 @@
     // FAILS on current code: preferredContentSize is CGSizeZero (NSZeroRect frame used).
     // PASSES after fix: preferredContentSize is set to 800×600.
 
-    PreviewViewController *vc = [[PreviewViewController alloc] init];
+    PreviewViewController *vc = [self makeViewController];
     [vc loadView];
 
     NSSize size = vc.preferredContentSize;
