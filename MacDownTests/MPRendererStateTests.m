@@ -99,6 +99,7 @@
 @end
 
 
+
 #pragma mark - Test Class
 
 @interface MPRendererStateTests : XCTestCase
@@ -164,6 +165,7 @@
     XCTAssertTrue([html containsString:@"Hello World"],
                   @"HTML should contain heading text");
 }
+
 
 
 #pragma mark - Extension Configuration Tests
