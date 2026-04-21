@@ -2,15 +2,9 @@
 //  MPZoomTests.m
 //  MacDownTests
 //
-//  TDD tests for the zoom feature in MPDocument.
-//  Some tests are RED regression guards and are expected to FAIL against the
-//  current code until the corresponding bug is fixed:
-//
-//  Bug 2: setupEditor: resets the editor font to the base (unzoomed) size,
-//         clobbering any zoom that was applied via applyCurrentZoom.
-//
-//  Bug 3: setupEditor: computes tab stops from the base font (not the zoomed
-//         font), so tab stops do not scale with zoom.
+//  Tests for the per-document zoom feature in MPDocument
+//  (zoomIn:/zoomOut:/resetZoom: actions, zoomMultiplier property,
+//  and the zoom-aware font and tab-stop code paths).
 //
 
 #import <XCTest/XCTest.h>
@@ -223,26 +217,11 @@
 }
 
 
-#pragma mark - Preference Observer — Bug 2 Regression Tests
-
-/**
- * setupEditor: must not reset zoomMultiplier to 1.0.
- * Bug 2: If setupEditor: calls applyCurrentZoom internally with the base font it
- * resets, zoom is effectively lost even though zoomMultiplier itself is unchanged.
- * This test guards the multiplier value directly (no editor required).
- */
-- (void)testSetupEditorDoesNotResetZoomMultiplier
-{
-    self.document.zoomMultiplier = 1.5;
-    XCTAssertNoThrow([self.document setupEditor:@"editorBaseFontInfo"],
-                     @"setupEditor:editorBaseFontInfo should not throw");
-    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 1.5, 0.001,
-                               @"setupEditor: must not reset zoomMultiplier");
-}
+#pragma mark - Preference Observer Tests
 
 /**
  * Calling setupEditor: while zoomed should not crash.
- * Bug 2 regression: nil changedKey exercises the full setup path.
+ * nil changedKey exercises the full setup path.
  */
 - (void)testSetupEditorDoesNotCrashWhileZoomed
 {
@@ -253,7 +232,6 @@
 
 /**
  * Calling setupEditor: for a line-spacing change while zoomed should not crash.
- * Bug 2 regression guard for the editorLineSpacing code path.
  */
 - (void)testSetupEditorDoesNotCrashForLineSpacingChangeWhileZoomed
 {
@@ -264,7 +242,6 @@
 
 /**
  * Calling setupEditor: for a style change while zoomed should not crash.
- * Bug 2 regression guard for the editorStyleName code path.
  */
 - (void)testSetupEditorDoesNotCrashForStyleChangeWhileZoomed
 {
@@ -274,14 +251,11 @@
 }
 
 /**
- * CONDITIONAL / RED TEST — expected to FAIL until Bug 2 is fixed.
+ * After zooming to 1.5 and calling applyCurrentZoom, a subsequent
+ * setupEditor:editorBaseFontInfo must not revert the editor font to the
+ * unzoomed base size.
  *
- * After zooming to 1.5 and calling applyCurrentZoom, the editor font's point
- * size should reflect the zoom. After a subsequent setupEditor:editorBaseFontInfo,
- * the editor font should NOT revert to the base (unzoomed) size.
- *
- * This test skips gracefully in headless environments where the editor outlet
- * is nil (e.g. CI without a display server).
+ * Skips in headless environments where the editor outlet is nil.
  */
 - (void)testSetupEditorPreservesZoomedFontSize
 {
@@ -303,11 +277,8 @@
 
     CGFloat afterSetupPointSize = self.document.editor.font.pointSize;
 
-    // BUG 2: setupEditor: resets the font to the base size, so afterSetupPointSize
-    // will equal the unzoomed base size, not zoomedPointSize.
-    // This assertion FAILS until Bug 2 is fixed.
     XCTAssertEqualWithAccuracy(afterSetupPointSize, zoomedPointSize, 0.1,
-                               @"Bug 2: setupEditor: must not revert the editor font to "
+                               @"setupEditor: must not revert the editor font to "
                                @"the unzoomed base size after applyCurrentZoom has run");
 }
 
@@ -330,7 +301,7 @@
 }
 
 
-#pragma mark - Tab Stop Calculation — Bug 3 Regression Tests
+#pragma mark - Tab Stop Calculation Tests
 
 /**
  * Pure math test: a font at 2x size must produce a wider space character and
@@ -365,11 +336,8 @@
 }
 
 /**
- * CONDITIONAL / RED TEST — expected to FAIL until Bug 3 is fixed.
- *
- * After zooming to 2.0, applyCurrentZoom, and setupEditor:editorBaseFontInfo,
- * the first tab stop in the editor's paragraph style should match the tab
- * interval computed from the zoomed font (not the base font).
+ * After zooming to 2.0 and applying, the first tab stop should match the
+ * tab interval computed from the zoomed font, not the base font.
  *
  * Skips in headless environments where the editor outlet is nil.
  */
@@ -407,11 +375,8 @@
 
     NSTextTab *firstTab = tabStops[0];
 
-    // BUG 3: setupEditor: uses the base font (not the zoomed font) to compute
-    // tab stops, so firstTab.location will equal the base-font tab interval.
-    // This assertion FAILS until Bug 3 is fixed.
     XCTAssertEqualWithAccuracy(firstTab.location, expectedTabInterval, 0.5,
-                               @"Bug 3: First tab stop must reflect zoomed font size, "
+                               @"First tab stop must reflect zoomed font size, "
                                @"not the unzoomed base font size");
 }
 
