@@ -405,7 +405,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="QMZ-Ld-Nza"/>
-                            <menuItem title="Zoom In" keyEquivalent="+" id="zIn-01-ABC">
+                            <menuItem title="Zoom In" keyEquivalent="=" id="zIn-01-ABC">
                                 <connections>
                                     <action selector="zoomIn:" target="-1" id="zIn-02-DEF"/>
                                 </connections>
@@ -415,7 +415,7 @@
                                     <action selector="zoomOut:" target="-1" id="zOt-02-JKL"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Actual Size" keyEquivalent="0" id="zRs-01-PQR">
+                            <menuItem title="Actual Size" id="zRs-01-PQR">
                                 <connections>
                                     <action selector="resetZoom:" target="-1" id="zRs-02-STU"/>
                                 </connections>
