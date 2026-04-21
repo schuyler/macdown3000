@@ -109,16 +109,26 @@ static CGFloat itemWidth = 37;
 - (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender
 {
     NSInteger selectedIndex = sender.selectedSegment;
-    
+
     NSToolbarItemGroup *selectedGroup = self->toolbarItemIdentifierObjectDictionary[sender.identifier];
     NSToolbarItem *selectedItem = selectedGroup.subitems[selectedIndex];
-    
-    // Invoke the toolbar item's action
-    // Must convert to IMP to let the compiler know about the method definition
+
+    // Invoke the toolbar item's action on the document. Use performSelector:
+    // (rather than a raw IMP cast) so the ObjC ABI correctly sets up self,
+    // _cmd, and the sender argument. The previous IMP cast to `void (*)(id)`
+    // left _cmd and sender as uninitialized register values, which produced
+    // garbage senders like 0x400000000000bad0 and random EXC_BAD_ACCESS
+    // crashes when the invoked action (or its responder-chain validation)
+    // touched sender.
     MPDocument *document = self.document;
-    IMP imp = [document methodForSelector:selectedItem.action];
-    void (*impFunc)(id) = (void *)imp;
-    impFunc(document);
+    SEL action = selectedItem.action;
+    if (document && action && [document respondsToSelector:action])
+    {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [document performSelector:action withObject:selectedItem];
+        #pragma clang diagnostic pop
+    }
 }
 
 
