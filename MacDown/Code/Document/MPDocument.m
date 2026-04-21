@@ -2733,7 +2733,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         style.lineSpacing = self.preferences.editorLineSpacing;
 
         // Configure tab stops to match 4-space tab width (fixes #195)
-        NSFont *font = [self.preferences.editorBaseFont copy];
+        NSFont *font = [[self zoomedEditorFont] copy];
         if (font)
         {
             NSDictionary *attrs = @{NSFontAttributeName: font};
@@ -2932,11 +2932,20 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 #endif
 }
 
+- (NSFont *)zoomedEditorFont
+{
+    NSFont *baseFont = self.preferences.editorBaseFont;
+    if (!baseFont)
+        return nil;
+    CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
+    return [NSFont fontWithName:baseFont.fontName size:zoomedSize];
+}
+
 - (IBAction)zoomIn:(id)sender
 {
     if (self.zoomMultiplier >= kMPMaxZoom)
         return;
-    
+
     self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMPMaxZoom);
     [self applyCurrentZoom];
 }
@@ -2958,15 +2967,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (void)applyCurrentZoom
 {
-    NSFont *baseFont = self.preferences.editorBaseFont;
-    CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
-    
-    // Apply zoom to editor (transient, not saved to preferences)
-    [self.editor setFont:[NSFont fontWithName:baseFont.fontName
-                                         size:zoomedSize]];
-    
-    // Apply zoom to preview
-    [self scaleWebview];
+    [self setupEditor:@"editorBaseFontInfo"];
 }
 
 /**
