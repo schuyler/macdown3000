@@ -39,7 +39,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
 | MPEditorViewSubstitutionTests.m | Text substitution preference getters, NSUserDefaults integration | Good | (Issue #263) |
 | MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
-| MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing | Good | (Issue #313) |
+| MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing, nil/bounds guards on `selectedToolbarItemGroupItem:` | Good | (Issue #313, Issue #394) |
 | MPMermaidRenderingTests.m | Mermaid diagram rendering, MutationObserver re-rendering, SVG sizing | Good | (Issue #331) |
 | MPGraphvizRenderingTests.m | Graphviz diagram rendering, MutationObserver re-rendering, script inclusion | Good | (Issue #332) |
 | MPURLSecurityPolicyTests.m | URL security policy: executable/bundle detection, directory scope checking | Good | (Issue #351) |
