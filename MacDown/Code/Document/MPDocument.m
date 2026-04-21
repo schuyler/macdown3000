@@ -257,7 +257,6 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
 
-// Transient per-document zoom level (not saved to preferences)
 @property CGFloat zoomMultiplier;
 
 - (void)scaleWebview;
@@ -2173,32 +2172,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             || [changedKey isEqualToString:@"editorStyleName"]
             || [changedKey isEqualToString:@"editorLineSpacing"])
     {
-        NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        style.lineSpacing = self.preferences.editorLineSpacing;
-
-        // Configure tab stops to match 4-space tab width (fixes #195)
-        NSFont *font = [[self zoomedEditorFont] copy];
-        if (font)
-        {
-            NSDictionary *attrs = @{NSFontAttributeName: font};
-            CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
-            CGFloat tabInterval = spaceWidth * 4;
-
-            NSMutableArray *tabStops = [NSMutableArray array];
-            for (NSInteger i = 1; i <= 100; i++)
-            {
-                NSTextTab *tab = [[NSTextTab alloc]
-                    initWithTextAlignment:NSTextAlignmentLeft
-                                 location:tabInterval * i
-                                  options:@{}];
-                [tabStops addObject:tab];
-            }
-            style.tabStops = tabStops;
-        }
-
-        self.editor.defaultParagraphStyle = [style copy];
-        if (font)
-            self.editor.font = font;
+        [self applyEditorFontAndParagraphStyle];
         self.editor.textColor = nil;
         self.editor.backgroundColor = [NSColor clearColor];
         self.highlighter.styles = nil;
@@ -2374,6 +2348,37 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return [NSFont fontWithName:baseFont.fontName size:zoomedSize];
 }
 
+- (void)applyEditorFontAndParagraphStyle
+{
+    NSFont *font = [[self zoomedEditorFont] copy];
+
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    style.lineSpacing = self.preferences.editorLineSpacing;
+
+    // Configure tab stops to match 4-space tab width (fixes #195)
+    if (font)
+    {
+        NSDictionary *attrs = @{NSFontAttributeName: font};
+        CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
+        CGFloat tabInterval = spaceWidth * 4;
+
+        NSMutableArray *tabStops = [NSMutableArray array];
+        for (NSInteger i = 1; i <= 100; i++)
+        {
+            NSTextTab *tab = [[NSTextTab alloc]
+                initWithTextAlignment:NSTextAlignmentLeft
+                             location:tabInterval * i
+                              options:@{}];
+            [tabStops addObject:tab];
+        }
+        style.tabStops = tabStops;
+    }
+
+    self.editor.defaultParagraphStyle = [style copy];
+    if (font)
+        self.editor.font = font;
+}
+
 - (IBAction)zoomIn:(id)sender
 {
     if (self.zoomMultiplier >= kMPMaxZoom)
@@ -2400,7 +2405,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)applyCurrentZoom
 {
-    [self setupEditor:@"editorBaseFontInfo"];
+    [self applyEditorFontAndParagraphStyle];
+    [self scaleWebview];
 }
 
 /**

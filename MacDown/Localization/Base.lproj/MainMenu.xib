@@ -405,12 +405,13 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="QMZ-Ld-Nza"/>
-                            <menuItem title="Zoom In" keyEquivalent="=" id="zIn-01-ABC">
+                            <menuItem title="Zoom In" keyEquivalent="+" id="zIn-01-ABC">
                                 <connections>
                                     <action selector="zoomIn:" target="-1" id="zIn-02-DEF"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom Out" keyEquivalent="-" id="zOt-01-GHI">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections>
                                     <action selector="zoomOut:" target="-1" id="zOt-02-JKL"/>
                                 </connections>
