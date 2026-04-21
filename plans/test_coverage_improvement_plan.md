@@ -64,7 +64,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Security policy (MPURLSecurityPolicy.m) - 16 tests covering executable/bundle detection and directory scope enforcement for CVE-2019-12138 and CVE-2019-12173 (Issue #351)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 - Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
-- Toolbar controller (MPToolbarController.m) - 37 tests for NSToolbarDelegate methods, flexible space/separator support, item groups (Issue #313)
+- Toolbar controller (MPToolbarController.m) - 41 tests for NSToolbarDelegate methods, flexible space/separator support, item groups, nil-group and out-of-bounds crash guards on `selectedToolbarItemGroupItem:` (Issue #313, Issue #394)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -449,7 +449,7 @@ MacDownTests/
 │   ├── MPAssetTests.m
 │   ├── MPEditorViewSubstitutionTests.m (✅ implemented - Issue #263 - text substitution preferences)
 │   ├── MPFileIOTests.m (new - planned)
-│   ├── MPToolbarControllerTests.m (✅ implemented - Issue #313 - toolbar item identifiers, groups, delegate methods)
+│   ├── MPToolbarControllerTests.m (✅ implemented - Issue #313, Issue #394 - toolbar item identifiers, groups, delegate methods, nil/bounds crash guards)
 │   └── MPURLSecurityPolicyTests.m (✅ implemented - Issue #351 - CVE-2019-12138, CVE-2019-12173: executable/bundle detection, scope checks)
 ├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m
