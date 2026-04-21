@@ -11,6 +11,12 @@
 #import <XCTest/XCTest.h>
 #import "MPToolbarController.h"
 
+// Expose the segmented-control action method to the test target; it is not
+// part of the public header but is callable via dynamic dispatch.
+@interface MPToolbarController (MPToolbarControllerTests)
+- (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender;
+@end
+
 @interface MPToolbarControllerTests : XCTestCase
 @property (strong) MPToolbarController *controller;
 @end
@@ -674,11 +680,11 @@
 
 - (void)testSelectedToolbarItemGroupItemOutOfBoundsIndexAsserts
 {
-    // indent-group has 2 subitems (shift-left, shift-right).
+    // indent-group has 2 subitems; segment 2 is one past the end.
     NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
     sender.identifier = @"indent-group";
-    sender.segmentCount = 99;
-    sender.selectedSegment = 50;
+    sender.segmentCount = 3;
+    sender.selectedSegment = 2;
 
     XCTAssertThrowsSpecificNamed([self.controller selectedToolbarItemGroupItem:sender],
                                  NSException, NSInternalInconsistencyException,
@@ -692,6 +698,12 @@
     sender.identifier = @"indent-group";
     sender.segmentCount = 2;
     sender.selectedSegment = -1;    // momentary tracking can theoretically produce -1
+
+    // Confirm AppKit didn't clamp the assignment. If this precondition fails
+    // on a given macOS version we'll need a different way to reach the
+    // negative-index branch.
+    XCTAssertEqual(sender.selectedSegment, (NSInteger)-1,
+                   @"NSSegmentedControl should accept a -1 selectedSegment for this test");
 
     XCTAssertThrowsSpecificNamed([self.controller selectedToolbarItemGroupItem:sender],
                                  NSException, NSInternalInconsistencyException,
