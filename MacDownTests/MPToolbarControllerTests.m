@@ -11,6 +11,12 @@
 #import <XCTest/XCTest.h>
 #import "MPToolbarController.h"
 
+// Expose the segmented-control action method to the test target; it is not
+// part of the public header but is callable via dynamic dispatch.
+@interface MPToolbarController (MPToolbarControllerTests)
+- (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender;
+@end
+
 @interface MPToolbarControllerTests : XCTestCase
 @property (strong) MPToolbarController *controller;
 @end
@@ -649,6 +655,75 @@
     XCTAssertNotNil(item.view, @"Layout item should have a view");
     XCTAssertTrue([item.view isKindOfClass:[NSPopUpButton class]],
                   @"Layout item view should be an NSPopUpButton");
+}
+
+
+#pragma mark - selectedToolbarItemGroupItem: Tests (Issue #394)
+
+// CI runs tests in Debug with ENABLE_NS_ASSERTIONS enabled, so the nil- and
+// bounds-guards' NSAsserts raise NSInternalInconsistencyException. In Release
+// the asserts compile away and the trailing `if ... return;` keeps users out
+// of the crash path; that branch is not directly testable from XCTest.
+
+- (void)testSelectedToolbarItemGroupItemUnknownIdentifierAsserts
+{
+    NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+    sender.identifier = @"nonexistent-group";
+    sender.segmentCount = 1;
+    sender.selectedSegment = 0;
+
+    XCTAssertThrowsSpecificNamed([self.controller selectedToolbarItemGroupItem:sender],
+                                 NSException, NSInternalInconsistencyException,
+                                 @"selectedToolbarItemGroupItem: must assert in Debug "
+                                 @"when sender.identifier is not registered in the dictionary");
+}
+
+- (void)testSelectedToolbarItemGroupItemOutOfBoundsIndexAsserts
+{
+    // indent-group has 2 subitems; segment 2 is one past the end.
+    NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+    sender.identifier = @"indent-group";
+    sender.segmentCount = 3;
+    sender.selectedSegment = 2;
+
+    XCTAssertThrowsSpecificNamed([self.controller selectedToolbarItemGroupItem:sender],
+                                 NSException, NSInternalInconsistencyException,
+                                 @"selectedToolbarItemGroupItem: must assert in Debug "
+                                 @"when selectedSegment is out of bounds for the group's subitems");
+}
+
+- (void)testSelectedToolbarItemGroupItemNegativeIndexAsserts
+{
+    NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+    sender.identifier = @"indent-group";
+    sender.segmentCount = 2;
+    sender.selectedSegment = -1;    // momentary tracking can theoretically produce -1
+
+    // Confirm AppKit didn't clamp the assignment. If this precondition fails
+    // on a given macOS version we'll need a different way to reach the
+    // negative-index branch.
+    XCTAssertEqual(sender.selectedSegment, (NSInteger)-1,
+                   @"NSSegmentedControl should accept a -1 selectedSegment for this test");
+
+    XCTAssertThrowsSpecificNamed([self.controller selectedToolbarItemGroupItem:sender],
+                                 NSException, NSInternalInconsistencyException,
+                                 @"selectedToolbarItemGroupItem: must assert in Debug "
+                                 @"when selectedSegment is negative");
+}
+
+- (void)testSelectedToolbarItemGroupItemValidCallDoesNotCrash
+{
+    // Valid identifier and valid index. With no document connected the
+    // internal performSelector: block is skipped, so this should complete
+    // without throwing.
+    NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+    sender.identifier = @"indent-group";
+    sender.segmentCount = 2;
+    sender.selectedSegment = 0;
+
+    XCTAssertNoThrow([self.controller selectedToolbarItemGroupItem:sender],
+                     @"selectedToolbarItemGroupItem: must not throw for a valid "
+                     @"group identifier and in-bounds selected segment");
 }
 
 

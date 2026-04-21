@@ -111,6 +111,19 @@ static CGFloat itemWidth = 37;
     NSInteger selectedIndex = sender.selectedSegment;
 
     NSToolbarItemGroup *selectedGroup = self->toolbarItemIdentifierObjectDictionary[sender.identifier];
+    NSAssert(selectedGroup != nil,
+             @"selectedToolbarItemGroupItem: sender identifier '%@' is not registered "
+             @"in toolbarItemIdentifierObjectDictionary",
+             sender.identifier);
+    if (!selectedGroup) { return; }
+
+    NSAssert(selectedIndex >= 0 && (NSUInteger)selectedIndex < selectedGroup.subitems.count,
+             @"selectedToolbarItemGroupItem: selectedSegment %ld is out of bounds "
+             @"for group '%@' with %lu subitems",
+             (long)selectedIndex, sender.identifier,
+             (unsigned long)selectedGroup.subitems.count);
+    if (selectedIndex < 0 || (NSUInteger)selectedIndex >= selectedGroup.subitems.count) { return; }
+
     NSToolbarItem *selectedItem = selectedGroup.subitems[selectedIndex];
 
     // Invoke the toolbar item's action on the document. Use performSelector:

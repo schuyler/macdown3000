@@ -74,7 +74,7 @@ This document analyzes the gaps and proposes technical approaches to fill them t
 
 **5. User Interactions**
 - Zero tests for: menu actions, keyboard shortcuts, preferences UI
-- ✅ Toolbar tests added (Issue #313) - 37 unit tests for MPToolbarController covering delegate methods and item identifiers
+- ✅ Toolbar tests added (Issue #313, Issue #394) - 41 unit tests for MPToolbarController covering delegate methods, item identifiers, and nil/bounds crash guards on `selectedToolbarItemGroupItem:`
 - Missing: interactive task lists, link clicks in preview
 
 **6. Error Handling**
