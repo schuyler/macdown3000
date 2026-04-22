@@ -38,6 +38,9 @@
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+static const CGFloat kMPMinZoom = 0.5;
+static const CGFloat kMPMaxZoom = 3.0;
+
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
@@ -254,6 +257,8 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
 
+@property CGFloat zoomMultiplier;
+
 - (void)scaleWebview;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
@@ -440,6 +445,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
     self.lastNonCollapsedRatio = -1.0;
+    self.zoomMultiplier = 1.0;
     
     return self;
 }
@@ -856,7 +862,21 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     BOOL result = [super validateUserInterfaceItem:item];
     SEL action = item.action;
-    if (action == @selector(toggleToolbar:))
+    
+    // Zoom menu validation
+    if (action == @selector(zoomIn:))
+    {
+        return self.zoomMultiplier < kMPMaxZoom;
+    }
+    else if (action == @selector(zoomOut:))
+    {
+        return self.zoomMultiplier > kMPMinZoom;
+    }
+    else if (action == @selector(resetZoom:))
+    {
+        return fabs(self.zoomMultiplier - 1.0) > 0.001;
+    }
+    else if (action == @selector(toggleToolbar:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
         it.title = self.toolbarVisible ?
@@ -2161,32 +2181,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             || [changedKey isEqualToString:@"editorStyleName"]
             || [changedKey isEqualToString:@"editorLineSpacing"])
     {
-        NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        style.lineSpacing = self.preferences.editorLineSpacing;
-
-        // Configure tab stops to match 4-space tab width (fixes #195)
-        NSFont *font = [self.preferences.editorBaseFont copy];
-        if (font)
-        {
-            NSDictionary *attrs = @{NSFontAttributeName: font};
-            CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
-            CGFloat tabInterval = spaceWidth * 4;
-
-            NSMutableArray *tabStops = [NSMutableArray array];
-            for (NSInteger i = 1; i <= 100; i++)
-            {
-                NSTextTab *tab = [[NSTextTab alloc]
-                    initWithTextAlignment:NSTextAlignmentLeft
-                                 location:tabInterval * i
-                                  options:@{}];
-                [tabStops addObject:tab];
-            }
-            style.tabStops = tabStops;
-        }
-
-        self.editor.defaultParagraphStyle = [style copy];
-        if (font)
-            self.editor.font = font;
+        [self applyEditorFontAndParagraphStyle];
         self.editor.textColor = nil;
         self.editor.backgroundColor = [NSColor clearColor];
         self.highlighter.styles = nil;
@@ -2326,16 +2321,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)scaleWebview
 {
-    if (!self.preferences.previewZoomRelativeToBaseFontSize)
-        return;
+    CGFloat scale = self.zoomMultiplier;
 
-    CGFloat fontSize = self.preferences.editorBaseFontSize;
-    if (fontSize <= 0.0)
-        return;
+    if (self.preferences.previewZoomRelativeToBaseFontSize)
+    {
+        CGFloat fontSize = self.preferences.editorBaseFontSize;
+        if (fontSize > 0.0)
+        {
+            static const CGFloat defaultSize = 14.0;
+            scale = (fontSize / defaultSize)
+                    * self.zoomMultiplier;
+        }
+    }
 
-    static const CGFloat defaultSize = 14.0;
-    CGFloat scale = fontSize / defaultSize;
-    
 #if 0
     // Sadly, this doesn’t work correctly.
     // It looks fine, but selections are offset relative to the mouse cursor.
@@ -2348,6 +2346,76 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Warning: this is private webkit API and NOT App Store-safe!
     [self.preview setPageSizeMultiplier:scale];
 #endif
+}
+
+- (NSFont *)zoomedEditorFont
+{
+    NSFont *baseFont = self.preferences.editorBaseFont;
+    if (!baseFont)
+        return nil;
+    CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
+    return [NSFont fontWithName:baseFont.fontName size:zoomedSize];
+}
+
+- (void)applyEditorFontAndParagraphStyle
+{
+    NSFont *font = [[self zoomedEditorFont] copy];
+
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    style.lineSpacing = self.preferences.editorLineSpacing;
+
+    // Configure tab stops to match 4-space tab width (fixes #195)
+    if (font)
+    {
+        NSDictionary *attrs = @{NSFontAttributeName: font};
+        CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
+        CGFloat tabInterval = spaceWidth * 4;
+
+        NSMutableArray *tabStops = [NSMutableArray array];
+        for (NSInteger i = 1; i <= 100; i++)
+        {
+            NSTextTab *tab = [[NSTextTab alloc]
+                initWithTextAlignment:NSTextAlignmentLeft
+                             location:tabInterval * i
+                              options:@{}];
+            [tabStops addObject:tab];
+        }
+        style.tabStops = tabStops;
+    }
+
+    self.editor.defaultParagraphStyle = [style copy];
+    if (font)
+        self.editor.font = font;
+}
+
+- (IBAction)zoomIn:(id)sender
+{
+    if (self.zoomMultiplier >= kMPMaxZoom)
+        return;
+
+    self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMPMaxZoom);
+    [self applyCurrentZoom];
+}
+
+- (IBAction)zoomOut:(id)sender
+{
+    if (self.zoomMultiplier <= kMPMinZoom)
+        return;
+    
+    self.zoomMultiplier = MAX(self.zoomMultiplier - 0.1, kMPMinZoom);
+    [self applyCurrentZoom];
+}
+
+- (IBAction)resetZoom:(id)sender
+{
+    self.zoomMultiplier = 1.0;
+    [self applyCurrentZoom];
+}
+
+- (void)applyCurrentZoom
+{
+    [self applyEditorFontAndParagraphStyle];
+    [self scaleWebview];
 }
 
 /**
