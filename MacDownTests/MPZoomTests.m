@@ -22,6 +22,7 @@
 - (IBAction)resetZoom:(id)sender;
 - (void)applyCurrentZoom;
 - (void)setupEditor:(NSString *)changedKey;
+- (CGFloat)previewScale;
 @end
 
 #pragma mark - Mock Menu Item
@@ -417,6 +418,102 @@
     XCTAssertEqualWithAccuracy(firstTab.location, expectedTabInterval, 0.5,
                                @"At default zoom, first tab stop should match "
                                @"the base-font tab interval");
+}
+
+
+#pragma mark - Preview Scale Calculation Tests
+
+/**
+ * scaleWebview routes through previewScale. These tests pin the scale
+ * computation across both branches of the previewZoomRelativeToBaseFontSize
+ * preference, including the regression risk introduced by removing the
+ * old early-return when the preference is OFF.
+ *
+ * Each test saves and restores the preference values it touches so the
+ * shared MPPreferences instance is not mutated across tests.
+ */
+
+- (void)testPreviewScaleAtDefaultZoomWhenPreferenceOffIsOne
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedPref = prefs.previewZoomRelativeToBaseFontSize;
+    @try {
+        prefs.previewZoomRelativeToBaseFontSize = NO;
+        self.document.zoomMultiplier = 1.0;
+
+        XCTAssertEqualWithAccuracy([self.document previewScale], 1.0, 0.001,
+                                   @"At default zoom with preference OFF, "
+                                   @"previewScale must be 1.0 (no-op).");
+    } @finally {
+        prefs.previewZoomRelativeToBaseFontSize = savedPref;
+    }
+}
+
+- (void)testPreviewScaleTracksZoomMultiplierWhenPreferenceOff
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedPref = prefs.previewZoomRelativeToBaseFontSize;
+    @try {
+        prefs.previewZoomRelativeToBaseFontSize = NO;
+        self.document.zoomMultiplier = 1.5;
+
+        XCTAssertEqualWithAccuracy([self.document previewScale], 1.5, 0.001,
+                                   @"With preference OFF, previewScale should "
+                                   @"equal zoomMultiplier (1.5).");
+
+        self.document.zoomMultiplier = 0.5;
+        XCTAssertEqualWithAccuracy([self.document previewScale], 0.5, 0.001,
+                                   @"With preference OFF, previewScale should "
+                                   @"track zoomMultiplier across changes.");
+    } @finally {
+        prefs.previewZoomRelativeToBaseFontSize = savedPref;
+    }
+}
+
+- (void)testPreviewScaleCombinesFontRatioAndZoomWhenPreferenceOn
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedPref = prefs.previewZoomRelativeToBaseFontSize;
+    NSFont *savedFont = prefs.editorBaseFont;
+    @try {
+        prefs.previewZoomRelativeToBaseFontSize = YES;
+
+        NSFont *font21 = [NSFont fontWithName:savedFont.fontName size:21.0];
+        if (!font21) {
+            NSLog(@"Skipping testPreviewScaleCombinesFontRatioAndZoomWhenPreferenceOn"
+                  @" - cannot construct 21pt variant of base font.");
+            return;
+        }
+        prefs.editorBaseFont = font21;
+
+        self.document.zoomMultiplier = 2.0;
+
+        // 21pt / 14pt default = 1.5; combined with 2.0 zoom = 3.0.
+        XCTAssertEqualWithAccuracy([self.document previewScale], 3.0, 0.01,
+                                   @"With preference ON, previewScale should "
+                                   @"be (fontSize/14) * zoomMultiplier.");
+    } @finally {
+        prefs.editorBaseFont = savedFont;
+        prefs.previewZoomRelativeToBaseFontSize = savedPref;
+    }
+}
+
+- (void)testPreviewScaleAtDefaultZoomWhenPreferenceOnMatchesFontRatio
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedPref = prefs.previewZoomRelativeToBaseFontSize;
+    @try {
+        prefs.previewZoomRelativeToBaseFontSize = YES;
+        self.document.zoomMultiplier = 1.0;
+
+        // At zoom 1.0, scale should match the legacy fontSize/14 behaviour.
+        CGFloat expected = prefs.editorBaseFontSize / 14.0;
+        XCTAssertEqualWithAccuracy([self.document previewScale], expected, 0.001,
+                                   @"At zoom 1.0 with preference ON, previewScale"
+                                   @" must equal the pre-PR fontSize/14 ratio.");
+    } @finally {
+        prefs.previewZoomRelativeToBaseFontSize = savedPref;
+    }
 }
 
 @end
