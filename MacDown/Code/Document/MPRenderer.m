@@ -111,6 +111,10 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     if (!text.length)
         return text;
 
+    // Normalize Windows CRLF to LF (Issue #382). Handles content arriving via
+    // paste or programmatic assignment that bypasses readFromData:ofType:error:.
+    text = [text stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"];
+
     // Lists after paragraphs (Issue #254)
     static NSRegularExpression *listRegex = nil;
     static dispatch_once_t listToken;

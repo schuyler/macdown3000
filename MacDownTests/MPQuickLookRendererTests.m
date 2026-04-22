@@ -616,6 +616,39 @@
 }
 
 
+#pragma mark - CRLF Line Ending Tests (Issue #382)
+
+- (void)testRenderMarkdownFromURLWithCRLFLineEndings
+{
+    // Write a temp file using Windows CRLF line endings and verify it renders
+    // correctly — the same HTML that LF content produces (Issue #382).
+    NSString *tempFile = [NSTemporaryDirectory()
+                          stringByAppendingPathComponent:
+                          [NSString stringWithFormat:@"ql-crlf-%@.md",
+                           [[NSUUID UUID] UUIDString]]];
+    [self addTeardownBlock:^{
+        [[NSFileManager defaultManager] removeItemAtPath:tempFile error:nil];
+    }];
+
+    NSString *crlfMarkdown = @"# Heading\r\n\r\nParagraph text.\r\n";
+    NSData *crlfData = [crlfMarkdown dataUsingEncoding:NSUTF8StringEncoding];
+    [crlfData writeToFile:tempFile atomically:YES];
+
+    NSError *error = nil;
+    NSString *html = [self.renderer renderMarkdownFromURL:[NSURL fileURLWithPath:tempFile]
+                                                    error:&error];
+
+    XCTAssertNil(error, @"Should render CRLF file without error");
+    XCTAssertNotNil(html, @"Should produce HTML from CRLF file");
+    XCTAssertTrue([html containsString:@"<h1>"],
+                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([html containsString:@"Heading"],
+                  @"Heading text should appear in output");
+    XCTAssertTrue([html containsString:@"<p>"],
+                  @"CRLF paragraph should render as <p>");
+}
+
+
 #pragma mark - Error Handling Tests
 
 - (void)testRenderMarkdownFromURLWithNonexistentFile

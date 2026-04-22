@@ -103,6 +103,23 @@
     // it simply returns NO when [[NSString alloc] initWithData:encoding:] returns nil
 }
 
+- (void)testReadFromDataWithCRLFLineEndings
+{
+    // Windows-created files use CRLF (\r\n). This is valid UTF-8, so the load
+    // must succeed. On load, \r\n should be normalized to \n so downstream
+    // rendering and preprocessing see only LF line endings (Issue #382).
+    NSString *crlfMarkdown = @"# Heading\r\n\r\nParagraph text.\r\n";
+    NSData *crlfData = [crlfMarkdown dataUsingEncoding:NSUTF8StringEncoding];
+
+    NSError *error = nil;
+    BOOL success = [self.document readFromData:crlfData
+                                        ofType:@"net.daringfireball.markdown"
+                                         error:&error];
+
+    XCTAssertTrue(success, @"readFromData:ofType:error: should succeed with CRLF data");
+    XCTAssertNil(error, @"No error should occur loading CRLF-terminated content");
+}
+
 - (void)testWritableTypes
 {
     // Call [MPDocument writableTypes] (class method)
