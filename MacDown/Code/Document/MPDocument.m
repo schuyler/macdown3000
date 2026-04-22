@@ -1437,6 +1437,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"  var body = document.body;"
                     @"  body.innerHTML = html;"
                     @"  if(window.Prism){Prism.highlightAll();}"
+                    @"  if(typeof window.macdownInitTaskList==='function'){window.macdownInitTaskList();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
