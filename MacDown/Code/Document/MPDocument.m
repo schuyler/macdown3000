@@ -1208,8 +1208,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             if (url.isFileURL)
             {
                 NSURL *baseURL = self.currentBaseUrl ?: self.fileURL;
-                if (!baseURL || !baseURL.isFileURL
-                    || ![MPURLSecurityPolicy url:url isWithinScopeOfBaseURL:baseURL]
+                if (!baseURL || !baseURL.isFileURL)
+                {
+                    // Untitled documents have no base URL; silently ignore.
+                    [listener ignore];
+                    return;
+                }
+                if (![MPURLSecurityPolicy url:url isWithinScopeOfBaseURL:baseURL]
                     || [MPURLSecurityPolicy isExecutableOrAppBundleAtURL:url])
                 {
                     NSLog(@"MacDown: Blocked file:// navigation for security: %@", url);
