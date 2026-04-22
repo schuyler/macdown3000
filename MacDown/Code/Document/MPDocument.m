@@ -2319,20 +2319,23 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 }
 
-- (void)scaleWebview
+- (CGFloat)previewScale
 {
-    CGFloat scale = self.zoomMultiplier;
-
     if (self.preferences.previewZoomRelativeToBaseFontSize)
     {
         CGFloat fontSize = self.preferences.editorBaseFontSize;
         if (fontSize > 0.0)
         {
             static const CGFloat defaultSize = 14.0;
-            scale = (fontSize / defaultSize)
-                    * self.zoomMultiplier;
+            return (fontSize / defaultSize) * self.zoomMultiplier;
         }
     }
+    return self.zoomMultiplier;
+}
+
+- (void)scaleWebview
+{
+    CGFloat scale = [self previewScale];
 
 #if 0
     // Sadly, this doesn’t work correctly.
