@@ -154,4 +154,38 @@
     XCTAssertTrue([vc hasResizableHeight], @"Terminal panel hasResizableHeight should return YES");
 }
 
+#pragma mark - Minimum panel frame sizes (Issue #397)
+
+- (void)testEditorPanelFrameIsWideEnoughForContent
+{
+    MPEditorPreferencesViewController *vc = [[MPEditorPreferencesViewController alloc] init];
+    [vc view];
+    XCTAssertGreaterThanOrEqual(vc.view.frame.size.width, 482.0,
+        @"Editor panel must be at least 482pt wide to show all content");
+}
+
+- (void)testEditorPanelFrameIsTallEnoughForBehaviorCheckboxes
+{
+    MPEditorPreferencesViewController *vc = [[MPEditorPreferencesViewController alloc] init];
+    [vc view];
+    XCTAssertGreaterThanOrEqual(vc.view.frame.size.height, 427.0,
+        @"Editor panel must be at least 427pt tall to show all 7 Behavior checkboxes");
+}
+
+- (void)testGeneralPanelFrameIsTallEnoughForContent
+{
+    MPGeneralPreferencesViewController *vc = [[MPGeneralPreferencesViewController alloc] init];
+    [vc view];
+    XCTAssertGreaterThanOrEqual(vc.view.frame.size.height, 325.0,
+        @"General panel must be at least 325pt tall to accommodate full-height checkboxes");
+}
+
+- (void)testHtmlPanelFrameIsWideEnoughForCssAndThemeRows
+{
+    MPHtmlPreferencesViewController *vc = [[MPHtmlPreferencesViewController alloc] init];
+    [vc view];
+    XCTAssertGreaterThanOrEqual(vc.view.frame.size.width, 430.0,
+        @"Html panel must be at least 430pt wide to prevent CSS/Theme field overlap");
+}
+
 @end
