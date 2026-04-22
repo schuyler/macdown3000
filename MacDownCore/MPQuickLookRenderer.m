@@ -292,6 +292,9 @@ static void mp_quicklook_render_blockcode(
         return nil;
     }
 
+    // Normalize Windows CRLF to LF (Issue #382)
+    markdown = [markdown stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"];
+
     return [self renderMarkdown:markdown];
 }
 

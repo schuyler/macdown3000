@@ -742,6 +742,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!content)
         return NO;
 
+    // Normalize Windows CRLF to LF (Issue #382)
+    content = [content stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"];
+
     self.loadedString = content;
     [self reloadFromLoadedString];
     return YES;

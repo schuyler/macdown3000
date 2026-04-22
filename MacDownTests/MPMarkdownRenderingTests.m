@@ -666,4 +666,91 @@
                   @"Large document should render in reasonable time (<%f seconds)", elapsed);
 }
 
+
+#pragma mark - CRLF Line Ending Tests (Issue #382)
+
+/**
+ * Basic heading and paragraph with Windows CRLF line endings should render
+ * identically to the same content with Unix LF endings.
+ */
+- (void)testHeadingAndParagraphWithCRLFLineEndings
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    NSString *lfMarkdown   = @"# Heading\n\nParagraph text.\n";
+    NSString *crlfMarkdown = @"# Heading\r\n\r\nParagraph text.\r\n";
+
+    NSString *lfHtml   = [self renderMarkdown:lfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+    NSString *crlfHtml = [self renderMarkdown:crlfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+
+    XCTAssertNotNil(crlfHtml, @"CRLF content should produce non-nil HTML");
+    XCTAssertTrue([crlfHtml containsString:@"<h1>"],
+                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([crlfHtml containsString:@"Heading"],
+                  @"CRLF heading text should appear in output");
+    XCTAssertTrue([crlfHtml containsString:@"<p>"],
+                  @"CRLF paragraph should render as <p>");
+    XCTAssertEqualObjects(lfHtml, crlfHtml,
+                          @"CRLF and LF content should produce identical HTML");
+}
+
+/**
+ * MPPreprocessMarkdown Issue #254 workaround: list immediately after paragraph.
+ * The regex that inserts a blank line uses \n, so it must also work with CRLF.
+ */
+- (void)testListAfterParagraphWithCRLFLineEndings
+{
+    int extFlags = 0;
+    int rendFlags = 0;
+
+    NSString *lfMarkdown   = @"Paragraph\n- List item\n";
+    NSString *crlfMarkdown = @"Paragraph\r\n- List item\r\n";
+
+    NSString *lfHtml   = [self renderMarkdown:lfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+    NSString *crlfHtml = [self renderMarkdown:crlfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+
+    XCTAssertTrue([crlfHtml containsString:@"<ul>"],
+                  @"CRLF list after paragraph should render as <ul>");
+    XCTAssertTrue([crlfHtml containsString:@"List item"],
+                  @"CRLF list item text should appear in output");
+    XCTAssertEqualObjects(lfHtml, crlfHtml,
+                          @"CRLF and LF list-after-paragraph should produce identical HTML");
+}
+
+/**
+ * MPPreprocessMarkdown Issue #36 workaround: fenced code block immediately after text.
+ * The fence regex must also work when lines are terminated with CRLF.
+ */
+- (void)testFencedCodeAfterTextWithCRLFLineEndings
+{
+    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int rendFlags = 0;
+
+    NSString *lfMarkdown   = @"Text\n```\ncode\n```\n";
+    NSString *crlfMarkdown = @"Text\r\n```\r\ncode\r\n```\r\n";
+
+    NSString *lfHtml   = [self renderMarkdown:lfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+    NSString *crlfHtml = [self renderMarkdown:crlfMarkdown
+                               withExtensions:extFlags
+                                rendererFlags:rendFlags];
+
+    XCTAssertTrue([crlfHtml containsString:@"<code"],
+                  @"CRLF fenced code block should render as <code>");
+    XCTAssertTrue([crlfHtml containsString:@"code"],
+                  @"CRLF fenced code content should appear in output");
+    XCTAssertEqualObjects(lfHtml, crlfHtml,
+                          @"CRLF and LF fenced-code-after-text should produce identical HTML");
+}
+
 @end
