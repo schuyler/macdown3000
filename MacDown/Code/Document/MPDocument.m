@@ -909,6 +909,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 {
     [self redrawDivider];
     self.editor.editable = self.editorVisible;
+    [self updateToolbarVisibility];
     // Issue #377: Track divider-drag collapses. When the ratio transitions from
     // a non-collapsed value to 0 or 1, save the pre-collapse ratio to
     // previousSplitRatio so the menu item remains visible (not hidden).
@@ -2107,6 +2108,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 }
 
+- (void)updateToolbarVisibility
+{
+    BOOL shouldShowToolbar = self.editorVisible;
+    if (self.windowForSheet.toolbar.visible != shouldShowToolbar)
+    {
+        [self.windowForSheet toggleToolbarShown:nil];
+    }
+}
+
 - (void)applyEditorStartInPreviewModePreference
 {
     if (!self.preferences.editorStartInPreviewMode || !self.editorVisible)
@@ -2772,6 +2782,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self syncScrollersReverse];
         _scrollOwner = MPScrollOwnerNeither;
     }
+
+    [self updateToolbarVisibility];
 
     [self setupEditor:NSStringFromSelector(@selector(editorHorizontalInset))];
 }

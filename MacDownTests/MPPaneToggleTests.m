@@ -19,9 +19,11 @@
 @property (weak) NSView *editorContainer;
 @property (weak) WebView *preview;
 @property CGFloat previousSplitRatio;
+@property (readonly) BOOL toolbarVisible;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
+- (void)updateToolbarVisibility;
 @end
 
 #pragma mark - Mock Menu Item
@@ -208,6 +210,48 @@
                                    @"Startup preview mode should collapse the divider to the preview-only edge");
         XCTAssertGreaterThan(oldRatio, 0.0,
                              @"The precondition for this test is a visible editor split");
+    }
+    @finally {
+        preferences.editorStartInPreviewMode = originalStartInPreviewMode;
+        preferences.editorOnRight = originalEditorOnRight;
+        [preferences synchronize];
+    }
+}
+
+- (void)testStartInPreviewModeHidesToolbar
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        [self.document makeWindowControllers];
+
+        if (!self.document.editorVisible || !self.document.previewVisible) {
+            NSLog(@"Skipping testStartInPreviewModeHidesToolbar - panes not initialized");
+            return;
+        }
+
+        preferences.editorStartInPreviewMode = YES;
+        preferences.editorOnRight = NO;
+        self.document.previousSplitRatio = -1.0;
+
+        [self.document applyEditorStartInPreviewModePreference];
+        [self.document updateToolbarVisibility];
+
+        XCTAssertFalse(self.document.editorVisible,
+                       @"Startup preview mode should collapse the editor pane");
+        XCTAssertFalse(self.document.toolbarVisible,
+                       @"Toolbar should be hidden when editor is hidden in preview mode");
+
+        // Restore editor pane and verify toolbar is shown
+        [self.document toggleEditorPane:nil];
+        [self.document updateToolbarVisibility];
+
+        XCTAssertTrue(self.document.editorVisible,
+                      @"Restoring editor pane should make editor visible");
+        XCTAssertTrue(self.document.toolbarVisible,
+                      @"Toolbar should be shown when editor pane is restored");
     }
     @finally {
         preferences.editorStartInPreviewMode = originalStartInPreviewMode;

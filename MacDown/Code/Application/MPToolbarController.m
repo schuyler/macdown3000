@@ -47,10 +47,6 @@ static CGFloat itemWidth = 37;
 
 - (void)setupToolbarItems
 {
-    // Set up layout drop down alternatives. title will be set in validateUserInterfaceItem:
-    NSMenuItem *toggleEditorMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(toggleEditorPane:) keyEquivalent:@"e"];
-    NSMenuItem *togglePreviewMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(togglePreviewPane:) keyEquivalent:@"p"];
-    
     // Set up all available toolbar items
     self->toolbarItems = @[
         [self toolbarItemGroupWithIdentifier:@"indent-group" separated:YES label:NSLocalizedString(@"Shift Left/Right", @"") items:@[
@@ -79,15 +75,9 @@ static CGFloat itemWidth = 37;
         [self toolbarItemWithIdentifier:@"code" label:NSLocalizedString(@"Inline Code", @"Inline code toolbar button") icon:@"ToolbarIconInlineCode" action:@selector(toggleInlineCode:)],
         [self toolbarItemWithIdentifier:@"link" label:NSLocalizedString(@"Link", @"Link toolbar button") icon:@"ToolbarIconLink" action:@selector(toggleLink:)],
         [self toolbarItemWithIdentifier:@"image" label:NSLocalizedString(@"Image", @"Image toolbar button") icon:@"ToolbarIconImage" action:@selector(toggleImage:)],
-        [self toolbarItemWithIdentifier:@"copy-html" label:NSLocalizedString(@"Copy HTML", @"Copy HTML toolbar button") icon:@"ToolbarIconCopyHTML" action:@selector(copyHtml:)],
         [self toolbarItemWithIdentifier:@"comment" label:NSLocalizedString(@"Comment", @"Comment toolbar button") icon:@"ToolbarIconComment" action:@selector(toggleComment:)],
         [self toolbarItemWithIdentifier:@"highlight" label:NSLocalizedString(@"Highlight", @"Highlight toolbar button") icon:@"ToolbarIconHighlight" action:@selector(toggleHighlight:)],
-        [self toolbarItemWithIdentifier:@"strikethrough" label:NSLocalizedString(@"Strikethrough", @"Strikethrough toolbar button") icon:@"ToolbarIconStrikethrough" action:@selector(toggleStrikethrough:)],
-        [self toolbarItemDropDownWithIdentifier:@"layout" label:NSLocalizedString(@"Layout", @"Layout toolbar button") icon:@"ToolbarIconEditorAndPreview" menuItems:
-            @[
-              toggleEditorMenuItem, togglePreviewMenuItem
-            ]
-        ]
+        [self toolbarItemWithIdentifier:@"strikethrough" label:NSLocalizedString(@"Strikethrough", @"Strikethrough toolbar button") icon:@"ToolbarIconStrikethrough" action:@selector(toggleStrikethrough:)]
     ];
     
     self->toolbarItemIdentifiers = [self toolbarItemIdentifiersFromItemsArray:self->toolbarItems];
@@ -157,7 +147,7 @@ static CGFloat itemWidth = 37;
     
     // Add space after the specified toolbar item indices
     int spaceAfterIndices[] = {}; // No space in the default set
-    int flexibleSpaceAfterIndices[] = {2, 3, 5, 7, 11};
+    int flexibleSpaceAfterIndices[] = {2, 3, 5, 7, 10};
 
     // Bounds checking to prevent buffer overflow when accessing C arrays
     // Empty spaceAfterIndices array must not be accessed (count = 0)
@@ -296,41 +286,5 @@ static CGFloat itemWidth = 37;
     
     return toolbarItem;
 }
-
-/**
- * Factory method for creating and configuring a NSToolbarItem object with a NSPopupButton holding menu options as passed in the menuItems parameter.
- */
-- (NSToolbarItem *)toolbarItemDropDownWithIdentifier:(NSString *)itemIdentifier label:(NSString *)label icon:(NSString *)iconImageName menuItems:(NSArray <NSMenuItem *>*)menuItems {
-    NSToolbarItem *toolbarItem = [[NSToolbarItem alloc] initWithItemIdentifier:itemIdentifier];
-    toolbarItem.label = label;
-    toolbarItem.paletteLabel = label;
-    toolbarItem.toolTip = label;
-    
-    NSImage *itemImage = [NSImage imageNamed:iconImageName];
-    [itemImage setTemplate:YES];
-    [itemImage setSize:CGSizeMake(19, 19)];
-    
-    NSPopUpButton *popupButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 42, 27) pullsDown:YES];
-    popupButton.bezelStyle = NSBezelStyleTexturedRounded;
-    popupButton.focusRingType = NSFocusRingTypeDefault;
-    //popupButton.imageScaling = NSImageScaleProportionallyDown;
-    
-    // First item's image is displayed as button image, therefor we need a dummy with the icon
-    [popupButton addItemWithTitle:@""];
-    [[popupButton lastItem] setImage:itemImage];
-    
-    for (NSMenuItem *menuItem in menuItems) {
-        [popupButton addItemWithTitle:menuItem.title];
-        [[popupButton lastItem] setTarget:self.document];
-        [[popupButton lastItem] setAction:menuItem.action];
-    }
-    
-    toolbarItem.view = popupButton;
-    
-    [self->toolbarItemIdentifierObjectDictionary setObject:toolbarItem forKey:itemIdentifier];
-    
-    return toolbarItem;
-}
-
 
 @end
