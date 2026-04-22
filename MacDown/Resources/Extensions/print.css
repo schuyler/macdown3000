@@ -70,4 +70,19 @@
     body {
         padding: 0;
     }
+
+    /* Issue #387: themes set an explicit body background-color (e.g.
+     * GitHub.css uses #F8F8F8) and also declare
+     * `* { -webkit-print-color-adjust: exact; }`, which forces WebKit to
+     * preserve that background in printed output and exported PDFs.
+     * Force a white page and dark body text so every theme prints
+     * legibly on paper. pre/code/table/blockquote/heading/link rules are
+     * intentionally left alone - they either set their own color or have
+     * their own background designed for readability. */
+    html, body {
+        background: #ffffff !important;
+    }
+    body {
+        color: #000000 !important;
+    }
 }
