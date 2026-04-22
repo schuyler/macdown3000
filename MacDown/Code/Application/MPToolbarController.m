@@ -262,7 +262,6 @@ static CGFloat itemWidth = 37;
         segmentIndex++;
     }
     
-    itemGroup.maxSize = NSMakeSize(itemGroupWidth, 25);
     itemGroup.view = segmentedControl;
     
     [self->toolbarItemIdentifierObjectDictionary setObject:itemGroup forKey:itemIdentifier];

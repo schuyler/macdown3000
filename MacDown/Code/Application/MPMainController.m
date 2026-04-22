@@ -243,6 +243,11 @@ NS_INLINE void treat()
     return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
 
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app
+{
+    return YES;
+}
+
 - (void)applicationDidBecomeActive:(NSNotification *)notification
 {
     [self openPendingPipedContent];
