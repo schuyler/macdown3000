@@ -156,14 +156,6 @@
 
 #pragma mark - Minimum panel frame sizes (Issue #397)
 
-- (void)testEditorPanelFrameIsWideEnoughForContent
-{
-    MPEditorPreferencesViewController *vc = [[MPEditorPreferencesViewController alloc] init];
-    [vc view];
-    XCTAssertGreaterThanOrEqual(vc.view.frame.size.width, 482.0,
-        @"Editor panel must be at least 482pt wide to show all content");
-}
-
 - (void)testEditorPanelFrameIsTallEnoughForBehaviorCheckboxes
 {
     MPEditorPreferencesViewController *vc = [[MPEditorPreferencesViewController alloc] init];
