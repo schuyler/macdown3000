@@ -221,7 +221,7 @@ Test that syntax highlighting applies correctly for:
 - [ ] Unicode characters (emoji, CJK, etc.) render correctly
 - [ ] Special HTML entities (`&amp;`, `&lt;`, `&gt;`) render correctly
 - [ ] Markdown with HTML inline tags renders appropriately
-- [ ] File with Windows line endings (CRLF) renders correctly
+- [ ] File with Windows line endings (CRLF) is normalized to LF and renders correctly
 - [ ] File with classic Mac line endings (CR) renders correctly
 
 ### 7.4 File Path Edge Cases
