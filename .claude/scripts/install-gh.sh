@@ -48,12 +48,22 @@ case "$OS" in
             TEMP_DIR=$(mktemp -d)
             trap "rm -rf $TEMP_DIR" EXIT
 
-            # Fetch latest release info
+            # Fetch latest release info. Authenticate when GH_TOKEN is set so
+            # we don't hit the 60/hour anonymous rate limit on shared egress IPs.
+            AUTH_HEADER=()
+            if [ -n "$GH_TOKEN" ]; then
+                AUTH_HEADER=(-H "Authorization: Bearer $GH_TOKEN")
+            fi
             RELEASE_JSON=$(curl -sS --fail --connect-timeout 10 --max-time 30 \
+                "${AUTH_HEADER[@]}" \
+                -H "Accept: application/vnd.github+json" \
                 https://api.github.com/repos/cli/cli/releases/latest 2>/dev/null)
 
             if [ -z "$RELEASE_JSON" ]; then
                 echo "✗ Failed to fetch release info"
+                if [ -z "$GH_TOKEN" ]; then
+                    echo "  (GH_TOKEN not set — anonymous GitHub API requests are rate-limited per IP)"
+                fi
                 exit 1
             fi
 
