@@ -23,7 +23,7 @@
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="g0N-qr-H8K">
-                    <rect key="frame" x="109" y="362" width="232" height="22"/>
+                    <rect key="frame" x="109" y="361" width="232" height="24"/>
                     <textFieldCell key="cell" refusesFirstResponder="YES" allowsUndo="NO" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="center" drawsBackground="YES" allowsEditingTextAttributes="YES" id="5dX-oK-p9L">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
@@ -97,7 +97,7 @@
                     </textFieldCell>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uWf-nW-3Ez">
-                    <rect key="frame" x="109" y="276" width="88" height="22"/>
+                    <rect key="frame" x="109" y="275" width="88" height="24"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" focusRingType="none" alignment="right" drawsBackground="YES" id="797-vo-Lg9">
                         <numberFormatter key="formatter" formatterBehavior="custom10_4" numberStyle="decimal" usesGroupingSeparator="NO" minimumIntegerDigits="1" maximumIntegerDigits="2" id="Z1m-eN-5ss">
                             <real key="minimum" value="0.0"/>
@@ -118,7 +118,7 @@
                     </connections>
                 </textField>
                 <textField focusRingType="none" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="77u-zZ-bC0">
-                    <rect key="frame" x="237" y="276" width="88" height="22"/>
+                    <rect key="frame" x="237" y="275" width="88" height="24"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" focusRingType="none" alignment="right" drawsBackground="YES" id="557-oZ-4zf">
                         <numberFormatter key="formatter" formatterBehavior="custom10_4" usesGroupingSeparator="NO" groupingSize="0" minimumIntegerDigits="1" maximumIntegerDigits="2" id="E8M-bY-H1G">
                             <real key="minimum" value="0.0"/>
@@ -139,14 +139,14 @@
                     </connections>
                 </textField>
                 <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="u4r-9h-qMR">
-                    <rect key="frame" x="196" y="273" width="19" height="27"/>
+                    <rect key="frame" x="196" y="272" width="21" height="29"/>
                     <stepperCell key="cell" continuous="YES" alignment="left" maxValue="35" id="YKV-Q4-Mio"/>
                     <connections>
                         <binding destination="-2" name="value" keyPath="self.preferences.editorHorizontalInset" id="Ytm-fZ-mfY"/>
                     </connections>
                 </stepper>
                 <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="uUN-8R-G1c">
-                    <rect key="frame" x="324" y="273" width="19" height="27"/>
+                    <rect key="frame" x="324" y="272" width="21" height="29"/>
                     <stepperCell key="cell" continuous="YES" alignment="left" maxValue="35" id="W0c-qa-cIF"/>
                     <connections>
                         <binding destination="-2" name="value" keyPath="self.preferences.editorVerticalInset" id="mbR-4u-imj"/>
@@ -161,7 +161,7 @@
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ogi-ll-Yii">
-                    <rect key="frame" x="109" y="305" width="216" height="22"/>
+                    <rect key="frame" x="109" y="304" width="216" height="24"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" drawsBackground="YES" id="Qlw-QZ-XWE">
                         <numberFormatter key="formatter" formatterBehavior="custom10_4" numberStyle="decimal" usesGroupingSeparator="NO" groupingSize="0" minimumIntegerDigits="1" maximumIntegerDigits="309" id="cbO-Ho-XRq">
                             <real key="minimum" value="0.0"/>
@@ -176,7 +176,7 @@
                     </connections>
                 </textField>
                 <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qZo-S6-Vbh">
-                    <rect key="frame" x="324" y="302" width="19" height="27"/>
+                    <rect key="frame" x="324" y="301" width="21" height="29"/>
                     <stepperCell key="cell" continuous="YES" alignment="left" maxValue="100" id="6T1-uq-ddF"/>
                     <connections>
                         <binding destination="-2" name="value" keyPath="self.preferences.editorLineSpacing" id="q21-0R-8wr"/>
@@ -193,7 +193,7 @@
                     </connections>
                 </button>
                 <textField verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="IAf-0I-hfF">
-                    <rect key="frame" x="168" y="243" width="157" height="23"/>
+                    <rect key="frame" x="168" y="242" width="157" height="24"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="right" drawsBackground="YES" id="M8w-C7-PC0">
                         <numberFormatter key="formatter" formatterBehavior="custom10_4" numberStyle="decimal" usesGroupingSeparator="NO" minimumIntegerDigits="1" maximumIntegerDigits="5" id="MQ9-lM-ZUg">
                             <real key="minimum" value="300"/>
@@ -209,7 +209,7 @@
                     </connections>
                 </textField>
                 <stepper horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="mql-gy-6Sv">
-                    <rect key="frame" x="324" y="241" width="19" height="27"/>
+                    <rect key="frame" x="324" y="240" width="21" height="29"/>
                     <stepperCell key="cell" continuous="YES" alignment="left" minValue="300" maxValue="10000" doubleValue="300" id="SN0-ZN-Y1k"/>
                     <connections>
                         <binding destination="-2" name="value" keyPath="self.preferences.editorMaximumWidth" id="8C1-Bv-oDh"/>
