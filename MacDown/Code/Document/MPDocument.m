@@ -3097,11 +3097,10 @@ to link outside that scope.", \
     if (!markdown || markdown.length == 0)
         return markdown;
 
-    // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
-    // Note: Only lowercase [x] is recognized by hoedown, so we only match that.
+    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], * [ ], etc.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ x])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ x])\\]"
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
                                error:&error];
 

@@ -273,6 +273,17 @@
                           @"Asterisk marker checkbox should toggle correctly");
 }
 
+- (void)testToggleUppercaseCheckedCheckbox
+{
+    NSString *markdown = @"- [X] Done";
+    NSString *expected = @"- [ ] Done";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Uppercase checked checkbox should toggle to unchecked");
+}
+
 /**
  * Test checkbox with plus marker.
  */
