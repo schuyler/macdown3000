@@ -254,6 +254,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorAutoSave;
 @dynamic editorScrollsPastEnd;
 @dynamic editorEnsuresNewlineAtEndOfFile;
+@dynamic editorShowsInvisibleCharacters;
 @dynamic editorUnorderedListMarkerType;
 
 @dynamic previewZoomRelativeToBaseFontSize;
