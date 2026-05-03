@@ -103,6 +103,31 @@
                           @"JS, full link");
 }
 
+- (void)testJavaScriptFullLinkWithNonce
+{
+    NSURL *url = [self.bundle URLForResource:@"test" withExtension:@"js"];
+    MPScript *script = [MPScript javaScriptWithURL:url];
+
+    NSString *tag =
+        @"<script type=\"text/javascript\" nonce=\"abc123\" "
+         @"src=\"%@\"></script>";
+    tag = [NSString stringWithFormat:tag, url.absoluteString];
+    XCTAssertEqualObjects([script htmlForOption:MPAssetFullLink nonce:@"abc123"],
+                          tag, @"JS full link with nonce");
+}
+
+- (void)testEmbeddedScriptWithNonce
+{
+    NSURL *url = [self.bundle URLForResource:@"test" withExtension:@"js"];
+    MPEmbeddedScript *script =
+        [MPEmbeddedScript assetWithURL:url andType:kMPMathJaxConfigType];
+
+    NSString *tag = @"<script type=\"text/x-mathjax-config\" nonce=\"abc123\">\n"
+                    @"console.log('test');\n</script>";
+    XCTAssertEqualObjects([script htmlForOption:MPAssetFullLink nonce:@"abc123"],
+                          tag, @"Embedded JS full link forced embedded with nonce");
+}
+
 - (void)testEmbedded
 {
     NSURL *url = [self.bundle URLForResource:@"test" withExtension:@"js"];

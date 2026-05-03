@@ -21,6 +21,8 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
 @property (strong) NSURL *url;
 @property (copy, nonatomic) NSString *typeName;
 @property (readonly) NSString *defaultTypeName;
+- (NSString *)htmlForOption:(MPAssetOption)option
+               extraContext:(NSDictionary *)extraContext;
 @end
 
 
@@ -68,6 +70,12 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
 
 - (NSString *)htmlForOption:(MPAssetOption)option
 {
+    return [self htmlForOption:option extraContext:nil];
+}
+
+- (NSString *)htmlForOption:(MPAssetOption)option
+               extraContext:(NSDictionary *)extraContext
+{
     NSMutableDictionary *context =
         [NSMutableDictionary dictionaryWithObject:self.typeName
                                            forKey:@"typeName"];
@@ -89,6 +97,8 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
             context[@"url"] = self.url.absoluteString;
             break;
     }
+    if (extraContext)
+        [context addEntriesFromDictionary:extraContext];
 
     NSString *template = [self templateForOption:option];
     if (!template || !context.count)
@@ -163,17 +173,30 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
         case MPAssetEmbedded:
             if (self.url.isFileURL)
             {
-                template = (@"<script type=\"{{ typeName }}\">\n"
+                template = (@"<script type=\"{{ typeName }}\"{{{ nonceAttribute }}}>\n"
                             @"{{{ content }}}\n</script>");
                 break;
             }
             // Non-file URLs fall-through to be treated as full links.
         case MPAssetFullLink:
-            template = (@"<script type=\"{{ typeName }}\" src=\"{{ url }}\">"
+            template = (@"<script type=\"{{ typeName }}\"{{{ nonceAttribute }}} "
+                        @"src=\"{{ url }}\">"
                         @"</script>");
             break;
     }
     return template;
+}
+
+- (NSString *)htmlForOption:(MPAssetOption)option nonce:(NSString *)nonce
+{
+    NSDictionary *context = nil;
+    if (nonce.length)
+    {
+        NSString *attribute =
+            [NSString stringWithFormat:@" nonce=\"%@\"", nonce];
+        context = @{@"nonceAttribute": attribute};
+    }
+    return [self htmlForOption:option extraContext:context];
 }
 
 @end
@@ -186,6 +209,13 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
     if (option == MPAssetFullLink)
         option = MPAssetEmbedded;
     return [super htmlForOption:option];
+}
+
+- (NSString *)htmlForOption:(MPAssetOption)option nonce:(NSString *)nonce
+{
+    if (option == MPAssetFullLink)
+        option = MPAssetEmbedded;
+    return [super htmlForOption:option nonce:nonce];
 }
 
 @end

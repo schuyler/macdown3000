@@ -248,12 +248,15 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
 
 NS_INLINE NSString *MPEscapeHTMLAttribute(NSString *value);
 NS_INLINE NSString *MPEscapeHTMLText(NSString *value);
-NS_INLINE NSString *MPPreviewContentSecurityPolicy(void);
-NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken);
+NS_INLINE NSString *MPPreviewScriptNonce(void);
+NS_INLINE NSString *MPPreviewContentSecurityPolicy(NSString *scriptNonce);
+NS_INLINE NSString *MPPreviewHeadTags(
+    NSString *checkboxBridgeToken, NSString *scriptNonce);
 
 NS_INLINE NSString *MPGetHTML(
     NSString *title, NSString *headTags, NSString *body, NSArray *styles,
-    MPAssetOption styleopt, NSArray *scripts, MPAssetOption scriptopt)
+    MPAssetOption styleopt, NSArray *scripts, MPAssetOption scriptopt,
+    NSString *scriptNonce)
 {
     NSMutableArray *styleTags = [NSMutableArray array];
     NSMutableArray *scriptTags = [NSMutableArray array];
@@ -265,7 +268,7 @@ NS_INLINE NSString *MPGetHTML(
     }
     for (MPScript *script in scripts)
     {
-        NSString *s = [script htmlForOption:scriptopt];
+        NSString *s = [script htmlForOption:scriptopt nonce:scriptNonce];
         if (s)
             [scriptTags addObject:s];
     }
@@ -484,26 +487,42 @@ NS_INLINE NSString *MPEscapeHTMLText(NSString *value)
     return escaped;
 }
 
-NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
+NS_INLINE NSString *MPPreviewScriptNonce(void)
+{
+    return [NSUUID.UUID.UUIDString
+        stringByReplacingOccurrencesOfString:@"-" withString:@""];
+}
+
+NS_INLINE NSString *MPPreviewContentSecurityPolicy(NSString *scriptNonce)
 {
     // MathJax 2.x relies on eval/new Function during startup, and bundled
     // preview libraries inject inline styles while rendering annotated output.
-    return @"default-src 'none'; "
-           @"base-uri 'none'; "
-           @"form-action 'none'; "
-           @"object-src 'none'; "
-           @"frame-src 'none'; "
-           @"img-src data: file: http: https:; "
-           @"media-src data: file: http: https:; "
-           @"style-src 'self' 'unsafe-inline' file:; "
-           @"font-src data: file:; "
-           @"connect-src http: https:; "
-           @"script-src 'self' file: https://cdnjs.cloudflare.com 'unsafe-eval'";
+    // A per-render nonce keeps renderer-owned scripts working without allowing
+    // document-authored file:// script tags from raw Markdown HTML.
+    NSString *scriptPolicy = scriptNonce.length
+        ? [NSString stringWithFormat:
+            @"script-src 'nonce-%@' https://cdnjs.cloudflare.com 'unsafe-eval'",
+            scriptNonce]
+        : @"script-src 'none'";
+    return [NSString stringWithFormat:
+        @"default-src 'none'; "
+         @"base-uri 'none'; "
+         @"form-action 'none'; "
+         @"object-src 'none'; "
+         @"frame-src 'none'; "
+         @"img-src data: file: http: https:; "
+         @"media-src data: file: http: https:; "
+         @"style-src 'self' 'unsafe-inline' file:; "
+         @"font-src data: file:; "
+         @"connect-src 'none'; %@",
+        scriptPolicy];
 }
 
-NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
+NS_INLINE NSString *MPPreviewHeadTags(
+    NSString *checkboxBridgeToken, NSString *scriptNonce)
 {
-    NSString *csp = MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy());
+    NSString *csp =
+        MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy(scriptNonce));
     NSString *token = MPEscapeHTMLAttribute(checkboxBridgeToken);
     return [NSString stringWithFormat:
         @"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n"
@@ -827,10 +846,12 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     if (!self.checkboxBridgeToken.length)
         self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
-    NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
+    NSString *scriptNonce = MPPreviewScriptNonce();
+    NSString *headTags =
+        MPPreviewHeadTags(self.checkboxBridgeToken, scriptNonce);
     NSString *html = MPGetHTML(
         title, headTags, body, self.stylesheets, MPAssetFullLink,
-        self.scripts, MPAssetFullLink);
+        self.scripts, MPAssetFullLink, scriptNonce);
     [delegate renderer:self didProduceHTMLOutput:html];
 
     self.styleName = [delegate rendererStyleName:self];
@@ -902,7 +923,7 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         title = @"";
     NSString *html = MPGetHTML(
         title, nil, self.currentHtml, styles, stylesOption, scripts,
-        scriptsOption);
+        scriptsOption, nil);
     return html;
 }
 
