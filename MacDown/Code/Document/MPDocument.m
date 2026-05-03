@@ -2269,6 +2269,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             [self.splitView swapViews];
             if (!self.previewVisible && self.previousSplitRatio >= 0.0)
                 self.previousSplitRatio = 1.0 - self.previousSplitRatio;
+            if (self.lastNonCollapsedRatio > 0.0
+                    && self.lastNonCollapsedRatio < 1.0)
+                self.lastNonCollapsedRatio = 1.0 - self.lastNonCollapsedRatio;
 
             // Need to queue this or the views won't be initialised correctly.
             // Don't really know why, but this works.

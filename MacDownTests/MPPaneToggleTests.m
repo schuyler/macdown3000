@@ -19,9 +19,11 @@
 @property (weak) NSView *editorContainer;
 @property (weak) WebView *preview;
 @property CGFloat previousSplitRatio;
+@property CGFloat lastNonCollapsedRatio;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
+- (void)setupEditor:(NSString *)changedKey;
 @end
 
 #pragma mark - Mock Menu Item
@@ -899,6 +901,39 @@
 
     XCTAssertFalse(item.hidden,
                    @"Issue #377: Editor menu item should NOT be hidden after divider-drag collapse");
+}
+
+- (void)testEditorOnRightMirrorsLastNonCollapsedRatio
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        MPDocumentSplitView *splitView =
+            [[MPDocumentSplitView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
+        NSView *preview = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 50, 100)];
+        NSView *editor = [[NSView alloc] initWithFrame:NSMakeRect(50, 0, 50, 100)];
+        [splitView addSubview:preview];
+        [splitView addSubview:editor];
+        self.document.splitView = splitView;
+        self.document.preview = (WebView *)preview;
+
+        preferences.editorOnRight = NO;
+        [self.document setupEditor:@"editorOnRight"];
+        self.document.previousSplitRatio = -1.0;
+        self.document.lastNonCollapsedRatio = 0.3;
+
+        preferences.editorOnRight = YES;
+        [self.document setupEditor:@"editorOnRight"];
+
+        XCTAssertEqualWithAccuracy(self.document.lastNonCollapsedRatio, 0.7, 0.001,
+                                   @"Issue #380: drag-collapse restore ratio should mirror "
+                                   @"when editorOnRight swaps panes");
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+        [preferences synchronize];
+    }
 }
 
 @end
