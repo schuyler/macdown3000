@@ -70,6 +70,7 @@ static CGFloat itemWidth = 37;
             [self toolbarItemWithIdentifier:@"heading3" label:NSLocalizedString(@"Heading 3", @"Heading 3 toolbar button") icon:@"ToolbarIconHeading3" action:@selector(convertToH3:)]
             ]
          ],
+        [self toolbarItemWithIdentifier:@"headings-navigator" label:NSLocalizedString(@"Navigate Headings", @"Headings navigator toolbar button") icon:NSImageNameListViewTemplate action:@selector(showHeadingsNavigator:)],
         [self toolbarItemGroupWithIdentifier:@"list-group" separated:YES label:NSLocalizedString(@"Ordered/Unordered List", @"") items:@[
             [self toolbarItemWithIdentifier:@"unordered-list" label:NSLocalizedString(@"Unordered List", @"Unordered list toolbar button") icon:@"ToolbarIconUnorderedList" action:@selector(toggleUnorderedList:)],
             [self toolbarItemWithIdentifier:@"ordered-list" label:NSLocalizedString(@"Ordered List", @"Ordered list toolbar button") icon:@"ToolbarIconOrderedList" action:@selector(toggleOrderedList:)]
@@ -157,7 +158,7 @@ static CGFloat itemWidth = 37;
     
     // Add space after the specified toolbar item indices
     int spaceAfterIndices[] = {}; // No space in the default set
-    int flexibleSpaceAfterIndices[] = {2, 3, 5, 7, 11};
+    int flexibleSpaceAfterIndices[] = {3, 4, 6, 8, 12};
 
     // Bounds checking to prevent buffer overflow when accessing C arrays
     // Empty spaceAfterIndices array must not be accessed (count = 0)

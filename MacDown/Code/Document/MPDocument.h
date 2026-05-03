@@ -19,6 +19,8 @@
 @property (nonatomic, readwrite) NSString *markdown;
 @property (nonatomic, readonly) NSString *html;
 
++ (NSArray<NSDictionary *> *)headingsInMarkdown:(NSString *)markdown;
+
 /**
  * Toggle the checkbox at the specified index in the markdown source.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.

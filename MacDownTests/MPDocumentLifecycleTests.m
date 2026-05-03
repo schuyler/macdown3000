@@ -864,4 +864,29 @@
     }
 }
 
+#pragma mark - Headings Navigator Tests
+
+- (void)testHeadingsInMarkdownParsesATXAndSetextHeadings
+{
+    NSString *markdown = @"# One\n\nTwo\n---\n\n### Three\n";
+    NSArray<NSDictionary *> *headings = [MPDocument headingsInMarkdown:markdown];
+
+    XCTAssertEqual(headings.count, 3);
+    XCTAssertEqualObjects(headings[0][@"title"], @"One");
+    XCTAssertEqualObjects(headings[0][@"level"], @1);
+    XCTAssertEqualObjects(headings[1][@"title"], @"Two");
+    XCTAssertEqualObjects(headings[1][@"level"], @2);
+    XCTAssertEqualObjects(headings[2][@"title"], @"Three");
+    XCTAssertEqualObjects(headings[2][@"level"], @3);
+}
+
+- (void)testHeadingsInMarkdownSkipsFencedCodeBlocks
+{
+    NSString *markdown = @"```markdown\n# Not a heading\n```\n\n# Real\n";
+    NSArray<NSDictionary *> *headings = [MPDocument headingsInMarkdown:markdown];
+
+    XCTAssertEqual(headings.count, 1);
+    XCTAssertEqualObjects(headings.firstObject[@"title"], @"Real");
+}
+
 @end

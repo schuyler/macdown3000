@@ -86,6 +86,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -107,10 +108,10 @@
 - (void)testAllowedIdentifiersTotalCount
 {
     NSArray *allowed = [self.controller toolbarAllowedItemIdentifiers:nil];
-    // 13 custom + 3 system (flexible space, space, separator)
-    XCTAssertEqual(allowed.count, 16,
-                   @"Allowed identifiers should have 16 items: "
-                   @"13 custom + flexible space + space + separator");
+    // 14 custom + 3 system (flexible space, space, separator)
+    XCTAssertEqual(allowed.count, 17,
+                   @"Allowed identifiers should have 17 items: "
+                   @"14 custom + flexible space + space + separator");
 }
 
 - (void)testAllowedIdentifiersOrderCustomItemsFirst
@@ -121,6 +122,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -208,6 +210,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -229,8 +232,8 @@
 - (void)testSelectableIdentifiersCount
 {
     NSArray *selectable = [self.controller toolbarSelectableItemIdentifiers:nil];
-    XCTAssertEqual(selectable.count, 13,
-                   @"Selectable identifiers should have exactly 13 items (custom only, no system items)");
+    XCTAssertEqual(selectable.count, 14,
+                   @"Selectable identifiers should have exactly 14 items (custom only, no system items)");
 }
 
 - (void)testSelectableIdentifiersAcceptsNilToolbar
@@ -270,6 +273,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -303,8 +307,8 @@
 - (void)testDefaultIdentifiersTotalCount
 {
     NSArray *defaults = [self.controller toolbarDefaultItemIdentifiers:nil];
-    XCTAssertEqual(defaults.count, 15,
-                   @"Default toolbar should have 15 items: 10 custom + 5 flexible spaces");
+    XCTAssertEqual(defaults.count, 16,
+                   @"Default toolbar should have 16 items: 11 custom + 5 flexible spaces");
 }
 
 - (void)testDefaultIdentifiersDoNotContainFixedSpaces
@@ -322,6 +326,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         NSToolbarFlexibleSpaceItemIdentifier,
         @"list-group",
         NSToolbarFlexibleSpaceItemIdentifier,
@@ -361,6 +366,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -389,6 +395,7 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
+        @"headings-navigator",
         @"list-group",
         @"blockquote",
         @"code",
@@ -631,6 +638,7 @@
         @"code",
         @"link",
         @"image",
+        @"headings-navigator",
         @"copy-html",
         @"comment",
         @"highlight",

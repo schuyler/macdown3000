@@ -899,6 +899,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             return NO;
         }
     }
+    else if (action == @selector(showHeadingsNavigator:))
+    {
+        return self.editor != nil;
+    }
     return result;
 }
 
@@ -1995,6 +1999,49 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self toggleSplitterCollapsingEditorPane:YES];
 }
 
+- (IBAction)showHeadingsNavigator:(id)sender
+{
+    NSMenu *menu = [[NSMenu alloc] initWithTitle:NSLocalizedString(
+        @"Headings", @"Headings navigator menu title")];
+    NSArray<NSDictionary *> *headings = [MPDocument headingsInMarkdown:self.editor.string];
+
+    if (!headings.count)
+    {
+        NSMenuItem *item = [[NSMenuItem alloc]
+            initWithTitle:NSLocalizedString(@"No Headings", @"empty headings navigator")
+                   action:nil keyEquivalent:@""];
+        item.enabled = NO;
+        [menu addItem:item];
+    }
+
+    for (NSDictionary *heading in headings)
+    {
+        NSString *title = heading[@"title"] ?: @"";
+        NSInteger level = [heading[@"level"] integerValue];
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title
+                                                      action:@selector(jumpToHeading:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = heading[@"location"];
+        item.indentationLevel = MAX(0, MIN(5, level - 1));
+        [menu addItem:item];
+    }
+
+    NSView *view = [sender isKindOfClass:[NSView class]] ? sender : self.editor;
+    NSPoint point = NSMakePoint(0.0, NSHeight(view.bounds));
+    [menu popUpMenuPositioningItem:nil atLocation:point inView:view];
+}
+
+- (void)jumpToHeading:(NSMenuItem *)sender
+{
+    NSUInteger location = [sender.representedObject unsignedIntegerValue];
+    location = MIN(location, self.editor.string.length);
+    NSRange range = NSMakeRange(location, 0);
+    self.editor.selectedRange = range;
+    [self.editor scrollRangeToVisible:range];
+    [self.windowForSheet makeFirstResponder:self.editor];
+}
+
 - (IBAction)render:(id)sender
 {
     [self.renderer parseAndRenderLater];
@@ -3017,6 +3064,110 @@ to link outside that scope.", \
 
 
 #pragma mark - Interactive Checkbox Support (Issue #269)
+
++ (NSArray<NSDictionary *> *)headingsInMarkdown:(NSString *)markdown
+{
+    if (!markdown.length)
+        return @[];
+
+    static NSRegularExpression *atxRegex = nil;
+    static NSRegularExpression *setextRegex = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        atxRegex = [NSRegularExpression
+            regularExpressionWithPattern:@"^[ ]{0,3}(#{1,6})[ \\t]+(.+?)[ \\t#]*$"
+                                 options:0 error:NULL];
+        setextRegex = [NSRegularExpression
+            regularExpressionWithPattern:@"^[ ]{0,3}(=+|-+)[ \\t]*$"
+                                 options:0 error:NULL];
+    });
+
+    NSMutableArray<NSDictionary *> *headings = [NSMutableArray array];
+    NSArray<NSString *> *lines = [markdown componentsSeparatedByString:@"\n"];
+    NSCharacterSet *trimSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    BOOL inFence = NO;
+    unichar fenceCharacter = 0;
+    NSUInteger characterLocation = 0;
+
+    for (NSUInteger index = 0; index < lines.count; index++)
+    {
+        NSString *line = lines[index];
+        NSString *trimmedLine = [line stringByTrimmingCharactersInSet:trimSet];
+        NSUInteger leadingSpaces = 0;
+        while (leadingSpaces < line.length &&
+               [line characterAtIndex:leadingSpaces] == ' ')
+        {
+            leadingSpaces++;
+        }
+        BOOL canBeMarkdownBlock = leadingSpaces < 4;
+
+        if (canBeMarkdownBlock && trimmedLine.length >= 3)
+        {
+            unichar first = [trimmedLine characterAtIndex:0];
+            if (first == '`' || first == '~')
+            {
+                NSUInteger fenceLength = 0;
+                while (fenceLength < trimmedLine.length &&
+                       [trimmedLine characterAtIndex:fenceLength] == first)
+                {
+                    fenceLength++;
+                }
+                if (fenceLength >= 3 && (!inFence || first == fenceCharacter))
+                {
+                    inFence = !inFence;
+                    fenceCharacter = inFence ? first : 0;
+                    characterLocation += line.length + 1;
+                    continue;
+                }
+            }
+        }
+
+        if (inFence)
+        {
+            characterLocation += line.length + 1;
+            continue;
+        }
+
+        NSTextCheckingResult *atxMatch =
+            [atxRegex firstMatchInString:line options:0
+                                   range:NSMakeRange(0, line.length)];
+        if (atxMatch)
+        {
+            NSString *levelText = [line substringWithRange:[atxMatch rangeAtIndex:1]];
+            NSString *title = [line substringWithRange:[atxMatch rangeAtIndex:2]];
+            title = [title stringByTrimmingCharactersInSet:trimSet];
+            if (title.length)
+            {
+                [headings addObject:@{
+                    @"level": @(levelText.length),
+                    @"title": title,
+                    @"location": @(characterLocation),
+                }];
+            }
+        }
+        else if (canBeMarkdownBlock && trimmedLine.length && index + 1 < lines.count)
+        {
+            NSString *nextLine = lines[index + 1];
+            NSTextCheckingResult *setextMatch =
+                [setextRegex firstMatchInString:nextLine options:0
+                                          range:NSMakeRange(0, nextLine.length)];
+            if (setextMatch)
+            {
+                NSString *marker = [nextLine substringWithRange:
+                    [setextMatch rangeAtIndex:1]];
+                [headings addObject:@{
+                    @"level": @([marker hasPrefix:@"="] ? 1 : 2),
+                    @"title": trimmedLine,
+                    @"location": @(characterLocation),
+                }];
+            }
+        }
+
+        characterLocation += line.length + 1;
+    }
+
+    return [headings copy];
+}
 
 /**
  * Handle the checkbox toggle URL from the preview.
