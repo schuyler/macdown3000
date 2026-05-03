@@ -75,6 +75,18 @@
     XCTAssertNil(watcher.path);
 }
 
+- (void)testCanWatchLocalPath
+{
+    NSString *path = [self createTestFileWithName:@"local.txt" content:@"hello"];
+
+    XCTAssertTrue([MPFileWatcher canWatchPath:path]);
+}
+
+- (void)testCannotWatchNilPath
+{
+    XCTAssertFalse([MPFileWatcher canWatchPath:nil]);
+}
+
 #pragma mark - Event Handling
 
 - (void)testHandlerCalledOnFileWrite
