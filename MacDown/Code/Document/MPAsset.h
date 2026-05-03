@@ -35,6 +35,7 @@ extern NSString * const kMPMathJaxConfigType;
 
 @interface MPScript : MPAsset
 + (instancetype)javaScriptWithURL:(NSURL *)url;
+- (NSString *)htmlForOption:(MPAssetOption)option nonce:(NSString *)nonce;
 @end
 
 

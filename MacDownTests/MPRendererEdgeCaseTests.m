@@ -150,12 +150,40 @@
     XCTAssertNotNil(html, @"Preview render should produce HTML");
     XCTAssertTrue([html containsString:@"Content-Security-Policy"],
                   @"Preview HTML should include a CSP meta tag");
-    XCTAssertTrue([html containsString:@"script-src &#39;self&#39; file: https://cdnjs.cloudflare.com &#39;unsafe-eval&#39;"],
-                  @"CSP should whitelist only bundled scripts and the MathJax CDN");
+    XCTAssertTrue([html containsString:@"script-src &#39;nonce-"],
+                  @"CSP should allow nonce-bearing preview scripts");
+    XCTAssertFalse([html containsString:@"script-src &#39;self&#39; file:"],
+                   @"CSP should not allow document-supplied file scripts");
+    XCTAssertFalse([html containsString:@"connect-src http: https:"],
+                   @"CSP should not allow arbitrary script exfiltration");
+    XCTAssertTrue([html containsString:@"<script type=\"text/javascript\" nonce=\""],
+                  @"Renderer-owned scripts should carry the preview nonce");
     XCTAssertTrue([html containsString:@"name=\"macdown-checkbox-token\""],
                   @"Preview HTML should include a checkbox bridge token");
     XCTAssertTrue(self.renderer.checkboxBridgeToken.length > 0,
                   @"Renderer should expose the active checkbox bridge token");
+}
+
+- (void)testPreviewCSPBlocksDocumentSuppliedFileScripts
+{
+    NSString *script =
+        @"<script src=\"file:///tmp/macdown-preview-attack.js\"></script>";
+    self.dataSource.markdown = script;
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    NSString *html = self.delegate.lastHTML;
+    XCTAssertNotNil(html, @"Preview render should produce HTML");
+    XCTAssertTrue([html containsString:script],
+                  @"Raw Markdown HTML may still be rendered into the preview");
+    XCTAssertFalse([html containsString:@"script-src &#39;self&#39; file:"],
+                   @"CSP should not allow document-supplied file scripts");
+    XCTAssertFalse([html containsString:@"connect-src http: https:"],
+                   @"CSP should not allow arbitrary script exfiltration");
+    XCTAssertFalse([html containsString:
+                    @"file:///tmp/macdown-preview-attack.js\" nonce=\""],
+                   @"Document-supplied script tags should not receive a nonce");
 }
 
 - (void)testPreviewRenderKeepsCheckboxBridgeTokenStableAcrossRenders
