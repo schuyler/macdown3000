@@ -246,4 +246,15 @@
                           @"Should consume single trailing newline after closing delimiter");
 }
 
+- (void)testFrontMatterContentOffsetWithInvalidYAML
+{
+    NSString *input = @"---\ninvalid: yaml: content:\n---\n\n# Content";
+    NSUInteger offset = 0;
+    id result = [input frontMatter:&offset];
+    NSString *remaining = [input substringFromIndex:offset];
+    XCTAssertNil(result, @"Invalid YAML should not return parsed front matter");
+    XCTAssertEqualObjects(remaining, @"# Content",
+                          @"Syntactic front matter should still be skipped");
+}
+
 @end

@@ -70,17 +70,6 @@
         return nil;
     }
 
-    NSString *frontMatter = [self substringWithRange:[result rangeAtIndex:1]];
-    NSArray *objects =
-        [YAMLSerialization objectsWithYAMLString:frontMatter
-                                         options:kYAMLReadOptionStringScalars
-                                           error:NULL];
-    if (!objects.count)
-    {
-        if (contentOffset)
-            *contentOffset = 0;
-        return nil;
-    }
     if (contentOffset)
     {
         NSUInteger offset = NSMaxRange([result rangeAtIndex:0]);
@@ -95,6 +84,13 @@
         }
         *contentOffset = offset;
     }
+    NSString *frontMatter = [self substringWithRange:[result rangeAtIndex:1]];
+    NSArray *objects =
+        [YAMLSerialization objectsWithYAMLString:frontMatter
+                                         options:kYAMLReadOptionStringScalars
+                                           error:NULL];
+    if (!objects.count)
+        return nil;
     return objects[0];
 }
 
