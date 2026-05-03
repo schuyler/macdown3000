@@ -192,6 +192,59 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     return mut;
 }
 
+NS_INLINE NSString *MPHTMLWithGitHubAlertBlocks(NSString *html)
+{
+    if (!html.length)
+        return html;
+
+    static NSRegularExpression *alertRegex = nil;
+    static NSDictionary<NSString *, NSString *> *titles = nil;
+    static dispatch_once_t alertToken;
+    dispatch_once(&alertToken, ^{
+        NSString *pattern =
+            @"<blockquote>\\s*<p>\\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\\]"
+             "(?:\\s*<br\\s*/?>)?\\s*([\\s\\S]*?)</p>([\\s\\S]*?)</blockquote>";
+        alertRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                          options:NSRegularExpressionCaseInsensitive
+                                                            error:NULL];
+        titles = @{
+            @"note": @"Note",
+            @"tip": @"Tip",
+            @"important": @"Important",
+            @"warning": @"Warning",
+            @"caution": @"Caution"
+        };
+    });
+
+    NSMutableString *result = [html mutableCopy];
+    NSArray<NSTextCheckingResult *> *matches =
+        [alertRegex matchesInString:result options:0
+                              range:NSMakeRange(0, result.length)];
+    NSCharacterSet *whitespaceAndNewline =
+        [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    for (NSTextCheckingResult *match in [matches reverseObjectEnumerator])
+    {
+        NSString *kind = [[result substringWithRange:[match rangeAtIndex:1]]
+            lowercaseString];
+        NSString *firstParagraph = [[result substringWithRange:[match rangeAtIndex:2]]
+            stringByTrimmingCharactersInSet:whitespaceAndNewline];
+        NSString *remainingHTML = [result substringWithRange:[match rangeAtIndex:3]];
+
+        NSMutableString *body = [NSMutableString string];
+        if (firstParagraph.length)
+            [body appendFormat:@"<p>%@</p>\n", firstParagraph];
+        [body appendString:remainingHTML];
+
+        NSString *replacement = [NSString stringWithFormat:
+            @"<div class=\"markdown-alert markdown-alert-%@\">\n"
+             "<p class=\"markdown-alert-title\">%@</p>\n"
+             "%@</div>",
+            kind, titles[kind], body];
+        [result replaceCharactersInRange:match.range withString:replacement];
+    }
+    return result;
+}
+
 NS_INLINE NSString *MPHTMLFromMarkdown(
     NSString *text, int flags, BOOL smartypants, NSString *frontMatter,
     hoedown_renderer *htmlRenderer, hoedown_renderer *tocRenderer)
@@ -242,6 +295,7 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
     }
     if (frontMatter)
         result = [NSString stringWithFormat:@"%@\n%@", frontMatter, result];
+    result = MPHTMLWithGitHubAlertBlocks(result);
     
     return result;
 }
@@ -662,6 +716,9 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     NSURL *printURL = MPExtensionURL(@"print", @"css");
     [stylesheets addObject:[MPStyleSheet CSSWithURL:printURL]];
 
+    NSURL *alertsURL = MPExtensionURL(@"github-alerts", @"css");
+    [stylesheets addObject:[MPStyleSheet CSSWithURL:alertsURL]];
+
     // Load export.css last for paragraph text wrapping in HTML exports and preview
     NSURL *exportURL = MPExtensionURL(@"export", @"css");
     [stylesheets addObject:[MPStyleSheet CSSWithURL:exportURL]];
@@ -893,6 +950,9 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     // Must be after all other stylesheets to ensure proper cascade order
     if (withStyles)
     {
+        NSURL *alertsURL = MPExtensionURL(@"github-alerts", @"css");
+        [styles addObject:[MPStyleSheet CSSWithURL:alertsURL]];
+
         NSURL *exportURL = MPExtensionURL(@"export", @"css");
         [styles addObject:[MPStyleSheet CSSWithURL:exportURL]];
     }
