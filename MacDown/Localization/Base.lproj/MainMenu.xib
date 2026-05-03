@@ -368,6 +368,22 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="onf-Mq-Pah"/>
+                            <menuItem title="Zoom In" keyEquivalent="+" id="zNi-uN-Zin">
+                                <connections>
+                                    <action selector="zoomIn:" target="-1" id="ZIn-2S-aCt"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="zNo-uT-Zot">
+                                <connections>
+                                    <action selector="zoomOut:" target="-1" id="ZOt-7q-aCt"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="zRs-0m-Act">
+                                <connections>
+                                    <action selector="resetZoom:" target="-1" id="ZRs-0m-aCt"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zSp-zo-001"/>
                             <menuItem title="Left 1:3 Right" id="VW7-VH-9yl">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -444,7 +460,8 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Strikethrough" keyEquivalent="-" id="9CN-Qi-Fln">
+                            <menuItem title="Strikethrough" id="9CN-Qi-Fln">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleStrikethrough:" target="-1" id="rUc-gb-x5q"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionStrikethough" id="kQ0-Wi-BPs">
@@ -509,7 +526,8 @@
                                                 <action selector="convertToH6:" target="-1" id="u4y-F9-JR3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paragraph" keyEquivalent="0" id="xN5-GU-ASF">
+                                        <menuItem title="Paragraph" id="xN5-GU-ASF">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="convertToParagraph:" target="-1" id="4BU-GT-Qyv"/>
                                             </connections>
