@@ -899,6 +899,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             return NO;
         }
     }
+    else if (action == @selector(toggleAutoSave:))
+    {
+        if ([(id)item isKindOfClass:[NSMenuItem class]])
+            ((NSMenuItem *)item).state = self.preferences.editorAutoSave ?
+                NSControlStateValueOn : NSControlStateValueOff;
+    }
     return result;
 }
 
@@ -1993,6 +1999,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)toggleEditorPane:(id)sender
 {
     [self toggleSplitterCollapsingEditorPane:YES];
+}
+
+- (IBAction)toggleAutoSave:(id)sender
+{
+    self.preferences.editorAutoSave = !self.preferences.editorAutoSave;
+    [self.preferences synchronize];
 }
 
 - (IBAction)render:(id)sender

@@ -13,6 +13,7 @@
 @interface MPDocument (LinkTargetTesting)
 @property (strong) NSURL *currentBaseUrl;
 - (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
+- (IBAction)toggleAutoSave:(id)sender;
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -202,6 +203,44 @@
                    @"MPDocument should not autosave when editorAutoSave is NO");
 
     // Restore
+    prefs.editorAutoSave = original;
+}
+
+- (void)testToggleAutoSaveActionUpdatesPreference
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorAutoSave;
+
+    prefs.editorAutoSave = YES;
+    [self.document toggleAutoSave:nil];
+    XCTAssertFalse(prefs.editorAutoSave,
+                   @"File menu auto-save toggle should disable autosave");
+
+    [self.document toggleAutoSave:nil];
+    XCTAssertTrue(prefs.editorAutoSave,
+                  @"File menu auto-save toggle should re-enable autosave");
+
+    prefs.editorAutoSave = original;
+}
+
+- (void)testToggleAutoSaveMenuValidationReflectsPreference
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorAutoSave;
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Auto Save"
+                                                  action:@selector(toggleAutoSave:)
+                                           keyEquivalent:@""];
+
+    prefs.editorAutoSave = YES;
+    [self.document validateUserInterfaceItem:item];
+    XCTAssertEqual(item.state, NSControlStateValueOn,
+                   @"Auto-save menu item should be checked when autosave is enabled");
+
+    prefs.editorAutoSave = NO;
+    [self.document validateUserInterfaceItem:item];
+    XCTAssertEqual(item.state, NSControlStateValueOff,
+                   @"Auto-save menu item should be unchecked when autosave is disabled");
+
     prefs.editorAutoSave = original;
 }
 
