@@ -367,6 +367,44 @@
                                     <binding destination="LEY-zf-22t" name="enabled" keyPath="self.currentDocument.previewVisible" id="5e7-rJ-oX2"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Column Guide" id="K8f-gQ-VwD">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Column Guide" id="v6J-FR-3yq">
+                                    <items>
+                                        <menuItem title="Show Column Guide" id="f4Z-W1-vnP">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleColumnGuide:" target="-1" id="5P6-eg-Xqa"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Wrap at Column Guide" id="Ujc-WO-zaz">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="toggleWrapAtColumnGuide:" target="-1" id="mzd-N9-YqB"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="v7y-Ag-a51"/>
+                                        <menuItem title="80 Columns" id="yvz-tM-mAM">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setColumnGuideWidth80:" target="-1" id="YAc-DN-hJD"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="100 Columns" id="NDe-1A-hS0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setColumnGuideWidth100:" target="-1" id="ypl-hW-kv9"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="120 Columns" id="WXW-t8-dCa">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="setColumnGuideWidth120:" target="-1" id="OaW-Jw-spo"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="onf-Mq-Pah"/>
                             <menuItem title="Left 1:3 Right" id="VW7-VH-9yl">
                                 <modifierMask key="keyEquivalentModifierMask"/>

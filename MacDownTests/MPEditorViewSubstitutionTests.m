@@ -146,6 +146,33 @@ static const NSTextCheckingTypes kTestCheckingTypes = (NSTextCheckingTypeSpellin
     [defaults synchronize];
 }
 
+#pragma mark - Column Guide Tests
+
+- (void)testColumnGuideXPositionUsesConfiguredColumn
+{
+    NSFont *font = [NSFont fontWithName:@"Menlo-Regular" size:12.0];
+    self.editorView.font = font;
+    self.editorView.textContainer.lineFragmentPadding = 0.0;
+    self.editorView.textContainerInset = NSZeroSize;
+    self.editorView.columnGuideColumn = 10;
+
+    CGFloat characterWidth =
+        [@"0" sizeWithAttributes:@{NSFontAttributeName: font}].width;
+
+    XCTAssertEqualWithAccuracy([self.editorView columnGuideXPosition],
+                               characterWidth * 10.0,
+                               0.5,
+                               @"Guide should be placed after the configured column");
+}
+
+- (void)testColumnGuideColumnClampsToPositiveValue
+{
+    self.editorView.columnGuideColumn = 0;
+
+    XCTAssertEqual(self.editorView.columnGuideColumn, 1,
+                   @"Column guide should clamp non-positive widths");
+}
+
 #pragma mark - Automatic Dash Substitution Tests
 
 /**

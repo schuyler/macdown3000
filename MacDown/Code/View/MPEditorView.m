@@ -38,11 +38,33 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 @synthesize contentRect = _contentRect;
 @synthesize scrollsPastEnd = _scrollsPastEnd;
 
+- (void)setColumnGuideVisible:(BOOL)columnGuideVisible
+{
+    _columnGuideVisible = columnGuideVisible;
+    self.needsDisplay = YES;
+}
+
+- (void)setColumnGuideColumn:(NSInteger)columnGuideColumn
+{
+    _columnGuideColumn = MAX(1, columnGuideColumn);
+    self.needsDisplay = YES;
+}
+
 - (BOOL)scrollsPastEnd
 {
     @synchronized(self) {
         return _scrollsPastEnd;
     }
+}
+
+- (CGFloat)columnGuideXPosition
+{
+    NSFont *font = self.font ?: [NSFont userFixedPitchFontOfSize:0.0];
+    NSDictionary *attributes = @{NSFontAttributeName: font};
+    CGFloat characterWidth = [@"0" sizeWithAttributes:attributes].width;
+    CGFloat padding = self.textContainer.lineFragmentPadding;
+    return self.textContainerOrigin.x + padding +
+        characterWidth * MAX(1, self.columnGuideColumn);
 }
 
 - (void)awakeFromNib {
@@ -166,6 +188,25 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     [super didChangeText];
     if (self.scrollsPastEnd)
         [self updateContentGeometry];
+}
+
+- (void)drawViewBackgroundInRect:(NSRect)rect
+{
+    [super drawViewBackgroundInRect:rect];
+
+    if (!self.columnGuideVisible || self.columnGuideColumn <= 0)
+        return;
+
+    CGFloat x = floor([self columnGuideXPosition]) + 0.5;
+    if (x < NSMinX(rect) || x > NSMaxX(rect))
+        return;
+
+    NSBezierPath *path = [NSBezierPath bezierPath];
+    [path moveToPoint:NSMakePoint(x, NSMinY(rect))];
+    [path lineToPoint:NSMakePoint(x, NSMaxY(rect))];
+    [[NSColor separatorColor] setStroke];
+    path.lineWidth = 1.0;
+    [path stroke];
 }
 
 /** Overridden to advertise markdown UTType support for pasteboard operations.

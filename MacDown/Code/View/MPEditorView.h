@@ -11,7 +11,11 @@
 @interface MPEditorView : NSTextView
 
 @property BOOL scrollsPastEnd;
+@property BOOL columnGuideVisible;
+@property NSInteger columnGuideColumn;
+@property BOOL wrapsAtColumnGuide;
 - (NSRect)contentRect;
+- (CGFloat)columnGuideXPosition;
 - (void)paste:(id)sender;
 
 @end
