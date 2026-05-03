@@ -300,6 +300,19 @@
                   @"Second checkbox should have index 1");
 }
 
+- (void)testUppercaseCheckedCheckboxHasDataIndex
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [X] Done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"<input type=\"checkbox\" checked data-checkbox-index=\"0\">"],
+                  @"Uppercase checked task-list markers should render as checked checkboxes");
+}
+
 /**
  * Test that multiple checkboxes get sequential indices.
  * Related to GitHub issue #269.
