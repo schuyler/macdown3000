@@ -2350,6 +2350,120 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 #endif
 }
 
+static BOOL MPLineFenceMarker(NSString *line, unichar *marker, NSUInteger *count)
+{
+    NSUInteger length = line.length;
+    NSUInteger index = 0;
+    while (index < length && index < 4 && [line characterAtIndex:index] == ' ')
+        index++;
+    if (index > 3 || index >= length)
+        return NO;
+
+    unichar character = [line characterAtIndex:index];
+    if (character != '`' && character != '~')
+        return NO;
+
+    NSUInteger markerCount = 0;
+    while (index + markerCount < length &&
+           [line characterAtIndex:index + markerCount] == character)
+        markerCount++;
+    if (markerCount < 3)
+        return NO;
+
+    if (marker)
+        *marker = character;
+    if (count)
+        *count = markerCount;
+    return YES;
+}
+
+static BOOL MPLineClosesFence(NSString *line, unichar marker, NSUInteger count)
+{
+    unichar closingMarker = 0;
+    NSUInteger closingCount = 0;
+    if (!MPLineFenceMarker(line, &closingMarker, &closingCount))
+        return NO;
+    if (closingMarker != marker || closingCount < count)
+        return NO;
+
+    NSUInteger index = 0;
+    while (index < line.length && [line characterAtIndex:index] == ' ')
+        index++;
+    index += closingCount;
+    while (index < line.length)
+    {
+        unichar character = [line characterAtIndex:index++];
+        if (!MPCharacterIsWhitespace(character))
+            return NO;
+    }
+    return YES;
+}
+
+- (NSArray<NSNumber *> *)editorReferenceLineIndexesForMarkdown:(NSString *)markdown
+{
+    NSArray<NSString *> *documentLines = [markdown componentsSeparatedByString:@"\n"];
+    NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
+
+    static NSRegularExpression *dashRegex = nil;
+    static NSRegularExpression *headerRegex = nil;
+    static NSRegularExpression *imgRegex = nil;
+    static NSRegularExpression *imgRefRegex = nil;
+    static NSRegularExpression *hrRegex = nil;
+    static dispatch_once_t regexOnceToken;
+    dispatch_once(&regexOnceToken, ^{
+        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
+        headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
+        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
+        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
+        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
+    });
+
+    BOOL previousLineHadContent = NO;
+    BOOL inFencedCodeBlock = NO;
+    unichar fenceMarker = 0;
+    NSUInteger fenceLength = 0;
+
+    for (NSUInteger lineNumber = 0; lineNumber < documentLines.count; lineNumber++)
+    {
+        NSString *line = documentLines[lineNumber];
+        if (inFencedCodeBlock)
+        {
+            if (MPLineClosesFence(line, fenceMarker, fenceLength))
+                inFencedCodeBlock = NO;
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        unichar marker = 0;
+        NSUInteger markerCount = 0;
+        if (MPLineFenceMarker(line, &marker, &markerCount))
+        {
+            inFencedCodeBlock = YES;
+            fenceMarker = marker;
+            fenceLength = markerCount;
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        NSRange range = NSMakeRange(0, line.length);
+        BOOL isDashHeader = previousLineHadContent &&
+            [dashRegex numberOfMatchesInString:line options:0 range:range];
+        BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:range] > 0 ||
+                        [imgRefRegex numberOfMatchesInString:line options:0 range:range] > 0);
+        BOOL isHeader = [headerRegex numberOfMatchesInString:line options:0 range:range] > 0;
+
+        if (isDashHeader || isImage || isHeader)
+            [locations addObject:@(lineNumber)];
+
+        BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:range] > 0;
+        previousLineHadContent = line.length &&
+            !isHorizontalRule &&
+            ![dashRegex numberOfMatchesInString:line options:0 range:range];
+    }
+
+    return [locations copy];
+}
+
 /**
  * Updates cached positions of reference points (headers, standalone images) in both
  * editor and preview for scroll synchronization.
@@ -2418,77 +2532,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSLayoutManager *layoutManager = [self.editor layoutManager];
     NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
     [locations removeAllObjects];
-
-    // Cache regex patterns for markdown headers and images.
-    // Only handle images that are not inline with other text/images.
-    static NSRegularExpression *dashRegex = nil;
-    static NSRegularExpression *headerRegex = nil;
-    static NSRegularExpression *imgRegex = nil;
-    static NSRegularExpression *imgRefRegex = nil;
-    static NSRegularExpression *hrRegex = nil;
-    static dispatch_once_t regexOnceToken;
-    dispatch_once(&regexOnceToken, ^{
-        // Match setext-style headers (underlined with dashes).
-        // Matches one or more dashes on a line by itself.
-        // Used with previousLineHadContent to distinguish from horizontal rules.
-        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
-
-        // Match ATX-style headers (# Header, ## Header, etc.)
-        headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
-
-        // Match basic inline image syntax: ![alt](url)
-        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
-
-        // Match reference-style image syntax: ![alt][ref]
-        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
-
-        // Match horizontal rules per CommonMark specification:
-        // - Requires 3+ matching characters: -, *, or _
-        // - Allows 0-3 leading spaces (4+ spaces = code block)
-        // - Allows optional spaces between characters
-        // - All non-whitespace characters must be identical
-        // Examples that match: ---, ***, ___, - - -, * * *, _ _ _,    ---
-        // Examples that don't: --, **, __, -*-,  ----a,     --- (4+ leading spaces)
-        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
-    });
-
-    // Track whether previous line had content (non-empty, non-dash-only).
-    // This flag is essential for distinguishing between:
-    //   - Setext headers (content line followed by dashes): Text\n---
-    //   - Horizontal rules (dashes without preceding content): \n---
-    //
-    // The distinction works as follows:
-    //   1. If previous line had content AND current line is dashes AND not an HR
-    //      → It's a setext header underline
-    //   2. If no previous content OR current line matches HR pattern
-    //      → It's a horizontal rule (or standalone dashes)
-    BOOL previousLineHadContent = NO;
+    NSArray<NSNumber *> *referenceLineIndexes =
+        [self editorReferenceLineIndexesForMarkdown:self.editor.string ?: @""];
+    NSUInteger referenceIndex = 0;
 
     // We start by splitting our document into lines, and then searching
     // line by line for headers or images.
     for (NSInteger lineNumber = 0; lineNumber < [documentLines count]; lineNumber++)
     {
         NSString *line = documentLines[lineNumber];
-
-        // Check if line is a horizontal rule (3+ matching characters).
-        // Per CommonMark: 0-3 leading spaces allowed, spaces between characters allowed.
-        BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
-
-        // Check if line is a setext-style header (dashes after content).
-        // A line of dashes is a setext header if:
-        //   1. Previous line had content (text, not dashes)
-        //   2. Current line is all consecutive dashes (matches dashRegex)
-        //
-        // Note: dashRegex pattern ^([-]+)$ only matches consecutive dashes (---, not - - -).
-        // Spaced patterns like "- - -" match hrRegex but not dashRegex, so they're HRs.
-        // This ensures "Text\n---" is a setext header but "\n---" and "- - -" are HRs.
-        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-
-        BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0 ||
-                        [imgRefRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0);
-        BOOL isHeader = [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
-
-        if (isDashHeader || isImage || isHeader)
+        BOOL isReferenceLine = (referenceIndex < referenceLineIndexes.count &&
+                                referenceLineIndexes[referenceIndex].integerValue == lineNumber);
+        if (isReferenceLine)
         {
             // Calculate where this header/image appears vertically in the editor
             NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(characterCount, [line length]) actualCharacterRange:nil];
@@ -2500,16 +2555,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // The runtime filters in syncScrollers/syncScrollersReverse already
             // handle end-of-document interpolation.
             [locations addObject:@(headerY)];
+            referenceIndex++;
         }
-
-        // Update previousLineHadContent flag for next iteration.
-        // A line "has content" if:
-        //   1. It's non-empty (has length)
-        //   2. It's not just dashes (not a potential header underline)
-        //
-        // This allows the next line to determine if dashes should be interpreted
-        // as a setext header underline.
-        previousLineHadContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
 
         characterCount += [line length] + 1;
     }

@@ -51,6 +51,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)setSplitViewDividerLocation:(CGFloat)ratio;
 // Commit 8 (gap 9): MathJax render generation counter getter
 - (NSUInteger)mathJaxRenderGeneration;
+- (NSArray<NSNumber *> *)editorReferenceLineIndexesForMarkdown:(NSString *)markdown;
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1198,7 +1199,13 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)testHeaderInsideCodeBlockIsIgnored
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Real Header\n\n```\n# Not a header\n## Also not a header\n```\n\n## Another Real Header";
+    NSString *markdown = @"# Real Header\n\n```\n# Not a header\n## Also not a header\n```\n\n## Another Real Header";
+    doc.markdown = markdown;
+
+    NSArray<NSNumber *> *lineIndexes =
+        [doc editorReferenceLineIndexesForMarkdown:markdown];
+    XCTAssertEqualObjects(lineIndexes, (@[@0, @7]),
+                          @"Headers inside fenced code blocks should be ignored");
 
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle headers inside code blocks");
@@ -1211,7 +1218,13 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)testCodeFenceWithInfoString
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Header 1\n\n```markdown\n# Not a header\n```\n\n## Header 2\n\n```objc\n// code\n```";
+    NSString *markdown = @"# Header 1\n\n```markdown\n# Not a header\n```\n\n## Header 2\n\n```objc\n// code\n```";
+    doc.markdown = markdown;
+
+    NSArray<NSNumber *> *lineIndexes =
+        [doc editorReferenceLineIndexesForMarkdown:markdown];
+    XCTAssertEqualObjects(lineIndexes, (@[@0, @6]),
+                          @"Info-string fences should hide inner headings");
 
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle code fences with info strings");
@@ -1224,7 +1237,13 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)testUnclosedCodeFenceAtEndOfDocument
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Header 1\n\n```\n# This should be ignored\n## Also ignored";
+    NSString *markdown = @"# Header 1\n\n```\n# This should be ignored\n## Also ignored";
+    doc.markdown = markdown;
+
+    NSArray<NSNumber *> *lineIndexes =
+        [doc editorReferenceLineIndexesForMarkdown:markdown];
+    XCTAssertEqualObjects(lineIndexes, (@[@0]),
+                          @"Unclosed fences should hide remaining headings");
 
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle unclosed code fence at end of document");
@@ -1236,22 +1255,32 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)testTildeCodeFence
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Header 1\n\n~~~\n# Not a header\n~~~\n\n## Header 2";
+    NSString *markdown = @"# Header 1\n\n~~~\n# Not a header\n~~~\n\n## Header 2";
+    doc.markdown = markdown;
+
+    NSArray<NSNumber *> *lineIndexes =
+        [doc editorReferenceLineIndexesForMarkdown:markdown];
+    XCTAssertEqualObjects(lineIndexes, (@[@0, @6]),
+                          @"Tilde fences should hide inner headings");
 
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle tilde code fences");
 }
 
 /**
- * Test that four backticks (escaping) doesn't start a code block.
- * Per CommonMark, ```` is different from ``` - tests our bounds check fix.
+ * Test that longer fences hide inner headings and close with the same length.
  */
-- (void)testFourBackticksNotCodeFence
+- (void)testFourBackticksCodeFence
 {
     MPDocument *doc = [[MPDocument alloc] init];
-    doc.markdown = @"# Header 1\n\n````\n# Should this be a header?\n````\n\n## Header 2";
+    NSString *markdown = @"# Header 1\n\n````\n# Not a header\n````\n\n## Header 2";
+    doc.markdown = markdown;
 
-    // This tests the bounds check fix - shouldn't crash on edge cases
+    NSArray<NSNumber *> *lineIndexes =
+        [doc editorReferenceLineIndexesForMarkdown:markdown];
+    XCTAssertEqualObjects(lineIndexes, (@[@0, @6]),
+                          @"Longer fences should hide inner headings");
+
     XCTAssertNoThrow([doc updateHeaderLocations],
                      @"updateHeaderLocations should handle four backticks without crashing");
 }
