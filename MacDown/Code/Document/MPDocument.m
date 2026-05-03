@@ -1918,6 +1918,34 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.editor.selectedRange = selectedRange;
 }
 
+- (IBAction)insertTable:(id)sender
+{
+    NSString *template = @"| Column 1 | Column 2 | Column 3 |\n"
+                         @"| --- | --- | --- |\n"
+                         @"|  |  |  |\n";
+    NSRange selectedRange = self.editor.selectedRange;
+    NSString *content = self.editor.string ?: @"";
+    NSMutableString *inserted = [template mutableCopy];
+    NSUInteger cursorOffset = [template rangeOfString:@"|  |"].location + 2;
+
+    if (selectedRange.location > 0 &&
+        [content characterAtIndex:selectedRange.location - 1] != '\n')
+    {
+        [inserted insertString:@"\n\n" atIndex:0];
+        cursorOffset += 2;
+    }
+
+    NSUInteger selectionEnd = NSMaxRange(selectedRange);
+    if (selectionEnd < content.length &&
+        [content characterAtIndex:selectionEnd] != '\n')
+    {
+        [inserted appendString:@"\n"];
+    }
+
+    [self.editor insertText:inserted replacementRange:selectedRange];
+    self.editor.selectedRange = NSMakeRange(selectedRange.location + cursorOffset, 0);
+}
+
 - (IBAction)toggleOrderedList:(id)sender
 {
     [self.editor toggleBlockWithPattern:@"^[0-9]+ \\S" prefix:@"1. "];
