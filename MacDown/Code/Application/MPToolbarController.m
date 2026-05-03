@@ -79,6 +79,7 @@ static CGFloat itemWidth = 37;
         [self toolbarItemWithIdentifier:@"code" label:NSLocalizedString(@"Inline Code", @"Inline code toolbar button") icon:@"ToolbarIconInlineCode" action:@selector(toggleInlineCode:)],
         [self toolbarItemWithIdentifier:@"link" label:NSLocalizedString(@"Link", @"Link toolbar button") icon:@"ToolbarIconLink" action:@selector(toggleLink:)],
         [self toolbarItemWithIdentifier:@"image" label:NSLocalizedString(@"Image", @"Image toolbar button") icon:@"ToolbarIconImage" action:@selector(toggleImage:)],
+        [self toolbarItemWithIdentifier:@"table" label:NSLocalizedString(@"Table", @"Table toolbar button") icon:NSImageNameListViewTemplate action:@selector(insertTable:)],
         [self toolbarItemWithIdentifier:@"copy-html" label:NSLocalizedString(@"Copy HTML", @"Copy HTML toolbar button") icon:@"ToolbarIconCopyHTML" action:@selector(copyHtml:)],
         [self toolbarItemWithIdentifier:@"comment" label:NSLocalizedString(@"Comment", @"Comment toolbar button") icon:@"ToolbarIconComment" action:@selector(toggleComment:)],
         [self toolbarItemWithIdentifier:@"highlight" label:NSLocalizedString(@"Highlight", @"Highlight toolbar button") icon:@"ToolbarIconHighlight" action:@selector(toggleHighlight:)],
@@ -157,7 +158,7 @@ static CGFloat itemWidth = 37;
     
     // Add space after the specified toolbar item indices
     int spaceAfterIndices[] = {}; // No space in the default set
-    int flexibleSpaceAfterIndices[] = {2, 3, 5, 7, 11};
+    int flexibleSpaceAfterIndices[] = {2, 3, 5, 8, 12};
 
     // Bounds checking to prevent buffer overflow when accessing C arrays
     // Empty spaceAfterIndices array must not be accessed (count = 0)
