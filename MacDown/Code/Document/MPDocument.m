@@ -594,6 +594,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             self.editor.string = self.loadedString;
             self.loadedString = nil;
+            [self.highlighter clearHighlighting];
+            [self.highlighter readClearTextStylesFromTextView];
         }
 
         // Gap 8: Claim editor ownership before rendering so that the full-reload
