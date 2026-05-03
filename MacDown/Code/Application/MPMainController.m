@@ -25,6 +25,19 @@
 
 static NSString * const kMPTreatLastSeenStampKey = @"treatLastSeenStamp";
 
+typedef void (^MPOpenPendingFileCompletion)(NSDocument *document);
+
+
+NS_INLINE NSWindow *MPWindowForDocument(NSDocument *document)
+{
+    for (NSWindowController *controller in document.windowControllers)
+    {
+        if (controller.window)
+            return controller.window;
+    }
+    return document.windowForSheet;
+}
+
 
 NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
 {
@@ -309,24 +322,67 @@ NS_INLINE void treat()
 
 - (void)openPendingFiles
 {
-    NSDocumentController *c = [NSDocumentController sharedDocumentController];
-
-    for (NSString *path in self.preferences.filesToOpen)
-    {
-        NSURL *url = [NSURL fileURLWithPath:path];
-        if ([url checkResourceIsReachableAndReturnError:NULL])
-        {
-            [c openDocumentWithContentsOfURL:url display:YES
-                           completionHandler:MPDocumentOpenCompletionEmpty];
-        }
-        else
-        {
-            [c createNewEmptyDocumentForURL:url display:YES error:NULL];
-        }
-    }
+    NSArray *paths = [self.preferences.filesToOpen copy];
+    if (!paths.count)
+        return;
 
     self.preferences.filesToOpen = nil;
     [self.preferences synchronize];
+
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    [NSWindow setAllowsAutomaticWindowTabbing:YES];
+
+    [self openPendingFilePaths:paths index:0 tabbedToWindow:nil
+            documentController:c];
+}
+
+- (void)openPendingFilePaths:(NSArray *)paths index:(NSUInteger)index
+              tabbedToWindow:(NSWindow *)tabWindow
+          documentController:(NSDocumentController *)controller
+{
+    if (index >= paths.count)
+        return;
+
+    [self openPendingFileAtPath:paths[index] documentController:controller
+                     completion:^(NSDocument *document) {
+        NSWindow *window = MPWindowForDocument(document);
+        NSWindow *nextTabWindow = tabWindow ?: window;
+
+        if (tabWindow && window && window != tabWindow)
+        {
+            tabWindow.tabbingMode = NSWindowTabbingModePreferred;
+            window.tabbingMode = NSWindowTabbingModePreferred;
+            [tabWindow addTabbedWindow:window ordered:NSWindowAbove];
+            [tabWindow makeKeyAndOrderFront:nil];
+        }
+
+        [self openPendingFilePaths:paths index:index + 1
+                    tabbedToWindow:nextTabWindow
+                documentController:controller];
+    }];
+}
+
+- (void)openPendingFileAtPath:(NSString *)path
+           documentController:(NSDocumentController *)controller
+                   completion:(MPOpenPendingFileCompletion)completion
+{
+    NSURL *url = [NSURL fileURLWithPath:path];
+    if ([url checkResourceIsReachableAndReturnError:NULL])
+    {
+        [controller openDocumentWithContentsOfURL:url display:YES
+                               completionHandler:^(
+                NSDocument *document, BOOL wasOpen, NSError *error) {
+            if (completion)
+                completion(document);
+        }];
+        return;
+    }
+
+    NSDocument *document = [controller createNewEmptyDocumentForURL:url
+                                                            display:YES
+                                                              error:NULL];
+    if (completion)
+        completion(document);
 }
 
 - (void)openPendingPipedContent {
