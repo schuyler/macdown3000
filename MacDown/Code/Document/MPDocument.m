@@ -2789,7 +2789,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSString *title = nil;
     NSString *string = self.editor.string;
     if (self.preferences.htmlDetectFrontMatter)
-        title = [[[string frontMatter:NULL] objectForKey:@"title"] description];
+    {
+        id frontMatter = [string frontMatter:NULL];
+        if ([frontMatter respondsToSelector:@selector(objectForKey:)])
+            title = [[frontMatter objectForKey:@"title"] description];
+    }
     if (title)
         return title;
 
