@@ -75,6 +75,8 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorBaseFontInfo", @"extensionFootnotes",
             @"editorHorizontalInset", @"editorVerticalInset",
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
+            @"editorColumnGuideEnabled", @"editorColumnGuideWidth",
+            @"editorWrapsAtColumnGuide",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
             @"editorScrollsPastEnd",
             @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
@@ -267,6 +269,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
 - (void)applyEditorStartInPreviewModePreference;
+- (void)applyColumnGuidePreferences;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -898,6 +901,39 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             return NO;
         }
+    }
+    else if (action == @selector(toggleColumnGuide:))
+    {
+        ((NSMenuItem *)item).state = self.preferences.editorColumnGuideEnabled
+            ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
+    }
+    else if (action == @selector(toggleWrapAtColumnGuide:))
+    {
+        ((NSMenuItem *)item).state = self.preferences.editorWrapsAtColumnGuide
+            ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
+    }
+    else if (action == @selector(setColumnGuideWidth80:))
+    {
+        ((NSMenuItem *)item).state =
+            self.preferences.editorColumnGuideWidth == 80
+                ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
+    }
+    else if (action == @selector(setColumnGuideWidth100:))
+    {
+        ((NSMenuItem *)item).state =
+            self.preferences.editorColumnGuideWidth == 100
+                ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
+    }
+    else if (action == @selector(setColumnGuideWidth120:))
+    {
+        ((NSMenuItem *)item).state =
+            self.preferences.editorColumnGuideWidth == 120
+                ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
     }
     return result;
 }
@@ -1995,6 +2031,33 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self toggleSplitterCollapsingEditorPane:YES];
 }
 
+- (IBAction)toggleColumnGuide:(id)sender
+{
+    self.preferences.editorColumnGuideEnabled =
+        !self.preferences.editorColumnGuideEnabled;
+}
+
+- (IBAction)toggleWrapAtColumnGuide:(id)sender
+{
+    self.preferences.editorWrapsAtColumnGuide =
+        !self.preferences.editorWrapsAtColumnGuide;
+}
+
+- (IBAction)setColumnGuideWidth80:(id)sender
+{
+    self.preferences.editorColumnGuideWidth = 80;
+}
+
+- (IBAction)setColumnGuideWidth100:(id)sender
+{
+    self.preferences.editorColumnGuideWidth = 100;
+}
+
+- (IBAction)setColumnGuideWidth120:(id)sender
+{
+    self.preferences.editorColumnGuideWidth = 120;
+}
+
 - (IBAction)render:(id)sender
 {
     [self.renderer parseAndRenderLater];
@@ -2152,14 +2215,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!changedKey || [changedKey isEqualToString:@"editorHorizontalInset"]
             || [changedKey isEqualToString:@"editorVerticalInset"]
             || [changedKey isEqualToString:@"editorWidthLimited"]
-            || [changedKey isEqualToString:@"editorMaximumWidth"])
+            || [changedKey isEqualToString:@"editorMaximumWidth"]
+            || [changedKey isEqualToString:@"editorColumnGuideEnabled"]
+            || [changedKey isEqualToString:@"editorColumnGuideWidth"]
+            || [changedKey isEqualToString:@"editorWrapsAtColumnGuide"])
     {
         [self adjustEditorInsets];
+        [self applyColumnGuidePreferences];
     }
 
     if (!changedKey || [changedKey isEqualToString:@"editorBaseFontInfo"]
             || [changedKey isEqualToString:@"editorStyleName"]
-            || [changedKey isEqualToString:@"editorLineSpacing"])
+            || [changedKey isEqualToString:@"editorLineSpacing"]
+            || [changedKey isEqualToString:@"editorColumnGuideWidth"])
     {
         NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
         style.lineSpacing = self.preferences.editorLineSpacing;
@@ -2209,6 +2277,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         if (backgroundCGColor)
             layer.backgroundColor = backgroundCGColor;
         self.editorContainer.layer = layer;
+        [self applyColumnGuidePreferences];
     }
     
     if ([changedKey isEqualToString:@"editorBaseFontInfo"])
@@ -2296,6 +2365,43 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // Hence the 0.45 instead of 0.5 (which whould feel a bit too much).
     }
     self.editor.textContainerInset = NSMakeSize(x, y);
+}
+
+- (void)applyColumnGuidePreferences
+{
+    NSInteger column = self.preferences.editorColumnGuideWidth;
+    if (column <= 0)
+        column = 80;
+
+    self.editor.columnGuideVisible =
+        self.preferences.editorColumnGuideEnabled;
+    self.editor.columnGuideColumn = column;
+    self.editor.wrapsAtColumnGuide =
+        self.preferences.editorWrapsAtColumnGuide;
+
+    NSTextContainer *container = self.editor.textContainer;
+    if (!container)
+        return;
+
+    if (self.editor.wrapsAtColumnGuide)
+    {
+        NSFont *font = self.editor.font ?:
+            self.preferences.editorBaseFont ?:
+            [NSFont userFixedPitchFontOfSize:0.0];
+        NSDictionary *attributes = @{NSFontAttributeName: font};
+        CGFloat characterWidth = [@"0" sizeWithAttributes:attributes].width;
+        CGFloat width = characterWidth * column +
+            2.0 * container.lineFragmentPadding;
+        container.widthTracksTextView = NO;
+        container.containerSize = NSMakeSize(width, CGFLOAT_MAX);
+    }
+    else
+    {
+        container.widthTracksTextView = YES;
+        container.containerSize = NSMakeSize(CGFLOAT_MAX, CGFLOAT_MAX);
+    }
+
+    self.editor.needsDisplay = YES;
 }
 
 - (void)redrawDivider

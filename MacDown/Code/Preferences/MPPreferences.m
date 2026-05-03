@@ -247,6 +247,9 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorLineSpacing;
 @dynamic editorWidthLimited;
 @dynamic editorMaximumWidth;
+@dynamic editorColumnGuideEnabled;
+@dynamic editorColumnGuideWidth;
+@dynamic editorWrapsAtColumnGuide;
 @dynamic editorOnRight;
 @dynamic editorStartInPreviewMode;
 @dynamic editorShowWordCount;
@@ -427,6 +430,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (![defaults objectForKey:@"editorMaximumWidth"])
         self.editorMaximumWidth = 1000.0;
+    if (![defaults objectForKey:@"editorColumnGuideWidth"])
+        self.editorColumnGuideWidth = 80;
     if (![defaults objectForKey:@"editorAutoIncrementNumberedLists"])
         self.editorAutoIncrementNumberedLists = YES;
     if (![defaults objectForKey:@"editorInsertPrefixInBlock"])

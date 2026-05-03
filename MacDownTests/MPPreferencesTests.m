@@ -152,6 +152,30 @@
     [self.preferences synchronize];
 }
 
+- (void)testColumnGuidePreferences
+{
+    BOOL originalEnabled = self.preferences.editorColumnGuideEnabled;
+    BOOL originalWrap = self.preferences.editorWrapsAtColumnGuide;
+    NSInteger originalWidth = self.preferences.editorColumnGuideWidth;
+
+    self.preferences.editorColumnGuideEnabled = YES;
+    self.preferences.editorWrapsAtColumnGuide = YES;
+    self.preferences.editorColumnGuideWidth = 100;
+    [self.preferences synchronize];
+
+    XCTAssertTrue(self.preferences.editorColumnGuideEnabled,
+                  @"Column guide should be ON");
+    XCTAssertTrue(self.preferences.editorWrapsAtColumnGuide,
+                  @"Column wrapping should be ON");
+    XCTAssertEqual(self.preferences.editorColumnGuideWidth, 100,
+                   @"Column guide width should persist");
+
+    self.preferences.editorColumnGuideEnabled = originalEnabled;
+    self.preferences.editorWrapsAtColumnGuide = originalWrap;
+    self.preferences.editorColumnGuideWidth = originalWidth;
+    [self.preferences synchronize];
+}
+
 - (void)testExtensionFlags
 {
     // Save originals
