@@ -182,6 +182,10 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @end
 
 
+static const CGFloat MPDocumentZoomMinimum = 0.5;
+static const CGFloat MPDocumentZoomMaximum = 3.0;
+static const CGFloat MPDocumentZoomStep = 1.1;
+
 @interface MPDocument ()
     <NSSplitViewDelegate, NSTextViewDelegate,
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
@@ -233,6 +237,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (nonatomic) BOOL needsToUnregister;
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
+@property (nonatomic) CGFloat documentZoomMultiplier;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
@@ -255,6 +260,8 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (copy) NSString *loadedString;
 
 - (void)scaleWebview;
+- (NSFont *)effectiveEditorBaseFont;
+- (void)applyDocumentZoom;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
@@ -437,6 +444,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         return nil;
 
     self.isPreviewReady = NO;
+    self.documentZoomMultiplier = 1.0;
     _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
     self.lastNonCollapsedRatio = -1.0;
@@ -898,6 +906,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             return NO;
         }
+    }
+    else if (action == @selector(zoomIn:))
+    {
+        return result && self.documentZoomMultiplier < MPDocumentZoomMaximum;
+    }
+    else if (action == @selector(zoomOut:))
+    {
+        return result && self.documentZoomMultiplier > MPDocumentZoomMinimum;
+    }
+    else if (action == @selector(resetZoom:))
+    {
+        return result && fabs(self.documentZoomMultiplier - 1.0) > 0.001;
     }
     return result;
 }
@@ -1995,6 +2015,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self toggleSplitterCollapsingEditorPane:YES];
 }
 
+- (IBAction)zoomIn:(id)sender
+{
+    self.documentZoomMultiplier =
+        MIN(MPDocumentZoomMaximum, self.documentZoomMultiplier * MPDocumentZoomStep);
+    [self applyDocumentZoom];
+}
+
+- (IBAction)zoomOut:(id)sender
+{
+    self.documentZoomMultiplier =
+        MAX(MPDocumentZoomMinimum, self.documentZoomMultiplier / MPDocumentZoomStep);
+    [self applyDocumentZoom];
+}
+
+- (IBAction)resetZoom:(id)sender
+{
+    self.documentZoomMultiplier = 1.0;
+    [self applyDocumentZoom];
+}
+
 - (IBAction)render:(id)sender
 {
     [self.renderer parseAndRenderLater];
@@ -2165,7 +2205,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         style.lineSpacing = self.preferences.editorLineSpacing;
 
         // Configure tab stops to match 4-space tab width (fixes #195)
-        NSFont *font = [self.preferences.editorBaseFont copy];
+        NSFont *font = [self effectiveEditorBaseFont];
         if (font)
         {
             NSDictionary *attrs = @{NSFontAttributeName: font};
@@ -2324,17 +2364,38 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 }
 
+- (NSFont *)effectiveEditorBaseFont
+{
+    NSFont *font = [self.preferences.editorBaseFont copy];
+    if (!font)
+        return nil;
+
+    CGFloat multiplier = self.documentZoomMultiplier > 0.0 ?
+        self.documentZoomMultiplier : 1.0;
+    CGFloat size = MAX(1.0, font.pointSize * multiplier);
+    return [NSFont fontWithDescriptor:font.fontDescriptor size:size] ?: font;
+}
+
+- (void)applyDocumentZoom
+{
+    [self setupEditor:@"editorBaseFontInfo"];
+}
+
 - (void)scaleWebview
 {
-    if (!self.preferences.previewZoomRelativeToBaseFontSize)
-        return;
+    CGFloat multiplier = self.documentZoomMultiplier > 0.0 ?
+        self.documentZoomMultiplier : 1.0;
+    CGFloat scale = multiplier;
 
-    CGFloat fontSize = self.preferences.editorBaseFontSize;
-    if (fontSize <= 0.0)
-        return;
+    if (self.preferences.previewZoomRelativeToBaseFontSize)
+    {
+        CGFloat fontSize = self.preferences.editorBaseFontSize;
+        if (fontSize <= 0.0)
+            return;
 
-    static const CGFloat defaultSize = 14.0;
-    CGFloat scale = fontSize / defaultSize;
+        static const CGFloat defaultSize = 14.0;
+        scale *= fontSize / defaultSize;
+    }
     
 #if 0
     // Sadly, this doesn’t work correctly.

@@ -21,6 +21,9 @@
 @property CGFloat previousSplitRatio;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
+- (IBAction)zoomIn:(id)sender;
+- (IBAction)zoomOut:(id)sender;
+- (IBAction)resetZoom:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
 @end
 
@@ -79,6 +82,41 @@
 {
     XCTAssertNoThrow([self.document togglePreviewPane:nil],
                      @"togglePreviewPane: should not crash");
+}
+
+- (void)testZoomActionsUseTransientDocumentMultiplier
+{
+    NSDictionary *fontInfo = [self.document.preferences.editorBaseFontInfo copy];
+
+    [self.document zoomIn:nil];
+    CGFloat zoomed = [[self.document valueForKey:@"documentZoomMultiplier"] doubleValue];
+
+    XCTAssertGreaterThan(zoomed, 1.0,
+                         @"Zoom in should update the document-local multiplier");
+    XCTAssertEqualObjects(self.document.preferences.editorBaseFontInfo, fontInfo,
+                          @"Zoom should not mutate the saved editor base font preference");
+
+    [self.document resetZoom:nil];
+    CGFloat reset = [[self.document valueForKey:@"documentZoomMultiplier"] doubleValue];
+    XCTAssertEqualWithAccuracy(reset, 1.0, 0.001,
+                               @"Reset zoom should restore actual size");
+}
+
+- (void)testZoomActionsClampAtConfiguredBounds
+{
+    for (NSUInteger i = 0; i < 100; i++)
+        [self.document zoomIn:nil];
+
+    CGFloat zoomedIn = [[self.document valueForKey:@"documentZoomMultiplier"] doubleValue];
+    XCTAssertEqualWithAccuracy(zoomedIn, 3.0, 0.001,
+                               @"Zoom in should clamp at 300 percent");
+
+    for (NSUInteger i = 0; i < 200; i++)
+        [self.document zoomOut:nil];
+
+    CGFloat zoomedOut = [[self.document valueForKey:@"documentZoomMultiplier"] doubleValue];
+    XCTAssertEqualWithAccuracy(zoomedOut, 0.5, 0.001,
+                               @"Zoom out should clamp at 50 percent");
 }
 
 
