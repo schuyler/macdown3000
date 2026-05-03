@@ -16,6 +16,9 @@
 /// YES if currently watching.
 @property (nonatomic, readonly, getter=isWatching) BOOL watching;
 
+/// YES if the path is on a local volume that should receive vnode watchers.
++ (BOOL)canWatchPath:(NSString *)path;
+
 /// Create a watcher for the given path. Calls handler on the main queue
 /// when the file is written to. Calls cancelHandler when the file is
 /// deleted, renamed, or stopWatching is called.

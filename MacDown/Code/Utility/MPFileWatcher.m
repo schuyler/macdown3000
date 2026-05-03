@@ -16,6 +16,22 @@
 
 @implementation MPFileWatcher
 
++ (BOOL)canWatchPath:(NSString *)path
+{
+    if (!path.length)
+        return NO;
+
+    NSURL *url = [NSURL fileURLWithPath:path];
+    NSNumber *isLocal = nil;
+    if (![url getResourceValue:&isLocal
+                        forKey:NSURLVolumeIsLocalKey error:NULL])
+    {
+        return NO;
+    }
+
+    return isLocal.boolValue;
+}
+
 - (instancetype)initWithPath:(NSString *)path
                      handler:(void (^)(NSString *path))handler
                cancelHandler:(void (^)(NSString *path))cancelHandler
@@ -24,7 +40,7 @@
     if (!self)
         return nil;
 
-    if (!path)
+    if (![MPFileWatcher canWatchPath:path])
         return self;
 
     int fd = open(path.fileSystemRepresentation, O_EVTONLY);
