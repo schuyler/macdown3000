@@ -115,6 +115,12 @@
                                     <action selector="revertDocumentToSaved:" target="-1" id="iJ3-Pv-kwq"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Auto Save" id="aSv-FL-tgl">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="toggleAutoSave:" target="-1" id="aSv-FL-act"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="oOV-6A-wGe"/>
                             <menuItem title="Export" id="5mp-ev-1el">
                                 <modifierMask key="keyEquivalentModifierMask"/>
