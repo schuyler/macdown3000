@@ -76,7 +76,7 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorHorizontalInset", @"editorVerticalInset",
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
-            @"editorScrollsPastEnd",
+            @"editorScrollsPastEnd", @"editorShowsInvisibleCharacters",
             @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
         ];
     });
@@ -898,6 +898,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             return NO;
         }
+    }
+    else if (action == @selector(toggleInvisibleCharacters:))
+    {
+        NSMenuItem *it = ((NSMenuItem *)item);
+        it.state = self.preferences.editorShowsInvisibleCharacters
+            ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
     }
     return result;
 }
@@ -1995,6 +2002,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self toggleSplitterCollapsingEditorPane:YES];
 }
 
+- (IBAction)toggleInvisibleCharacters:(id)sender
+{
+    self.preferences.editorShowsInvisibleCharacters =
+        !self.preferences.editorShowsInvisibleCharacters;
+}
+
 - (IBAction)render:(id)sender
 {
     [self.renderer parseAndRenderLater];
@@ -2241,6 +2254,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         if (contentRect.size.width < minSize.width)
             contentRect.size.width = minSize.width;
         self.editor.frame = contentRect;
+    }
+
+    if (!changedKey || [changedKey isEqualToString:@"editorShowsInvisibleCharacters"])
+    {
+        self.editor.layoutManager.showsInvisibleCharacters =
+            self.preferences.editorShowsInvisibleCharacters;
     }
 
     if (!changedKey)
