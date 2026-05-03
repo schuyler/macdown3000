@@ -43,6 +43,9 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL editorSyncScrolling;
 @property (assign) BOOL editorSmartHome;
 @property (assign) NSString *editorStyleName;
+@property (assign) BOOL appearanceThemesFollowSystem;
+@property (assign) NSString *editorLightStyleName;
+@property (assign) NSString *editorDarkStyleName;
 @property (assign) CGFloat editorHorizontalInset;
 @property (assign) CGFloat editorVerticalInset;
 @property (assign) CGFloat editorLineSpacing;
@@ -61,6 +64,8 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 
 @property (assign) NSString *htmlTemplateName;
 @property (assign) NSString *htmlStyleName;
+@property (assign) NSString *htmlLightStyleName;
+@property (assign) NSString *htmlDarkStyleName;
 @property (assign) BOOL htmlDetectFrontMatter;
 @property (assign) BOOL htmlTaskList;
 @property (assign) BOOL htmlHardWrap;
@@ -80,8 +85,17 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (readonly) CGFloat editorBaseFontSize;
 @property (nonatomic, assign) NSFont *editorBaseFont;
 @property (readonly) NSString *editorUnorderedListMarker;
+@property (readonly) NSString *effectiveEditorStyleName;
+@property (readonly) NSString *effectiveHtmlStyleName;
 
 - (instancetype)init;
+- (BOOL)usesDarkSystemAppearance;
+- (NSString *)editorStyleNameForDarkAppearance:(BOOL)darkAppearance;
+- (NSString *)htmlStyleNameForDarkAppearance:(BOOL)darkAppearance;
+- (void)setEditorStyleName:(NSString *)styleName
+         forDarkAppearance:(BOOL)darkAppearance;
+- (void)setHtmlStyleName:(NSString *)styleName
+       forDarkAppearance:(BOOL)darkAppearance;
 
 // Convinience methods.
 @property (nonatomic, assign) NSArray *filesToOpen;

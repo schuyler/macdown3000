@@ -32,7 +32,9 @@ static CGFloat    const kMPDefaultEditorVerticalInset = 30.0;
 static CGFloat    const kMPDefaultEditorLineSpacing = 3.0;
 static BOOL       const kMPDefaultEditorSyncScrolling = YES;
 static NSString * const kMPDefaultEditorThemeName = @"Tomorrow+";
+static NSString * const kMPDefaultEditorDarkThemeName = @"Mou Night+";
 static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
+static NSString * const kMPDefaultHtmlDarkStyleName = @"Github2 (dark)";
 
 
 @implementation MPPreferences
@@ -242,6 +244,9 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorSyncScrolling;
 @dynamic editorSmartHome;
 @dynamic editorStyleName;
+@dynamic appearanceThemesFollowSystem;
+@dynamic editorLightStyleName;
+@dynamic editorDarkStyleName;
 @dynamic editorHorizontalInset;
 @dynamic editorVerticalInset;
 @dynamic editorLineSpacing;
@@ -260,6 +265,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 @dynamic htmlTemplateName;
 @dynamic htmlStyleName;
+@dynamic htmlLightStyleName;
+@dynamic htmlDarkStyleName;
 @dynamic htmlDetectFrontMatter;
 @dynamic htmlTaskList;
 @dynamic htmlHardWrap;
@@ -316,6 +323,69 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         default:
             return @"* ";
     }
+}
+
+- (BOOL)usesDarkSystemAppearance
+{
+    NSAppearance *appearance = NSApp.effectiveAppearance;
+    if (!appearance)
+        appearance = [NSAppearance currentAppearance];
+
+    NSString *match = [appearance bestMatchFromAppearancesWithNames:
+        @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]];
+    return [match isEqualToString:NSAppearanceNameDarkAqua];
+}
+
+- (NSString *)editorStyleNameForDarkAppearance:(BOOL)darkAppearance
+{
+    if (!self.appearanceThemesFollowSystem)
+        return self.editorStyleName;
+
+    NSString *styleName =
+        darkAppearance ? self.editorDarkStyleName : self.editorLightStyleName;
+    return styleName.length ? styleName : self.editorStyleName;
+}
+
+- (NSString *)htmlStyleNameForDarkAppearance:(BOOL)darkAppearance
+{
+    if (!self.appearanceThemesFollowSystem)
+        return self.htmlStyleName;
+
+    NSString *styleName =
+        darkAppearance ? self.htmlDarkStyleName : self.htmlLightStyleName;
+    return styleName.length ? styleName : self.htmlStyleName;
+}
+
+- (void)setEditorStyleName:(NSString *)styleName
+         forDarkAppearance:(BOOL)darkAppearance
+{
+    if (darkAppearance)
+        self.editorDarkStyleName = styleName;
+    else
+        self.editorLightStyleName = styleName;
+    self.editorStyleName = styleName;
+}
+
+- (void)setHtmlStyleName:(NSString *)styleName
+       forDarkAppearance:(BOOL)darkAppearance
+{
+    if (darkAppearance)
+        self.htmlDarkStyleName = styleName;
+    else
+        self.htmlLightStyleName = styleName;
+    self.htmlStyleName = styleName;
+}
+
+- (NSString *)effectiveEditorStyleName
+{
+    return [self editorStyleNameForDarkAppearance:
+        [self usesDarkSystemAppearance]];
+}
+
+- (NSString *)effectiveHtmlStyleName
+{
+    return [self htmlStyleNameForDarkAppearance:
+        [self usesDarkSystemAppearance]];
 }
 
 - (NSArray *)filesToOpen
@@ -406,7 +476,12 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     self.editorVerticalInset = kMPDefaultEditorVerticalInset;
     self.editorLineSpacing = kMPDefaultEditorLineSpacing;
     self.editorSyncScrolling = kMPDefaultEditorSyncScrolling;
+    self.appearanceThemesFollowSystem = NO;
+    self.editorLightStyleName = kMPDefaultEditorThemeName;
+    self.editorDarkStyleName = kMPDefaultEditorDarkThemeName;
     self.htmlStyleName = kMPDefaultHtmlStyleName;
+    self.htmlLightStyleName = kMPDefaultHtmlStyleName;
+    self.htmlDarkStyleName = kMPDefaultHtmlDarkStyleName;
     self.htmlDefaultDirectoryUrl = [NSURL fileURLWithPath:NSHomeDirectory()
                                               isDirectory:YES];
 }
@@ -437,6 +512,14 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.extensionStrikethough = YES;
     if (![defaults objectForKey:@"editorAutoSave"])
         self.editorAutoSave = YES;
+    if (![defaults objectForKey:@"editorLightStyleName"])
+        self.editorLightStyleName = self.editorStyleName ?: kMPDefaultEditorThemeName;
+    if (![defaults objectForKey:@"editorDarkStyleName"])
+        self.editorDarkStyleName = kMPDefaultEditorDarkThemeName;
+    if (![defaults objectForKey:@"htmlLightStyleName"])
+        self.htmlLightStyleName = self.htmlStyleName ?: kMPDefaultHtmlStyleName;
+    if (![defaults objectForKey:@"htmlDarkStyleName"])
+        self.htmlDarkStyleName = kMPDefaultHtmlDarkStyleName;
 
     // Apply preference migrations using version-based system.
     [self applyPreferencesMigrations];

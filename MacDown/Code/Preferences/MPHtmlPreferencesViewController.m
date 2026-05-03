@@ -61,10 +61,17 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     NSString *title = sender.selectedItem.title;
 
     // Special case: the first (empty) item. No stylesheets will be used.
-    if (!title.length)
-        self.preferences.htmlStyleName = nil;
+    NSString *styleName = title.length ? title : nil;
+    if (self.preferences.appearanceThemesFollowSystem)
+    {
+        [self.preferences setHtmlStyleName:styleName
+                         forDarkAppearance:
+            self.preferences.usesDarkSystemAppearance];
+    }
     else
-        self.preferences.htmlStyleName = title;
+    {
+        self.preferences.htmlStyleName = styleName;
+    }
 }
 
 - (IBAction)changeHighlightingTheme:(NSPopUpButton *)sender
@@ -153,7 +160,7 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     [self.stylesheetSelect addItemWithTitle:@""];
     [self.stylesheetSelect addItemsWithTitles:itemTitles];
 
-    NSString *title = self.preferences.htmlStyleName;
+    NSString *title = self.preferences.effectiveHtmlStyleName;
     if (title.length)
         [self.stylesheetSelect selectItemWithTitle:title];
 

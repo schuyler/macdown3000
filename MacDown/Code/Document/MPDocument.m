@@ -37,6 +37,8 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
+static NSString * const kMPAppleInterfaceThemeChangedNotification =
+    @"AppleInterfaceThemeChangedNotification";
 
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
@@ -76,6 +78,8 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorHorizontalInset", @"editorVerticalInset",
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
+            @"appearanceThemesFollowSystem", @"editorLightStyleName",
+            @"editorDarkStyleName",
             @"editorScrollsPastEnd",
             @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
         ];
@@ -535,6 +539,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [center addObserver:self selector:@selector(previewBoundsDidChange:)
                    name:NSViewBoundsDidChangeNotification
                  object:self.preview.enclosingScrollView.contentView];
+    [[NSDistributedNotificationCenter defaultCenter]
+        addObserver:self selector:@selector(applicationAppearanceDidChange:)
+               name:kMPAppleInterfaceThemeChangedNotification object:nil];
 
     self.needsToUnregister = YES;
 
@@ -654,6 +661,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
 
         [[NSNotificationCenter defaultCenter] removeObserver:self];
+        [[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
@@ -1323,7 +1331,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (NSString *)rendererStyleName:(MPRenderer *)renderer
 {
-    return self.preferences.htmlStyleName;
+    return self.preferences.effectiveHtmlStyleName;
 }
 
 - (BOOL)rendererDetectsFrontMatter:(MPRenderer *)renderer
@@ -1398,7 +1406,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Check if CSS style or highlighting theme has changed.
     // If either changed, we must do a full reload to update <head> with new CSS links.
-    NSString *newStyleName = self.preferences.htmlStyleName;
+    NSString *newStyleName = self.preferences.effectiveHtmlStyleName;
     NSString *newHighlightingTheme = self.preferences.htmlHighlightingThemeName;
     BOOL stylesChanged = !MPAreNilableStringsEqual(self.currentStyleName, newStyleName) ||
                          !MPAreNilableStringsEqual(self.currentHighlightingThemeName, newHighlightingTheme);
@@ -1689,6 +1697,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self render:nil];
 }
 
+- (void)applicationAppearanceDidChange:(NSNotification *)notification
+{
+    if (!self.preferences.appearanceThemesFollowSystem)
+        return;
+
+    [self setupEditor:nil];
+    [self.renderer renderIfPreferencesChanged];
+}
+
 - (void)previewBoundsDidChange:(NSNotification *)notification
 {
     // Issue #342: Only trigger reverse sync when the user is explicitly scrolling
@@ -1757,7 +1774,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     MPExportPanelAccessoryViewController *controller =
         [[MPExportPanelAccessoryViewController alloc] init];
-    controller.stylesIncluded = (BOOL)self.preferences.htmlStyleName;
+    controller.stylesIncluded = (BOOL)self.preferences.effectiveHtmlStyleName;
     controller.highlightingIncluded = self.preferences.htmlSyntaxHighlighting;
     panel.accessoryView = controller.view;
 
@@ -2159,6 +2176,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     if (!changedKey || [changedKey isEqualToString:@"editorBaseFontInfo"]
             || [changedKey isEqualToString:@"editorStyleName"]
+            || [changedKey isEqualToString:@"appearanceThemesFollowSystem"]
+            || [changedKey isEqualToString:@"editorLightStyleName"]
+            || [changedKey isEqualToString:@"editorDarkStyleName"]
             || [changedKey isEqualToString:@"editorLineSpacing"])
     {
         NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
@@ -2192,7 +2212,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         self.highlighter.styles = nil;
         [self.highlighter readClearTextStylesFromTextView];
 
-        NSString *themeName = [self.preferences.editorStyleName copy];
+        NSString *themeName = [self.preferences.effectiveEditorStyleName copy];
         if (themeName.length)
         {
             NSString *path = MPThemePathForName(themeName);
@@ -2200,7 +2220,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             [self.highlighter applyStylesFromStylesheet:themeString
                                        withErrorHandler:
                 ^(NSArray *errorMessages) {
-                    self.preferences.editorStyleName = nil;
+                    [self.preferences setEditorStyleName:nil
+                                       forDarkAppearance:
+                        self.preferences.usesDarkSystemAppearance];
                 }];
         }
 

@@ -12,6 +12,13 @@
 @interface MPPreferencesTests : XCTestCase
 @property MPPreferences *preferences;
 @property NSDictionary *oldFontInfo;
+@property BOOL oldAppearanceThemesFollowSystem;
+@property NSString *oldEditorStyleName;
+@property NSString *oldEditorLightStyleName;
+@property NSString *oldEditorDarkStyleName;
+@property NSString *oldHtmlStyleName;
+@property NSString *oldHtmlLightStyleName;
+@property NSString *oldHtmlDarkStyleName;
 @end
 
 
@@ -22,12 +29,28 @@
     [super setUp];
     self.preferences = [MPPreferences sharedInstance];
     self.oldFontInfo = [self.preferences.editorBaseFontInfo copy];
+    self.oldAppearanceThemesFollowSystem =
+        self.preferences.appearanceThemesFollowSystem;
+    self.oldEditorStyleName = [self.preferences.editorStyleName copy];
+    self.oldEditorLightStyleName = [self.preferences.editorLightStyleName copy];
+    self.oldEditorDarkStyleName = [self.preferences.editorDarkStyleName copy];
+    self.oldHtmlStyleName = [self.preferences.htmlStyleName copy];
+    self.oldHtmlLightStyleName = [self.preferences.htmlLightStyleName copy];
+    self.oldHtmlDarkStyleName = [self.preferences.htmlDarkStyleName copy];
 }
 
 - (void)tearDown
 {
-    // Only restore font info which is what the original test modified
+    // Restore shared singleton state touched by these tests.
     self.preferences.editorBaseFontInfo = self.oldFontInfo;
+    self.preferences.appearanceThemesFollowSystem =
+        self.oldAppearanceThemesFollowSystem;
+    self.preferences.editorStyleName = self.oldEditorStyleName;
+    self.preferences.editorLightStyleName = self.oldEditorLightStyleName;
+    self.preferences.editorDarkStyleName = self.oldEditorDarkStyleName;
+    self.preferences.htmlStyleName = self.oldHtmlStyleName;
+    self.preferences.htmlLightStyleName = self.oldHtmlLightStyleName;
+    self.preferences.htmlDarkStyleName = self.oldHtmlDarkStyleName;
     [self.preferences synchronize];
     [super tearDown];
 }
@@ -213,6 +236,61 @@
     // Restore
     self.preferences.htmlHighlightingThemeName = original;
     [self.preferences synchronize];
+}
+
+- (void)testAppearanceThemePairsUseSingleThemeWhenDisabled
+{
+    self.preferences.appearanceThemesFollowSystem = NO;
+    self.preferences.editorStyleName = @"Tomorrow+";
+    self.preferences.editorLightStyleName = @"Solarized (Light)+";
+    self.preferences.editorDarkStyleName = @"Mou Night+";
+    self.preferences.htmlStyleName = @"GitHub2";
+    self.preferences.htmlLightStyleName = @"Solarized (Light)";
+    self.preferences.htmlDarkStyleName = @"Solarized (Dark)";
+
+    XCTAssertEqualObjects(
+        [self.preferences editorStyleNameForDarkAppearance:YES],
+        @"Tomorrow+");
+    XCTAssertEqualObjects(
+        [self.preferences htmlStyleNameForDarkAppearance:YES],
+        @"GitHub2");
+}
+
+- (void)testAppearanceThemePairsSelectLightAndDarkThemes
+{
+    self.preferences.appearanceThemesFollowSystem = YES;
+    self.preferences.editorStyleName = @"Tomorrow+";
+    self.preferences.editorLightStyleName = @"Solarized (Light)+";
+    self.preferences.editorDarkStyleName = @"Mou Night+";
+    self.preferences.htmlStyleName = @"GitHub2";
+    self.preferences.htmlLightStyleName = @"Solarized (Light)";
+    self.preferences.htmlDarkStyleName = @"Solarized (Dark)";
+
+    XCTAssertEqualObjects(
+        [self.preferences editorStyleNameForDarkAppearance:NO],
+        @"Solarized (Light)+");
+    XCTAssertEqualObjects(
+        [self.preferences editorStyleNameForDarkAppearance:YES],
+        @"Mou Night+");
+    XCTAssertEqualObjects(
+        [self.preferences htmlStyleNameForDarkAppearance:NO],
+        @"Solarized (Light)");
+    XCTAssertEqualObjects(
+        [self.preferences htmlStyleNameForDarkAppearance:YES],
+        @"Solarized (Dark)");
+}
+
+- (void)testAppearanceThemePairSettersUpdateCurrentFallback
+{
+    [self.preferences setEditorStyleName:@"Mou Night+"
+                       forDarkAppearance:YES];
+    [self.preferences setHtmlStyleName:@"Solarized (Dark)"
+                     forDarkAppearance:YES];
+
+    XCTAssertEqualObjects(self.preferences.editorDarkStyleName, @"Mou Night+");
+    XCTAssertEqualObjects(self.preferences.editorStyleName, @"Mou Night+");
+    XCTAssertEqualObjects(self.preferences.htmlDarkStyleName, @"Solarized (Dark)");
+    XCTAssertEqualObjects(self.preferences.htmlStyleName, @"Solarized (Dark)");
 }
 
 
