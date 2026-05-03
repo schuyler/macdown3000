@@ -24,6 +24,9 @@
 
 
 static NSString * const kMPTreatLastSeenStampKey = @"treatLastSeenStamp";
+static NSString * const kMPViewMenuTitle = @"View";
+static NSString * const kMPFollowSystemAppearanceMenuItemTitle =
+    @"Follow System Appearance";
 
 
 NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
@@ -97,7 +100,7 @@ NS_INLINE void treat()
 }
 
 
-@interface MPMainController ()
+@interface MPMainController () <NSMenuItemValidation>
 @property (readonly) NSWindowController *preferencesWindowController;
 @end
 
@@ -112,6 +115,7 @@ NS_INLINE void treat()
         setEventHandler:self
             andSelector:@selector(openUrlSchemeAppleEvent:withReplyEvent:)
           forEventClass:kInternetEventClass andEventID:kAEGetURL];
+    [self installAppearanceThemeMenuItem];
 }
 
 // Open a file from a browser with url of the form :
@@ -216,6 +220,26 @@ NS_INLINE void treat()
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
+- (IBAction)toggleAppearanceThemesFollowSystem:(id)sender
+{
+    MPPreferences *preferences = self.preferences;
+    preferences.appearanceThemesFollowSystem =
+        !preferences.appearanceThemesFollowSystem;
+}
+
+
+#pragma mark - NSMenuItemValidation
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+{
+    if (menuItem.action == @selector(toggleAppearanceThemesFollowSystem:))
+    {
+        menuItem.state = self.preferences.appearanceThemesFollowSystem ?
+            NSControlStateValueOn : NSControlStateValueOff;
+    }
+    return YES;
+}
+
 
 #pragma mark - Override
 
@@ -305,6 +329,28 @@ NS_INLINE void treat()
                 [manager copyItemAtURL:fileSource toURL:fileTarget error:NULL];
         }
     }
+}
+
+- (void)installAppearanceThemeMenuItem
+{
+    NSMenuItem *viewItem = [NSApp.mainMenu itemWithTitle:kMPViewMenuTitle];
+    NSMenu *viewMenu = viewItem.submenu;
+    if (!viewMenu)
+        return;
+
+    SEL action = @selector(toggleAppearanceThemesFollowSystem:);
+    for (NSMenuItem *item in viewMenu.itemArray)
+    {
+        if (item.action == action)
+            return;
+    }
+
+    [viewMenu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem *item =
+        [[NSMenuItem alloc] initWithTitle:kMPFollowSystemAppearanceMenuItemTitle
+                                   action:action keyEquivalent:@""];
+    item.target = self;
+    [viewMenu addItem:item];
 }
 
 - (void)openPendingFiles

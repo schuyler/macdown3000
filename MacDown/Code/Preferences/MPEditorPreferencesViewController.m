@@ -76,7 +76,7 @@ NSString * const MPDidRequestEditorSetupNotificationKeyName =
     [self.themeSelect addItemWithTitle:@""];
     [self.themeSelect addItemsWithTitles:itemTitles];
 
-    NSString *title = [self.preferences.editorStyleName copy];
+    NSString *title = [self.preferences.effectiveEditorStyleName copy];
     if (title.length)
         [self.themeSelect selectItemWithTitle:title];
 
@@ -123,10 +123,17 @@ NSString * const MPDidRequestEditorSetupNotificationKeyName =
     NSString *title = sender.selectedItem.title;
 
     // Special case: the first (empty) item. No stylesheets will be used.
-    if (!title.length)
-        self.preferences.editorStyleName = nil;
+    NSString *styleName = title.length ? title : nil;
+    if (self.preferences.appearanceThemesFollowSystem)
+    {
+        [self.preferences setEditorStyleName:styleName
+                           forDarkAppearance:
+            self.preferences.usesDarkSystemAppearance];
+    }
     else
-        self.preferences.editorStyleName = title;
+    {
+        self.preferences.editorStyleName = styleName;
+    }
 }
 
 - (IBAction)invokeStylesheetFunction:(NSSegmentedControl *)sender
