@@ -97,6 +97,41 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
     return ([s1 isEqualToString:s2] || s1 == s2);
 }
 
+NS_INLINE NSString *MPHTMLResourceSignature(NSString *html)
+{
+    NSMutableString *signature = [NSMutableString string];
+
+    NSRange headStart = [html rangeOfString:@"<head"
+                                    options:NSCaseInsensitiveSearch];
+    NSRange headEnd = [html rangeOfString:@"</head>"
+                                  options:NSCaseInsensitiveSearch];
+    if (headStart.location != NSNotFound && headEnd.location != NSNotFound)
+    {
+        NSUInteger end = headEnd.location + headEnd.length;
+        if (end > headStart.location && end <= html.length)
+        {
+            NSRange range = NSMakeRange(headStart.location,
+                                        end - headStart.location);
+            [signature appendString:[html substringWithRange:range]];
+        }
+    }
+
+    NSRegularExpressionOptions options =
+        NSRegularExpressionCaseInsensitive
+        | NSRegularExpressionDotMatchesLineSeparators;
+    NSRegularExpression *scriptRegex =
+        [NSRegularExpression regularExpressionWithPattern:@"<script\\b[^>]*>.*?</script>"
+                                                  options:options error:NULL];
+    NSArray *matches = [scriptRegex matchesInString:html options:0
+                                              range:NSMakeRange(0, html.length)];
+    for (NSTextCheckingResult *match in matches)
+    {
+        [signature appendString:[html substringWithRange:match.range]];
+    }
+
+    return signature.length ? signature : html;
+}
+
 NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     DOMDocument *doc = webview.mainFrameDocument;
@@ -222,6 +257,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSURL *currentBaseUrl;
 @property (copy) NSString *currentStyleName;
 @property (copy) NSString *currentHighlightingThemeName;
+@property (copy) NSString *currentPreviewResourceSignature;
 @property CGFloat lastPreviewScrollTop;
 @property (nonatomic, readonly) BOOL needsHtml;
 @property (nonatomic) NSUInteger totalWords;
@@ -1396,8 +1432,16 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self.resourceWatcherSet updateWatchedPaths:paths];
     }
 
-    // Check if CSS style or highlighting theme has changed.
-    // If either changed, we must do a full reload to update <head> with new CSS links.
+    // Check if generated resources have changed. Prism language scripts are
+    // discovered from the current Markdown during parse, so a body-only DOM
+    // replacement can otherwise preserve stale scripts without the resources
+    // needed by newly introduced fenced code languages.
+    NSString *newPreviewResourceSignature = MPHTMLResourceSignature(html);
+    BOOL resourcesChanged = !MPAreNilableStringsEqual(self.currentPreviewResourceSignature,
+                                                      newPreviewResourceSignature);
+
+    // Keep the legacy style/theme comparison as a guard for explicit reloads
+    // that reset these cached names.
     NSString *newStyleName = self.preferences.htmlStyleName;
     NSString *newHighlightingTheme = self.preferences.htmlHighlightingThemeName;
     BOOL stylesChanged = !MPAreNilableStringsEqual(self.currentStyleName, newStyleName) ||
@@ -1406,9 +1450,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // Try DOM replacement to preserve scroll position.
     // MathJax re-typesetting is handled via MathJax.Hub.Queue, which serializes
     // the async typesetting correctly. Scroll is restored after typesetting completes.
-    // Skip DOM replacement if styles changed, since <head> CSS links need updating.
+    // Skip DOM replacement if resources changed, since CSS or scripts need updating.
     // Related to issue #325.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !stylesChanged)
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl]
+            && !resourcesChanged && !stylesChanged)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -1522,6 +1567,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
+    self.currentPreviewResourceSignature = newPreviewResourceSignature;
 }
 
 - (NSURL *)rendererBaseURL:(MPRenderer *)renderer
@@ -2021,6 +2067,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     // path instead of body-only DOM replacement.
     self.currentStyleName = nil;
     self.currentHighlightingThemeName = nil;
+    self.currentPreviewResourceSignature = nil;
 }
 
 /**
