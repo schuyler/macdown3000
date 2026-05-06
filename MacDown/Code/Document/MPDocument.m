@@ -1117,6 +1117,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame
 {
+    if (frame == sender.mainFrame)
+    {
+        JSContext *context = sender.mainFrame.javaScriptContext;
+        [context evaluateScript:@"if(window.Prism){Prism.highlightAll();}"];
+    }
+
     // If MathJax is on, the on-completion callback will be invoked by the
     // JavaScript handler injected in -webView:didCommitLoadForFrame:.
     if (!self.preferences.htmlMathJax)
