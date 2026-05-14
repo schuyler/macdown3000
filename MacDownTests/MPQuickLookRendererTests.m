@@ -124,8 +124,8 @@
     NSString *html = [self.renderer renderMarkdown:markdown];
 
     XCTAssertNotNil(html, @"Should return non-nil HTML");
-    XCTAssertTrue([html containsString:@"<h1>"],
-                  @"Should render heading as <h1>");
+    XCTAssertTrue([html containsString:@"<h1 "],
+                  @"Should render heading as an <h1> element");
     XCTAssertTrue([html containsString:@"Hello World"],
                   @"Should include heading text");
     XCTAssertTrue([html containsString:@"<p>"],
@@ -640,8 +640,8 @@
 
     XCTAssertNil(error, @"Should render CRLF file without error");
     XCTAssertNotNil(html, @"Should produce HTML from CRLF file");
-    XCTAssertTrue([html containsString:@"<h1>"],
-                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([html containsString:@"<h1 "],
+                  @"CRLF heading should render as an <h1> element");
     XCTAssertTrue([html containsString:@"Heading"],
                   @"Heading text should appear in output");
     XCTAssertTrue([html containsString:@"<p>"],
