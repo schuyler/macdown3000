@@ -38,6 +38,10 @@ void hoedown_patch_render_listitem(
     hoedown_buffer *ob, const hoedown_buffer *text, hoedown_list_flags flags,
     const hoedown_renderer_data *data);
 
+void hoedown_patch_render_header(
+    hoedown_buffer *ob, const hoedown_buffer *content, int level,
+    const hoedown_renderer_data *data);
+
 void hoedown_patch_render_toc_header(
      hoedown_buffer *ob, const hoedown_buffer *content, int level,
      const hoedown_renderer_data *data);

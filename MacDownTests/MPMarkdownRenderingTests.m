@@ -689,8 +689,8 @@
                                 rendererFlags:rendFlags];
 
     XCTAssertNotNil(crlfHtml, @"CRLF content should produce non-nil HTML");
-    XCTAssertTrue([crlfHtml containsString:@"<h1>"],
-                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([crlfHtml containsString:@"<h1 "],
+                  @"CRLF heading should render as an <h1> element");
     XCTAssertTrue([crlfHtml containsString:@"Heading"],
                   @"CRLF heading text should appear in output");
     XCTAssertTrue([crlfHtml containsString:@"<p>"],
@@ -751,6 +751,52 @@
                   @"CRLF fenced code content should appear in output");
     XCTAssertEqualObjects(lfHtml, crlfHtml,
                           @"CRLF and LF fenced-code-after-text should produce identical HTML");
+}
+
+
+#pragma mark - Heading Anchor ID Tests
+
+// Headings should always receive a text-derived id attribute so that
+// CommonMark/GFM-style anchor links like [text](#section) navigate to
+// the corresponding heading in the preview.
+
+- (void)testHeadingHasSlugBasedAnchorId
+{
+    NSString *html = [self renderMarkdown:@"## Foo Bar"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"foo-bar\""],
+                  @"Heading should have a slug-based id derived from its text. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdPreservesUTF8
+{
+    NSString *html = [self renderMarkdown:@"## Introducción"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"introducción\""],
+                  @"Heading id should preserve UTF-8 multi-byte characters. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdStripsPunctuation
+{
+    NSString *html = [self renderMarkdown:@"# Hello, World!"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"hello-world\""],
+                  @"Heading id should drop ASCII punctuation. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdEmittedWithoutTOCPreference
+{
+    // Regression guard: ids must be emitted regardless of the
+    // "Detect TOC token" preference state.
+    self.delegate.renderTOC = NO;
+    NSString *html = [self renderMarkdown:@"### Some Section"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"some-section\""],
+                  @"Heading id must be emitted independent of TOC preference. Got: %@", html);
 }
 
 @end

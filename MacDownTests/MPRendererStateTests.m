@@ -295,7 +295,7 @@
     XCTAssertNotNil(html, @"Should produce HTML");
     XCTAssertTrue([html containsString:@"<style"],
                   @"Should include embedded styles");
-    XCTAssertTrue([html containsString:@"<h1>"],
+    XCTAssertTrue([html containsString:@"<h1 "],
                   @"Should include heading");
 }
 
@@ -308,7 +308,7 @@
     NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
 
     XCTAssertNotNil(html, @"Should produce HTML");
-    XCTAssertTrue([html containsString:@"<h1>"],
+    XCTAssertTrue([html containsString:@"<h1 "],
                   @"Should include heading");
 }
 
