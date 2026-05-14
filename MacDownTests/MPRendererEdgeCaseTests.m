@@ -534,8 +534,8 @@
     NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle many headings");
-    XCTAssertTrue([html containsString:@"<h1>"], @"Should have h1");
-    XCTAssertTrue([html containsString:@"<h6>"], @"Should have h6");
+    XCTAssertTrue([html containsString:@"<h1 "], @"Should have h1");
+    XCTAssertTrue([html containsString:@"<h6 "], @"Should have h6");
 }
 
 - (void)testRendererWithDeeplyNestedLists
