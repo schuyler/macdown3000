@@ -41,19 +41,19 @@ Before I tell you about all the extra syntaxes and capabilities I have, I'll int
 
 To force a line break, put two spaces and a newline (return) at the end of the line.
 
-* This two-line bullet
+* This two-line bullet (with no extra space before newline)
 won't break
 
-* This two-line bullet
+* This two-line bullet (with two spaces before newline)  
 will break
 
 Here is the code:
 
 ```markdown
-* This two-line bullet
+* This two-line bullet (with no extra space before newline)
 won't break
 
-* This two-line bullet  
+* This two-line bullet (with two spaces before newline)  
 will break
 ```
 
