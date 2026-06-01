@@ -23,10 +23,15 @@ li {
     overflow-wrap: break-word;
 }
 
-/* Table cells - handle long content in tables */
-td, th {
-    word-break: break-word;
-    overflow-wrap: break-word;
+/* Tables - allow horizontal scrolling for wide tables (Issue #432)
+ * Replaces previous td/th word-break rules that caused column compression.
+ * Pattern from GitHub-2020.css which handles table overflow correctly.
+ */
+table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
 }
 
 /* Blockquotes - ensure quoted content wraps */
