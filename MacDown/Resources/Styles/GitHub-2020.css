@@ -219,10 +219,9 @@ body dl dd {
 
 body table {
   display: block;
-  width: 100%;
   width: max-content;
-  max-width: 100%;
-  overflow: auto;
+  min-width: 100%;
+  overflow-x: auto;
   font-variant: tabular-nums;
 }
 body table th {
