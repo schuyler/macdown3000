@@ -23,10 +23,15 @@ li {
     overflow-wrap: break-word;
 }
 
-/* Table cells - handle long content in tables */
-td, th {
-    word-break: break-word;
-    overflow-wrap: break-word;
+/* Table overflow - allow wide tables to scroll horizontally (Issue #432).
+ * Uses the same pattern as GitHub-2020.css, promoted here to cover all themes.
+ * Note: word-break is intentionally NOT applied to td/th — cells should
+ * expand to natural width; the table-level overflow provides the safety valve. */
+table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow: auto;
 }
 
 /* Blockquotes - ensure quoted content wraps */
