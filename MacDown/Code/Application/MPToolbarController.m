@@ -7,6 +7,7 @@
 //
 
 #import "MPToolbarController.h"
+#import "MPPreferences.h"
 
 // Because we're creating selectors for methods which aren't in this class
 #pragma GCC diagnostic ignored "-Wundeclared-selector"
@@ -14,6 +15,16 @@
 
 
 static CGFloat itemWidth = 37;
+// Preview-zoom presets must match MPPreviewZoomLevels() in MPDocument.m.
+static NSArray<NSNumber *> *MPToolbarPreviewZoomLevels(void)
+{
+    static NSArray *levels = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        levels = @[@0.5, @0.75, @0.9, @1.0, @1.1, @1.25, @1.5, @2.0];
+    });
+    return levels;
+}
 
 
 @implementation MPToolbarController
@@ -33,22 +44,58 @@ static CGFloat itemWidth = 37;
      * created, so we can't set target = self.document at construction time.
      */
     NSMutableDictionary<NSString *, NSString *> *standaloneItemActions;
+
+    /**
+     * Weak reference to the zoom popup so we can re-sync its selected item
+     * when the preference changes from elsewhere (menu, keyboard shortcut).
+     */
+    __weak NSPopUpButton *_zoomPopUp;
 }
 
 - (id)init
 {
     self = [super init];
-    
+
     if (!self)
     {
         return nil;
     }
-    
+
     self->toolbarItemIdentifierObjectDictionary = [NSMutableDictionary new];
     self->standaloneItemActions = [NSMutableDictionary new];
     [self setupToolbarItems];
-    
+
+    // Observe NSUserDefaults so the popup's selection reflects external
+    // changes (View menu actions, ⌘+/⌘-/⌘0). Using KVO on the standard
+    // defaults avoids threading a sync callback through MPDocument.
+    [[NSUserDefaults standardUserDefaults]
+        addObserver:self
+         forKeyPath:@"previewZoomLevel"
+            options:NSKeyValueObservingOptionNew
+            context:NULL];
+
     return self;
+}
+
+- (void)dealloc
+{
+    @try {
+        [[NSUserDefaults standardUserDefaults]
+            removeObserver:self forKeyPath:@"previewZoomLevel"];
+    } @catch (NSException *exception) {
+        // removeObserver may throw if not registered; ignore on teardown.
+    }
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
+                       context:(void *)context
+{
+    if ([keyPath isEqualToString:@"previewZoomLevel"])
+    {
+        [self syncPreviewZoomDisplay];
+    }
 }
 
 
@@ -97,10 +144,14 @@ static CGFloat itemWidth = 37;
             @[
               toggleEditorMenuItem, togglePreviewMenuItem
             ]
-        ]
+        ],
+        [self toolbarItemZoomPopUpWithIdentifier:@"preview-zoom" label:NSLocalizedString(@"Preview Zoom", @"Preview pane zoom toolbar item")]
     ];
-    
+
     self->toolbarItemIdentifiers = [self toolbarItemIdentifiersFromItemsArray:self->toolbarItems];
+
+    // Reflect the persisted preference once everything is wired up.
+    [self syncPreviewZoomDisplay];
 }
 
 /**
@@ -400,12 +451,79 @@ static CGFloat itemWidth = 37;
         [[popupButton lastItem] setTarget:self];
         [[popupButton lastItem] setAction:@selector(dropdownMenuItemClicked:)];
     }
-    
+
     toolbarItem.view = popupButton;
-    
+
     [self->toolbarItemIdentifierObjectDictionary setObject:toolbarItem forKey:itemIdentifier];
-    
+
     return toolbarItem;
+}
+
+/**
+ * Factory method for the preview-zoom popup. Unlike the layout dropdown
+ * this is a regular (non-pull-down) NSPopUpButton: the currently selected
+ * item is shown as the button label so the user sees the active zoom
+ * percentage at a glance. Each menu item is wired to
+ * -selectPreviewZoom: on the document, with the target zoom level
+ * (NSNumber) attached as the item's representedObject.
+ */
+- (NSToolbarItem *)toolbarItemZoomPopUpWithIdentifier:(NSString *)itemIdentifier label:(NSString *)label
+{
+    NSToolbarItem *toolbarItem = [[NSToolbarItem alloc] initWithItemIdentifier:itemIdentifier];
+    toolbarItem.label = label;
+    toolbarItem.paletteLabel = label;
+    toolbarItem.toolTip = label;
+
+    NSPopUpButton *popupButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, 0, 70, 27) pullsDown:NO];
+    popupButton.bezelStyle = NSBezelStyleTexturedRounded;
+    popupButton.focusRingType = NSFocusRingTypeDefault;
+
+    NSArray<NSNumber *> *levels = MPToolbarPreviewZoomLevels();
+    for (NSNumber *level in levels)
+    {
+        NSString *title = [NSString stringWithFormat:@"%.0f%%", level.doubleValue * 100.0];
+        [popupButton addItemWithTitle:title];
+        NSMenuItem *added = [popupButton lastItem];
+        added.representedObject = level;
+        added.target = self.document;
+        added.action = @selector(selectPreviewZoom:);
+    }
+
+    toolbarItem.view = popupButton;
+
+    [self->toolbarItemIdentifierObjectDictionary setObject:toolbarItem forKey:itemIdentifier];
+    _zoomPopUp = popupButton;
+
+    return toolbarItem;
+}
+
+/**
+ * Update the popup's selection to match the current preview-zoom
+ * preference. If the current preference matches a preset (within
+ * epsilon), that item is selected. Otherwise the popup falls back to
+ * the closest preset so the button always shows a sensible label.
+ */
+- (void)syncPreviewZoomDisplay
+{
+    NSPopUpButton *popup = _zoomPopUp;
+    if (!popup)
+        return;
+
+    CGFloat current = [MPPreferences sharedInstance].previewZoomLevel;
+    NSArray<NSNumber *> *levels = MPToolbarPreviewZoomLevels();
+
+    NSUInteger nearestIdx = 0;
+    CGFloat bestDiff = CGFLOAT_MAX;
+    for (NSUInteger i = 0; i < levels.count; i++)
+    {
+        CGFloat diff = fabs(levels[i].doubleValue - current);
+        if (diff < bestDiff)
+        {
+            bestDiff = diff;
+            nearestIdx = i;
+        }
+    }
+    [popup selectItemAtIndex:(NSInteger)nearestIdx];
 }
 
 

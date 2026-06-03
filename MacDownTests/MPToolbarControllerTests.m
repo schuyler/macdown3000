@@ -378,7 +378,8 @@
         NSToolbarFlexibleSpaceItemIdentifier,
         @"copy-html",
         NSToolbarFlexibleSpaceItemIdentifier,
-        @"layout"
+        @"layout",
+        @"preview-zoom"
     ];
 
     XCTAssertEqual(defaults.count, expected.count,

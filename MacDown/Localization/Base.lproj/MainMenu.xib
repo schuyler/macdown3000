@@ -422,6 +422,25 @@
                                     <action selector="toggleFullScreen:" target="-1" id="7ez-RY-PkZ"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zm0-Sp-aaa"/>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="zm1-Ac-bbb">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="actualPreviewSize:" target="-1" id="zm1-Ax-ccc"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom In" keyEquivalent="+" id="zm2-In-ddd">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="zoomPreviewIn:" target="-1" id="zm2-Ix-eee"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="zm3-Ou-fff">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="zoomPreviewOut:" target="-1" id="zm3-Ox-ggg"/>
+                                </connections>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
