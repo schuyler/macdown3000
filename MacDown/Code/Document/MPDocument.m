@@ -77,10 +77,26 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
             @"editorScrollsPastEnd",
-            @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
+            @"htmlMathJax", @"htmlMathJaxInlineDollar",
+            @"previewZoomLevel", nil
         ];
     });
     return keys;
+}
+
+/**
+ * Ordered list of preset preview zoom multipliers used by ⌘+/⌘- and the
+ * toolbar dropdown. Kept as a single source of truth so the popup and the
+ * snap-step helper cannot drift apart.
+ */
+NS_INLINE NSArray<NSNumber *> *MPPreviewZoomLevels()
+{
+    static NSArray *levels = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        levels = @[@0.5, @0.75, @0.9, @1.0, @1.1, @1.25, @1.5, @2.0];
+    });
+    return levels;
 }
 
 NS_INLINE NSString *MPRectStringForAutosaveName(NSString *name)
@@ -267,6 +283,9 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
 - (void)applyEditorStartInPreviewModePreference;
+// Preview zoom helpers
+- (void)applyPreviewZoom;
+- (void)stepPreviewZoomDirection:(NSInteger)direction;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -899,6 +918,25 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             return NO;
         }
     }
+    else if (action == @selector(zoomPreviewIn:))
+    {
+        // Grey out ⌘+ once we are already at the maximum preset.
+        NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
+        CGFloat max = levels.lastObject.doubleValue;
+        return (self.preferences.previewZoomLevel < max - 1e-6);
+    }
+    else if (action == @selector(zoomPreviewOut:))
+    {
+        // Grey out ⌘- once we are already at the minimum preset.
+        NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
+        CGFloat min = levels.firstObject.doubleValue;
+        return (self.preferences.previewZoomLevel > min + 1e-6);
+    }
+    else if (action == @selector(actualPreviewSize:) ||
+             action == @selector(selectPreviewZoom:))
+    {
+        return YES;
+    }
     return result;
 }
 
@@ -1141,6 +1179,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Issue #16: Invoke deferred operation handlers after render completes
     [self invokeRenderCompletionHandlers];
+
+    // Re-apply the preview pane page-size multiplier. WebKit resets the
+    // multiplier when a new document loads, so each finished mainFrame load
+    // needs to restore the user's preference. Restrict to mainFrame so
+    // subframe (e.g. iframe) loads do not stomp the top-level zoom.
+    if (frame == sender.mainFrame)
+        [self applyPreviewZoom];
 }
 
 - (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error
@@ -1519,6 +1564,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
+    // Re-apply preview zoom immediately. The WebKit page-size multiplier
+    // is reset by a fresh load; calling it now (in addition to the
+    // didFinishLoadForFrame callback) shortens the visible window where
+    // the preview could briefly render at 100% before our preference
+    // takes effect.
+    [self applyPreviewZoom];
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
@@ -1721,6 +1772,14 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
     else if (object == [NSUserDefaults standardUserDefaults])
     {
+        // Preview zoom changes only need to push a new page-size multiplier
+        // to the WebView; the rendered HTML is unaffected, so skip the
+        // editor setup / divider redraw path that other preferences need.
+        if ([keyPath isEqualToString:@"previewZoomLevel"])
+        {
+            [self applyPreviewZoom];
+            return;
+        }
         if (self.highlighter.isActive)
             [self setupEditor:keyPath];
         [self redrawDivider];
@@ -3360,6 +3419,123 @@ to link outside that scope.", \
 
     // Restart file watching (descriptor may have become stale)
     [self startFileWatching];
+}
+
+
+#pragma mark - Preview zoom
+
+/**
+ * Push the user's preview-zoom preference into the underlying WebView.
+ * Clamps the value to the supported [0.5, 2.0] range so a corrupt or
+ * out-of-range preference cannot blank the preview pane. Silently does
+ * nothing when the preview outlet is not yet wired (early launch / unit
+ * tests instantiating MPDocument without the nib).
+ */
+- (void)applyPreviewZoom
+{
+    if (!self.preview)
+        return;
+
+    CGFloat level = self.preferences.previewZoomLevel;
+    NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
+    CGFloat min = levels.firstObject.doubleValue;
+    CGFloat max = levels.lastObject.doubleValue;
+    if (level < min) level = min;
+    if (level > max) level = max;
+
+    [self.preview setPageSizeMultiplier:(float)level];
+}
+
+/**
+ * Step the preview zoom by one preset in the requested direction.
+ * @param direction +1 to zoom in, -1 to zoom out.
+ *
+ * If the current zoom matches a preset (within epsilon), step from that
+ * preset. Otherwise snap to the nearest preset on the requested side:
+ * zooming in snaps up to the smallest preset greater than the current
+ * value; zooming out snaps down to the largest preset less than current.
+ * Beeps when already at the bound.
+ */
+- (void)stepPreviewZoomDirection:(NSInteger)direction
+{
+    NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
+    CGFloat current = self.preferences.previewZoomLevel;
+    if (current <= 0) current = 1.0;
+
+    // Find index of nearest preset to the current zoom.
+    NSUInteger nearestIdx = 0;
+    CGFloat bestDiff = CGFLOAT_MAX;
+    for (NSUInteger i = 0; i < levels.count; i++)
+    {
+        CGFloat diff = fabs(levels[i].doubleValue - current);
+        if (diff < bestDiff)
+        {
+            bestDiff = diff;
+            nearestIdx = i;
+        }
+    }
+
+    NSInteger targetIdx;
+    const CGFloat eps = 1e-6;
+    if (fabs(levels[nearestIdx].doubleValue - current) < eps)
+    {
+        targetIdx = (NSInteger)nearestIdx + direction;
+    }
+    else if (direction > 0)
+    {
+        // Snap up to the smallest preset > current.
+        targetIdx = (NSInteger)nearestIdx;
+        if (levels[nearestIdx].doubleValue < current)
+            targetIdx++;
+    }
+    else
+    {
+        // Snap down to the largest preset < current.
+        targetIdx = (NSInteger)nearestIdx;
+        if (levels[nearestIdx].doubleValue > current)
+            targetIdx--;
+    }
+
+    if (targetIdx < 0 || targetIdx >= (NSInteger)levels.count)
+    {
+        NSBeep();
+        return;
+    }
+    self.preferences.previewZoomLevel = levels[(NSUInteger)targetIdx].doubleValue;
+}
+
+- (IBAction)zoomPreviewIn:(id)sender
+{
+    [self stepPreviewZoomDirection:+1];
+}
+
+- (IBAction)zoomPreviewOut:(id)sender
+{
+    [self stepPreviewZoomDirection:-1];
+}
+
+- (IBAction)actualPreviewSize:(id)sender
+{
+    self.preferences.previewZoomLevel = 1.0;
+}
+
+- (IBAction)selectPreviewZoom:(id)sender
+{
+    // Sender is an NSPopUpButton (toolbar) or NSMenuItem (future menu).
+    // Both carry the target level as an NSNumber in representedObject.
+    NSNumber *level = nil;
+    if ([sender isKindOfClass:[NSMenuItem class]])
+    {
+        level = [(NSMenuItem *)sender representedObject];
+    }
+    else if ([sender isKindOfClass:[NSPopUpButton class]])
+    {
+        level = [[(NSPopUpButton *)sender selectedItem] representedObject];
+    }
+    if ([level isKindOfClass:[NSNumber class]])
+    {
+        self.preferences.previewZoomLevel = level.doubleValue;
+    }
 }
 
 @end

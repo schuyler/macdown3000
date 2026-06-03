@@ -27,4 +27,31 @@
  */
 + (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown;
 
+/**
+ * Step the preview pane zoom level up to the next preset.
+ * Snaps to the next preset > current; beeps if already at the maximum.
+ * Bound to View > Zoom In (Command-+).
+ */
+- (IBAction)zoomPreviewIn:(id)sender;
+
+/**
+ * Step the preview pane zoom level down to the previous preset.
+ * Snaps to the next preset < current; beeps if already at the minimum.
+ * Bound to View > Zoom Out (Command--).
+ */
+- (IBAction)zoomPreviewOut:(id)sender;
+
+/**
+ * Reset the preview pane zoom level to 100%.
+ * Bound to View > Actual Size (Command-0).
+ */
+- (IBAction)actualPreviewSize:(id)sender;
+
+/**
+ * Set the preview pane zoom to the level represented by the sender's
+ * representedObject (NSNumber). Sender may be an NSMenuItem or
+ * NSPopUpButton; the toolbar dropdown uses this entry point.
+ */
+- (IBAction)selectPreviewZoom:(id)sender;
+
 @end
