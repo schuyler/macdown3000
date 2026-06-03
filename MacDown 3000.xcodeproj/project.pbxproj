@@ -107,6 +107,7 @@
 		BA2B9EC2E95175092A97B41E /* MPResourceWatcherSet.m in Sources */ = {isa = PBXBuildFile; fileRef = E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */; };
 		CCD97578A2886FFE73BD96F7 /* MPMathJaxRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */; };
 		CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */; };
+		PRVZMTST0001BUILDFILER /* MPPreviewZoomTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PRVZMTST0001FILEREFID /* MPPreviewZoomTests.m */; };
 		D29776CC6E7EB5B4AA2E0537 /* MPFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A81247E840EB5C07669FF165 /* MPFileWatcher.m */; };
 		D3877A6637DE48017448C8DB /* MPRendererTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */; };
 		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
@@ -547,6 +548,7 @@
 		B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPEditorViewSubstitutionTests.m; sourceTree = "<group>"; };
 		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
 		CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPCheckboxToggleTests.m; sourceTree = "<group>"; };
+		PRVZMTST0001FILEREFID /* MPPreviewZoomTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreviewZoomTests.m; sourceTree = "<group>"; };
 		DDDB87873110C02114439C2C /* MPFileWatcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPFileWatcher.h; sourceTree = "<group>"; };
 		E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPResourceWatcherSet.m; sourceTree = "<group>"; };
 		E70ECDD4241C933C00537A46 /* ru-RU */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ru-RU"; path = "Localization/ru-RU.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -961,6 +963,7 @@
 				197TESTS0F00000000197RSTF /* MPRendererStateTests.m */,
 				C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */,
 				CHKBOXTGL0001FILEREFID /* MPCheckboxToggleTests.m */,
+				PRVZMTST0001FILEREFID /* MPPreviewZoomTests.m */,
 				ISSUE285SMARTQTFILEREF /* MPSmartQuoteTests.m */,
 				1FFEB3261972DAB400B2254F /* MPHTMLTabularizeTests.m */,
 				1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */,
@@ -1430,6 +1433,7 @@
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
 				CHKBOXTGL0001BUILDFILER /* MPCheckboxToggleTests.m in Sources */,
+				PRVZMTST0001BUILDFILER /* MPPreviewZoomTests.m in Sources */,
 				ISSUE285SMARTQTBUILDFILE /* MPSmartQuoteTests.m in Sources */,
 				1F51C9A5194565050015A96F /* MPPreferencesTests.m in Sources */,
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
