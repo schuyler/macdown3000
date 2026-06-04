@@ -1193,6 +1193,30 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             // Otherwise this is somewhere else on the same page. Jump there.
             break;
         default:
+            // Issue #431: Our own loadHTMLString:baseURL: render arrives
+            // here as a main-frame navigation of type "other" targeting the
+            // base URL (the document file itself). Rendering a document is
+            // not executing it, so the render load must bypass the
+            // content-initiated navigation policy below. Without this, a
+            // Markdown file with the POSIX execute bit set (common for
+            // files that lived on Windows/exFAT/SMB volumes) renders a
+            // permanently blank preview, because the executable check
+            // below vetoes the entire page load.
+            //
+            // A render load is identified by: a render in flight
+            // (alreadyRenderingInWeb), targeting the main frame, with the
+            // exact URL the renderer uses as its base. Worst case for a
+            // same-URL JS navigation slipping through this window is the
+            // raw Markdown bytes displayed as text — never execution.
+            if (self.alreadyRenderingInWeb && frame == webView.mainFrame
+                && url.isFileURL)
+            {
+                NSURL *renderBase = self.fileURL
+                    ?: self.preferences.htmlDefaultDirectoryUrl;
+                if ([url isEqual:renderBase]
+                    || [url isEqual:self.currentBaseUrl])
+                    break;
+            }
             // CVE-2019-12173: Block file:// navigations from non-user-initiated
             // actions (e.g., JavaScript auto-click) unless they target the
             // current document scope and are not executable.
