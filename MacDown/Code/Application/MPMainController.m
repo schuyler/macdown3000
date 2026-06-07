@@ -96,6 +96,15 @@ NS_INLINE void treat()
     }];
 }
 
+NS_INLINE MPDocument *MPDocumentForFindActions()
+{
+    NSWindow *window = NSApp.keyWindow ?: NSApp.mainWindow;
+    id document = window.windowController.document;
+    if ([document isKindOfClass:MPDocument.class])
+        return document;
+
+    return nil;
+}
 
 @interface MPMainController ()
 @property (readonly) NSWindowController *preferencesWindowController;
@@ -216,8 +225,48 @@ NS_INLINE void treat()
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
+- (IBAction)performFindPanelAction:(id)sender
+{
+    MPDocument *document = MPDocumentForFindActions();
+    if (![document respondsToSelector:_cmd])
+    {
+        NSBeep();
+        return;
+    }
+
+    [document performFindPanelAction:sender];
+}
+
+- (IBAction)centerSelectionInVisibleArea:(id)sender
+{
+    MPDocument *document = MPDocumentForFindActions();
+    if (![document respondsToSelector:_cmd])
+    {
+        NSBeep();
+        return;
+    }
+
+    [document centerSelectionInVisibleArea:sender];
+}
+
 
 #pragma mark - Override
+
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if (item.action == @selector(performFindPanelAction:) ||
+        item.action == @selector(centerSelectionInVisibleArea:))
+    {
+        MPDocument *document = MPDocumentForFindActions();
+        if (![document respondsToSelector:item.action])
+            return NO;
+        if ([document respondsToSelector:@selector(validateUserInterfaceItem:)])
+            return [document validateUserInterfaceItem:item];
+        return YES;
+    }
+
+    return YES;
+}
 
 - (instancetype)init
 {

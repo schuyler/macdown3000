@@ -16,8 +16,8 @@ fi
 set -o errexit
 set -o nounset
 
-pushd `dirname $0` > /dev/null
-source $(pwd -P)/utils.sh
+pushd "$(dirname "$0")" > /dev/null
+source "$(pwd -P)/utils.sh"
 popd > /dev/null
 
 BUILD_VERSION=$(get_build_version)

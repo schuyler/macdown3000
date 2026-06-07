@@ -97,6 +97,48 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
     return ([s1 isEqualToString:s2] || s1 == s2);
 }
 
+NS_INLINE NSString *MPJavaScriptStringLiteral(NSString *string)
+{
+    NSData *data = [NSJSONSerialization dataWithJSONObject:@[string ?: @""]
+                                                   options:0 error:nil];
+    NSString *json = [[NSString alloc] initWithData:data
+                                           encoding:NSUTF8StringEncoding];
+    return [json substringWithRange:NSMakeRange(1, json.length - 2)];
+}
+
+NS_INLINE BOOL MPActionRequiresVisibleEditor(SEL action)
+{
+    static NSSet *actions = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        actions = [NSSet setWithArray:@[
+            NSStringFromSelector(@selector(convertToH1:)),
+            NSStringFromSelector(@selector(convertToH2:)),
+            NSStringFromSelector(@selector(convertToH3:)),
+            NSStringFromSelector(@selector(convertToH4:)),
+            NSStringFromSelector(@selector(convertToH5:)),
+            NSStringFromSelector(@selector(convertToH6:)),
+            NSStringFromSelector(@selector(convertToParagraph:)),
+            NSStringFromSelector(@selector(toggleStrong:)),
+            NSStringFromSelector(@selector(toggleEmphasis:)),
+            NSStringFromSelector(@selector(toggleInlineCode:)),
+            NSStringFromSelector(@selector(toggleStrikethrough:)),
+            NSStringFromSelector(@selector(toggleUnderline:)),
+            NSStringFromSelector(@selector(toggleHighlight:)),
+            NSStringFromSelector(@selector(toggleComment:)),
+            NSStringFromSelector(@selector(toggleLink:)),
+            NSStringFromSelector(@selector(toggleImage:)),
+            NSStringFromSelector(@selector(toggleOrderedList:)),
+            NSStringFromSelector(@selector(toggleUnorderedList:)),
+            NSStringFromSelector(@selector(toggleBlockquote:)),
+            NSStringFromSelector(@selector(indent:)),
+            NSStringFromSelector(@selector(unindent:)),
+            NSStringFromSelector(@selector(insertNewParagraph:)),
+        ]];
+    });
+    return [actions containsObject:NSStringFromSelector(action)];
+}
+
 NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     DOMDocument *doc = webview.mainFrameDocument;
@@ -185,9 +227,12 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @interface MPDocument ()
     <NSSplitViewDelegate, NSTextViewDelegate,
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
-     WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
+     WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate,
+     WebResourceLoadDelegate, WebUIDelegate,
 #endif
-     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate>
+     MPAutosaving, MPRendererDataSource, MPRendererDelegate,
+     MPResourceWatcherSetDelegate,
+     NSControlTextEditingDelegate>
 
 typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeWord,
@@ -250,6 +295,9 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
+@property (strong) NSView *previewFindBar;
+@property (strong) NSTextField *previewFindField;
+@property (strong) NSTextField *previewFindStatusLabel;
 
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
@@ -267,6 +315,16 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
 - (void)applyEditorStartInPreviewModePreference;
+- (void)updateFirstResponderForVisiblePanes;
+- (void)showPreviewFindBar;
+- (void)hidePreviewFindBar:(id)sender;
+- (void)performPreviewFindWithTag:(NSInteger)tag;
+- (void)searchPreviewForString:(NSString *)findString forward:(BOOL)forward;
+- (void)searchPreviewForFindBarStringForward:(BOOL)forward;
+- (void)clearPreviewFindHighlights;
+- (void)usePreviewSelectionForFind;
+- (IBAction)previewFindNext:(id)sender;
+- (IBAction)previewFindPrevious:(id)sender;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -898,6 +956,26 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             return NO;
         }
+    }
+    else if (action == @selector(performFindPanelAction:))
+    {
+        if (!self.editorVisible && self.previewVisible)
+        {
+            id rawItem = item;
+            NSInteger tag = [rawItem respondsToSelector:@selector(tag)] ?
+                [rawItem tag] : 1;
+            return (tag != 12);
+        }
+        if (self.editorVisible)
+            return [self.editor validateUserInterfaceItem:item];
+    }
+    else if (action == @selector(centerSelectionInVisibleArea:))
+    {
+        return (self.editorVisible || self.previewVisible);
+    }
+    else if (MPActionRequiresVisibleEditor(action))
+    {
+        return (result && self.editorVisible);
     }
     return result;
 }
@@ -1995,9 +2073,391 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     [self toggleSplitterCollapsingEditorPane:YES];
 }
 
+- (IBAction)performFindPanelAction:(id)sender
+{
+    if (!self.editorVisible && self.previewVisible)
+    {
+        NSInteger tag = [sender respondsToSelector:@selector(tag)] ?
+            [sender tag] : 1;
+        [self performPreviewFindWithTag:tag];
+        return;
+    }
+
+    [self hidePreviewFindBar:nil];
+    [self.editor performFindPanelAction:sender];
+}
+
+- (IBAction)centerSelectionInVisibleArea:(id)sender
+{
+    if (self.editorVisible)
+    {
+        [self.editor centerSelectionInVisibleArea:sender];
+        return;
+    }
+
+    if (!self.previewVisible)
+        return;
+
+    [self.preview stringByEvaluatingJavaScriptFromString:
+        @"(function() {"
+        "var selection = window.getSelection();"
+        "if (!selection || !selection.rangeCount) return;"
+        "var rect = selection.getRangeAt(0).getBoundingClientRect();"
+        "if (!rect || (!rect.top && !rect.bottom)) return;"
+        "window.scrollBy(0, rect.top - (window.innerHeight / 2));"
+        "})();"];
+}
+
 - (IBAction)render:(id)sender
 {
     [self.renderer parseAndRenderLater];
+}
+
+- (NSButton *)previewFindBarButtonWithTitle:(NSString *)title
+                                     action:(SEL)action
+{
+    NSButton *button = [NSButton buttonWithTitle:title
+                                          target:self
+                                          action:action];
+    button.bezelStyle = NSBezelStyleTexturedRounded;
+    button.translatesAutoresizingMaskIntoConstraints = NO;
+    return button;
+}
+
+- (void)setupPreviewFindBarIfNeeded
+{
+    if (self.previewFindBar || !self.windowForSheet.contentView)
+        return;
+
+    NSView *contentView = self.windowForSheet.contentView;
+    NSView *bar = [[NSView alloc] initWithFrame:NSZeroRect];
+    bar.translatesAutoresizingMaskIntoConstraints = NO;
+    bar.wantsLayer = YES;
+    bar.layer.backgroundColor = NSColor.windowBackgroundColor.CGColor;
+    bar.layer.borderColor = NSColor.separatorColor.CGColor;
+    bar.layer.borderWidth = 1.0;
+    bar.hidden = YES;
+
+    NSTextField *field = [[NSTextField alloc] initWithFrame:NSZeroRect];
+    field.translatesAutoresizingMaskIntoConstraints = NO;
+    field.placeholderString =
+        NSLocalizedString(@"Find", @"Find field placeholder");
+    field.usesSingleLineMode = YES;
+    field.bezelStyle = NSTextFieldRoundedBezel;
+    field.target = self;
+    field.action = @selector(previewFindNext:);
+    field.delegate = (id<NSTextFieldDelegate>)self;
+
+    NSString *previousTitle = NSLocalizedString(@"Previous", @"Find previous");
+    NSString *nextTitle = NSLocalizedString(@"Next", @"Find next");
+    NSString *doneTitle = NSLocalizedString(@"Done", @"Find done");
+    NSButton *previousButton =
+        [self previewFindBarButtonWithTitle:previousTitle
+                                     action:@selector(previewFindPrevious:)];
+    NSButton *nextButton =
+        [self previewFindBarButtonWithTitle:nextTitle
+                                     action:@selector(previewFindNext:)];
+    NSButton *doneButton =
+        [self previewFindBarButtonWithTitle:doneTitle
+                                     action:@selector(hidePreviewFindBar:)];
+
+    NSTextField *statusLabel = [NSTextField labelWithString:@""];
+    statusLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    statusLabel.textColor = NSColor.secondaryLabelColor;
+    statusLabel.hidden = YES;
+
+    [bar addSubview:field];
+    [bar addSubview:previousButton];
+    [bar addSubview:nextButton];
+    [bar addSubview:statusLabel];
+    [bar addSubview:doneButton];
+    [contentView addSubview:bar positioned:NSWindowAbove relativeTo:nil];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [bar.topAnchor constraintEqualToAnchor:contentView.topAnchor],
+        [bar.leadingAnchor constraintEqualToAnchor:contentView.leadingAnchor],
+        [bar.trailingAnchor constraintEqualToAnchor:contentView.trailingAnchor],
+        [bar.heightAnchor constraintEqualToConstant:40.0],
+
+        [field.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor
+                                            constant:12.0],
+        [field.centerYAnchor constraintEqualToAnchor:bar.centerYAnchor],
+        [field.widthAnchor constraintEqualToConstant:260.0],
+
+        [previousButton.leadingAnchor
+            constraintEqualToAnchor:field.trailingAnchor constant:8.0],
+        [previousButton.centerYAnchor
+            constraintEqualToAnchor:bar.centerYAnchor],
+
+        [nextButton.leadingAnchor
+            constraintEqualToAnchor:previousButton.trailingAnchor
+                           constant:6.0],
+        [nextButton.centerYAnchor constraintEqualToAnchor:bar.centerYAnchor],
+
+        [statusLabel.leadingAnchor
+            constraintEqualToAnchor:nextButton.trailingAnchor constant:10.0],
+        [statusLabel.centerYAnchor constraintEqualToAnchor:bar.centerYAnchor],
+        [statusLabel.trailingAnchor
+            constraintLessThanOrEqualToAnchor:doneButton.leadingAnchor
+                                      constant:-10.0],
+
+        [doneButton.trailingAnchor
+            constraintEqualToAnchor:bar.trailingAnchor constant:-12.0],
+        [doneButton.centerYAnchor constraintEqualToAnchor:bar.centerYAnchor],
+    ]];
+
+    self.previewFindBar = bar;
+    self.previewFindField = field;
+    self.previewFindStatusLabel = statusLabel;
+}
+
+- (NSPasteboard *)findPasteboard
+{
+    return [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+}
+
+- (void)setFindPasteboardString:(NSString *)string
+{
+    NSPasteboard *pasteboard = [self findPasteboard];
+    [pasteboard clearContents];
+    if (string.length)
+        [pasteboard setString:string forType:NSPasteboardTypeString];
+}
+
+- (NSString *)findPasteboardString
+{
+    return [[self findPasteboard] stringForType:NSPasteboardTypeString] ?: @"";
+}
+
+- (void)showPreviewFindBar
+{
+    [self setupPreviewFindBarIfNeeded];
+
+    self.previewFindField.stringValue = [self findPasteboardString];
+    self.previewFindStatusLabel.hidden = YES;
+    self.previewFindBar.hidden = NO;
+    [self.windowForSheet makeFirstResponder:self.previewFindField];
+}
+
+- (void)hidePreviewFindBar:(id)sender
+{
+    self.previewFindBar.hidden = YES;
+    [self clearPreviewFindHighlights];
+
+    if (!sender)
+        return;
+
+    NSView *documentView = self.preview.mainFrame.frameView.documentView;
+    [self.windowForSheet makeFirstResponder:documentView ?: self.preview];
+}
+
+- (void)performPreviewFindWithTag:(NSInteger)tag
+{
+    if (tag == 7)
+    {
+        [self usePreviewSelectionForFind];
+        return;
+    }
+
+    if (tag == 1)
+    {
+        [self showPreviewFindBar];
+        return;
+    }
+
+    NSString *findString =
+        self.previewFindField.stringValue.length ?
+            self.previewFindField.stringValue : [self findPasteboardString];
+    if (!findString.length)
+    {
+        [self showPreviewFindBar];
+        return;
+    }
+
+    [self searchPreviewForString:findString forward:(tag != 3)];
+}
+
+- (void)searchPreviewForString:(NSString *)findString forward:(BOOL)forward
+{
+    if (!findString.length)
+    {
+        self.previewFindStatusLabel.hidden = YES;
+        [self clearPreviewFindHighlights];
+        return;
+    }
+
+    [self setFindPasteboardString:findString];
+    NSString *script = [NSString stringWithFormat:
+        @"(function(query, forward) {"
+        "function clear() {"
+        "  var marks = document.querySelectorAll('span[data-mp-preview-find]');"
+        "  for (var i = marks.length - 1; i >= 0; i--) {"
+        "    var mark = marks[i];"
+        "    var parent = mark.parentNode;"
+        "    if (!parent) continue;"
+        "    parent.replaceChild("
+        "document.createTextNode(mark.textContent), mark);"
+        "    parent.normalize();"
+        "  }"
+        "}"
+        "clear();"
+        "if (!query) {"
+        "document.body.removeAttribute('data-mp-preview-find-index');"
+        "return '0:-1';"
+        "}"
+        "var lower = query.toLocaleLowerCase();"
+        "var nodes = [];"
+        "var walker = document.createTreeWalker("
+        "document.body, NodeFilter.SHOW_TEXT, {"
+        "  acceptNode: function(node) {"
+        "    var parent = node.parentNode;"
+        "    while (parent) {"
+        "      var name = parent.nodeName;"
+        "      if (name === 'SCRIPT' || name === 'STYLE' ||"
+        "name === 'TEXTAREA')"
+        "        return NodeFilter.FILTER_REJECT;"
+        "      parent = parent.parentNode;"
+        "    }"
+        "    return node.nodeValue.toLocaleLowerCase().indexOf(lower) >= 0 ?"
+        "      NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;"
+        "  }"
+        "}, false);"
+        "var node;"
+        "while ((node = walker.nextNode())) nodes.push(node);"
+        "for (var n = 0; n < nodes.length; n++) {"
+        "  var text = nodes[n].nodeValue;"
+        "  var textLower = text.toLocaleLowerCase();"
+        "  var fragment = document.createDocumentFragment();"
+        "  var start = 0;"
+        "  var index;"
+        "  while ((index = textLower.indexOf(lower, start)) >= 0) {"
+        "    if (index > start) fragment.appendChild("
+        "document.createTextNode(text.substring(start, index)));"
+        "    var mark = document.createElement('span');"
+        "    mark.setAttribute('data-mp-preview-find', '1');"
+        "    mark.style.backgroundColor = '#fff59d';"
+        "    mark.style.color = 'inherit';"
+        "    mark.textContent = text.substring(index, index + query.length);"
+        "    fragment.appendChild(mark);"
+        "    start = index + query.length;"
+        "  }"
+        "  if (start < text.length) fragment.appendChild("
+        "document.createTextNode(text.substring(start)));"
+        "  nodes[n].parentNode.replaceChild(fragment, nodes[n]);"
+        "}"
+        "var marks = document.querySelectorAll('span[data-mp-preview-find]');"
+        "if (!marks.length) {"
+        "document.body.removeAttribute('data-mp-preview-find-index');"
+        "return '0:-1';"
+        "}"
+        "var current = parseInt("
+        "document.body.getAttribute('data-mp-preview-find-index') || '-1',"
+        "10);"
+        "if (isNaN(current) || current < 0 || current >= marks.length)"
+        "  current = forward ? 0 : marks.length - 1;"
+        "else"
+        "  current = (current + (forward ? 1 : -1) + marks.length) %%"
+        "marks.length;"
+        "for (var m = 0; m < marks.length; m++)"
+        "marks[m].style.backgroundColor = '#fff59d';"
+        "marks[current].style.backgroundColor = '#ffb74d';"
+        "document.body.setAttribute("
+        "'data-mp-preview-find-index', String(current));"
+        "marks[current].scrollIntoView({block: 'center', inline: 'nearest'});"
+        "return String(marks.length) + ':' + String(current);"
+        "})(%@, %@);",
+        MPJavaScriptStringLiteral(findString), forward ? @"true" : @"false"];
+    NSString *result =
+        [self.preview stringByEvaluatingJavaScriptFromString:script];
+    NSInteger count =
+        [[result componentsSeparatedByString:@":"].firstObject integerValue];
+    BOOL found = (count > 0);
+    self.previewFindStatusLabel.stringValue =
+        found ? [NSString stringWithFormat:@"%ld", (long)count] :
+                NSLocalizedString(@"No Results", @"Find no results");
+    self.previewFindStatusLabel.hidden = found;
+}
+
+- (void)searchPreviewForFindBarStringForward:(BOOL)forward
+{
+    [self searchPreviewForString:self.previewFindField.stringValue
+                         forward:forward];
+}
+
+- (void)clearPreviewFindHighlights
+{
+    [self.preview stringByEvaluatingJavaScriptFromString:
+        @"(function() {"
+        "var marks = document.querySelectorAll('span[data-mp-preview-find]');"
+        "for (var i = marks.length - 1; i >= 0; i--) {"
+        "  var mark = marks[i];"
+        "  var parent = mark.parentNode;"
+        "  if (!parent) continue;"
+        "  parent.replaceChild("
+        "document.createTextNode(mark.textContent), mark);"
+        "  parent.normalize();"
+        "}"
+        "if (document.body)"
+        "document.body.removeAttribute('data-mp-preview-find-index');"
+        "})();"];
+}
+
+- (void)usePreviewSelectionForFind
+{
+    NSString *selection =
+        [self.preview stringByEvaluatingJavaScriptFromString:
+            @"window.getSelection().toString()"];
+    if (!selection.length)
+        return;
+
+    [self setFindPasteboardString:selection];
+    if (self.previewFindBar && !self.previewFindBar.hidden)
+    {
+        self.previewFindField.stringValue = selection;
+        [self searchPreviewForFindBarStringForward:YES];
+    }
+}
+
+- (IBAction)previewFindNext:(id)sender
+{
+    [self searchPreviewForFindBarStringForward:YES];
+}
+
+- (IBAction)previewFindPrevious:(id)sender
+{
+    [self searchPreviewForFindBarStringForward:NO];
+}
+
+- (void)controlTextDidChange:(NSNotification *)notification
+{
+    if (notification.object == self.previewFindField)
+    {
+        self.previewFindStatusLabel.hidden = YES;
+        [self clearPreviewFindHighlights];
+    }
+}
+
+- (BOOL)control:(NSControl *)control
+       textView:(NSTextView *)textView
+doCommandBySelector:(SEL)commandSelector
+{
+    if (control != self.previewFindField)
+        return NO;
+
+    if (commandSelector == @selector(cancelOperation:))
+    {
+        [self hidePreviewFindBar:control];
+        return YES;
+    }
+    if (commandSelector == @selector(insertNewline:))
+    {
+        BOOL backwards =
+            ((NSApp.currentEvent.modifierFlags
+              & NSEventModifierFlagShift) != 0);
+        [self searchPreviewForFindBarStringForward:!backwards];
+        return YES;
+    }
+    return NO;
 }
 
 
@@ -2114,7 +2574,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)applyEditorStartInPreviewModePreference
 {
-    if (!self.preferences.editorStartInPreviewMode || !self.editorVisible)
+    BOOL shouldStartInReaderMode =
+        (self.preferences.editorStartInPreviewMode ||
+         self.preferences.editorStartInReaderMode);
+    if (!shouldStartInReaderMode || !self.editorVisible)
         return;
 
     CGFloat ratio = self.splitView.dividerLocation;
@@ -2131,6 +2594,24 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
     CGFloat targetRatio = self.preferences.editorOnRight ? 1.0 : 0.0;
     [self setSplitViewDividerLocation:targetRatio];
+}
+
+- (void)updateFirstResponderForVisiblePanes
+{
+    if (!self.windowForSheet)
+        return;
+
+    NSResponder *firstResponder = self.windowForSheet.firstResponder;
+    BOOL firstResponderIsEditor = (firstResponder == self.editor);
+    if ([firstResponder isKindOfClass:NSView.class])
+        firstResponderIsEditor |=
+            [(NSView *)firstResponder isDescendantOf:self.editorContainer];
+
+    if (!self.editorVisible && self.previewVisible && firstResponderIsEditor)
+    {
+        NSView *documentView = self.preview.mainFrame.frameView.documentView;
+        [self.windowForSheet makeFirstResponder:documentView ?: self.preview];
+    }
 }
 
 - (void)setupEditor:(NSString *)changedKey
@@ -2760,6 +3241,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     BOOL wasPreviewVisible = self.previewVisible;
     BOOL wasEditorVisible = self.editorVisible;
     [self.splitView setDividerLocation:ratio];
+
+    if (!wasEditorVisible && self.editorVisible)
+        [self hidePreviewFindBar:nil];
+    else if (wasPreviewVisible && !self.previewVisible)
+        [self clearPreviewFindHighlights];
+
     if (!wasPreviewVisible && self.previewVisible
             && !self.preferences.markdownManualRender)
         [self.renderer parseAndRenderNow];
@@ -2779,6 +3266,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     }
 
     [self setupEditor:NSStringFromSelector(@selector(editorHorizontalInset))];
+    [self updateFirstResponderForVisiblePanes];
 }
 
 - (NSString *)presumedFileName

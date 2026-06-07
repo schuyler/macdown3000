@@ -22,6 +22,7 @@
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
+- (void)setSplitViewDividerLocation:(CGFloat)ratio;
 @end
 
 #pragma mark - Mock Menu Item
@@ -214,6 +215,104 @@
         preferences.editorOnRight = originalEditorOnRight;
         [preferences synchronize];
     }
+}
+
+- (void)testStartInReaderModeRestoresPreviewFromEditorOnlyLayout
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    BOOL originalStartInReaderMode = preferences.editorStartInReaderMode;
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try
+    {
+        [self.document makeWindowControllers];
+
+        if (!self.document.editorVisible || !self.document.previewVisible)
+        {
+            NSLog(@"Skipping reader startup test - panes not initialized");
+            return;
+        }
+
+        preferences.editorStartInPreviewMode = NO;
+        preferences.editorStartInReaderMode = YES;
+        preferences.editorOnRight = NO;
+        self.document.previousSplitRatio = -1.0;
+
+        [self.document applyEditorStartInPreviewModePreference];
+
+        XCTAssertFalse(self.document.editorVisible,
+                       @"Reader startup should collapse the editor pane");
+        XCTAssertTrue(self.document.previewVisible,
+                      @"Reader startup should make the preview visible");
+        XCTAssertEqualWithAccuracy(
+            self.document.splitView.dividerLocation, 0.0, 0.001,
+            @"Reader startup should collapse to the preview-only edge");
+    }
+    @finally
+    {
+        preferences.editorStartInPreviewMode = originalStartInPreviewMode;
+        preferences.editorStartInReaderMode = originalStartInReaderMode;
+        preferences.editorOnRight = originalEditorOnRight;
+        [preferences synchronize];
+    }
+}
+
+- (void)testReaderModeDisablesEditorOnlyFormattingCommands
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible)
+    {
+        NSLog(@"Skipping reader formatting test - panes not initialized");
+        return;
+    }
+
+    [self.document setSplitViewDividerLocation:0.0];
+
+    MockMenuItem *formatItem =
+        [[MockMenuItem alloc] initWithTitle:@"Strong"
+                                     action:@selector(toggleStrong:)
+                              keyEquivalent:@""];
+    XCTAssertFalse([self.document validateUserInterfaceItem:formatItem],
+                   @"Reader mode should disable editor-only formatting");
+}
+
+- (void)testReaderModeKeepsFindAndJumpToSelectionAvailable
+{
+    [self.document makeWindowControllers];
+
+    if (!self.document.editorVisible || !self.document.previewVisible)
+    {
+        NSLog(@"Skipping reader find menu test - panes not initialized");
+        return;
+    }
+
+    [self.document setSplitViewDividerLocation:0.0];
+
+    MockMenuItem *findItem =
+        [[MockMenuItem alloc] initWithTitle:@"Find"
+                                     action:@selector(performFindPanelAction:)
+                              keyEquivalent:@""];
+    findItem.tag = 1;
+    XCTAssertTrue([self.document validateUserInterfaceItem:findItem],
+                  @"Reader mode should keep Find available");
+
+    MockMenuItem *replaceItem =
+        [[MockMenuItem alloc] initWithTitle:@"Find and Replace"
+                                     action:@selector(performFindPanelAction:)
+                              keyEquivalent:@""];
+    replaceItem.tag = 12;
+    XCTAssertFalse([self.document validateUserInterfaceItem:replaceItem],
+                   @"Reader-only mode should disable editor-only Replace");
+
+    MockMenuItem *jumpItem =
+        [[MockMenuItem alloc] initWithTitle:@"Jump to Selection"
+                                     action:@selector(
+                                         centerSelectionInVisibleArea:)
+                              keyEquivalent:@""];
+    XCTAssertTrue([self.document validateUserInterfaceItem:jumpItem],
+                  @"Reader mode should keep Jump to Selection available");
 }
 
 
