@@ -93,10 +93,23 @@
 
     CGFloat ratio = oldLeftWidth / oldTotalWidth;
 
-    // If either pane is collapsed, defer to default NSSplitView behavior.
+    // If either pane is collapsed, preserve that collapse during window
+    // resizes. The default NSSplitView behavior may re-expand a zero-width
+    // pane, which breaks reader-only mode.
     if (ratio <= 0.0 || ratio >= 1.0)
     {
-        [super resizeSubviewsWithOldSize:oldSize];
+        CGFloat dividerThickness = self.dividerThickness;
+        CGFloat newTotalWidth = self.frame.size.width - dividerThickness;
+        CGFloat newHeight = self.frame.size.height;
+        CGFloat leftWidth = (ratio <= 0.0) ? 0.0 : newTotalWidth;
+        CGFloat rightWidth = newTotalWidth - leftWidth;
+
+        NSView *left = parts[0];
+        NSView *right = parts[1];
+        left.frame = NSMakeRect(0.0, 0.0, leftWidth, newHeight);
+        right.frame = NSMakeRect(leftWidth + dividerThickness, 0.0,
+                                 rightWidth, newHeight);
+        [self setPosition:leftWidth ofDividerAtIndex:0];
         return;
     }
 

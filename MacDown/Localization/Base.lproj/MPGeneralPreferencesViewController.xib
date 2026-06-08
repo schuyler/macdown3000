@@ -89,12 +89,12 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="V1d-g4-bk8">
                                 <rect key="frame" x="16" y="53" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Start in preview mode" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="aYQ-0c-EOQ">
+                                <buttonCell key="cell" type="check" title="Start in reader-only mode" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="aYQ-0c-EOQ">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <binding destination="-2" name="value" keyPath="self.preferences.editorStartInPreviewMode" id="MQb-TB-4dk"/>
+                                    <binding destination="-2" name="value" keyPath="self.preferences.editorStartInReaderMode" id="MQb-TB-4dk"/>
                                 </connections>
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="WVd-hz-Dcr">

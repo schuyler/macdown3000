@@ -19,6 +19,9 @@
 @property (nonatomic, readwrite) NSString *markdown;
 @property (nonatomic, readonly) NSString *html;
 
+- (IBAction)performFindPanelAction:(id)sender;
+- (IBAction)centerSelectionInVisibleArea:(id)sender;
+
 /**
  * Toggle the checkbox at the specified index in the markdown source.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.

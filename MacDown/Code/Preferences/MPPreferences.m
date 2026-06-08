@@ -249,6 +249,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorMaximumWidth;
 @dynamic editorOnRight;
 @dynamic editorStartInPreviewMode;
+@dynamic editorStartInReaderMode;
 @dynamic editorShowWordCount;
 @dynamic editorWordCountType;
 @dynamic editorAutoSave;
@@ -437,6 +438,11 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.extensionStrikethough = YES;
     if (![defaults objectForKey:@"editorAutoSave"])
         self.editorAutoSave = YES;
+    if (![defaults objectForKey:@"editorStartInReaderMode"]
+            && self.editorStartInPreviewMode)
+    {
+        self.editorStartInReaderMode = YES;
+    }
 
     // Apply preference migrations using version-based system.
     [self applyPreferencesMigrations];

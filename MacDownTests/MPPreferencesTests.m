@@ -152,6 +152,58 @@
     [self.preferences synchronize];
 }
 
+- (void)testStartInReaderModeToggle
+{
+    BOOL original = self.preferences.editorStartInReaderMode;
+
+    self.preferences.editorStartInReaderMode = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.editorStartInReaderMode,
+                  @"Start in reader-only mode should be ON");
+
+    self.preferences.editorStartInReaderMode = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.editorStartInReaderMode,
+                   @"Start in reader-only mode should be OFF");
+
+    self.preferences.editorStartInReaderMode = original;
+    [self.preferences synchronize];
+}
+
+- (void)testReaderModeDefaultMirrorsLegacyPreviewMode
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    id originalPreview =
+        [defaults objectForKey:@"editorStartInPreviewMode"];
+    id originalReader =
+        [defaults objectForKey:@"editorStartInReaderMode"];
+
+    @try
+    {
+        [defaults setBool:YES forKey:@"editorStartInPreviewMode"];
+        [defaults removeObjectForKey:@"editorStartInReaderMode"];
+
+        MPPreferences *preferences = [[MPPreferences alloc] init];
+
+        XCTAssertTrue(preferences.editorStartInReaderMode,
+                      @"Legacy preview startup should enable reader startup");
+    }
+    @finally
+    {
+        if (originalPreview)
+            [defaults setObject:originalPreview
+                         forKey:@"editorStartInPreviewMode"];
+        else
+            [defaults removeObjectForKey:@"editorStartInPreviewMode"];
+
+        if (originalReader)
+            [defaults setObject:originalReader
+                         forKey:@"editorStartInReaderMode"];
+        else
+            [defaults removeObjectForKey:@"editorStartInReaderMode"];
+    }
+}
+
 - (void)testExtensionFlags
 {
     // Save originals
