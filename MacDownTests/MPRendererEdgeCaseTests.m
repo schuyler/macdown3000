@@ -154,8 +154,16 @@
                   @"CSP should whitelist only bundled scripts and the MathJax CDN");
     XCTAssertTrue([html containsString:@"name=\"macdown-checkbox-token\""],
                   @"Preview HTML should include a checkbox bridge token");
+    XCTAssertTrue([html containsString:@"name=\"macdown-table-layout-token\""],
+                  @"Preview HTML should include a table layout bridge token");
+    XCTAssertTrue([html containsString:@"table-resize.js"],
+                  @"Preview HTML should include live table resizing behavior");
+    XCTAssertTrue([html containsString:@"id=\"macdown-table-layouts\""],
+                  @"Preview HTML should include table layout data for the live script");
     XCTAssertTrue(self.renderer.checkboxBridgeToken.length > 0,
                   @"Renderer should expose the active checkbox bridge token");
+    XCTAssertTrue(self.renderer.tableLayoutBridgeToken.length > 0,
+                  @"Renderer should expose the active table layout bridge token");
 }
 
 - (void)testPreviewRenderKeepsCheckboxBridgeTokenStableAcrossRenders
@@ -166,14 +174,35 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     [self.renderer render];
     NSString *firstToken = [self.renderer.checkboxBridgeToken copy];
+    NSString *firstTableToken = [self.renderer.tableLayoutBridgeToken copy];
 
     [self.renderer render];
     NSString *secondToken = [self.renderer.checkboxBridgeToken copy];
+    NSString *secondTableToken = [self.renderer.tableLayoutBridgeToken copy];
 
     XCTAssertEqualObjects(firstToken, secondToken,
                           @"DOM-only preview refreshes keep the original head meta tags, so the checkbox bridge token must remain stable across renders");
+    XCTAssertEqualObjects(firstTableToken, secondTableToken,
+                          @"DOM-only preview refreshes keep the original head meta tags, so the table layout bridge token must remain stable across renders");
     XCTAssertTrue([self.delegate.lastHTML containsString:firstToken],
                   @"Rendered preview HTML should continue to expose the active checkbox bridge token");
+    XCTAssertTrue([self.delegate.lastHTML containsString:firstTableToken],
+                  @"Rendered preview HTML should continue to expose the active table layout bridge token");
+}
+
+- (void)testPreviewRenderEscapesTableLayoutJSONScriptClosers
+{
+    self.dataSource.markdown = @"| A |\n|---|\n| 1 |";
+    self.dataSource.tableLayoutsJSON = @"{\"0:bad\":{\"</script>\":120}}";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    NSString *html = self.delegate.lastHTML;
+    XCTAssertTrue([html containsString:@"<\\/script>"],
+                  @"Table layout JSON should escape script-closing text");
+    XCTAssertFalse([html containsString:@"{\"0:bad\":{\"</script>\":120}}"],
+                   @"Table layout JSON should not expose a raw script closer");
 }
 
 - (void)testHTMLExportDoesNotIncludePreviewOnlySecurityMetaTags
@@ -189,6 +218,12 @@
                    @"Preview-only CSP should not be embedded into exports");
     XCTAssertFalse([html containsString:@"macdown-checkbox-token"],
                    @"Preview-only checkbox tokens should not leak into exports");
+    XCTAssertFalse([html containsString:@"macdown-table-layout-token"],
+                   @"Preview-only table layout tokens should not leak into exports");
+    XCTAssertFalse([html containsString:@"table-resize.js"],
+                   @"Preview-only table resizing script should not leak into exports");
+    XCTAssertFalse([html containsString:@"macdown-table-layouts"],
+                   @"Preview-only table layout JSON should not leak into exports");
 }
 
 

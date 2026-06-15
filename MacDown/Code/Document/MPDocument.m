@@ -37,6 +37,10 @@
 #import <JavaScriptCore/JavaScriptCore.h>
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
+static NSString * const kMPTableLayoutScheme = @"x-macdown-table-layout";
+static NSString * const kMPTableLayoutSetAction = @"set";
+static NSString * const kMPTableLayoutResetAction = @"reset";
+static const CGFloat kMPMinimumTableColumnWidth = 48.0;
 
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
@@ -237,6 +241,9 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
 @property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableDictionary<NSString *, NSNumber *> *> *tableLayouts;
+@property (copy) NSString *tableLayoutDocumentKey;
+@property (nonatomic, strong) NSURL *tableLayoutsFileURL;
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -258,6 +265,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
+- (void)handleTableLayoutURL:(NSURL *)url;
 - (void)validateHeaderLocationAlignment;
 - (void)invokeRenderCompletionHandlers;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
@@ -334,6 +342,45 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // (This is called for MathJax rendering completion path)
         [strongObj invokeRenderCompletionHandlers];
     };
+}
+
+NS_INLINE NSURL *MPDefaultTableLayoutsFileURL(void)
+{
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSURL *supportURL = [[manager URLsForDirectory:NSApplicationSupportDirectory
+                                         inDomains:NSUserDomainMask] firstObject];
+    supportURL = [supportURL URLByAppendingPathComponent:@"MacDown 3000"
+                                             isDirectory:YES];
+    supportURL = [supportURL URLByAppendingPathComponent:@"Table Layouts"
+                                             isDirectory:YES];
+    return [supportURL URLByAppendingPathComponent:@"table-layouts.json"];
+}
+
+NS_INLINE NSString *MPTableLayoutDocumentKeyForURL(NSURL *url)
+{
+    if (!url)
+        return nil;
+    if (url.isFileURL)
+        return url.URLByStandardizingPath.path;
+    return url.absoluteString;
+}
+
+NS_INLINE NSMutableDictionary *MPMutableDictionaryFromJSONObject(id object)
+{
+    if (![object isKindOfClass:[NSDictionary class]])
+        return [NSMutableDictionary dictionary];
+
+    NSMutableDictionary *result = [NSMutableDictionary dictionary];
+    [(NSDictionary *)object enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *stop) {
+        if ([key isKindOfClass:[NSString class]])
+        {
+            if ([value isKindOfClass:[NSDictionary class]])
+                result[key] = MPMutableDictionaryFromJSONObject(value);
+            else
+                result[key] = value;
+        }
+    }];
+    return result;
 }
 
 
@@ -425,6 +472,119 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (NSUInteger)mathJaxRenderGeneration
 {
     return _mathJaxRenderGeneration;
+}
+
+- (NSURL *)tableLayoutsFileURL
+{
+    if (!_tableLayoutsFileURL)
+        _tableLayoutsFileURL = MPDefaultTableLayoutsFileURL();
+    return _tableLayoutsFileURL;
+}
+
+- (NSMutableDictionary *)tableLayouts
+{
+    if (!_tableLayouts)
+        _tableLayouts = [NSMutableDictionary dictionary];
+    return _tableLayouts;
+}
+
+- (NSString *)currentTableLayoutDocumentKey
+{
+    return MPTableLayoutDocumentKeyForURL(self.fileURL);
+}
+
+- (NSMutableDictionary *)tableLayoutStore
+{
+    NSData *data = [NSData dataWithContentsOfURL:self.tableLayoutsFileURL];
+    if (!data.length)
+        return [NSMutableDictionary dictionary];
+
+    id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
+    return MPMutableDictionaryFromJSONObject(json);
+}
+
+- (void)loadTableLayoutsIfNeeded
+{
+    NSString *documentKey = [self currentTableLayoutDocumentKey];
+    NSString *previousDocumentKey = self.tableLayoutDocumentKey;
+    if ((!documentKey && !previousDocumentKey)
+        || [documentKey isEqualToString:previousDocumentKey])
+        return;
+
+    BOOL shouldMigrateSessionLayouts = (documentKey.length
+                                        && self.tableLayouts.count > 0);
+    self.tableLayoutDocumentKey = documentKey;
+
+    if (shouldMigrateSessionLayouts)
+    {
+        [self persistTableLayouts];
+        return;
+    }
+
+    [self.tableLayouts removeAllObjects];
+
+    if (!documentKey.length)
+        return;
+
+    NSDictionary *store = [self tableLayoutStore];
+    NSDictionary *documents = store[@"documents"];
+    NSDictionary *layouts = documents[documentKey];
+    if (![layouts isKindOfClass:[NSDictionary class]])
+        return;
+
+    [layouts enumerateKeysAndObjectsUsingBlock:^(id tableKey, id columns, BOOL *stop) {
+        if (![tableKey isKindOfClass:[NSString class]]
+            || ![columns isKindOfClass:[NSDictionary class]])
+            return;
+
+        NSMutableDictionary *table = [NSMutableDictionary dictionary];
+        [(NSDictionary *)columns enumerateKeysAndObjectsUsingBlock:^(id column, id width, BOOL *innerStop) {
+            if ([column isKindOfClass:[NSString class]]
+                && [width respondsToSelector:@selector(doubleValue)]
+                && [width doubleValue] >= kMPMinimumTableColumnWidth)
+                table[column] = @([width doubleValue]);
+        }];
+        if (table.count)
+            self.tableLayouts[tableKey] = table;
+    }];
+}
+
+- (void)persistTableLayouts
+{
+    NSString *documentKey = [self currentTableLayoutDocumentKey];
+    if (!documentKey.length)
+        return;
+
+    NSMutableDictionary *store = [self tableLayoutStore];
+    NSMutableDictionary *documents = MPMutableDictionaryFromJSONObject(store[@"documents"]);
+    store[@"documents"] = documents;
+
+    if (self.tableLayouts.count)
+        documents[documentKey] = [self.tableLayouts copy];
+    else
+        [documents removeObjectForKey:documentKey];
+
+    NSURL *directoryURL = [self.tableLayoutsFileURL URLByDeletingLastPathComponent];
+    [[NSFileManager defaultManager] createDirectoryAtURL:directoryURL
+                             withIntermediateDirectories:YES
+                                              attributes:nil
+                                                   error:NULL];
+    NSData *data = [NSJSONSerialization dataWithJSONObject:store
+                                                   options:NSJSONWritingPrettyPrinted
+                                                     error:NULL];
+    if (data)
+        [data writeToURL:self.tableLayoutsFileURL atomically:YES];
+}
+
+- (NSString *)rendererTableLayoutsJSON:(MPRenderer *)renderer
+{
+    [self loadTableLayoutsIfNeeded];
+    NSData *data = [NSJSONSerialization dataWithJSONObject:self.tableLayouts
+                                                   options:0
+                                                     error:NULL];
+    if (!data)
+        return @"{}";
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?: @"{}";
 }
 
 
@@ -1173,6 +1333,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self handleCheckboxToggle:url];
         return;
     }
+    if ([url.scheme isEqualToString:kMPTableLayoutScheme])
+    {
+        [listener ignore];
+        [self handleTableLayoutURL:url];
+        return;
+    }
 
     switch ([information[WebActionNavigationTypeKey] integerValue])
     {
@@ -1443,6 +1609,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                     @"  body.innerHTML = html;"
                     @"  if(window.Prism){Prism.highlightAll();}"
                     @"  if(typeof window.macdownInitTaskList==='function'){window.macdownInitTaskList();}"
+                    @"  if(typeof window.macdownInitTableResize==='function'){window.macdownInitTableResize();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
@@ -3018,6 +3185,81 @@ to link outside that scope.", \
 
 #pragma mark - Interactive Checkbox Support (Issue #269)
 
+- (NSDictionary<NSString *, NSString *> *)queryItemsByNameForURL:(NSURL *)url
+{
+    NSURLComponents *components =
+        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSMutableDictionary *items = [NSMutableDictionary dictionary];
+    for (NSURLQueryItem *item in components.queryItems)
+    {
+        if (item.name.length && item.value)
+            items[item.name] = item.value;
+    }
+    return items;
+}
+
+/**
+ * Handle table layout URLs from the live preview.
+ * URL format:
+ *   x-macdown-table-layout://set?token=<token>&table=<key>&column=<n>&width=<px>
+ *   x-macdown-table-layout://reset?token=<token>&table=<key>&column=<n>
+ */
+- (void)handleTableLayoutURL:(NSURL *)url
+{
+    NSString *action = url.host;
+    if (![action isEqualToString:kMPTableLayoutSetAction]
+        && ![action isEqualToString:kMPTableLayoutResetAction])
+        return;
+
+    NSDictionary *items = [self queryItemsByNameForURL:url];
+    NSString *token = items[@"token"];
+    if (!token.length
+        || ![token isEqualToString:self.renderer.tableLayoutBridgeToken])
+    {
+        NSLog(@"MacDown: Ignored unauthorized table layout URL: %@", url);
+        return;
+    }
+
+    NSString *tableKey = items[@"table"];
+    NSString *column = items[@"column"];
+    if (!tableKey.length || !column.length)
+        return;
+
+    NSCharacterSet *digits = [NSCharacterSet decimalDigitCharacterSet];
+    if ([[column stringByTrimmingCharactersInSet:digits] length] != 0)
+        return;
+
+    [self loadTableLayoutsIfNeeded];
+    if ([action isEqualToString:kMPTableLayoutSetAction])
+    {
+        double width = [items[@"width"] doubleValue];
+        if (width < kMPMinimumTableColumnWidth)
+            return;
+        NSNumber *newWidth = @(round(width));
+        NSMutableDictionary *table = self.tableLayouts[tableKey];
+        if (!table)
+        {
+            table = [NSMutableDictionary dictionary];
+            self.tableLayouts[tableKey] = table;
+        }
+        if ([table[column] isEqualToNumber:newWidth])
+            return;
+        table[column] = newWidth;
+    }
+    else
+    {
+        NSMutableDictionary *table = self.tableLayouts[tableKey];
+        if (!table[column])
+            return;
+        [table removeObjectForKey:column];
+        if (!table.count)
+            [self.tableLayouts removeObjectForKey:tableKey];
+    }
+
+    if ([self currentTableLayoutDocumentKey].length)
+        [self persistTableLayouts];
+}
+
 /**
  * Handle the checkbox toggle URL from the preview.
  * URL format: x-macdown-checkbox://toggle/<index>
@@ -3027,17 +3269,7 @@ to link outside that scope.", \
     if (![url.host isEqualToString:@"toggle"])
         return;
 
-    NSURLComponents *components =
-        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
-    NSString *token = nil;
-    for (NSURLQueryItem *item in components.queryItems)
-    {
-        if ([item.name isEqualToString:@"token"])
-        {
-            token = item.value;
-            break;
-        }
-    }
+    NSString *token = [self queryItemsByNameForURL:url][@"token"];
     if (!token.length
         || ![token isEqualToString:self.renderer.checkboxBridgeToken])
     {

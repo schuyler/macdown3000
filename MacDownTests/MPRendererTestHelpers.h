@@ -21,6 +21,7 @@
 @interface MPMockRendererDataSource : NSObject <MPRendererDataSource>
 @property (nonatomic, copy) NSString *markdown;
 @property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) NSString *tableLayoutsJSON;
 @end
 
 
