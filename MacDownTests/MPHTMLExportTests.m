@@ -161,6 +161,19 @@
                   @"Should target th elements");
 }
 
+- (void)testExportCSSKeepsTableHeadersOnOneLine
+{
+    NSString *cssContent = [self exportCSSContent];
+    XCTAssertNotNil(cssContent, @"export.css should have content");
+
+    XCTAssertTrue([cssContent containsString:@"white-space: nowrap"],
+                  @"Table headers should not wrap short phase labels");
+    XCTAssertTrue([cssContent containsString:@"word-break: normal"],
+                  @"Table headers should preserve normal word breaking");
+    XCTAssertTrue([cssContent containsString:@"overflow-x: auto"],
+                  @"Wide tables should scroll horizontally instead of squeezing columns");
+}
+
 - (void)testExportCSSContainsBlockquoteAndDescriptionBreaking
 {
     NSString *cssContent = [self exportCSSContent];

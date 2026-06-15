@@ -28,6 +28,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (strong) MPRenderer *renderer;
 @property (unsafe_unretained) MPEditorView *editor;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
+@property (strong) NSMutableDictionary *tableLayouts;
+@property (strong) NSURL *tableLayoutsFileURL;
 - (void)updateHeaderLocations;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
@@ -43,6 +45,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (nonatomic, readonly) BOOL isPreviewReady;
 // Commit 5 (gap 10): checkbox toggle
 - (void)handleCheckboxToggle:(NSURL *)url;
+- (void)handleTableLayoutURL:(NSURL *)url;
+- (NSString *)rendererTableLayoutsJSON:(MPRenderer *)renderer;
 // Commit 6 (gaps 1+3): layout-change sync
 - (void)refreshHeaderCacheAfterResize;
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
@@ -1941,6 +1945,164 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     XCTAssertEqualObjects(editor.string, @"- [x] Task",
                           @"Checkbox toggles with the active bridge token should update the source document");
+}
+
+- (void)testHandleTableLayoutRejectsMismatchedToken
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    doc.renderer = renderer;
+    [renderer setValue:@"expected-token" forKey:@"tableLayoutBridgeToken"];
+
+    NSURL *url = [NSURL URLWithString:
+                  @"x-macdown-table-layout://set?token=wrong-token&table=0:abc&column=1&width=120"];
+    [doc handleTableLayoutURL:url];
+
+    XCTAssertEqual(doc.tableLayouts.count, 0u,
+                   @"Table layout messages with a mismatched token must be ignored");
+}
+
+- (void)testHandleTableLayoutDoesNotPersistUnsavedDocuments
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    doc.renderer = renderer;
+    [renderer setValue:@"expected-token" forKey:@"tableLayoutBridgeToken"];
+
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                      [NSString stringWithFormat:@"macdown-table-layout-%@.json",
+                       NSUUID.UUID.UUIDString]];
+    doc.tableLayoutsFileURL = [NSURL fileURLWithPath:path];
+
+    NSURL *url = [NSURL URLWithString:
+                  @"x-macdown-table-layout://set?token=expected-token&table=0:abc&column=1&width=120"];
+    [doc handleTableLayoutURL:url];
+
+    XCTAssertEqualObjects(doc.tableLayouts[@"0:abc"][@"1"], @120,
+                          @"Unsaved documents should keep table widths for the current session");
+    XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:path],
+                   @"Unsaved documents must not write table widths to Application Support");
+}
+
+- (void)testUntitledTableLayoutsPersistAfterSavingDocument
+{
+    NSString *layoutPath = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                            [NSString stringWithFormat:@"macdown-table-layout-%@.json",
+                             NSUUID.UUID.UUIDString]];
+    NSURL *layoutURL = [NSURL fileURLWithPath:layoutPath];
+    NSURL *documentURL = [NSURL fileURLWithPath:
+                          [NSTemporaryDirectory() stringByAppendingPathComponent:
+                           [NSString stringWithFormat:@"saved-table-doc-%@.md",
+                            NSUUID.UUID.UUIDString]]];
+
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    doc.renderer = renderer;
+    doc.tableLayoutsFileURL = layoutURL;
+    [renderer setValue:@"expected-token" forKey:@"tableLayoutBridgeToken"];
+
+    NSURL *setURL = [NSURL URLWithString:
+                     @"x-macdown-table-layout://set?token=expected-token&table=0:abc&column=1&width=120"];
+    [doc handleTableLayoutURL:setURL];
+    XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:layoutPath],
+                   @"Untitled table widths should remain session-only before save");
+
+    [doc setFileURL:documentURL];
+    NSString *json = [doc rendererTableLayoutsJSON:renderer];
+
+    XCTAssertEqualObjects(doc.tableLayouts[@"0:abc"][@"1"], @120,
+                          @"Saving an untitled document should keep session table widths");
+    XCTAssertTrue([json containsString:@"0:abc"],
+                  @"Migrated table layout JSON should include the existing table key");
+    XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:layoutPath],
+                  @"Migrated table widths should persist under the saved document path");
+}
+
+- (void)testFileBackedTableLayoutsPersistAfterSaveAs
+{
+    NSString *layoutPath = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                            [NSString stringWithFormat:@"macdown-table-layout-%@.json",
+                             NSUUID.UUID.UUIDString]];
+    NSURL *layoutURL = [NSURL fileURLWithPath:layoutPath];
+    NSURL *originalURL = [NSURL fileURLWithPath:
+                          [NSTemporaryDirectory() stringByAppendingPathComponent:
+                           [NSString stringWithFormat:@"original-table-doc-%@.md",
+                            NSUUID.UUID.UUIDString]]];
+    NSURL *saveAsURL = [NSURL fileURLWithPath:
+                        [NSTemporaryDirectory() stringByAppendingPathComponent:
+                         [NSString stringWithFormat:@"save-as-table-doc-%@.md",
+                          NSUUID.UUID.UUIDString]]];
+
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    doc.renderer = renderer;
+    doc.tableLayoutsFileURL = layoutURL;
+    [doc setFileURL:originalURL];
+    [renderer setValue:@"expected-token" forKey:@"tableLayoutBridgeToken"];
+
+    NSURL *setURL = [NSURL URLWithString:
+                     @"x-macdown-table-layout://set?token=expected-token&table=0:abc&column=1&width=144"];
+    [doc handleTableLayoutURL:setURL];
+
+    [doc setFileURL:saveAsURL];
+    NSString *json = [doc rendererTableLayoutsJSON:renderer];
+
+    XCTAssertEqualObjects(doc.tableLayouts[@"0:abc"][@"1"], @144,
+                          @"Save As should keep current table widths in memory");
+    XCTAssertTrue([json containsString:@"144"],
+                  @"Save As should expose current table widths in preview JSON");
+
+    MPDocument *reopened = [[MPDocument alloc] init];
+    reopened.tableLayoutsFileURL = layoutURL;
+    [reopened setFileURL:saveAsURL];
+    NSString *savedJSON = [reopened rendererTableLayoutsJSON:renderer];
+    XCTAssertTrue([savedJSON containsString:@"144"],
+                  @"Save As should persist current table widths under the new document path");
+}
+
+- (void)testHandleTableLayoutSavesLoadsAndResetsFileBackedWidths
+{
+    NSString *layoutPath = [NSTemporaryDirectory() stringByAppendingPathComponent:
+                            [NSString stringWithFormat:@"macdown-table-layout-%@.json",
+                             NSUUID.UUID.UUIDString]];
+    NSURL *layoutURL = [NSURL fileURLWithPath:layoutPath];
+    NSURL *documentURL = [NSURL fileURLWithPath:
+                          [NSTemporaryDirectory() stringByAppendingPathComponent:
+                           [NSString stringWithFormat:@"table-doc-%@.md", NSUUID.UUID.UUIDString]]];
+
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    doc.renderer = renderer;
+    doc.tableLayoutsFileURL = layoutURL;
+    [doc setFileURL:documentURL];
+    [renderer setValue:@"expected-token" forKey:@"tableLayoutBridgeToken"];
+
+    NSURL *setURL = [NSURL URLWithString:
+                     @"x-macdown-table-layout://set?token=expected-token&table=0:abc&column=1&width=132"];
+    [doc handleTableLayoutURL:setURL];
+
+    XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:layoutPath],
+                  @"File-backed documents should persist table widths");
+
+    MPDocument *reopened = [[MPDocument alloc] init];
+    reopened.tableLayoutsFileURL = layoutURL;
+    [reopened setFileURL:documentURL];
+    NSString *json = [reopened rendererTableLayoutsJSON:renderer];
+    XCTAssertTrue([json containsString:@"0:abc"],
+                  @"Saved table layouts should load for the same document URL");
+    XCTAssertTrue([json containsString:@"132"],
+                  @"Saved column width should load for the same document URL");
+
+    NSURL *resetURL = [NSURL URLWithString:
+                       @"x-macdown-table-layout://reset?token=expected-token&table=0:abc&column=1"];
+    [doc handleTableLayoutURL:resetURL];
+
+    MPDocument *afterReset = [[MPDocument alloc] init];
+    afterReset.tableLayoutsFileURL = layoutURL;
+    [afterReset setFileURL:documentURL];
+    NSString *resetJSON = [afterReset rendererTableLayoutsJSON:renderer];
+    XCTAssertFalse([resetJSON containsString:@"0:abc"],
+                   @"Reset should remove saved table layout widths");
 }
 
 #pragma mark - Group J — Sync after layout changes (Commit 6, gaps 1+3)
