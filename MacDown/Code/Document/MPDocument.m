@@ -1533,24 +1533,43 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return [self previewSafeBaseURL:baseUrl];
 }
 
-// Issue #431: On macOS 26, WebKit silently refuses to load file:// preview
-// content whose base resource is an executable file. Some sync clients (notably
-// OneDrive) set the execute bit (0700) on every synced file and revert any
-// manual `chmod -x`, so externally-originated documents render blank even though
-// the editor — which reads bytes via NSDocument, not WebKit — works fine.
+// Issues #405 and #431: On macOS 26, WebKit silently refuses to load file://
+// preview content when the base resource is the real document file, based on
+// file metadata WebKit inspects but the editor — which reads bytes via
+// NSDocument, not WebKit — does not. The preview blanks while the editor works
+// fine. Two known triggers, neither of which lives in the document bytes:
 //
-// When the document file is executable, substitute a non-existent sentinel in
-// the same directory as the base URL. WebKit no longer sees an executable base
-// resource, while everything that actually depends on the base URL — relative
-// resource resolution, MPLocalFilePathsInHTML, cache busting, and the
-// MPURLSecurityPolicy scope check (which keys off the base URL's parent
-// directory) — is unchanged, since the sentinel lives in the same directory.
+//   * The execute bit (0700) that some sync clients (notably OneDrive) set on
+//     every synced file and revert after any manual `chmod -x`.
+//   * Stale TCC / provenance / app-association state carried by a file's inode
+//     and birthtime across its history (issue #431). `xattr -c` cannot clear it
+//     because the relevant attributes are kernel-protected, and copying the
+//     bytes to a fresh inode makes the very same content render correctly.
+//
+// Because there is no reliable runtime signal that a given file will trigger a
+// blank load, and because the base URL is only ever needed for the document's
+// *directory* — relative resource resolution, MPLocalFilePathsInHTML, cache
+// busting, and the MPURLSecurityPolicy scope check (which keys off the base
+// URL's parent directory) — the real document file never needs to be the base
+// resource at all. Whenever the base URL points at a real file, substitute a
+// non-existent sentinel in the same directory. WebKit then never inspects the
+// document file as its base resource, while everything that depends on the
+// directory is unchanged. Directory base URLs (unsaved documents use the default
+// HTML directory), non-existent paths, and non-file URLs are already safe and
+// pass through untouched.
 - (NSURL *)previewSafeBaseURL:(NSURL *)baseURL
 {
     if (!baseURL || !baseURL.isFileURL)
         return baseURL;
-    if (![MPURLSecurityPolicy isExecutableOrAppBundleAtURL:baseURL])
+
+    NSString *path = baseURL.URLByResolvingSymlinksInPath.path;
+    BOOL isDirectory = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path
+                                              isDirectory:&isDirectory])
         return baseURL;
+    if (isDirectory)
+        return baseURL;
+
     return [baseURL.URLByDeletingLastPathComponent
             URLByAppendingPathComponent:@".macdown-preview-base"];
 }

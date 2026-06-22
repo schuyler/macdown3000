@@ -864,4 +864,35 @@
     }
 }
 
+
+#pragma mark - Opened-File Preview Base URL (Issue #405)
+
+// Simulate the open-file state: the document has a fileURL pointing at a real
+// on-disk .md file, exactly as it does after opening a saved document. The base
+// URL handed to the preview WebView — through the MPRendererDelegate
+// rendererBaseURL: hook that MPRenderer queries before producing HTML — must
+// never be the real document file, because WebKit on macOS 26 can silently blank
+// the preview when its base resource is that file (issues #405 / #431). Full
+// WebView rendering can't be asserted headlessly, but this exercises the
+// document-level base-URL path where the blank-preview bug lives.
+- (void)testRendererBaseURLForOpenedFileAvoidsRealDocumentFile
+{
+    NSString *content = @"# Opened\n\nBody text.\n";
+    [content writeToURL:self.testFileURL atomically:YES
+               encoding:NSUTF8StringEncoding error:nil];
+    self.document.fileURL = self.testFileURL;
+
+    NSURL *base = [(id<MPRendererDelegate>)self.document rendererBaseURL:nil];
+
+    XCTAssertNotNil(base, @"An opened document must still provide a base URL");
+    XCTAssertNotEqualObjects(base, self.testFileURL,
+        @"The opened document's own file must never be the preview base resource");
+    XCTAssertEqualObjects(base.URLByDeletingLastPathComponent.path,
+                          self.testFileURL.URLByDeletingLastPathComponent.path,
+        @"The base URL must stay in the document's directory so relative "
+         "resources and the security scope check are unchanged");
+    XCTAssertFalse([self.fileManager fileExistsAtPath:base.path],
+        @"The base URL must point at a non-existent sentinel, not a real file");
+}
+
 @end
