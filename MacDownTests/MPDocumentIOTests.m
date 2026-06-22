@@ -121,17 +121,27 @@
     XCTAssertNil(error, @"No error should occur loading CRLF-terminated content");
 }
 
-- (void)testPreviewSafeBaseURLLeavesNonExecutableFileUnchanged
+- (void)testPreviewSafeBaseURLRewritesRegularFile
 {
-    // Issue #431: a normal (non-executable) document file must be used as-is so
-    // relative resources and security scope behave exactly as before.
+    // Issues #405 / #431: WebKit on macOS 26 can silently blank the preview
+    // based on file metadata it inspects but the editor does not (execute bit,
+    // stale TCC/provenance state). There is no reliable runtime signal for this,
+    // so the real document file is NEVER used as the preview base resource — even
+    // an ordinary, non-executable file is swapped for a non-existent sentinel in
+    // the SAME directory. The directory is all the scope/resolution code needs.
     NSString *content = @"# Test\n";
     [content writeToURL:self.testFileURL atomically:YES
                encoding:NSUTF8StringEncoding error:nil];
 
     NSURL *safe = [self.document previewSafeBaseURL:self.testFileURL];
-    XCTAssertEqualObjects(safe, self.testFileURL,
-        @"Non-executable files should be returned unchanged");
+
+    XCTAssertNotEqualObjects(safe, self.testFileURL,
+        @"A real document file must never be used as the preview base URL");
+    XCTAssertEqualObjects(safe.URLByDeletingLastPathComponent.path,
+                          self.testFileURL.URLByDeletingLastPathComponent.path,
+        @"Sentinel base URL must live in the same directory as the document");
+    XCTAssertFalse([self.fileManager fileExistsAtPath:safe.path],
+        @"Sentinel base URL must not point at a real file");
 }
 
 - (void)testPreviewSafeBaseURLRewritesExecutableFile
@@ -155,6 +165,47 @@
         @"Sentinel base URL must live in the same directory as the document");
     XCTAssertFalse([self.fileManager fileExistsAtPath:safe.path],
         @"Sentinel base URL must not point at a real (executable) file");
+}
+
+- (void)testPreviewSafeBaseURLLeavesDirectoryUnchanged
+{
+    // An unsaved document has no fileURL, so the base URL is the default HTML
+    // directory rather than a document file. A directory is already a safe base
+    // resource (relative resolution uses the directory itself) and must pass
+    // through untouched.
+    NSURL *dirURL = [NSURL fileURLWithPath:self.testDirectory isDirectory:YES];
+
+    NSURL *safe = [self.document previewSafeBaseURL:dirURL];
+    XCTAssertEqualObjects(safe, dirURL,
+        @"Directory base URLs must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNonexistentPathUnchanged
+{
+    // A file URL that does not resolve to anything on disk has no real base
+    // resource for WebKit to inspect, so there is nothing to make safe.
+    NSURL *missingURL = [NSURL fileURLWithPath:
+        [self.testDirectory stringByAppendingPathComponent:@"missing.md"]];
+
+    NSURL *safe = [self.document previewSafeBaseURL:missingURL];
+    XCTAssertEqualObjects(safe, missingURL,
+        @"Non-existent file paths must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNonFileURLUnchanged
+{
+    // Only file:// base URLs can trigger the WebKit blanking behavior.
+    NSURL *httpURL = [NSURL URLWithString:@"https://example.com/page.html"];
+
+    NSURL *safe = [self.document previewSafeBaseURL:httpURL];
+    XCTAssertEqualObjects(safe, httpURL,
+        @"Non-file URLs must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNilUnchanged
+{
+    XCTAssertNil([self.document previewSafeBaseURL:nil],
+        @"A nil base URL must be returned as nil");
 }
 
 - (void)testWritableTypes
