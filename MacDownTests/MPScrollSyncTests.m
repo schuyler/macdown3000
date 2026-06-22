@@ -2301,6 +2301,14 @@ static const NSUInteger MPScrollOwnerNeither = 2;
                           @"B8: setext header then HR yields just the header (Issue #436)");
 }
 
+- (void)testClassifierSetextWithLeadingAndTrailingSpaces
+{
+    XCTAssertEqualObjects([self kindsFor:@"Title\n   --- "], (@[@2]),
+                          @"B9: setext underline allows 0-3 leading spaces and trailing whitespace (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"Title\n  ==="], (@[@1]),
+                          @"B9: '===' underline allows leading spaces too (Issue #436)");
+}
+
 // --- HR vs setext (no reference points) ---
 
 - (void)testClassifierStandaloneDashHR

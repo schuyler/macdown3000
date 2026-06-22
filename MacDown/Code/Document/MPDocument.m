@@ -2826,8 +2826,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     static NSRegularExpression *hrRegex = nil;     // thematic break (-, *, _)
     static dispatch_once_t regexOnceToken;
     dispatch_once(&regexOnceToken, ^{
-        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
-        eqRegex = [NSRegularExpression regularExpressionWithPattern:@"^([=]+)$" options:0 error:NULL];
+        // Setext underlines: 0-3 leading spaces and trailing whitespace are allowed
+        // (CommonMark), matching how the preview DOM renders e.g. "Text\n   ---".
+        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}([-]+)[ \\t]*$" options:0 error:NULL];
+        eqRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}([=]+)[ \\t]*$" options:0 error:NULL];
         // Capture the leading hashes (0-3 leading spaces allowed); a space must follow.
         atxRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(#+)\\s" options:0 error:NULL];
         imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
