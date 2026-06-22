@@ -1384,6 +1384,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSURL *baseUrl = self.fileURL;
     if (!baseUrl)   // Unsaved doument; just use the default URL.
         baseUrl = self.preferences.htmlDefaultDirectoryUrl;
+    baseUrl = [self previewSafeBaseURL:baseUrl];
 
     self.manualRender = self.preferences.markdownManualRender;
 
@@ -1529,7 +1530,29 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSURL *baseUrl = self.fileURL;
     if (!baseUrl)
         baseUrl = self.preferences.htmlDefaultDirectoryUrl;
-    return baseUrl;
+    return [self previewSafeBaseURL:baseUrl];
+}
+
+// Issue #431: On macOS 26, WebKit silently refuses to load file:// preview
+// content whose base resource is an executable file. Some sync clients (notably
+// OneDrive) set the execute bit (0700) on every synced file and revert any
+// manual `chmod -x`, so externally-originated documents render blank even though
+// the editor — which reads bytes via NSDocument, not WebKit — works fine.
+//
+// When the document file is executable, substitute a non-existent sentinel in
+// the same directory as the base URL. WebKit no longer sees an executable base
+// resource, while everything that actually depends on the base URL — relative
+// resource resolution, MPLocalFilePathsInHTML, cache busting, and the
+// MPURLSecurityPolicy scope check (which keys off the base URL's parent
+// directory) — is unchanged, since the sentinel lives in the same directory.
+- (NSURL *)previewSafeBaseURL:(NSURL *)baseURL
+{
+    if (!baseURL || !baseURL.isFileURL)
+        return baseURL;
+    if (![MPURLSecurityPolicy isExecutableOrAppBundleAtURL:baseURL])
+        return baseURL;
+    return [baseURL.URLByDeletingLastPathComponent
+            URLByAppendingPathComponent:@".macdown-preview-base"];
 }
 
 #pragma mark - Resource Watcher Delegate (Issue #110)
