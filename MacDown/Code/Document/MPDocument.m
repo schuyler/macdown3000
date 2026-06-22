@@ -1646,6 +1646,13 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     if (!self.preferences.editorShowWordCount)
         return;
 
+    // No editor yet (e.g. before the nib loads): nothing is selected.
+    if (!self.editor)
+    {
+        [self refreshDocumentWordCountTitles];
+        return;
+    }
+
     NSString *string = self.editor.string;
     NSRange selection = self.editor.selectedRange;
 
