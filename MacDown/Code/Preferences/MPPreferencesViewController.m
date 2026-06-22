@@ -32,15 +32,6 @@ NSString * const MPDidRequestEditorSetupNotification =
 
     NSView *wrapper = [[NSView alloc] initWithFrame:frame];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // When the NIB loaded, NSViewController linked the content view's next
-    // responder back to this controller. Re-homing the content view inside a
-    // wrapper and then re-pointing -view at that wrapper leaves a responder
-    // cycle, which trips "The next responder should never be yourself!" the
-    // first time the responder chain is traversed (e.g. during layout in a
-    // unit test). Detach the link before re-homing, then restore a clean
-    // chain (content -> wrapper -> controller) afterward.
-    contentView.nextResponder = nil;
     [wrapper addSubview:contentView];
 
     // Keep the panel's designed width and start at the designed height. The
@@ -55,7 +46,6 @@ NSString * const MPDidRequestEditorSetupNotification =
     ]];
 
     self.view = wrapper;
-    contentView.nextResponder = wrapper;
 
     // Now that the content is wrapped at its designed width, grow the height to
     // fit the content for the active locale: longer localized strings (e.g.
@@ -69,6 +59,21 @@ NSString * const MPDidRequestEditorSetupNotification =
     NSRect wrapperFrame = wrapper.frame;
     wrapperFrame.size.height = height;
     wrapper.frame = wrapperFrame;
+}
+
+- (void)dealloc
+{
+    // -loadView wraps the NIB's content view in a centering wrapper, which
+    // leaves the responder chain routed through this controller. When the
+    // controller is later deallocated, NSViewController's own teardown tries to
+    // splice itself out of that chain and can hit "The next responder should
+    // never be yourself!". Detaching both ends of the link first makes the
+    // superclass cleanup a no-op. (In the running app the preference panes are
+    // retained for the process lifetime, so this only bites short-lived
+    // instances such as those created in unit tests.)
+    self.nextResponder = nil;
+    if (self.isViewLoaded)
+        self.view.nextResponder = nil;
 }
 
 - (BOOL)hasResizableWidth  { return YES; }
