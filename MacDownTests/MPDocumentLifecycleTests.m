@@ -48,12 +48,20 @@
 // Spy highlighter: records whether parseAndHighlightNow was called.
 @interface MPSpyHighlighter : HGMarkdownHighlighter
 @property (nonatomic) BOOL parseAndHighlightNowCalled;
+@property (nonatomic) BOOL clearHighlightingCalled;
+@property (nonatomic) BOOL readClearTextStylesFromTextViewCalled;
 @end
 
 @implementation MPSpyHighlighter
 - (void)parseAndHighlightNow {
     self.parseAndHighlightNowCalled = YES;
     // Do not call super — avoids actual text-view work in tests.
+}
+- (void)clearHighlighting {
+    self.clearHighlightingCalled = YES;
+}
+- (void)readClearTextStylesFromTextView {
+    self.readClearTextStylesFromTextViewCalled = YES;
 }
 @end
 
@@ -656,6 +664,29 @@
 
     XCTAssertTrue(highlighter.parseAndHighlightNowCalled,
                   @"parseAndHighlightNow must fire for new documents (issue #358)");
+}
+
+- (void)testExistingDocumentClearsHighlightingBeforeReloadHighlight
+{
+    MPSpyHighlighter *highlighter = nil;
+    MPEditorView *editor = nil;
+    [self wireDocument:self.document
+           intoRenderer:nil
+            highlighter:&highlighter
+                 editor:&editor];
+
+    self.document.loadedString = @"# Reloaded\n\nBody";
+    highlighter.clearHighlightingCalled = NO;
+    highlighter.readClearTextStylesFromTextViewCalled = NO;
+
+    [self.document reloadFromLoadedString];
+
+    XCTAssertTrue(highlighter.clearHighlightingCalled,
+                  @"Issue #378: external reload should clear stale editor attributes "
+                  @"before the async highlight pass");
+    XCTAssertTrue(highlighter.readClearTextStylesFromTextViewCalled,
+                  @"Issue #378: highlighter should refresh clear-text attributes "
+                  @"after replacing editor text");
 }
 
 // Regression: existing-document path must still trigger a render after the fix.
