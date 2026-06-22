@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Show a live word/character/character-no-spaces count for the current editor selection in the count widget, reverting to document totals when nothing is selected (#452)
+
 ### Security
 
 - Restrict auto-created link targets to the current document's folder to prevent unauthorized file creation (#386)
