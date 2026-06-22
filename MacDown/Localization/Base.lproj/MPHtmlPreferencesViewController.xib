@@ -76,7 +76,7 @@
                 </textField>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="Zna-RM-nBO">
                     <rect key="frame" x="106" y="295" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Syntax highlighted code block" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="BuQ-02-oQB">
+                    <buttonCell key="cell" type="check" title="Syntax highlighted code block" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="BuQ-02-oQB">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -120,7 +120,7 @@
                 </textField>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="ysT-Br-eSf">
                     <rect key="frame" x="127" y="221" width="260" height="18"/>
-                    <buttonCell key="cell" type="check" title="Show line numbers" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="WZa-V6-vvf">
+                    <buttonCell key="cell" type="check" title="Show line numbers" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="WZa-V6-vvf">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -131,7 +131,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="Qe1-sK-Yxe">
                     <rect key="frame" x="247" y="221" width="69" height="18"/>
-                    <buttonCell key="cell" type="check" title="Graphviz" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="Lnj-HG-QHi">
+                    <buttonCell key="cell" type="check" title="Graphviz" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="Lnj-HG-QHi">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -142,7 +142,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="bWg-uC-6W8">
                     <rect key="frame" x="318" y="221" width="68" height="18"/>
-                    <buttonCell key="cell" type="check" title="Mermaid" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="bda-Ft-ecb">
+                    <buttonCell key="cell" type="check" title="Mermaid" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="bda-Ft-ecb">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -153,7 +153,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="5mI-gS-xH9">
                     <rect key="frame" x="106" y="197" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="TeX-like math syntax" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="6vg-3f-KWk">
+                    <buttonCell key="cell" type="check" title="TeX-like math syntax" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="6vg-3f-KWk">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -171,7 +171,7 @@
                 </textField>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="u5h-MS-cR3">
                     <rect key="frame" x="127" y="176" width="260" height="18"/>
-                    <buttonCell key="cell" type="check" title="Use dollar sign ($) as inline delimiter" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="GF9-Dm-IoB">
+                    <buttonCell key="cell" type="check" title="Use dollar sign ($) as inline delimiter" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="GF9-Dm-IoB">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
@@ -182,7 +182,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="P7Z-ag-nPR">
                     <rect key="frame" x="106" y="133" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Task list syntax" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="kBf-iW-HlH">
+                    <buttonCell key="cell" type="check" title="Task list syntax" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="kBf-iW-HlH">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -192,7 +192,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="hfI-Rf-3Cr">
                     <rect key="frame" x="106" y="113" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Hide YAML front matter" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="iXi-Pv-mFl">
+                    <buttonCell key="cell" type="check" title="Hide YAML front matter" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="iXi-Pv-mFl">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -202,7 +202,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="6BB-rh-ZwZ">
                     <rect key="frame" x="106" y="93" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Detect table of contents token" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="nvS-dZ-eHT">
+                    <buttonCell key="cell" type="check" title="Detect table of contents token" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="nvS-dZ-eHT">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -212,7 +212,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="lxX-Pm-dhn">
                     <rect key="frame" x="106" y="73" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Render newline literally" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Sty-qG-J6K">
+                    <buttonCell key="cell" type="check" title="Render newline literally" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Sty-qG-J6K">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -222,7 +222,7 @@
                 </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="RCL-iK-kgx">
                     <rect key="frame" x="106" y="53" width="281" height="18"/>
-                    <buttonCell key="cell" type="check" title="Scale preview based on editor font size" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aWw-Wb-pBl">
+                    <buttonCell key="cell" type="check" title="Scale preview based on editor font size" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aWw-Wb-pBl">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -277,7 +277,7 @@
                 <constraint firstAttribute="trailing" secondItem="bih-Hu-dSj" secondAttribute="trailing" constant="20" id="9gU-rZ-Jh2"/>
                 <constraint firstItem="6BB-rh-ZwZ" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="ASs-te-jBE"/>
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="108" id="CtD-Eh-Skz"/>
-                <constraint firstItem="0ez-nk-c3q" firstAttribute="width" secondItem="f62-wu-Z6p" secondAttribute="width" id="Dr9-sw-xuw"/>
+                <constraint firstItem="0ez-nk-c3q" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" id="397-ld-css"/>
                 <constraint firstItem="6BB-rh-ZwZ" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="Ec3-wV-wvF"/>
                 <constraint firstItem="f62-wu-Z6p" firstAttribute="top" secondItem="RCL-iK-kgx" secondAttribute="bottom" constant="18" id="Efm-pX-TpX"/>
                 <constraint firstItem="bih-Hu-dSj" firstAttribute="centerY" secondItem="f62-wu-Z6p" secondAttribute="centerY" id="G5f-va-qLZ"/>
@@ -303,7 +303,6 @@
                 <constraint firstItem="lxX-Pm-dhn" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="aU1-Lx-0W1"/>
                 <constraint firstItem="vVI-g8-EhH" firstAttribute="centerY" secondItem="M0W-YD-Ouk" secondAttribute="centerY" id="bnP-5M-kyi"/>
                 <constraint firstItem="bih-Hu-dSj" firstAttribute="leading" secondItem="f62-wu-Z6p" secondAttribute="trailing" constant="8" id="ejW-lN-d1f"/>
-                <constraint firstItem="0ez-nk-c3q" firstAttribute="trailing" secondItem="f62-wu-Z6p" secondAttribute="trailing" id="fLc-Tu-YjS"/>
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="leading" secondItem="5mI-gS-xH9" secondAttribute="leading" id="fcQ-VR-b98"/>
                 <constraint firstItem="f62-wu-Z6p" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" id="fpW-YQ-VfI"/>
                 <constraint firstItem="hfI-Rf-3Cr" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="hTq-GU-Cn7"/>
