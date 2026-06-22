@@ -1,17 +1,26 @@
 /**
  * Detects reference points (headers and standalone images) in the preview document.
- * Returns an array of y-coordinates (relative to document top) for scroll synchronization.
+ * Returns parallel arrays of y-coordinates and kind codes (in document order) for
+ * scroll synchronization.
  *
  * Standalone images are defined as:
  * - An image alone in a paragraph
  * - An image wrapped in a link that's alone in a paragraph
  * - An image that's the only child of its parent element
  *
- * @returns {Array<number>} Array of y-coordinates for reference points, in document order
+ * Issue #436: The y-coordinates alone are not enough to keep the editor and preview
+ * in sync, because the editor (regex over markdown) and the preview (this DOM query)
+ * can disagree about which reference points exist mid-document. Each reference point is
+ * therefore tagged with a "kind" code so the ObjC side can align the two sequences:
+ *   - image  -> 0
+ *   - header -> header level (h1 -> 1, h2 -> 2, ... h6 -> 6)
+ *
+ * @returns {{ys: Array<number>, kinds: Array<number>}} Parallel arrays of y-coordinates
+ *          and kind codes for reference points, in document order.
  */
 (function() {
     try {
-        if (!document.body) return [];
+        if (!document.body) return {ys: [], kinds: []};
 
         var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
         var images = document.querySelectorAll('img');
@@ -72,14 +81,25 @@
             return 0;  // Same node or disconnected
         });
 
-        // Return y-coordinates (document-absolute) for all reference points.
+        // Return y-coordinates (document-absolute) and kind codes for all reference points.
         // Uses window.scrollY + rect.top so the result is independent of current scroll position.
         // No pre-filtering - the syncScrollers algorithm handles end-of-document cases.
-        return result.map(function(item) {
+        var ys = [];
+        var kinds = [];
+        for (var k = 0; k < result.length; k++) {
+            var item = result[k];
             var rect = item.node.getBoundingClientRect();
-            return window.scrollY + rect.top;
-        });
+            ys.push(window.scrollY + rect.top);
+            if (item.type === 'image') {
+                kinds.push(0);
+            } else {
+                // tagName is like 'H3'; the second character is the header level.
+                var level = parseInt(String(item.node.tagName).charAt(1), 10);
+                kinds.push((level >= 1 && level <= 6) ? level : 1);
+            }
+        }
+        return {ys: ys, kinds: kinds};
     } catch (e) {
-        return [];
+        return {ys: [], kinds: []};
     }
 })()

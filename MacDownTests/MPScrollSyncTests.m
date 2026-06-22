@@ -29,6 +29,17 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (unsafe_unretained) MPEditorView *editor;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
+// Issue #436: pure helpers for reference-point classification and sequence alignment
++ (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
+                                          outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers;
++ (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs
+          editorTypes:(NSArray<NSNumber *> *)editorTypes
+            previewYs:(NSArray<NSNumber *> *)previewYs
+         previewTypes:(NSArray<NSNumber *> *)previewTypes
+      alignedEditorYs:(NSArray<NSNumber *> **)outEditorYs
+     alignedPreviewYs:(NSArray<NSNumber *> **)outPreviewYs;
+@property (strong) NSArray<NSNumber *> *webViewHeaderTypes;
+@property (strong) NSArray<NSNumber *> *editorHeaderTypes;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
 - (void)editorTextDidChange:(NSNotification *)notification;
@@ -1499,7 +1510,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     JSContext *context = [self jsContextWithScrollY:200 headerTops:@[@100]];
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [result[@"ys"] toArray];  // Issue #436: result is now {ys, kinds}
 
     XCTAssertEqual(locations.count, 1U, @"Should return one location");
     XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 300.0, 0.5,
@@ -1520,7 +1531,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     JSContext *context = [self jsContextWithScrollY:0 headerTops:@[@150]];
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [result[@"ys"] toArray];  // Issue #436: result is now {ys, kinds}
 
     XCTAssertEqual(locations.count, 1U, @"Should return one location");
     XCTAssertEqualWithAccuracy([[locations firstObject] floatValue], 150.0, 0.5,
@@ -1560,7 +1571,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [result[@"ys"] toArray];  // Issue #436: result is now {ys, kinds}
+    NSArray *kinds = [result[@"kinds"] toArray];
 
     XCTAssertEqual(locations.count, 3U, @"Should return three locations");
     XCTAssertEqualWithAccuracy([locations[0] floatValue], 550.0, 0.5,
@@ -1569,6 +1581,9 @@ static const NSUInteger MPScrollOwnerNeither = 2;
                                @"Second header: 500+100=600");
     XCTAssertEqualWithAccuracy([locations[2] floatValue], 800.0, 0.5,
                                @"Third header: 500+300=800");
+    // Issue #436: kinds carry the header level parsed from tagName (H1/H2/H3).
+    XCTAssertEqualObjects(kinds, (@[@1, @2, @3]),
+                          @"kinds should be the header levels [1,2,3] in document order");
 }
 
 /**
@@ -1595,7 +1610,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    NSArray *locations = [result toArray];
+    NSArray *locations = [result[@"ys"] toArray];  // Issue #436: result is now {ys, kinds}
 
     XCTAssertNotNil(locations, @"Result should not be nil for empty body");
     XCTAssertEqual(locations.count, 0U, @"Empty body should return empty array");
@@ -1622,9 +1637,9 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"var document = {body: null, querySelectorAll: function(s){return [];}};\n"];
 
     JSValue *result = [context evaluateScript:script];
-    XCTAssertNoThrow((void)[result toArray],
+    XCTAssertNoThrow((void)[result[@"ys"] toArray],
                      @"Script with null document.body should not throw");
-    NSArray *locations = [result toArray];
+    NSArray *locations = [result[@"ys"] toArray];  // Issue #436: result is now {ys, kinds}
     XCTAssertEqual(locations.count, 0U, @"Null body should return empty array");
 }
 
@@ -2178,6 +2193,404 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     {
         prefs.editorSyncScrolling = savedSync;
     }
+}
+
+#pragma mark - Issue #436: Group P — Editor reference classifier (pure)
+
+/**
+ * Helper: classify markdown into reference-point kind codes via the pure classifier.
+ */
+- (NSArray<NSNumber *> *)kindsFor:(NSString *)markdown
+{
+    NSArray<NSNumber *> *lines = nil;
+    return [MPDocument editorReferenceKindsForMarkdown:markdown outLineNumbers:&lines];
+}
+
+// --- ATX headers and clamping ---
+
+- (void)testClassifierATXLevels
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n## B\n### C\n#### D\n##### E\n###### F"],
+                          (@[@1, @2, @3, @4, @5, @6]),
+                          @"A1: ATX header kind equals the hash count (Issue #436)");
+}
+
+- (void)testClassifierSevenHashesNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"####### G"], @[],
+                          @"A2: 7 hashes is not a header in CommonMark/Hoedown (Issue #436)");
+}
+
+- (void)testClassifierEightHashesNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"######## H"], @[],
+                          @"A3: 8 hashes is not a header (Issue #436)");
+}
+
+- (void)testClassifierATXRequiresSpace
+{
+    XCTAssertEqualObjects([self kindsFor:@"#NoSpace"], @[],
+                          @"A4: ATX header requires a space after the hashes (Issue #436)");
+}
+
+- (void)testClassifierBareHashNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"#"], @[],
+                          @"A5: a bare '#' with no following space/text is not a header (Issue #436)");
+}
+
+- (void)testClassifierATXLeadingSpacesAllowed
+{
+    XCTAssertEqualObjects([self kindsFor:@"   ### C"], (@[@3]),
+                          @"A7: 0-3 leading spaces are allowed before ATX hashes (Issue #436)");
+}
+
+- (void)testClassifierATXFourLeadingSpacesNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"    # C"], @[],
+                          @"A8: 4 leading spaces is indented code, not a header (Issue #436)");
+}
+
+// --- Setext headers ---
+
+- (void)testClassifierSetextEqualsIsH1
+{
+    XCTAssertEqualObjects([self kindsFor:@"Title\n==="], (@[@1]),
+                          @"B1: '===' under a paragraph line is a level-1 setext header (Issue #436)");
+}
+
+- (void)testClassifierSetextDashIsH2
+{
+    XCTAssertEqualObjects([self kindsFor:@"Title\n---"], (@[@2]),
+                          @"B2: '---' under a paragraph line is a level-2 setext header (Issue #436)");
+}
+
+- (void)testClassifierSetextRequiresPrevContent
+{
+    XCTAssertEqualObjects([self kindsFor:@"\n---"], @[],
+                          @"B3: '---' with no preceding content is an HR, not a setext header (Issue #436)");
+}
+
+- (void)testClassifierSetextAfterBlankLineIsNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"Text\n\n---"], @[],
+                          @"B4: a blank line breaks setext context, so '---' is an HR (Issue #436)");
+}
+
+- (void)testClassifierEqualsAfterBlankIsNotHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"Text\n\n==="], @[],
+                          @"B5: '===' not directly under content is not a setext header (Issue #436)");
+}
+
+- (void)testClassifierTwoDashesSetext
+{
+    XCTAssertEqualObjects([self kindsFor:@"Text\n--"], (@[@2]),
+                          @"B6: two dashes under content is a setext header, not an HR (Issue #436)");
+}
+
+- (void)testClassifierMultipleSetext
+{
+    XCTAssertEqualObjects([self kindsFor:@"H1\n===\n\nH2\n---"], (@[@1, @2]),
+                          @"B7: multiple setext headers detected with correct levels (Issue #436)");
+}
+
+- (void)testClassifierSetextThenHR
+{
+    XCTAssertEqualObjects([self kindsFor:@"H\n---\n\n***"], (@[@2]),
+                          @"B8: setext header then HR yields just the header (Issue #436)");
+}
+
+- (void)testClassifierSetextWithLeadingAndTrailingSpaces
+{
+    XCTAssertEqualObjects([self kindsFor:@"Title\n   --- "], (@[@2]),
+                          @"B9: setext underline allows 0-3 leading spaces and trailing whitespace (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"Title\n  ==="], (@[@1]),
+                          @"B9: '===' underline allows leading spaces too (Issue #436)");
+}
+
+// --- HR vs setext (no reference points) ---
+
+- (void)testClassifierStandaloneDashHR
+{
+    XCTAssertEqualObjects([self kindsFor:@"---\n\ntext"], @[],
+                          @"C1: a leading '---' is an HR (Issue #436)");
+}
+
+- (void)testClassifierAsteriskHR
+{
+    XCTAssertEqualObjects([self kindsFor:@"***"], @[], @"C2: '***' is an HR (Issue #436)");
+}
+
+- (void)testClassifierSpacedDashHR
+{
+    XCTAssertEqualObjects([self kindsFor:@"- - -"], @[],
+                          @"C4: '- - -' is an HR, not a setext underline (Issue #436)");
+}
+
+- (void)testClassifierHRAfterATX
+{
+    XCTAssertEqualObjects([self kindsFor:@"# H\n\n---"], (@[@1]),
+                          @"C5: ATX header followed by an HR yields just the header (Issue #436)");
+}
+
+- (void)testClassifierHeadingThenDashesIsHR
+{
+    XCTAssertEqualObjects([self kindsFor:@"# H\n---"], (@[@1]),
+                          @"An ATX heading is not paragraph text, so a following '---' is an HR (Issue #436)");
+}
+
+// --- Fenced code blocks ---
+
+- (void)testClassifierBacktickFenceSkipsHeaders
+{
+    XCTAssertEqualObjects([self kindsFor:@"# Real\n\n```\n# Fake\n## Fake\n```\n\n## Real2"],
+                          (@[@1, @2]),
+                          @"D1: headers inside a backtick fence are skipped (Issue #436)");
+}
+
+- (void)testClassifierTildeFenceSkipsHeaders
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n~~~\n# Fake\n~~~\n\n## B"],
+                          (@[@1, @2]),
+                          @"D2: headers inside a tilde fence are skipped (Issue #436)");
+}
+
+- (void)testClassifierFenceWithInfoString
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n```objc\n# Fake\n```\n\n## B"],
+                          (@[@1, @2]),
+                          @"D3: a fence with an info string still skips its contents (Issue #436)");
+}
+
+- (void)testClassifierUnclosedFenceAtEOFSkipsRest
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n```\n# Fake\n## Fake"],
+                          (@[@1]),
+                          @"D4: an unclosed fence at EOF swallows the remaining headers (Issue #436)");
+}
+
+- (void)testClassifierBacktickDoesNotCloseTildeFence
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n~~~\n# Fake\n```\n## StillFake\n~~~\n\n## B"],
+                          (@[@1, @2]),
+                          @"D5: a backtick line does not close a tilde fence (Issue #436)");
+}
+
+- (void)testClassifierClosingFenceLengthRule
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n````\n# Fake\n```\n## StillFake\n````\n\n## B"],
+                          (@[@1, @2]),
+                          @"D6: a closing fence must be at least as long as the opening fence (Issue #436)");
+}
+
+- (void)testClassifierFourBacktickFence
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n````\n# Fake\n````\n\n## B"],
+                          (@[@1, @2]),
+                          @"D7: a 4-backtick fence opens and closes normally (Issue #436)");
+}
+
+- (void)testClassifierFenceThreeLeadingSpaces
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n   ```\n# Fake\n   ```\n\n## B"],
+                          (@[@1, @2]),
+                          @"D8: 0-3 leading spaces are allowed on a fence marker (Issue #436)");
+}
+
+- (void)testClassifierFourLeadingSpacesIsNotAFence
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n    ```\n# Fake\n\n## B"],
+                          (@[@1, @1, @2]),
+                          @"D9: a 4-space-indented marker is not a fence, so '# Fake' is a real header (Issue #436)");
+}
+
+- (void)testClassifierImageInsideFenceSkipped
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n\n```\n![x](y.png)\n```\n\n## B"],
+                          (@[@1, @2]),
+                          @"D11: a standalone image inside a fence is skipped (Issue #436)");
+}
+
+// --- Images ---
+
+- (void)testClassifierStandaloneInlineImage
+{
+    XCTAssertEqualObjects([self kindsFor:@"![alt](img.png)"], (@[@0]),
+                          @"E1: a whole-line inline image is a reference point (Issue #436)");
+}
+
+- (void)testClassifierStandaloneRefImage
+{
+    XCTAssertEqualObjects([self kindsFor:@"![alt][ref]"], (@[@0]),
+                          @"E2: a whole-line reference image is a reference point (Issue #436)");
+}
+
+- (void)testClassifierInlineImageInTextIgnored
+{
+    XCTAssertEqualObjects([self kindsFor:@"text ![x](y.png) more"], @[],
+                          @"E3: an image inline with text is not a reference point (Issue #436)");
+}
+
+- (void)testClassifierImageWithTrailingTextIgnored
+{
+    XCTAssertEqualObjects([self kindsFor:@"![x](y.png) caption"], @[],
+                          @"E5: an image with trailing text is not standalone (Issue #436)");
+}
+
+- (void)testClassifierHeaderThenImage
+{
+    XCTAssertEqualObjects([self kindsFor:@"# H\n\n![x](y.png)"], (@[@1, @0]),
+                          @"E6: header then standalone image yields [H1, image] (Issue #436)");
+}
+
+// --- Mixed / integration ---
+
+- (void)testClassifierComplexDocument
+{
+    NSString *md = @"# Main\n\nintro\n\n## Sec\n\n![Fig](f.png)\n\n"
+                   @"text ![inline](s.png) text\n\n---\n\n### Sub\n\n![Fig2][f2]\n\n[f2]: f2.png";
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:md outLineNumbers:&lines];
+
+    XCTAssertEqualObjects(kinds, (@[@1, @2, @0, @3, @0]),
+                          @"F1: mixed document yields headers and standalone images only (Issue #436)");
+    XCTAssertEqual(lines.count, kinds.count,
+                   @"F1: line numbers must run parallel to kinds (Issue #436)");
+    for (NSUInteger i = 1; i < lines.count; i++) {
+        XCTAssertGreaterThan(lines[i].unsignedIntegerValue, lines[i - 1].unsignedIntegerValue,
+                             @"F1: reference-point line numbers must be strictly increasing (Issue #436)");
+    }
+}
+
+- (void)testClassifierHeadersInsideAndOutsideFences
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n```\n## skip\n```\n### B\n\n~~~\n#### skip\n~~~\n##### C"],
+                          (@[@1, @3, @5]),
+                          @"F4: only headers outside fences are detected (Issue #436)");
+}
+
+- (void)testClassifierEmptyDocument
+{
+    XCTAssertEqualObjects([self kindsFor:@""], @[], @"F2: empty document has no reference points (Issue #436)");
+}
+
+- (void)testClassifierWhitespaceOnlyDocument
+{
+    XCTAssertEqualObjects([self kindsFor:@"\n\n\n"], @[],
+                          @"F3: whitespace-only document has no reference points (Issue #436)");
+}
+
+- (void)testClassifierTrailingNewlineNoExtraReference
+{
+    XCTAssertEqualObjects([self kindsFor:@"# A\n"], (@[@1]),
+                          @"A trailing newline must not add a spurious reference point (Issue #436)");
+}
+
+#pragma mark - Issue #436: Group Q — Reference-point aligner (LCS)
+
+/**
+ * Helper: run the pure aligner and assert both aligned outputs.
+ */
+- (void)assertAlignEditorYs:(NSArray *)eY types:(NSArray *)eT
+                  previewYs:(NSArray *)pY types:(NSArray *)pT
+              expectEditor:(NSArray *)wantE expectPreview:(NSArray *)wantP
+                    message:(NSString *)msg
+{
+    NSArray<NSNumber *> *outE = nil, *outP = nil;
+    [MPDocument alignEditorYs:eY editorTypes:eT previewYs:pY previewTypes:pT
+              alignedEditorYs:&outE alignedPreviewYs:&outP];
+    XCTAssertEqualObjects(outE, wantE, @"%@ (editor)", msg);
+    XCTAssertEqualObjects(outP, wantP, @"%@ (preview)", msg);
+    XCTAssertEqual(outE.count, outP.count, @"%@ (outputs must be equal length)", msg);
+}
+
+- (void)testAlignIdenticalIsNoOp
+{
+    [self assertAlignEditorYs:@[@10, @20, @30] types:@[@1, @1, @1]
+                    previewYs:@[@11, @21, @31] types:@[@1, @1, @1]
+                 expectEditor:@[@10, @20, @30] expectPreview:@[@11, @21, @31]
+                      message:@"G1: identical kind sequences align fully (Issue #436)"];
+}
+
+- (void)testAlignLevelMismatchStillMatches
+{
+    [self assertAlignEditorYs:@[@10, @20] types:@[@1, @2]
+                    previewYs:@[@11, @21] types:@[@2, @3]
+                 expectEditor:@[@10, @20] expectPreview:@[@11, @21]
+                      message:@"G2: headers match on coarse class regardless of level (Issue #436)"];
+}
+
+- (void)testAlignExtraImageOnEditorMid
+{
+    [self assertAlignEditorYs:@[@10, @20, @30] types:@[@1, @0, @1]
+                    previewYs:@[@11, @31] types:@[@1, @1]
+                 expectEditor:@[@10, @30] expectPreview:@[@11, @31]
+                      message:@"G3: an unmatched mid-document editor point is dropped from both (Issue #436)"];
+}
+
+- (void)testAlignExtraImageOnPreviewMid
+{
+    [self assertAlignEditorYs:@[@10, @30] types:@[@1, @1]
+                    previewYs:@[@11, @21, @31] types:@[@1, @0, @1]
+                 expectEditor:@[@10, @30] expectPreview:@[@11, @31]
+                      message:@"G4: an unmatched mid-document preview point is dropped from both (Issue #436)"];
+}
+
+- (void)testAlignMultipleDivergences
+{
+    [self assertAlignEditorYs:@[@10, @20, @30, @40] types:@[@1, @1, @0, @1]
+                    previewYs:@[@11, @31, @41] types:@[@1, @0, @1]
+                 expectEditor:@[@10, @30, @40] expectPreview:@[@11, @31, @41]
+                      message:@"G5: alignment realigns around multiple divergences (Issue #436)"];
+}
+
+- (void)testAlignTotalMismatchEmpty
+{
+    [self assertAlignEditorYs:@[@10] types:@[@0]
+                    previewYs:@[@11] types:@[@1]
+                 expectEditor:@[] expectPreview:@[]
+                      message:@"G6: image-vs-header with no common class yields empty alignment (Issue #436)"];
+}
+
+- (void)testAlignEmptyInputs
+{
+    [self assertAlignEditorYs:@[] types:@[]
+                    previewYs:@[] types:@[]
+                 expectEditor:@[] expectPreview:@[]
+                      message:@"G7: empty inputs yield empty outputs (Issue #436)"];
+}
+
+- (void)testAlignSingleMatch
+{
+    [self assertAlignEditorYs:@[@10] types:@[@1]
+                    previewYs:@[@11] types:@[@1]
+                 expectEditor:@[@10] expectPreview:@[@11]
+                      message:@"G8: a single matching pair aligns (Issue #436)"];
+}
+
+- (void)testAlignOneSideEmpty
+{
+    [self assertAlignEditorYs:@[@10, @20] types:@[@1, @1]
+                    previewYs:@[] types:@[]
+                 expectEditor:@[] expectPreview:@[]
+                      message:@"G9: when one side is empty the alignment is empty (Issue #436)"];
+}
+
+- (void)testAlignTypesAbsentFallsBackToTruncation
+{
+    [self assertAlignEditorYs:@[@10, @20, @30] types:nil
+                    previewYs:@[@11, @21] types:nil
+                 expectEditor:@[@10, @20] expectPreview:@[@11, @21]
+                      message:@"G10: missing types fall back to MIN-count truncation (Issue #436)"];
+}
+
+- (void)testAlignTypesCountMismatchFallsBackToTruncation
+{
+    [self assertAlignEditorYs:@[@10, @20, @30] types:@[@1, @1]
+                    previewYs:@[@11, @21, @31] types:@[@1, @1, @1]
+                 expectEditor:@[@10, @20, @30] expectPreview:@[@11, @21, @31]
+                      message:@"G11: inconsistent type counts fall back to MIN-count truncation (Issue #436)"];
 }
 
 @end
