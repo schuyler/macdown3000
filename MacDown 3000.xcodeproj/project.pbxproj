@@ -110,6 +110,7 @@
 		D29776CC6E7EB5B4AA2E0537 /* MPFileWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = A81247E840EB5C07669FF165 /* MPFileWatcher.m */; };
 		D3877A6637DE48017448C8DB /* MPRendererTestHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = 3E2FC4B9389A012264DC6214 /* MPRendererTestHelpers.m */; };
 		E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */; };
+		ISSUE341IMGRENDERBUILDFILE /* MPImageRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */; };
 		EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */; };
 		EBFE3157737058F5A63699C8 /* libPods-MacDownTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C949FDE45493AE77DAD9BF4 /* libPods-MacDownTests.a */; };
 		ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */; };
@@ -531,6 +532,7 @@
 		852D52391E260A6400BA7162 /* MPTerminalPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPTerminalPreferencesViewController.h; sourceTree = "<group>"; };
 		852D523A1E260A6400BA7162 /* MPTerminalPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesViewController.m; sourceTree = "<group>"; };
 		8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLResourceURLsTests.m; sourceTree = "<group>"; };
+		ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageRenderingTests.m; sourceTree = "<group>"; };
 		8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPResourceWatcherSetTests.m; sourceTree = "<group>"; };
 		85E24E5A1E5019C00056E696 /* MPToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MPToolbarController.h; path = Code/Application/MPToolbarController.h; sourceTree = "<group>"; };
 		85E24E5B1E5019C00056E696 /* MPToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MPToolbarController.m; path = Code/Application/MPToolbarController.m; sourceTree = "<group>"; };
@@ -979,6 +981,7 @@
 				779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */,
 				8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */,
 				8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */,
+				ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */,
 				ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
@@ -1457,6 +1460,7 @@
 				EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */,
 				B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */,
 				E087CFBB2125A4D2B37C132F /* MPHTMLResourceURLsTests.m in Sources */,
+				ISSUE341IMGRENDERBUILDFILE /* MPImageRenderingTests.m in Sources */,
 				ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */,
 				ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */,
 				ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */,
