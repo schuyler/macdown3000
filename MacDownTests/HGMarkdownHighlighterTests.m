@@ -12,6 +12,7 @@
 #import "HGMarkdownHighlighter.h"
 #import "HGMarkdownHighlightingStyle.h"
 #import "pmh_definitions.h"
+#import "MPUtilities.h"
 
 
 @interface HGMarkdownHighlighterTests : XCTestCase
@@ -463,6 +464,73 @@
     }
 
     XCTAssertNoThrow([self.highlighter deactivate], @"Should be stable after rapid toggling");
+}
+
+
+#pragma mark - Bundled Theme HTML Coloring Tests (Issue #443)
+
+// Returns the parsed style matching the given element type, or nil if the
+// stylesheet does not define one.
+- (HGMarkdownHighlightingStyle *)styleForType:(pmh_element_type)type
+                                  inStylesheet:(NSString *)stylesheet
+{
+    HGMarkdownHighlighter *hl = [[HGMarkdownHighlighter alloc] init];
+    [hl applyStylesFromStylesheet:stylesheet withErrorHandler:nil];
+    for (HGMarkdownHighlightingStyle *style in hl.styles) {
+        if (style.elementType == type)
+            return style;
+    }
+    return nil;
+}
+
+// Every bundled editor theme should color inline HTML so that markup such as
+// <br> or <span> stands out from body text in the editor.
+- (void)testAllBundledThemesDefineHTMLForegroundColor
+{
+    NSArray *themeNames = MPListEntriesForDirectory(
+        kMPThemesDirectoryName,
+        MPFileNameHasExtensionProcessor(kMPThemeFileExtension));
+    XCTAssertTrue(themeNames.count > 0,
+                  @"Should find bundled editor themes to test");
+
+    for (NSString *name in themeNames) {
+        NSString *stylesheet = MPReadFileOfPath(MPThemePathForName(name));
+        XCTAssertTrue(stylesheet.length > 0,
+                      @"Theme '%@' should have readable content", name);
+
+        HGMarkdownHighlightingStyle *htmlStyle =
+            [self styleForType:pmh_HTML inStylesheet:stylesheet];
+        XCTAssertNotNil(htmlStyle,
+                        @"Theme '%@' should define an HTML style", name);
+        XCTAssertNotNil(htmlStyle.attributesToAdd[NSForegroundColorAttributeName],
+                        @"Theme '%@' HTML style should set a foreground color",
+                        name);
+    }
+}
+
+// Every bundled editor theme should also color block-level HTML (e.g. a
+// <div>...</div> block) so it is visually distinct in the editor.
+- (void)testAllBundledThemesDefineHTMLBlockForegroundColor
+{
+    NSArray *themeNames = MPListEntriesForDirectory(
+        kMPThemesDirectoryName,
+        MPFileNameHasExtensionProcessor(kMPThemeFileExtension));
+    XCTAssertTrue(themeNames.count > 0,
+                  @"Should find bundled editor themes to test");
+
+    for (NSString *name in themeNames) {
+        NSString *stylesheet = MPReadFileOfPath(MPThemePathForName(name));
+        XCTAssertTrue(stylesheet.length > 0,
+                      @"Theme '%@' should have readable content", name);
+
+        HGMarkdownHighlightingStyle *htmlBlockStyle =
+            [self styleForType:pmh_HTMLBLOCK inStylesheet:stylesheet];
+        XCTAssertNotNil(htmlBlockStyle,
+                        @"Theme '%@' should define an HTMLBLOCK style", name);
+        XCTAssertNotNil(htmlBlockStyle.attributesToAdd[NSForegroundColorAttributeName],
+                        @"Theme '%@' HTMLBLOCK style should set a foreground color",
+                        name);
+    }
 }
 
 @end

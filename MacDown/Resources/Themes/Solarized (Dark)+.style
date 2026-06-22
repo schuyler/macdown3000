@@ -77,6 +77,12 @@ VERBATIM
 foreground: 93a1a1
 background: 073642
 
+HTML
+foreground: 586e75
+
+HTMLBLOCK
+foreground: 586e75
+
 HTML_ENTITY
 foreground: 586e75
 
