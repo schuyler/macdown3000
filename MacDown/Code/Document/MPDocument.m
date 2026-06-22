@@ -236,6 +236,11 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
+// Issue #441: Last observed value of editorSyncScrolling, used purely for edge
+// detection in userDefaultsDidChange: so we can settle/re-sync the panes the
+// moment the user toggles Sync Panes mid-session. Never used for gating — gating
+// always reads self.preferences.editorSyncScrolling live.
+@property (nonatomic) BOOL lastKnownSyncScrolling;
 @property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
 @property (nonatomic) BOOL showingSelectionCount;  // Issue #452: Widget showing selection counts
 
@@ -268,6 +273,9 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
 - (void)applyEditorStartInPreviewModePreference;
+// Issue #441: Settle / re-sync the panes when Sync Panes is toggled mid-session.
+- (void)handleSyncScrollingEnabled;
+- (void)handleSyncScrollingDisabled;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -467,7 +475,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
     self.lastNonCollapsedRatio = -1.0;
-    
+    // Issue #441: Seed the cached Sync Panes value from the live preference so the
+    // first NSUserDefaultsDidChangeNotification (which fires for any default) is not
+    // misread as a transition.
+    _lastKnownSyncScrolling = [MPPreferences sharedInstance].editorSyncScrolling;
+
     return self;
 }
 
@@ -1562,6 +1574,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
     }
 
+    // Issue #441: The full-reload completion handler unconditionally restores the
+    // preview to lastPreviewScrollTop to avoid a flash-to-top. When sync is OFF the
+    // preview scrolls independently, so capture its actual position here — before the
+    // load blanks the view — so the restore preserves where the user is rather than
+    // an editor-derived position left over from when sync was ON.
+    if (!self.preferences.editorSyncScrolling && self.preview.enclosingScrollView)
+        self.lastPreviewScrollTop =
+            NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+
     // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
@@ -1700,6 +1721,21 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 
 - (void)userDefaultsDidChange:(NSNotification *)notification
 {
+    // Issue #441: NSUserDefaultsDidChangeNotification fires for every defaults
+    // change, so detect a genuine Sync Panes transition by comparing against the
+    // last observed value. On a real toggle, settle the panes (disable) or re-sync
+    // them immediately (enable) so the new mode takes effect without requiring a
+    // document reopen. Always refresh the cached value, even for unrelated changes.
+    BOOL nowSync = self.preferences.editorSyncScrolling;
+    if (nowSync != self.lastKnownSyncScrolling)
+    {
+        self.lastKnownSyncScrolling = nowSync;
+        if (nowSync)
+            [self handleSyncScrollingEnabled];
+        else
+            [self handleSyncScrollingDisabled];
+    }
+
     MPRenderer *renderer = self.renderer;
 
     // Force update if we're switching from manual to auto, or renderer settings
@@ -1716,6 +1752,44 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [renderer parseIfPreferencesChanged];
         [renderer renderIfPreferencesChanged];
     }
+}
+
+// Issue #441: The user turned Sync Panes ON mid-session. Re-sync immediately,
+// Editor-authoritative (the Preview moves to match the editor's current position),
+// then return to the quiescent state so subsequent scrolls sync in either direction.
+// Mirrors the editor-reveal sync in setSplitViewDividerLocation:, but forward.
+- (void)handleSyncScrollingEnabled
+{
+    if (!self.renderer)
+        return;                              // Headless / nib not yet loaded.
+    if (_scrollOwner != MPScrollOwnerNeither)
+        return;                              // Don't fight an in-progress live scroll.
+
+    // Claiming editor ownership suppresses the synchronous previewBoundsDidChange:
+    // fired by the bounds write inside syncScrollers (it is gated on == Preview).
+    _scrollOwner = MPScrollOwnerEditor;
+    [self updateHeaderLocations];
+    [self syncScrollers];
+    _scrollOwner = MPScrollOwnerNeither;
+}
+
+// Issue #441: The user turned Sync Panes OFF mid-session. Make the panes fully
+// independent immediately, preserving their current positions (no jump). The bug
+// was that a stale, editor-derived lastPreviewScrollTop — last written while sync
+// was ON — kept getting restored on the full-reload completion path, yanking the
+// Preview toward the editor each time the user typed. Resetting ownership prevents
+// any lingering Editor ownership from suppressing the user's own preview scrolls,
+// and recapturing the Preview's actual position makes the restore a visual no-op.
+- (void)handleSyncScrollingDisabled
+{
+    // Unlike handleSyncScrollingEnabled, which defers when a live scroll owns the
+    // panes, disabling resets ownership unconditionally: the goal is immediate
+    // independence. If a preview drag is somehow in flight, didEndPreviewLiveScroll:
+    // re-checks the (now false) preference before reverse-syncing, so this is safe.
+    _scrollOwner = MPScrollOwnerNeither;
+    if (self.preview.enclosingScrollView)
+        self.lastPreviewScrollTop =
+            NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 }
 
 - (void)editorFrameDidChange:(NSNotification *)notification

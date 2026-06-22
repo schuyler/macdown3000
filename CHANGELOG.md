@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Fix the Preview pane still auto-scrolling toward the editor when typing after Sync Panes was turned off mid-session; toggling Sync Panes now takes effect immediately (settling the panes on disable, re-syncing on enable) without needing to reopen the document (#441) -- thanks @gregwillits!
 - Fix blank preview when opening saved or externally-originated documents: the real document file is no longer used as the preview's base resource, which WebKit on macOS 26 can silently refuse to load (e.g. files with the execute bit set by sync clients like OneDrive, or stale TCC/provenance state) (#431, #405) -- thanks @maskedspitz, @songjianbupt, and @craigrodger for the diagnosis!
 - Improve render-path responsiveness: single-pass word/character counting, cached body-extraction regex, and bounded renderer polling with cancellation (#388)
 - Restrict auto-created link targets to the current document's folder scope (#388)
