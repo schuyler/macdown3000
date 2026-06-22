@@ -488,6 +488,12 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
 {
     // MathJax 2.x relies on eval/new Function during startup, and bundled
     // preview libraries inject inline styles while rendering annotated output.
+    //
+    // Issue #341: img-src and media-src must keep data:, file:, http: and
+    // https: allowed. Dropping any scheme silently breaks image rendering for
+    // that source — the <img> container still lays out, but the bits never
+    // load. MPImageRenderingTests pins this contract; update it deliberately
+    // if you tighten the policy.
     return @"default-src 'none'; "
            @"base-uri 'none'; "
            @"form-action 'none'; "
