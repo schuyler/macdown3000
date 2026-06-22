@@ -152,6 +152,24 @@
     [self.preferences synchronize];
 }
 
+- (void)testInvisibleCharactersToggle
+{
+    BOOL original = self.preferences.editorShowsInvisibleCharacters;
+
+    self.preferences.editorShowsInvisibleCharacters = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.editorShowsInvisibleCharacters,
+                  @"Invisible characters should be ON");
+
+    self.preferences.editorShowsInvisibleCharacters = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.editorShowsInvisibleCharacters,
+                   @"Invisible characters should be OFF");
+
+    self.preferences.editorShowsInvisibleCharacters = original;
+    [self.preferences synchronize];
+}
+
 - (void)testExtensionFlags
 {
     // Save originals
