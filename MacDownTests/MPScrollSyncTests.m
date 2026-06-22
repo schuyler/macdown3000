@@ -51,6 +51,11 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)setSplitViewDividerLocation:(CGFloat)ratio;
 // Commit 8 (gap 9): MathJax render generation counter getter
 - (NSUInteger)mathJaxRenderGeneration;
+// Issue #441: mid-session Sync Panes toggle handling
+@property (nonatomic) BOOL lastKnownSyncScrolling;
+- (void)userDefaultsDidChange:(NSNotification *)notification;
+- (void)handleSyncScrollingEnabled;
+- (void)handleSyncScrollingDisabled;
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -2022,6 +2027,157 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     XCTAssertEqual([doc mathJaxRenderGeneration], (NSUInteger)0,
                    @"N1: _mathJaxRenderGeneration should be 0 on a fresh document");
+}
+
+#pragma mark - Group O — Issue #441: Sync Panes mid-session toggle
+
+/**
+ * O1 — Disabling Sync Panes mid-session resets scroll ownership to Neither.
+ *
+ * Issue #441: while sync was ON, typing sets scrollOwner = Editor. If that
+ * ownership lingers after the user disables Sync Panes, the panes are not truly
+ * independent. handleSyncScrollingDisabled must clear it back to Neither.
+ */
+- (void)testDisableSyncResetsOwnershipToNeither
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerEditor;
+
+    [doc handleSyncScrollingDisabled];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"O1: disabling Sync Panes should reset scrollOwner to Neither");
+}
+
+/**
+ * O2 — Disabling Sync Panes is safe (and a no-op on lastPreviewScrollTop) when
+ * there is no preview scroll view, as in a headless document.
+ *
+ * Issue #441: the position recapture is guarded on the preview's scroll view, so
+ * a headless document must not crash and must leave the stored value untouched.
+ */
+- (void)testDisableSyncWithNilPreviewDoesNotCrash
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.lastPreviewScrollTop = 123.0;
+
+    XCTAssertNoThrow([doc handleSyncScrollingDisabled],
+                     @"O2: disabling Sync Panes must not crash without a preview");
+    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, 123.0, 0.01,
+                               @"O2: lastPreviewScrollTop unchanged when preview is nil");
+}
+
+/**
+ * O3 — Enabling Sync Panes is a no-op (and safe) when the renderer is nil.
+ *
+ * Issue #441: handleSyncScrollingEnabled must bail out early on a not-yet-loaded
+ * document rather than attempting to sync against absent views.
+ */
+- (void)testEnableSyncWithNilRendererIsNoOp
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.scrollOwner = MPScrollOwnerNeither;
+
+    XCTAssertNoThrow([doc handleSyncScrollingEnabled],
+                     @"O3: enabling Sync Panes must not crash without a renderer");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"O3: ownership stays Neither when there is nothing to sync");
+}
+
+/**
+ * O4 — Enabling Sync Panes does not steal ownership during an active preview drag.
+ *
+ * Issue #441: if the user is live-scrolling the preview (scrollOwner == Preview)
+ * when sync is toggled on, the re-sync must defer rather than fight the drag.
+ */
+- (void)testEnableSyncDoesNotStealActivePreviewOwnership
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.renderer = [[MPRenderer alloc] init];
+    doc.scrollOwner = MPScrollOwnerPreview;
+
+    [doc handleSyncScrollingEnabled];
+
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerPreview,
+                   @"O4: enabling sync must not seize ownership during a preview drag");
+}
+
+/**
+ * O5 — Enabling Sync Panes from the quiescent state brackets the re-sync in
+ * Editor ownership and returns to Neither.
+ *
+ * Issue #441: with a renderer present and empty header arrays, the forward
+ * re-sync runs and leaves the document quiescent so both directions resume.
+ */
+- (void)testEnableSyncReturnsToNeitherAfterResync
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    doc.renderer = [[MPRenderer alloc] init];
+    doc.editorHeaderLocations = @[];
+    doc.webViewHeaderLocations = @[];
+    doc.scrollOwner = MPScrollOwnerNeither;
+
+    XCTAssertNoThrow([doc handleSyncScrollingEnabled],
+                     @"O5: enabling sync should re-sync without crashing");
+    XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                   @"O5: ownership returns to Neither after the re-sync");
+}
+
+/**
+ * O6 — A fresh document seeds lastKnownSyncScrolling from the live preference so
+ * the first defaults-change notification is not misread as a transition.
+ *
+ * Issue #441: prevents a spurious settle/re-sync on the first unrelated defaults
+ * change of the session.
+ */
+- (void)testLastKnownSyncScrollingSeededFromPreference
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+
+    XCTAssertEqual(doc.lastKnownSyncScrolling,
+                   [MPPreferences sharedInstance].editorSyncScrolling,
+                   @"O6: lastKnownSyncScrolling should match the live preference at init");
+}
+
+/**
+ * O7 — userDefaultsDidChange: only reacts to a genuine Sync Panes transition.
+ *
+ * Issue #441: edge detection must compare against the cached value. Here we
+ * simulate "sync was ON, now OFF": prime the cached value to YES, force the live
+ * preference OFF, and verify the disable path ran (ownership reset to Neither).
+ * A second call with no further change must not re-trigger. The preference is
+ * saved and restored so the test does not leak state to other tests.
+ */
+- (void)testUserDefaultsChangeReactsOnlyToSyncTransition
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedSync = prefs.editorSyncScrolling;
+
+    @try
+    {
+        // Simulate the mid-session disable: cache says ON, live preference is OFF.
+        prefs.editorSyncScrolling = NO;
+        doc.lastKnownSyncScrolling = YES;
+        doc.scrollOwner = MPScrollOwnerEditor;
+
+        [doc userDefaultsDidChange:nil];
+
+        XCTAssertFalse(doc.lastKnownSyncScrolling,
+                       @"O7: cached value should update to the new (OFF) state");
+        XCTAssertEqual(doc.scrollOwner, MPScrollOwnerNeither,
+                       @"O7: the disable transition should have settled ownership");
+
+        // No further change: a second call must be a no-op for the transition.
+        doc.scrollOwner = MPScrollOwnerEditor;
+        [doc userDefaultsDidChange:nil];
+        XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
+                       @"O7: no transition means handleSyncScrollingDisabled is not re-run");
+    }
+    @finally
+    {
+        prefs.editorSyncScrolling = savedSync;
+    }
 }
 
 @end
