@@ -312,6 +312,32 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }];
 }
 
+// The HTML pane's CSS theme popup and its Reveal/Reload controls were clipped
+// at the original 430pt design width, most visibly with long theme names such
+// as the bundled "GitHub Dark Default". loadView pins each pane to its XIB
+// design width (it never widens, only grows height), so the design width itself
+// must stay wide enough. This guards against the pane being narrowed back to the
+// cramped value. (Issue #419.)
+- (void)testHtmlPaneIsWideEnoughForThemeControls
+{
+    MPHtmlPreferencesViewController *vc = [[MPHtmlPreferencesViewController alloc] init];
+    NSView *content = MPContentView(vc);
+
+    NSLayoutConstraint *widthPin = nil;
+    for (NSLayoutConstraint *c in content.constraints)
+    {
+        if (c.firstItem == content && c.secondItem == nil
+            && c.relation == NSLayoutRelationEqual
+            && c.firstAttribute == NSLayoutAttributeWidth)
+            widthPin = c;
+    }
+    XCTAssertNotNil(widthPin, @"Html pane: loadView should pin the content width");
+    XCTAssertGreaterThanOrEqual(widthPin.constant, 482,
+        @"Html pane must stay wide enough for the CSS theme popup and its "
+        @"Reveal/Reload controls; long theme names like \"GitHub Dark Default\" "
+        @"clip at the old 430pt width");
+}
+
 // loadView must size each pane to fit its content for the active locale rather
 // than the static English design frame, so localized text is never clipped.
 - (void)testContentIsSizedToFitItsContent
