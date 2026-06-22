@@ -237,6 +237,7 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
 @property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
+@property (nonatomic) BOOL showingSelectionCount;  // Issue #452: Widget showing selection counts
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -383,35 +384,61 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return (self.previewVisible || self.preferences.editorShowWordCount);
 }
 
+// Issue #452: Build a localized, pluralized count title. The `selected` flag
+// chooses the "… selected" variant of each key.
+- (NSString *)wordCountTitleForKey:(NSString *)key number:(NSUInteger)value
+{
+    NSInteger rule = kJJPluralFormRule.integerValue;
+    return [JJPluralForm pluralStringForNumber:value
+                               withPluralForms:NSLocalizedString(key, @"")
+                               usingPluralRule:rule localizeNumeral:NO];
+}
+
+- (void)applyWordsTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.wordsMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"WORDS_SELECTED_PLURAL_STRING" : @"WORDS_PLURAL_STRING")
+                                                   number:value];
+}
+
+- (void)applyCharactersTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.charMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"CHARACTERS_SELECTED_PLURAL_STRING"
+                  : @"CHARACTERS_PLURAL_STRING")
+                                                  number:value];
+}
+
+- (void)applyCharactersNoSpacesTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.charNoSpacesMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING"
+                  : @"CHARACTERS_NO_SPACES_PLURAL_STRING")
+                                                          number:value];
+}
+
+// Issue #452: Document-total setters always store the latest value, but only
+// write the menu titles when the widget isn't showing selection counts — this
+// keeps a throttled updateWordCount from clobbering the selection display.
 - (void)setTotalWords:(NSUInteger)value
 {
     _totalWords = value;
-    NSString *key = NSLocalizedString(@"WORDS_PLURAL_STRING", @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.wordsMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyWordsTitle:value selected:NO];
 }
 
 - (void)setTotalCharacters:(NSUInteger)value
 {
     _totalCharacters = value;
-    NSString *key = NSLocalizedString(@"CHARACTERS_PLURAL_STRING", @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.charMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyCharactersTitle:value selected:NO];
 }
 
 - (void)setTotalCharactersNoSpaces:(NSUInteger)value
 {
     _totalCharactersNoSpaces = value;
-    NSString *key = NSLocalizedString(@"CHARACTERS_NO_SPACES_PLURAL_STRING",
-                                      @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.charNoSpacesMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyCharactersNoSpacesTitle:value selected:NO];
 }
 
 - (void)setAutosaveName:(NSString *)autosaveName
@@ -500,6 +527,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(editorTextDidChange:)
                    name:NSTextDidChangeNotification object:self.editor];
+    // Issue #452: Update the count widget to reflect the editor selection.
+    [center addObserver:self selector:@selector(editorSelectionDidChange:)
+                   name:NSTextViewDidChangeSelectionNotification
+                 object:self.editor];
     // Issue #320: Use block-based observer with mainQueue to guarantee
     // main-thread delivery of NSUserDefaultsDidChangeNotification.
     __weak typeof(self) weakSelf = self;
@@ -1607,6 +1638,46 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _scrollOwner = MPScrollOwnerEditor;
 }
 
+// Issue #452: When the editor has a non-empty selection, show the selection's
+// word/character/character-no-spaces counts in the count widget; otherwise
+// revert to the document-wide totals.
+- (void)editorSelectionDidChange:(NSNotification *)notification
+{
+    if (!self.preferences.editorShowWordCount)
+        return;
+
+    NSString *string = self.editor.string;
+    NSRange selection = self.editor.selectedRange;
+
+    // Empty selection (caret only), or a stale range during a rapid
+    // edit-and-select race: fall back to document totals.
+    if (selection.length == 0
+            || NSMaxRange(selection) > string.length)
+    {
+        [self refreshDocumentWordCountTitles];
+        return;
+    }
+
+    NSString *selected = [string substringWithRange:selection];
+    DOMNodeTextCount count = MPTextCountForString(selected);
+
+    self.showingSelectionCount = YES;
+    [self applyWordsTitle:count.words selected:YES];
+    [self applyCharactersTitle:count.characters selected:YES];
+    [self applyCharactersNoSpacesTitle:count.characterWithoutSpaces
+                              selected:YES];
+}
+
+// Issue #452: Restore the document-wide totals to the count widget titles.
+- (void)refreshDocumentWordCountTitles
+{
+    self.showingSelectionCount = NO;
+    [self applyWordsTitle:self.totalWords selected:NO];
+    [self applyCharactersTitle:self.totalCharacters selected:NO];
+    [self applyCharactersNoSpacesTitle:self.totalCharactersNoSpaces
+                              selected:NO];
+}
+
 - (void)userDefaultsDidChange:(NSNotification *)notification
 {
     MPRenderer *renderer = self.renderer;
@@ -2298,6 +2369,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             self.wordCountWidget.hidden = YES;
             self.editorPaddingBottom.constant = 0.0;
+            // Issue #452: Reset selection mode so re-enabling starts on totals.
+            self.showingSelectionCount = NO;
         }
     }
 
