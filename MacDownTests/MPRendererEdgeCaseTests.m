@@ -701,6 +701,35 @@
                    @"Should not contain front matter table");
 }
 
+- (void)testRendererWithInvalidFrontMatterStillHidesFromPreview
+{
+    self.delegate.detectFrontMatter = YES;
+    self.dataSource.markdown = @"---\ninvalid: yaml: content:\n---\n\n# Content";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertFalse([html containsString:@"invalid"],
+                   @"Invalid front matter should not appear in preview");
+    XCTAssertTrue([html containsString:@"Content"],
+                  @"Content after invalid front matter should render");
+}
+
+- (void)testRendererWithHTMLTitleInFrontMatterStillRendersBody
+{
+    self.delegate.detectFrontMatter = YES;
+    self.dataSource.markdown =
+        @"---\ntitle: <title>Hidden</title>\n---\n\n# Visible Body";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertFalse([html containsString:@"Hidden"],
+                   @"Front matter HTML values should not appear in preview");
+    XCTAssertTrue([html containsString:@"Visible Body"],
+                  @"Body should render after front matter containing HTML tags");
+}
+
 
 #pragma mark - Issue #254: Lists After Paragraphs
 
