@@ -28,32 +28,37 @@ NSString * const MPDidRequestEditorSetupNotification =
     [super loadView];  // loads NIB named after the concrete subclass
 
     NSView *contentView = self.view;
-    NSRect designFrame = contentView.frame;
+    NSRect frame = contentView.frame;
+
+    NSView *wrapper = [[NSView alloc] initWithFrame:frame];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
-
-    // Keep the panel's designed width, then measure the height the content
-    // actually needs at that width for the active locale. Longer localized
-    // strings (e.g. French, Italian) wrap onto extra lines, so the panel must
-    // grow vertically to fit them instead of clipping. The English design
-    // height acts as a floor so we never shrink a panel.
-    CGFloat width = NSWidth(designFrame);
-    NSLayoutConstraint *widthConstraint =
-        [contentView.widthAnchor constraintEqualToConstant:width];
-    widthConstraint.active = YES;
-    [contentView layoutSubtreeIfNeeded];
-    CGFloat height = MAX(contentView.fittingSize.height, NSHeight(designFrame));
-
-    NSView *wrapper =
-        [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, width, height)];
     [wrapper addSubview:contentView];
 
+    // Keep the panel's designed width and start at the designed height. The
+    // height is grown below once the content has been laid out.
+    NSLayoutConstraint *heightConstraint =
+        [contentView.heightAnchor constraintEqualToConstant:NSHeight(frame)];
     [NSLayoutConstraint activateConstraints:@[
         [contentView.centerXAnchor constraintEqualToAnchor:wrapper.centerXAnchor],
         [contentView.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
-        [contentView.heightAnchor constraintEqualToConstant:height],
+        [contentView.widthAnchor  constraintEqualToConstant:NSWidth(frame)],
+        heightConstraint,
     ]];
 
     self.view = wrapper;
+
+    // Now that the content is wrapped at its designed width, grow the height to
+    // fit the content for the active locale: longer localized strings (e.g.
+    // French, Italian) wrap onto extra lines, so the panel must expand to fit
+    // them instead of clipping. The English design height acts as a floor so we
+    // never shrink a panel.
+    [wrapper layoutSubtreeIfNeeded];
+    CGFloat height = MAX(contentView.fittingSize.height, NSHeight(frame));
+    heightConstraint.constant = height;
+
+    NSRect wrapperFrame = wrapper.frame;
+    wrapperFrame.size.height = height;
+    wrapper.frame = wrapperFrame;
 }
 
 - (BOOL)hasResizableWidth  { return YES; }
