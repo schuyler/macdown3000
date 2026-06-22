@@ -236,7 +236,11 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         {
             for (NSLayoutConstraint *c in box.constraints)
             {
+                // Only author-set, required-priority height pins are a problem.
+                // AppKit installs a low-priority NSContentSizeLayoutConstraint
+                // for every box's intrinsic height; that one is expected.
                 BOOL fixesHeight = (c.active
+                    && c.priority == NSLayoutPriorityRequired
                     && c.firstItem == box && c.secondItem == nil
                     && c.firstAttribute == NSLayoutAttributeHeight
                     && c.relation == NSLayoutRelationEqual
