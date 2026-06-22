@@ -41,9 +41,9 @@ Both panes detect the same set of structural elements: ATX headers (`# Heading`)
 
 **Editor side.** `updateHeaderLocations` (a single method that populates both arrays) runs a regex over the raw Markdown text and uses `NSLayoutManager` to convert character offsets to Y-coordinates in the text view's coordinate system.
 
-**Preview side.** The same `updateHeaderLocations` method evaluates `updateHeaderLocations.js` synchronously via the WebView's `JavaScriptContext`. The script runs `document.querySelectorAll('h1, h2, h3, h4, h5, h6')` and a standalone image query, returning document-absolute Y-coordinates computed as `window.scrollY + getBoundingClientRect().top` for each matched element. The result crosses the JavaScript-to-Objective-C boundary via `JSValue`'s `-toArray` method.
+**Preview side.** The same `updateHeaderLocations` method evaluates `updateHeaderLocations.js` synchronously via the WebView's `JavaScriptContext`. The script runs `document.querySelectorAll('h1, h2, h3, h4, h5, h6')` and a standalone image query, returning an object `{ys, kinds}` where `ys` holds document-absolute Y-coordinates computed as `window.scrollY + getBoundingClientRect().top` for each matched element and `kinds` holds the parallel kind codes (0 = image, 1-6 = header level). The result crosses the JavaScript-to-Objective-C boundary as a `JSValue`.
 
-The two arrays must stay parallel — the Nth entry in `_editorHeaderLocations` must correspond to the Nth entry in `_webViewHeaderLocations`. In practice they can diverge because the editor regex matches headers inside code blocks while the JS query does not (issue #375 tracks AST-based detection as a fix). A runtime validation step, `validateHeaderLocationAlignment`, detects count mismatches and truncates both arrays to the shorter length. This prevents index-out-of-bounds errors but discards trailing reference points.
+The two arrays must stay parallel — the Nth entry in `_editorHeaderLocations` must correspond to the Nth entry in `_webViewHeaderLocations`. In practice they can diverge because the editor and preview detectors disagree mid-document (headers inside fenced code blocks, `===` setext headers, 7+ hash lines), which would shift every subsequent index. To keep the arrays aligned, each reference point is tagged with a kind code. `updateHeaderLocations.js` returns `{ys, kinds}` (kind 0 = image, 1-6 = header level), and the editor side computes parallel kind codes via the pure class method `+editorReferenceKindsForMarkdown:outLineNumbers:`, which skips headers inside ``` / ~~~ fences, detects `===`/`---` setext headers, treats 7+ hashes as non-headers (CommonMark/Hoedown), allows 0-3 leading spaces on ATX, and detects standalone images. The kinds are stored in the private parallel arrays `_editorHeaderTypes` / `_webViewHeaderTypes`. A runtime validation step, `validateHeaderLocationAlignment`, calls `+alignEditorYs:editorTypes:previewYs:previewTypes:alignedEditorYs:alignedPreviewYs:`, which runs an LCS over the coarse kind class (image vs header) and keeps only matched points, dropping unmatched points on the correct side (issue #436). It falls back to truncating both arrays to the shorter length when the kind tags are absent or inconsistent.
 
 ---
 
@@ -148,7 +148,7 @@ This prevents state corruption but does not eliminate the brief visual flash whe
 
 **MathJax visual jump.** The generation counter prevents incorrect state transitions but cannot prevent the un-typeset DOM from being briefly visible between DOM replacement and MathJax completion.
 
-**Header array alignment divergence.** The editor regex detects headers inside fenced code blocks; the JS query does not. This causes the two arrays to have different lengths on documents with headers in code blocks. The truncation fix loses trailing reference points, reducing sync accuracy at the bottom of the document (#375).
+**Header array alignment divergence.** The editor detector and the JS query can disagree mid-document (e.g. headers inside fenced code blocks). Issue #436 addresses this by tagging each reference point with a kind code and aligning the two sequences with an LCS over the coarse kind class (image vs header), keeping only matched points rather than truncating from the tail. AST-based editor-side detection (#375) would further reduce divergence at the source.
 
 **Checkbox toggle and syntax highlighting.** Checkbox toggles modify `NSTextStorage` directly, which fires `NSTextStorageDidProcessEditingNotification` but not `NSTextDidChangeNotification`. The syntax highlighter observes the latter, so it does not re-highlight after a checkbox toggle.
 
@@ -158,7 +158,7 @@ This prevents state corruption but does not eliminate the brief visual flash whe
 
 ## Future Work
 
-- **AST-based header detection** (#375): Replace the editor-side regex with an AST walk that is aware of code block boundaries. This would eliminate the primary cause of array alignment divergence.
+- **AST-based header detection** (#375): Replace the editor-side detector with an AST walk that is aware of code block boundaries. The kind-tagged LCS alignment (#436) already keeps the two arrays parallel when the detectors disagree; an AST walk would reduce divergence at the source.
 
 - **WKWebView migration** (#111): The `WebView` class is deprecated. Migrating to `WKWebView` will require reworking the JavaScript bridge used by `updateHeaderLocations.js` and the DOM replacement path.
 
