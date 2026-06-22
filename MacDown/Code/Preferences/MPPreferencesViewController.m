@@ -28,17 +28,29 @@ NSString * const MPDidRequestEditorSetupNotification =
     [super loadView];  // loads NIB named after the concrete subclass
 
     NSView *contentView = self.view;
-    NSRect frame = contentView.frame;
-
-    NSView *wrapper = [[NSView alloc] initWithFrame:frame];
+    NSRect designFrame = contentView.frame;
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
+
+    // Keep the panel's designed width, then measure the height the content
+    // actually needs at that width for the active locale. Longer localized
+    // strings (e.g. French, Italian) wrap onto extra lines, so the panel must
+    // grow vertically to fit them instead of clipping. The English design
+    // height acts as a floor so we never shrink a panel.
+    CGFloat width = NSWidth(designFrame);
+    NSLayoutConstraint *widthConstraint =
+        [contentView.widthAnchor constraintEqualToConstant:width];
+    widthConstraint.active = YES;
+    [contentView layoutSubtreeIfNeeded];
+    CGFloat height = MAX(contentView.fittingSize.height, NSHeight(designFrame));
+
+    NSView *wrapper =
+        [[NSView alloc] initWithFrame:NSMakeRect(0.0, 0.0, width, height)];
     [wrapper addSubview:contentView];
 
     [NSLayoutConstraint activateConstraints:@[
         [contentView.centerXAnchor constraintEqualToAnchor:wrapper.centerXAnchor],
         [contentView.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
-        [contentView.widthAnchor  constraintEqualToConstant:NSWidth(frame)],
-        [contentView.heightAnchor constraintEqualToConstant:NSHeight(frame)],
+        [contentView.heightAnchor constraintEqualToConstant:height],
     ]];
 
     self.view = wrapper;

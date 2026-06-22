@@ -184,7 +184,7 @@
                 </stepper>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="JV2-Ef-pKx">
                     <rect key="frame" x="18" y="246" width="144" height="18"/>
-                    <buttonCell key="cell" type="check" title="Limit editor width to" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="bhL-NA-9No">
+                    <buttonCell key="cell" type="check" title="Limit editor width to" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="bhL-NA-9No">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="system"/>
                     </buttonCell>
@@ -251,7 +251,7 @@
                         <subviews>
                             <button verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Hdc-ZZ-0Bg">
                                 <rect key="frame" x="16" y="137" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Insert spaces instead of tabs" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="XSN-mi-gbk">
+                                <buttonCell key="cell" type="check" title="Insert spaces instead of tabs" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="XSN-mi-gbk">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -261,7 +261,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="nxG-74-mdM">
                                 <rect key="frame" x="16" y="117" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Auto-complete matching characters" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="o4K-iG-sGA">
+                                <buttonCell key="cell" type="check" title="Auto-complete matching characters" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="o4K-iG-sGA">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -271,7 +271,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="NV7-zh-ydN">
                                 <rect key="frame" x="16" y="77" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="⌘← jumps to first non-whitespace character in line" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2Yf-FT-MDH">
+                                <buttonCell key="cell" type="check" title="⌘← jumps to first non-whitespace character in line" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2Yf-FT-MDH">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -281,7 +281,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="B3N-s7-0vd">
                                 <rect key="frame" x="16" y="57" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Scroll past end" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="nBR-LK-G9a">
+                                <buttonCell key="cell" type="check" title="Scroll past end" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="nBR-LK-G9a">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -291,7 +291,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="tes-GA-Mpn">
                                 <rect key="frame" x="16" y="37" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Ensure newline at end of file on save" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="9Wp-5V-GeQ">
+                                <buttonCell key="cell" type="check" title="Ensure newline at end of file on save" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="9Wp-5V-GeQ">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -301,7 +301,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="hSa-rl-wPT">
                                 <rect key="frame" x="16" y="17" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Auto-increment numbering in ordered lists" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="UPm-G1-Bc6">
+                                <buttonCell key="cell" type="check" title="Auto-increment numbering in ordered lists" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="UPm-G1-Bc6">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -312,7 +312,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="CXK-QF-WSK">
                                 <rect key="frame" x="16" y="97" width="415" height="18"/>
-                                <buttonCell key="cell" type="check" title="Automatically insert line prefix for the current block" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zGb-kg-2CJ">
+                                <buttonCell key="cell" type="check" title="Automatically insert line prefix for the current block" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zGb-kg-2CJ">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -343,11 +343,9 @@
                             <constraint firstItem="NV7-zh-ydN" firstAttribute="top" secondItem="CXK-QF-WSK" secondAttribute="bottom" constant="6" symbolic="YES" id="oAM-9C-rnP"/>
                             <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="leading" secondItem="nxG-74-mdM" secondAttribute="leading" id="pGd-1r-h4g"/>
                             <constraint firstItem="B3N-s7-0vd" firstAttribute="top" secondItem="NV7-zh-ydN" secondAttribute="bottom" constant="6" symbolic="YES" id="z6Q-dF-r1X"/>
+                            <constraint firstAttribute="bottom" secondItem="hSa-rl-wPT" secondAttribute="bottom" constant="10" id="397-bm-hSa"/>
                         </constraints>
                     </view>
-                    <constraints>
-                        <constraint firstAttribute="height" constant="200" id="8f4-Vw-KzM"/>
-                    </constraints>
                 </box>
             </subviews>
             <constraints>
