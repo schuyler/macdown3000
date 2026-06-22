@@ -13,6 +13,7 @@
 @interface MPDocument (LinkTargetTesting)
 @property (strong) NSURL *currentBaseUrl;
 - (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
+- (NSURL *)previewSafeBaseURL:(NSURL *)baseURL;
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -118,6 +119,42 @@
 
     XCTAssertTrue(success, @"readFromData:ofType:error: should succeed with CRLF data");
     XCTAssertNil(error, @"No error should occur loading CRLF-terminated content");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNonExecutableFileUnchanged
+{
+    // Issue #431: a normal (non-executable) document file must be used as-is so
+    // relative resources and security scope behave exactly as before.
+    NSString *content = @"# Test\n";
+    [content writeToURL:self.testFileURL atomically:YES
+               encoding:NSUTF8StringEncoding error:nil];
+
+    NSURL *safe = [self.document previewSafeBaseURL:self.testFileURL];
+    XCTAssertEqualObjects(safe, self.testFileURL,
+        @"Non-executable files should be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLRewritesExecutableFile
+{
+    // Issue #431: WebKit blanks the preview for executable base resources (e.g.
+    // OneDrive's 0700 files). The base URL should be swapped for a non-existent
+    // sentinel in the SAME directory, so WebKit no longer sees an executable
+    // base while the directory — all the scope/resolution code depends on —
+    // stays identical.
+    NSString *content = @"# Test\n";
+    [content writeToURL:self.testFileURL atomically:YES
+               encoding:NSUTF8StringEncoding error:nil];
+    chmod(self.testFileURL.path.fileSystemRepresentation, 0700);
+
+    NSURL *safe = [self.document previewSafeBaseURL:self.testFileURL];
+
+    XCTAssertNotEqualObjects(safe, self.testFileURL,
+        @"Executable files should not be used as the preview base URL");
+    XCTAssertEqualObjects(safe.URLByDeletingLastPathComponent.path,
+                          self.testFileURL.URLByDeletingLastPathComponent.path,
+        @"Sentinel base URL must live in the same directory as the document");
+    XCTAssertFalse([self.fileManager fileExistsAtPath:safe.path],
+        @"Sentinel base URL must not point at a real (executable) file");
 }
 
 - (void)testWritableTypes
