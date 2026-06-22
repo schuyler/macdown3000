@@ -14,6 +14,13 @@
 
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ character (no spaces);%@ characters (no spaces)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ word selected;%@ words selected";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ character selected;%@ characters selected";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ character (no spaces) selected;%@ characters (no spaces) selected";
+
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Installation Failed";
 "Installation Successful" = "Installation Successful";
