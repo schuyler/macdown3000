@@ -76,6 +76,28 @@
                   @"Should return user theme path, got: %@", result.path);
 }
 
+- (void)testHighlightingThemeURLPreservesUserThemeFilenameCase
+{
+    NSString *userThemeDir = [self.tempDir
+        stringByAppendingPathComponent:@"Prism/themes"];
+    [[NSFileManager defaultManager] createDirectoryAtPath:userThemeDir
+                              withIntermediateDirectories:YES
+                                               attributes:nil
+                                                    error:nil];
+    [@"/* custom theme */" writeToFile:[userThemeDir
+        stringByAppendingPathComponent:@"prism-Embark6.css"]
+                            atomically:YES
+                              encoding:NSUTF8StringEncoding
+                                 error:nil];
+
+    NSURL *result = MPHighlightingThemeURLForNameInPaths(@"Embark6",
+                                                         self.tempDir,
+                                                         nil);
+    XCTAssertNotNil(result, @"Should find mixed-case user theme");
+    XCTAssertEqualObjects(result.lastPathComponent, @"prism-Embark6.css",
+                          @"Should return the actual theme filename");
+}
+
 - (void)testHighlightingThemeURLReturnsBundleURLWhenNoUserTheme
 {
     // Create a fake bundle theme directory
