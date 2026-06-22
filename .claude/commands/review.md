@@ -165,8 +165,10 @@ Diff:
 
 Assess:
 1. Do any documents in the plans/ directory need updates to reflect this change?
-2. Are there user-facing docs (README, CHANGELOG, in-repo guides) that drift if this merges?
+2. Are there user-facing docs (README, in-repo guides) that drift if this merges?
 3. Are code comments / docstrings touched by the PR accurate?
+
+**Do NOT flag missing or absent CHANGELOG entries.** Changelog entries are not the responsibility of PR contributors — the maintainer updates the changelog at release time, not before. Never raise a missing changelog entry as a finding.
 
 Return findings tagged blocker / important / suggestion / nit.
 ```
@@ -224,6 +226,7 @@ Improvements the submitter can reasonably address, framed as suggestions not com
 
 **Bucket 3 — Drop or note for our own follow-up** (NOT posted to the PR)
 Examples of what belongs here:
+- Any missing/absent CHANGELOG entry — changelog entries are NOT the contributor's responsibility and are updated by the maintainer at release time. Always drop these; never ask the submitter to add a changelog entry.
 - Stylistic preferences ("I'd name this differently", "extract this helper")
 - Refactor opportunities the maintainer can do post-merge
 - Pre-existing tech debt the PR happens to touch but didn't introduce
@@ -352,4 +355,5 @@ Internal follow-up items (NOT posted to the submitter):
 6. **Bucket 3 stays internal.** Items Chico judges as not-the-submitter's-burden are shown to the user but never posted to GitHub.
 7. **No Co-authored-by trailers** (matches project convention).
 8. **Don't reference Claude Code or the subagents in the posted review.** No one cares, and it's not relevant to the submitter.
-9. **Use TodoWrite throughout** — update status as each step completes.
+9. **Never ask contributors about changelog entries.** Changelog entries are not the contributor's responsibility; the maintainer updates the changelog at release time. A missing or absent changelog entry must never be the basis of feedback to a submitter.
+10. **Use TodoWrite throughout** — update status as each step completes.
