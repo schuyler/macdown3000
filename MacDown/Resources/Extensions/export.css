@@ -23,9 +23,8 @@ li {
     overflow-wrap: break-word;
 }
 
-/* Table cells - handle long content in tables */
+/* Table cells - wrap truly unbreakable strings (e.g. URLs); natural column width otherwise */
 td, th {
-    word-break: break-word;
     overflow-wrap: break-word;
 }
 
