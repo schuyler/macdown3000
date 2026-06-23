@@ -56,13 +56,6 @@ to back:
 1. **Promote** the previous RC → final release.
 2. **Cut** the next RC from `main` HEAD.
 
-Sunday is chosen deliberately for a solo maintainer: it's when the maintainer is
-reliably at the keyboard with capacity (and credit headroom) to babysit the
-agent-driven RC cut, contributor lookup, and notarization round-trip. The
-usual "don't ship before the weekend" caution assumes a team that goes dark on
-weekends; here the maintainer *is* the weekend coverage, and the 14-day
-validation window means nothing is ever time-critical on release day.
-
 Key intervals that fall out of a 2-week cadence:
 
 | Property | Value |
