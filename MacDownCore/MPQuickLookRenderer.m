@@ -183,6 +183,12 @@ NS_INLINE NSString *MPQuickLookContentSecurityPolicy(void)
 // Build a stable text-derived slug from a heading's HTML content.
 // Mirrors slugify() in MacDown/Code/Extension/hoedown_html_patch.c so the
 // preview and Quick Look render identical heading ids.
+// Strips HTML tags and skips HTML entities (&amp; / &lt; / &#39; ...),
+// lowercases ASCII, converts spaces to hyphens, drops ASCII punctuation,
+// preserves UTF-8 multi-byte sequences so accented characters survive
+// (e.g. "Introducción" -> "introducción"). Anchors keep their raw UTF-8
+// bytes (no percent-encoding): browsers match the URL fragment against
+// the id literally, so encoding would break navigation.
 static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *content)
 {
     if (!content || !content->size)
@@ -203,6 +209,13 @@ static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *cont
         if (c == '<')
         {
             in_tag = 1;
+            continue;
+        }
+        if (c == '&')
+        {            // skip an HTML entity like &amp; / &lt; / &#39;
+            while (i + 1 < content->size && content->data[i + 1] != ';')
+                i++;
+            i++;                    // consume the ';'
             continue;
         }
 
