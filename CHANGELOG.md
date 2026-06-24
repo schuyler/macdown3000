@@ -18,6 +18,69 @@
 - Restrict auto-created link targets to the current document's folder scope (#388)
 - Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
 
+<!-- rc-temp -->
+## [3000.0.7-rc.1] - 2026-06-24
+
+This release candidate brings a large batch of preview-rendering fixes, editor and toolbar improvements, new theming options, and several reporter-driven bug fixes. Highlights include fixes for blank previews, table layout and scrolling, pane sync on large files, and a hardened, more responsive preview pipeline.
+
+### Added
+
+- Add GitHub Dark Default editor theme -- thanks @sks3691 for the contribution!
+- Add editor invisible character toggle (#43) -- thanks @yusufm for the contribution!
+- Add File menu autosave toggle (#301) -- thanks @Xylopyrographer for the report! thanks @yusufm for the contribution!
+- Add insert table toolbar action (#278) -- thanks @rcuisnier for the report! thanks @yusufm for the contribution!
+- Add Selection character/word count (#452) -- thanks @Telamonster for the report!
+- Persist preview-only startup mode (#383) -- thanks @yusufm for the contribution!
+- Emit slug-based heading IDs for anchor link navigation (#429) -- thanks @falcon-enoc for the report and the contribution!
+
+### Changed
+
+- Color HTML in default editor themes (#443) -- thanks @gregwillits for the report!
+- Support uppercase task list checkboxes (#369) -- thanks @gino-santerre-telus for the report! thanks @yusufm for the contribution!
+- Hide unparsable YAML front matter -- thanks @yusufm for the contribution!
+- Make the toolbar fully delegate-driven so Flexible Space can be dropped (#313) -- thanks @gregwillits for the report!
+- Extend wide-table horizontal scrolling to all themes (screen only) (#432) -- thanks @dafi for the report!
+- Widen HTML preferences pane to fit theme controls (#397) -- thanks @rcuisnier for the report!
+- Sort editor theme and rendering CSS preference menus
+- Improve render-path responsiveness (#388) -- thanks @yusufm for the contribution!
+
+### Fixed
+
+- Fix blank preview for documents with execute bit set (#431, #405) -- thanks @maskedspitz and @b2sc for the reports!
+- Never use the document file as the preview base URL (#405, #431) -- thanks @b2sc and @maskedspitz for the reports!
+- Normalize CRLF line endings on file load (#382) -- thanks @Ariaflux for the report!
+- Cache-bust style/theme CSS on preview reload (#318) -- thanks @gregwillits for the report!
+- Restore natural table width and horizontal scrolling (#432) -- thanks @dafi for the report! thanks @samqbush for the contribution!
+- Keep editor and preview panes in sync on large files (#436) -- thanks @KingMob for the report!
+- Honor Sync Panes toggle mid-session (#441) -- thanks @gregwillits for the report!
+- Clear editor highlighting on reload (#378) -- thanks @yusufm for the contribution!
+- Re-initialize task list handlers after DOM replacement (#376)
+- Strip grey background from printed output (#387) -- thanks @richb-hanover for the report!
+- Preserve custom Prism theme filename case (#315) -- thanks @gregwillits for the report! thanks @yusufm for the contribution!
+- Mirror drag-collapse ratio on pane swap (#380) -- thanks @yusufm for the contribution!
+- Fix preference pane layout for localized text wrapping (#397) -- thanks @rcuisnier for the report!
+- Fix Settings panel layout clipping and field overlap (#397) -- thanks @rcuisnier for the report!
+- Fix EXC_BAD_ACCESS when clicking grouped toolbar buttons -- thanks @yusufm for the contribution!
+- Guard nil-group and out-of-bounds index in grouped toolbar item selection (#394)
+- Fix entitlements loss during app re-signing (#302) -- thanks @whispersnowleopard for the report!
+- Open only the help document on first launch (#428) -- thanks @mundijr for the report! thanks @1waterrj for the contribution!
+- Fix Xcode runtime warnings -- thanks @yusufm for the contribution!
+
+### Security
+
+- Harden Quick Look preview sandbox (#385) -- thanks @yusufm for the contribution!
+- Harden preview script boundaries (#384) -- thanks @yusufm for the contribution!
+- Restrict auto-created link targets (#386) -- thanks @yusufm for the contribution!
+
+### Documentation
+
+- Fix and clarify line break example in help.md -- thanks @mjonss for the contribution!
+
+### Infrastructure
+
+- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; website update for 3000.0.6.
+<!-- /rc-temp -->
+
 ## [3000.0.6] - 2026-04-18
 
 This release rebuilds scroll sync around an ownership model that eliminates timing-based race conditions, and fixes several user-reported bugs with preview rendering, Quick Look, and diagram support. The deep dive into the long history of the editor / preview panel scroll synchronization took about a day of persistent work. Hopefully it was worth it!
