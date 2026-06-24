@@ -304,12 +304,18 @@ jobs:
 
           echo "✅ CLI binary signed successfully"
 
-          # Re-sign the app bundle to update the seal after modifying nested component
+          # Re-sign the app bundle to update the seal after modifying nested component.
+          # --entitlements MUST be re-applied here: the Xcode build signs the app with
+          # CODE_SIGN_ENTITLEMENTS, but this re-sign replaces that signature. Without
+          # --entitlements the app ships with NO entitlements, breaking NSSavePanel
+          # (Move To / Save As…) with ViewBridge error 14 on macOS Sequoia and later.
+          # See issue #302.
           echo "🔐 Re-signing app bundle to update code signature seal..."
           codesign --sign "$IDENTITY" \
             --force \
             --deep \
             --options runtime \
+            --entitlements "MacDown/MacDown.entitlements" \
             --timestamp \
             "build/MacDown 3000.app"
 
@@ -355,6 +361,21 @@ jobs:
           # Show CLI binary signature details
           echo "📋 CLI binary signature details:"
           codesign -dvv "$CLI_BINARY" 2>&1 | head -20
+
+          # Verify the app bundle still carries the file-access entitlement.
+          # The post-build re-sign previously stripped entitlements, shipping builds
+          # that hit ViewBridge error 14 on Move To / Save As… (issue #302). This gate
+          # ensures a build can NEVER ship without it.
+          echo "🔍 Verifying app entitlements..."
+          APP_ENTITLEMENTS=$(codesign -d --entitlements :- "build/MacDown 3000.app" 2>/dev/null || true)
+          if [[ "$APP_ENTITLEMENTS" != *"com.apple.security.files.user-selected.read-write"* ]]; then
+            echo "::error::App bundle is missing com.apple.security.files.user-selected.read-write entitlement"
+            echo "::error::This breaks NSSavePanel (Move To / Save As…) on macOS Sequoia and later. See issue #302."
+            echo "Entitlements found:"
+            echo "$APP_ENTITLEMENTS"
+            exit 1
+          fi
+          echo "✅ App bundle has the user-selected.read-write entitlement"
 
           echo "✅ Application bundle ready"
 
@@ -409,6 +430,19 @@ jobs:
           fi
 
           echo "✅ App bundle inside DMG is properly signed: $SIGNING_IDENTITY"
+
+          # Verify the packaged app still carries the file-access entitlement (issue #302)
+          echo "🔍 Verifying app entitlements inside DMG..."
+          DMG_APP_ENTITLEMENTS=$(codesign -d --entitlements :- "/tmp/dmg-verify/MacDown 3000.app" 2>/dev/null || true)
+          if [[ "$DMG_APP_ENTITLEMENTS" != *"com.apple.security.files.user-selected.read-write"* ]]; then
+            echo "::error::App inside DMG is missing com.apple.security.files.user-selected.read-write entitlement"
+            echo "::error::This breaks NSSavePanel (Move To / Save As…) on macOS Sequoia and later. See issue #302."
+            echo "Entitlements found:"
+            echo "$DMG_APP_ENTITLEMENTS"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+          echo "✅ App inside DMG has the user-selected.read-write entitlement"
 
           # Verify CLI binary inside DMG
           echo "🔍 Verifying CLI binary inside DMG..."

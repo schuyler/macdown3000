@@ -52,6 +52,8 @@ MacDown uses an entitlements file at `MacDown/MacDown.entitlements` with the fol
 
 The entitlements file is wired into the Xcode project via `CODE_SIGN_ENTITLEMENTS` for both Debug and Release configurations, and is also passed during signed CI builds in `.github/actions/build-macdown/action.yml`.
 
+**Re-signing must re-apply entitlements.** After the Xcode build, the release workflow re-signs the app bundle (with `codesign --force --deep`) to re-seal it after signing the bundled `macdown` CLI binary. A `codesign` re-sign *replaces* the existing signature, so it must pass `--entitlements MacDown/MacDown.entitlements` — otherwise the shipped app loses its entitlements entirely and `NSSavePanel` (Move To / Save As…) fails with ViewBridge error 14 on macOS Sequoia and later. To prevent this regression from shipping silently, the pipeline asserts the `com.apple.security.files.user-selected.read-write` entitlement is present at three gates: after the re-sign and on the app inside the DMG (`release.yml`), and at the final pre-publish verification (`staple-release.yml`).
+
 **If additional entitlements are needed** (e.g., for JIT compilation or unsigned code execution), add them to `MacDown/MacDown.entitlements`:
 
    ```xml
@@ -446,6 +448,30 @@ CloudKit query for MacDown-1.0.0.dmg (2/....) failed due to "Ticket not found"
 - Ensure DMG is both **notarized** and **stapled**
 - Test on a clean Mac before releasing
 - Provide instructions for users with strict security settings
+
+### "Move To" / "Save As…" Fails with ViewBridge Error 14
+
+**Symptom:** On macOS Sequoia (15.x) and later, "Move To" or "Save As…" shows
+`com.apple.ViewBridge error 14`, or nothing happens at all.
+
+**Cause:** The shipped app lost its `com.apple.security.files.user-selected.read-write`
+entitlement. Under Hardened Runtime, `NSSavePanel` requires this entitlement. A common
+way to lose it is a post-build `codesign` re-sign that does **not** pass
+`--entitlements` — the re-sign replaces the Xcode-applied signature and drops the
+entitlements (see issue #302).
+
+**How to diagnose:** Inspect the installed app's entitlements:
+```bash
+codesign -d --entitlements :- "/Applications/MacDown 3000.app"
+```
+The output must include `com.apple.security.files.user-selected.read-write`.
+
+**Solution:**
+- Ensure every `codesign` re-sign of the app bundle passes
+  `--entitlements MacDown/MacDown.entitlements`.
+- The pipeline verifies this entitlement at three gates (after the re-sign and on the
+  app inside the DMG in `release.yml`, and at final verification in `staple-release.yml`),
+  so a build that lost it will fail CI rather than ship.
 
 ### Build Fails: CocoaPods Error
 
