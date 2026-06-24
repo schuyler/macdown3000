@@ -131,21 +131,32 @@ matching the tag exactly — including the `-rc.N` suffix — and extract that
 section's body as the release notes. An RC tag therefore needs its own section,
 or CI fails on the first step.
 
-To satisfy the gate without disturbing the rolling `## [Unreleased]` accumulator,
-insert a **temporary snapshot section** directly below `[Unreleased]`. It is a
-copy of the current `[Unreleased]` body (which, by Step 3, is exactly what this
-RC contains), marked with an HTML comment so `/release` can strip it at
-graduation:
+**Do not copy `## [Unreleased]` to build this section.** This project does not
+require contributors to update the changelog, so `[Unreleased]` is chronically
+incomplete and will **never** match the RC's actual contents (at v3000.0.7-rc.1
+it listed ~5 PRs against 48 real changes). The RC section must be **generated
+from the commit range**, exactly the way `/release` builds its notes.
+
+Build it from `v${LATEST_STABLE}..HEAD` using the same attribution process as
+`/release` Step 2b: categorize entries (Added / Changed / Fixed / Security /
+Documentation / Infrastructure) and credit reporters, contributors, and testers
+(excluding @schuyler) by looking up each PR's linked issues across both
+`schuyler/macdown3000` and `MacDownApp/macdown`. This is the heavy step —
+delegating the lookup to a subagent keeps it manageable for large batches.
+
+Insert the generated section as a `<!-- rc-temp -->` block so `/release` can
+strip it at graduation. Leave `[Unreleased]` untouched — it is **not** the
+source and is not relied upon:
 
 ```markdown
 ## [Unreleased]
 
-{the existing rolling entries — left untouched}
+{existing rolling entries — left untouched, NOT used as the source}
 
 <!-- rc-temp -->
 ## [{VERSION}] - {YYYY-MM-DD}
 
-{snapshot copy of the current [Unreleased] body}
+{section generated from the commit range, with attribution}
 <!-- /rc-temp -->
 
 ## [3000.0.6] - 2026-04-18
@@ -157,17 +168,18 @@ to `main` so the tag captures it:
 
 ```bash
 git add CHANGELOG.md
-git commit -m "Snapshot changelog for release candidate ${VERSION}"
+git commit -m "Generate changelog for release candidate ${VERSION}"
 git push origin main
 ```
 
 > **Do not** touch `README.md`. The `**Version X.Y.Z** - Available Now` line is
 > the *stable* pointer; RCs are pre-releases and must not change it.
 >
-> **`[Unreleased]` stays intact.** The snapshot is an additive, clearly-marked
-> temporary block. `/release` removes every `<!-- rc-temp -->…<!-- /rc-temp -->`
-> block for the target and converts `[Unreleased]` into the final section at
-> graduation — so the changelog never carries stale RC sections forward.
+> **`[Unreleased]` is not authoritative.** Because contributors don't maintain
+> it, both the RC section here and the final section at graduation are generated
+> from the commit range — never from `[Unreleased]`. `/release` removes every
+> `<!-- rc-temp -->…<!-- /rc-temp -->` block for the target at graduation, so the
+> changelog never carries stale RC sections forward.
 
 ### Step 5: Tag and Push the RC
 
