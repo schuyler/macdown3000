@@ -37,6 +37,7 @@ Use TodoWrite to track progress:
 ```
 - Determine RC version and run pre-flight checks
 - Identify changes included in this RC
+- Write the temporary RC changelog snapshot and commit
 - Tag and push the RC (triggers build + notarization)
 - Staple and publish the RC pre-release
 - Look up reporters and post validation comments
@@ -56,9 +57,11 @@ LATEST_STABLE=$(gh release list --repo schuyler/macdown3000 --exclude-pre-releas
 # e.g. 3000.0.6  →  next patch target is 3000.0.7
 TARGET=$(echo "$LATEST_STABLE" | awk -F. '{printf "%s.%s.%d", $1, $2, $3+1}')
 
-# Highest existing rc.N for this target (0 if none)
-LAST_RC=$(gh release list --repo schuyler/macdown3000 --limit 30 --json tagName --jq \
-  '[.[] | select(.tagName | startswith("v'"$TARGET"'-rc."))] | length')
+# Highest existing rc.N for this target (0 if none). Use max(N), NOT count —
+# counting collides if a failed/rejected RC was ever deleted (e.g. rc.2 deleted
+# leaves rc.1 + rc.3; count=2 → wrongly recomputes rc.3).
+LAST_RC=$(gh release list --repo schuyler/macdown3000 --limit 100 --json tagName --jq \
+  '[.[] | .tagName | capture("^v'"$TARGET"'-rc\\.(?<n>[0-9]+)$") | .n | tonumber] | max // 0')
 RC_NUM=$((LAST_RC + 1))
 VERSION="${TARGET}-rc.${RC_NUM}"
 ```
@@ -78,14 +81,28 @@ git pull origin main
 git tag -l "v${VERSION}" | grep -q . && echo "Tag exists — pick a new rc number"
 ```
 
-**Skip-if-empty:** list commits since the last RC (or last stable if this is
+**Skip-if-empty:** list commits since the previous RC (or last stable if this is
 rc.1). If nothing app-facing has merged, tell the user the cycle is empty and
 stop — don't cut a redundant RC.
 
+Derive the previous RC tag explicitly. **Do not** use `gh release list --limit 1`
+for this — an express-lane hotfix (a final shipped out-of-band) can make the most
+recent release something other than the prior RC, which would corrupt the
+"new since previous RC" diff in Step 3.
+
 ```bash
-PREV_TAG=$(gh release list --repo schuyler/macdown3000 --limit 1 --json tagName --jq '.[0].tagName')
+# Previous RC for THIS target = the rc just below the one we're cutting.
+# If we're cutting rc.1, there is no previous RC → fall back to last stable,
+# so EVERY change since the stable is "new" and gets pinged (correct for rc.1).
+PREV_RC_NUM=$((RC_NUM - 1))
+if [[ "$PREV_RC_NUM" -ge 1 ]]; then
+  PREV_TAG="v${TARGET}-rc.${PREV_RC_NUM}"
+else
+  PREV_TAG="v${LATEST_STABLE}"
+fi
+# Sanity: PREV_TAG must be an ancestor of HEAD, else the range is meaningless.
+git merge-base --is-ancestor "$PREV_TAG" HEAD || echo "WARN: ${PREV_TAG} is not an ancestor of HEAD"
 git log "${PREV_TAG}..HEAD" --oneline --no-merges
-```
 
 ### Step 3: Identify Included Changes
 
@@ -106,21 +123,62 @@ pinged; do not re-ping). Determine "new since previous RC" by diffing against
 Filter out non-app changes (website, CI/release workflow, infra-only) the same
 way `/release` does — they ride the train but need no reporter validation.
 
-### Step 4: Tag and Push the RC
+### Step 4: Write the Temporary RC Changelog Section
 
-Confirm with the user, then create and push the tag. This triggers
-`release.yml`, which auto-detects the `-rc.N` suffix and builds a **pre-release**
-DMG (universal, signed, submitted for notarization).
+Both `release.yml` (the "Verify changelog entry exists" gate) and
+`staple-release.yml` **require** a `## [${VERSION}]` section in `CHANGELOG.md`
+matching the tag exactly — including the `-rc.N` suffix — and extract that
+section's body as the release notes. An RC tag therefore needs its own section,
+or CI fails on the first step.
+
+To satisfy the gate without disturbing the rolling `## [Unreleased]` accumulator,
+insert a **temporary snapshot section** directly below `[Unreleased]`. It is a
+copy of the current `[Unreleased]` body (which, by Step 3, is exactly what this
+RC contains), marked with an HTML comment so `/release` can strip it at
+graduation:
+
+```markdown
+## [Unreleased]
+
+{the existing rolling entries — left untouched}
+
+<!-- rc-temp -->
+## [{VERSION}] - {YYYY-MM-DD}
+
+{snapshot copy of the current [Unreleased] body}
+<!-- /rc-temp -->
+
+## [3000.0.6] - 2026-04-18
+...
+```
+
+Use the Edit tool to insert it (date = the RC cut date, i.e. today). Then commit
+to `main` so the tag captures it:
+
+```bash
+git add CHANGELOG.md
+git commit -m "Snapshot changelog for release candidate ${VERSION}"
+git push origin main
+```
+
+> **Do not** touch `README.md`. The `**Version X.Y.Z** - Available Now` line is
+> the *stable* pointer; RCs are pre-releases and must not change it.
+>
+> **`[Unreleased]` stays intact.** The snapshot is an additive, clearly-marked
+> temporary block. `/release` removes every `<!-- rc-temp -->…<!-- /rc-temp -->`
+> block for the target and converts `[Unreleased]` into the final section at
+> graduation — so the changelog never carries stale RC sections forward.
+
+### Step 5: Tag and Push the RC
+
+Confirm with the user, then create and push the tag (from the snapshot commit on
+`main`). This triggers `release.yml`, which auto-detects the `-rc.N` suffix and
+builds a **pre-release** DMG (universal, signed, submitted for notarization).
 
 ```bash
 git tag -a "v${VERSION}" -m "Release candidate ${VERSION}"
 git push origin "v${VERSION}"
 ```
-
-> **Do not** update `README.md`. The `**Version X.Y.Z** - Available Now` line is
-> the *stable* pointer; RCs are pre-releases and must not change it. Likewise,
-> do not finalize a `## [X.Y.Z]` CHANGELOG section for an RC — the changelog is
-> written when the train graduates via `/release`.
 
 Monitor the build:
 
@@ -129,7 +187,7 @@ gh run list --repo schuyler/macdown3000 --workflow release.yml --limit 1
 gh run watch {RUN_ID} --repo schuyler/macdown3000
 ```
 
-### Step 5: Staple and Publish the Pre-release
+### Step 6: Staple and Publish the Pre-release
 
 Once the build completes and Apple notarization finishes (5–15 min), staple and
 publish using the same workflow finals use:
@@ -146,28 +204,52 @@ Capture the published pre-release URL for the validation comments:
 RC_URL=$(gh release view "v${VERSION}" --repo schuyler/macdown3000 --json url --jq '.url')
 ```
 
-### Step 6: Look Up Reporters and Post Validation Comments
+### Step 7: Look Up Reporters and Post Validation Comments
 
 For each **newly-added** PR (from Step 3), identify who to invite. Reuse the
-contributor-lookup logic from `/release` Step 2b:
+contributor-lookup logic from `/release` Step 2b to find:
 
 1. **Reporter(s)** — author(s) of the issue(s) the PR links (look for `#123` or
-   `MacDownApp/macdown#123` in the PR body). Check both repos.
+   `MacDownApp/macdown#123` in the PR body).
 2. **Prior testers** — users who previously commented confirming/testing.
 
-**Exclude @schuyler.** If a change has no linked issue / no reporter, skip the
-comment (it still gets a label in Step 7).
+**Only @-mention people who engaged on `schuyler/macdown3000`.** The lookup may
+surface authors of upstream `MacDownApp/macdown` issues — they may be fine to
+*credit* in a changelog, but they never opted into this fork, so do **not** ping
+them with an `@`-mention. Cross-repo is for attribution, not notification.
 
-Compute the planned release date — the **second** Sunday from the RC cut:
+**Exclude @schuyler.** If a change has no linked issue, no reporter, or the only
+associated user is @schuyler, skip the comment (it still gets a label in Step 8).
+
+**Idempotency — don't re-ping.** Ephemeral sessions have no memory of last
+cycle's pings, so verify against GitHub state rather than trusting the range
+math. Before commenting, check whether this issue already has an RC validation
+comment (the body carries the `<!-- rc-validation-ping -->` marker below) and
+skip if so:
 
 ```bash
-RELEASE_DATE=$(date -d "sunday + 2 weeks" +%Y-%m-%d 2>/dev/null || date -v+sun -v+1w +%Y-%m-%d)
+gh issue view {ISSUE_NUMBER} --repo schuyler/macdown3000 --json comments \
+  --jq '.comments[].body' | grep -q 'rc-validation-ping' && echo "already pinged — skip"
 ```
 
-Post one comment per issue (or PR if no issue), on the issue the change resolves:
+Compute the planned release date — the next release Sunday, **14 days after the
+RC cut**. This skill is meant to run on the cut Sunday; anchor to that explicitly
+and produce identical output on GNU (Linux/CI) and BSD (macOS) `date`:
+
+```bash
+# CUT_DATE defaults to today (run this on the cut Sunday). Override if needed.
+CUT_DATE=${CUT_DATE:-$(date +%Y-%m-%d)}
+RELEASE_DATE=$(date -d "${CUT_DATE} + 14 days" +%Y-%m-%d 2>/dev/null \
+  || date -j -v+14d -f %Y-%m-%d "${CUT_DATE}" +%Y-%m-%d)
+```
+
+Post one comment per issue (or PR if no issue), on the issue the change resolves.
+The hidden marker makes the ping idempotent; the Gatekeeper line keeps
+non-technical reporters from misreading a quarantine prompt as "still broken":
 
 ```bash
 gh issue comment {ISSUE_NUMBER} --repo schuyler/macdown3000 --body "$(cat <<'EOF'
+<!-- rc-validation-ping -->
 👋 A fix for this is available for testing in **MacDown {VERSION}**.
 
 If you have a moment, please download it, confirm the issue is resolved, and
@@ -175,6 +257,10 @@ reply here — your confirmation is what graduates the fix into the next stable
 release (currently planned for {RELEASE_DATE}).
 
 📦 Download: {RC_URL}
+
+> First launch: if macOS says the app is from an unidentified developer,
+> right-click the app and choose **Open**, then confirm. (This is a signed,
+> notarized pre-release build.)
 
 No rush — if we don't hear back, the fix ships anyway. Thanks for reporting it!
 EOF
@@ -184,7 +270,7 @@ EOF
 Tag the reporter(s)/tester(s) by `@`-mentioning them in the comment body. **Post
 at most one comment per issue per RC.**
 
-### Step 7: Apply Labels and Summarize
+### Step 8: Apply Labels and Summarize
 
 Apply `rc-pending` to every included issue/PR (including the ownerless ones that
 got no comment), so release day knows what's aboard the train:
@@ -209,9 +295,11 @@ Print a summary:
 
 ## Important Reminders
 
-1. **RCs never touch README.md or finalize CHANGELOG sections** — those belong to
-   the final release (`/release`).
-2. **One comment per issue per RC.** Never re-ping a carried-over change.
+1. **RCs never touch README.md.** They add only a temporary, clearly-marked
+   (`<!-- rc-temp -->`) CHANGELOG snapshot that `/release` strips at graduation;
+   the rolling `[Unreleased]` section and the final entry belong to `/release`.
+2. **One comment per issue per RC.** Never re-ping a carried-over change; check
+   for the `<!-- rc-validation-ping -->` marker first.
 3. **Exclude @schuyler from all credits and tags.**
 4. **No 'v' in the VERSION variable**; add it back only for the tag.
 5. **No Co-authored-by trailers.** Use "Related to #123", not "Fixes #123".
