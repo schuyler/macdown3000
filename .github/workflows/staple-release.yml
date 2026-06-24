@@ -263,6 +263,21 @@ jobs:
           hdiutil attach "$DMG_PATH" -mountpoint /tmp/final-verify -nobrowse -readonly
           codesign -vvv --deep --strict "/tmp/final-verify/MacDown 3000.app"
 
+          # Final gate: the published app MUST carry the file-access entitlement, or
+          # Move To / Save As… break with ViewBridge error 14 on macOS Sequoia and
+          # later (issue #302). Refuse to publish a build that lost it.
+          echo "  ✓ Checking app entitlements..."
+          FINAL_ENTITLEMENTS=$(codesign -d --entitlements :- "/tmp/final-verify/MacDown 3000.app" 2>/dev/null || true)
+          if [[ "$FINAL_ENTITLEMENTS" != *"com.apple.security.files.user-selected.read-write"* ]]; then
+            echo "::error::Published app is missing com.apple.security.files.user-selected.read-write entitlement"
+            echo "::error::This breaks NSSavePanel (Move To / Save As…) on macOS Sequoia and later. See issue #302."
+            echo "Entitlements found:"
+            echo "$FINAL_ENTITLEMENTS"
+            hdiutil detach /tmp/final-verify
+            exit 1
+          fi
+          echo "    Entitlement present: com.apple.security.files.user-selected.read-write"
+
           # Get app version for logging
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" \
                         "/tmp/final-verify/MacDown 3000.app/Contents/Info.plist" 2>/dev/null || echo "unknown")
