@@ -3735,6 +3735,9 @@ to link outside that scope.", \
 
     [self stopFileWatching];
 
+    if (![MPFileWatcher canWatchPath:self.fileURL.path])
+        return;
+
     __weak MPDocument *weakSelf = self;
     self.fileWatcher = [[MPFileWatcher alloc]
         initWithPath:self.fileURL.path
