@@ -115,6 +115,11 @@
     return self.highlightingThemeName;
 }
 
+- (NSURL *)rendererBaseURL:(MPRenderer *)renderer
+{
+    return self.baseURL;
+}
+
 - (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html
 {
     self.lastHTML = html;

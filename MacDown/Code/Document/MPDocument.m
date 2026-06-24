@@ -2339,6 +2339,24 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // re-read from disk instead of served from the in-memory cache.
     [[NSURLCache sharedURLCache] removeAllCachedResponses];
 
+    // Issue #318: Bump a cache-busting version stamp on the active style and
+    // highlighting-theme CSS files. The legacy WebView serves CSS from its own
+    // by-URL resource cache, which removeAllCachedResponses does not clear, so
+    // a full reload of the same file:// URL still yields stale CSS. Stamping
+    // the file paths gives the <link> tags a fresh "?t=" query (applied in
+    // MPRenderer.render), which the WebView has not cached. This is the same
+    // trick used for edited local images (issue #110), and it also forces a
+    // refresh even when no file-watcher change event preceded the reload.
+    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    NSString *stylePath = MPStylePathForName(self.preferences.htmlStyleName);
+    if (stylePath)
+        [self.renderer setTimestamp:now forResourcePath:stylePath];
+    NSString *themePath =
+        MPHighlightingThemeURLForName(
+            self.preferences.htmlHighlightingThemeName).path;
+    if (themePath)
+        [self.renderer setTimestamp:now forResourcePath:themePath];
+
     // Issue #318: Reset cached names so renderer:didProduceHTMLOutput:
     // sees a "change" (nil != currentPref) and takes the full HTML reload
     // path instead of body-only DOM replacement.
