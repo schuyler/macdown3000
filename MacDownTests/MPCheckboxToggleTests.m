@@ -273,6 +273,17 @@
                           @"Asterisk marker checkbox should toggle correctly");
 }
 
+- (void)testToggleUppercaseCheckedCheckbox
+{
+    NSString *markdown = @"- [X] Done";
+    NSString *expected = @"- [ ] Done";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Uppercase checked checkbox should toggle to unchecked");
+}
+
 /**
  * Test checkbox with plus marker.
  */
@@ -313,6 +324,95 @@
 
     XCTAssertEqualObjects(result, expected,
                           @"Checkbox with Unicode content should toggle correctly");
+}
+
+#pragma mark - Case Insensitivity (Issue #369)
+
+/**
+ * Test that toggling an uppercase [X] checkbox unchecks it to [ ].
+ */
+- (void)testToggleUppercaseCheckedToUnchecked
+{
+    NSString *markdown = @"- [X] Capital X task\n- [ ] Pending task";
+    NSString *expected = @"- [ ] Capital X task\n- [ ] Pending task";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Uppercase [X] checkbox should toggle to unchecked");
+}
+
+/**
+ * Test that re-checking after an uppercase [X] normalizes to lowercase [x].
+ * Index 1 is the unchecked item, which should become [x] (not [X]).
+ */
+- (void)testReCheckNormalizesToLowercase
+{
+    NSString *markdown = @"- [X] Capital X task\n- [ ] Pending task";
+    NSString *expected = @"- [X] Capital X task\n- [x] Pending task";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:1 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Re-checking should write lowercase [x]");
+}
+
+/**
+ * Test that an uppercase [X] occupies an index, keeping subsequent checkboxes
+ * aligned with the renderer. Toggling index 1 must hit the second item, not
+ * skip over the uppercase one.
+ */
+- (void)testUppercaseCheckboxOccupiesIndex
+{
+    NSString *markdown = @"- [X] First (capital)\n- [ ] Second\n- [x] Third";
+    NSString *expected = @"- [X] First (capital)\n- [x] Second\n- [x] Third";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:1 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"[X] should occupy index 0 so index 1 hits the second item");
+}
+
+/**
+ * Test toggling an uppercase [X] checkbox with an asterisk marker.
+ */
+- (void)testToggleUppercaseCheckboxWithAsteriskMarker
+{
+    NSString *markdown = @"* [X] Asterisk capital task";
+    NSString *expected = @"* [ ] Asterisk capital task";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Asterisk marker [X] checkbox should toggle correctly");
+}
+
+/**
+ * Test toggling an uppercase [X] checkbox with a plus marker.
+ */
+- (void)testToggleUppercaseCheckboxWithPlusMarker
+{
+    NSString *markdown = @"+ [X] Plus capital task";
+    NSString *expected = @"+ [ ] Plus capital task";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Plus marker [X] checkbox should toggle correctly");
+}
+
+/**
+ * Test toggling an uppercase [X] checkbox in a numbered list.
+ */
+- (void)testToggleUppercaseNumberedListCheckbox
+{
+    NSString *markdown = @"1. [X] First numbered\n2. [ ] Second numbered";
+    NSString *expected = @"1. [ ] First numbered\n2. [ ] Second numbered";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Numbered list [X] checkbox should toggle correctly");
 }
 
 #pragma mark - URL Scheme Tests

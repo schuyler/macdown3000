@@ -13,6 +13,8 @@
 @interface MPDocument (LinkTargetTesting)
 @property (strong) NSURL *currentBaseUrl;
 - (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
+- (NSURL *)previewSafeBaseURL:(NSURL *)baseURL;
+- (IBAction)toggleAutoSave:(id)sender;
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -120,6 +122,93 @@
     XCTAssertNil(error, @"No error should occur loading CRLF-terminated content");
 }
 
+- (void)testPreviewSafeBaseURLRewritesRegularFile
+{
+    // Issues #405 / #431: WebKit on macOS 26 can silently blank the preview
+    // based on file metadata it inspects but the editor does not (execute bit,
+    // stale TCC/provenance state). There is no reliable runtime signal for this,
+    // so the real document file is NEVER used as the preview base resource — even
+    // an ordinary, non-executable file is swapped for a non-existent sentinel in
+    // the SAME directory. The directory is all the scope/resolution code needs.
+    NSString *content = @"# Test\n";
+    [content writeToURL:self.testFileURL atomically:YES
+               encoding:NSUTF8StringEncoding error:nil];
+
+    NSURL *safe = [self.document previewSafeBaseURL:self.testFileURL];
+
+    XCTAssertNotEqualObjects(safe, self.testFileURL,
+        @"A real document file must never be used as the preview base URL");
+    XCTAssertEqualObjects(safe.URLByDeletingLastPathComponent.path,
+                          self.testFileURL.URLByDeletingLastPathComponent.path,
+        @"Sentinel base URL must live in the same directory as the document");
+    XCTAssertFalse([self.fileManager fileExistsAtPath:safe.path],
+        @"Sentinel base URL must not point at a real file");
+}
+
+- (void)testPreviewSafeBaseURLRewritesExecutableFile
+{
+    // Issue #431: WebKit blanks the preview for executable base resources (e.g.
+    // OneDrive's 0700 files). The base URL should be swapped for a non-existent
+    // sentinel in the SAME directory, so WebKit no longer sees an executable
+    // base while the directory — all the scope/resolution code depends on —
+    // stays identical.
+    NSString *content = @"# Test\n";
+    [content writeToURL:self.testFileURL atomically:YES
+               encoding:NSUTF8StringEncoding error:nil];
+    chmod(self.testFileURL.path.fileSystemRepresentation, 0700);
+
+    NSURL *safe = [self.document previewSafeBaseURL:self.testFileURL];
+
+    XCTAssertNotEqualObjects(safe, self.testFileURL,
+        @"Executable files should not be used as the preview base URL");
+    XCTAssertEqualObjects(safe.URLByDeletingLastPathComponent.path,
+                          self.testFileURL.URLByDeletingLastPathComponent.path,
+        @"Sentinel base URL must live in the same directory as the document");
+    XCTAssertFalse([self.fileManager fileExistsAtPath:safe.path],
+        @"Sentinel base URL must not point at a real (executable) file");
+}
+
+- (void)testPreviewSafeBaseURLLeavesDirectoryUnchanged
+{
+    // An unsaved document has no fileURL, so the base URL is the default HTML
+    // directory rather than a document file. A directory is already a safe base
+    // resource (relative resolution uses the directory itself) and must pass
+    // through untouched.
+    NSURL *dirURL = [NSURL fileURLWithPath:self.testDirectory isDirectory:YES];
+
+    NSURL *safe = [self.document previewSafeBaseURL:dirURL];
+    XCTAssertEqualObjects(safe, dirURL,
+        @"Directory base URLs must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNonexistentPathUnchanged
+{
+    // A file URL that does not resolve to anything on disk has no real base
+    // resource for WebKit to inspect, so there is nothing to make safe.
+    NSURL *missingURL = [NSURL fileURLWithPath:
+        [self.testDirectory stringByAppendingPathComponent:@"missing.md"]];
+
+    NSURL *safe = [self.document previewSafeBaseURL:missingURL];
+    XCTAssertEqualObjects(safe, missingURL,
+        @"Non-existent file paths must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNonFileURLUnchanged
+{
+    // Only file:// base URLs can trigger the WebKit blanking behavior.
+    NSURL *httpURL = [NSURL URLWithString:@"https://example.com/page.html"];
+
+    NSURL *safe = [self.document previewSafeBaseURL:httpURL];
+    XCTAssertEqualObjects(safe, httpURL,
+        @"Non-file URLs must be returned unchanged");
+}
+
+- (void)testPreviewSafeBaseURLLeavesNilUnchanged
+{
+    XCTAssertNil([self.document previewSafeBaseURL:nil],
+        @"A nil base URL must be returned as nil");
+}
+
 - (void)testWritableTypes
 {
     // Call [MPDocument writableTypes] (class method)
@@ -202,6 +291,44 @@
                    @"MPDocument should not autosave when editorAutoSave is NO");
 
     // Restore
+    prefs.editorAutoSave = original;
+}
+
+- (void)testToggleAutoSaveActionUpdatesPreference
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorAutoSave;
+
+    prefs.editorAutoSave = YES;
+    [self.document toggleAutoSave:nil];
+    XCTAssertFalse(prefs.editorAutoSave,
+                   @"File menu auto-save toggle should disable autosave");
+
+    [self.document toggleAutoSave:nil];
+    XCTAssertTrue(prefs.editorAutoSave,
+                  @"File menu auto-save toggle should re-enable autosave");
+
+    prefs.editorAutoSave = original;
+}
+
+- (void)testToggleAutoSaveMenuValidationReflectsPreference
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorAutoSave;
+    NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:@"Auto Save"
+                                                  action:@selector(toggleAutoSave:)
+                                           keyEquivalent:@""];
+
+    prefs.editorAutoSave = YES;
+    [self.document validateUserInterfaceItem:item];
+    XCTAssertEqual(item.state, NSControlStateValueOn,
+                   @"Auto-save menu item should be checked when autosave is enabled");
+
+    prefs.editorAutoSave = NO;
+    [self.document validateUserInterfaceItem:item];
+    XCTAssertEqual(item.state, NSControlStateValueOff,
+                   @"Auto-save menu item should be unchecked when autosave is disabled");
+
     prefs.editorAutoSave = original;
 }
 

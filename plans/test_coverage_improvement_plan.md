@@ -30,7 +30,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPColorTests.m | Color parsing | Good | ~39 |
 | MPAssetTests.m | Asset handling | Good | ~122 |
 | MPDocumentIOTests.m | File I/O, document state | Good | ~340 |
-| MPScrollSyncTests.m | Scroll sync, JavaScript sort, horizontal rule/setext header detection, bidirectional scroll sync | Excellent | ~1201 |
+| MPScrollSyncTests.m | Scroll sync, JavaScript sort, horizontal rule/setext header detection, bidirectional scroll sync, reference-kind classifier and kind-tagged alignment (Issue #436) | Excellent | ~1201 |
 | MPDocumentLifecycleTests.m | Document lifecycle, dirty flags, encoding | Good | (Issue #234) |
 | MPNotificationTests.m | Notification observers, preference changes | Good | (Issue #234) |
 | MPRendererEdgeCaseTests.m | Renderer edge cases, nil handling | Good | (Issue #234) |
@@ -58,7 +58,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 **Partial Coverage:**
 - Markdown rendering engine (MPRenderer.m) - 18 golden file tests + 3 regression tests added (Issue #89, Issue #81)
 - Document management (MPDocument.m) - File I/O and state management covered (Issue #90)
-- Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
+- Scroll synchronization (MPDocument.m) - 78 regression tests covering header detection, scroll position preservation, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, and editing-state-aware sync (Issue #39, Issue #143, Issue #144, Issue #258, Issue #282); plus pure-function tests for the reference-kind classifier (`+editorReferenceKindsForMarkdown:outLineNumbers:`) and kind-tagged LCS alignment (`+alignEditorYs:...`) that keep the editor/preview reference arrays parallel when the detectors disagree mid-document (Issue #436)
 - Preferences UI localization - Validation tests for complete translations added (Issue #40)
 - Style change detection (MPDocument.m) - Tests for CSS style and syntax highlighting theme change detection added (Issue #219); style reload cache invalidation tests added (Issue #318)
 - Security policy (MPURLSecurityPolicy.m) - 16 tests covering executable/bundle detection and directory scope enforcement for CVE-2019-12138 and CVE-2019-12173 (Issue #351)

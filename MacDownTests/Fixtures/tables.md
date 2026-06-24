@@ -42,3 +42,11 @@
 | -------- | -------- | -------- |
 | Cell 1   |          | Cell 3   |
 |          | Cell 2   |          |
+
+## Wide Table (many columns, issue #432 regression)
+
+| Column One | Column Two | Column Three | Column Four | Column Five | Column Six | Column Seven | Column Eight | Column Nine | Column Ten |
+| ---------- | ---------- | ------------ | ----------- | ----------- | ---------- | ------------ | ------------ | ----------- | ---------- |
+| Alpha      | Beta       | Gamma        | Delta       | Epsilon     | Zeta       | Eta          | Theta        | Iota        | Kappa      |
+| 1          | 2          | 3            | 4           | 5           | 6          | 7            | 8            | 9           | 10         |
+| Lorem      | Ipsum      | Dolor        | Sit         | Amet        | Consectetur | Adipiscing  | Elit         | Sed         | Do         |

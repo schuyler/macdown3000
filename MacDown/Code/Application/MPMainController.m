@@ -354,8 +354,11 @@ NS_INLINE void treat()
 
 - (void)showFirstLaunchTips
 {
+    // Issue #428: Open only the help document on first launch. Together
+    // with the standard untitled document this makes two windows; also
+    // opening contribute.md made it three, which users reported as
+    // confusing. Contributing remains available in the Help menu.
     [self showHelp:nil];
-    [self showContributing:nil];
 }
 
 

@@ -118,7 +118,7 @@ void hoedown_patch_render_listitem(
         if (flags & HOEDOWN_LI_BLOCK)
             offset = 3;
 
-        // Do task list checkbox ([x] or [ ]).
+        // Do task list checkbox ([x], [X], or [ ]).
         if (USE_TASK_LIST(state) && text->size >= 3)
         {
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
@@ -131,7 +131,8 @@ void hoedown_patch_render_listitem(
                     g_checkbox_index++);
 				offset += 3;
             }
-            else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0)
+            else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
+                     strncmp((char *)(text->data + offset), "[X]", 3) == 0)
             {
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);

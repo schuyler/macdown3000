@@ -27,7 +27,7 @@
                         <subviews>
                             <button enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jet-bG-trd">
                                 <rect key="frame" x="16" y="12" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Include pre-releases (unavailable)" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
+                                <buttonCell key="cell" type="check" title="Include pre-releases (unavailable)" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -54,7 +54,7 @@
                         <subviews>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="6Nz-Ft-FbR">
                                 <rect key="frame" x="16" y="113" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Update preview automatically as you type" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="npz-xj-plX">
+                                <buttonCell key="cell" type="check" title="Update preview automatically as you type" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="npz-xj-plX">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -69,7 +69,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="Vab-4T-IU5">
                                 <rect key="frame" x="16" y="93" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Sync preview scrollbar when editor scrolls" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2Uj-Sx-FjV">
+                                <buttonCell key="cell" type="check" title="Sync preview scrollbar when editor scrolls" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2Uj-Sx-FjV">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -79,7 +79,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="fjb-tU-1Kw">
                                 <rect key="frame" x="16" y="73" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Put editor on the right" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="bUn-PQ-5Ez">
+                                <buttonCell key="cell" type="check" title="Put editor on the right" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="bUn-PQ-5Ez">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -89,7 +89,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="V1d-g4-bk8">
                                 <rect key="frame" x="16" y="53" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Start in preview mode" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="aYQ-0c-EOQ">
+                                <buttonCell key="cell" type="check" title="Start in preview mode" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="aYQ-0c-EOQ">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -99,7 +99,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="WVd-hz-Dcr">
                                 <rect key="frame" x="16" y="33" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Show word count" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="oeW-bF-ybW">
+                                <buttonCell key="cell" type="check" title="Show word count" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="oeW-bF-ybW">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -114,7 +114,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="hqr-gd-6gi">
                                 <rect key="frame" x="16" y="153" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Ensure open document on launch" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="l9N-wk-WRY">
+                                <buttonCell key="cell" type="check" title="Ensure open document on launch" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="l9N-wk-WRY">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -129,7 +129,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="UZT-HE-EaK">
                                 <rect key="frame" x="16" y="12" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Automatically create files for link targets" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hpF-zP-3cM">
+                                <buttonCell key="cell" type="check" title="Automatically create files for link targets" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hpF-zP-3cM">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -139,7 +139,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="aSv-Qd-7kR">
                                 <rect key="frame" x="16" y="133" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Auto-save and auto-reload documents" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aSv-Bc-cel">
+                                <buttonCell key="cell" type="check" title="Auto-save and auto-reload documents" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aSv-Bc-cel">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>

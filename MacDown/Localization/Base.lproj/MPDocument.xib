@@ -454,12 +454,7 @@
                     <constraint firstItem="0kv-p9-H4b" firstAttribute="top" secondItem="gIp-Ho-8D9" secondAttribute="top" id="yHd-Qc-mhZ"/>
                 </constraints>
             </view>
-            <toolbar key="toolbar" implicitIdentifier="E416A0C4-CA17-4923-8651-5CFF69659C83" displayMode="iconOnly" sizeMode="regular" id="owf-WR-5UO">
-                <allowedToolbarItems>
-                    <toolbarItem implicitItemIdentifier="NSToolbarSpaceItem" id="bzN-vA-6Vq"/>
-                    <toolbarItem implicitItemIdentifier="NSToolbarFlexibleSpaceItem" id="mwe-fC-9du"/>
-                </allowedToolbarItems>
-                <defaultToolbarItems/>
+            <toolbar key="toolbar" identifier="MPDocumentToolbar" allowsUserCustomization="YES" autosavesConfiguration="YES" displayMode="iconOnly" sizeMode="regular" id="owf-WR-5UO">
                 <connections>
                     <outlet property="delegate" destination="3i0-CY-DlB" id="4m3-HV-5dD"/>
                 </connections>

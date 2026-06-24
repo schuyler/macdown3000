@@ -71,6 +71,12 @@ foreground: 999999
 VERBATIM
 foreground: 999999
 
+HTML
+foreground: cc99cc
+
+HTMLBLOCK
+foreground: cc99cc
+
 HTML_ENTITY
 foreground: cc99cc
 

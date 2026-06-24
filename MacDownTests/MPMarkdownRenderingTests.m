@@ -300,6 +300,19 @@
                   @"Second checkbox should have index 1");
 }
 
+- (void)testUppercaseCheckedCheckboxHasDataIndex
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [X] Done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"<input type=\"checkbox\" checked data-checkbox-index=\"0\">"],
+                  @"Uppercase checked task-list markers should render as checked checkboxes");
+}
+
 /**
  * Test that multiple checkboxes get sequential indices.
  * Related to GitHub issue #269.
@@ -389,6 +402,49 @@
                   @"Second numbered task should have index 1");
     XCTAssertTrue([html containsString:@"data-checkbox-index=\"2\""],
                   @"Third numbered task should have index 2");
+}
+
+/**
+ * Test that an uppercase [X] checkbox renders as a checked checkbox, matching
+ * the GFM spec. Related to GitHub issue #369.
+ */
+- (void)testUppercaseCheckboxRendersChecked
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [X] Capital X task";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"task-list-item"],
+                  @"Uppercase [X] should render as a task-list item, not plain text");
+    XCTAssertTrue([html containsString:@"checked"],
+                  @"Uppercase [X] should render as a checked checkbox");
+    XCTAssertFalse([html containsString:@"[X]"],
+                   @"Uppercase [X] should not appear as literal text");
+}
+
+/**
+ * Test that [x] and [X] share a single sequential index space, so the rendered
+ * data-checkbox-index values stay aligned with the editor-side toggle logic.
+ * Related to GitHub issue #369.
+ */
+- (void)testMixedCaseCheckboxesShareIndexSpace
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Lower unchecked\n- [X] Capital checked\n- [x] Lower checked";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""],
+                  @"First checkbox should have index 0");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"Uppercase [X] checkbox should take the next sequential index 1");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"2\""],
+                  @"Third checkbox should have index 2");
 }
 
 - (void)testStrikethrough

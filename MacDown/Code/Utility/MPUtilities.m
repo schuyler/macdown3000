@@ -234,34 +234,51 @@ static NSString *MPPrismThemeDisplayName(NSString *fileName)
     return [name capitalizedString];
 }
 
+static NSURL *MPPrismThemeURLInRoot(NSString *root, NSString *fileName)
+{
+    if (!root || !fileName)
+        return nil;
+
+    NSString *themeDir = [NSString pathWithComponents:@[
+        root, kMPPrismThemesDirectoryName]];
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSArray *files = [manager contentsOfDirectoryAtPath:themeDir error:nil];
+    for (NSString *file in files)
+    {
+        if ([file caseInsensitiveCompare:fileName] == NSOrderedSame)
+        {
+            NSString *path = [themeDir stringByAppendingPathComponent:file];
+            return [NSURL fileURLWithPath:path];
+        }
+    }
+
+    NSString *path = [themeDir stringByAppendingPathComponent:fileName];
+    if ([manager fileExistsAtPath:path])
+        return [NSURL fileURLWithPath:path];
+    return nil;
+}
+
 NSURL *MPHighlightingThemeURLForNameInPaths(
     NSString *name, NSString *userDataRoot, NSString *bundleResourceRoot)
 {
     NSString *fileName = MPPrismThemeFileName(name);
-    NSFileManager *manager = [NSFileManager defaultManager];
 
     // Check user Application Support directory first
-    if (userDataRoot)
-    {
-        NSString *userPath = [NSString pathWithComponents:@[
-            userDataRoot, kMPPrismThemesDirectoryName, fileName]];
-        if ([manager fileExistsAtPath:userPath])
-            return [NSURL fileURLWithPath:userPath];
-    }
+    NSURL *url = MPPrismThemeURLInRoot(userDataRoot, fileName);
+    if (url)
+        return url;
 
     // Fall back to bundle resources
     if (bundleResourceRoot)
     {
-        NSString *bundlePath = [NSString pathWithComponents:@[
-            bundleResourceRoot, kMPPrismThemesDirectoryName, fileName]];
-        if ([manager fileExistsAtPath:bundlePath])
-            return [NSURL fileURLWithPath:bundlePath];
+        url = MPPrismThemeURLInRoot(bundleResourceRoot, fileName);
+        if (url)
+            return url;
 
         // Safety net: fall back to default theme (prism.css)
-        NSString *defaultPath = [NSString pathWithComponents:@[
-            bundleResourceRoot, kMPPrismThemesDirectoryName, @"prism.css"]];
-        if ([manager fileExistsAtPath:defaultPath])
-            return [NSURL fileURLWithPath:defaultPath];
+        url = MPPrismThemeURLInRoot(bundleResourceRoot, @"prism.css");
+        if (url)
+            return url;
     }
 
     return nil;
@@ -317,4 +334,3 @@ NSArray *MPListHighlightingThemesInPaths(
 
     return [[names array] sortedArrayUsingSelector:@selector(compare:)];
 }
-

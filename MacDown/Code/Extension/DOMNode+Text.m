@@ -123,6 +123,20 @@ NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *node)
 }
 
 
+// Issue #452: Public wrapper so the editor can count its selected text using
+// the exact same per-string algorithm as the document-wide word count.
+DOMNodeTextCount MPTextCountForString(NSString *string)
+{
+    MPAccumulatedTextCount accumulatedCount =
+        MPGetStringAccumulatedTextCount(string);
+    DOMNodeTextCount count;
+    count.words = accumulatedCount.words;
+    count.characters = accumulatedCount.characters;
+    count.characterWithoutSpaces = accumulatedCount.charactersWithoutSpaces;
+    return count;
+}
+
+
 @implementation DOMNode (Text)
 
 - (DOMNodeTextCount)textCount

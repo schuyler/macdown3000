@@ -23,10 +23,33 @@ li {
     overflow-wrap: break-word;
 }
 
-/* Table cells - handle long content in tables */
+/* Table cells - wrap truly unbreakable strings (e.g. URLs); natural column width otherwise */
 td, th {
-    word-break: break-word;
     overflow-wrap: break-word;
+}
+
+/* Wide tables - give every theme a horizontal scroll container so columns keep
+ * their natural width instead of compressing to the pane width (Issue #432).
+ *
+ * Scoped to screen media on purpose: this stylesheet is also present when the
+ * preview is printed to PDF, where WebKit switches to print media. A scroll
+ * container would clip wide tables on paper instead of scrolling them, so PDF
+ * table layout is left entirely to print.css.
+ *
+ * The non-default themes declare bare `table { ... }` rules with no overflow
+ * handling. Those have the SAME specificity as this rule, so it wins purely
+ * because export.css is appended LAST in the cascade (see MPRenderer.m) -- keep
+ * export.css last or this tie-break breaks. The default GitHub-2020.css theme
+ * is intentionally left alone: its `body table` rule has higher specificity and
+ * retains the behavior from PR #440. `max-width: 100%` keeps the scrollbar on
+ * the table itself rather than relying on document-level horizontal scrolling. */
+@media screen {
+    table {
+        display: block;
+        width: max-content;
+        max-width: 100%;
+        overflow-x: auto;
+    }
 }
 
 /* Blockquotes - ensure quoted content wraps */

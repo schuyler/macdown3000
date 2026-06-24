@@ -76,7 +76,7 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorHorizontalInset", @"editorVerticalInset",
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
-            @"editorScrollsPastEnd",
+            @"editorScrollsPastEnd", @"editorShowsInvisibleCharacters",
             @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
         ];
     });
@@ -203,6 +203,22 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
     MPScrollOwnerNeither = 2,  // Quiescent; sync in either direction is valid
 };
 
+// Issue #436: Reference-point kind tag. The editor (regex over markdown) and the
+// preview (DOM query in updateHeaderLocations.js) detect reference points by
+// independent mechanisms that can disagree mid-document. Tagging each point with its
+// kind lets validateHeaderLocationAlignment align the two sequences instead of blindly
+// assuming they correspond 1:1 by index. Header values equal the header level, matching
+// the kind codes emitted by updateHeaderLocations.js.
+typedef NS_ENUM(NSInteger, MPReferenceKind) {
+    MPReferenceKindImage = 0,
+    MPReferenceKindH1    = 1,
+    MPReferenceKindH2    = 2,
+    MPReferenceKindH3    = 3,
+    MPReferenceKindH4    = 4,
+    MPReferenceKindH5    = 5,
+    MPReferenceKindH6    = 6,
+};
+
 @property (weak) IBOutlet NSToolbar *toolbar;
 @property (weak) IBOutlet MPDocumentSplitView *splitView;
 @property (weak) IBOutlet NSView *editorContainer;
@@ -235,8 +251,18 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 @property (nonatomic) BOOL renderToWebPending;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
+// Issue #436: Kind tags running parallel to the *HeaderLocations arrays. Kept private;
+// the public Y-coordinate arrays stay NSNumber arrays so existing consumers are unaffected.
+@property (strong) NSArray<NSNumber *> *webViewHeaderTypes;
+@property (strong) NSArray<NSNumber *> *editorHeaderTypes;
 @property (nonatomic) MPScrollOwner scrollOwner;  // Issue #342: Scroll ownership model
+// Issue #441: Last observed value of editorSyncScrolling, used purely for edge
+// detection in userDefaultsDidChange: so we can settle/re-sync the panes the
+// moment the user toggles Sync Panes mid-session. Never used for gating — gating
+// always reads self.preferences.editorSyncScrolling live.
+@property (nonatomic) BOOL lastKnownSyncScrolling;
 @property (nonatomic) NSTimeInterval lastWordCountUpdate;  // Issue #294: Throttle timestamp
+@property (nonatomic) BOOL showingSelectionCount;  // Issue #452: Widget showing selection counts
 
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
@@ -259,6 +285,15 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
 - (void)validateHeaderLocationAlignment;
+// Issue #436: Pure helpers — no view/DOM dependencies, so they are unit-testable headless.
++ (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
+                                          outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers;
++ (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs
+          editorTypes:(NSArray<NSNumber *> *)editorTypes
+            previewYs:(NSArray<NSNumber *> *)previewYs
+         previewTypes:(NSArray<NSNumber *> *)previewTypes
+      alignedEditorYs:(NSArray<NSNumber *> **)outEditorYs
+     alignedPreviewYs:(NSArray<NSNumber *> **)outPreviewYs;
 - (void)invokeRenderCompletionHandlers;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
@@ -267,6 +302,9 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 - (void)windowDidEndLiveResize:(NSNotification *)notification;
 - (void)windowDidChangeFullScreen:(NSNotification *)notification;
 - (void)applyEditorStartInPreviewModePreference;
+// Issue #441: Settle / re-sync the panes when Sync Panes is toggled mid-session.
+- (void)handleSyncScrollingEnabled;
+- (void)handleSyncScrollingDisabled;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -337,6 +375,51 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 }
 
 
+/**
+ * Issue #436: Scans a single line for a fenced-code-block marker (a run of 3+ backticks or
+ * tildes, allowing 0-3 leading spaces). Returns YES and reports the marker character, its
+ * length, and whether any non-whitespace follows the run. A backtick run whose info string
+ * contains a backtick is not a valid fence marker (per CommonMark), so it returns NO.
+ * The caller decides whether the marker opens or closes a fence.
+ */
+static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outLength,
+                              BOOL *outHasTrailingContent)
+{
+    NSUInteger length = line.length;
+    NSUInteger i = 0;
+    NSUInteger leadingSpaces = 0;
+    while (i < length && [line characterAtIndex:i] == ' ') { i++; leadingSpaces++; }
+    if (leadingSpaces > 3 || i >= length)
+        return NO;  // 4+ leading spaces is indented code, not a fence.
+
+    unichar marker = [line characterAtIndex:i];
+    if (marker != '`' && marker != '~')
+        return NO;
+
+    NSUInteger runStart = i;
+    while (i < length && [line characterAtIndex:i] == marker) i++;
+    NSUInteger runLength = i - runStart;
+    if (runLength < 3)
+        return NO;
+
+    BOOL hasTrailing = NO;
+    BOOL hasBacktickAfter = NO;
+    for (NSUInteger j = i; j < length; j++) {
+        unichar c = [line characterAtIndex:j];
+        if (c != ' ' && c != '\t') hasTrailing = YES;
+        if (c == '`') hasBacktickAfter = YES;
+    }
+    // A backtick fence's info string may not contain backticks.
+    if (marker == '`' && hasBacktickAfter)
+        return NO;
+
+    if (outChar) *outChar = marker;
+    if (outLength) *outLength = runLength;
+    if (outHasTrailingContent) *outHasTrailingContent = hasTrailing;
+    return YES;
+}
+
+
 @implementation MPDocument
 
 #pragma mark - Accessor
@@ -383,35 +466,61 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     return (self.previewVisible || self.preferences.editorShowWordCount);
 }
 
+// Issue #452: Build a localized, pluralized count title. The `selected` flag
+// chooses the "… selected" variant of each key.
+- (NSString *)wordCountTitleForKey:(NSString *)key number:(NSUInteger)value
+{
+    NSInteger rule = kJJPluralFormRule.integerValue;
+    return [JJPluralForm pluralStringForNumber:value
+                               withPluralForms:NSLocalizedString(key, @"")
+                               usingPluralRule:rule localizeNumeral:NO];
+}
+
+- (void)applyWordsTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.wordsMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"WORDS_SELECTED_PLURAL_STRING" : @"WORDS_PLURAL_STRING")
+                                                   number:value];
+}
+
+- (void)applyCharactersTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.charMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"CHARACTERS_SELECTED_PLURAL_STRING"
+                  : @"CHARACTERS_PLURAL_STRING")
+                                                  number:value];
+}
+
+- (void)applyCharactersNoSpacesTitle:(NSUInteger)value selected:(BOOL)selected
+{
+    self.charNoSpacesMenuItem.title = [self wordCountTitleForKey:
+        (selected ? @"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING"
+                  : @"CHARACTERS_NO_SPACES_PLURAL_STRING")
+                                                          number:value];
+}
+
+// Issue #452: Document-total setters always store the latest value, but only
+// write the menu titles when the widget isn't showing selection counts — this
+// keeps a throttled updateWordCount from clobbering the selection display.
 - (void)setTotalWords:(NSUInteger)value
 {
     _totalWords = value;
-    NSString *key = NSLocalizedString(@"WORDS_PLURAL_STRING", @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.wordsMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyWordsTitle:value selected:NO];
 }
 
 - (void)setTotalCharacters:(NSUInteger)value
 {
     _totalCharacters = value;
-    NSString *key = NSLocalizedString(@"CHARACTERS_PLURAL_STRING", @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.charMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyCharactersTitle:value selected:NO];
 }
 
 - (void)setTotalCharactersNoSpaces:(NSUInteger)value
 {
     _totalCharactersNoSpaces = value;
-    NSString *key = NSLocalizedString(@"CHARACTERS_NO_SPACES_PLURAL_STRING",
-                                      @"");
-    NSInteger rule = kJJPluralFormRule.integerValue;
-    self.charNoSpacesMenuItem.title =
-        [JJPluralForm pluralStringForNumber:value withPluralForms:key
-                            usingPluralRule:rule localizeNumeral:NO];
+    if (!self.showingSelectionCount)
+        [self applyCharactersNoSpacesTitle:value selected:NO];
 }
 
 - (void)setAutosaveName:(NSString *)autosaveName
@@ -440,7 +549,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _scrollOwner = MPScrollOwnerNeither;
     self.previousSplitRatio = -1.0;
     self.lastNonCollapsedRatio = -1.0;
-    
+    // Issue #441: Seed the cached Sync Panes value from the live preference so the
+    // first NSUserDefaultsDidChangeNotification (which fires for any default) is not
+    // misread as a transition.
+    _lastKnownSyncScrolling = [MPPreferences sharedInstance].editorSyncScrolling;
+
     return self;
 }
 
@@ -500,6 +613,10 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center addObserver:self selector:@selector(editorTextDidChange:)
                    name:NSTextDidChangeNotification object:self.editor];
+    // Issue #452: Update the count widget to reflect the editor selection.
+    [center addObserver:self selector:@selector(editorSelectionDidChange:)
+                   name:NSTextViewDidChangeSelectionNotification
+                 object:self.editor];
     // Issue #320: Use block-based observer with mainQueue to guarantee
     // main-thread delivery of NSUserDefaultsDidChangeNotification.
     __weak typeof(self) weakSelf = self;
@@ -594,6 +711,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             self.editor.string = self.loadedString;
             self.loadedString = nil;
+            [self.highlighter clearHighlighting];
+            [self.highlighter readClearTextStylesFromTextView];
         }
 
         // Gap 8: Claim editor ownership before rendering so that the full-reload
@@ -898,6 +1017,19 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             return NO;
         }
+    }
+    else if (action == @selector(toggleAutoSave:))
+    {
+        if ([(id)item isKindOfClass:[NSMenuItem class]])
+            ((NSMenuItem *)item).state = self.preferences.editorAutoSave ?
+                NSControlStateValueOn : NSControlStateValueOff;
+    }
+    else if (action == @selector(toggleInvisibleCharacters:))
+    {
+        NSMenuItem *it = ((NSMenuItem *)item);
+        it.state = self.preferences.editorShowsInvisibleCharacters
+            ? NSControlStateValueOn : NSControlStateValueOff;
+        return self.editor != nil;
     }
     return result;
 }
@@ -1384,6 +1516,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSURL *baseUrl = self.fileURL;
     if (!baseUrl)   // Unsaved doument; just use the default URL.
         baseUrl = self.preferences.htmlDefaultDirectoryUrl;
+    baseUrl = [self previewSafeBaseURL:baseUrl];
 
     self.manualRender = self.preferences.markdownManualRender;
 
@@ -1517,6 +1650,15 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
     }
 
+    // Issue #441: The full-reload completion handler unconditionally restores the
+    // preview to lastPreviewScrollTop to avoid a flash-to-top. When sync is OFF the
+    // preview scrolls independently, so capture its actual position here — before the
+    // load blanks the view — so the restore preserves where the user is rather than
+    // an editor-derived position left over from when sync was ON.
+    if (!self.preferences.editorSyncScrolling && self.preview.enclosingScrollView)
+        self.lastPreviewScrollTop =
+            NSMinY(self.preview.enclosingScrollView.contentView.bounds);
+
     // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
     self.currentBaseUrl = baseUrl;
@@ -1529,7 +1671,48 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSURL *baseUrl = self.fileURL;
     if (!baseUrl)
         baseUrl = self.preferences.htmlDefaultDirectoryUrl;
-    return baseUrl;
+    return [self previewSafeBaseURL:baseUrl];
+}
+
+// Issues #405 and #431: On macOS 26, WebKit silently refuses to load file://
+// preview content when the base resource is the real document file, based on
+// file metadata WebKit inspects but the editor — which reads bytes via
+// NSDocument, not WebKit — does not. The preview blanks while the editor works
+// fine. Two known triggers, neither of which lives in the document bytes:
+//
+//   * The execute bit (0700) that some sync clients (notably OneDrive) set on
+//     every synced file and revert after any manual `chmod -x`.
+//   * Stale TCC / provenance / app-association state carried by a file's inode
+//     and birthtime across its history (issue #431). `xattr -c` cannot clear it
+//     because the relevant attributes are kernel-protected, and copying the
+//     bytes to a fresh inode makes the very same content render correctly.
+//
+// Because there is no reliable runtime signal that a given file will trigger a
+// blank load, and because the base URL is only ever needed for the document's
+// *directory* — relative resource resolution, MPLocalFilePathsInHTML, cache
+// busting, and the MPURLSecurityPolicy scope check (which keys off the base
+// URL's parent directory) — the real document file never needs to be the base
+// resource at all. Whenever the base URL points at a real file, substitute a
+// non-existent sentinel in the same directory. WebKit then never inspects the
+// document file as its base resource, while everything that depends on the
+// directory is unchanged. Directory base URLs (unsaved documents use the default
+// HTML directory), non-existent paths, and non-file URLs are already safe and
+// pass through untouched.
+- (NSURL *)previewSafeBaseURL:(NSURL *)baseURL
+{
+    if (!baseURL || !baseURL.isFileURL)
+        return baseURL;
+
+    NSString *path = baseURL.URLByResolvingSymlinksInPath.path;
+    BOOL isDirectory = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path
+                                              isDirectory:&isDirectory])
+        return baseURL;
+    if (isDirectory)
+        return baseURL;
+
+    return [baseURL.URLByDeletingLastPathComponent
+            URLByAppendingPathComponent:@".macdown-preview-base"];
 }
 
 #pragma mark - Resource Watcher Delegate (Issue #110)
@@ -1565,8 +1748,70 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     _scrollOwner = MPScrollOwnerEditor;
 }
 
+// Issue #452: When the editor has a non-empty selection, show the selection's
+// word/character/character-no-spaces counts in the count widget; otherwise
+// revert to the document-wide totals.
+- (void)editorSelectionDidChange:(NSNotification *)notification
+{
+    if (!self.preferences.editorShowWordCount)
+        return;
+
+    // No editor yet (e.g. before the nib loads): nothing is selected.
+    if (!self.editor)
+    {
+        [self refreshDocumentWordCountTitles];
+        return;
+    }
+
+    NSString *string = self.editor.string;
+    NSRange selection = self.editor.selectedRange;
+
+    // Empty selection (caret only), or a stale range during a rapid
+    // edit-and-select race: fall back to document totals.
+    if (selection.length == 0
+            || NSMaxRange(selection) > string.length)
+    {
+        [self refreshDocumentWordCountTitles];
+        return;
+    }
+
+    NSString *selected = [string substringWithRange:selection];
+    DOMNodeTextCount count = MPTextCountForString(selected);
+
+    self.showingSelectionCount = YES;
+    [self applyWordsTitle:count.words selected:YES];
+    [self applyCharactersTitle:count.characters selected:YES];
+    [self applyCharactersNoSpacesTitle:count.characterWithoutSpaces
+                              selected:YES];
+}
+
+// Issue #452: Restore the document-wide totals to the count widget titles.
+- (void)refreshDocumentWordCountTitles
+{
+    self.showingSelectionCount = NO;
+    [self applyWordsTitle:self.totalWords selected:NO];
+    [self applyCharactersTitle:self.totalCharacters selected:NO];
+    [self applyCharactersNoSpacesTitle:self.totalCharactersNoSpaces
+                              selected:NO];
+}
+
 - (void)userDefaultsDidChange:(NSNotification *)notification
 {
+    // Issue #441: NSUserDefaultsDidChangeNotification fires for every defaults
+    // change, so detect a genuine Sync Panes transition by comparing against the
+    // last observed value. On a real toggle, settle the panes (disable) or re-sync
+    // them immediately (enable) so the new mode takes effect without requiring a
+    // document reopen. Always refresh the cached value, even for unrelated changes.
+    BOOL nowSync = self.preferences.editorSyncScrolling;
+    if (nowSync != self.lastKnownSyncScrolling)
+    {
+        self.lastKnownSyncScrolling = nowSync;
+        if (nowSync)
+            [self handleSyncScrollingEnabled];
+        else
+            [self handleSyncScrollingDisabled];
+    }
+
     MPRenderer *renderer = self.renderer;
 
     // Force update if we're switching from manual to auto, or renderer settings
@@ -1583,6 +1828,44 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [renderer parseIfPreferencesChanged];
         [renderer renderIfPreferencesChanged];
     }
+}
+
+// Issue #441: The user turned Sync Panes ON mid-session. Re-sync immediately,
+// Editor-authoritative (the Preview moves to match the editor's current position),
+// then return to the quiescent state so subsequent scrolls sync in either direction.
+// Mirrors the editor-reveal sync in setSplitViewDividerLocation:, but forward.
+- (void)handleSyncScrollingEnabled
+{
+    if (!self.renderer)
+        return;                              // Headless / nib not yet loaded.
+    if (_scrollOwner != MPScrollOwnerNeither)
+        return;                              // Don't fight an in-progress live scroll.
+
+    // Claiming editor ownership suppresses the synchronous previewBoundsDidChange:
+    // fired by the bounds write inside syncScrollers (it is gated on == Preview).
+    _scrollOwner = MPScrollOwnerEditor;
+    [self updateHeaderLocations];
+    [self syncScrollers];
+    _scrollOwner = MPScrollOwnerNeither;
+}
+
+// Issue #441: The user turned Sync Panes OFF mid-session. Make the panes fully
+// independent immediately, preserving their current positions (no jump). The bug
+// was that a stale, editor-derived lastPreviewScrollTop — last written while sync
+// was ON — kept getting restored on the full-reload completion path, yanking the
+// Preview toward the editor each time the user typed. Resetting ownership prevents
+// any lingering Editor ownership from suppressing the user's own preview scrolls,
+// and recapturing the Preview's actual position makes the restore a visual no-op.
+- (void)handleSyncScrollingDisabled
+{
+    // Unlike handleSyncScrollingEnabled, which defers when a live scroll owns the
+    // panes, disabling resets ownership unconditionally: the goal is immediate
+    // independence. If a preview drag is somehow in flight, didEndPreviewLiveScroll:
+    // re-checks the (now false) preference before reverse-syncing, so this is safe.
+    _scrollOwner = MPScrollOwnerNeither;
+    if (self.preview.enclosingScrollView)
+        self.lastPreviewScrollTop =
+            NSMinY(self.preview.enclosingScrollView.contentView.bounds);
 }
 
 - (void)editorFrameDidChange:(NSNotification *)notification
@@ -1918,6 +2201,34 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     self.editor.selectedRange = selectedRange;
 }
 
+- (IBAction)insertTable:(id)sender
+{
+    NSString *template = @"| Column 1 | Column 2 | Column 3 |\n"
+                         @"| --- | --- | --- |\n"
+                         @"|  |  |  |\n";
+    NSRange selectedRange = self.editor.selectedRange;
+    NSString *content = self.editor.string ?: @"";
+    NSMutableString *inserted = [template mutableCopy];
+    NSUInteger cursorOffset = [template rangeOfString:@"|  |"].location + 2;
+
+    if (selectedRange.location > 0 &&
+        [content characterAtIndex:selectedRange.location - 1] != '\n')
+    {
+        [inserted insertString:@"\n\n" atIndex:0];
+        cursorOffset += 2;
+    }
+
+    NSUInteger selectionEnd = NSMaxRange(selectedRange);
+    if (selectionEnd < content.length &&
+        [content characterAtIndex:selectionEnd] != '\n')
+    {
+        [inserted appendString:@"\n"];
+    }
+
+    [self.editor insertText:inserted replacementRange:selectedRange];
+    self.editor.selectedRange = NSMakeRange(selectedRange.location + cursorOffset, 0);
+}
+
 - (IBAction)toggleOrderedList:(id)sender
 {
     [self.editor toggleBlockWithPattern:@"^[0-9]+ \\S" prefix:@"1. "];
@@ -1993,6 +2304,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)toggleEditorPane:(id)sender
 {
     [self toggleSplitterCollapsingEditorPane:YES];
+}
+
+- (IBAction)toggleAutoSave:(id)sender
+{
+    self.preferences.editorAutoSave = !self.preferences.editorAutoSave;
+    [self.preferences synchronize];
+}
+
+- (IBAction)toggleInvisibleCharacters:(id)sender
+{
+    self.preferences.editorShowsInvisibleCharacters =
+        !self.preferences.editorShowsInvisibleCharacters;
 }
 
 - (IBAction)render:(id)sender
@@ -2228,6 +2551,8 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         {
             self.wordCountWidget.hidden = YES;
             self.editorPaddingBottom.constant = 0.0;
+            // Issue #452: Reset selection mode so re-enabling starts on totals.
+            self.showingSelectionCount = NO;
         }
     }
 
@@ -2241,6 +2566,12 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         if (contentRect.size.width < minSize.width)
             contentRect.size.width = minSize.width;
         self.editor.frame = contentRect;
+    }
+
+    if (!changedKey || [changedKey isEqualToString:@"editorShowsInvisibleCharacters"])
+    {
+        self.editor.layoutManager.showsInvisibleCharacters =
+            self.preferences.editorShowsInvisibleCharacters;
     }
 
     if (!changedKey)
@@ -2269,6 +2600,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
             [self.splitView swapViews];
             if (!self.previewVisible && self.previousSplitRatio >= 0.0)
                 self.previousSplitRatio = 1.0 - self.previousSplitRatio;
+            if (self.lastNonCollapsedRatio > 0.0
+                    && self.lastNonCollapsedRatio < 1.0)
+                self.lastNonCollapsedRatio = 1.0 - self.lastNonCollapsedRatio;
 
             // Need to queue this or the views won't be initialised correctly.
             // Don't really know why, but this works.
@@ -2391,8 +2725,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
  */
 -(void) updateHeaderLocations
 {
-    NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
-
     // Load JavaScript from resource file for better maintainability
     static NSString *script = nil;
     static dispatch_once_t onceToken;
@@ -2403,150 +2735,322 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         }
     });
 
-    // Issue #342 (Bug B): JS now returns document-absolute coordinates via
-    // window.scrollY + rect.top. No ObjC-side offset correction is needed.
+    // Preview side. Issue #436: the JS now returns {ys, kinds} instead of a bare array.
+    // ys are document-absolute (window.scrollY + rect.top, Issue #342 Bug B); kinds tag
+    // each reference point (0 = image, 1-6 = header level) so the two sequences can be
+    // aligned rather than blindly cross-indexed by position.
     if (script) {
-        _webViewHeaderLocations = [[self.preview.mainFrame.javaScriptContext evaluateScript:script] toArray];
+        JSValue *result = [self.preview.mainFrame.javaScriptContext evaluateScript:script];
+        NSArray<NSNumber *> *ys = [result[@"ys"] toArray];
+        NSArray<NSNumber *> *kinds = [result[@"kinds"] toArray];
+        _webViewHeaderLocations = ys ?: @[];
+        _webViewHeaderTypes = kinds ?: @[];
     } else {
         _webViewHeaderLocations = @[];
+        _webViewHeaderTypes = @[];
     }
 
+    // Editor side. Issue #436: which lines are reference points (and their kinds) is now
+    // a pure function, +editorReferenceKindsForMarkdown:outLineNumbers:, so it can be unit
+    // tested headless. Here we only translate those line numbers into vertical positions
+    // via the layout manager. In headless tests self.editor is nil and the geometry
+    // collapses to 0 (harmless — the classifier is exercised directly in unit tests).
+    NSString *editorString = self.editor.string ?: @"";
+    NSArray<NSNumber *> *lineNumbers = nil;
+    _editorHeaderTypes = [MPDocument editorReferenceKindsForMarkdown:editorString
+                                                      outLineNumbers:&lineNumbers];
 
-
-    // Next, cache the locations of all of the reference nodes in the editor view.
-    NSInteger characterCount = 0;
+    NSArray<NSString *> *documentLines = [editorString componentsSeparatedByString:@"\n"];
+    NSUInteger lineCount = documentLines.count;
     NSLayoutManager *layoutManager = [self.editor layoutManager];
-    NSArray<NSString *> *documentLines = [self.editor.string componentsSeparatedByString:@"\n"];
-    [locations removeAllObjects];
+    NSTextContainer *textContainer = [self.editor textContainer];
 
-    // Cache regex patterns for markdown headers and images.
-    // Only handle images that are not inline with other text/images.
-    static NSRegularExpression *dashRegex = nil;
-    static NSRegularExpression *headerRegex = nil;
-    static NSRegularExpression *imgRegex = nil;
-    static NSRegularExpression *imgRefRegex = nil;
-    static NSRegularExpression *hrRegex = nil;
-    static dispatch_once_t regexOnceToken;
-    dispatch_once(&regexOnceToken, ^{
-        // Match setext-style headers (underlined with dashes).
-        // Matches one or more dashes on a line by itself.
-        // Used with previousLineHadContent to distinguish from horizontal rules.
-        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^([-]+)$" options:0 error:NULL];
+    // Precompute the character offset at the start of each line so a line number maps to
+    // its glyph range without rescanning the whole string.
+    NSMutableArray<NSNumber *> *lineStartOffsets = [NSMutableArray arrayWithCapacity:lineCount];
+    NSUInteger runningOffset = 0;
+    for (NSString *line in documentLines) {
+        [lineStartOffsets addObject:@(runningOffset)];
+        runningOffset += line.length + 1;  // +1 for the '\n' separator
+    }
 
-        // Match ATX-style headers (# Header, ## Header, etc.)
-        headerRegex = [NSRegularExpression regularExpressionWithPattern:@"^(#+)\\s" options:0 error:NULL];
-
-        // Match basic inline image syntax: ![alt](url)
-        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
-
-        // Match reference-style image syntax: ![alt][ref]
-        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
-
-        // Match horizontal rules per CommonMark specification:
-        // - Requires 3+ matching characters: -, *, or _
-        // - Allows 0-3 leading spaces (4+ spaces = code block)
-        // - Allows optional spaces between characters
-        // - All non-whitespace characters must be identical
-        // Examples that match: ---, ***, ___, - - -, * * *, _ _ _,    ---
-        // Examples that don't: --, **, __, -*-,  ----a,     --- (4+ leading spaces)
-        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
-    });
-
-    // Track whether previous line had content (non-empty, non-dash-only).
-    // This flag is essential for distinguishing between:
-    //   - Setext headers (content line followed by dashes): Text\n---
-    //   - Horizontal rules (dashes without preceding content): \n---
-    //
-    // The distinction works as follows:
-    //   1. If previous line had content AND current line is dashes AND not an HR
-    //      → It's a setext header underline
-    //   2. If no previous content OR current line matches HR pattern
-    //      → It's a horizontal rule (or standalone dashes)
-    BOOL previousLineHadContent = NO;
-
-    // We start by splitting our document into lines, and then searching
-    // line by line for headers or images.
-    for (NSInteger lineNumber = 0; lineNumber < [documentLines count]; lineNumber++)
-    {
-        NSString *line = documentLines[lineNumber];
-
-        // Check if line is a horizontal rule (3+ matching characters).
-        // Per CommonMark: 0-3 leading spaces allowed, spaces between characters allowed.
-        BOOL isHorizontalRule = [hrRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
-
-        // Check if line is a setext-style header (dashes after content).
-        // A line of dashes is a setext header if:
-        //   1. Previous line had content (text, not dashes)
-        //   2. Current line is all consecutive dashes (matches dashRegex)
-        //
-        // Note: dashRegex pattern ^([-]+)$ only matches consecutive dashes (---, not - - -).
-        // Spaced patterns like "- - -" match hrRegex but not dashRegex, so they're HRs.
-        // This ensures "Text\n---" is a setext header but "\n---" and "- - -" are HRs.
-        BOOL isDashHeader = previousLineHadContent && [dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-
-        BOOL isImage = ([imgRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0 ||
-                        [imgRefRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0);
-        BOOL isHeader = [headerRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])] > 0;
-
-        if (isDashHeader || isImage || isHeader)
-        {
-            // Calculate where this header/image appears vertically in the editor
-            NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(characterCount, [line length]) actualCharacterRange:nil];
-            NSRect topRect = [layoutManager boundingRectForGlyphRange:glyphRange inTextContainer:[self.editor textContainer]];
-            CGFloat headerY = NSMidY(topRect);
-
-            // Issue #342 (Bug D): Add all headers unconditionally to keep
-            // _editorHeaderLocations and _webViewHeaderLocations aligned.
-            // The runtime filters in syncScrollers/syncScrollersReverse already
-            // handle end-of-document interpolation.
-            [locations addObject:@(headerY)];
-        }
-
-        // Update previousLineHadContent flag for next iteration.
-        // A line "has content" if:
-        //   1. It's non-empty (has length)
-        //   2. It's not just dashes (not a potential header underline)
-        //
-        // This allows the next line to determine if dashes should be interpreted
-        // as a setext header underline.
-        previousLineHadContent = [line length] && ![dashRegex numberOfMatchesInString:line options:0 range:NSMakeRange(0, [line length])];
-
-        characterCount += [line length] + 1;
+    NSMutableArray<NSNumber *> *locations = [NSMutableArray arrayWithCapacity:lineNumbers.count];
+    for (NSNumber *lineNumberObj in lineNumbers) {
+        NSUInteger lineNumber = lineNumberObj.unsignedIntegerValue;
+        if (lineNumber >= lineCount)
+            continue;
+        NSUInteger charLocation = lineStartOffsets[lineNumber].unsignedIntegerValue;
+        NSUInteger lineLength = documentLines[lineNumber].length;
+        NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:NSMakeRange(charLocation, lineLength)
+                                                   actualCharacterRange:nil];
+        NSRect topRect = [layoutManager boundingRectForGlyphRange:glyphRange inTextContainer:textContainer];
+        [locations addObject:@(NSMidY(topRect))];
     }
 
     _editorHeaderLocations = [locations copy];
 
-    // Gap 5: Validate that editor and preview header arrays are aligned.
-    // Mismatches cause cross-indexing to wrong reference points.
+    // Issue #436 / Gap 5: Align the editor and preview reference-point sequences so
+    // syncScrollers/syncScrollersReverse always cross-index matching points.
     [self validateHeaderLocationAlignment];
 }
 
 /**
- * Validates that _editorHeaderLocations and _webViewHeaderLocations have the
- * same count. When they diverge (e.g. because the editor regex matches headers
- * inside fenced code blocks that the JS DOM query ignores), truncates both to
- * MIN(editorCount, previewCount) so syncScrollers/syncScrollersReverse always
- * cross-index aligned arrays. Trailing unmatched headers are dropped; the sync
- * algorithms interpolate to end-of-document for those sections.
+ * Issue #436: Classifies the reference points (ATX/setext headers and standalone images)
+ * in a markdown string, returning their kind codes (see MPReferenceKind) in document
+ * order, with the matching source line numbers via outLineNumbers. This mirrors the DOM
+ * detection in updateHeaderLocations.js so the editor and preview sequences agree:
  *
- * Gap 5: editor regex vs JS DOM divergence.
+ *   - Headers inside fenced code blocks (``` or ~~~) are skipped — the DOM renders them
+ *     as <pre><code>, not <hN>.
+ *   - Setext headers are detected for both '===' (level 1) and '---' (level 2).
+ *   - ATX headers with 7+ hashes are not headers (CommonMark §4.2; Hoedown emits no <hN>),
+ *     so they are treated as ordinary paragraph text.
+ *   - Standalone whole-line images (inline or reference syntax) are kind 0.
+ *
+ * Pure function: no view, layout, or DOM dependencies, so it is unit-testable headless.
+ */
++ (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
+                                          outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers
+{
+    NSMutableArray<NSNumber *> *kinds = [NSMutableArray array];
+    NSMutableArray<NSNumber *> *lineNumbers = [NSMutableArray array];
+
+    if (markdown.length == 0) {
+        if (outLineNumbers) *outLineNumbers = lineNumbers;
+        return kinds;
+    }
+
+    static NSRegularExpression *dashRegex = nil;   // setext underline '---' (level 2)
+    static NSRegularExpression *eqRegex = nil;     // setext underline '===' (level 1)
+    static NSRegularExpression *atxRegex = nil;    // ATX header, 0-3 leading spaces
+    static NSRegularExpression *imgRegex = nil;    // ![alt](url)
+    static NSRegularExpression *imgRefRegex = nil; // ![alt][ref]
+    static NSRegularExpression *hrRegex = nil;     // thematic break (-, *, _)
+    static dispatch_once_t regexOnceToken;
+    dispatch_once(&regexOnceToken, ^{
+        // Setext underlines: 0-3 leading spaces and trailing whitespace are allowed
+        // (CommonMark), matching how the preview DOM renders e.g. "Text\n   ---".
+        dashRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}([-]+)[ \\t]*$" options:0 error:NULL];
+        eqRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}([=]+)[ \\t]*$" options:0 error:NULL];
+        // Capture the leading hashes (0-3 leading spaces allowed); a space must follow.
+        atxRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(#+)\\s" options:0 error:NULL];
+        imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
+        imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
+        hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
+    });
+
+    NSArray<NSString *> *lines = [markdown componentsSeparatedByString:@"\n"];
+
+    // Setext underlines attach to a *paragraph* line. previousLineHadContent is true only
+    // after ordinary text — not after blanks, headers, HRs, images, or fence lines —
+    // so e.g. "# H\n---" is an ATX header followed by an HR, not a setext header.
+    BOOL previousLineHadContent = NO;
+
+    // Fenced-code-block state. CommonMark: a fence opens with 3+ of ` or ~ (0-3 leading
+    // spaces) and closes with a run of the same character at least as long, with nothing
+    // but whitespace after it. A backtick fence's info string may not contain backticks.
+    BOOL insideFence = NO;
+    unichar fenceChar = 0;
+    NSUInteger fenceLength = 0;
+
+    for (NSUInteger lineNumber = 0; lineNumber < lines.count; lineNumber++) {
+        NSString *line = lines[lineNumber];
+        NSRange full = NSMakeRange(0, line.length);
+
+        unichar markerChar = 0;
+        NSUInteger markerLength = 0;
+        BOOL hasTrailingContent = NO;
+        BOOL isFenceMarker = MPScanFenceMarker(line, &markerChar, &markerLength, &hasTrailingContent);
+
+        if (insideFence) {
+            // Inside a fence: only a matching, long-enough, bare closing marker ends it.
+            // Everything here (including the fence lines) is code, never a reference point.
+            if (isFenceMarker && markerChar == fenceChar
+                    && markerLength >= fenceLength && !hasTrailingContent) {
+                insideFence = NO;
+            }
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        if (isFenceMarker) {
+            // Opens a fence. The opening line itself is never a reference point.
+            insideFence = YES;
+            fenceChar = markerChar;
+            fenceLength = markerLength;
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // ATX header? Capture the hash run; 7+ hashes is not a header (paragraph text).
+        NSTextCheckingResult *atxMatch = [atxRegex firstMatchInString:line options:0 range:full];
+        if (atxMatch) {
+            NSUInteger hashCount = [atxMatch rangeAtIndex:1].length;
+            if (hashCount >= 1 && hashCount <= 6) {
+                [kinds addObject:@((NSInteger)hashCount)];
+                [lineNumbers addObject:@(lineNumber)];
+                previousLineHadContent = NO;
+                continue;
+            }
+            // 7+ hashes: ordinary paragraph text, which can still anchor a setext header.
+            previousLineHadContent = YES;
+            continue;
+        }
+
+        // Setext underline (only valid directly under a paragraph line).
+        if (previousLineHadContent
+                && [eqRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            [kinds addObject:@(MPReferenceKindH1)];
+            [lineNumbers addObject:@(lineNumber)];
+            previousLineHadContent = NO;
+            continue;
+        }
+        if (previousLineHadContent
+                && [dashRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            [kinds addObject:@(MPReferenceKindH2)];
+            [lineNumbers addObject:@(lineNumber)];
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // Standalone whole-line image.
+        if ([imgRegex numberOfMatchesInString:line options:0 range:full] > 0
+                || [imgRefRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            [kinds addObject:@(MPReferenceKindImage)];
+            [lineNumbers addObject:@(lineNumber)];
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // Thematic break: not a reference point, and not paragraph text either.
+        if ([hrRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // Blank line breaks any setext context.
+        if ([[line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // Anything else is ordinary paragraph text that can anchor a setext underline.
+        previousLineHadContent = YES;
+    }
+
+    if (outLineNumbers) *outLineNumbers = lineNumbers;
+    return kinds;
+}
+
+/**
+ * Issue #436: Aligns the editor and preview reference-point sequences so they correspond
+ * 1:1 by index, which is the invariant syncScrollers/syncScrollersReverse rely on.
+ *
+ * The two detectors (editor regex vs preview DOM) can disagree mid-document; a single
+ * extra point on one side shifts every later index, which is the "synced only at the
+ * start and end" bug. This computes the longest common subsequence of the two *kind*
+ * sequences (matching on the coarse image-vs-header class, since the two sides legitimately
+ * disagree on exact header level) and keeps only the matched points on each side. An
+ * unmatched point is dropped from whichever side it appears on, so the remaining points
+ * stay aligned regardless of where the divergence occurs.
+ *
+ * Fallback: if the type information is missing or inconsistent with the coordinate arrays
+ * (e.g. callers/tests that set only the Y arrays), it degrades to the original behavior of
+ * truncating both arrays to MIN count.
+ *
+ * Pure function: no view dependencies, so it is unit-testable headless.
+ */
++ (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs
+          editorTypes:(NSArray<NSNumber *> *)editorTypes
+            previewYs:(NSArray<NSNumber *> *)previewYs
+         previewTypes:(NSArray<NSNumber *> *)previewTypes
+      alignedEditorYs:(NSArray<NSNumber *> **)outEditorYs
+     alignedPreviewYs:(NSArray<NSNumber *> **)outPreviewYs
+{
+    NSUInteger editorCount = editorYs.count;
+    NSUInteger previewCount = previewYs.count;
+
+    // Fallback to MIN-count truncation when type tags are absent or inconsistent.
+    if (editorTypes.count != editorCount || previewTypes.count != previewCount) {
+        NSUInteger minCount = MIN(editorCount, previewCount);
+        if (outEditorYs)
+            *outEditorYs = [editorYs subarrayWithRange:NSMakeRange(0, minCount)];
+        if (outPreviewYs)
+            *outPreviewYs = [previewYs subarrayWithRange:NSMakeRange(0, minCount)];
+        return;
+    }
+
+    // Coarse class for matching: images match images, any header matches any header.
+    NSInteger (^classOf)(NSNumber *) = ^NSInteger(NSNumber *kind) {
+        return kind.integerValue == MPReferenceKindImage ? 0 : 1;
+    };
+
+    // LCS over the coarse class sequences. dp[i][j] = LCS length of editor[i..] / preview[j..].
+    NSUInteger m = editorCount, n = previewCount;
+    NSUInteger **dp = calloc(m + 1, sizeof(NSUInteger *));
+    for (NSUInteger i = 0; i <= m; i++)
+        dp[i] = calloc(n + 1, sizeof(NSUInteger));
+
+    for (NSInteger i = (NSInteger)m - 1; i >= 0; i--) {
+        for (NSInteger j = (NSInteger)n - 1; j >= 0; j--) {
+            if (classOf(editorTypes[i]) == classOf(previewTypes[j]))
+                dp[i][j] = dp[i + 1][j + 1] + 1;
+            else
+                dp[i][j] = MAX(dp[i + 1][j], dp[i][j + 1]);
+        }
+    }
+
+    NSMutableArray<NSNumber *> *alignedEditor = [NSMutableArray array];
+    NSMutableArray<NSNumber *> *alignedPreview = [NSMutableArray array];
+    NSUInteger i = 0, j = 0;
+    while (i < m && j < n) {
+        if (classOf(editorTypes[i]) == classOf(previewTypes[j])) {
+            [alignedEditor addObject:editorYs[i]];
+            [alignedPreview addObject:previewYs[j]];
+            i++; j++;
+        } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+            // Drop the editor point (no preview counterpart).
+            i++;
+        } else {
+            // Drop the preview point (no editor counterpart).
+            j++;
+        }
+    }
+
+    for (NSUInteger k = 0; k <= m; k++)
+        free(dp[k]);
+    free(dp);
+
+    if (outEditorYs) *outEditorYs = alignedEditor;
+    if (outPreviewYs) *outPreviewYs = alignedPreview;
+}
+
+/**
+ * Issue #436: Realigns _editorHeaderLocations and _webViewHeaderLocations using the kind
+ * tags so syncScrollers/syncScrollersReverse cross-index matching reference points. See
+ * +alignEditorYs:... for the algorithm; this just wires the instance state through it and
+ * stores the aligned results back.
  */
 - (void)validateHeaderLocationAlignment
 {
-    NSUInteger editorCount = _editorHeaderLocations.count;
-    NSUInteger previewCount = _webViewHeaderLocations.count;
-    if (editorCount != previewCount)
-    {
-        NSUInteger minCount = MIN(editorCount, previewCount);
+    NSArray<NSNumber *> *alignedEditor = nil;
+    NSArray<NSNumber *> *alignedPreview = nil;
+    [MPDocument alignEditorYs:_editorHeaderLocations
+                  editorTypes:_editorHeaderTypes
+                    previewYs:_webViewHeaderLocations
+                 previewTypes:_webViewHeaderTypes
+              alignedEditorYs:&alignedEditor
+             alignedPreviewYs:&alignedPreview];
 #ifdef DEBUG
-        NSLog(@"[ScrollSync] Header location count mismatch: editor=%lu preview=%lu, truncating to %lu",
-              (unsigned long)editorCount, (unsigned long)previewCount, (unsigned long)minCount);
-#endif
-        if (editorCount > minCount)
-            _editorHeaderLocations = [_editorHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
-        if (previewCount > minCount)
-            _webViewHeaderLocations = [_webViewHeaderLocations subarrayWithRange:NSMakeRange(0, minCount)];
+    if (alignedEditor.count != _editorHeaderLocations.count
+            || alignedPreview.count != _webViewHeaderLocations.count) {
+        NSLog(@"[ScrollSync] Realigned reference points: editor %lu->%lu, preview %lu->%lu",
+              (unsigned long)_editorHeaderLocations.count, (unsigned long)alignedEditor.count,
+              (unsigned long)_webViewHeaderLocations.count, (unsigned long)alignedPreview.count);
     }
+#endif
+    _editorHeaderLocations = alignedEditor;
+    _webViewHeaderLocations = alignedPreview;
 }
 
 /**
@@ -2789,7 +3293,11 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     NSString *title = nil;
     NSString *string = self.editor.string;
     if (self.preferences.htmlDetectFrontMatter)
-        title = [[[string frontMatter:NULL] objectForKey:@"title"] description];
+    {
+        id frontMatter = [string frontMatter:NULL];
+        if ([frontMatter respondsToSelector:@selector(objectForKey:)])
+            title = [[frontMatter objectForKey:@"title"] description];
+    }
     if (title)
         return title;
 
@@ -3097,11 +3605,10 @@ to link outside that scope.", \
     if (!markdown || markdown.length == 0)
         return markdown;
 
-    // Regex pattern to match checkbox syntax: - [ ], - [x], * [ ], * [x], + [ ], + [x], 1. [ ], etc.
-    // Note: Only lowercase [x] is recognized by hoedown, so we only match that.
+    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], * [ ], etc.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ x])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ x])\\]"
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
                                error:&error];
 

@@ -193,7 +193,7 @@ No timers anywhere in the sync path.
 
 ### Step 4 — Fix asymmetric header filtering (Bug D)
 
-Remove the `editorContentHeight - editorVisibleHeight` filter from `_editorHeaderLocations` in `updateHeaderLocations`. Both arrays should contain all headers in document order. The `interpolateToEndOfDocument` logic in `syncScrollers` and `syncScrollersReverse` already handles the end-of-document case correctly; no pre-filtering is needed. This ensures `_editorHeaderLocations[n]` and `_webViewHeaderLocations[n]` always refer to the same heading.
+Remove the `editorContentHeight - editorVisibleHeight` filter from `_editorHeaderLocations` in `updateHeaderLocations`. Both arrays should contain all headers in document order. The `interpolateToEndOfDocument` logic in `syncScrollers` and `syncScrollersReverse` already handles the end-of-document case correctly; no pre-filtering is needed. (Filter removal alone does not guarantee `_editorHeaderLocations[n]` and `_webViewHeaderLocations[n]` refer to the same heading — the detectors can still disagree mid-document. Issue #436 later added a kind-tagged LCS alignment pass, `validateHeaderLocationAlignment`, that restores the 1:1 index invariant before `syncScrollers`/`syncScrollersReverse` run.)
 
 ### Step 5 — Fix `lastPreviewScrollTop` (Bug E)
 
@@ -264,7 +264,7 @@ Conducted after multi-agent codebase review. All line numbers are from `MPDocume
 
 ### `updateHeaderLocations.js` confirmed
 
-Currently returns `rect.top` (viewport-relative). The Step 1 fix (`window.scrollY + rect.top`) is confirmed necessary.
+The Step 1 fix landed: the script returns document-absolute coordinates (`window.scrollY + rect.top`). It has since (#436) been changed to return `{ys, kinds}` — parallel arrays of y-coordinates and kind codes (0 = image, 1-6 = header level) — rather than a bare array of y-coordinates.
 
 ### `syncScrollers` and `syncScrollersReverse` have their own runtime filters
 
@@ -407,7 +407,9 @@ All tests live in `MacDownTests/MPScrollSyncTests.m`. No new test file is needed
 
 Mock DOM in JSContext: inject `window = {scrollY: N}`, `document = {body: ..., querySelectorAll: fn}`, `Node = {DOCUMENT_POSITION_FOLLOWING: 4, ...}`. Load and evaluate `updateHeaderLocations.js`.
 
-| Test | scrollY | header rect.top(s) | Expected result |
+(Since #436 the script returns `{ys, kinds}`; the expected `ys` values are below.)
+
+| Test | scrollY | header rect.top(s) | Expected `ys` |
 |------|---------|-------------------|-----------------|
 | C1 — scrolled page | 200 | [100] | [300] |
 | C2 — unscrolled page | 0 | [150] | [150] |

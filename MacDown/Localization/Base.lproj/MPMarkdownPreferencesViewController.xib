@@ -24,7 +24,7 @@
                         <subviews>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="J8u-0k-Z3s">
                                 <rect key="frame" x="16" y="32" width="147" height="18"/>
-                                <buttonCell key="cell" type="check" title="Table" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="z8g-3M-hbc">
+                                <buttonCell key="cell" type="check" title="Table" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="z8g-3M-hbc">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -34,7 +34,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="fhk-gr-iF0">
                                 <rect key="frame" x="16" y="12" width="147" height="18"/>
-                                <buttonCell key="cell" type="check" title="Fenced code block" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ELg-sx-vIf">
+                                <buttonCell key="cell" type="check" title="Fenced code block" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ELg-sx-vIf">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -66,7 +66,7 @@
                         <subviews>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="iwB-ah-rER">
                                 <rect key="frame" x="16" y="132" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Strikethrough" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="RjP-zE-c6b">
+                                <buttonCell key="cell" type="check" title="Strikethrough" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="RjP-zE-c6b">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -76,7 +76,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="CCI-wC-lHw">
                                 <rect key="frame" x="16" y="112" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Underline" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Gdr-Ro-ZnW">
+                                <buttonCell key="cell" type="check" title="Underline" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Gdr-Ro-ZnW">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -86,7 +86,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="gtf-xR-sKM">
                                 <rect key="frame" x="16" y="92" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Quote" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2lB-hq-5eX">
+                                <buttonCell key="cell" type="check" title="Quote" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="2lB-hq-5eX">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -96,7 +96,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="tqY-25-uOh">
                                 <rect key="frame" x="16" y="152" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Intra-word emphasis" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="D7l-nP-P0y">
+                                <buttonCell key="cell" type="check" title="Intra-word emphasis" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="D7l-nP-P0y">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -106,7 +106,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="lYF-J6-3YU">
                                 <rect key="frame" x="16" y="52" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Superscript" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="k2n-VN-cKT">
+                                <buttonCell key="cell" type="check" title="Superscript" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="k2n-VN-cKT">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -116,7 +116,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="QMR-TV-GNi">
                                 <rect key="frame" x="16" y="72" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Highlight" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="8kI-gm-5Lo">
+                                <buttonCell key="cell" type="check" title="Highlight" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="8kI-gm-5Lo">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -126,7 +126,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="T31-Sx-beD">
                                 <rect key="frame" x="16" y="32" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Autolink" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Roe-rh-8f9">
+                                <buttonCell key="cell" type="check" title="Autolink" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="Roe-rh-8f9">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -136,7 +136,7 @@
                             </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="Y8p-KQ-Vis">
                                 <rect key="frame" x="16" y="12" width="149" height="18"/>
-                                <buttonCell key="cell" type="check" title="Footnote" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="0yU-vT-72e">
+                                <buttonCell key="cell" type="check" title="Footnote" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="0yU-vT-72e">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -184,7 +184,7 @@
                         <subviews>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="rDS-Bm-rxW">
                                 <rect key="frame" x="16" y="12" width="101" height="18"/>
-                                <buttonCell key="cell" type="check" title="Smartypants" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aSK-nR-xMr">
+                                <buttonCell key="cell" type="check" title="Smartypants" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aSK-nR-xMr">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
