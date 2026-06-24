@@ -180,6 +180,97 @@ NS_INLINE NSString *MPQuickLookContentSecurityPolicy(void)
 
 #pragma mark - Hoedown Renderer Callbacks
 
+// Build a stable text-derived slug from a heading's HTML content.
+// Mirrors slugify() in MacDown/Code/Extension/hoedown_html_patch.c so the
+// preview and Quick Look render identical heading ids.
+// Strips HTML tags and skips HTML entities (&amp; / &lt; / &#39; ...),
+// lowercases ASCII, converts spaces to hyphens, drops ASCII punctuation,
+// preserves UTF-8 multi-byte sequences so accented characters survive
+// (e.g. "Introducción" -> "introducción"). Anchors keep their raw UTF-8
+// bytes (no percent-encoding): browsers match the URL fragment against
+// the id literally, so encoding would break navigation.
+static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *content)
+{
+    if (!content || !content->size)
+        return;
+
+    int in_tag = 0;
+    int last_was_dash = 1;
+
+    for (size_t i = 0; i < content->size; i++)
+    {
+        uint8_t c = content->data[i];
+
+        if (in_tag)
+        {
+            if (c == '>') in_tag = 0;
+            continue;
+        }
+        if (c == '<')
+        {
+            in_tag = 1;
+            continue;
+        }
+        if (c == '&')
+        {            // skip an HTML entity like &amp; / &lt; / &#39;
+            while (i + 1 < content->size && content->data[i + 1] != ';')
+                i++;
+            i++;                    // consume the ';'
+            continue;
+        }
+
+        if (c >= 0x80)
+        {
+            hoedown_buffer_putc(out, c);
+            last_was_dash = 0;
+            continue;
+        }
+
+        if (c >= 'A' && c <= 'Z')
+            c += 32;
+
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+        {
+            hoedown_buffer_putc(out, c);
+            last_was_dash = 0;
+        }
+        else if (c == ' ' || c == '\t' || c == '-')
+        {
+            if (!last_was_dash)
+            {
+                hoedown_buffer_putc(out, '-');
+                last_was_dash = 1;
+            }
+        }
+    }
+
+    while (out->size > 0 && out->data[out->size - 1] == '-')
+        out->size--;
+}
+
+// Emit headings with text-derived id attributes so anchor links work in
+// Quick Look previews, matching the main MacDown preview behavior.
+static void mp_quicklook_render_header(
+    hoedown_buffer *ob, const hoedown_buffer *content, int level,
+    const hoedown_renderer_data *data)
+{
+    (void)data;
+    if (ob->size) hoedown_buffer_putc(ob, '\n');
+
+    hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+    mp_quicklook_slugify(slug, content);
+    if (slug->size == 0)
+        HOEDOWN_BUFPUTSL(slug, "section");
+
+    hoedown_buffer_printf(ob, "<h%d id=\"", level);
+    hoedown_buffer_put(ob, slug->data, slug->size);
+    HOEDOWN_BUFPUTSL(ob, "\">");
+    if (content) hoedown_buffer_put(ob, content->data, content->size);
+    hoedown_buffer_printf(ob, "</h%d>\n", level);
+
+    hoedown_buffer_free(slug);
+}
+
 /**
  * Custom blockcode renderer that adds Prism language classes without scripts.
  */
@@ -310,6 +401,7 @@ static void mp_quicklook_render_blockcode(
 
     // Preserve Prism language classes, but Quick Look never executes Prism JS.
     renderer->blockcode = mp_quicklook_render_blockcode;
+    renderer->header = mp_quicklook_render_header;
 
     // Create document
     hoedown_document *document = hoedown_document_new(

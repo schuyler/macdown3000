@@ -405,7 +405,7 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
 
-    XCTAssertTrue([html containsString:@"<h1>"], @"Should have heading");
+    XCTAssertTrue([html containsString:@"<h1 "], @"Should have heading");
     XCTAssertTrue([html containsString:@"example.com/1.png"], @"Should have first image");
     XCTAssertTrue([html containsString:@"example.com/2.png"], @"Should have second image");
 }

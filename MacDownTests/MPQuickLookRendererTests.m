@@ -124,8 +124,8 @@
     NSString *html = [self.renderer renderMarkdown:markdown];
 
     XCTAssertNotNil(html, @"Should return non-nil HTML");
-    XCTAssertTrue([html containsString:@"<h1>"],
-                  @"Should render heading as <h1>");
+    XCTAssertTrue([html containsString:@"<h1 "],
+                  @"Should render heading as an <h1> element");
     XCTAssertTrue([html containsString:@"Hello World"],
                   @"Should include heading text");
     XCTAssertTrue([html containsString:@"<p>"],
@@ -640,8 +640,8 @@
 
     XCTAssertNil(error, @"Should render CRLF file without error");
     XCTAssertNotNil(html, @"Should produce HTML from CRLF file");
-    XCTAssertTrue([html containsString:@"<h1>"],
-                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([html containsString:@"<h1 "],
+                  @"CRLF heading should render as an <h1> element");
     XCTAssertTrue([html containsString:@"Heading"],
                   @"Heading text should appear in output");
     XCTAssertTrue([html containsString:@"<p>"],
@@ -668,6 +668,36 @@
 
     XCTAssertNil(html, @"Should return nil for nil URL");
     XCTAssertNotNil(error, @"Should populate error for nil URL");
+}
+
+
+#pragma mark - Heading Anchor ID Tests
+
+// Quick Look mirrors the preview slugify(), so heading ids must match exactly.
+// See MPMarkdownRenderingTests for the full slug contract.
+
+- (void)testQuickLookHeadingAnchorIdSkipsAmpEntity
+{
+    // "Q&A" renders as "Q&amp;A"; the slug must be "qa", not "qampa".
+    NSString *html = [self.renderer renderMarkdown:@"## Q&A"];
+    XCTAssertTrue([html containsString:@"id=\"qa\""],
+                  @"Quick Look heading id must skip the &amp; entity. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdSkipsMultipleEntities
+{
+    // "Tips & Tricks" renders as "Tips &amp; Tricks"; slug must be "tips-tricks".
+    NSString *html = [self.renderer renderMarkdown:@"## Tips & Tricks"];
+    XCTAssertTrue([html containsString:@"id=\"tips-tricks\""],
+                  @"Quick Look heading id must skip every HTML entity. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdStripsPunctuation
+{
+    // Parity with the preview: punctuation drops, spaces become hyphens.
+    NSString *html = [self.renderer renderMarkdown:@"# Hello, World!"];
+    XCTAssertTrue([html containsString:@"id=\"hello-world\""],
+                  @"Quick Look heading id should drop ASCII punctuation. Got: %@", html);
 }
 
 @end

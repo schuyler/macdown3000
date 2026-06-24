@@ -745,8 +745,8 @@
                                 rendererFlags:rendFlags];
 
     XCTAssertNotNil(crlfHtml, @"CRLF content should produce non-nil HTML");
-    XCTAssertTrue([crlfHtml containsString:@"<h1>"],
-                  @"CRLF heading should render as <h1>");
+    XCTAssertTrue([crlfHtml containsString:@"<h1 "],
+                  @"CRLF heading should render as an <h1> element");
     XCTAssertTrue([crlfHtml containsString:@"Heading"],
                   @"CRLF heading text should appear in output");
     XCTAssertTrue([crlfHtml containsString:@"<p>"],
@@ -807,6 +807,122 @@
                   @"CRLF fenced code content should appear in output");
     XCTAssertEqualObjects(lfHtml, crlfHtml,
                           @"CRLF and LF fenced-code-after-text should produce identical HTML");
+}
+
+
+#pragma mark - Heading Anchor ID Tests
+
+// Headings should always receive a text-derived id attribute so that
+// CommonMark/GFM-style anchor links like [text](#section) navigate to
+// the corresponding heading in the preview.
+
+- (void)testHeadingHasSlugBasedAnchorId
+{
+    NSString *html = [self renderMarkdown:@"## Foo Bar"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"foo-bar\""],
+                  @"Heading should have a slug-based id derived from its text. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdPreservesUTF8
+{
+    NSString *html = [self renderMarkdown:@"## Introducción"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"introducción\""],
+                  @"Heading id should preserve UTF-8 multi-byte characters. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdStripsPunctuation
+{
+    NSString *html = [self renderMarkdown:@"# Hello, World!"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"hello-world\""],
+                  @"Heading id should drop ASCII punctuation. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdEmittedWithoutTOCPreference
+{
+    // Regression guard: ids must be emitted regardless of the
+    // "Detect TOC token" preference state.
+    self.delegate.renderTOC = NO;
+    NSString *html = [self renderMarkdown:@"### Some Section"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"some-section\""],
+                  @"Heading id must be emitted independent of TOC preference. Got: %@", html);
+}
+
+// Rendered heading content always escapes special characters to HTML entities
+// (&amp; / &lt; / &gt; ...), so the slug must skip &...; sequences the same way
+// it already skips <...> tags. Otherwise literal letters leak into the id and
+// anchor links like [text](#qa) silently fail to navigate.
+
+- (void)testHeadingAnchorIdSkipsAmpEntity
+{
+    // "Q&A" renders as "Q&amp;A"; the slug must be "qa", not "qampa".
+    NSString *html = [self renderMarkdown:@"## Q&A"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"qa\""],
+                  @"Heading id must skip the &amp; entity. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdSkipsLtGtEntity
+{
+    // "A < B" renders as "A &lt; B"; the slug must be "a-b", not "a-lt-b".
+    NSString *html = [self renderMarkdown:@"## A < B"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"a-b\""],
+                  @"Heading id must skip the &lt; entity. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdSkipsMultipleEntities
+{
+    // "Tips & Tricks" renders as "Tips &amp; Tricks"; the slug must be
+    // "tips-tricks", not "tips-amp-tricks".
+    NSString *html = [self renderMarkdown:@"## Tips & Tricks"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"tips-tricks\""],
+                  @"Heading id must skip every HTML entity. Got: %@", html);
+}
+
+// Documents the current slug contract: identical headings are not uniquified,
+// so "## C" and "## C++" both collapse to id="c". This pins the behavior so a
+// future change to deduplication is a conscious decision, not a silent side
+// effect.
+
+- (void)testDuplicateHeadingsCollapseToSameId
+{
+    NSString *html = [self renderMarkdown:@"## C\n\n## C++\n"
+                           withExtensions:0
+                            rendererFlags:0];
+    NSUInteger firstC = [html rangeOfString:@"id=\"c\""].location;
+    NSUInteger secondC = [html rangeOfString:@"id=\"c\""
+                                  options:0
+                                    range:NSMakeRange(firstC + 1, html.length - firstC - 1)].location;
+    XCTAssertNotEqual(firstC, NSNotFound, @"First heading should have id=\"c\". Got: %@", html);
+    XCTAssertNotEqual(secondC, NSNotFound, @"Second heading should also have id=\"c\". Got: %@", html);
+}
+
+// Because this PR changes both the heading id and the TOC href, lock in the
+// navigation guarantee: the TOC href must equal the heading id for the same
+// heading text.
+
+- (void)testTOCHrefMatchesHeadingId
+{
+    self.delegate.renderTOC = YES;
+    NSString *html = [self renderMarkdown:@"[TOC]\n\n## Foo Bar"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"href=\"#foo-bar\""],
+                  @"TOC entry must link to the heading slug. Got: %@", html);
+    XCTAssertTrue([html containsString:@"id=\"foo-bar\""],
+                  @"Heading must carry the matching id. Got: %@", html);
 }
 
 @end

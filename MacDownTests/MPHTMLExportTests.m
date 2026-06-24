@@ -401,7 +401,7 @@
                                                      error:&error];
     XCTAssertNil(error, @"Should read file without error");
     XCTAssertEqualObjects(readBack, html, @"Content should match");
-    XCTAssertTrue([readBack containsString:@"<h1>Test Document</h1>"], @"Should contain heading");
+    XCTAssertTrue([readBack containsString:@"<h1 id=\"test-document\">Test Document</h1>"], @"Should contain heading");
     XCTAssertTrue([readBack containsString:@"<strong>paragraph</strong>"], @"Should contain bold text");
 }
 
@@ -431,7 +431,7 @@
     NSString *readBack = [NSString stringWithContentsOfURL:fileURL
                                                   encoding:NSUTF8StringEncoding
                                                      error:&error];
-    XCTAssertTrue([readBack containsString:@"<h1>New Content</h1>"], @"Should have new content");
+    XCTAssertTrue([readBack containsString:@"<h1 id=\"new-content\">New Content</h1>"], @"Should have new content");
     XCTAssertFalse([readBack containsString:@"Initial"], @"Should not have old content");
 }
 
@@ -460,8 +460,8 @@
                   @"Should be complete HTML document");
     XCTAssertTrue([content containsString:@"<head>"], @"Should have head");
     XCTAssertTrue([content containsString:@"<body"], @"Should have body");
-    XCTAssertTrue([content containsString:@"<h1>"], @"Should have h1");
-    XCTAssertTrue([content containsString:@"<h2>"], @"Should have h2");
+    XCTAssertTrue([content containsString:@"<h1 "], @"Should have h1");
+    XCTAssertTrue([content containsString:@"<h2 "], @"Should have h2");
     XCTAssertTrue([content containsString:@"<ul>"], @"Should have list");
     XCTAssertTrue([content containsString:@"<li>"], @"Should have list items");
     XCTAssertTrue([content containsString:@"<pre>"] || [content containsString:@"<code>"],

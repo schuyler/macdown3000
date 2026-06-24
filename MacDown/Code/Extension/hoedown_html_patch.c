@@ -162,6 +162,95 @@ void hoedown_patch_render_listitem(
 	HOEDOWN_BUFPUTSL(ob, "</li>\n");
 }
 
+// Build a stable text-derived slug from a heading's HTML content.
+// Strips HTML tags and skips HTML entities (&amp; / &lt; / &#39; ...),
+// lowercases ASCII, converts spaces to hyphens, drops ASCII punctuation,
+// preserves UTF-8 multi-byte sequences so accented characters survive
+// (e.g. "Introducción" -> "introducción"). Anchors keep their raw UTF-8
+// bytes (no percent-encoding): browsers match the URL fragment against
+// the id literally, so encoding would break navigation.
+static void slugify(hoedown_buffer *out, const hoedown_buffer *content)
+{
+    if (!content || !content->size)
+        return;
+
+    int in_tag = 0;
+    int last_was_dash = 1;
+
+    for (size_t i = 0; i < content->size; i++)
+    {
+        uint8_t c = content->data[i];
+
+        if (in_tag)
+        {
+            if (c == '>') in_tag = 0;
+            continue;
+        }
+        if (c == '<')
+        {
+            in_tag = 1;
+            continue;
+        }
+        if (c == '&')
+        {            // skip an HTML entity like &amp; / &lt; / &#39;
+            while (i + 1 < content->size && content->data[i + 1] != ';')
+                i++;
+            i++;                    // consume the ';'
+            continue;
+        }
+
+        if (c >= 0x80)
+        {
+            hoedown_buffer_putc(out, c);
+            last_was_dash = 0;
+            continue;
+        }
+
+        if (c >= 'A' && c <= 'Z')
+            c += 32;
+
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+        {
+            hoedown_buffer_putc(out, c);
+            last_was_dash = 0;
+        }
+        else if (c == ' ' || c == '\t' || c == '-')
+        {
+            if (!last_was_dash)
+            {
+                hoedown_buffer_putc(out, '-');
+                last_was_dash = 1;
+            }
+        }
+    }
+
+    while (out->size > 0 && out->data[out->size - 1] == '-')
+        out->size--;
+}
+
+// rndr_header replacement that always emits a text-derived id, independent
+// of the TOC nesting level. Enables [link](#section-name) navigation.
+void hoedown_patch_render_header(
+    hoedown_buffer *ob, const hoedown_buffer *content, int level,
+    const hoedown_renderer_data *data)
+{
+    (void)data;
+    if (ob->size) hoedown_buffer_putc(ob, '\n');
+
+    hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+    slugify(slug, content);
+    if (slug->size == 0)
+        HOEDOWN_BUFPUTSL(slug, "section");
+
+    hoedown_buffer_printf(ob, "<h%d id=\"", level);
+    hoedown_buffer_put(ob, slug->data, slug->size);
+    HOEDOWN_BUFPUTSL(ob, "\">");
+    if (content) hoedown_buffer_put(ob, content->data, content->size);
+    hoedown_buffer_printf(ob, "</h%d>\n", level);
+
+    hoedown_buffer_free(slug);
+}
+
 // Adds a "toc" class to the outmost UL element to support TOC styling.
 void hoedown_patch_render_toc_header(
     hoedown_buffer *ob, const hoedown_buffer *content, int level,
@@ -196,7 +285,15 @@ void hoedown_patch_render_toc_header(
             HOEDOWN_BUFPUTSL(ob,"</li>\n<li>\n");
         }
 
-        hoedown_buffer_printf(ob, "<a href=\"#toc_%d\">", state->toc_data.header_count++);
+        hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+        slugify(slug, content);
+        if (slug->size == 0)
+            HOEDOWN_BUFPUTSL(slug, "section");
+        HOEDOWN_BUFPUTSL(ob, "<a href=\"#");
+        hoedown_buffer_put(ob, slug->data, slug->size);
+        HOEDOWN_BUFPUTSL(ob, "\">");
+        hoedown_buffer_free(slug);
+        state->toc_data.header_count++;
         if (content) hoedown_buffer_put(ob, content->data, content->size);
         HOEDOWN_BUFPUTSL(ob, "</a>\n");
     }
