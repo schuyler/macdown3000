@@ -226,4 +226,51 @@
     XCTAssertTrue([result containsString:@"images/photo.png?t=2000"]);
 }
 
+#pragma mark - MPApplyCacheBusting on stylesheet <link> (Issue #318)
+
+- (void)testCacheBustStampsRelativeStylesheetLink
+{
+    // The legacy WebView serves CSS from its cache keyed by file URL; a version
+    // stamp on the <link> href is what forces a fresh load after an edit.
+    NSString *html = @"<link rel=\"stylesheet\" href=\"style.css\">";
+    NSDictionary *timestamps = @{@"/Users/test/docs/style.css": @(1000.0)};
+    NSString *result = MPApplyCacheBusting(html, timestamps, self.baseURL);
+    XCTAssertTrue([result containsString:@"style.css?t=1000"],
+                  @"Stylesheet <link> href should receive a cache-busting stamp");
+}
+
+- (void)testCacheBustStampsAbsoluteFileURLStylesheetLink
+{
+    // The preview emits style/theme links as absolute file:// URLs.
+    NSString *html =
+        @"<link rel=\"stylesheet\" href=\"file:///Users/test/docs/GitHub2.css\">";
+    NSDictionary *timestamps =
+        @{@"/Users/test/docs/GitHub2.css": @(1750000000.0)};
+    NSString *result = MPApplyCacheBusting(html, timestamps, self.baseURL);
+    XCTAssertTrue([result containsString:@"GitHub2.css?t=1750000000"],
+                  @"Absolute file:// stylesheet link should be cache-busted");
+}
+
+- (void)testCacheBustReplacesExistingStylesheetTimestamp
+{
+    NSString *html = @"<link rel=\"stylesheet\" href=\"theme.css?t=500\">";
+    NSDictionary *timestamps = @{@"/Users/test/docs/theme.css": @(1000.0)};
+    NSString *result = MPApplyCacheBusting(html, timestamps, self.baseURL);
+    XCTAssertTrue([result containsString:@"theme.css?t=1000"]);
+    XCTAssertFalse([result containsString:@"t=500"],
+                   @"Stale stylesheet timestamp should be replaced, not appended");
+}
+
+- (void)testCacheBustOnlyStampsTrackedStylesheet
+{
+    // Only the edited style is tracked; bundled CSS (no timestamp) is left alone.
+    NSString *html = @"<link rel=\"stylesheet\" href=\"GitHub2.css\">"
+                     @"<link rel=\"stylesheet\" href=\"print.css\">";
+    NSDictionary *timestamps = @{@"/Users/test/docs/GitHub2.css": @(1000.0)};
+    NSString *result = MPApplyCacheBusting(html, timestamps, self.baseURL);
+    XCTAssertTrue([result containsString:@"GitHub2.css?t=1000"]);
+    XCTAssertTrue([result containsString:@"href=\"print.css\""],
+                  @"Untracked stylesheets must remain unchanged");
+}
+
 @end

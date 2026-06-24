@@ -9,6 +9,9 @@
 
 #import <XCTest/XCTest.h>
 #import "MPPreferences.h"
+#import "MPRenderer.h"
+#import "MPRendererTestHelpers.h"
+#import "MPUtilities.h"
 
 // Forward declare the helper function we're testing
 NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
@@ -440,6 +443,113 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
         XCTAssertFalse(stylesChanged,
                        @"If both preferences are nil, no change detected");
     }
+}
+
+@end
+
+
+#pragma mark - Style Reload Cache-Busting Integration (Issue #318)
+
+// These tests drive MPRenderer end to end and assert that a version stamp on a
+// style/theme CSS file reaches the <head> <link> in the rendered preview HTML.
+// This is the missing piece that left "Reload" broken: the cache-busting trick
+// (issue #110) was only applied to the <body>, so the legacy WebView kept
+// serving the cached CSS by its unchanged file:// URL.
+@interface MPStyleReloadCacheBustTests : XCTestCase
+@property (nonatomic, strong) MPRenderer *renderer;
+@property (nonatomic, strong) MPMockRendererDataSource *dataSource;
+@property (nonatomic, strong) MPMockRendererDelegate *delegate;
+@end
+
+@implementation MPStyleReloadCacheBustTests
+
+- (void)setUp
+{
+    [super setUp];
+    self.dataSource = [[MPMockRendererDataSource alloc] init];
+    self.delegate = [[MPMockRendererDelegate alloc] init];
+    // A non-nil file base URL enables the cache-busting path in MPRenderer.
+    self.delegate.baseURL =
+        [NSURL fileURLWithPath:@"/Users/test/docs/readme.md"];
+    self.delegate.styleName = @"GitHub2";
+
+    self.renderer = [[MPRenderer alloc] init];
+    self.renderer.dataSource = self.dataSource;
+    self.renderer.delegate = self.delegate;
+}
+
+- (void)tearDown
+{
+    self.renderer = nil;
+    self.dataSource = nil;
+    self.delegate = nil;
+    [super tearDown];
+}
+
+- (NSString *)renderMarkdown:(NSString *)markdown
+{
+    self.dataSource.markdown = markdown;
+    [self.renderer parseMarkdown:markdown];
+    [self.renderer render];
+    return self.delegate.lastHTML;
+}
+
+- (void)testStyleLinkHasNoStampWithoutTimestamp
+{
+    NSString *html = [self renderMarkdown:@"# Hello"];
+    XCTAssertNotNil(html, @"Render should produce HTML");
+    XCTAssertTrue([html containsString:@"GitHub2.css"],
+                  @"Preview head should link the active style");
+    XCTAssertFalse([html containsString:@"GitHub2.css?t="],
+                   @"Without a recorded timestamp, the style link is unstamped");
+}
+
+- (void)testStyleLinkInHeadIsCacheBustedWhenTimestamped
+{
+    NSString *stylePath = MPStylePathForName(self.delegate.styleName);
+    XCTAssertNotNil(stylePath, @"Active style should resolve to a path");
+
+    [self.renderer setTimestamp:1750000000 forResourcePath:stylePath];
+    NSString *html = [self renderMarkdown:@"# Hello"];
+
+    XCTAssertTrue([html containsString:@"GitHub2.css?t=1750000000"],
+                  @"A timestamped style file must produce a cache-busted "
+                  @"<link> in the preview <head> (issue #318)");
+}
+
+- (void)testHighlightingThemeLinkInHeadIsCacheBusted
+{
+    self.delegate.syntaxHighlighting = YES;
+    self.delegate.highlightingThemeName = @"tomorrow";
+
+    NSURL *themeURL =
+        MPHighlightingThemeURLForName(self.delegate.highlightingThemeName);
+    if (!themeURL)
+        return;     // Theme unavailable in this environment; nothing to assert.
+
+    NSString *themeFile = themeURL.lastPathComponent;
+    [self.renderer setTimestamp:1750000001 forResourcePath:themeURL.path];
+    NSString *html = [self renderMarkdown:@"```c\nint x;\n```"];
+
+    NSString *expected =
+        [NSString stringWithFormat:@"%@?t=1750000001", themeFile];
+    XCTAssertTrue([html containsString:expected],
+                  @"A timestamped highlighting theme must be cache-busted in "
+                  @"the preview <head> (issue #318)");
+}
+
+- (void)testUntrackedBundledStylesheetsAreNotStamped
+{
+    // Stamping only the active style must not stamp print.css/export.css.
+    NSString *stylePath = MPStylePathForName(self.delegate.styleName);
+    [self.renderer setTimestamp:1750000000 forResourcePath:stylePath];
+    NSString *html = [self renderMarkdown:@"# Hello"];
+
+    XCTAssertTrue([html containsString:@"GitHub2.css?t=1750000000"]);
+    XCTAssertTrue([html containsString:@"print.css"],
+                  @"Bundled print.css should still be linked");
+    XCTAssertFalse([html containsString:@"print.css?t="],
+                   @"Untracked bundled CSS must not be cache-busted");
 }
 
 @end

@@ -40,4 +40,8 @@
 @property (nonatomic, copy) NSString *styleName;
 @property (nonatomic, copy) NSString *highlightingThemeName;
 @property (nonatomic, copy) NSString *lastHTML;
+// Optional base URL for the cache-busting path (issue #110 / #318). When set,
+// MPRenderer applies MPApplyCacheBusting to the rendered HTML; leave nil to
+// exercise the no-base-URL fallback.
+@property (nonatomic, copy) NSURL *baseURL;
 @end

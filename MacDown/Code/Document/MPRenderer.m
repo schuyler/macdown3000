@@ -821,14 +821,6 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *body = self.currentHtml;
-    if (self.resourceTimestamps.count > 0)
-    {
-        NSURL *baseURL = nil;
-        if ([delegate respondsToSelector:@selector(rendererBaseURL:)])
-            baseURL = [delegate rendererBaseURL:self];
-        if (baseURL)
-            body = MPApplyCacheBusting(body, self.resourceTimestamps, baseURL);
-    }
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     if (!self.checkboxBridgeToken.length)
@@ -837,6 +829,22 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     NSString *html = MPGetHTML(
         title, headTags, body, self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
+
+    // Issue #110 / #318: Apply cache-busting version stamps to local resource
+    // URLs. Run this over the full document — not just the <body> — so that
+    // edited style/theme CSS <link> tags in <head> also get a fresh URL that
+    // the legacy WebView cannot serve from its by-URL resource cache. Only
+    // paths with a recorded timestamp are stamped; bundled CSS and other
+    // untracked resources pass through unchanged.
+    if (self.resourceTimestamps.count > 0)
+    {
+        NSURL *baseURL = nil;
+        if ([delegate respondsToSelector:@selector(rendererBaseURL:)])
+            baseURL = [delegate rendererBaseURL:self];
+        if (baseURL)
+            html = MPApplyCacheBusting(html, self.resourceTimestamps, baseURL);
+    }
+
     [delegate renderer:self didProduceHTMLOutput:html];
 
     self.styleName = [delegate rendererStyleName:self];
