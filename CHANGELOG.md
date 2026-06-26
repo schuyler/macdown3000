@@ -19,7 +19,7 @@
 - Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
 
 <!-- rc-temp -->
-## [3000.0.7-rc.1] - 2026-06-24
+## [3000.0.7-rc.1] - 2026-06-26
 
 This release candidate brings a large batch of preview-rendering fixes, editor and toolbar improvements, new theming options, and several reporter-driven bug fixes. Highlights include fixes for blank previews, table layout and scrolling, pane sync on large files, and a hardened, more responsive preview pipeline.
 
@@ -78,7 +78,7 @@ This release candidate brings a large batch of preview-rendering fixes, editor a
 
 ### Infrastructure
 
-- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; website update for 3000.0.6.
+- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; release-train RC process; website update for 3000.0.6.
 <!-- /rc-temp -->
 
 ## [3000.0.6] - 2026-04-18
