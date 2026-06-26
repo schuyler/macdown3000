@@ -266,6 +266,22 @@ Insert the new entry at the top (after the `# Changelog` title):
 
 Use Edit tool to make the change.
 
+**Strip any release-candidate snapshot blocks.** If this release was staged
+through the RC train (see `plans/rc-process.md`), `CHANGELOG.md` may contain one
+or more temporary snapshot sections fenced like:
+
+```markdown
+<!-- rc-temp -->
+## [{VERSION}-rc.N] - YYYY-MM-DD
+...
+<!-- /rc-temp -->
+```
+
+Remove **every** `<!-- rc-temp -->` … `<!-- /rc-temp -->` block (including the
+fences) before committing. These are RC-only scratch entries; the final release
+gets the single `[{VERSION}]` entry above, and the published changelog should
+never show intermediate RCs. If no such blocks exist, this is a no-op.
+
 **Update README.md:**
 
 Update the version number in README.md. Find and replace the version line:
