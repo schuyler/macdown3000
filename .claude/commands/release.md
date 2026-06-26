@@ -152,6 +152,11 @@ Append credits to each changelog line item using these formats:
 - Contributor (non-maintainer PR author): `-- thanks @user for the contribution!`
 - Tester: `-- thanks @user for the help testing!`
 
+**Every entry must reference both the linked issue(s) and the PR number.** Use
+the format `(#ISSUE, #PR)` — just the numbers, no "PR" prefix. If there is no
+linked issue, the PR number alone is sufficient: `(#PR)`. If there are multiple
+linked issues, list them all: `(#ISSUE1, #ISSUE2, #PR)`.
+
 **Multiple roles:** If the same user has multiple roles, credit them for each:
 ```
 - Fix foo bar bug (#123, #45) -- thanks @reporter for the report! thanks @contributor for the contribution!
@@ -159,8 +164,9 @@ Append credits to each changelog line item using these formats:
 
 **Examples:**
 ```markdown
-- Fix preview pane sync issue (#261, #258) -- thanks @dadvir for the contribution!
-- Fix lists not rendering after paragraphs (#260, #254) -- thanks @userA for the report! thanks @userB for the contribution! thanks @userC for the help testing!
+- Fix preview pane sync issue (#261, #258, #270) -- thanks @dadvir for the contribution!
+- Fix lists not rendering after paragraphs (#254, #260) -- thanks @userA for the report! thanks @userB for the contribution! thanks @userC for the help testing!
+- Add GitHub Dark Default editor theme (#465)
 ```
 
 #### 2c. Filter and Display Recent Changes

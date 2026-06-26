@@ -144,6 +144,17 @@ Documentation / Infrastructure) and credit reporters, contributors, and testers
 `schuyler/macdown3000` and `MacDownApp/macdown`. This is the heavy step —
 delegating the lookup to a subagent keeps it manageable for large batches.
 
+**Every entry must reference both the PR and the linked issue(s).** Use the
+format `(#ISSUE, #PR)` — just the numbers, no "PR" prefix. If there is no linked
+issue, the PR number alone is sufficient: `(#PR)`. If there are multiple linked
+issues, list them all: `(#ISSUE1, #ISSUE2, #PR)`. Examples:
+
+```markdown
+- Fix blank preview for documents with execute bit set (#431, #405, #454)
+- Add GitHub Dark Default editor theme (#465)
+- Add File menu autosave toggle (#301, #459) -- thanks @Xylopyrographer for the report!
+```
+
 Insert the generated section as a `<!-- rc-temp -->` block so `/release` can
 strip it at graduation. Leave `[Unreleased]` untouched — it is **not** the
 source and is not relied upon:
