@@ -31,7 +31,6 @@
             <key>QLSupportedContentTypes</key>
             <array>
                 <string>net.daringfireball.markdown</string>
-                <string>public.text</string>
             </array>
             <key>QLSupportedFilenameExtensions</key>
             <array>
