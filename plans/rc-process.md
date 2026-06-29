@@ -24,6 +24,7 @@ here is **when** we cut, **who** validates, and **how** validated work graduates
 - [Reporter validation comments](#reporter-validation-comments)
 - [The express lane (hotfixes)](#the-express-lane-hotfixes)
 - [Edge cases](#edge-cases)
+- [Release branch conventions](#release-branch-conventions)
 - [Bootstrapping the first cycle](#bootstrapping-the-first-cycle)
 
 ## Why a train
@@ -40,23 +41,25 @@ case in hand. We ship them a signed build and let them confirm their own fix.
 
 ## The model in one paragraph
 
-`main` is a single linear history. We do **not** cherry-pick individual fixes
-into releases — the train leaves on schedule with everything currently aboard.
-Reporter validation is a **green light / revert signal**, not a per-change gate:
-everything in an RC graduates to the next release **unless** a reporter reports
-it's still broken, in which case we revert that commit before cutting the
-release. Silence counts as acceptance. This keeps git history linear and gives
-every cycle a clean terminal state. (A revert isn't always conflict-free either —
-if later commits built on the broken one, prefer a forward-fix or a fresh
-`-rc.(N+1)`; see [Edge cases](#edge-cases).)
+Development happens on `main`. When an RC is cut, a short-lived **release
+branch** (`release/X.Y.Z`) is created from `main` HEAD. The RC is tagged from
+that branch, and `main` stays open for new work. Reporter validation is a
+**green light / revert signal**: everything in the RC graduates **unless** a
+reporter reports it's still broken, in which case that commit is reverted on the
+release branch. Silence counts as acceptance. On release day, the final release
+is tagged from the release branch, the graduation commit (changelog + README
+update) is cherry-picked onto `main`, and the branch is deleted — the release
+tag keeps the branch's commits reachable permanently. Changes flow one way: from
+`main` into the release branch at cut time, never back. Then the next RC is cut
+from the new `main` HEAD.
 
 ## Cadence
 
 **Every other Sunday.** One recurring event per cycle that does two things back
 to back:
 
-1. **Promote** the previous RC → final release.
-2. **Cut** the next RC from `main` HEAD.
+1. **Graduate** the previous RC → final release (from its release branch).
+2. **Cut** the next RC from `main` HEAD (creates a new release branch).
 
 Key intervals that fall out of a 2-week cadence:
 
@@ -91,15 +94,19 @@ in `CHANGELOG.md` matching the tag exactly — `-rc.N` and all — and extract i
 body as the release notes. So an RC needs a section, but we don't want RC noise
 polluting the permanent changelog. The compromise:
 
-- The rolling `## [Unreleased]` section is the single accumulator and is **never**
-  destroyed by an RC cut — PR entries keep landing there as normal.
-- `/release-candidate` inserts a **temporary snapshot** section just below it,
-  fenced by `<!-- rc-temp -->` / `<!-- /rc-temp -->`, containing a copy of the
-  current `[Unreleased]` body under the RC's version+date heading. This satisfies
-  the CI gate and gives the RC sensible release notes.
-- At graduation, `/release` **strips every `rc-temp` block for the target** and
-  converts `[Unreleased]` into the final `## [X.Y.Z]` section — so the published
-  changelog shows one clean entry per release, never the intermediate RCs.
+- The rolling `## [Unreleased]` section on `main` is the single accumulator and
+  is **never** destroyed by an RC cut — PR entries keep landing there as normal.
+- `/release-candidate` inserts a **temporary snapshot** section on the **release
+  branch**, fenced by `<!-- rc-temp -->` / `<!-- /rc-temp -->`, containing the
+  generated changelog under the RC's version+date heading. This satisfies the CI
+  gate and gives the RC sensible release notes. Because this happens on the
+  release branch, `main`'s CHANGELOG is untouched.
+- At graduation, `/release` works on the **release branch**: strips the
+  `rc-temp` block, writes the final `## [X.Y.Z]` section (regenerated from the
+  commit range, reflecting any reverts), and updates `README.md`. The release is
+  tagged from this commit. The graduation commit is then cherry-picked onto
+  `main` so that `main`'s CHANGELOG carries the full release history. The release
+  branch is deleted afterward — the release tag keeps its commits reachable.
 
 ## Lifecycle of a change
 
@@ -107,25 +114,33 @@ polluting the permanent changelog. The compromise:
 merged to main
       │
       ▼
-next RC cut (Sunday)  ──►  rc-pending label + validation comment to reporter(s)
+RC cut Sunday
+      ├─ create release/X.Y.Z from main HEAD
+      ├─ tag RC from release branch
+      └─ rc-pending label + validation comment to reporter(s)
       │
       ▼
-14-day validation window
+14-day validation window (main stays open for new work)
       │
       ├─ reporter confirms ............► rc-validated
       ├─ reporter silent ..............► stays rc-pending (silence = acceptance)
-      └─ reporter says still broken ...► rc-broken → revert commit before release
+      └─ reporter says still broken ...► rc-broken → revert on release branch
       │
       ▼
 release day (next Sunday)
+      ├─ tag final release from release branch
+      ├─ cherry-pick graduation commit (changelog + README) onto main
+      ├─ delete release branch
+      └─ cut next RC from main HEAD (new release branch)
       │
       ├─ rc-validated / rc-pending ....► graduates into the final release
-      └─ rc-broken ....................► reverted; rides a future RC once re-fixed
+      └─ rc-broken ....................► reverted on branch; re-fixed work rides a future RC
 ```
 
 A change merged at time *t* misses the RC cut just before it, first appears in
 the *next* RC, validates for one cycle, and ships at the following release —
-hence the 2–4 week latency.
+hence the 2–4 week latency. Meanwhile, `main` never stops — new work merges
+continuously and rides the *next* release branch.
 
 ## Labels
 
@@ -140,9 +155,11 @@ there's no linked issue). Three labels, created once:
 
 Lifecycle: `rc-pending` is applied when a change **first** enters an RC. A
 reporter's confirmation flips it to `rc-validated`; a "still broken" report flips
-it to `rc-broken`. On graduation, the rc-* label is removed (the CHANGELOG and
-release notes become the durable record). `rc-broken` items keep their label
-until re-fixed and re-entered into a later RC.
+it to `rc-broken`. On graduation, `rc-pending` and `rc-validated` labels are
+removed from issues whose changes **shipped** (the CHANGELOG becomes the durable
+record). `rc-broken` labels are **not** removed at graduation — the change
+didn't ship. They stay until the fix author addresses the issue on `main` and
+the change re-enters a later RC as `rc-pending`.
 
 These do not exist yet — create them before the first cycle:
 
@@ -159,22 +176,29 @@ Every other Sunday, in order:
 1. **Triage validation feedback.** Read the issues currently labelled
    `rc-pending`. Anyone who confirmed → `rc-validated`. Anyone reporting it's
    still broken → `rc-broken`.
-2. **Handle `rc-broken`.** For each, `git revert` the offending commit(s) on
-   `main` (or merge a quick re-fix if one is ready), **and remove that change's
-   line from the `[Unreleased]` changelog section** — otherwise the graduated
-   release would credit a fix that isn't in the build. If the broken commit has
-   dependent work on top of it, a clean isolated revert may not exist; see
-   [Edge cases](#edge-cases). Reverted work simply rides a future RC once
-   re-fixed — it does not block the train.
-3. **Graduate.** Run the existing **`/release`** workflow to cut the final
-   `vX.Y.Z` from `main`. It strips the `rc-temp` snapshot blocks, converts
-   `[Unreleased]` into the final entry, and produces the release notes;
-   everything still aboard the train ships.
-4. **Clear graduated labels.** Remove `rc-*` labels from issues included in the
-   release (the CHANGELOG is now the record).
-5. **Open the next RC.** Run **`/release-candidate`** to cut `vX.Y.(Z+1)-rc.1`
-   from the new `main` HEAD, which tags + builds + staples the pre-release and
-   posts validation comments to the new batch's reporters.
+2. **Handle `rc-broken`.** Check out the release branch (`release/X.Y.Z`). For
+   each broken change, `git revert` the offending commit(s) on the release
+   branch (or apply a quick fix if one is ready). Reverted work rides a future
+   RC once re-fixed — it does not block the train. **Do not** revert on `main`;
+   the release branch is isolated specifically so `main` isn't affected by
+   release-time surgery. (Note: because reverts stay on the branch, the broken
+   code remains on `main`. It will reappear in the next RC unless the fix author
+   commits a fix to `main` before the next RC cut. This is intentional — `main`
+   does not need to be in a releasable state; the release branch is what ships.)
+3. **Graduate.** Run **`/release`** against the release branch. It strips the
+   `rc-temp` changelog block, generates the final `## [X.Y.Z]` entry (from the
+   commit range on the branch, reflecting any reverts), updates `README.md`,
+   tags the final release from the branch, cherry-picks the graduation commit
+   onto `main`, and deletes the release branch. Everything still aboard the
+   branch ships.
+4. **Clear graduated labels.** Remove `rc-pending` and `rc-validated` labels
+   from issues whose changes shipped in this release. **Do not** remove
+   `rc-broken` — those changes didn't ship and the label should stay until the
+   fix is re-merged and re-enters a future RC.
+5. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
+   cut `vX.Y.(Z+1)-rc.1` from the new `main` HEAD. This creates a fresh `release/X.Y.(Z+1)` branch,
+   tags + builds + staples the pre-release, and posts validation comments to the
+   new batch's reporters.
 
 Steps 3 and 5 are the two builds; everything else is bookkeeping the
 `/release-candidate` and `/release` skills automate.
@@ -225,9 +249,23 @@ No rush — if we don't hear back, the fix ships anyway. Thanks for reporting it
 ## The express lane (hotfixes)
 
 Security and critical-severity fixes **do not wait for the train**. They ship
-immediately off `main` as a normal patch release via the existing `/release`
-workflow, outside the cycle. The CVE fixes in v3000.0.5 are the archetype. After
-a hotfix, the next scheduled RC/release simply continues from the new `main`.
+immediately off `main` via **`/hotfix`** — a separate skill that tags and
+releases directly from `main`, outside the release branch model. The CVE fixes
+in v3000.0.5 are the archetype.
+
+If an RC's release branch already exists when a hotfix ships from `main`, the
+hotfix commit should be cherry-picked onto the release branch so the next
+graduation includes it. (The final release should never be *behind* the latest
+hotfix.) After a hotfix, the next scheduled RC/release continues from the new
+`main`.
+
+Three skills, one job each:
+
+| Skill | Operates on | Purpose |
+|---|---|---|
+| `/release-candidate` | `main` → new `release/X.Y.Z` | Cut an RC, create the release branch |
+| `/release` | `release/X.Y.Z` | Graduate an RC to a final release |
+| `/hotfix` | `main` | Ship a critical fix immediately, outside the train |
 
 ## Edge cases
 
@@ -235,32 +273,70 @@ a hotfix, the next scheduled RC/release simply continues from the new `main`.
   at the next release. Don't chase.
 - **Reporter can't reproduce on demand** (intermittent bug). Treat as silence;
   it graduates. If it recurs post-release, it comes back as a new report.
-- **An RC is found broadly broken** (not one fix, but the build itself). Fix
-  forward on `main` and cut `-rc.(N+1)`; the validation window for the affected
-  changes effectively resets to the new RC.
+- **An RC is found broadly broken** (not one fix, but the build itself). Fix on
+  the release branch and cut `-rc.(N+1)` from it; the validation window for the
+  affected changes effectively resets to the new RC.
 - **Empty cycle.** Skip the RC cut; still promote any prior RC that's due.
 - **A change reported broken but the fix isn't ready by release day.** Revert it
-  for this release; it re-enters a future RC once re-fixed. Never hold the whole
-  train for one change.
+  on the release branch; it re-enters a future RC once re-fixed on `main`. Never
+  hold the whole train for one change.
 - **The broken commit has dependent work built on top of it.** A clean isolated
   `git revert` may not exist (it'll conflict, or silently undo the dependent
-  change too). Don't force it — prefer a forward-fix on `main`, or hold this one
-  change by cutting a fresh `-rc.(N+1)` and letting it graduate a cycle later.
-  The no-cherry-pick rule keeps history linear; it does not promise every revert
-  is conflict-free.
+  change too). Don't force it — prefer a forward-fix on the release branch, or
+  hold this one change by cutting a fresh `-rc.(N+1)` and letting it graduate a
+  cycle later.
+- **Hotfix ships while a release branch exists.** Cherry-pick the hotfix onto
+  the release branch. The graduated release must never be behind the latest
+  stable.
+- **Cherry-pick conflict on graduation.** The graduation commit (changelog +
+  README) is cherry-picked onto `main`. If `main`'s CHANGELOG has changed since
+  the branch point (e.g. new `[Unreleased]` entries), the cherry-pick may
+  conflict. Resolve by keeping both: `main`'s `[Unreleased]` entries and the new
+  release section.
+- **Release day skipped** (maintainer unavailable). The release branch stays
+  open. Graduate on the next available Sunday; the validation window simply
+  extends. The next RC cut follows immediately after.
+
+## Release branch conventions
+
+- **Name:** `release/X.Y.Z` (e.g. `release/3000.0.7`). One branch per release
+  target; RC iterations (`-rc.1`, `-rc.2`) are tags on the same branch.
+- **Created by:** `/release-candidate` when cutting the first RC for a target.
+- **Lives for:** one validation cycle (14 days), then deleted after graduation.
+- **Commits allowed:** changelog/README updates, reverts of `rc-broken` changes,
+  forward-fixes for broken changes, cherry-picked hotfixes. No new feature work.
+- **Flow is one-way:** changes flow from `main` into the release branch at cut
+  time. Nothing flows back. The graduation commit (changelog + README) is
+  cherry-picked onto `main`; reverts and forward-fixes on the branch stay there.
+- **Deletion:** after tagging the final release and cherry-picking the graduation
+  commit, delete the branch. The release tag keeps all commits reachable.
 
 ## Bootstrapping the first cycle
 
-There is no in-flight RC yet, so the first Sunday only does the **cut** half:
+Before the first cycle, these one-time prerequisites must be completed:
 
 1. Create the three `rc-*` labels (commands above).
-2. Run `/release-candidate` to cut `v3000.0.7-rc.1` from `main`, label the
-   included issues `rc-pending`, and post validation comments.
-3. Two Sundays later, the full runbook applies: graduate `v3000.0.7`, then cut
-   `v3000.0.8-rc.1`.
+2. **Update `release.yml`**: the workflow currently enforces that tags are
+   ancestors of `origin/main` (`git merge-base --is-ancestor`). Under the
+   release branch model, RC and release tags are created on `release/*` branches.
+   The ancestry check must be relaxed to also accept tags on `release/*` branches,
+   or removed entirely (the branch naming convention provides sufficient
+   protection against accidental dev-branch tags).
+3. **Update `/release-candidate`** and **`/release`** skills to implement the
+   release branch model (create/operate on `release/X.Y.Z` instead of `main`).
+4. **Create `/hotfix`** skill for express-lane releases from `main`.
+
+Then the first Sunday only does the **cut** half:
+
+1. Run `/release-candidate` to cut `v3000.0.7-rc.1` from `main` — this creates
+   the `release/3000.0.7` branch, tags the RC from it, and posts validation
+   comments.
+2. Two Sundays later, the full runbook applies: graduate `v3000.0.7` from the
+   release branch, cherry-pick the graduation commit to `main`, delete the
+   branch, then cut `v3000.0.8-rc.1` (creating `release/3000.0.8`).
 
 ---
 
-**Last updated:** 2026-06-23
+**Last updated:** 2026-06-29
 **Cadence:** every other Sunday · **Model:** release train, reporter validation
 as green-light/revert signal

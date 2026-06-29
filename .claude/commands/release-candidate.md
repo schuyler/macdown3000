@@ -100,9 +100,12 @@ if [[ "$PREV_RC_NUM" -ge 1 ]]; then
 else
   PREV_TAG="v${LATEST_STABLE}"
 fi
-# Sanity: PREV_TAG must be an ancestor of HEAD, else the range is meaningless.
-git merge-base --is-ancestor "$PREV_TAG" HEAD || echo "WARN: ${PREV_TAG} is not an ancestor of HEAD"
+# Sanity: LATEST_STABLE must be an ancestor of HEAD (ensures the range is valid).
+# Do NOT check PREV_TAG ancestry — under the release branch model, prior RC tags
+# live on deleted release branches and are not ancestors of main.
+git merge-base --is-ancestor "v${LATEST_STABLE}" HEAD || echo "WARN: v${LATEST_STABLE} is not an ancestor of HEAD"
 git log "${PREV_TAG}..HEAD" --oneline --no-merges
+```
 
 ### Step 3: Identify Included Changes
 
