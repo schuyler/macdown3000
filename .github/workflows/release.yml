@@ -27,27 +27,34 @@ jobs:
           submodules: recursive
           fetch-depth: 0  # Need full history to check branch
 
-      - name: Verify tag is on main branch
+      - name: Verify tag is on main or release branch
         if: github.ref_type == 'tag'
         run: |
-          echo "🔍 Verifying that tag ${{ github.ref_name }} is on main branch..."
+          echo "🔍 Verifying that tag ${{ github.ref_name }} is on an allowed branch..."
 
           # Get the commit hash of the tag
           TAG_COMMIT=$(git rev-parse ${{ github.ref_name }})
 
-          # Check if this commit is reachable from main
+          # Check if this commit is reachable from main or a release/* branch.
+          # Under the release branch model, RC and final release tags are created
+          # on release/* branches, not main. See plans/rc-process.md.
+          FOUND=false
           if git merge-base --is-ancestor "$TAG_COMMIT" origin/main 2>/dev/null; then
             echo "✅ Tag is on main branch (or ancestor of main)"
+            FOUND=true
           else
-            echo "::error::Tag ${{ github.ref_name }} is NOT on the main branch!"
-            echo "::error::Release tags must be created from the main branch only."
-            echo "::error::Please delete this tag and create it from main:"
-            echo "::error::  git push origin :refs/tags/${{ github.ref_name }}"
-            echo "::error::  git tag -d ${{ github.ref_name }}"
-            echo "::error::  git checkout main"
-            echo "::error::  git pull origin main"
-            echo "::error::  git tag ${{ github.ref_name }}"
-            echo "::error::  git push origin ${{ github.ref_name }}"
+            for branch in $(git branch -r --list 'origin/release/*'); do
+              if git merge-base --is-ancestor "$TAG_COMMIT" "$branch" 2>/dev/null; then
+                echo "✅ Tag is on ${branch} (release branch)"
+                FOUND=true
+                break
+              fi
+            done
+          fi
+
+          if [ "$FOUND" = false ]; then
+            echo "::error::Tag ${{ github.ref_name }} is NOT on main or any release/* branch!"
+            echo "::error::Release tags must be created from main or a release/* branch."
             exit 1
           fi
 
