@@ -700,6 +700,19 @@
                   @"Quick Look heading id should drop ASCII punctuation. Got: %@", html);
 }
 
+// A bare setext underline ('-' or '=') makes Hoedown emit a heading with empty
+// content. The Quick Look renderer mirrors the preview's slug logic, so it has
+// the same zero-unit buffer hazard and must also survive empty headings without
+// aborting the Quick Look render process. Related to #479.
+
+- (void)testQuickLookEmptyHeadingDoesNotCrash
+{
+    NSString *html = [self.renderer renderMarkdown:@"-"];
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"Quick Look must render an empty heading with the fallback id "
+                  @"without crashing. Got: %@", html);
+}
+
 @end
 
 #else

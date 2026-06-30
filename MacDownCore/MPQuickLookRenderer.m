@@ -248,6 +248,16 @@ static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *cont
         out->size--;
 }
 
+// hoedown_buffer_new() stores its argument as the buffer's growth "unit", and
+// hoedown_buffer_grow() asserts that unit is non-zero. A size hint of 0 (an
+// empty heading, e.g. a bare setext underline) therefore yields a buffer that
+// aborts the process on first write. Clamp the hint so the buffer is always
+// growable. Mirrors new_growable_buffer() in hoedown_html_patch.c. Issue #479.
+static hoedown_buffer *mp_quicklook_new_growable_buffer(size_t size_hint)
+{
+    return hoedown_buffer_new(size_hint ? size_hint : 16);
+}
+
 // Emit headings with text-derived id attributes so anchor links work in
 // Quick Look previews, matching the main MacDown preview behavior.
 static void mp_quicklook_render_header(
@@ -257,7 +267,8 @@ static void mp_quicklook_render_header(
     (void)data;
     if (ob->size) hoedown_buffer_putc(ob, '\n');
 
-    hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+    hoedown_buffer *slug =
+        mp_quicklook_new_growable_buffer(content ? content->size : 16);
     mp_quicklook_slugify(slug, content);
     if (slug->size == 0)
         HOEDOWN_BUFPUTSL(slug, "section");
