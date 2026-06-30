@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history so we can check out any tag
 
       - name: Detect or use provided release tag
         env:
@@ -54,6 +56,14 @@ jobs:
 
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Checkout tag commit
+        run: |
+          # Under the release branch model, RC and release tags live on
+          # release/* branches, not main. Check out the tagged commit so
+          # CHANGELOG.md has the right content for release notes extraction.
+          echo "📌 Checking out ${{ env.TAG }}..."
+          git checkout "${{ env.TAG }}"
 
       - name: Get release info
         env:
