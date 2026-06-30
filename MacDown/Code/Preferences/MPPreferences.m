@@ -332,6 +332,19 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
                     inSuiteNamed:kMPApplicationSuiteName];
 }
 
+- (NSArray *)foldersToOpen
+{
+    return [[NSUserDefaults standardUserDefaults]
+        objectForKey:kMPFoldersToOpenKey inSuiteNamed:kMPApplicationSuiteName];
+}
+
+- (void)setFoldersToOpen:(NSArray *)foldersToOpen
+{
+    [[NSUserDefaults standardUserDefaults]
+        setObject:foldersToOpen forKey:kMPFoldersToOpenKey
+     inSuiteNamed:kMPApplicationSuiteName];
+}
+
 - (NSString *)pipedContentFileToOpen {
     return [self.userDefaults objectForKey:kMPPipedContentFileToOpen
                               inSuiteNamed:kMPApplicationSuiteName];
