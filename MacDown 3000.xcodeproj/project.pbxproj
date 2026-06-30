@@ -138,6 +138,7 @@
 		ISSUE341IMGRENDERBUILDFILE /* MPImageRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */; };
 		ISSUE362PREFRESIZBUILDF /* MPPreferencesViewControllerResizabilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */; };
 		ISSUE452SELCNTBUILDFILE /* MPSelectionCountTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE452SELCNTFILEREF /* MPSelectionCountTests.m */; };
+		ISSUE278TABLEBUILDFILE /* MPInsertTableTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE278TABLEFILEREF /* MPInsertTableTests.m */; };
 		PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */; };
 		PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */; };
 		PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */; };
@@ -676,6 +677,7 @@
 		ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE362PREFRESIZFILEREF /* MPPreferencesViewControllerResizabilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreferencesViewControllerResizabilityTests.m; sourceTree = "<group>"; };
 		ISSUE452SELCNTFILEREF /* MPSelectionCountTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPSelectionCountTests.m; sourceTree = "<group>"; };
+		ISSUE278TABLEFILEREF /* MPInsertTableTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPInsertTableTests.m; sourceTree = "<group>"; };
 		PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPNotificationTests.m; sourceTree = "<group>"; };
 		PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentLifecycleTests.m; sourceTree = "<group>"; };
 		PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPRendererEdgeCaseTests.m; sourceTree = "<group>"; };
@@ -1080,6 +1082,7 @@
 				ISSUE16RNDRDEFRFILEREF /* MPRenderDeferralTests.m */,
 				ISSUE294WRDCNTFILEREF /* MPWordCountUpdateTests.m */,
 				ISSUE452SELCNTFILEREF /* MPSelectionCountTests.m */,
+				ISSUE278TABLEFILEREF /* MPInsertTableTests.m */,
 				779606A8E0525000200B4EC5 /* MPFileWatcherTests.m */,
 				8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */,
 				8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */,
@@ -1740,6 +1743,7 @@
 				ISSUE16RNDRDEFRBUILDFILE /* MPRenderDeferralTests.m in Sources */,
 				ISSUE294WRDCNTBUILDFILE /* MPWordCountUpdateTests.m in Sources */,
 				ISSUE452SELCNTBUILDFILE /* MPSelectionCountTests.m in Sources */,
+				ISSUE278TABLEBUILDFILE /* MPInsertTableTests.m in Sources */,
 				ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
 				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
