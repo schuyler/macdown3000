@@ -11,9 +11,9 @@ Create a new MacDown release with interactive changelog editing and automated mo
 - **Repository:** https://github.com/schuyler/macdown3000
 - **Main Branch:** main
 
-### GitHub CLI
+### GitHub access
 
-The `gh` CLI is automatically installed via SessionStart hook on Linux. It uses the `GH_TOKEN` environment variable automatically—no manual authentication needed.
+This workflow performs GitHub operations (reading releases and PRs, triggering and watching workflows). Run them through the `gh` CLI when it's available — e.g. locally on macOS, where it's installed via Homebrew — or the GitHub MCP tools when running in Claude Code on the web. The examples below are written in `gh` form; when `gh` isn't on the PATH, use the equivalent GitHub MCP tool. Authentication is handled by the environment — no manual `gh auth login` needed.
 
 ## Usage
 

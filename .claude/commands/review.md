@@ -10,9 +10,9 @@ Review an inbound pull request by gathering perspectives from all four Marx Brot
 
 - **Repository:** https://github.com/schuyler/macdown3000
 
-### GitHub CLI
+### GitHub access
 
-The `gh` CLI is automatically installed via SessionStart hook on Linux. It uses the `GH_TOKEN` environment variable automatically — no manual authentication needed.
+This workflow performs GitHub operations (reading the PR and linked issues, posting the review). Run them through the `gh` CLI when it's available — e.g. locally on macOS, where it's installed via Homebrew — or the GitHub MCP tools when running in Claude Code on the web. The examples below are written in `gh` form; when `gh` isn't on the PATH, use the equivalent GitHub MCP tool. Authentication is handled by the environment — no manual `gh auth login` needed.
 
 ## Core Principles
 
@@ -49,7 +49,7 @@ Use TodoWrite to track progress:
 Strip any leading `#` from the argument.
 
 ```bash
-/tmp/gh/bin/gh pr view {number} --repo schuyler/macdown3000 \
+gh pr view {number} --repo schuyler/macdown3000 \
   --json number,title,body,author,baseRefName,headRefName,state,isDraft,labels,files,additions,deletions,url
 ```
 
@@ -60,15 +60,15 @@ If the PR is closed, merged, or draft, ask the user whether to proceed before co
 Get the full diff:
 
 ```bash
-/tmp/gh/bin/gh pr diff {number} --repo schuyler/macdown3000
+gh pr diff {number} --repo schuyler/macdown3000
 ```
 
 Scan the PR body for linked issue references (`#NNN` or `MacDownApp/macdown#NNN`). For each, fetch the issue for requirements context:
 
 ```bash
-/tmp/gh/bin/gh issue view {issue_number} --repo schuyler/macdown3000 --json title,body,author
+gh issue view {issue_number} --repo schuyler/macdown3000 --json title,body,author
 # If no match, also try the upstream:
-/tmp/gh/bin/gh issue view {issue_number} --repo MacDownApp/macdown --json title,body,author
+gh issue view {issue_number} --repo MacDownApp/macdown --json title,body,author
 ```
 
 ### Step 3: Dispatch ALL FOUR Agents IN PARALLEL (Sonnet)
@@ -304,21 +304,21 @@ Based on the user's chosen disposition, run one of:
 
 ```bash
 # Comment-only review:
-/tmp/gh/bin/gh pr review {number} --repo schuyler/macdown3000 \
+gh pr review {number} --repo schuyler/macdown3000 \
   --comment --body "$(cat <<'EOF'
 {draft}
 EOF
 )"
 
 # Request changes:
-/tmp/gh/bin/gh pr review {number} --repo schuyler/macdown3000 \
+gh pr review {number} --repo schuyler/macdown3000 \
   --request-changes --body "$(cat <<'EOF'
 {draft}
 EOF
 )"
 
 # Approve:
-/tmp/gh/bin/gh pr review {number} --repo schuyler/macdown3000 \
+gh pr review {number} --repo schuyler/macdown3000 \
   --approve --body "$(cat <<'EOF'
 {draft}
 EOF

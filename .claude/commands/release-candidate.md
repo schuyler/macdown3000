@@ -17,10 +17,15 @@ half — graduating a validated RC into a final release — is the existing
 - **Repository:** https://github.com/schuyler/macdown3000
 - **Main Branch:** main
 
-### GitHub CLI
+### GitHub access
 
-The `gh` CLI is installed via the SessionStart hook on Linux (`/tmp/gh/bin/gh`)
-and assumed present on macOS. It uses `GH_TOKEN` automatically — no manual auth.
+This workflow performs GitHub operations (reading releases, triggering and
+watching workflows, posting validation comments, labelling issues). Run them
+through the `gh` CLI when it's available — e.g. locally on macOS, where it's
+installed via Homebrew — or the GitHub MCP tools when running in Claude Code on
+the web. The examples below are written in `gh` form; when `gh` isn't on the
+PATH, use the equivalent GitHub MCP tool. Authentication is handled by the
+environment — no manual `gh auth login` needed.
 
 ## Usage
 
