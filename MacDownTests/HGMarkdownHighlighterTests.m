@@ -9,6 +9,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <Cocoa/Cocoa.h>
 #import "HGMarkdownHighlighter.h"
 #import "HGMarkdownHighlightingStyle.h"
 #import "pmh_definitions.h"
@@ -327,6 +328,79 @@
 {
     XCTAssertNoThrow([self.highlighter readClearTextStylesFromTextView],
                      @"Should handle reading styles without text view");
+}
+
+
+#pragma mark - Full-Range Clear Regression Tests (Issue #376)
+
+// Issue #376: toggling a checkbox in the preview replaces the editor's entire
+// text storage via -replaceCharactersInRange:withString:, which leaves the
+// inserted text carrying character 0's attributes — e.g. a leading heading's
+// oversized font smeared across the whole document. The bug surfaced because
+// -parseAndHighlightNow ultimately calls -applyVisibleRangeHighlighting, which
+// clears and restyles only the on-screen range; a full-document
+// -clearHighlighting is required to wipe the smear from off-screen content.
+// This test pins the load-bearing behavior deterministically (no async parse).
+// The #376 symptom was "heading size and color", so both the smeared font size
+// and the smeared foreground color are asserted.
+- (void)testClearHighlightingResetsSmearedHeadingStyleAcrossFullRange
+{
+    NSTextView *textView =
+        [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)];
+    textView.font = [NSFont systemFontOfSize:12.0];
+    textView.textColor = [NSColor blackColor];
+    textView.string = @"# Heading\n\n- [ ] task item\n";
+
+    HGMarkdownHighlighter *hl =
+        [[HGMarkdownHighlighter alloc] initWithTextView:textView];
+    hl.targetTextView = textView;
+    // Capture the clear/default baselines (default text size, trait mask, color)
+    // the same way the document does before highlighting.
+    [hl readClearTextStylesFromTextView];
+
+    // Simulate the smear: a heading-sized font AND a heading color applied across
+    // the ENTIRE range, exactly what replaceCharactersInRange:withString: produces
+    // when character 0 belongs to a heading.
+    NSTextStorage *storage = textView.textStorage;
+    NSRange fullRange = NSMakeRange(0, storage.length);
+    [storage addAttribute:NSFontAttributeName
+                    value:[NSFont systemFontOfSize:24.0]
+                    range:fullRange];
+    [storage addAttribute:NSForegroundColorAttributeName
+                    value:[NSColor redColor]
+                    range:fullRange];
+
+    NSUInteger listItemOffset = [textView.string rangeOfString:@"task"].location;
+    XCTAssertNotEqual(listItemOffset, (NSUInteger)NSNotFound,
+                      @"Test fixture should contain the list item text");
+
+    // Precondition: the heading font/color really did smear onto the list item.
+    NSFont *smearedFont = [storage attribute:NSFontAttributeName
+                                     atIndex:listItemOffset
+                              effectiveRange:NULL];
+    XCTAssertEqualWithAccuracy(smearedFont.pointSize, 24.0, 0.01,
+                               @"Precondition: heading font should smear onto the list item");
+    NSColor *smearedColor = [storage attribute:NSForegroundColorAttributeName
+                                       atIndex:listItemOffset
+                                effectiveRange:NULL];
+    XCTAssertEqualObjects(smearedColor, [NSColor redColor],
+                          @"Precondition: heading color should smear onto the list item");
+
+    // The fix: a full-range clear must wipe the off-screen smear.
+    [hl clearHighlighting];
+
+    NSFont *clearedFont = [storage attribute:NSFontAttributeName
+                                     atIndex:listItemOffset
+                              effectiveRange:NULL];
+    XCTAssertEqualWithAccuracy(clearedFont.pointSize, 12.0, 0.01,
+                               @"clearHighlighting should reset the smeared font to the body size "
+                               @"across the full document, not leave off-screen text heading-sized");
+    NSColor *clearedColor = [storage attribute:NSForegroundColorAttributeName
+                                       atIndex:listItemOffset
+                                effectiveRange:NULL];
+    XCTAssertNotEqualObjects(clearedColor, [NSColor redColor],
+                             @"clearHighlighting should reset the smeared foreground color "
+                             @"across the full document, not leave off-screen text heading-colored");
 }
 
 

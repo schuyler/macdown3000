@@ -3593,6 +3593,24 @@ to link outside that scope.", \
                                                withString:newMarkdown];
         [self.editor.textStorage endEditing];
 
+        // Issue #376: replaceCharactersInRange:withString: leaves the inserted
+        // text carrying character 0's attributes (e.g. a leading heading's font
+        // and color smeared across the whole document). The highlighter only
+        // re-parses on NSTextDidChangeNotification, which this direct textStorage
+        // edit deliberately does not fire ("Gap 10" below) — so re-highlight
+        // explicitly, following -reloadFromLoadedString's programmatic-swap recipe.
+        // (We intentionally skip that path's -readClearTextStylesFromTextView: a
+        // checkbox toggle leaves the font, theme, and default color unchanged, so
+        // the highlighter's clear baselines are still valid.)
+        //
+        // The full-range -clearHighlighting is load-bearing: -parseAndHighlightNow
+        // ultimately calls -applyVisibleRangeHighlighting, which clears and restyles
+        // only the on-screen range. Without a full-document clear first, the heading
+        // smear would persist on any content scrolled off-screen until it next
+        // re-entered the viewport.
+        [self.highlighter clearHighlighting];
+        [self.highlighter parseAndHighlightNow];
+
         // Gap 10: textStorage editing doesn't fire NSTextDidChangeNotification.
         // Mirror editorTextDidChange: — trigger render and claim ownership.
         if (self.needsHtml)
