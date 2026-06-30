@@ -212,6 +212,8 @@
                 <constraint firstItem="x36-52-U0p" firstAttribute="leading" secondItem="TXy-fD-S4Y" secondAttribute="leading" id="aXZ-Pm-NEe"/>
                 <constraint firstItem="TXy-fD-S4Y" firstAttribute="top" secondItem="x36-52-U0p" secondAttribute="bottom" constant="8" id="nUm-2S-CCN"/>
                 <constraint firstItem="TXy-fD-S4Y" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" id="rVA-W8-cMW"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="TXy-fD-S4Y" secondAttribute="bottom" constant="20" id="dyn-Md-Bt1"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="Ycc-Px-jbu" secondAttribute="bottom" constant="20" id="dyn-Md-Bt2"/>
             </constraints>
         </customView>
         <userDefaultsController representsSharedInstance="YES" id="4rH-6F-B28"/>
