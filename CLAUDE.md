@@ -12,48 +12,31 @@ This document provides essential information for Claude Code when working on the
 - **Dependencies:** Hoedown (Markdown rendering), Prism (syntax highlighting), PEG Markdown Highlight (editor highlighting)
 - **Build System:** Xcode, CocoaPods (managed via Bundler)
 
-## GitHub CLI (`gh`)
+## GitHub access
 
-The `gh` CLI is automatically installed on Linux via the SessionStart hook (`.claude/scripts/install-gh.sh`). On macOS, it's assumed to be pre-installed via Homebrew.
+GitHub operations run two ways depending on where the session is:
 
-| Platform | Path |
-|----------|------|
-| Linux | `/tmp/gh/bin/gh` |
-| macOS | `gh` |
+- **Locally** (e.g. macOS): use the `gh` CLI, pre-installed via Homebrew. It authenticates from your existing `gh` login or the `GH_TOKEN` environment variable — no `gh auth login` needed.
+- **Claude Code on the web:** use the GitHub MCP tools, which are available automatically and need no `gh` install.
 
-### Setup (One-Time)
+Workflow examples in `.claude/commands/` are written in `gh` form; when `gh` isn't on the PATH, use the equivalent GitHub MCP tool.
 
-`gh` automatically uses the `GH_TOKEN` environment variable—no `gh auth login` needed.
-
-**Claude Code Web:**
-1. Go to Settings → Environment Configuration
-2. Add: `GH_TOKEN=ghp_your_token_here`
-
-**Claude Code CLI:**
-```bash
-export GH_TOKEN=ghp_your_token_here
-```
-
-**Token requirements:**
-- Generate at: https://github.com/settings/tokens
-- Required scopes: `repo`, `read:org`
-
-### Usage Examples
+### Usage Examples (`gh`)
 
 ```bash
 # Issues
-/tmp/gh/bin/gh issue list --repo schuyler/macdown3000
-/tmp/gh/bin/gh issue view 123 --repo schuyler/macdown3000
-/tmp/gh/bin/gh issue comment 123 --repo schuyler/macdown3000 --body "Comment text"
+gh issue list --repo schuyler/macdown3000
+gh issue view 123 --repo schuyler/macdown3000
+gh issue comment 123 --repo schuyler/macdown3000 --body "Comment text"
 
 # Pull Requests
-/tmp/gh/bin/gh pr create --repo schuyler/macdown3000 --base main --title "Title" --body "Description"
-/tmp/gh/bin/gh pr list --repo schuyler/macdown3000
+gh pr create --repo schuyler/macdown3000 --base main --title "Title" --body "Description"
+gh pr list --repo schuyler/macdown3000
 
 # Workflow Runs
-/tmp/gh/bin/gh run list --repo schuyler/macdown3000 --branch my-branch
-/tmp/gh/bin/gh run watch $RUN_ID --repo schuyler/macdown3000
-/tmp/gh/bin/gh run view $RUN_ID --repo schuyler/macdown3000 --log
+gh run list --repo schuyler/macdown3000 --branch my-branch
+gh run watch $RUN_ID --repo schuyler/macdown3000
+gh run view $RUN_ID --repo schuyler/macdown3000 --log
 ```
 
 ### Repository

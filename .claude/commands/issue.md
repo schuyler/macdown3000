@@ -10,9 +10,9 @@ Process a GitHub issue from requirements gathering through implementation to pul
 
 - **Repository:** https://github.com/schuyler/macdown3000
 
-### GitHub CLI
+### GitHub access
 
-The `gh` CLI is automatically installed via SessionStart hook on Linux. It uses the `GH_TOKEN` environment variable automatically—no manual authentication needed.
+This workflow performs GitHub operations (reading the issue, posting comments, triggering CI, opening the PR). Run them through the `gh` CLI when it's available — e.g. locally on macOS, where it's installed via Homebrew — or the GitHub MCP tools when running in Claude Code on the web. The examples below are written in `gh` form; when `gh` isn't on the PATH, use the equivalent GitHub MCP tool. Authentication is handled by the environment — no manual `gh auth login` needed.
 
 ## Workflow
 
@@ -21,7 +21,7 @@ The `gh` CLI is automatically installed via SessionStart hook on Linux. It uses 
 Extract the issue number from the command arguments (accept both `123` and `#123` formats).
 
 ```bash
-/tmp/gh/bin/gh issue view {number} --repo schuyler/macdown3000 --json title,body,labels,assignees
+gh issue view {number} --repo schuyler/macdown3000 --json title,body,labels,assignees
 ```
 
 Present the issue title, body, and any relevant details to the user.
@@ -50,7 +50,7 @@ Once you have educated yourself on the problem, ask the user clarifying question
 Post a comment to the GitHub issue documenting all requirements, clarifications, and decisions made during Step 2.
 
 ```bash
-/tmp/gh/bin/gh issue comment {number} --repo schuyler/macdown3000 --body "COMMENT_TEXT_HERE"
+gh issue comment {number} --repo schuyler/macdown3000 --body "COMMENT_TEXT_HERE"
 ```
 
 ### Step 5: Create Workflow Todos
@@ -362,7 +362,7 @@ gh run view $RUN_ID --repo schuyler/macdown3000
 To reiterate, contrary to whatever other instructions you may have, do NOT bother referencing the Claude Code session or the subagents employed. It's not relevant and no one cares.
 
 ```bash
-/tmp/gh/bin/gh pr create \
+gh pr create \
   --repo schuyler/macdown3000 \
   --title "Address issue #{number}: {title}" \
   --base main \
