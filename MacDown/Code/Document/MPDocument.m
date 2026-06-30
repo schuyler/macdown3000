@@ -3856,10 +3856,13 @@ to link outside that scope.", \
 
 - (void)startFileWatching
 {
+    // Tear down any previously-armed watcher first, so an early return below
+    // (nil URL, or a path that cannot be watched) can never leak a stale
+    // watcher for an old session. Related to #478.
+    [self stopFileWatching];
+
     if (!self.fileURL || !self.fileURL.isFileURL)
         return;
-
-    [self stopFileWatching];
 
     if (![MPFileWatcher canWatchPath:self.fileURL.path])
         return;

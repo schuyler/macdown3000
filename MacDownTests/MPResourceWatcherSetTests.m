@@ -122,6 +122,15 @@
     XCTAssertEqual(self.watcherSet.watchedPaths.count, 0u);
 }
 
+- (void)testSkipsUnwatchablePath
+{
+    // An unwatchable path (here an empty string, but in practice a remote
+    // volume) must be rejected before a watcher is constructed and never
+    // stored. Related to #478.
+    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:@""]];
+    XCTAssertEqual(self.watcherSet.watchedPaths.count, 0u);
+}
+
 - (void)testDelegateCalledOnChange
 {
     NSString *path = [self createTestFileWithName:@"watch.png"];

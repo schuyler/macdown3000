@@ -57,6 +57,12 @@
 
 - (void)addWatcherForPath:(NSString *)path
 {
+    // Skip paths that cannot receive vnode watchers (nil/empty or on a remote
+    // volume) before constructing a watcher, mirroring the guard in
+    // -[MPDocument startFileWatching]. Related to #478.
+    if (![MPFileWatcher canWatchPath:path])
+        return;
+
     __weak MPResourceWatcherSet *weakSelf = self;
     NSString *watchedPath = [path copy];
 

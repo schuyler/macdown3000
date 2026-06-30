@@ -21,11 +21,26 @@
     if (!path.length)
         return NO;
 
-    NSURL *url = [NSURL fileURLWithPath:path];
+    // NSURLVolumeIsLocalKey can only be read from a URL that resolves to an
+    // existing item. During an external editor's atomic rename-replace save the
+    // file transiently disappears, so probing the file itself would wrongly
+    // report the path as non-local and disable auto-reload. Fall back to the
+    // parent directory's volume in that case. Related to #478.
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *probePath = path;
+    if (![fileManager fileExistsAtPath:probePath])
+        probePath = [path stringByDeletingLastPathComponent];
+    if (!probePath.length || ![fileManager fileExistsAtPath:probePath])
+        return NO;
+
+    NSURL *url = [NSURL fileURLWithPath:probePath];
     NSNumber *isLocal = nil;
+    NSError *error = nil;
     if (![url getResourceValue:&isLocal
-                        forKey:NSURLVolumeIsLocalKey error:NULL])
+                        forKey:NSURLVolumeIsLocalKey error:&error])
     {
+        NSLog(@"MPFileWatcher: cannot determine volume locality for %@: %@",
+              probePath, error.localizedDescription);
         return NO;
     }
 
