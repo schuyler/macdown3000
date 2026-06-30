@@ -29,36 +29,53 @@ NSString * const MPDidRequestEditorSetupNotification =
 
     NSView *contentView = self.view;
     NSRect frame = contentView.frame;
+    CGFloat englishDesignWidth  = NSWidth(frame);
+    CGFloat englishDesignHeight = NSHeight(frame);
 
     NSView *wrapper = [[NSView alloc] initWithFrame:frame];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
     [wrapper addSubview:contentView];
 
-    // Keep the panel's designed width and start at the designed height. The
-    // height is grown below once the content has been laid out.
-    NSLayoutConstraint *heightConstraint =
-        [contentView.heightAnchor constraintEqualToConstant:NSHeight(frame)];
+    // Center the content in the wrapper (unchanged from before).
     [NSLayoutConstraint activateConstraints:@[
         [contentView.centerXAnchor constraintEqualToAnchor:wrapper.centerXAnchor],
         [contentView.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
-        [contentView.widthAnchor  constraintEqualToConstant:NSWidth(frame)],
-        heightConstraint,
     ]];
 
-    self.view = wrapper;
-
-    // Now that the content is wrapped at its designed width, grow the height to
-    // fit the content for the active locale: longer localized strings (e.g.
-    // French, Italian) wrap onto extra lines, so the panel must expand to fit
-    // them instead of clipping. The English design height acts as a floor so we
-    // never shrink a panel.
+    // --- Pass 1: resolve width ---
+    // Apply a >= floor so the pane never shrinks below the English design width,
+    // then ask Auto Layout for the width the content actually needs.
+    NSLayoutConstraint *widthFloor =
+        [contentView.widthAnchor constraintGreaterThanOrEqualToConstant:englishDesignWidth];
+    widthFloor.active = YES;
     [wrapper layoutSubtreeIfNeeded];
-    CGFloat height = MAX(contentView.fittingSize.height, NSHeight(frame));
-    heightConstraint.constant = height;
+    CGFloat width = MAX(contentView.fittingSize.width, englishDesignWidth);
+    widthFloor.active = NO;
 
+    // Pin the resolved width with an = constraint for the height pass.
+    NSLayoutConstraint *widthPin =
+        [contentView.widthAnchor constraintEqualToConstant:width];
+    widthPin.active = YES;
+
+    // --- Pass 2: resolve height at the resolved width ---
+    NSLayoutConstraint *heightFloor =
+        [contentView.heightAnchor constraintGreaterThanOrEqualToConstant:englishDesignHeight];
+    heightFloor.active = YES;
+    [wrapper layoutSubtreeIfNeeded];
+    CGFloat height = MAX(contentView.fittingSize.height, englishDesignHeight);
+    heightFloor.active = NO;
+
+    // Pin the resolved height.
+    NSLayoutConstraint *heightPin =
+        [contentView.heightAnchor constraintEqualToConstant:height];
+    heightPin.active = YES;
+
+    // Update the wrapper frame so MASPreferences reads the correct minimum size.
     NSRect wrapperFrame = wrapper.frame;
-    wrapperFrame.size.height = height;
+    wrapperFrame.size = NSMakeSize(width, height);
     wrapper.frame = wrapperFrame;
+
+    self.view = wrapper;
 }
 
 - (void)dealloc

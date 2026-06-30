@@ -366,14 +366,45 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         // Measure the height the content needs at its pinned width (the width
         // must stay fixed, or wrapping labels would balloon the height). The
         // applied height must accommodate that — i.e. nothing is clipped.
+        XCTAssertTrue(widthPin.active,
+            @"%@ pane: width pin must be active during height measurement", name);
         CGFloat appliedHeight = heightPin.constant;
         heightPin.active = NO;
         [content layoutSubtreeIfNeeded];
         CGFloat neededHeight = content.fittingSize.height;
+        heightPin.active = YES;
 
         XCTAssertGreaterThanOrEqual(appliedHeight + 0.5, neededHeight,
             @"%@ pane: content height (%g) must accommodate its content (%g)",
             name, appliedHeight, neededHeight);
+    }];
+}
+
+// Every resolved pane width should be within a sane range — wide enough to show
+// content but not ballooning to absurd sizes (which would indicate a runaway
+// fittingSize calculation).
+- (void)testResolvedWidthIsWithinSaneBounds
+{
+    [self.allControllers enumerateKeysAndObjectsUsingBlock:
+     ^(NSString *name, MPPreferencesViewController *vc, BOOL *stop) {
+        NSView *content = MPContentView(vc);
+
+        NSLayoutConstraint *widthPin = nil;
+        for (NSLayoutConstraint *c in content.constraints)
+        {
+            if (c.firstItem == content && c.secondItem == nil
+                && c.relation == NSLayoutRelationEqual
+                && c.firstAttribute == NSLayoutAttributeWidth)
+                widthPin = c;
+        }
+        XCTAssertNotNil(widthPin,
+            @"%@ pane: loadView should pin the content width", name);
+        XCTAssertGreaterThan(widthPin.constant, 200,
+            @"%@ pane: resolved width (%g) is suspiciously narrow",
+            name, widthPin.constant);
+        XCTAssertLessThan(widthPin.constant, 2000,
+            @"%@ pane: resolved width (%g) is suspiciously wide",
+            name, widthPin.constant);
     }];
 }
 

@@ -40,11 +40,8 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" preferredMaxLayoutWidth="320" translatesAutoresizingMaskIntoConstraints="NO" id="jXn-KV-WQB">
+                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="jXn-KV-WQB">
                     <rect key="frame" x="20" y="82" width="324" height="51"/>
-                    <constraints>
-                        <constraint firstAttribute="width" constant="320" id="4IK-PY-Scf"/>
-                    </constraints>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="By activating shell support you can use the macdown utility to open MacDown and documents from a shell." id="W5n-x2-ygz">
                         <font key="font" metaFont="system"/>
                         <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -89,6 +86,7 @@
                 <constraint firstItem="oUF-aA-NID" firstAttribute="leading" secondItem="jQ4-bt-VFs" secondAttribute="trailing" constant="5" id="oLe-wI-n0K"/>
                 <constraint firstItem="jXn-KV-WQB" firstAttribute="top" secondItem="QYt-FS-lHh" secondAttribute="bottom" constant="8" id="pGj-R1-E8c"/>
                 <constraint firstItem="GyN-lb-9B9" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" id="wQ0-u9-0uy"/>
+                <constraint firstAttribute="trailing" secondItem="jXn-KV-WQB" secondAttribute="trailing" constant="20" id="dyn-Tm-Tr1"/>
             </constraints>
             <point key="canvasLocation" x="79" y="152.5"/>
         </customView>
