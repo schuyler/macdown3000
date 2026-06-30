@@ -106,12 +106,61 @@ NS_INLINE void treat()
 
 @synthesize preferencesWindowController = _preferencesWindowController;
 
+- (NSMenu *)mainSubmenuContainingAction:(SEL)action fallbackTitle:(NSString *)title
+{
+    NSMenu *mainMenu = [NSApp mainMenu];
+    for (NSMenuItem *top in mainMenu.itemArray)
+    {
+        NSMenu *submenu = top.submenu;
+        if (submenu && [submenu indexOfItemWithTarget:nil andAction:action] >= 0)
+            return submenu;
+    }
+    return [mainMenu itemWithTitle:title].submenu;   // fallback (e.g. unit test menus)
+}
+
+- (void)installFolderMenuItems
+{
+    // File › Open Folder…  (right after Open…)
+    NSMenu *fileMenu = [self mainSubmenuContainingAction:@selector(openDocument:)
+                                           fallbackTitle:NSLocalizedString(@"File", @"File menu")];
+    if (fileMenu && [fileMenu indexOfItemWithTarget:self
+                                          andAction:@selector(openFolder:)] < 0)
+    {
+        NSMenuItem *openFolder = [[NSMenuItem alloc]
+            initWithTitle:NSLocalizedString(@"Open Folder…", @"File menu item")
+                   action:@selector(openFolder:) keyEquivalent:@""];
+        openFolder.target = self;
+        NSInteger openIdx =
+            [fileMenu indexOfItemWithTarget:nil andAction:@selector(openDocument:)];
+        if (openIdx >= 0)
+            [fileMenu insertItem:openFolder atIndex:openIdx + 1];
+        else
+            [fileMenu addItem:openFolder];
+    }
+
+    // View › Show Sidebar  (⌘\, routed to the key window's MPDocument)
+    NSMenu *viewMenu = [self mainSubmenuContainingAction:@selector(togglePreviewPane:)
+                                           fallbackTitle:NSLocalizedString(@"View", @"View menu")];
+    if (viewMenu && [viewMenu indexOfItemWithTarget:nil
+                                          andAction:@selector(toggleFolderSidebar:)] < 0)
+    {
+        NSMenuItem *toggle = [[NSMenuItem alloc]
+            initWithTitle:NSLocalizedString(@"Show Sidebar", @"View menu item")
+                   action:@selector(toggleFolderSidebar:) keyEquivalent:@"\\"];
+        toggle.keyEquivalentModifierMask = NSEventModifierFlagCommand;
+        toggle.target = nil;   // first responder → key window's MPDocument
+        [viewMenu insertItem:toggle atIndex:0];
+        [viewMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
     [[NSAppleEventManager sharedAppleEventManager]
         setEventHandler:self
             andSelector:@selector(openUrlSchemeAppleEvent:withReplyEvent:)
           forEventClass:kInternetEventClass andEventID:kAEGetURL];
+    [self installFolderMenuItems];
 }
 
 // Open a file from a browser with url of the form :
@@ -238,7 +287,9 @@ NS_INLINE void treat()
 
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    if (self.preferences.filesToOpen.count || self.preferences.pipedContentFileToOpen)
+    if (self.preferences.filesToOpen.count
+        || self.preferences.pipedContentFileToOpen
+        || self.preferences.foldersToOpen.count)
         return NO;
     return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
@@ -252,6 +303,7 @@ NS_INLINE void treat()
 {
     [self openPendingPipedContent];
     [self openPendingFiles];
+    [self openPendingFolders];
     treat();
 }
 
@@ -326,6 +378,41 @@ NS_INLINE void treat()
     }
 
     self.preferences.filesToOpen = nil;
+    [self.preferences synchronize];
+}
+
+- (IBAction)openFolder:(id)sender
+{
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseFiles = NO;
+    panel.canChooseDirectories = YES;
+    panel.allowsMultipleSelection = NO;
+    if ([panel runModal] == NSModalResponseOK && panel.URL)
+        [self openWorkspaceAtURL:panel.URL];
+}
+
+- (void)openWorkspaceAtURL:(NSURL *)url
+{
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    NSError *error = nil;
+    MPDocument *doc =
+        (MPDocument *)[c openUntitledDocumentAndDisplay:NO error:&error];
+    if (!doc)
+        return;
+    doc.workspaceRootURL = url;          // set BEFORE the nib loads the sidebar
+    [doc makeWindowControllers];
+    [doc showWindows];
+}
+
+- (void)openPendingFolders
+{
+    for (NSString *path in self.preferences.foldersToOpen)
+    {
+        NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+        if ([url checkResourceIsReachableAndReturnError:NULL])
+            [self openWorkspaceAtURL:url];
+    }
+    self.preferences.foldersToOpen = nil;
     [self.preferences synchronize];
 }
 

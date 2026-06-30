@@ -63,6 +63,10 @@ Code blocks get syntax highlighting via Prism, supporting numerous programming a
 - **Jekyll front-matter** for static site generators
 - **Export to HTML or PDF** with customizable styling
 
+### Folder Browsing
+
+Open an entire folder as a workspace with `macdown .` from the terminal or via **File › Open Folder…** in the menu. A sidebar lists subfolders and Markdown files in the chosen directory; double-click any file to open it as a tab in the same window. Press **⌘\\** to show or hide the sidebar. Right-click any item in the sidebar for quick access to **Reveal in Finder** or **Copy Path**.
+
 ### Editor Features
 
 - **Auto-completion**: Automatic bracket and quote pairing, list continuation, and formatting shortcuts (customizable or disable)

@@ -45,6 +45,19 @@ void MPCollectForMacDown(NSOrderedSet<NSURL *> *urls)
     [defaults synchronize];
 }
 
+void MPCollectFoldersForMacDown(NSOrderedSet<NSURL *> *urls)
+{
+    NSUserDefaults *defaults =
+        [[NSUserDefaults alloc] initWithSuiteNamed:kMPApplicationSuiteName];
+    NSMutableArray<NSString *> *paths =
+        [[NSMutableArray alloc] initWithCapacity:urls.count];
+    for (NSURL *url in urls)
+        [paths addObject:url.path];
+    [defaults setObject:paths forKey:kMPFoldersToOpenKey
+           inSuiteNamed:kMPApplicationSuiteName];
+    [defaults synchronize];
+}
+
 /**
  * Data piped to macdown through stdin.
  * 
@@ -103,15 +116,24 @@ int main(int argc, const char * argv[])
         // be opened later.
         NSString *pwd = [NSFileManager defaultManager].currentDirectoryPath;
         NSURL *pwdUrl = [NSURL fileURLWithPath:pwd isDirectory:YES];
-        NSMutableOrderedSet<NSURL *> *urls = [NSMutableOrderedSet orderedSet];
+        NSFileManager *fm = [NSFileManager defaultManager];
+        NSMutableOrderedSet<NSURL *> *fileURLs = [NSMutableOrderedSet orderedSet];
+        NSMutableOrderedSet<NSURL *> *folderURLs = [NSMutableOrderedSet orderedSet];
         for (NSString *arg in argproc.arguments)
         {
             NSString *escaped =
                 [arg stringByAddingPercentEscapesUsingEncoding:kMPPathEncoding];
             NSURL *url = [NSURL URLWithString:escaped relativeToURL:pwdUrl];
-            [urls addObject:url];
+            BOOL isDir = NO;
+            if ([fm fileExistsAtPath:url.path isDirectory:&isDir] && isDir)
+                [folderURLs addObject:url];
+            else
+                [fileURLs addObject:url];
         }
-        MPCollectForMacDown(urls);
+        if (fileURLs.count)
+            MPCollectForMacDown(fileURLs);
+        if (folderURLs.count)
+            MPCollectFoldersForMacDown(folderURLs);
 
         // Launch MacDown.
         [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:kMPApplicationBundleIdentifier options:NSWorkspaceLaunchDefault additionalEventParamDescriptor:nil launchIdentifier:nil];
