@@ -28,6 +28,16 @@ void hoedown_patch_reset_checkbox_index(void)
     g_checkbox_index = 0;
 }
 
+// hoedown_buffer_new() stores its argument as the buffer's growth "unit", and
+// hoedown_buffer_grow() asserts that unit is non-zero. Passing a size hint of 0
+// (e.g. when a heading or code-fence info string is empty) therefore produces a
+// buffer that aborts the process the first time anything is written to it. Clamp
+// the hint so a derived buffer is always growable. Related to GitHub issue #479.
+static hoedown_buffer *new_growable_buffer(size_t size_hint)
+{
+    return hoedown_buffer_new(size_hint ? size_hint : 16);
+}
+
 int hoedown_patch_get_checkbox_index(void)
 {
     return g_checkbox_index;
@@ -48,8 +58,8 @@ void hoedown_patch_render_blockcode(
     hoedown_buffer *back = NULL;
     if (lang && USE_BLOCKCODE_INFORMATION(state))
     {
-        front = hoedown_buffer_new(lang->size);
-        back = hoedown_buffer_new(lang->size);
+        front = new_growable_buffer(lang->size);
+        back = new_growable_buffer(lang->size);
 
         hoedown_buffer *current = front;
         for (size_t i = 0; i < lang->size; i++)
@@ -237,7 +247,7 @@ void hoedown_patch_render_header(
     (void)data;
     if (ob->size) hoedown_buffer_putc(ob, '\n');
 
-    hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+    hoedown_buffer *slug = new_growable_buffer(content ? content->size : 16);
     slugify(slug, content);
     if (slug->size == 0)
         HOEDOWN_BUFPUTSL(slug, "section");
@@ -285,7 +295,7 @@ void hoedown_patch_render_toc_header(
             HOEDOWN_BUFPUTSL(ob,"</li>\n<li>\n");
         }
 
-        hoedown_buffer *slug = hoedown_buffer_new(content ? content->size : 16);
+        hoedown_buffer *slug = new_growable_buffer(content ? content->size : 16);
         slugify(slug, content);
         if (slug->size == 0)
             HOEDOWN_BUFPUTSL(slug, "section");
