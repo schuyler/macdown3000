@@ -87,6 +87,32 @@
     XCTAssertFalse([MPFileWatcher canWatchPath:nil]);
 }
 
+- (void)testCannotWatchEmptyPath
+{
+    XCTAssertFalse([MPFileWatcher canWatchPath:@""]);
+}
+
+- (void)testCanWatchNonexistentLocalPath
+{
+    // A file that does not yet exist (e.g. mid atomic rename-replace save) on a
+    // local volume must still be considered watchable: the locality check falls
+    // back to the parent directory. Otherwise auto-reload silently dies during
+    // an external editor's save. Related to #478.
+    NSString *path = [self.testDirectory stringByAppendingPathComponent:@"gone.txt"];
+    XCTAssertFalse([self.fileManager fileExistsAtPath:path]);
+    XCTAssertTrue([MPFileWatcher canWatchPath:path]);
+}
+
+- (void)testCannotWatchPathWithNonexistentParent
+{
+    // Neither the file nor its parent directory exists -> nothing to probe for
+    // volume locality, so watching is not possible.
+    NSString *path = [[self.testDirectory
+                       stringByAppendingPathComponent:@"missing-dir"]
+                      stringByAppendingPathComponent:@"file.txt"];
+    XCTAssertFalse([MPFileWatcher canWatchPath:path]);
+}
+
 #pragma mark - Event Handling
 
 - (void)testHandlerCalledOnFileWrite

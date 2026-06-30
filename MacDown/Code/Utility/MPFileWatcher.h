@@ -16,7 +16,11 @@
 /// YES if currently watching.
 @property (nonatomic, readonly, getter=isWatching) BOOL watching;
 
-/// YES if the path is on a local volume that should receive vnode watchers.
+/// YES if the path can receive vnode watchers: it is non-nil, non-empty, and
+/// resides on a local volume. When the file itself does not exist (e.g. during
+/// an external editor's atomic rename-replace save) the locality check falls
+/// back to the parent directory. Returns NO for nil, empty, non-local, or
+/// otherwise unresolvable paths.
 + (BOOL)canWatchPath:(NSString *)path;
 
 /// Create a watcher for the given path. Calls handler on the main queue

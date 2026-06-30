@@ -13,6 +13,7 @@
 ### Fixed
 
 - Fix the Insert Table toolbar button doing nothing when the editor pane had focus, and corrupting the document when clicked repeatedly (a second table was inserted inside the first table's cell); every click now inserts a clean, well-separated table regardless of which pane has focus (#278) -- thanks @rcuisnier for the report!
+- Fix auto-reload silently breaking after an external editor's atomic save by making the local-volume watcher check fall back to the parent directory when the file is transiently missing; also guard resource-file watchers against remote volumes and tear down any prior watcher before re-arming (#478)
 - Fix the Preview pane still auto-scrolling toward the editor when typing after Sync Panes was turned off mid-session; toggling Sync Panes now takes effect immediately (settling the panes on disable, re-syncing on enable) without needing to reopen the document (#441) -- thanks @gregwillits!
 - Fix blank preview when opening saved or externally-originated documents: the real document file is no longer used as the preview's base resource, which WebKit on macOS 26 can silently refuse to load (e.g. files with the execute bit set by sync clients like OneDrive, or stale TCC/provenance state) (#431, #405) -- thanks @maskedspitz, @songjianbupt, and @craigrodger for the diagnosis!
 - Improve render-path responsiveness: single-pass word/character counting, cached body-extraction regex, and bounded renderer polling with cancellation (#388)
