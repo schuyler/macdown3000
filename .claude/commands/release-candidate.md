@@ -4,13 +4,27 @@ description: Cut a release candidate from main and invite reporters to validate 
 
 # Release Candidate Workflow
 
-Cut a release candidate (RC) from `main`, build/sign/staple it through the
-existing pipeline, and post validation invitations to the reporters of every
-change it contains.
+Cut a release candidate (RC) using a **release branch**, build/sign/staple it
+through the existing pipeline, and post validation invitations to the reporters
+of every change it contains.
 
 This is the **cut** half of the every-other-Sunday release train. The **promote**
 half — graduating a validated RC into a final release — is the existing
 `/release` workflow. See `plans/rc-process.md` for the full model.
+
+## Release Branch Model
+
+RCs operate on a **release branch** (`release/X.Y.Z`), not `main`. This keeps
+`main` open for new work while the RC is being validated.
+
+- **rc.1**: create `release/X.Y.Z` from `main` HEAD.
+- **rc.N (N>1)**: cherry-pick **only bug fixes and security fixes** from `main`
+  onto the existing `release/X.Y.Z`. New features ride the next release target.
+  Skip infra, website, CI, and docs-only commits.
+- The changelog and RC tag go on the release branch. **Never commit RC
+  changelogs to `main`.**
+- At graduation, `/release` tags the final release from the branch, cherry-picks
+  the graduation commit onto `main`, and deletes the branch.
 
 ## Configuration
 
@@ -21,11 +35,9 @@ half — graduating a validated RC into a final release — is the existing
 
 This workflow performs GitHub operations (reading releases, triggering and
 watching workflows, posting validation comments, labelling issues). Run them
-through the `gh` CLI when it's available — e.g. locally on macOS, where it's
-installed via Homebrew — or the GitHub MCP tools when running in Claude Code on
-the web. The examples below are written in `gh` form; when `gh` isn't on the
-PATH, use the equivalent GitHub MCP tool. Authentication is handled by the
-environment — no manual `gh auth login` needed.
+through the `gh` CLI when available, or the GitHub MCP tools when running in
+Claude Code on the web. Authentication is handled by the environment — no manual
+`gh auth login` needed.
 
 ## Usage
 
@@ -41,6 +53,7 @@ Use TodoWrite to track progress:
 
 ```
 - Determine RC version and run pre-flight checks
+- Set up release branch (create or update)
 - Identify changes included in this RC
 - Write the temporary RC changelog snapshot and commit
 - Tag and push the RC (triggers build + notarization)
@@ -69,6 +82,7 @@ LAST_RC=$(gh release list --repo schuyler/macdown3000 --limit 100 --json tagName
   '[.[] | .tagName | capture("^v'"$TARGET"'-rc\\.(?<n>[0-9]+)$") | .n | tonumber] | max // 0')
 RC_NUM=$((LAST_RC + 1))
 VERSION="${TARGET}-rc.${RC_NUM}"
+RELEASE_BRANCH="release/${TARGET}"
 ```
 
 Confirm the computed version with the user before proceeding.
@@ -76,7 +90,7 @@ Confirm the computed version with the user before proceeding.
 ### Step 2: Pre-flight Checks
 
 ```bash
-# On main
+# Start on main
 [[ "$(git branch --show-current)" == "main" ]] || echo "Switch to main first"
 # Clean working tree
 [[ -z "$(git status --porcelain)" ]] || echo "Commit or stash changes first"
@@ -87,8 +101,8 @@ git tag -l "v${VERSION}" | grep -q . && echo "Tag exists — pick a new rc numbe
 ```
 
 **Skip-if-empty:** list commits since the previous RC (or last stable if this is
-rc.1). If nothing app-facing has merged, tell the user the cycle is empty and
-stop — don't cut a redundant RC.
+rc.1). If nothing app-facing has merged to `main`, tell the user the cycle is
+empty and stop — don't cut a redundant RC.
 
 Derive the previous RC tag explicitly. **Do not** use `gh release list --limit 1`
 for this — an express-lane hotfix (a final shipped out-of-band) can make the most
@@ -107,26 +121,58 @@ else
 fi
 # Sanity: LATEST_STABLE must be an ancestor of HEAD (ensures the range is valid).
 # Do NOT check PREV_TAG ancestry — under the release branch model, prior RC tags
-# live on deleted release branches and are not ancestors of main.
+# live on the release branch and are not ancestors of main.
 git merge-base --is-ancestor "v${LATEST_STABLE}" HEAD || echo "WARN: v${LATEST_STABLE} is not an ancestor of HEAD"
 git log "${PREV_TAG}..HEAD" --oneline --no-merges
 ```
 
+### Step 2.5: Set Up the Release Branch
+
+**For rc.1** (no existing release branch):
+
+```bash
+git checkout -b "${RELEASE_BRANCH}"
+git push -u origin "${RELEASE_BRANCH}"
+```
+
+**For rc.N (N>1)** (release branch already exists):
+
+```bash
+git checkout "${RELEASE_BRANCH}"
+git pull origin "${RELEASE_BRANCH}"
+```
+
+Then cherry-pick **only bug fixes and security fixes** from `main` since the
+previous RC. New features and enhancements stay on `main` and ride the next
+release target — the release branch is for stabilization, not new functionality.
+
+Review the commit list from Step 2 and classify each commit:
+
+- **Cherry-pick**: bug fixes, security fixes, regression fixes, crash fixes
+- **Skip**: new features, enhancements, infra, CI, website, docs-only, release
+  process, changelog commits
+
+Present the classification to the user for confirmation, then cherry-pick in
+chronological order:
+
+```bash
+git cherry-pick <commit1> <commit2> ...
+```
+
+If a cherry-pick conflicts, resolve it or ask the user.
+
 ### Step 3: Identify Included Changes
 
-Collect the changes this RC introduces — everything on `main` since the **last
-stable** release (an RC is always a cumulative superset of the work since the
-last final release):
+From the release branch, collect the changes this RC introduces — everything
+since the **last stable** release:
 
 ```bash
 git log "v${LATEST_STABLE}..HEAD" --oneline --no-merges
 ```
 
 Extract PR numbers (`#1234`) from the commit subjects. For each PR, note whether
-it was **newly added since the previous RC** — only newly-added changes get a
-validation comment this cycle (changes carried over from a prior RC were already
-pinged; do not re-ping). Determine "new since previous RC" by diffing against
-`${PREV_TAG}..HEAD` from Step 2.
+it was **newly added since the previous RC** — this determines who gets
+validation comments (see Step 7).
 
 Filter out non-app changes (website, CI/release workflow, infra-only) the same
 way `/release` does — they ride the train but need no reporter validation.
@@ -141,31 +187,26 @@ or CI fails on the first step.
 
 **Do not copy `## [Unreleased]` to build this section.** This project does not
 require contributors to update the changelog, so `[Unreleased]` is chronically
-incomplete and will **never** match the RC's actual contents (at v3000.0.7-rc.1
-it listed ~5 PRs against 48 real changes). The RC section must be **generated
-from the commit range**, exactly the way `/release` builds its notes.
+incomplete and will **never** match the RC's actual contents. The RC section must
+be **generated from the commit range**, exactly the way `/release` builds its
+notes.
 
-Build it from `v${LATEST_STABLE}..HEAD` using the same attribution process as
-`/release` Step 2b: categorize entries (Added / Changed / Fixed / Security /
-Documentation / Infrastructure) and credit reporters, contributors, and testers
-(excluding @schuyler) by looking up each PR's linked issues across both
-`schuyler/macdown3000` and `MacDownApp/macdown`. This is the heavy step —
-delegating the lookup to a subagent keeps it manageable for large batches.
+Build it from `v${LATEST_STABLE}..HEAD` (on the release branch) using the same
+attribution process as `/release` Step 2b: categorize entries (Added / Changed /
+Fixed / Security / Documentation / Infrastructure) and credit reporters,
+contributors, and testers (excluding @schuyler) by looking up each PR's linked
+issues across both `schuyler/macdown3000` and `MacDownApp/macdown`. This is the
+heavy step — delegating the lookup to a subagent keeps it manageable for large
+batches.
 
 **Every entry must reference both the PR and the linked issue(s).** Use the
-format `(#ISSUE, #PR)` — just the numbers, no "PR" prefix. If there is no linked
-issue, the PR number alone is sufficient: `(#PR)`. If there are multiple linked
-issues, list them all: `(#ISSUE1, #ISSUE2, #PR)`. Examples:
+format `(#ISSUE, PR #NNN)`. If there is no linked issue, the PR number alone is
+sufficient: `(PR #NNN)`. If there are multiple linked issues, list them all:
+`(#ISSUE1, #ISSUE2, PR #NNN)`.
 
-```markdown
-- Fix blank preview for documents with execute bit set (#431, #405, #454)
-- Add GitHub Dark Default editor theme (#465)
-- Add File menu autosave toggle (#301, #459) -- thanks @Xylopyrographer for the report!
-```
-
-Insert the generated section as a `<!-- rc-temp -->` block so `/release` can
-strip it at graduation. Leave `[Unreleased]` untouched — it is **not** the
-source and is not relied upon:
+For rc.N (N>1), replace the existing `<!-- rc-temp -->` block with the updated
+section. For rc.1, insert a new block. Either way, leave `[Unreleased]`
+untouched:
 
 ```markdown
 ## [Unreleased]
@@ -182,17 +223,20 @@ source and is not relied upon:
 ...
 ```
 
-Use the Edit tool to insert it (date = the RC cut date, i.e. today). Then commit
-to `main` so the tag captures it:
+Commit **on the release branch** (date = the RC cut date, i.e. today):
 
 ```bash
 git add CHANGELOG.md
 git commit -m "Generate changelog for release candidate ${VERSION}"
-git push origin main
+git push origin "${RELEASE_BRANCH}"
 ```
 
 > **Do not** touch `README.md`. The `**Version X.Y.Z** - Available Now` line is
 > the *stable* pointer; RCs are pre-releases and must not change it.
+>
+> **Do not commit RC changelogs to `main`.** The changelog lives on the release
+> branch. `/release` cherry-picks the graduation commit (final changelog +
+> README) onto `main` at release time.
 >
 > **`[Unreleased]` is not authoritative.** Because contributors don't maintain
 > it, both the RC section here and the final section at graduation are generated
@@ -202,9 +246,9 @@ git push origin main
 
 ### Step 5: Tag and Push the RC
 
-Confirm with the user, then create and push the tag (from the snapshot commit on
-`main`). This triggers `release.yml`, which auto-detects the `-rc.N` suffix and
-builds a **pre-release** DMG (universal, signed, submitted for notarization).
+Confirm with the user, then create and push the tag **from the release branch**.
+This triggers `release.yml`, which auto-detects the `-rc.N` suffix and builds a
+**pre-release** DMG (universal, signed, submitted for notarization).
 
 ```bash
 git tag -a "v${VERSION}" -m "Release candidate ${VERSION}"
@@ -252,15 +296,16 @@ them with an `@`-mention. Cross-repo is for attribution, not notification.
 **Exclude @schuyler.** If a change has no linked issue, no reporter, or the only
 associated user is @schuyler, skip the comment (it still gets a label in Step 8).
 
-**Idempotency — don't re-ping.** Ephemeral sessions have no memory of last
-cycle's pings, so verify against GitHub state rather than trusting the range
-math. Before commenting, check whether this issue already has an RC validation
-comment (the body carries the `<!-- rc-validation-ping -->` marker below) and
-skip if so:
+**Idempotency and re-pinging.** The default rule: before commenting, check
+whether this issue already has an `<!-- rc-validation-ping -->` marker and skip
+if so. **Exception:** if a reporter found a regression or bug during the
+*previous* RC's validation period that produced a fix in *this* RC, they must be
+re-pinged — they need to know the follow-up fix is available. In that case, post
+a new comment even though a marker exists.
 
 ```bash
 gh issue view {ISSUE_NUMBER} --repo schuyler/macdown3000 --json comments \
-  --jq '.comments[].body' | grep -q 'rc-validation-ping' && echo "already pinged — skip"
+  --jq '.comments[].body' | grep -q 'rc-validation-ping' && echo "already pinged"
 ```
 
 Compute the planned release date — the next release Sunday, **14 days after the
@@ -318,22 +363,28 @@ Print a summary:
 🚂 Release candidate v{VERSION} is live.
 
 - Pre-release: {RC_URL}
+- Release branch: {RELEASE_BRANCH}
 - Changes aboard: {N} ({M} new this cycle, {K} carried over)
 - Reporters invited to validate: {list}
 - Labelled rc-pending: {count} issues
-- Planned graduation: {RELEASE_DATE} (run /release, then cut the next RC)
+- Planned graduation: {RELEASE_DATE} (run /release on the release branch)
 ```
 
 ## Important Reminders
 
-1. **RCs never touch README.md.** They add only a temporary, clearly-marked
+1. **Work on the release branch, not `main`.** The changelog, cherry-picks, and
+   tag all go on `release/X.Y.Z`. Never commit RC changelogs to `main`.
+2. **Cherry-pick only app-facing commits** for rc.N (N>1). Infra, website, CI,
+   and docs-only commits stay on `main`.
+3. **RCs never touch README.md.** They add only a temporary, clearly-marked
    (`<!-- rc-temp -->`) CHANGELOG snapshot that `/release` strips at graduation;
    the rolling `[Unreleased]` section and the final entry belong to `/release`.
-2. **One comment per issue per RC.** Never re-ping a carried-over change; check
-   for the `<!-- rc-validation-ping -->` marker first.
-3. **Exclude @schuyler from all credits and tags.**
-4. **No 'v' in the VERSION variable**; add it back only for the tag.
-5. **No Co-authored-by trailers.** Use "Related to #123", not "Fixes #123".
-6. **Assume GitHub works** — no defensive retry loops; surface real errors and
+4. **One comment per issue per RC.** Check for the `<!-- rc-validation-ping -->`
+   marker first — but **re-ping reporters who found regressions** during the
+   previous RC's validation that are fixed in this RC.
+5. **Exclude @schuyler from all credits and tags.**
+6. **No 'v' in the VERSION variable**; add it back only for the tag.
+7. **No Co-authored-by trailers.** Use "Related to #123", not "Fixes #123".
+8. **Assume GitHub works** — no defensive retry loops; surface real errors and
    let the user decide.
-7. **Skip empty cycles** — don't cut an RC with nothing app-facing in it.
+9. **Skip empty cycles** — don't cut an RC with nothing app-facing in it.
