@@ -2201,32 +2201,122 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.editor.selectedRange = selectedRange;
 }
 
+/**
+ * Issue #278: Compute how to insert a fixed 3-column Markdown table into
+ * `content` at `selectedRange`.
+ *
+ * The table is always emitted as its own block, separated from surrounding
+ * content by exactly one blank line above and below (Markdown requires a blank
+ * line around a table for it to be recognized). When the selection is empty,
+ * the insertion point is snapped to the end of the current line first, so a
+ * table never splits a line and a *repeated* insert never lands inside a
+ * previously inserted table cell (the nesting/corruption reported against
+ * rc.1). When the selection is non-empty it is replaced, preserving the prior
+ * "replace selection" behavior.
+ *
+ * Returns the string to insert; `outReplacementRange` receives the (possibly
+ * snapped) range in `content` to replace; `outCaretLocation` receives the
+ * absolute caret location, which lands inside the first body cell so the user
+ * can start typing immediately.
+ *
+ * Pure function: no view, layout, or DOM dependencies, so it is unit-testable
+ * headless.
+ */
++ (NSString *)tableInsertionForContent:(NSString *)content
+                         selectedRange:(NSRange)selectedRange
+                      replacementRange:(NSRange *)outReplacementRange
+                         caretLocation:(NSUInteger *)outCaretLocation
+{
+    static NSString *const core = @"| Column 1 | Column 2 | Column 3 |\n"
+                                  @"| --- | --- | --- |\n"
+                                  @"|  |  |  |";
+    NSUInteger caretOffsetInCore = [core rangeOfString:@"|  |"].location + 2;
+
+    if (content == nil)
+        content = @"";
+    NSUInteger length = content.length;
+
+    // Defensively clamp the incoming range to the content bounds.
+    NSUInteger start = selectedRange.location > length ? length
+                                                       : selectedRange.location;
+    NSUInteger end = NSMaxRange(selectedRange) > length ? length
+                                                        : NSMaxRange(selectedRange);
+    if (end < start)
+        end = start;
+
+    // Empty selection (a caret): if the caret sits in the middle of a line,
+    // snap it to the end of that line so the table is emitted as its own block
+    // and never lands inside an existing table cell (the repeated-insert
+    // corruption). A caret already at the start of a line is left alone, so the
+    // table is inserted there rather than after the line.
+    if (start == end)
+    {
+        BOOL atLineStart = (start == 0)
+                           || [content characterAtIndex:start - 1] == '\n';
+        if (!atLineStart)
+        {
+            while (end < length && [content characterAtIndex:end] != '\n')
+                end++;
+            start = end;
+        }
+    }
+
+    // Count blank-line padding that already exists around the insertion point so
+    // we add exactly one blank line of separation on each side.
+    NSUInteger leadingExisting = 0;
+    for (NSUInteger i = start; i > 0 && [content characterAtIndex:i - 1] == '\n'; i--)
+        leadingExisting++;
+    NSUInteger trailingExisting = 0;
+    for (NSUInteger i = end; i < length && [content characterAtIndex:i] == '\n'; i++)
+        trailingExisting++;
+
+    NSUInteger leadingNeeded = (start == 0 || leadingExisting >= 2)
+                                   ? 0 : 2 - leadingExisting;
+    NSUInteger trailingNeeded = (end == length) ? 1
+                                : (trailingExisting >= 2 ? 0 : 2 - trailingExisting);
+
+    NSMutableString *result = [NSMutableString string];
+    for (NSUInteger i = 0; i < leadingNeeded; i++)
+        [result appendString:@"\n"];
+    NSUInteger caretWithinResult = result.length + caretOffsetInCore;
+    [result appendString:core];
+    for (NSUInteger i = 0; i < trailingNeeded; i++)
+        [result appendString:@"\n"];
+
+    if (outReplacementRange)
+        *outReplacementRange = NSMakeRange(start, end - start);
+    if (outCaretLocation)
+        *outCaretLocation = start + caretWithinResult;
+    return result;
+}
+
 - (IBAction)insertTable:(id)sender
 {
-    NSString *template = @"| Column 1 | Column 2 | Column 3 |\n"
-                         @"| --- | --- | --- |\n"
-                         @"|  |  |  |\n";
-    NSRange selectedRange = self.editor.selectedRange;
     NSString *content = self.editor.string ?: @"";
-    NSMutableString *inserted = [template mutableCopy];
-    NSUInteger cursorOffset = [template rangeOfString:@"|  |"].location + 2;
+    NSRange replacementRange = NSMakeRange(0, 0);
+    NSUInteger caretLocation = 0;
+    NSString *inserted =
+        [MPDocument tableInsertionForContent:content
+                               selectedRange:self.editor.selectedRange
+                            replacementRange:&replacementRange
+                               caretLocation:&caretLocation];
 
-    if (selectedRange.location > 0 &&
-        [content characterAtIndex:selectedRange.location - 1] != '\n')
-    {
-        [inserted insertString:@"\n\n" atIndex:0];
-        cursorOffset += 2;
-    }
-
-    NSUInteger selectionEnd = NSMaxRange(selectedRange);
-    if (selectionEnd < content.length &&
-        [content characterAtIndex:selectionEnd] != '\n')
-    {
-        [inserted appendString:@"\n"];
-    }
-
-    [self.editor insertText:inserted replacementRange:selectedRange];
-    self.editor.selectedRange = NSMakeRange(selectedRange.location + cursorOffset, 0);
+    // Use the standard undoable mutation sequence rather than
+    // insertText:replacementRange:. The latter is an NSTextInputClient callback
+    // whose behavior depends on which pane is first responder, which is why the
+    // toolbar button (whose target is the document) failed when the editor pane
+    // had focus. shouldChangeTextInRange:/replaceCharactersInRange:/didChangeText
+    // mutates the text storage directly regardless of first responder, registers
+    // a single undo step, and fires NSTextDidChangeNotification so the
+    // highlighter re-parses.
+    if (![self.editor shouldChangeTextInRange:replacementRange
+                            replacementString:inserted])
+        return;
+    [self.editor.textStorage replaceCharactersInRange:replacementRange
+                                           withString:inserted];
+    [self.editor didChangeText];
+    self.editor.selectedRange = NSMakeRange(caretLocation, 0);
+    [self.editor scrollRangeToVisible:self.editor.selectedRange];
 }
 
 - (IBAction)toggleOrderedList:(id)sender
