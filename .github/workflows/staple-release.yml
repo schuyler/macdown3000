@@ -288,6 +288,25 @@ jobs:
           fi
           echo "    Entitlement present: com.apple.security.files.user-selected.read-write"
 
+          # Verify Quick Look extension entitlements (issue #284)
+          echo "  ✓ Checking Quick Look extension entitlements..."
+          QL_APPEX_FINAL="/tmp/final-verify/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex"
+          if [ ! -d "$QL_APPEX_FINAL" ]; then
+            echo "::error::Quick Look extension not found in final verification"
+            hdiutil detach /tmp/final-verify
+            exit 1
+          fi
+          QL_FINAL_ENTITLEMENTS=$(codesign -d --entitlements :- "$QL_APPEX_FINAL" 2>/dev/null || true)
+          if [[ "$QL_FINAL_ENTITLEMENTS" != *"com.apple.security.app-sandbox"* ]]; then
+            echo "::error::Published Quick Look extension is missing com.apple.security.app-sandbox entitlement"
+            echo "::error::Without sandbox, macOS will not load the extension. See issue #284."
+            echo "Entitlements found:"
+            echo "$QL_FINAL_ENTITLEMENTS"
+            hdiutil detach /tmp/final-verify
+            exit 1
+          fi
+          echo "    Entitlement present: com.apple.security.app-sandbox (Quick Look extension)"
+
           # Get app version for logging
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" \
                         "/tmp/final-verify/MacDown 3000.app/Contents/Info.plist" 2>/dev/null || echo "unknown")
