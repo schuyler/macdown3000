@@ -311,16 +311,21 @@ jobs:
 
           echo "✅ CLI binary signed successfully"
 
-          # Re-sign the app bundle to update the seal after modifying nested component.
-          # --entitlements MUST be re-applied here: the Xcode build signs the app with
-          # CODE_SIGN_ENTITLEMENTS, but this re-sign replaces that signature. Without
-          # --entitlements the app ships with NO entitlements, breaking NSSavePanel
-          # (Move To / Save As…) with ViewBridge error 14 on macOS Sequoia and later.
-          # See issue #302.
+          # Re-sign nested components inside-out to preserve per-component
+          # entitlements. Using --deep would apply the app's entitlements to
+          # ALL nested components, stripping the QL extension's sandbox
+          # entitlement and preventing macOS from loading it (issue #284).
+          echo "🔐 Re-signing Quick Look extension..."
+          codesign --sign "$IDENTITY" \
+            --force \
+            --options runtime \
+            --entitlements "MacDownQuickLook/MacDownQuickLook.entitlements" \
+            --timestamp \
+            "build/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex"
+
           echo "🔐 Re-signing app bundle to update code signature seal..."
           codesign --sign "$IDENTITY" \
             --force \
-            --deep \
             --options runtime \
             --entitlements "MacDown/MacDown.entitlements" \
             --timestamp \
@@ -383,6 +388,23 @@ jobs:
             exit 1
           fi
           echo "✅ App bundle has the user-selected.read-write entitlement"
+
+          # Verify Quick Look extension has sandbox entitlement (issue #284)
+          echo "🔍 Verifying Quick Look extension entitlements..."
+          QL_APPEX="build/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex"
+          if [ ! -d "$QL_APPEX" ]; then
+            echo "::error::Quick Look extension not found at expected location: $QL_APPEX"
+            exit 1
+          fi
+          QL_ENTITLEMENTS=$(codesign -d --entitlements :- "$QL_APPEX" 2>/dev/null || true)
+          if [[ "$QL_ENTITLEMENTS" != *"com.apple.security.app-sandbox"* ]]; then
+            echo "::error::Quick Look extension is missing com.apple.security.app-sandbox entitlement"
+            echo "::error::Without sandbox, macOS will not load the extension. See issue #284."
+            echo "Entitlements found:"
+            echo "$QL_ENTITLEMENTS"
+            exit 1
+          fi
+          echo "✅ Quick Look extension has sandbox entitlement"
 
           echo "✅ Application bundle ready"
 
@@ -450,6 +472,25 @@ jobs:
             exit 1
           fi
           echo "✅ App inside DMG has the user-selected.read-write entitlement"
+
+          # Verify Quick Look extension entitlements inside DMG (issue #284)
+          echo "🔍 Verifying Quick Look extension entitlements inside DMG..."
+          QL_APPEX_IN_DMG="/tmp/dmg-verify/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex"
+          if [ ! -d "$QL_APPEX_IN_DMG" ]; then
+            echo "::error::Quick Look extension not found in DMG"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+          QL_DMG_ENTITLEMENTS=$(codesign -d --entitlements :- "$QL_APPEX_IN_DMG" 2>/dev/null || true)
+          if [[ "$QL_DMG_ENTITLEMENTS" != *"com.apple.security.app-sandbox"* ]]; then
+            echo "::error::Quick Look extension in DMG is missing com.apple.security.app-sandbox entitlement"
+            echo "::error::Without sandbox, macOS will not load the extension. See issue #284."
+            echo "Entitlements found:"
+            echo "$QL_DMG_ENTITLEMENTS"
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
+          echo "✅ Quick Look extension inside DMG has sandbox entitlement"
 
           # Verify CLI binary inside DMG
           echo "🔍 Verifying CLI binary inside DMG..."
