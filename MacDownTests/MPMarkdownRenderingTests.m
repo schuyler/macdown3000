@@ -925,4 +925,59 @@
                   @"Heading must carry the matching id. Got: %@", html);
 }
 
+#pragma mark - Empty Heading Crash Regression (#479)
+
+// A lone setext underline ('-' or '=') with no preceding text makes Hoedown
+// emit a heading whose content is empty. The slug buffer must not be created
+// with a zero unit, or Hoedown's hoedown_buffer_grow assertion aborts the
+// whole app on the background render queue. These render through the real
+// parse path, so before the fix they crash the test process outright.
+// Related to #479.
+
+- (void)testLoneHyphenHeadingDoesNotCrash
+{
+    NSString *html = [self renderMarkdown:@"-"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"Empty setext heading must render with the fallback id without "
+                  @"crashing. Got: %@", html);
+}
+
+- (void)testLoneEqualsHeadingDoesNotCrash
+{
+    NSString *html = [self renderMarkdown:@"="
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"Empty setext H1 heading must render with the fallback id "
+                  @"without crashing. Got: %@", html);
+}
+
+- (void)testReportedHyphenCrashInputRenders
+{
+    // Exact document from the issue: it ends in a lone '-' after a blank line,
+    // which Hoedown treats as an empty setext heading underline.
+    NSString *html = [self renderMarkdown:@"_ - _ - _ -\n-\n\n-"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertNotNil(html,
+                  @"Reported crash input must render to a non-nil string.");
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"The trailing empty heading must render with the fallback id. "
+                  @"Got: %@", html);
+}
+
+- (void)testEmptyHeadingWithTOCDoesNotCrash
+{
+    // The TOC header renderer has the same buffer-creation pattern and must
+    // also survive empty heading content.
+    self.delegate.renderTOC = YES;
+    NSString *html = [self renderMarkdown:@"[TOC]\n\n-"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertNotNil(html,
+                  @"Empty heading with TOC enabled must render without crashing.");
+}
+
 @end
