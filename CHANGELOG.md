@@ -21,13 +21,12 @@
 - Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
 
 <!-- rc-temp -->
-## [3000.0.7-rc.2] - 2026-06-30
+## [3000.0.7-rc.1] - 2026-06-26
 
-Second release candidate. Fixes an Insert Table regression found during rc.1 validation, a crash on empty Markdown headings, and several file-watcher issues on remote and network volumes. Also wires the Quick Look extension into the Xcode build so it ships with the app.
+This release candidate brings a large batch of preview-rendering fixes, editor and toolbar improvements, new theming options, and several reporter-driven bug fixes. Highlights include fixes for blank previews, table layout and scrolling, pane sync on large files, and a hardened, more responsive preview pipeline.
 
 ### Added
 
-- Wire Quick Look extension into Xcode build (#284, PR #477) -- thanks @caius for the report!
 - Add GitHub Dark Default editor theme (PR #465) -- thanks @sks3691 for the contribution!
 - Add editor invisible character toggle (#43, PR #462) -- thanks @yusufm for the contribution!
 - Add File menu autosave toggle (#301, PR #459) -- thanks @Xylopyrographer for the report! thanks @yusufm for the contribution!
@@ -38,7 +37,6 @@ Second release candidate. Fixes an Insert Table regression found during rc.1 val
 
 ### Changed
 
-- Dynamic preferences pane sizing for localized strings (#397, PR #481) -- thanks @rcuisnier for the report!
 - Color HTML in default editor themes (#443, PR #458) -- thanks @gregwillits for the report!
 - Support uppercase task list checkboxes (#369, PR #410) -- thanks @gino-santerre-telus for the report! thanks @yusufm for the contribution!
 - Hide unparsable YAML front matter (#307, PR #413) -- thanks @yusufm for the contribution!
@@ -50,11 +48,6 @@ Second release candidate. Fixes an Insert Table regression found during rc.1 val
 
 ### Fixed
 
-- Harden file watching against transient paths and remote volumes (#478, PR #492)
-- Fix Insert Table toolbar regression: button now works regardless of which pane has focus, repeated clicks no longer nest tables (#278, PR #483) -- thanks @rcuisnier for the report!
-- Fix crash on empty Markdown headings from slug-based heading IDs (#479, PR #482) -- thanks @Telamonster for the report!
-- Skip file watchers on remote volumes (#371, PR #424) -- thanks @gurple for the report! thanks @yusufm for the contribution!
-- Re-highlight editor after preview checkbox toggle (#376, PR #480)
 - Fix blank preview for documents with execute bit set (#431, #405, PR #454) -- thanks @maskedspitz and @b2sc for the reports!
 - Never use the document file as the preview base URL (#405, #431, PR #456) -- thanks @b2sc and @maskedspitz for the reports!
 - Normalize CRLF line endings on file load (#382, PR #398) -- thanks @Ariaflux for the report!
@@ -87,7 +80,7 @@ Second release candidate. Fixes an Insert Table regression found during rc.1 val
 
 ### Infrastructure
 
-- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; release-train RC process; website update for 3000.0.6; remove gh CLI install machinery from canned workflows.
+- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; release-train RC process; website update for 3000.0.6.
 <!-- /rc-temp -->
 
 ## [3000.0.6] - 2026-04-18
