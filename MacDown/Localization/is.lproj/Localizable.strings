@@ -7,6 +7,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ stafur (án bila);%@ stafir (án bila)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ orð valið;%@ orð valin";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ stafur valinn;%@ stafir valdir";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ stafur (án bila) valinn;%@ stafir (án bila) valdir";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ stafur;%@ stafir";
 

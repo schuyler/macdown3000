@@ -37,6 +37,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробелов);%@ символов (без пробелов)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ выделенное слово;%@ выделенных слов";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ выделенный символ;%@ выделенных символов";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ выделенный символ (без пробелов);%@ выделенных символов (без пробелов)";
+
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Ошибка установки";
 "Installation Successful" = "Установка успешна";

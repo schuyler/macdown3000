@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@-teken (geen spaties);%@-tekens (geen spaties)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ woord geselecteerd;%@ woorden geselecteerd";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@-teken geselecteerd;%@-tekens geselecteerd";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@-teken (geen spaties) geselecteerd;%@-tekens (geen spaties) geselecteerd";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@-teken;%@-tekens";
 

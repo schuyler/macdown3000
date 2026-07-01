@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ अक्षर (बिना स्पेस);%@ अक्षर (बिना स्पेस)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ चयनित शब्द;%@ चयनित शब्द";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ चयनित अक्षर;%@ चयनित अक्षर";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ चयनित अक्षर (बिना स्पेस);%@ चयनित अक्षर (बिना स्पेस)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ अक्षर;%@ अक्षर";
 

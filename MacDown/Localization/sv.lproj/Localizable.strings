@@ -1,6 +1,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tecken (inga mellanslag);%@ tecken (inga mellanslag)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ ord markerat;%@ ord markerade";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ tecken markerat;%@ tecken markerade";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ tecken (inga mellanslag) markerat;%@ tecken (inga mellanslag) markerade";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ tecken;%@ tecken";
 
