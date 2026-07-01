@@ -22,12 +22,13 @@
 - Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
 
 <!-- rc-temp -->
-## [3000.0.7-rc.2] - 2026-06-30
+## [3000.0.7-rc.3] - 2026-07-01
 
-Second release candidate. Fixes an Insert Table regression found during rc.1 validation, a crash on empty Markdown headings, and several file-watcher issues on remote and network volumes. Also wires the Quick Look extension into the Xcode build so it ships with the app.
+Third release candidate. Fixes Quick Look extension entitlements stripped by release re-signing, toolbar buttons not dispatching when the editor has focus, checkbox label clipping in localized preference panes, toolbar redraws after switching preference panes, and spurious save conflicts on remote volumes. Also completes localization of the selection count widget.
 
 ### Added
 
+- Add localized selection count strings to all locale files (#452, PR #501) -- thanks @Telamonster for the report!
 - Wire Quick Look extension into Xcode build (#284, PR #477) -- thanks @caius for the report!
 - Add GitHub Dark Default editor theme (PR #465) -- thanks @sks3691 for the contribution!
 - Add editor invisible character toggle (#43, PR #462) -- thanks @yusufm for the contribution!
@@ -51,6 +52,11 @@ Second release candidate. Fixes an Insert Table regression found during rc.1 val
 
 ### Fixed
 
+- Fix Quick Look extension entitlements stripped by release signing (#284, PR #494) -- thanks @caius for the report!
+- Fix toolbar buttons not dispatching when editor has focus (#278, PR #496) -- thanks @rcuisnier for the report!
+- Fix checkbox label clipping in localized preference panes (#397, PR #498) -- thanks @rcuisnier for the report!
+- Force toolbar redraw after preference pane switch (PR #500)
+- Bypass atomic safe-save on remote volumes to prevent spurious save conflicts and the "does not support permanent version storage" prompt on SSHFS and similar mounts (#371, PR #502) -- thanks @gurple for the report!
 - Harden file watching against transient paths and remote volumes (#478, PR #492)
 - Fix Insert Table toolbar regression: button now works regardless of which pane has focus, repeated clicks no longer nest tables (#278, PR #483) -- thanks @rcuisnier for the report!
 - Fix crash on empty Markdown headings from slug-based heading IDs (#479, PR #482) -- thanks @Telamonster for the report!
