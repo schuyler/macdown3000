@@ -148,6 +148,9 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
     // the toolbar's selection highlight stuck on the previously active tab
     // (issue #499). Force the toolbar to revalidate and the window to
     // redraw now that the pane is actually visible.
+    //
+    // Subclasses that override -viewDidAppear must call super, or this fix
+    // is silently skipped for that pane.
     [self.view.window.toolbar validateVisibleItems];
     [self.view.window displayIfNeeded];
 }
