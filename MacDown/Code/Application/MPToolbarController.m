@@ -20,11 +20,19 @@ static CGFloat itemWidth = 37;
 {
     NSArray *toolbarItems;
     NSArray *toolbarItemIdentifiers;
-    
+
     /**
      * Map toolbar item identifier to it's NSToolbarItem or NSToolbarItemGroup object
      */
     NSMutableDictionary *toolbarItemIdentifierObjectDictionary;
+
+    /**
+     * Map toolbar item identifier to the selector name (NSString) that should
+     * be dispatched to self.document when a standalone button is clicked.
+     * Needed because self.document is nil during init when toolbar items are
+     * created, so we can't set target = self.document at construction time.
+     */
+    NSMutableDictionary<NSString *, NSString *> *standaloneItemActions;
 }
 
 - (id)init
@@ -37,6 +45,7 @@ static CGFloat itemWidth = 37;
     }
     
     self->toolbarItemIdentifierObjectDictionary = [NSMutableDictionary new];
+    self->standaloneItemActions = [NSMutableDictionary new];
     [self setupToolbarItems];
     
     return self;
@@ -141,6 +150,69 @@ static CGFloat itemWidth = 37;
         #pragma clang diagnostic push
         #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         [document performSelector:action withObject:selectedItem];
+        #pragma clang diagnostic pop
+    }
+}
+
+
+/**
+ * Forward validation for dropdown menu items to the document so that
+ * validateUserInterfaceItem: can set titles, hidden state, and
+ * enable/disable based on the real action (stored in representedObject).
+ */
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if (item.action == @selector(dropdownMenuItemClicked:)
+        && [(id)item isKindOfClass:[NSMenuItem class]])
+    {
+        NSMenuItem *menuItem = (NSMenuItem *)item;
+        NSString *actionName = menuItem.representedObject;
+        if (!actionName) return NO;
+
+        MPDocument *document = self.document;
+        if (!document) return NO;
+
+        // Temporarily restore the real action and target so the document's
+        // validateUserInterfaceItem: can identify and configure the item.
+        // This is safe: validation is synchronous and single-threaded.
+        SEL realAction = NSSelectorFromString(actionName);
+        menuItem.action = realAction;
+        menuItem.target = document;
+        BOOL result = [document validateUserInterfaceItem:menuItem];
+        menuItem.target = self;
+        menuItem.action = @selector(dropdownMenuItemClicked:);
+        return result;
+    }
+    return YES;
+}
+
+
+- (void)standaloneToolbarItemClicked:(NSButton *)sender
+{
+    NSString *actionName = self->standaloneItemActions[sender.identifier];
+    if (!actionName) return;
+    SEL action = NSSelectorFromString(actionName);
+    MPDocument *document = self.document;
+    if (document && [document respondsToSelector:action])
+    {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [document performSelector:action withObject:sender];
+        #pragma clang diagnostic pop
+    }
+}
+
+- (void)dropdownMenuItemClicked:(NSMenuItem *)sender
+{
+    NSString *actionName = sender.representedObject;
+    if (!actionName) return;
+    SEL action = NSSelectorFromString(actionName);
+    MPDocument *document = self.document;
+    if (document && [document respondsToSelector:action])
+    {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [document performSelector:action withObject:sender];
         #pragma clang diagnostic pop
     }
 }
@@ -287,8 +359,11 @@ static CGFloat itemWidth = 37;
     itemButton.imageScaling = NSImageScaleProportionallyDown;
     itemButton.bezelStyle = NSBezelStyleTexturedRounded;
     itemButton.focusRingType = NSFocusRingTypeDefault;
-    itemButton.target = self.document;
-    itemButton.action = action;
+    [self->standaloneItemActions setObject:NSStringFromSelector(action)
+                                    forKey:itemIdentifier];
+    itemButton.identifier = itemIdentifier;
+    itemButton.target = self;
+    itemButton.action = @selector(standaloneToolbarItemClicked:);
     
     toolbarItem.view = itemButton;
     
@@ -321,8 +396,9 @@ static CGFloat itemWidth = 37;
     
     for (NSMenuItem *menuItem in menuItems) {
         [popupButton addItemWithTitle:menuItem.title];
-        [[popupButton lastItem] setTarget:self.document];
-        [[popupButton lastItem] setAction:menuItem.action];
+        [[popupButton lastItem] setRepresentedObject:NSStringFromSelector(menuItem.action)];
+        [[popupButton lastItem] setTarget:self];
+        [[popupButton lastItem] setAction:@selector(dropdownMenuItemClicked:)];
     }
     
     toolbarItem.view = popupButton;
