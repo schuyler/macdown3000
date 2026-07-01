@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символів (без пробілів)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ виділене слово;%@ виділених слів";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ виділений символ;%@ виділених символів";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ виділений символ (без пробілів);%@ виділених символів (без пробілів)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символів";
 

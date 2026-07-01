@@ -95,6 +95,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 문자 (공백 제외);%@ 문자 (공백 제외)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ 단어 선택됨;%@ 단어 선택됨";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ 문자 선택됨;%@ 문자 선택됨";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ 문자 (공백 제외) 선택됨;%@ 문자 (공백 제외) 선택됨";
+
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "설치 실패";
 "Installation Successful" = "설치 성공";

@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 文字 (スペースなし);%@ 文字 (スペースなし)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ 語を選択中;%@ 語を選択中";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ 文字を選択中;%@ 文字を選択中";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ 文字 (スペースなし) を選択中;%@ 文字 (スペースなし) を選択中";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ 文字;%@ 文字";
 

@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ 个字符（不含空白）;%@ 个字符（不含空白）";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ 个词已选择;%@ 个词已选择";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ 个字符已选择;%@ 个字符已选择";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ 个字符（不含空白）已选择;%@ 个字符（不含空白）已选择";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ 个字符;%@ 个字符";
 

@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ Zeichen (ohne Leerzeichen);%@ Zeichen (ohne Leerzeichen)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ Wort ausgewählt;%@ Wörter ausgewählt";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ Zeichen ausgewählt;%@ Zeichen ausgewählt";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ Zeichen (ohne Leerzeichen) ausgewählt;%@ Zeichen (ohne Leerzeichen) ausgewählt";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ Zeichen;%@ Zeichen";
 

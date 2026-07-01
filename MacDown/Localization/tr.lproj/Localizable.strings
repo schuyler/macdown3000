@@ -71,6 +71,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ karakter (boşluksuz);%@ karakter (boşluksuz)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ seçili kelime;%@ seçili kelime";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ seçili karakter;%@ seçili karakter";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ seçili karakter (boşluksuz);%@ seçili karakter (boşluksuz)";
+
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Yükleme Başarısız";
 "Installation Successful" = "Yükleme Başarılı";

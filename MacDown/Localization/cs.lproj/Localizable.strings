@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ znak (bez mezer);%@ znaků (bez mezer)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ vybrané slovo;%@ vybraných slov";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ vybraný znak;%@ vybraných znaků";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ vybraný znak (bez mezer);%@ vybraných znaků (bez mezer)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ znak;%@ znaků";
 
