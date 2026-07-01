@@ -155,6 +155,38 @@ static CGFloat itemWidth = 37;
 }
 
 
+/**
+ * Forward validation for dropdown menu items to the document so that
+ * validateUserInterfaceItem: can set titles, hidden state, and
+ * enable/disable based on the real action (stored in representedObject).
+ */
+- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item
+{
+    if (item.action == @selector(dropdownMenuItemClicked:)
+        && [(id)item isKindOfClass:[NSMenuItem class]])
+    {
+        NSMenuItem *menuItem = (NSMenuItem *)item;
+        NSString *actionName = menuItem.representedObject;
+        if (!actionName) return NO;
+
+        MPDocument *document = self.document;
+        if (!document) return NO;
+
+        // Temporarily restore the real action and target so the document's
+        // validateUserInterfaceItem: can identify and configure the item.
+        // This is safe: validation is synchronous and single-threaded.
+        SEL realAction = NSSelectorFromString(actionName);
+        menuItem.action = realAction;
+        menuItem.target = document;
+        BOOL result = [document validateUserInterfaceItem:menuItem];
+        menuItem.target = self;
+        menuItem.action = @selector(dropdownMenuItemClicked:);
+        return result;
+    }
+    return YES;
+}
+
+
 - (void)standaloneToolbarItemClicked:(NSButton *)sender
 {
     NSString *actionName = self->standaloneItemActions[sender.identifier];
