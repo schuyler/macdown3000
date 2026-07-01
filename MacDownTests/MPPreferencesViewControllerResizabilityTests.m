@@ -483,4 +483,22 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }];
 }
 
+#pragma mark - Toolbar tab highlight (Issue #499)
+
+// -viewDidAppear forces the toolbar to revalidate and the window to redraw
+// once a pane's view actually lands in the window, so the toolbar's
+// selection highlight doesn't lag the pane switch (Issue #499). This exercises
+// the override directly; it must not crash even before the view has a window
+// (the state exercised by every other test in this file, which never attaches
+// panes to a real window).
+- (void)testViewDidAppearDoesNotCrashWithoutAWindow
+{
+    [self.allControllers enumerateKeysAndObjectsUsingBlock:
+     ^(NSString *name, MPPreferencesViewController *vc, BOOL *stop) {
+        MPContentView(vc);  // triggers loadView
+        XCTAssertNoThrow([vc viewDidAppear],
+            @"%@ pane: viewDidAppear must not throw even without a window", name);
+    }];
+}
+
 @end
