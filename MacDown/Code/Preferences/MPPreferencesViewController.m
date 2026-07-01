@@ -101,6 +101,20 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
         MPCollectCheckboxes(sub, out);
 }
 
+/// Recursively collects NSBox objects that directly contain Auto Layout
+/// subviews (i.e. boxes whose content view has constraints) into @c out.
+static void MPCollectAutoLayoutBoxes(NSView *view, NSMutableArray<NSBox *> *out)
+{
+    if ([view isKindOfClass:[NSBox class]])
+    {
+        NSBox *box = (NSBox *)view;
+        if (box.contentView.constraints.count > 0)
+            [out addObject:box];
+    }
+    for (NSView *sub in view.subviews)
+        MPCollectAutoLayoutBoxes(sub, out);
+}
+
 + (void)addHeightConstraintsForWrappingCheckboxesInView:(NSView *)view
 {
     NSMutableArray<NSButton *> *checkboxes = [NSMutableArray array];
@@ -132,6 +146,40 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
                 [checkbox.heightAnchor
                     constraintGreaterThanOrEqualToConstant:ceil(cellSize.height)];
             heightConstraint.active = YES;
+        }
+    }
+
+    // NSBox.intrinsicContentSize reflects only its title/border, not the
+    // Auto Layout constraints of its content view. This means the outer Auto
+    // Layout system underestimates the box height when content wraps to more
+    // lines (e.g. localized strings in French/Italian). After adding checkbox
+    // height constraints above, force a layout pass so the NSBox fittingSize
+    // is current, then add explicit >= height constraints on the NSBox objects
+    // themselves so the outer layout system can correctly compute the pane's
+    // total needed height.
+    [view layoutSubtreeIfNeeded];
+
+    NSMutableArray<NSBox *> *boxes = [NSMutableArray array];
+    MPCollectAutoLayoutBoxes(view, boxes);
+
+    for (NSBox *box in boxes)
+    {
+        // box.fittingSize.height only reflects the box title/border (intrinsic
+        // size), not its content, because the contentView's autoresizingMask
+        // creates fixed-size constraints that conflict with the checkbox >=
+        // constraints when the box frame is tiny. Use contentView.fittingSize
+        // directly (which correctly ignores the AMASK constraints because those
+        // live in the box's layout system, not the contentView's own system).
+        CGFloat contentFittingH = box.contentView.fittingSize.height;
+        CGFloat overhead = NSHeight(box.frame) - NSHeight(box.contentView.frame);
+        CGFloat neededBoxHeight = contentFittingH + overhead;
+        CGFloat currentIntrinsicHeight = box.intrinsicContentSize.height;
+        if (neededBoxHeight > currentIntrinsicHeight + 0.5)
+        {
+            NSLayoutConstraint *boxHeightConstraint =
+                [box.heightAnchor
+                    constraintGreaterThanOrEqualToConstant:ceil(neededBoxHeight)];
+            boxHeightConstraint.active = YES;
         }
     }
 }
