@@ -57,6 +57,15 @@ NSString * const MPDidRequestEditorSetupNotification =
         [contentView.widthAnchor constraintEqualToConstant:width];
     widthPin.active = YES;
 
+    // --- Pass 1.5: fix checkbox heights for word-wrapping titles ---
+    // NSButton.intrinsicContentSize always returns single-line height even when
+    // lineBreakMode is wordWrap, so Auto Layout underestimates the space needed
+    // for multi-line labels (e.g. French/Italian translations). Resolve frames
+    // at the pinned width, then add explicit height constraints where the cell
+    // reports it needs more than intrinsicContentSize provides.
+    [wrapper layoutSubtreeIfNeeded];
+    [[self class] addHeightConstraintsForWrappingCheckboxesInView:contentView];
+
     // --- Pass 2: resolve height at the resolved width ---
     NSLayoutConstraint *heightFloor =
         [contentView.heightAnchor constraintGreaterThanOrEqualToConstant:englishDesignHeight];
@@ -76,6 +85,55 @@ NSString * const MPDidRequestEditorSetupNotification =
     wrapper.frame = wrapperFrame;
 
     self.view = wrapper;
+}
+
+/// Recursively collects checkbox-style NSButtons (regularSquare bezel) from the
+/// view tree into @c out.
+static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
+{
+    if ([view isKindOfClass:[NSButton class]])
+    {
+        NSButton *button = (NSButton *)view;
+        if (button.bezelStyle == NSBezelStyleRegularSquare)
+            [out addObject:button];
+    }
+    for (NSView *sub in view.subviews)
+        MPCollectCheckboxes(sub, out);
+}
+
++ (void)addHeightConstraintsForWrappingCheckboxesInView:(NSView *)view
+{
+    NSMutableArray<NSButton *> *checkboxes = [NSMutableArray array];
+    MPCollectCheckboxes(view, checkboxes);
+
+    for (NSButton *checkbox in checkboxes)
+    {
+        NSCell *cell = checkbox.cell;
+        if (cell.lineBreakMode != NSLineBreakByWordWrapping)
+            continue;
+
+        CGFloat frameWidth = NSWidth(checkbox.frame);
+        if (frameWidth <= 0)
+            continue;
+
+        // cellSizeForBounds: with CGFLOAT_MAX height returns NaN on some AppKit
+        // versions; use a large finite value instead. No UI checkbox label can
+        // plausibly exceed 10000pt of vertical space.
+        NSSize cellSize = [cell cellSizeForBounds:
+                           NSMakeRect(0, 0, frameWidth, 10000)];
+        CGFloat intrinsicHeight = checkbox.intrinsicContentSize.height;
+
+        // intrinsicContentSize always returns single-line height (~16pt)
+        // regardless of word-wrap. If the cell needs more, add an explicit
+        // height constraint so Auto Layout allocates the correct space.
+        if (cellSize.height > intrinsicHeight + 0.5)
+        {
+            NSLayoutConstraint *heightConstraint =
+                [checkbox.heightAnchor
+                    constraintGreaterThanOrEqualToConstant:ceil(cellSize.height)];
+            heightConstraint.active = YES;
+        }
+    }
 }
 
 - (void)dealloc
