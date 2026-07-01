@@ -380,6 +380,81 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }];
 }
 
+// When a checkbox title wraps to multiple lines, the checkbox frame must be
+// tall enough for the full wrapped text. NSButton.intrinsicContentSize always
+// returns single-line height even with lineBreakMode=wordWrap, so
+// addHeightConstraintsForWrappingCheckboxesInView: must add explicit height
+// constraints. (Issue #397 — French/Italian Editor "Behavior" checkboxes.)
+//
+// This test forces wrapping by setting long titles, then calls the class method
+// and verifies the resulting frame heights. Produces a reliable red/green cycle
+// in English CI because it doesn't depend on locale-driven wrapping.
+- (void)testWrappingCheckboxHeightsAccommodateMultiLineText
+{
+    __block NSUInteger testedCheckboxes = 0;
+
+    [self.allControllers enumerateKeysAndObjectsUsingBlock:
+     ^(NSString *name, MPPreferencesViewController *vc, BOOL *stop) {
+        NSView *content = MPContentView(vc);
+        NSArray<NSButton *> *checkboxes = MPCheckboxes(content);
+        if (checkboxes.count == 0)
+            return;  // Terminal has no checkboxes
+
+        // Set long titles that force wrapping at the pane width.
+        for (NSButton *checkbox in checkboxes)
+        {
+            checkbox.title = [NSString stringWithFormat:@"%@ — %@ — %@",
+                              checkbox.title, checkbox.title, checkbox.title];
+        }
+
+        // Remove the pane's height pin so the checkbox height constraints
+        // (added below) can expand the pane freely. Without this, the pin
+        // conflicts with the new constraints and Auto Layout breaks them.
+        for (NSLayoutConstraint *c in content.constraints)
+        {
+            if (c.firstItem == content && c.secondItem == nil
+                && c.relation == NSLayoutRelationEqual
+                && c.firstAttribute == NSLayoutAttributeHeight)
+                c.active = NO;
+        }
+
+        // Apply the checkbox height constraint mechanism.
+        [MPPreferencesViewController
+            addHeightConstraintsForWrappingCheckboxesInView:content];
+        [content layoutSubtreeIfNeeded];
+
+        // Verify each wrapping checkbox's frame accommodates its wrapped text.
+        for (NSButton *checkbox in checkboxes)
+        {
+            NSCell *cell = checkbox.cell;
+            if (cell.lineBreakMode != NSLineBreakByWordWrapping)
+                continue;
+
+            CGFloat frameWidth = NSWidth(checkbox.frame);
+            if (frameWidth <= 0)
+                continue;
+
+            // cellSizeForBounds: with CGFLOAT_MAX returns NaN on some AppKit
+            // versions; use a large finite value instead.
+            NSSize cellSize = [cell cellSizeForBounds:
+                               NSMakeRect(0, 0, frameWidth, 10000)];
+            CGFloat frameHeight = NSHeight(checkbox.frame);
+
+            if (cellSize.height > checkbox.intrinsicContentSize.height + 0.5)
+            {
+                testedCheckboxes++;
+                XCTAssertGreaterThanOrEqual(frameHeight + 0.5, cellSize.height,
+                    @"%@ pane: checkbox frame height (%g) must accommodate "
+                    @"wrapped text height (%g)",
+                    name, frameHeight, cellSize.height);
+            }
+        }
+    }];
+
+    XCTAssertGreaterThan(testedCheckboxes, 0U,
+        @"Expected at least one checkbox to require wrapping with long titles");
+}
+
 // Every resolved pane width should be within a sane range — wide enough to show
 // content but not ballooning to absurd sizes (which would indicate a runaway
 // fittingSize calculation).

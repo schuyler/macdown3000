@@ -24,4 +24,11 @@ extern NSString * const MPDidRequestPreviewRenderNotification;
 - (BOOL)hasResizableWidth;
 - (BOOL)hasResizableHeight;
 
+/// Walks the view tree looking for word-wrapping checkbox-style NSButtons whose
+/// cellSizeForBounds: height exceeds intrinsicContentSize.height (which always
+/// returns single-line height). For each such checkbox, adds a >= height
+/// constraint so Auto Layout allocates the correct multi-line height.
+/// Called by loadView after width is pinned.
++ (void)addHeightConstraintsForWrappingCheckboxesInView:(NSView *)view;
+
 @end
