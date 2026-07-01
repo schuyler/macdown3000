@@ -113,6 +113,46 @@
     XCTAssertFalse([MPFileWatcher canWatchPath:path]);
 }
 
+#pragma mark - Volume Locality (Issue #371)
+
+- (void)testPathIsOnLocalVolumeForLocalFile
+{
+    NSString *path = [self createTestFileWithName:@"local.txt" content:@"hello"];
+    XCTAssertTrue([MPFileWatcher pathIsOnLocalVolume:path]);
+}
+
+- (void)testPathIsOnLocalVolumeForNonexistentLocalPath
+{
+    // Same parent-directory fallback as canWatchPath:. Related to #478.
+    NSString *path = [self.testDirectory stringByAppendingPathComponent:@"gone.txt"];
+    XCTAssertFalse([self.fileManager fileExistsAtPath:path]);
+    XCTAssertTrue([MPFileWatcher pathIsOnLocalVolume:path]);
+}
+
+- (void)testPathIsOnLocalVolumeForNilPath
+{
+    XCTAssertFalse([MPFileWatcher pathIsOnLocalVolume:nil]);
+}
+
+- (void)testPathIsOnLocalVolumeForEmptyPath
+{
+    XCTAssertFalse([MPFileWatcher pathIsOnLocalVolume:@""]);
+}
+
+- (void)testPathIsOnLocalVolumeForPathWithNonexistentParent
+{
+    NSString *path = [[self.testDirectory
+                       stringByAppendingPathComponent:@"missing-dir"]
+                      stringByAppendingPathComponent:@"file.txt"];
+    XCTAssertFalse([MPFileWatcher pathIsOnLocalVolume:path]);
+}
+
+// NOTE: pathIsOnLocalVolume: returning NO for genuinely remote/FUSE-mounted
+// volumes (SSHFS, SMB, NFS) cannot be exercised in CI, which has no such
+// mount available. That branch (and the MPDocument save-path behavior that
+// depends on it) requires manual verification against a real network mount.
+// Related to #371.
+
 #pragma mark - Event Handling
 
 - (void)testHandlerCalledOnFileWrite

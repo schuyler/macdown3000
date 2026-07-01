@@ -23,6 +23,11 @@
 /// otherwise unresolvable paths.
 + (BOOL)canWatchPath:(NSString *)path;
 
+/// YES if the given path resolves to a local (non-network, non-FUSE) volume.
+/// Uses the same existence-fallback-to-parent-directory logic as
+/// canWatchPath:. Related to #371.
++ (BOOL)pathIsOnLocalVolume:(NSString *)path;
+
 /// Create a watcher for the given path. Calls handler on the main queue
 /// when the file is written to. Calls cancelHandler when the file is
 /// deleted, renamed, or stopWatching is called.
