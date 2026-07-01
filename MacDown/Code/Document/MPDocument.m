@@ -268,6 +268,11 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (strong) MPFileWatcher *fileWatcher;
 @property (nonatomic) BOOL isSelfSaving;
 
+// Issue #371: Injection seam so tests can simulate a non-local save
+// destination without a real network mount. Defaults to
+// +[MPFileWatcher pathIsOnLocalVolume:].
+@property (nonatomic, copy) BOOL (^volumeLocalityChecker)(NSString *path);
+
 // Issue #320: Block-based observer token for main-thread-safe defaults notification
 @property (strong) id userDefaultsObserverToken;
 
@@ -553,6 +558,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // first NSUserDefaultsDidChangeNotification (which fires for any default) is not
     // misread as a transition.
     _lastKnownSyncScrolling = [MPPreferences sharedInstance].editorSyncScrolling;
+
+    // Issue #371: Default locality checker; tests may override this to
+    // simulate a non-local destination.
+    self.volumeLocalityChecker = ^BOOL(NSString *path) {
+        return [MPFileWatcher pathIsOnLocalVolume:path];
+    };
 
     return self;
 }
@@ -846,6 +857,52 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
 
     return result;
+}
+
+- (BOOL)writeSafelyToURL:(NSURL *)url ofType:(NSString *)typeName
+         forSaveOperation:(NSSaveOperationType)saveOperation
+                    error:(NSError *__autoreleasing *)outError
+{
+    // Issue #371: NSDocument's default "safe save" writes to a temp file and
+    // swaps it into place via NSFileCoordinator, plus checks the destination's
+    // on-disk modification date for conflicts. Both are unreliable on
+    // FUSE/network volumes (mtime semantics are inconsistent, and the
+    // temp-file swap can fail outright), producing a spurious "changed by
+    // another application" conflict dialog followed by a hard save failure.
+    // The "volume does not support permanent version storage" prompt is also
+    // raised from within this same call chain, so it should no longer appear
+    // for these documents either — confirmed by code inspection, but as with
+    // the rest of this method, real-world behavior on an actual network mount
+    // has not been (and cannot be, in CI) directly observed.
+    //
+    // For non-local destinations, skip NSFileCoordinator-mediated coordination
+    // entirely and write directly. This is a deliberate trade-off: the
+    // coordinated temp-file dance is itself what's unreliable on these
+    // volumes, and MPFileWatcher already declines to watch (i.e. act as a
+    // file presenter for) non-local paths, so there's no in-process presenter
+    // left to race with here.
+    //
+    // Checked against `url` (the destination), not self.fileURL, so a Save As
+    // across volumes is classified by where the file is going, not where it
+    // came from.
+    if ([self shouldBypassSafeSaveForURL:url])
+    {
+        return [self writeToURL:url ofType:typeName
+                forSaveOperation:saveOperation
+             originalContentsURL:self.fileURL error:outError];
+    }
+    return [super writeSafelyToURL:url ofType:typeName
+                   forSaveOperation:saveOperation error:outError];
+}
+
+// Issue #371: Split out for test exposure. Checks `url` (the save
+// destination) rather than self.fileURL, so Save As across volumes is
+// classified by where the file is going, not where it came from. Goes
+// through volumeLocalityChecker (rather than calling MPFileWatcher directly)
+// so tests can simulate a non-local destination without a real network mount.
+- (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url
+{
+    return url.isFileURL && !self.volumeLocalityChecker(url.path);
 }
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError

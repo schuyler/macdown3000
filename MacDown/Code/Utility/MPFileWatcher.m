@@ -18,6 +18,11 @@
 
 + (BOOL)canWatchPath:(NSString *)path
 {
+    return path.length && [self pathIsOnLocalVolume:path];
+}
+
++ (BOOL)pathIsOnLocalVolume:(NSString *)path
+{
     if (!path.length)
         return NO;
 

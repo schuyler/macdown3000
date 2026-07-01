@@ -15,6 +15,8 @@
 - (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
 - (NSURL *)previewSafeBaseURL:(NSURL *)baseURL;
 - (IBAction)toggleAutoSave:(id)sender;
+- (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url;
+@property (nonatomic, copy) BOOL (^volumeLocalityChecker)(NSString *path);
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -656,5 +658,53 @@
     XCTAssertFalse([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
                    @"Symlink escapes must not be auto-created");
 }
+
+#pragma mark - Remote Volume Save Tests (Issue #371)
+
+- (void)testShouldBypassSafeSaveForURLIsNoForLocalFile
+{
+    // On a local volume, NSDocument's normal atomic "safe save" (with its
+    // conflict check and versioning support) must keep working exactly as
+    // before.
+    XCTAssertFalse([self.document shouldBypassSafeSaveForURL:self.testFileURL],
+        @"Local destinations must use NSDocument's default safe-save path");
+}
+
+- (void)testShouldBypassSafeSaveForURLIsNoForNonFileURL
+{
+    NSURL *httpURL = [NSURL URLWithString:@"https://example.com/page.html"];
+    XCTAssertFalse([self.document shouldBypassSafeSaveForURL:httpURL],
+        @"Non-file URLs are not eligible for the direct-write bypass");
+}
+
+- (void)testShouldBypassSafeSaveForURLIsYesForSimulatedNonLocalVolume
+{
+    // A real FUSE/network mount isn't available in CI, so simulate one via
+    // the volumeLocalityChecker injection seam rather than skipping coverage
+    // of the actual bug-fix branch entirely.
+    self.document.volumeLocalityChecker = ^BOOL(NSString *path) {
+        return NO;
+    };
+
+    XCTAssertTrue([self.document shouldBypassSafeSaveForURL:self.testFileURL],
+        @"Non-local destinations must bypass NSDocument's atomic safe-save");
+}
+
+- (void)testShouldBypassSafeSaveForURLDefaultCheckerMatchesFileWatcher
+{
+    // The default (non-test-injected) checker should be wired to
+    // MPFileWatcher's locality check, not some other logic.
+    XCTAssertTrue(self.document.volumeLocalityChecker(self.testFileURL.path),
+        @"Default volumeLocalityChecker should report the local test directory as local");
+}
+
+// NOTE: The bypass decision itself (shouldBypassSafeSaveForURL:) is now
+// exercised for both branches above via dependency injection. What remains
+// untestable in CI is the real-world trigger for the "YES" branch — an
+// actual non-local volume, per [MPFileWatcher pathIsOnLocalVolume:] (covered
+// directly in MPFileWatcherTests.m) — and the resulting absence of the
+// "changed by another application" dialog and the "couldn't be saved in
+// folder tmp" failure, which require manual verification against a real
+// SSHFS/SMB/NFS mount. Related to #371.
 
 @end
