@@ -11,10 +11,50 @@
 #import <XCTest/XCTest.h>
 #import "MPToolbarController.h"
 
-// Expose the segmented-control action method to the test target; it is not
-// part of the public header but is callable via dynamic dispatch.
+// Expose internal action methods to the test target; they are not part of
+// the public header but are callable via dynamic dispatch.
 @interface MPToolbarController (MPToolbarControllerTests)
 - (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender;
+- (void)standaloneToolbarItemClicked:(NSButton *)sender;
+- (void)dropdownMenuItemClicked:(NSMenuItem *)sender;
+@end
+
+
+// Lightweight mock that records which selectors were invoked on it.
+// Used to verify toolbar dispatch reaches the document with the correct action.
+@interface MPToolbarDispatchRecorder : NSObject
+@property (nonatomic, strong) NSMutableArray<NSString *> *invokedSelectors;
+@end
+
+@implementation MPToolbarDispatchRecorder
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _invokedSelectors = [NSMutableArray array];
+    }
+    return self;
+}
+
+// Accept any message and record its selector name.
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector
+{
+    // Return a signature for a method that takes one object argument (sender).
+    return [NSMethodSignature signatureWithObjCTypes:"v@:@"];
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation
+{
+    [self.invokedSelectors addObject:NSStringFromSelector(anInvocation.selector)];
+}
+
+- (BOOL)respondsToSelector:(SEL)aSelector
+{
+    // Claim to respond to any selector so performSelector: dispatch proceeds.
+    return YES;
+}
+
 @end
 
 @interface MPToolbarControllerTests : XCTestCase
@@ -731,6 +771,257 @@
     XCTAssertNoThrow([self.controller selectedToolbarItemGroupItem:sender],
                      @"selectedToolbarItemGroupItem: must not throw for a valid "
                      @"group identifier and in-bounds selected segment");
+}
+
+
+#pragma mark - Standalone Toolbar Item Dispatch Tests (Issue #278)
+
+- (void)testStandaloneButtonsTargetToolbarController
+{
+    // Standalone buttons must target the toolbar controller so actions
+    // dispatch correctly regardless of which pane has focus.
+    NSArray *standaloneIdentifiers = @[
+        @"blockquote", @"code", @"link", @"image", @"table",
+        @"copy-html", @"comment", @"highlight", @"strikethrough"
+    ];
+
+    for (NSString *identifier in standaloneIdentifiers) {
+        NSToolbarItem *item = [self.controller toolbar:nil
+                                 itemForItemIdentifier:identifier
+                             willBeInsertedIntoToolbar:YES];
+        NSButton *button = (NSButton *)item.view;
+        XCTAssertEqual(button.target, self.controller,
+                       @"Standalone button '%@' must target the toolbar controller, "
+                       @"not nil or the document (which is nil during init)",
+                       identifier);
+    }
+}
+
+- (void)testStandaloneButtonsUseDispatchAction
+{
+    // Standalone buttons must use the dispatch selector, not the
+    // document action directly.
+    NSArray *standaloneIdentifiers = @[
+        @"blockquote", @"code", @"link", @"image", @"table",
+        @"copy-html", @"comment", @"highlight", @"strikethrough"
+    ];
+
+    SEL expectedAction = @selector(standaloneToolbarItemClicked:);
+    for (NSString *identifier in standaloneIdentifiers) {
+        NSToolbarItem *item = [self.controller toolbar:nil
+                                 itemForItemIdentifier:identifier
+                             willBeInsertedIntoToolbar:YES];
+        NSButton *button = (NSButton *)item.view;
+        XCTAssertEqual(button.action, expectedAction,
+                       @"Standalone button '%@' must use standaloneToolbarItemClicked: action",
+                       identifier);
+    }
+}
+
+- (void)testStandaloneButtonsHaveIdentifierSet
+{
+    // Each standalone button needs an identifier so the dispatch method
+    // can look up the intended action.
+    NSArray *standaloneIdentifiers = @[
+        @"blockquote", @"code", @"link", @"image", @"table",
+        @"copy-html", @"comment", @"highlight", @"strikethrough"
+    ];
+
+    for (NSString *identifier in standaloneIdentifiers) {
+        NSToolbarItem *item = [self.controller toolbar:nil
+                                 itemForItemIdentifier:identifier
+                             willBeInsertedIntoToolbar:YES];
+        NSButton *button = (NSButton *)item.view;
+        XCTAssertEqualObjects(button.identifier, identifier,
+                              @"Standalone button '%@' must have its identifier set "
+                              @"for action lookup during dispatch",
+                              identifier);
+    }
+}
+
+- (void)testStandaloneDispatchAllActionMappings
+{
+    // Verify every standalone identifier dispatches the correct action.
+    NSDictionary *expectedMappings = @{
+        @"blockquote":     @"toggleBlockquote:",
+        @"code":           @"toggleInlineCode:",
+        @"link":           @"toggleLink:",
+        @"image":          @"toggleImage:",
+        @"table":          @"insertTable:",
+        @"copy-html":      @"copyHtml:",
+        @"comment":        @"toggleComment:",
+        @"highlight":      @"toggleHighlight:",
+        @"strikethrough":  @"toggleStrikethrough:",
+    };
+
+    for (NSString *identifier in expectedMappings) {
+        NSString *expectedAction = expectedMappings[identifier];
+        MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+        self.controller.document = (MPDocument *)recorder;
+
+        NSButton *fakeButton = [[NSButton alloc] init];
+        fakeButton.identifier = identifier;
+
+        [self.controller standaloneToolbarItemClicked:fakeButton];
+
+        XCTAssertTrue([recorder.invokedSelectors containsObject:expectedAction],
+                      @"standaloneToolbarItemClicked: with identifier '%@' "
+                      @"should dispatch %@ to the document. Got: %@",
+                      identifier, expectedAction, recorder.invokedSelectors);
+    }
+}
+
+- (void)testStandaloneDispatchWithNoDocumentDoesNotCrash
+{
+    // With no document set, dispatch should silently do nothing.
+    NSButton *fakeButton = [[NSButton alloc] init];
+    fakeButton.identifier = @"table";
+
+    XCTAssertNoThrow([self.controller standaloneToolbarItemClicked:fakeButton],
+                     @"standaloneToolbarItemClicked: must not crash when document is nil");
+}
+
+- (void)testStandaloneDispatchWithUnknownIdentifierDoesNotCrash
+{
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+
+    NSButton *fakeButton = [[NSButton alloc] init];
+    fakeButton.identifier = @"nonexistent-item";
+
+    XCTAssertNoThrow([self.controller standaloneToolbarItemClicked:fakeButton],
+                     @"standaloneToolbarItemClicked: must not crash for unknown identifier");
+    XCTAssertEqual(recorder.invokedSelectors.count, 0,
+                   @"No action should be dispatched for unknown identifier");
+}
+
+
+#pragma mark - Dropdown Menu Item Dispatch Tests (Issue #278)
+
+- (void)testDropdownMenuItemsTargetToolbarController
+{
+    // Dropdown menu items must target the toolbar controller, not the
+    // document (which is nil during init).
+    NSToolbarItem *layoutItem = [self.controller toolbar:nil
+                                   itemForItemIdentifier:@"layout"
+                               willBeInsertedIntoToolbar:YES];
+    NSPopUpButton *popup = (NSPopUpButton *)layoutItem.view;
+
+    // Guard: the popup must have real menu items beyond the dummy icon at index 0.
+    XCTAssertGreaterThan(popup.numberOfItems, 1,
+                         @"Layout popup must have menu items beyond the dummy icon item");
+
+    // Skip item 0 (the dummy icon item); real menu items start at index 1.
+    for (NSInteger i = 1; i < popup.numberOfItems; i++) {
+        NSMenuItem *menuItem = [popup itemAtIndex:i];
+        XCTAssertEqual(menuItem.target, self.controller,
+                       @"Dropdown menu item '%@' at index %ld must target the toolbar controller",
+                       menuItem.title, (long)i);
+    }
+}
+
+- (void)testDropdownMenuItemsUseDispatchAction
+{
+    NSToolbarItem *layoutItem = [self.controller toolbar:nil
+                                   itemForItemIdentifier:@"layout"
+                               willBeInsertedIntoToolbar:YES];
+    NSPopUpButton *popup = (NSPopUpButton *)layoutItem.view;
+
+    XCTAssertGreaterThan(popup.numberOfItems, 1,
+                         @"Layout popup must have menu items beyond the dummy icon item");
+
+    SEL expectedAction = @selector(dropdownMenuItemClicked:);
+    for (NSInteger i = 1; i < popup.numberOfItems; i++) {
+        NSMenuItem *menuItem = [popup itemAtIndex:i];
+        XCTAssertEqual(menuItem.action, expectedAction,
+                       @"Dropdown menu item '%@' at index %ld must use dropdownMenuItemClicked:",
+                       menuItem.title, (long)i);
+    }
+}
+
+- (void)testDropdownMenuItemsStoreActionInRepresentedObject
+{
+    NSToolbarItem *layoutItem = [self.controller toolbar:nil
+                                   itemForItemIdentifier:@"layout"
+                               willBeInsertedIntoToolbar:YES];
+    NSPopUpButton *popup = (NSPopUpButton *)layoutItem.view;
+
+    XCTAssertGreaterThan(popup.numberOfItems, 1,
+                         @"Layout popup must have menu items beyond the dummy icon item");
+
+    // The layout dropdown has toggleEditorPane: and togglePreviewPane:
+    NSArray *expectedActions = @[@"toggleEditorPane:", @"togglePreviewPane:"];
+    for (NSInteger i = 1; i < popup.numberOfItems; i++) {
+        NSMenuItem *menuItem = [popup itemAtIndex:i];
+        XCTAssertTrue([menuItem.representedObject isKindOfClass:[NSString class]],
+                      @"Dropdown menu item at index %ld should store action name "
+                      @"as representedObject string", (long)i);
+        NSString *storedAction = menuItem.representedObject;
+        XCTAssertTrue([expectedActions containsObject:storedAction],
+                      @"Dropdown menu item at index %ld representedObject should be "
+                      @"one of %@, got '%@'", (long)i, expectedActions, storedAction);
+    }
+}
+
+- (void)testDropdownDispatchInvokesCorrectActionOnDocument
+{
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+
+    NSMenuItem *fakeMenuItem = [[NSMenuItem alloc] initWithTitle:@"Test"
+                                                         action:nil
+                                                  keyEquivalent:@""];
+    fakeMenuItem.representedObject = @"toggleEditorPane:";
+
+    [self.controller dropdownMenuItemClicked:fakeMenuItem];
+
+    XCTAssertTrue([recorder.invokedSelectors containsObject:@"toggleEditorPane:"],
+                  @"dropdownMenuItemClicked: should dispatch toggleEditorPane: "
+                  @"to the document");
+}
+
+- (void)testDropdownDispatchTogglePreviewPane
+{
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+
+    NSMenuItem *fakeMenuItem = [[NSMenuItem alloc] initWithTitle:@"Test"
+                                                         action:nil
+                                                  keyEquivalent:@""];
+    fakeMenuItem.representedObject = @"togglePreviewPane:";
+
+    [self.controller dropdownMenuItemClicked:fakeMenuItem];
+
+    XCTAssertTrue([recorder.invokedSelectors containsObject:@"togglePreviewPane:"],
+                  @"dropdownMenuItemClicked: should dispatch togglePreviewPane: "
+                  @"to the document");
+}
+
+- (void)testDropdownDispatchWithNoDocumentDoesNotCrash
+{
+    NSMenuItem *fakeMenuItem = [[NSMenuItem alloc] initWithTitle:@"Test"
+                                                         action:nil
+                                                  keyEquivalent:@""];
+    fakeMenuItem.representedObject = @"toggleEditorPane:";
+
+    XCTAssertNoThrow([self.controller dropdownMenuItemClicked:fakeMenuItem],
+                     @"dropdownMenuItemClicked: must not crash when document is nil");
+}
+
+- (void)testDropdownDispatchWithNilRepresentedObjectDoesNotCrash
+{
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+
+    NSMenuItem *fakeMenuItem = [[NSMenuItem alloc] initWithTitle:@"Test"
+                                                         action:nil
+                                                  keyEquivalent:@""];
+    // representedObject is nil by default
+
+    XCTAssertNoThrow([self.controller dropdownMenuItemClicked:fakeMenuItem],
+                     @"dropdownMenuItemClicked: must not crash with nil representedObject");
+    XCTAssertEqual(recorder.invokedSelectors.count, 0,
+                   @"No action should be dispatched for nil representedObject");
 }
 
 
