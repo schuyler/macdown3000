@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tegn (uten mellomrom);%@ tegn (uten mellomrom)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ ord merket;%@ ord merket";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ tegn merket;%@ tegn merket";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ tegn (uten mellomrom) merket;%@ tegn (uten mellomrom) merket";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ tegn;%@ tegn";
 

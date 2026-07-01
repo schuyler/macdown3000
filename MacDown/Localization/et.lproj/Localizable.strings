@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ märki (ilma tühikuteta);%@ märki (ilma tühikuteta)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ valitud sõna;%@ valitud sõna";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ valitud märki;%@ valitud märki";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ valitud märki (ilma tühikuteta);%@ valitud märki (ilma tühikuteta)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ märki;%@ märki";
 

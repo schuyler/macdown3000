@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ caractere (sem espaços);%@ caracteres (sem espaços)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ palavra selecionada;%@ palavras selecionadas";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ caractere selecionado;%@ caracteres selecionados";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ caractere (sem espaços) selecionado;%@ caracteres (sem espaços) selecionados";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ caractere;%@ caracteres";
 

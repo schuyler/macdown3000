@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ حرف (بدون مسافات);%@ أحرف (بدون مسافات)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ كلمة محددة;%@ كلمات محددة";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ حرف محدد;%@ أحرف محددة";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ حرف محدد (بدون مسافات);%@ أحرف محددة (بدون مسافات)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ حرف;%@ أحرف";
 

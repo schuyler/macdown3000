@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ תו (ללא רווחים);%@ תווים (ללא רווחים)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ מילה מסומנת;%@ מילים מסומנות";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ תו מסומן;%@ תווים מסומנים";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ תו מסומן (ללא רווחים);%@ תווים מסומנים (ללא רווחים)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ תו;%@ תווים";
 

@@ -10,6 +10,13 @@
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ merkki (ilman välilyöntejä);%@ merkkiä (ilman välilyöntejä)";
 
+/* Selection counts (Issue #452) */
+"WORDS_SELECTED_PLURAL_STRING" = "%@ valittu sana;%@ valittua sanaa";
+
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ valittu merkki;%@ valittua merkkiä";
+
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ valittu merkki (ilman välilyöntejä);%@ valittua merkkiä (ilman välilyöntejä)";
+
 /* (No Comment) */
 "CHARACTERS_PLURAL_STRING" = "%@ merkki;%@ merkkiä";
 
