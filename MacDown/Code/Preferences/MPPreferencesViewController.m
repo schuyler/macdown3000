@@ -136,6 +136,25 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
     }
 }
 
+- (void)viewDidAppear
+{
+    [super viewDidAppear];
+
+    // -loadView resolves the wrapper's final size over several Auto Layout
+    // passes before installing it as self.view, which delays the moment the
+    // pane's view actually lands in the window relative to when
+    // MASPreferencesWindowController updates the toolbar's
+    // selectedItemIdentifier during a pane switch. That timing gap can leave
+    // the toolbar's selection highlight stuck on the previously active tab
+    // (issue #499). Force the toolbar to revalidate and the window to
+    // redraw now that the pane is actually visible.
+    //
+    // Subclasses that override -viewDidAppear must call super, or this fix
+    // is silently skipped for that pane.
+    [self.view.window.toolbar validateVisibleItems];
+    [self.view.window displayIfNeeded];
+}
+
 - (void)dealloc
 {
     // -loadView wraps the NIB's content view in a centering wrapper, which
