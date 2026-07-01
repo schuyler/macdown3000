@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- Fix spurious "changed by another application" save conflicts and save failures on remote/FUSE-mounted volumes (e.g. SSHFS) by bypassing NSDocument's atomic temp-file-swap save for non-local destinations and writing directly instead; this also stops the "does not support permanent version storage" prompt from appearing for those documents (#371) -- thanks @gurple for the report!
 - Fix the Insert Table toolbar button doing nothing when the editor pane had focus, and corrupting the document when clicked repeatedly (a second table was inserted inside the first table's cell); every click now inserts a clean, well-separated table regardless of which pane has focus (#278) -- thanks @rcuisnier for the report!
 - Fix auto-reload silently breaking after an external editor's atomic save by making the local-volume watcher check fall back to the parent directory when the file is transiently missing; also guard resource-file watchers against remote volumes and tear down any prior watcher before re-arming (#478)
 - Fix the Preview pane still auto-scrolling toward the editor when typing after Sync Panes was turned off mid-session; toggling Sync Panes now takes effect immediately (settling the panes on disable, re-syncing on enable) without needing to reopen the document (#441) -- thanks @gregwillits!

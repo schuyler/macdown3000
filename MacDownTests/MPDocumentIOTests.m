@@ -15,6 +15,7 @@
 - (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url;
 - (NSURL *)previewSafeBaseURL:(NSURL *)baseURL;
 - (IBAction)toggleAutoSave:(id)sender;
+- (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url;
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -656,5 +657,30 @@
     XCTAssertFalse([self.document canAutomaticallyCreateLinkedFileAtURL:targetURL],
                    @"Symlink escapes must not be auto-created");
 }
+
+#pragma mark - Remote Volume Save Tests (Issue #371)
+
+- (void)testShouldBypassSafeSaveForURLIsNoForLocalFile
+{
+    // On a local volume, NSDocument's normal atomic "safe save" (with its
+    // conflict check and versioning support) must keep working exactly as
+    // before.
+    XCTAssertFalse([self.document shouldBypassSafeSaveForURL:self.testFileURL],
+        @"Local destinations must use NSDocument's default safe-save path");
+}
+
+- (void)testShouldBypassSafeSaveForURLIsNoForNonFileURL
+{
+    NSURL *httpURL = [NSURL URLWithString:@"https://example.com/page.html"];
+    XCTAssertFalse([self.document shouldBypassSafeSaveForURL:httpURL],
+        @"Non-file URLs are not eligible for the direct-write bypass");
+}
+
+// NOTE: Exercising the "YES" branch (a genuinely non-local/FUSE-mounted
+// destination) requires a real network mount that CI does not have
+// available. [MPFileWatcher pathIsOnLocalVolume:] is covered directly in
+// MPFileWatcherTests.m; the "changed by another application" dialog and the
+// "couldn't be saved in folder tmp" failure it works around require manual
+// verification against a real SSHFS/SMB/NFS mount. Related to #371.
 
 @end

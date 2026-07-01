@@ -848,6 +848,38 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return result;
 }
 
+- (BOOL)writeSafelyToURL:(NSURL *)url ofType:(NSString *)typeName
+         forSaveOperation:(NSSaveOperationType)saveOperation
+                    error:(NSError *__autoreleasing *)outError
+{
+    // Issue #371: NSDocument's default "safe save" writes to a temp file and
+    // swaps it into place, plus checks the destination's on-disk modification
+    // date for conflicts. Both are unreliable on FUSE/network volumes (mtime
+    // semantics are inconsistent, and the temp-file swap can fail outright),
+    // producing a spurious "changed by another application" conflict dialog
+    // followed by a hard save failure. It's also what raises the "volume does
+    // not support permanent version storage" prompt. Bypass all of that for
+    // non-local destinations and write directly instead. Checked against
+    // `url` (the destination), not self.fileURL, so a Save As across volumes
+    // is classified by where the file is going, not where it came from.
+    if ([self shouldBypassSafeSaveForURL:url])
+    {
+        return [self writeToURL:url ofType:typeName
+                forSaveOperation:saveOperation
+             originalContentsURL:self.fileURL error:outError];
+    }
+    return [super writeSafelyToURL:url ofType:typeName
+                   forSaveOperation:saveOperation error:outError];
+}
+
+// Issue #371: Split out for test exposure. Checks `url` (the save
+// destination) rather than self.fileURL, so Save As across volumes is
+// classified by where the file is going, not where it came from.
+- (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url
+{
+    return url.isFileURL && ![MPFileWatcher pathIsOnLocalVolume:url.path];
+}
+
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
 {
     return [self.editor.string dataUsingEncoding:NSUTF8StringEncoding];
