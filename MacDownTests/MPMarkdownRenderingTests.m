@@ -872,22 +872,27 @@
 
 - (void)testHeadingAnchorIdSkipsLtGtEntity
 {
-    // "A < B" renders as "A &lt; B"; the slug must be "a-b", not "a-lt-b".
+    // "A < B" renders as "A &lt; B"; the entity is skipped like GitHub drops
+    // the raw "<", but (matching GitHub's no-collapse behavior) the two
+    // spaces surrounding it each become their own hyphen: "a--b", not "a-b"
+    // or "a-lt-b".
     NSString *html = [self renderMarkdown:@"## A < B"
                            withExtensions:0
                             rendererFlags:0];
-    XCTAssertTrue([html containsString:@"id=\"a-b\""],
+    XCTAssertTrue([html containsString:@"id=\"a--b\""],
                   @"Heading id must skip the &lt; entity. Got: %@", html);
 }
 
 - (void)testHeadingAnchorIdSkipsMultipleEntities
 {
-    // "Tips & Tricks" renders as "Tips &amp; Tricks"; the slug must be
-    // "tips-tricks", not "tips-amp-tricks".
+    // "Tips & Tricks" renders as "Tips &amp; Tricks"; the entity is skipped
+    // like GitHub drops the raw "&", but (matching GitHub's no-collapse
+    // behavior) the two spaces surrounding it each become their own hyphen:
+    // "tips--tricks", not "tips-tricks" or "tips-amp-tricks".
     NSString *html = [self renderMarkdown:@"## Tips & Tricks"
                            withExtensions:0
                             rendererFlags:0];
-    XCTAssertTrue([html containsString:@"id=\"tips-tricks\""],
+    XCTAssertTrue([html containsString:@"id=\"tips--tricks\""],
                   @"Heading id must skip every HTML entity. Got: %@", html);
 }
 
@@ -923,6 +928,88 @@
                   @"TOC entry must link to the heading slug. Got: %@", html);
     XCTAssertTrue([html containsString:@"id=\"foo-bar\""],
                   @"Heading must carry the matching id. Got: %@", html);
+}
+
+// GitHub-slugger parity (github-slugger semantics). Unicode punctuation and
+// symbols (em/en dashes, curly quotes, ellipsis, the Latin-1 ¡-¿ block, etc.)
+// are dropped rather than passed through raw, Latin-1 uppercase letters are
+// lowercased, and each space/tab maps to exactly one hyphen without
+// collapsing runs. Context: #471.
+
+- (void)testHeadingAnchorIdDropsEmDash
+{
+    NSString *html = [self renderMarkdown:@"## Pregunta 5 — Cobro de AWS Lambda"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"pregunta-5--cobro-de-aws-lambda\""],
+                  @"Em dash must be dropped, not passed through raw. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdLowercasesLatin1Uppercase
+{
+    NSString *html = [self renderMarkdown:@"## Índice"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"índice\""],
+                  @"Latin-1 uppercase letters must be lowercased. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdDropsInvertedQuestionMark
+{
+    NSString *html = [self renderMarkdown:@"## ¿Qué es AWS?"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"qué-es-aws\""],
+                  @"Inverted question mark and trailing '?' must be dropped. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdDropsEnDashBetweenWords
+{
+    NSString *html = [self renderMarkdown:@"## Conexión on-premises–AWS"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"conexión-on-premisesaws\""],
+                  @"En dash between words must be dropped with no hyphen left behind. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdDoesNotCollapseHyphenRuns
+{
+    NSString *html = [self renderMarkdown:@"## Foo --- Bar"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"foo-----bar\""],
+                  @"Consecutive spaces/hyphens must not collapse. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdKeepsUnchangedForOrdinaryUnicode
+{
+    NSString *html = [self renderMarkdown:@"## Introducción"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"introducción\""],
+                  @"Ordinary accented letters must pass through unchanged. Got: %@", html);
+}
+
+// Sanity check against a real-world heading (verbatim, not modified) from the
+// AWS certification study notes that originally surfaced this mismatch with
+// GitHub's slug algorithm.
+
+- (void)testHeadingAnchorIdMatchesGitHubForRealWorldHeading
+{
+    NSString *html = [self renderMarkdown:@"### Pregunta 16 — Conexión privada y consistente on-premises–AWS"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"pregunta-16--conexión-privada-y-consistente-on-premisesaws\""],
+                  @"Heading id must match GitHub's slug for real-world content. Got: %@", html);
+}
+
+- (void)testHeadingAnchorIdFallsBackToSectionForPunctuationOnlyHeading
+{
+    NSString *html = [self renderMarkdown:@"## ¡¿?!"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"A punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
 #pragma mark - Empty Heading Crash Regression (#479)

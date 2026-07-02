@@ -686,9 +686,12 @@
 
 - (void)testQuickLookHeadingAnchorIdSkipsMultipleEntities
 {
-    // "Tips & Tricks" renders as "Tips &amp; Tricks"; slug must be "tips-tricks".
+    // "Tips & Tricks" renders as "Tips &amp; Tricks"; the entity is skipped
+    // like GitHub drops the raw "&", but (matching GitHub's no-collapse
+    // behavior) the two spaces surrounding it each become their own hyphen:
+    // slug must be "tips--tricks".
     NSString *html = [self.renderer renderMarkdown:@"## Tips & Tricks"];
-    XCTAssertTrue([html containsString:@"id=\"tips-tricks\""],
+    XCTAssertTrue([html containsString:@"id=\"tips--tricks\""],
                   @"Quick Look heading id must skip every HTML entity. Got: %@", html);
 }
 
@@ -698,6 +701,58 @@
     NSString *html = [self.renderer renderMarkdown:@"# Hello, World!"];
     XCTAssertTrue([html containsString:@"id=\"hello-world\""],
                   @"Quick Look heading id should drop ASCII punctuation. Got: %@", html);
+}
+
+// GitHub-slugger parity (github-slugger semantics). Mirrors the acceptance
+// coverage in MPMarkdownRenderingTests. Context: #471.
+
+- (void)testQuickLookHeadingAnchorIdDropsEmDash
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Pregunta 5 — Cobro de AWS Lambda"];
+    XCTAssertTrue([html containsString:@"id=\"pregunta-5--cobro-de-aws-lambda\""],
+                  @"Quick Look em dash must be dropped, not passed through raw. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdLowercasesLatin1Uppercase
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Índice"];
+    XCTAssertTrue([html containsString:@"id=\"índice\""],
+                  @"Quick Look Latin-1 uppercase letters must be lowercased. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDropsInvertedQuestionMark
+{
+    NSString *html = [self.renderer renderMarkdown:@"## ¿Qué es AWS?"];
+    XCTAssertTrue([html containsString:@"id=\"qué-es-aws\""],
+                  @"Quick Look inverted question mark and trailing '?' must be dropped. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDropsEnDashBetweenWords
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Conexión on-premises–AWS"];
+    XCTAssertTrue([html containsString:@"id=\"conexión-on-premisesaws\""],
+                  @"Quick Look en dash between words must be dropped with no hyphen left behind. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDoesNotCollapseHyphenRuns
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Foo --- Bar"];
+    XCTAssertTrue([html containsString:@"id=\"foo-----bar\""],
+                  @"Quick Look consecutive spaces/hyphens must not collapse. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdKeepsUnchangedForOrdinaryUnicode
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Introducción"];
+    XCTAssertTrue([html containsString:@"id=\"introducción\""],
+                  @"Quick Look ordinary accented letters must pass through unchanged. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdFallsBackToSectionForPunctuationOnlyHeading
+{
+    NSString *html = [self.renderer renderMarkdown:@"## ¡¿?!"];
+    XCTAssertTrue([html containsString:@"id=\"section\""],
+                  @"Quick Look punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
 // A bare setext underline ('-' or '=') makes Hoedown emit a heading with empty
