@@ -317,3 +317,46 @@ jobs:
         path: |
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
+
+  ui-test:
+    name: Run UI Tests (smoke)
+    # Non-blocking until proven stable: XCUITest runs are flakier than unit
+    # tests in CI, so this job reports its status but does not fail the
+    # workflow. Runs on a single runner (not the full OS matrix) with a hard
+    # timeout so a hung UI test can't tie up CI the way it did before this
+    # job was split out of the main test job.
+    runs-on: macos-26
+    timeout-minutes: 30
+    continue-on-error: true
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MacDown build environment
+      uses: ./.github/actions/setup-macdown
+
+    - name: Run UI tests
+      run: |
+        set -o pipefail
+        xcodebuild test \
+          -workspace "MacDown 3000.xcworkspace" \
+          -scheme MacDownUITests \
+          -derivedDataPath DerivedData \
+          -resultBundlePath UITestResults.xcresult \
+          -test-timeouts-enabled YES \
+          -maximum-test-execution-time-allowance 120
+
+    - name: Upload UI test results
+      if: failure()
+      continue-on-error: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: ui-test-results
+        path: |
+          UITestResults.xcresult
+          ~/Library/Logs/DiagnosticReports/
