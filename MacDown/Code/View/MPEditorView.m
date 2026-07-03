@@ -47,6 +47,8 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
 - (void)awakeFromNib {
     [self registerForDraggedTypes:@[NSPasteboardTypeFileURL]];
+    // Set accessibility identifier for XCUITest
+    [self setAccessibilityIdentifier:@"editor-text-view"];
     [super awakeFromNib];
 }
 
