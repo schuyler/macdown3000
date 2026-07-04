@@ -1012,6 +1012,113 @@
                   @"A punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
+#pragma mark - GitHub-slugger Parity: UTF-8 Decoder Coverage (#503)
+
+// These exercise decode_utf8_codepoint through the render path -- the newest
+// and most intricate code in the slug algorithm. Ground truth for every parity
+// assertion was captured by running github-slugger on the same input.
+// Related to #503, #471.
+
+// Valid 3-byte UTF-8 (CJK): decoded and, as ordinary letters, passed through
+// unchanged -- github-slugger parity ("日本語" -> "日本語").
+- (void)testHeadingAnchorIdPassesThroughThreeByteCJK
+{
+    NSString *html = [self renderMarkdown:@"## 日本語"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"日本語\""],
+                  @"Three-byte CJK codepoints must pass through unchanged. Got: %@", html);
+}
+
+// The U+00D7 (×) / U+00DE (Þ) boundary, symbol side: the multiplication sign is
+// dropped while surrounding text stays -- "3×4 Grid" -> "34-grid".
+- (void)testHeadingAnchorIdDropsMultiplicationSignAtBoundary
+{
+    NSString *html = [self renderMarkdown:@"## 3×4 Grid"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"34-grid\""],
+                  @"The U+00D7 multiplication sign must be dropped. Got: %@", html);
+}
+
+// The same boundary, letter side: Þ (U+00DE) and Ð (U+00D0) both lowercase to
+// their two-byte forms -- "Þorn Ðeth" -> "þorn-ðeth".
+- (void)testHeadingAnchorIdLowercasesLatin1BoundaryLetters
+{
+    NSString *html = [self renderMarkdown:@"## Þorn Ðeth"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"þorn-ðeth\""],
+                  @"Þ and Ð must lowercase to þ and ð. Got: %@", html);
+}
+
+// Back-to-back dropped codepoints (em dash, en dash, ellipsis) collapse to
+// nothing, leaving no stray hyphens -- "Foo—–…Bar" -> "foobar".
+- (void)testHeadingAnchorIdDropsConsecutivePunctuationCodepoints
+{
+    NSString *html = [self renderMarkdown:@"## Foo—–…Bar"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"foobar\""],
+                  @"Consecutive dropped punctuation must leave no hyphens. Got: %@", html);
+}
+
+// Valid 4-byte UTF-8 (emoji) is decoded and passed through raw. This is a
+// documented scope boundary, NOT github-slugger parity: github-slugger drops
+// emoji ("😀 Hi" -> "-hi"), but our algorithm only classifies the Latin-1 and
+// General Punctuation ranges and passes every other codepoint through, so the
+// emoji survives. The test pins today's behavior.
+- (void)testHeadingAnchorIdPassesThroughFourByteEmoji
+{
+    NSString *html = [self renderMarkdown:@"## 😀 Hi"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"😀-hi\""],
+                  @"Four-byte emoji must be decoded and passed through raw. Got: %@", html);
+}
+
+#pragma mark - GitHub-slugger Parity: Leading Hyphen (#503)
+
+// A heading that starts with dropped punctuation followed by a space yields a
+// leading hyphen. Verified against github-slugger ("— Título" -> "-título"),
+// so the leading hyphen is intentional GitHub parity, not a bug. Related to
+// #503.
+- (void)testHeadingAnchorIdKeepsLeadingHyphenFromDroppedPunctuation
+{
+    NSString *html = [self renderMarkdown:@"## — Título"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"-título\""],
+                  @"A leading dropped em dash + space must yield a leading hyphen. Got: %@", html);
+}
+
+#pragma mark - GitHub-slugger Parity: Scope Boundary (#503)
+
+// Documented divergence: github-slugger lowercases every script via
+// String.toLowerCase() ("Привет Мир" -> "привет-мир"), but our algorithm only
+// lowercases the Latin-1 range and passes every other letter through raw, so
+// Cyrillic keeps its original case. This pins today's behavior to make the
+// scope boundary explicit for future readers. Related to #503, #471.
+- (void)testHeadingAnchorIdDoesNotLowercaseCyrillic
+{
+    NSString *html = [self renderMarkdown:@"## Привет Мир"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"Привет-Мир\""],
+                  @"Cyrillic is passed through without lowercasing (scope boundary). Got: %@", html);
+}
+
+// Same scope boundary for Greek: github-slugger gives "καλημέρα-κόσμε"; we keep
+// the original case.
+- (void)testHeadingAnchorIdDoesNotLowercaseGreek
+{
+    NSString *html = [self renderMarkdown:@"## Καλημέρα Κόσμε"
+                           withExtensions:0
+                            rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"Καλημέρα-Κόσμε\""],
+                  @"Greek is passed through without lowercasing (scope boundary). Got: %@", html);
+}
+
 #pragma mark - Empty Heading Crash Regression (#479)
 
 // A lone setext underline ('-' or '=') with no preceding text makes Hoedown

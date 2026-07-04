@@ -755,6 +755,81 @@
                   @"Quick Look punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
+// Sanity check against a real-world heading (verbatim) mirroring the preview's
+// coverage, so the two hand-synced slug copies cannot drift. Related to #503.
+
+- (void)testQuickLookHeadingAnchorIdMatchesGitHubForRealWorldHeading
+{
+    NSString *html = [self.renderer renderMarkdown:@"### Pregunta 16 — Conexión privada y consistente on-premises–AWS"];
+    XCTAssertTrue([html containsString:@"id=\"pregunta-16--conexión-privada-y-consistente-on-premisesaws\""],
+                  @"Quick Look heading id must match GitHub's slug for real-world content. Got: %@", html);
+}
+
+// UTF-8 decoder coverage mirroring MPMarkdownRenderingTests. Ground truth
+// captured from github-slugger. Related to #503, #471.
+
+- (void)testQuickLookHeadingAnchorIdPassesThroughThreeByteCJK
+{
+    NSString *html = [self.renderer renderMarkdown:@"## 日本語"];
+    XCTAssertTrue([html containsString:@"id=\"日本語\""],
+                  @"Quick Look three-byte CJK codepoints must pass through unchanged. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDropsMultiplicationSignAtBoundary
+{
+    NSString *html = [self.renderer renderMarkdown:@"## 3×4 Grid"];
+    XCTAssertTrue([html containsString:@"id=\"34-grid\""],
+                  @"Quick Look U+00D7 multiplication sign must be dropped. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdLowercasesLatin1BoundaryLetters
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Þorn Ðeth"];
+    XCTAssertTrue([html containsString:@"id=\"þorn-ðeth\""],
+                  @"Quick Look Þ and Ð must lowercase to þ and ð. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDropsConsecutivePunctuationCodepoints
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Foo—–…Bar"];
+    XCTAssertTrue([html containsString:@"id=\"foobar\""],
+                  @"Quick Look consecutive dropped punctuation must leave no hyphens. Got: %@", html);
+}
+
+// Documented scope boundary, not github-slugger parity: github-slugger drops
+// emoji ("😀 Hi" -> "-hi"); our algorithm passes the 4-byte codepoint through.
+- (void)testQuickLookHeadingAnchorIdPassesThroughFourByteEmoji
+{
+    NSString *html = [self.renderer renderMarkdown:@"## 😀 Hi"];
+    XCTAssertTrue([html containsString:@"id=\"😀-hi\""],
+                  @"Quick Look four-byte emoji must be decoded and passed through raw. Got: %@", html);
+}
+
+// Verified against github-slugger ("— Título" -> "-título"): the leading hyphen
+// is intentional GitHub parity. Related to #503.
+- (void)testQuickLookHeadingAnchorIdKeepsLeadingHyphenFromDroppedPunctuation
+{
+    NSString *html = [self.renderer renderMarkdown:@"## — Título"];
+    XCTAssertTrue([html containsString:@"id=\"-título\""],
+                  @"Quick Look leading dropped em dash + space must yield a leading hyphen. Got: %@", html);
+}
+
+// Documented scope boundary: github-slugger lowercases every script; our
+// algorithm only lowercases Latin-1, so Cyrillic and Greek keep their case.
+- (void)testQuickLookHeadingAnchorIdDoesNotLowercaseCyrillic
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Привет Мир"];
+    XCTAssertTrue([html containsString:@"id=\"Привет-Мир\""],
+                  @"Quick Look Cyrillic is passed through without lowercasing. Got: %@", html);
+}
+
+- (void)testQuickLookHeadingAnchorIdDoesNotLowercaseGreek
+{
+    NSString *html = [self.renderer renderMarkdown:@"## Καλημέρα Κόσμε"];
+    XCTAssertTrue([html containsString:@"id=\"Καλημέρα-Κόσμε\""],
+                  @"Quick Look Greek is passed through without lowercasing. Got: %@", html);
+}
+
 // A bare setext underline ('-' or '=') makes Hoedown emit a heading with empty
 // content. The Quick Look renderer mirrors the preview's slug logic, so it has
 // the same zero-unit buffer hazard and must also survive empty headings without

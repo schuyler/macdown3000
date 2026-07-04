@@ -173,9 +173,13 @@ void hoedown_patch_render_listitem(
 }
 
 // Decode the UTF-8 codepoint starting at data[i] (i < size). Returns the
-// number of bytes consumed (1-4) and stores the codepoint in *codepoint, or
-// returns 0 if the sequence is malformed / truncated, in which case the
-// caller should pass the raw byte through unchanged.
+// number of bytes consumed (1-4) and stores the codepoint in *codepoint.
+// Returns 0 when the lead byte is not a valid UTF-8 start byte, when the
+// sequence is truncated (fewer bytes remain than the lead byte promises), or
+// when a continuation byte is malformed; the caller then passes the raw byte
+// through unchanged. This is a lenient decoder: it recovers the codepoint but
+// does NOT reject overlong encodings or surrogate-range (U+D800-U+DFFF)
+// values, so it does not fully validate the sequence.
 static size_t decode_utf8_codepoint(const uint8_t *data, size_t size, size_t i,
                                      uint32_t *codepoint)
 {
@@ -228,9 +232,9 @@ static void encode_utf8_2byte(uint32_t cp, uint8_t out[2])
 // ellipsis, ...) are dropped entirely; every other codepoint passes through
 // unchanged as raw UTF-8 bytes (e.g. "Introducción" -> "introducción").
 // Malformed UTF-8 bytes are passed through unchanged rather than dropped.
-// Anchors keep their raw UTF-8 bytes (no percent-encoding): browsers match
-// the URL fragment against the id literally, so encoding would break
-// navigation.
+// Anchors keep their raw UTF-8 bytes (no percent-encoding), matching the id
+// convention GitHub emits so fragment links copied from GitHub-rendered
+// Markdown keep working.
 static void slugify(hoedown_buffer *out, const hoedown_buffer *content)
 {
     if (!content || !content->size)
