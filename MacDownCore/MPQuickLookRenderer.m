@@ -180,24 +180,87 @@ NS_INLINE NSString *MPQuickLookContentSecurityPolicy(void)
 
 #pragma mark - Hoedown Renderer Callbacks
 
-// Build a stable text-derived slug from a heading's HTML content.
+// Decode the UTF-8 codepoint starting at data[i] (i < size). Returns the
+// number of bytes consumed (1-4) and stores the codepoint in *codepoint, or
+// returns 0 if the sequence is malformed / truncated, in which case the
+// caller should pass the raw byte through unchanged.
+static size_t decode_utf8_codepoint(const uint8_t *data, size_t size, size_t i,
+                                     uint32_t *codepoint)
+{
+    uint8_t c = data[i];
+    size_t len;
+    uint32_t cp;
+
+    if ((c & 0x80) == 0x00)      { cp = c;        len = 1; }
+    else if ((c & 0xE0) == 0xC0) { cp = c & 0x1F; len = 2; }
+    else if ((c & 0xF0) == 0xE0) { cp = c & 0x0F; len = 3; }
+    else if ((c & 0xF8) == 0xF0) { cp = c & 0x07; len = 4; }
+    else return 0;
+
+    if (i + len > size)
+        return 0;
+
+    for (size_t k = 1; k < len; k++)
+    {
+        uint8_t cc = data[i + k];
+        if ((cc & 0xC0) != 0x80)
+            return 0;
+        cp = (cp << 6) | (cc & 0x3F);
+    }
+
+    *codepoint = cp;
+    return len;
+}
+
+// Encode a codepoint <= 0x7FF (used only for lowercased Latin-1 letters) as
+// two UTF-8 bytes.
+static void encode_utf8_2byte(uint32_t cp, uint8_t out[2])
+{
+    out[0] = (uint8_t)(0xC0 | (cp >> 6));
+    out[1] = (uint8_t)(0x80 | (cp & 0x3F));
+}
+
+// Build a stable text-derived slug from a heading's HTML content, matching
+// GitHub's heading-anchor slug algorithm (github-slugger semantics) so
+// [text](#slug) links copied from GitHub-rendered Markdown keep working.
 // Mirrors slugify() in MacDown/Code/Extension/hoedown_html_patch.c so the
 // preview and Quick Look render identical heading ids.
-// Strips HTML tags and skips HTML entities (&amp; / &lt; / &#39; ...),
-// lowercases ASCII, converts spaces to hyphens, drops ASCII punctuation,
-// preserves UTF-8 multi-byte sequences so accented characters survive
-// (e.g. "Introducción" -> "introducción"). Anchors keep their raw UTF-8
-// bytes (no percent-encoding): browsers match the URL fragment against
-// the id literally, so encoding would break navigation.
+// Strips HTML tags and skips HTML entities (&amp; / &lt; / &#39; ...), then
+// trims leading/trailing whitespace from the heading text. ASCII letters are
+// lowercased; digits, '_' and literal '-' are kept as-is; each remaining
+// ASCII space/tab maps to exactly one hyphen (runs are NOT collapsed, e.g.
+// "Foo --- Bar" -> "foo-----bar"); other ASCII punctuation is dropped.
+// Non-ASCII text is decoded as UTF-8: Latin-1 uppercase letters
+// (U+00C0-U+00DE, excluding the multiplication sign U+00D7) are lowercased
+// and re-encoded; the Latin-1 punctuation/symbol block (U+00A1-U+00BF), the
+// multiplication/division signs (U+00D7, U+00F7), and the General
+// Punctuation block (U+2000-U+206F, which covers em/en dashes, curly quotes,
+// ellipsis, ...) are dropped entirely; every other codepoint passes through
+// unchanged as raw UTF-8 bytes (e.g. "Introducción" -> "introducción").
+// Malformed UTF-8 bytes are passed through unchanged rather than dropped.
+// Anchors keep their raw UTF-8 bytes (no percent-encoding): browsers match
+// the URL fragment against the id literally, so encoding would break
+// navigation.
 static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *content)
 {
     if (!content || !content->size)
         return;
 
-    int in_tag = 0;
-    int last_was_dash = 1;
+    size_t start = 0, end = content->size;
+    while (start < end && (content->data[start] == ' ' ||
+                            content->data[start] == '\t' ||
+                            content->data[start] == '\n' ||
+                            content->data[start] == '\r'))
+        start++;
+    while (end > start && (content->data[end - 1] == ' ' ||
+                            content->data[end - 1] == '\t' ||
+                            content->data[end - 1] == '\n' ||
+                            content->data[end - 1] == '\r'))
+        end--;
 
-    for (size_t i = 0; i < content->size; i++)
+    int in_tag = 0;
+
+    for (size_t i = start; i < end; i++)
     {
         uint8_t c = content->data[i];
 
@@ -213,7 +276,7 @@ static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *cont
         }
         if (c == '&')
         {            // skip an HTML entity like &amp; / &lt; / &#39;
-            while (i + 1 < content->size && content->data[i + 1] != ';')
+            while (i + 1 < end && content->data[i + 1] != ';')
                 i++;
             i++;                    // consume the ';'
             continue;
@@ -221,31 +284,49 @@ static void mp_quicklook_slugify(hoedown_buffer *out, const hoedown_buffer *cont
 
         if (c >= 0x80)
         {
-            hoedown_buffer_putc(out, c);
-            last_was_dash = 0;
+            uint32_t cp;
+            size_t len = decode_utf8_codepoint(content->data, end, i, &cp);
+
+            if (len == 0)
+            {
+                // Malformed / truncated sequence: pass the raw byte through.
+                hoedown_buffer_putc(out, c);
+                continue;
+            }
+
+            if ((cp >= 0x00A1 && cp <= 0x00BF) || cp == 0x00D7 ||
+                cp == 0x00F7 || (cp >= 0x2000 && cp <= 0x206F))
+            {
+                // Dropped punctuation/symbol codepoint: emit nothing.
+            }
+            else if (cp >= 0x00C0 && cp <= 0x00DE && cp != 0x00D7)
+            {
+                uint8_t enc[2];
+                encode_utf8_2byte(cp + 0x20, enc);
+                hoedown_buffer_put(out, enc, 2);
+            }
+            else
+            {
+                hoedown_buffer_put(out, content->data + i, len);
+            }
+
+            i += len - 1;
             continue;
         }
 
         if (c >= 'A' && c <= 'Z')
             c += 32;
 
-        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+            c == '_' || c == '-')
         {
             hoedown_buffer_putc(out, c);
-            last_was_dash = 0;
         }
-        else if (c == ' ' || c == '\t' || c == '-')
+        else if (c == ' ' || c == '\t')
         {
-            if (!last_was_dash)
-            {
-                hoedown_buffer_putc(out, '-');
-                last_was_dash = 1;
-            }
+            hoedown_buffer_putc(out, '-');
         }
     }
-
-    while (out->size > 0 && out->data[out->size - 1] == '-')
-        out->size--;
 }
 
 // hoedown_buffer_new() stores its argument as the buffer's growth "unit", and
