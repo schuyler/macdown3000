@@ -11,7 +11,7 @@ inhibit_all_warnings!
 
 target "MacDown" do
   pod 'handlebars-objc', '~> 1.4'
-  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
+  pod 'cmark-gfm', :path => 'Dependency/cmark-gfm'
   pod 'JJPluralForm', '~> 2.1'
   pod 'LibYAML', '~> 0.1'
   pod 'M13OrderedDictionary', '~> 1.1'
@@ -24,7 +24,7 @@ end
 
 target "MacDownTests" do
   pod 'PAPreferences', '~> 0.5'
-  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
+  pod 'cmark-gfm', :path => 'Dependency/cmark-gfm'
 end
 
 target "macdown-cmd" do
@@ -33,7 +33,7 @@ end
 
 # Quick Look extension and shared framework for Issue #284
 target "MacDownCore" do
-  pod 'hoedown', '~> 3.0.7', :inhibit_warnings => false
+  pod 'cmark-gfm', :path => 'Dependency/cmark-gfm'
   pod 'handlebars-objc', '~> 1.4'
 end
 

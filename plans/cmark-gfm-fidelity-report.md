@@ -10,6 +10,14 @@ Generated with `scripts/cmark-gfm-fidelity-eval.py` (see its docstring for
 the cmark-gfm build recipe and re-run instructions). Evaluation date:
 2026-07-05.
 
+> **Status note:** this report is a point-in-time comparison against the
+> *hoedown* golden files. The migration has since landed (same branch): the
+> goldens were re-baselined to the new mdmark/cmark-gfm pipeline per the
+> per-category review below, so re-running the script against today's
+> fixtures compares plain cmark-gfm output against mdmark-contract output
+> instead — the hoedown baseline this report measured no longer exists in
+> the tree.
+
 ## Method
 
 Each fixture's `.md` is rendered through the cmark-gfm CLI with the closest
