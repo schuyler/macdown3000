@@ -120,8 +120,9 @@ deliberately:
 
 ### B. The preprocessor workarounds are confirmed deletable — and one is actively corrupting output today
 
-The four `MPPreprocessMarkdown` regex workarounds (#25, #34, #36, #37) all
-exist to patch hoedown parse bugs. cmark-gfm needs none of them:
+The four `MPPreprocessMarkdown` regex workarounds (#25, #254, #36, #37 —
+with #34, lists after colons, being the symptom the #254 regex addresses)
+all exist to patch hoedown parse bugs. cmark-gfm needs none of them:
 
 - `regression-issue25`, `regression-issue34`, `regression-issue36` are all
   **contract-only**: raw markdown through cmark-gfm matches what
@@ -171,10 +172,12 @@ v3000.1.1 release notes rather than compatibility shims:
   alone. This *improves* MathJax fidelity, and the app's shipping default
   already disables intra-word emphasis (preferences migration v3), so the
   practical delta is smaller than the fixture suggests.
-- **Raw angle-bracket text passes through**: `<Text in angle brackets>` is
-  treated as a raw HTML tag under `--unsafe` where hoedown escaped it to
-  visible text. Interacts with the D-9 `CMARK_OPT_UNSAFE` decision — the
-  D-3 hostile-HTML fixtures should pin this before re-baseline.
+- **Raw angle-bracket text is reclassified as an HTML block**: both parsers
+  pass `<Text in angle brackets>` through unescaped, but hoedown wraps it
+  in `<p>` (inline raw HTML) while cmark-gfm under `--unsafe` emits it as a
+  bare raw-HTML block — the paragraph wrapper and its styling disappear.
+  Interacts with the D-9 `CMARK_OPT_UNSAFE` decision — the D-3
+  hostile-HTML fixtures should pin raw-HTML handling before re-baseline.
 
 ### D. The one genuine hazard: `~~~` opens a tilde code fence
 
@@ -196,10 +199,12 @@ documents" note or an opt-in lint in the editor.
   absence produced zero diffs here. The math gap in particular remains the
   highest-risk parity item (survey §2.2, D-9) and needs D-3 fixtures plus a
   custom-extension decision before v3000.1.1.
-- `data-information` code-block accessories (`BLOCKCODE_INFORMATION`) were
-  neutralized as contract work: cmark-gfm keeps the full info string in the
-  AST, so the accessory is implementable in a renderer hook, but nothing
-  here proves it.
+- `data-information` code-block accessories (`BLOCKCODE_INFORMATION`):
+  several golden tests enable the flag, but no fixture uses the `lang:info`
+  fence syntax, so the goldens contain no `data-information` or
+  `line-numbers` attributes and this comparison exercises neither.
+  cmark-gfm keeps the full fence info string in the AST, so the accessory
+  is implementable in a renderer hook, but nothing here proves it.
 - Smartypants is a MacDown post-pass over rendered HTML, off in all golden
   tests; it is parser-independent and unaffected by this comparison.
 

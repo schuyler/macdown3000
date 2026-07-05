@@ -84,8 +84,8 @@ FIXTURE_EXTENSIONS = {
     "lists-nested": [],                              # testListsNested
     "lists-ordered": [],                             # testListsOrdered
     "lists-unordered": [],                           # testListsUnordered
-    "mathjax-in-code": [],                           # testMathJaxInCodeBlocks
-    "mathjax-syntax": [],                            # testMathJaxSyntax
+    "mathjax-in-code": [],                           # testMathInCodeBlocksIgnored
+    "mathjax-syntax": [],                            # testMathJaxSyntaxComprehensive
     "mixed-complex": ["table", "autolink",           # testMixedComplex
                       "strikethrough", "tasklist"],
     "regression-issue25": [],                        # testRegressionIssue25...
@@ -122,12 +122,11 @@ def normalize_serialization(html):
     html = re.sub(r"\s*/>", ">", html)
     # Boolean attribute serialization: checked="" vs checked.
     html = re.sub(r'(checked|disabled)=""', r"\1", html)
-    # Trailing whitespace and blank-line runs. Blank lines inside <pre> are
-    # real code content, so the collapse only applies outside those blocks.
-    lines = [line.rstrip() for line in html.split("\n")]
-    text = "\n".join(lines)
-    text = _outside_pre(text, lambda t: re.sub(r"\n{2,}", "\n", t))
-    return text.strip() + "\n"
+    # Trailing whitespace and blank-line runs. Whitespace inside <pre> is
+    # real code content, so both transforms apply only outside those blocks.
+    html = _outside_pre(html, lambda t: re.sub(r"[ \t]+\n", "\n", t))
+    html = _outside_pre(html, lambda t: re.sub(r"\n{2,}", "\n", t))
+    return html.strip() + "\n"
 
 
 def _outside_pre(html, transform):
@@ -164,11 +163,15 @@ def normalize_contract(html, aliases):
     # Task-list markup (tasklist.js contract vs cmark's tasklist extension).
     html = html.replace(' class="task-list-item"', "")
     html = re.sub(r' data-checkbox-index="\d+"', "", html)
-    html = re.sub(r"(<input [^>]*?) ?disabled(?=[ >])", r"\1", html)
+    html = re.sub(r'(<input [^>]*?) ?disabled(="")?(?=[ >/])', r"\1", html)
     # Inter-tag newline placement outside <pre> (e.g. hoedown's "text\n</li>"
     # vs cmark's "text</li>", cmark's "<li>\n<p>" vs hoedown's "<li><p>") —
-    # whitespace-insignificant in the DOM.
-    html = _outside_pre(html, lambda t: re.sub(r"\n+(?=</)", "", t))
+    # whitespace-insignificant in the DOM. Restricted to block-level closing
+    # tags: a newline before an inline closer (</em>, </a>, ...) renders as
+    # a space and removing it would mask a real difference.
+    block_close = (r"\n+(?=</(?:p|li|ul|ol|blockquote|h[1-6]|t[dhr]|thead"
+                   r"|tbody|table|div)>)")
+    html = _outside_pre(html, lambda t: re.sub(block_close, "", t))
     html = _outside_pre(html, lambda t: re.sub(r"(<li>)\n+(?=<)", r"\1", t))
     return html
 
@@ -206,8 +209,8 @@ def main():
     try:
         version = subprocess.run([args.cmark, "--version"],
                                  capture_output=True, text=True).stdout.strip()
-    except FileNotFoundError:
-        print(f"error: cmark-gfm CLI not found at '{args.cmark}'; "
+    except OSError as exc:
+        print(f"error: cannot run cmark-gfm CLI at '{args.cmark}' ({exc}); "
               "see the module docstring for build instructions",
               file=sys.stderr)
         return 2
@@ -220,22 +223,36 @@ def main():
     if out_dir:
         out_dir.mkdir(parents=True, exist_ok=True)
 
+    # Guard against silent staleness: every golden pair on disk must have a
+    # flag entry transcribed from its test, or the corpus has grown past us.
+    on_disk = {p.stem for p in FIXTURES_DIR.glob("*.html")
+               if (FIXTURES_DIR / f"{p.stem}.md").exists()}
+    unmapped = sorted(on_disk - set(FIXTURE_EXTENSIONS))
+    if unmapped:
+        print("error: golden fixtures missing from FIXTURE_EXTENSIONS "
+              f"(transcribe their test flags): {', '.join(unmapped)}",
+              file=sys.stderr)
+        return 2
+
     results = []
     for name, extensions in sorted(FIXTURE_EXTENSIONS.items()):
         md_path = FIXTURES_DIR / f"{name}.md"
         golden_path = FIXTURES_DIR / f"{name}.html"
-        if not golden_path.exists():
+        if not golden_path.exists() or not md_path.exists():
             continue
 
         golden = golden_path.read_text(encoding="utf-8")
         actual = run_cmark(args.cmark, md_path, extensions)
 
+        # Contract normalization runs on the raw HTML so its attribute
+        # regexes see original quoting, before entity replacement could
+        # corrupt attribute-value boundaries.
         ser_golden = normalize_serialization(golden)
         ser_actual = normalize_serialization(actual)
         con_golden = normalize_serialization(
-            normalize_contract(ser_golden, aliases))
+            normalize_contract(golden, aliases))
         con_actual = normalize_serialization(
-            normalize_contract(ser_actual, aliases))
+            normalize_contract(actual, aliases))
 
         if actual == golden:
             verdict = "identical"
@@ -264,6 +281,11 @@ def main():
             if behavioral_diff:
                 (out_dir / f"{name}.behavioral.diff").write_text(
                     "".join(behavioral_diff), encoding="utf-8")
+
+    if not results:
+        print("error: no golden fixture pairs found under "
+              f"{FIXTURES_DIR}", file=sys.stderr)
+        return 2
 
     width = max(len(r["fixture"]) for r in results)
     counts = {}
