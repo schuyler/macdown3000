@@ -755,16 +755,17 @@
                   @"Quick Look punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
-// A bare setext underline ('-' or '=') makes Hoedown emit a heading with empty
-// content. The Quick Look renderer mirrors the preview's slug logic, so it has
-// the same zero-unit buffer hazard and must also survive empty headings without
-// aborting the Quick Look render process. Related to #479.
+// Hoedown treated a bare setext underline ('-') as a heading with empty
+// content, which crashed its slug buffer (#479). cmark-gfm parses a lone
+// '-' as an empty bullet list item instead, so no empty heading exists;
+// this input must still render without aborting the Quick Look process.
 
 - (void)testQuickLookEmptyHeadingDoesNotCrash
 {
+    // cmark-gfm: "-" is an empty list item, not an empty heading (issue #77)
     NSString *html = [self.renderer renderMarkdown:@"-"];
-    XCTAssertTrue([html containsString:@"id=\"section\""],
-                  @"Quick Look must render an empty heading with the fallback id "
+    XCTAssertTrue([html containsString:@"<li></li>"],
+                  @"Quick Look must render a lone '-' as an empty list item "
                   @"without crashing. Got: %@", html);
 }
 

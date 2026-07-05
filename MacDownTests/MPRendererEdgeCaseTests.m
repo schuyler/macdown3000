@@ -12,8 +12,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
-#import "hoedown_html_patch.h"
+#import <cmark-gfm/mdmark.h>
 
 
 #pragma mark - Test Class
@@ -140,7 +139,7 @@
 
 - (void)testPreviewRenderIncludesContentSecurityPolicyAndCheckboxToken
 {
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -160,7 +159,7 @@
 
 - (void)testPreviewRenderKeepsCheckboxBridgeTokenStableAcrossRenders
 {
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -178,7 +177,7 @@
 
 - (void)testHTMLExportDoesNotIncludePreviewOnlySecurityMetaTags
 {
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -196,7 +195,7 @@
 
 - (void)testRendererExtensionTablesOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.delegate.extensions = MDMARK_EXT_TABLES;
     self.dataSource.markdown = @"| A | B |\n|---|---|\n| 1 | 2 |";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -207,7 +206,7 @@
 
 - (void)testRendererExtensionFencedCodeOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```\ncode here\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -219,7 +218,7 @@
 
 - (void)testRendererExtensionStrikethroughOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_STRIKETHROUGH;
+    self.delegate.extensions = MDMARK_EXT_STRIKETHROUGH;
     self.dataSource.markdown = @"~~deleted~~";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -231,7 +230,7 @@
 
 - (void)testRendererExtensionFootnotesOnly
 {
-    self.delegate.extensions = HOEDOWN_EXT_FOOTNOTES;
+    self.delegate.extensions = MDMARK_EXT_FOOTNOTES;
     self.dataSource.markdown = @"Text with footnote[^1].\n\n[^1]: Footnote content.";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -242,7 +241,7 @@
 
 - (void)testRendererExtensionTablesAndFencedCode
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES | HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = MDMARK_EXT_TABLES | 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"| Header |\n|---|\n| Cell |\n\n```js\ncode\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -255,7 +254,7 @@
 
 - (void)testRendererExtensionTablesAndStrikethrough
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES | HOEDOWN_EXT_STRIKETHROUGH;
+    self.delegate.extensions = MDMARK_EXT_TABLES | MDMARK_EXT_STRIKETHROUGH;
     self.dataSource.markdown = @"| ~~A~~ | B |\n|---|---|\n| 1 | 2 |";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -268,11 +267,11 @@
 
 - (void)testRendererExtensionAllCombined
 {
-    self.delegate.extensions = HOEDOWN_EXT_TABLES |
-                               HOEDOWN_EXT_FENCED_CODE |
-                               HOEDOWN_EXT_STRIKETHROUGH |
-                               HOEDOWN_EXT_FOOTNOTES |
-                               HOEDOWN_EXT_AUTOLINK;
+    self.delegate.extensions = MDMARK_EXT_TABLES |
+                               0 /* fenced code: core CommonMark */ |
+                               MDMARK_EXT_STRIKETHROUGH |
+                               MDMARK_EXT_FOOTNOTES |
+                               MDMARK_EXT_AUTOLINK;
 
     self.dataSource.markdown = @"# Heading\n\n"
                                @"| A | B |\n|---|---|\n| 1 | 2 |\n\n"
@@ -304,7 +303,7 @@
 
 - (void)testRendererWithScriptTagInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```html\n<script>alert('xss')</script>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -320,7 +319,7 @@
 
 - (void)testRendererWithStyleTagInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```css\n</style><script>bad()</script>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -331,7 +330,7 @@
 
 - (void)testRendererWithBrokenHTMLInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```html\n<div><span>unclosed\n</div>\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -342,7 +341,7 @@
 
 - (void)testRendererWithHTMLEntitiesInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```\n&lt; &gt; &amp; &quot;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -353,7 +352,7 @@
 
 - (void)testRendererWithDeepNestedTagsInCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     NSMutableString *nested = [NSMutableString string];
     for (int i = 0; i < 100; i++) {
         [nested appendString:@"<div>"];
@@ -573,7 +572,7 @@
 - (void)testRendererWithMermaidEnabled
 {
     self.delegate.mermaid = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -585,7 +584,7 @@
 - (void)testRendererWithGraphvizEnabled
 {
     self.delegate.graphviz = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -737,11 +736,8 @@
  * Tests for Issue #254: Lists immediately following paragraphs should render
  * correctly without requiring a blank line (CommonMark/GFM behavior).
  *
- * NOTE: The simple regex fix has known edge cases:
- * - Lists inside fenced code blocks may be incorrectly modified
- * - Lists inside indented code blocks may be incorrectly modified
- * - Blockquotes may need special handling
- * These edge cases are intentionally not addressed for simplicity.
+ * cmark-gfm parses this natively (issue #77); the hoedown-era regex
+ * preprocessor workaround and its edge cases are gone.
  */
 
 - (void)testUnorderedListAfterParagraph_Hyphen
