@@ -35,9 +35,46 @@
 #import "MPHTMLResourceURLs.h"
 #import "MPURLSecurityPolicy.h"
 #import <JavaScriptCore/JavaScriptCore.h>
+// Issue #504: PDF export post-processing (clickable internal anchor links).
+#import <PDFKit/PDFKit.h>
+#import "MPPDFAnchorInjector.h"
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+// Issue #504: Reads the anchor-link model from the rendered preview DOM for
+// PDF export post-processing. An IIFE evaluated via the same
+// evaluateScript: bridge already proven by -updateHeaderLocations
+// (Issue #436, see :2908 nearby). Enumerates internal fragment links
+// (`a[href^="#"]`) and headings with an id (`h1[id]`..`h6[id]`) in document
+// order (querySelectorAll is document-ordered), collapsing whitespace and
+// skipping anything with an empty fragment or empty visible text. Returns a
+// JS object (read back via JSValue subscripting — never a JSON string):
+// {links:[{linkText,targetSlug}], headings:[{slug,headingText}]}.
+static NSString * const kMPAnchorModelJS = @"(function() {"
+    "  function normalize(el) {"
+    "    return (el.textContent || '').replace(/\\s+/g, ' ').trim();"
+    "  }"
+    "  var links = [];"
+    "  var anchors = document.querySelectorAll('a[href^=\"#\"]');"
+    "  for (var i = 0; i < anchors.length; i++) {"
+    "    var a = anchors[i];"
+    "    var href = a.getAttribute('href') || '';"
+    "    var slug = href.slice(1);"
+    "    var text = normalize(a);"
+    "    if (!slug || !text) continue;"
+    "    links.push({ linkText: text, targetSlug: slug });"
+    "  }"
+    "  var headings = [];"
+    "  var heads = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');"
+    "  for (var j = 0; j < heads.length; j++) {"
+    "    var h = heads[j];"
+    "    var slug2 = h.getAttribute('id') || '';"
+    "    var text2 = normalize(h);"
+    "    if (!slug2 || !text2) continue;"
+    "    headings.push({ slug: slug2, headingText: text2 });"
+    "  }"
+    "  return { links: links, headings: headings };"
+    "})();";
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
@@ -234,6 +271,13 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property CGFloat lastNonCollapsedRatio;
 @property BOOL manualRender;
 @property BOOL printing;
+// Issue #504: Single-slot stash so the shared print-completion callback
+// (-document:didPrint:context:) knows whether this completion was a
+// save-to-PDF export (-exportPdf:) and, if so, which file to post-process
+// with clickable internal anchor links. Mirrors the `printing` BOOL
+// stash/clear convention above: set right before printing is dispatched,
+// always cleared once the callback fires.
+@property (strong) NSURL *pdfExportURL;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
 @property (copy) NSString *currentStyleName;
@@ -312,6 +356,10 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 - (void)handleSyncScrollingDisabled;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
+// Issue #504: PDF export post-processing (clickable internal anchor links).
+- (BOOL)readAnchorLinks:(NSArray<MPPDFAnchorLink *> **)outLinks
+               headings:(NSArray<MPPDFAnchorHeading *> **)outHeadings;
+- (void)postProcessExportedPDFAtURL:(NSURL *)url;
 
 @end
 
@@ -2138,6 +2186,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (result != NSFileHandlingPanelOKButton)
             return;
 
+        // Issue #504: Stash the destination URL so -document:didPrint:context:
+        // knows this print completion is a save-to-PDF export and which file
+        // to post-process with clickable internal anchor links.
+        self.pdfExportURL = panel.URL;
+
         // Issue #16: printDocumentWithSettings: already handles render deferral
         NSDictionary *settings = @{
             NSPrintJobDisposition: NSPrintSaveJob,
@@ -2146,6 +2199,110 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         [self printDocumentWithSettings:settings showPrintPanel:NO delegate:nil
                        didPrintSelector:NULL contextInfo:NULL];
     }];
+}
+
+// Issue #504: Read the anchor-link model (links needing destinations, and the
+// headings that can serve as destinations) from the live preview DOM, using
+// the same evaluateScript: bridge already proven by -updateHeaderLocations
+// (Issue #436) — not -stringByEvaluatingJavaScriptFromString:, which swallows
+// JS errors. Main-thread only; never dispatches. Returns NO (leaving the
+// exported PDF un-annotated) on any failure to read or parse the model.
+- (BOOL)readAnchorLinks:(NSArray<MPPDFAnchorLink *> **)outLinks
+               headings:(NSArray<MPPDFAnchorHeading *> **)outHeadings
+{
+    JSContext *ctx = self.preview.mainFrame.javaScriptContext;
+    if (!ctx)
+        return NO;
+
+    JSValue *result = [ctx evaluateScript:kMPAnchorModelJS];
+    if (![result isObject])
+        return NO;
+
+    NSArray *linkDicts = [result[@"links"] toArray];
+    NSArray *headDicts = [result[@"headings"] toArray];
+    if (![linkDicts isKindOfClass:[NSArray class]] ||
+        ![headDicts isKindOfClass:[NSArray class]])
+        return NO;
+
+    NSMutableArray<MPPDFAnchorLink *> *links = [NSMutableArray array];
+    for (NSDictionary *dict in linkDicts)
+    {
+        if (![dict isKindOfClass:[NSDictionary class]])
+            continue;
+        NSString *linkText = dict[@"linkText"];
+        NSString *targetSlug = dict[@"targetSlug"];
+        if (![linkText isKindOfClass:[NSString class]] || linkText.length == 0)
+            continue;
+        if (![targetSlug isKindOfClass:[NSString class]] || targetSlug.length == 0)
+            continue;
+        [links addObject:[MPPDFAnchorLink linkWithText:linkText slug:targetSlug]];
+    }
+
+    NSMutableArray<MPPDFAnchorHeading *> *headings = [NSMutableArray array];
+    for (NSDictionary *dict in headDicts)
+    {
+        if (![dict isKindOfClass:[NSDictionary class]])
+            continue;
+        NSString *slug = dict[@"slug"];
+        NSString *headingText = dict[@"headingText"];
+        if (![slug isKindOfClass:[NSString class]] || slug.length == 0)
+            continue;
+        if (![headingText isKindOfClass:[NSString class]] || headingText.length == 0)
+            continue;
+        [headings addObject:[MPPDFAnchorHeading headingWithSlug:slug text:headingText]];
+    }
+
+    if (outLinks)
+        *outLinks = links;
+    if (outHeadings)
+        *outHeadings = headings;
+    return YES;
+}
+
+// Issue #504: Best-effort post-processing of a just-exported PDF: read the
+// anchor-link model from the (still-loaded) preview DOM and inject clickable
+// internal-link annotations into the written file. The export has already
+// succeeded by the time this runs, so any failure here is silently logged —
+// never surfaced to the user — and leaves the exported PDF exactly as
+// written. Write-back is atomic: annotate a sibling temp copy, then swap it
+// in, so a crash or error mid-write can never corrupt the exported file.
+- (void)postProcessExportedPDFAtURL:(NSURL *)url
+{
+    @try {
+        NSArray<MPPDFAnchorLink *> *links = nil;
+        NSArray<MPPDFAnchorHeading *> *headings = nil;
+        if (![self readAnchorLinks:&links headings:&headings])
+            return;
+        if (links.count == 0)
+            return;
+
+        PDFDocument *pdf = [[PDFDocument alloc] initWithURL:url];
+        if (!pdf)
+            return;
+
+        NSUInteger added = [MPPDFAnchorInjector injectLinksIntoDocument:pdf
+                                                                    links:links
+                                                                 headings:headings];
+        if (added == 0)
+            return;
+
+        NSString *tmpName =
+            [[NSUUID UUID].UUIDString stringByAppendingPathExtension:@"pdf"];
+        NSURL *tmpURL = [url.URLByDeletingLastPathComponent
+                             URLByAppendingPathComponent:tmpName];
+        if (![pdf writeToURL:tmpURL])
+            return;
+
+        [[NSFileManager defaultManager] replaceItemAtURL:url
+                                            withItemAtURL:tmpURL
+                                           backupItemName:nil
+                                                  options:0
+                                         resultingItemURL:NULL
+                                                    error:NULL];
+    }
+    @catch (NSException *ex) {
+        NSLog(@"[Issue #504] PDF anchor post-processing failed: %@", ex);
+    }
 }
 
 - (IBAction)convertToH1:(id)sender
@@ -3676,6 +3833,25 @@ to link outside that scope.", \
 {
     if ([doc respondsToSelector:@selector(setPrinting:)])
         ((MPDocument *)doc).printing = NO;
+
+    // Issue #504: If this print completion was a save-to-PDF export, post-
+    // process the exported file to inject clickable internal anchor links.
+    // Gate on the stash, NOT on `context`: a normal Cmd-P print also has nil
+    // context, but never sets pdfExportURL, so it is correctly excluded here.
+    // Best-effort — annotation failures are never surfaced to the user, and
+    // the single-slot stash is always cleared once consumed.
+    MPDocument *mpDoc = (MPDocument *)doc;
+    if (mpDoc.pdfExportURL)
+    {
+        NSURL *exportURL = mpDoc.pdfExportURL;
+        @try {
+            if (ok)
+                [mpDoc postProcessExportedPDFAtURL:exportURL];
+        } @finally {
+            mpDoc.pdfExportURL = nil;
+        }
+    }
+
     if (context)
     {
         NSInvocation *invocation = (__bridge NSInvocation *)context;
