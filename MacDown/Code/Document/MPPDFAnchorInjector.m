@@ -143,6 +143,7 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
         @try {
             matches = [document findString:needle withOptions:0];
         } @catch (NSException *exception) {
+            NSLog(@"[Issue #504] anchor link skipped due to exception: %@", exception);
             matches = nil;
         }
         textToMatches[needle] = matches ?: @[];
@@ -200,7 +201,7 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
                 continue;
             }
             NSRect sourceBounds = [sourceSel boundsForPage:sourcePage];
-            CGFloat hSource = MPPDFAnchorSelectionHeight(sourceSel);
+            CGFloat hSource = NSHeight(sourceBounds);
 
             // Step 5: resolve the destination.
             NSString *destText = slugToHeadingText[link.targetSlug ?: @""];
@@ -262,6 +263,7 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
             [sourcePage addAnnotation:annotation];
             addedCount++;
         } @catch (NSException *exception) {
+            NSLog(@"[Issue #504] anchor link skipped due to exception: %@", exception);
             continue; // One bad link must never abort the whole pass.
         }
     }

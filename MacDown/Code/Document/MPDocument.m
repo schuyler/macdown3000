@@ -2172,6 +2172,14 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)exportPdf:(id)sender
 {
+    // Issue #504: The single-slot stash can only hold one in-flight export's
+    // destination URL. If it is already set, a previous export's save panel
+    // or print/write hasn't completed yet (document:didPrint:context: clears
+    // it in @finally); starting a second export here would clobber the stash
+    // and corrupt both exports' post-processing. Make it a safe no-op.
+    if (self.pdfExportURL)
+        return;
+
     NSSavePanel *panel = [NSSavePanel savePanel];
     panel.allowedFileTypes = @[@"pdf"];
     if (self.presumedFileName)
@@ -2278,7 +2286,13 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         PDFDocument *pdf = [[PDFDocument alloc] initWithURL:url];
         if (!pdf)
+        {
+            // Issue #504: Reopening the just-exported PDF failed; leave the
+            // valid, un-annotated export in place.
+            NSLog(@"[Issue #504] PDF anchor post-processing failed: "
+                  @"could not reopen exported PDF at %@", url);
             return;
+        }
 
         NSUInteger added = [MPPDFAnchorInjector injectLinksIntoDocument:pdf
                                                                     links:links
@@ -2291,14 +2305,31 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         NSURL *tmpURL = [url.URLByDeletingLastPathComponent
                              URLByAppendingPathComponent:tmpName];
         if (![pdf writeToURL:tmpURL])
+        {
+            // Issue #504: Failed to write the annotated copy; clean up any
+            // partial temp file and leave the original export untouched.
+            NSLog(@"[Issue #504] PDF anchor post-processing failed: "
+                  @"could not write annotated copy to %@", tmpURL);
+            [[NSFileManager defaultManager] removeItemAtURL:tmpURL error:NULL];
             return;
+        }
 
-        [[NSFileManager defaultManager] replaceItemAtURL:url
-                                            withItemAtURL:tmpURL
-                                           backupItemName:nil
-                                                  options:0
-                                         resultingItemURL:NULL
-                                                    error:NULL];
+        NSError *replaceError = nil;
+        BOOL replaced = [[NSFileManager defaultManager] replaceItemAtURL:url
+                                                            withItemAtURL:tmpURL
+                                                           backupItemName:nil
+                                                                  options:0
+                                                         resultingItemURL:NULL
+                                                                    error:&replaceError];
+        if (!replaced)
+        {
+            // Issue #504: The atomic swap failed; the original export is
+            // untouched, but the temp copy is now an orphaned stray file.
+            NSLog(@"[Issue #504] PDF anchor post-processing failed: "
+                  @"could not replace %@ with annotated copy: %@",
+                  url, replaceError);
+            [[NSFileManager defaultManager] removeItemAtURL:tmpURL error:NULL];
+        }
     }
     @catch (NSException *ex) {
         NSLog(@"[Issue #504] PDF anchor post-processing failed: %@", ex);

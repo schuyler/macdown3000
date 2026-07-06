@@ -6,17 +6,25 @@
 //  described in the design for GitHub issue #504 ("Clickable Internal
 //  Anchor Links in Exported PDF").
 //
-//  Fixture PDFs are generated in-test with real, selectable text (drawn via
-//  -[NSAttributedString drawAtPoint:] into a CGPDFContext) so that
-//  -[PDFDocument findString:withOptions:] can genuinely locate them, the
-//  same way the real export pipeline's PDF-native text search does. No
-//  WebView is involved anywhere in this file.
+//  Fixture PDFs are generated in-test with real, selectable text. Each
+//  fixture page is drawn by an offscreen AppKit view (see
+//  MPPDFTestPageView below) and rasterized to PDF via -[NSView
+//  dataWithPDFInsideRect:] -- the same underlying AppKit text-layout path
+//  that produces the real export's searchable text via NSPrintOperation --
+//  so that -[PDFDocument findString:withOptions:] can genuinely locate the
+//  drawn text, the same way the real export pipeline's PDF-native text
+//  search does. No WebView is involved anywhere in this file.
 //
-//  RED STATE: as of this writing, MPPDFAnchorInjector's
-//  +injectLinksIntoDocument:links:headings: is an intentional no-op stub
-//  that always returns 0 and adds no annotations (see the TODO(#504) in
-//  MPPDFAnchorInjector.m). Every behavioral assertion below therefore fails
-//  until the real text-search + disambiguation algorithm is implemented.
+//  MPPDFAnchorInjector's +injectLinksIntoDocument:links:headings: is fully
+//  implemented (see MPPDFAnchorInjector.m): it uses -findString:withOptions:
+//  to locate both TOC/link source text and body/heading destination text,
+//  then disambiguates same-text collisions via document order and rendered
+//  height. Every behavioral assertion below is expected to PASS against
+//  that implementation. Tests 4 and 8 are the exception: they assert ZERO
+//  annotations for genuinely no-op/skip inputs (empty links array, empty
+//  document, and a slug whose heading text has no body occurrence) -- these
+//  are regression guards for the no-op/skip paths, not stub-refuting
+//  coverage.
 //
 //  Related to GitHub issue #504.
 //
@@ -35,8 +43,7 @@
 // size, destination page, and its origin point measured from the TOP-LEFT
 // of the page (y grows downward) -- i.e. ordinary "reading order"
 // coordinates. The fixture builder converts this into the PDF's native
-// bottom-left, y-up coordinate space both when it draws the glyphs and when
-// it reports the resulting rect back to the test.
+// bottom-left, y-up coordinate space when it draws the glyphs.
 @interface MPPDFTestDrawItem : NSObject
 @property (nonatomic, copy) NSString *text;
 @property (nonatomic, assign) CGFloat fontSize;
@@ -64,7 +71,7 @@
 @end
 
 
-#pragma mark - Test Case
+#pragma mark - Constants
 
 // US Letter, matching the media box used by every fixture page.
 static const CGFloat kMPTestPageWidth = 612.0;
@@ -74,136 +81,217 @@ static const CGFloat kMPTestPageHeight = 792.0;
 // points of slop when comparing rects/points, per design §7.
 static const CGFloat kMPTestTolerance = 2.0;
 
-@interface MPPDFAnchorInjectorTests : XCTestCase
-@property (nonatomic, strong) NSMutableArray<NSURL *> *temporaryFixtureURLs;
+
+#pragma mark - Page View Helper
+
+// An offscreen, never-windowed NSView that draws exactly one fixture page's
+// worth of text items and is then rasterized via -dataWithPDFInsideRect:.
+// This is the SAME AppKit text-drawing/layout path AppKit uses when
+// producing PDF from a real print operation, so the glyphs it emits carry
+// standard, searchable text (unlike drawing directly into a bare
+// CGPDFContext, which does not reliably embed a ToUnicode mapping).
+//
+// NSView is UNFLIPPED by default (origin bottom-left, y-up) -- the same
+// space as a PDF page -- so `-isFlipped` is left at its default (NO) and
+// every item's precomputed bottom-left draw point is used as-is via
+// -[NSAttributedString drawAtPoint:].
+@interface MPPDFTestPageView : NSView
+@property (nonatomic, copy) NSArray<MPPDFTestDrawItem *> *drawItems;
 @end
 
+@implementation MPPDFTestPageView
 
-@implementation MPPDFAnchorInjectorTests
-
-- (void)setUp
+- (BOOL)isOpaque
 {
-    [super setUp];
-    self.temporaryFixtureURLs = [NSMutableArray array];
+    return YES;
 }
 
-- (void)tearDown
+- (void)drawRect:(NSRect)dirtyRect
 {
-    for (NSURL *url in self.temporaryFixtureURLs) {
-        [[NSFileManager defaultManager] removeItemAtURL:url error:nil];
-    }
-    self.temporaryFixtureURLs = nil;
-    [super tearDown];
-}
+    [[NSColor whiteColor] setFill];
+    NSRectFill(dirtyRect);
 
-#pragma mark - Fixture Building
-
-/**
- * Draws every item in `items` into a freshly generated PDF, one 612x792
- * (US Letter) media box per page, using real Cocoa text drawing so the
- * glyphs are genuinely selectable text -- `-[PDFDocument
- * findString:withOptions:]` must be able to locate them, exactly as it
- * would against a real exported document.
- *
- * Coordinate mapping: each item's `topLeftPoint` is specified from the
- * page's top-left corner (y grows downward). PDF pages are natively
- * bottom-left-origin, y-up, so for a page of height H the drawn rect's
- * bottom-left corner sits at
- *     (topLeftPoint.x, H - topLeftPoint.y - measuredHeight)
- * and `-[NSAttributedString drawAtPoint:]` is invoked at that same point
- * inside an UNFLIPPED (flipped:NO) graphics context wrapping the
- * CGPDFContext -- CGPDFContext's native page space is already
- * bottom-left/y-up, so flipped:NO makes NSGraphicsContext's coordinate
- * convention match the underlying CGContext exactly, with no additional
- * transform. The measured text size comes from `-[NSAttributedString
- * size]`.
- *
- * Returns the loaded PDFDocument. If `outDrawnRects` is non-NULL, it is set
- * to an array of NSValue-wrapped CGRects (PDF/bottom-left coordinates), one
- * per entry in `items`, in the SAME ORDER as `items` (independent of which
- * page each item lands on), for assertions.
- */
-- (PDFDocument *)documentFromDrawItems:(NSArray<MPPDFTestDrawItem *> *)items
-                             drawnRects:(NSArray<NSValue *> **)outDrawnRects
-{
-    // First pass: compute each item's drawn rect/point in PDF (bottom-left)
-    // coordinates, in `items` order, independent of page grouping.
-    NSMutableArray<NSValue *> *drawnRects = [NSMutableArray arrayWithCapacity:items.count];
-    NSMutableArray<NSValue *> *drawPoints = [NSMutableArray arrayWithCapacity:items.count];
-
-    NSUInteger pageCount = 1;
-    for (MPPDFTestDrawItem *item in items) {
+    for (MPPDFTestDrawItem *item in self.drawItems) {
         NSFont *font = [NSFont systemFontOfSize:item.fontSize];
         NSDictionary *attrs = @{NSFontAttributeName: font};
         NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
                                                                           attributes:attrs];
         NSSize measured = attrString.size;
 
+        // Same top-left -> bottom-left conversion as the previous
+        // CGPDFContext-based fixture: for a page of height H, an item
+        // whose origin is `topLeftPoint` (y grows downward) is drawn with
+        // its bottom-left corner at (x, H - topLeftPoint.y - measuredHeight).
         CGFloat pdfX = item.topLeftPoint.x;
         CGFloat pdfY = kMPTestPageHeight - item.topLeftPoint.y - measured.height;
-        NSPoint drawPoint = NSMakePoint(pdfX, pdfY);
-        CGRect drawnRect = CGRectMake(pdfX, pdfY, measured.width, measured.height);
+        [attrString drawAtPoint:NSMakePoint(pdfX, pdfY)];
+    }
+}
 
-        [drawPoints addObject:[NSValue valueWithPoint:drawPoint]];
-        [drawnRects addObject:[NSValue valueWithRect:NSRectFromCGRect(drawnRect)]];
+@end
 
+
+#pragma mark - Test Case
+
+@interface MPPDFAnchorInjectorTests : XCTestCase
+@end
+
+
+@implementation MPPDFAnchorInjectorTests
+
+#pragma mark - Fixture Building
+
+/**
+ * Draws every item in `items` into a freshly generated PDF, one 612x792
+ * (US Letter) media box per page.
+ *
+ * Each page is rendered independently by handing an offscreen
+ * MPPDFTestPageView (never added to any window) the items destined for
+ * that page, then calling `-[NSView dataWithPDFInsideRect:]` to capture
+ * AppKit's own PDF rendering of that view -- the same code path a real
+ * NSPrintOperation-driven PDF export uses, so the resulting page carries
+ * genuinely searchable text. Each page's data is loaded as its own
+ * one-page PDFDocument and its PDFPage is inserted into a combined
+ * PDFDocument in order.
+ *
+ * After assembly, the combined document's `.string` is force-accessed (and
+ * the document is round-tripped once through `-dataRepresentation` /
+ * `-initWithData:`) to guarantee PDFKit has fully built its text index
+ * before any `-findString:withOptions:` call runs against it, eliminating
+ * any lazy-parse race.
+ *
+ * Returns the loaded PDFDocument. If `outDrawnRects` is non-NULL, it is set
+ * to an array of NSValue-wrapped CGRects (PDF/bottom-left coordinates), one
+ * per entry in `items`, in the SAME ORDER as `items` (independent of which
+ * page each item lands on). These rects are not predicted from font
+ * metrics -- they are measured GROUND TRUTH, located in the finished
+ * document via `-findString:withOptions:` and `-[PDFSelection
+ * boundsForPage:]`, the exact same mechanism the engine itself uses. This
+ * keeps the geometry assertions in tests 1/6/7 self-consistent with
+ * whatever PDFKit actually reports for the rendered glyphs, rather than
+ * depending on font-metrics prediction matching PDFKit's internal layout
+ * to within a couple of points.
+ */
+- (PDFDocument *)documentFromDrawItems:(NSArray<MPPDFTestDrawItem *> *)items
+                             drawnRects:(NSArray<NSValue *> **)outDrawnRects
+{
+    NSUInteger pageCount = 1;
+    for (MPPDFTestDrawItem *item in items) {
         pageCount = MAX(pageCount, item.pageIndex + 1);
     }
 
-    // Second pass: actually draw, page by page, reusing the precomputed
-    // points so drawing order never affects the reported rects.
-    NSURL *tempURL = [NSURL fileURLWithPath:
-                       [[NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]
-                        stringByAppendingPathExtension:@"pdf"]];
-    [self.temporaryFixtureURLs addObject:tempURL];
-
-    CGDataConsumerRef consumer = CGDataConsumerCreateWithURL((__bridge CFURLRef)tempURL);
-    CGRect mediaBox = CGRectMake(0, 0, kMPTestPageWidth, kMPTestPageHeight);
-    CGContextRef ctx = CGPDFContextCreate(consumer, &mediaBox, NULL);
-    CGDataConsumerRelease(consumer);
-    XCTAssertTrue(ctx != NULL, @"Failed to create CGPDFContext for fixture");
-    if (!ctx) {
-        return nil;
-    }
+    NSRect pageFrame = NSMakeRect(0, 0, kMPTestPageWidth, kMPTestPageHeight);
+    PDFDocument *combinedDocument = [[PDFDocument alloc] init];
 
     for (NSUInteger pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-        CGPDFContextBeginPage(ctx, NULL);
-
-        NSGraphicsContext *nsContext = [NSGraphicsContext graphicsContextWithCGContext:ctx
-                                                                                flipped:NO];
-        [NSGraphicsContext saveGraphicsState];
-        [NSGraphicsContext setCurrentContext:nsContext];
-
-        for (NSUInteger i = 0; i < items.count; i++) {
-            MPPDFTestDrawItem *item = items[i];
-            if (item.pageIndex != pageIndex) {
-                continue;
+        NSMutableArray<MPPDFTestDrawItem *> *pageItems = [NSMutableArray array];
+        for (MPPDFTestDrawItem *item in items) {
+            if (item.pageIndex == pageIndex) {
+                [pageItems addObject:item];
             }
-
-            NSFont *font = [NSFont systemFontOfSize:item.fontSize];
-            NSDictionary *attrs = @{NSFontAttributeName: font};
-            NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
-                                                                              attributes:attrs];
-            NSPoint drawPoint = [drawPoints[i] pointValue];
-            [attrString drawAtPoint:drawPoint];
         }
 
-        [NSGraphicsContext restoreGraphicsState];
-        CGPDFContextEndPage(ctx);
+        MPPDFTestPageView *view = [[MPPDFTestPageView alloc] initWithFrame:pageFrame];
+        view.drawItems = pageItems;
+
+        NSData *pageData = [view dataWithPDFInsideRect:pageFrame];
+        XCTAssertNotNil(pageData, @"Failed to render fixture page %lu to PDF data",
+                        (unsigned long)pageIndex);
+        if (pageData == nil) {
+            continue;
+        }
+
+        PDFDocument *singlePageDocument = [[PDFDocument alloc] initWithData:pageData];
+        XCTAssertNotNil(singlePageDocument, @"Failed to load rendered fixture page %lu as a PDFDocument",
+                        (unsigned long)pageIndex);
+        if (singlePageDocument == nil || singlePageDocument.pageCount == 0) {
+            continue;
+        }
+
+        PDFPage *page = [singlePageDocument pageAtIndex:0];
+        [combinedDocument insertPage:page atIndex:combinedDocument.pageCount];
     }
 
-    CGPDFContextClose(ctx);
-    CGContextRelease(ctx);
-
-    PDFDocument *document = [[PDFDocument alloc] initWithURL:tempURL];
-    XCTAssertNotNil(document, @"Fixture PDFDocument failed to load from %@", tempURL);
-    XCTAssertEqual(document.pageCount, pageCount,
+    XCTAssertEqual(combinedDocument.pageCount, pageCount,
                   @"Fixture should have one page per requested pageIndex");
 
-    if (outDrawnRects) {
-        *outDrawnRects = drawnRects;
+    // Defensively force a full, synchronous text-index parse -- both on the
+    // freshly-assembled document and again after a round trip through
+    // -dataRepresentation/-initWithData: -- before this fixture is handed
+    // to the engine or measured below.
+    (void)combinedDocument.string;
+    NSData *roundTripData = combinedDocument.dataRepresentation;
+    PDFDocument *finalDocument = roundTripData ? [[PDFDocument alloc] initWithData:roundTripData] : nil;
+    if (finalDocument == nil) {
+        finalDocument = combinedDocument;
     }
-    return document;
+    (void)finalDocument.string;
+
+    if (outDrawnRects) {
+        *outDrawnRects = [self measuredRectsForItems:items inDocument:finalDocument];
+    }
+
+    return finalDocument;
+}
+
+/**
+ * Measures the GROUND-TRUTH rect (PDF/bottom-left coordinates) for every
+ * entry in `items` by locating its drawn text in the already-assembled
+ * `document` via `-findString:withOptions:`, exactly as the engine under
+ * test does. Results are returned in the same order as `items`.
+ *
+ * When the same text is drawn more than once on the same page (e.g. two
+ * identical TOC entries), occurrences are matched to items in draw order:
+ * the Nth item requesting a given (text, pageIndex) pair is matched to the
+ * Nth matching selection found on that page, which mirrors the vertical
+ * stacking order the items were drawn in (and the order PDFKit's own text
+ * extraction reports them, since it works out reading order top-to-bottom).
+ */
+- (NSArray<NSValue *> *)measuredRectsForItems:(NSArray<MPPDFTestDrawItem *> *)items
+                                    inDocument:(PDFDocument *)document
+{
+    NSMutableDictionary<NSString *, NSArray<PDFSelection *> *> *matchesByText = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSNumber *> *consumedOnPage = [NSMutableDictionary dictionary];
+    NSMutableArray<NSValue *> *rects = [NSMutableArray arrayWithCapacity:items.count];
+
+    for (MPPDFTestDrawItem *item in items) {
+        NSArray<PDFSelection *> *matches = matchesByText[item.text];
+        if (matches == nil) {
+            matches = [document findString:item.text withOptions:0] ?: @[];
+            matchesByText[item.text] = matches;
+        }
+
+        NSMutableArray<PDFSelection *> *onThisPage = [NSMutableArray array];
+        for (PDFSelection *selection in matches) {
+            NSArray<PDFPage *> *pages = selection.pages;
+            if (pages.count == 0) {
+                continue;
+            }
+            PDFPage *page = pages.firstObject;
+            if (page != nil && [document indexForPage:page] == item.pageIndex) {
+                [onThisPage addObject:selection];
+            }
+        }
+
+        NSString *counterKey = [NSString stringWithFormat:@"%@|%lu", item.text,
+                                 (unsigned long)item.pageIndex];
+        NSUInteger occurrenceIndex = consumedOnPage[counterKey].unsignedIntegerValue;
+        consumedOnPage[counterKey] = @(occurrenceIndex + 1);
+
+        CGRect rect = CGRectZero;
+        if (occurrenceIndex < onThisPage.count) {
+            PDFSelection *selection = onThisPage[occurrenceIndex];
+            PDFPage *page = selection.pages.firstObject;
+            rect = NSRectToCGRect([selection boundsForPage:page]);
+        } else {
+            XCTFail(@"Could not locate drawn text '%@' on fixture page %lu via findString: -- "
+                    @"the fixture's text may not be searchable", item.text, (unsigned long)item.pageIndex);
+        }
+
+        [rects addObject:[NSValue valueWithRect:NSRectFromCGRect(rect)]];
+    }
+
+    return rects;
 }
 
 /**
@@ -277,10 +365,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  * pages 1 and 2 respectively. After injection, page 0 must carry exactly 2
  * link annotations, each a real PDFActionGoTo landing on the matching
  * heading page at (approximately) the top of the heading's rect.
- *
- * FAILS AGAINST THE STUB: the stub always returns 0 and adds no
- * annotations, so `added == 2` and `tocAnnotations.count == 2` both fail
- * immediately.
  */
 - (void)testHappyPathInjectsClickableLinksToCorrectHeadingPages
 {
@@ -361,11 +445,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  * Two body headings share identical text ("Dup", same slug "dup") on
  * pages 1 and 2. The single TOC link targeting "dup" must resolve to the
  * FIRST body occurrence (page 1), per the collision rule.
- *
- * FAILS AGAINST THE STUB: `added == 0` (expected 1), so the annotation
- * count assertion fails immediately; the destination-page assertion is
- * never even reached against a correct implementation's wrong answer
- * because the stub produces no annotation to inspect at all.
  */
 - (void)testDuplicateHeadingTextResolvesToFirstBodyOccurrence
 {
@@ -421,11 +500,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  *     SKIP this link rather than search for "".
  * None of the unresolved cases may add an annotation, throw, or perturb
  * the one valid link's annotation.
- *
- * FAILS AGAINST THE STUB: `added == 0` (expected 1) and
- * `totalLinkAnnotationsInDocument: == 0` (expected 1), because the stub
- * never adds the one annotation that a correct implementation must
- * produce for the resolvable "Real" link.
  */
 - (void)testUnmatchedAndUnfoundLinksProduceNoAnnotationWithoutPerturbingValidOnes
 {
@@ -483,16 +557,9 @@ static const CGFloat kMPTestTolerance = 2.0;
  * (b) A genuinely empty (zero-page) PDFDocument, even given non-empty
  *     links/headings, must add zero annotations and must not throw.
  *
- * NOTE ON NON-VACUITY: unlike tests 1-3/5/6, this test's expected outcome
- * (0 annotations added) is exactly what the no-op stub already always
- * returns for ANY input -- there is no way for a genuinely correct
- * no-op assertion to fail against a function that is unconditionally a
- * no-op. This test therefore currently PASSES against the stub; it is
- * still valuable as a regression guard once the real engine is
- * implemented (to catch a future bug where empty input spuriously
- * produces annotations), but it does not by itself prove the stub is
- * incomplete. See the final report for this documented, unavoidable
- * exception.
+ * This is a regression guard for the engine's early no-op guards (an empty
+ * `links` array, or a zero-page document), so that a future change can
+ * never make either case spuriously produce annotations.
  */
 - (void)testEmptyLinksAndEmptyDocumentAreSafeNoOps
 {
@@ -532,8 +599,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  * document-order fallback (design §4 Step5(ii)) must still inject an
  * annotation, since height alone cannot distinguish heading from TOC/body
  * text here.
- *
- * FAILS AGAINST THE STUB: `added == 0` (expected 1).
  */
 - (void)testSameSizeHeadingStillResolvesViaDocumentOrderFallback
 {
@@ -581,17 +646,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  * `height > hSource` test correctly steps over it and promotes the
  * page-2, 24pt heading -- the first (and only) body occurrence that is
  * actually taller than the TOC entry.
- *
- * Before the fix, this fixture drew the TOC entry at 12pt but the
- * preceding prose at 14pt, so a CORRECT implementation would have
- * legitimately resolved to the (14pt > 12pt) prose on page 1 -- the
- * opposite of what the test asserted. That contradicted the algorithm and
- * has been corrected here.
- *
- * FAILS AGAINST THE STUB: `added == 0` (expected 1); a correct
- * implementation's destination-page assertion (page 2) is also something
- * the no-op stub can never produce, since it never adds an annotation to
- * inspect at all.
  */
 - (void)testHeightPromotesRealHeadingOverPrecedingSameTextProse
 {
@@ -641,10 +695,6 @@ static const CGFloat kMPTestTolerance = 2.0;
  * Assert: exactly 2 link annotations are added, one anchored at each of
  * the two distinct TOC source rects, and BOTH resolve to the identical
  * destination (same page and same point) -- the sole "Intro" heading.
- *
- * FAILS AGAINST THE STUB: `added == 0` (expected 2); the stub adds no
- * annotations at all, so neither the count nor the shared-destination
- * assertions can be satisfied.
  */
 - (void)testMultipleLinksToSameSlugShareFirstMatchDestination
 {
@@ -745,12 +795,9 @@ static const CGFloat kMPTestTolerance = 2.0;
  *
  * Assert: 0 annotations added, no throw.
  *
- * NOTE ON NON-VACUITY (like test 4): this expected outcome (0 annotations)
- * is exactly what the unconditional no-op stub already always returns, so
- * this assertion CANNOT fail against the stub. It is included as a
- * regression guard for the real engine's bodyGroup-empty branch (per the
- * task's documented, unavoidable exception for this class of test), not
- * as stub-refuting coverage.
+ * Like test 4, this expected outcome (0 annotations) is a regression guard
+ * for the engine's bodyGroup-empty skip branch, not a count that varies
+ * with the implementation.
  */
 - (void)testBodyGroupEmptySkipsLinkWithoutThrowing
 {
@@ -773,6 +820,108 @@ static const CGFloat kMPTestTolerance = 2.0;
                   @"must be skipped, not crash or partially annotate");
     XCTAssertEqual([self totalLinkAnnotationsInDocument:document], (NSUInteger)0,
                   @"No annotation should be added anywhere in the document");
+}
+
+#pragma mark - Test 9: Blank linkText Is Skipped
+
+/**
+ * A link with a BLANK linkText (empty string) alongside a resolvable
+ * "Real" link targeting the same, genuinely-drawn "Real" heading. Per
+ * design §4 Step2/Step4, MPPDFAnchorStringIsBlank(link.linkText) must
+ * short-circuit before any findString: lookup is attempted for that link,
+ * so it can never be searched for, never throws, and never adds an
+ * annotation -- while the other, valid link is completely unaffected.
+ */
+- (void)testBlankLinkTextIsSkippedWithoutAffectingValidLink
+{
+    PDFDocument *document = [self fixtureWithTOC:@[@"Real"]
+                                     bodyHeadings:@[@"Real"]
+                                         tocRects:NULL
+                                     headingRects:NULL];
+
+    NSArray<MPPDFAnchorLink *> *links = @[
+        [MPPDFAnchorLink linkWithText:@"" slug:@"real"],
+        [MPPDFAnchorLink linkWithText:@"Real" slug:@"real"],
+    ];
+    NSArray<MPPDFAnchorHeading *> *headings = @[
+        [MPPDFAnchorHeading headingWithSlug:@"real" text:@"Real"],
+    ];
+
+    __block NSUInteger added = 99;
+    XCTAssertNoThrow(added = [MPPDFAnchorInjector injectLinksIntoDocument:document
+                                                                      links:links
+                                                                   headings:headings]);
+    XCTAssertEqual(added, (NSUInteger)1,
+                  @"The blank-linkText link must be silently skipped; the resolvable 'Real' link "
+                  @"must still produce exactly one annotation");
+    XCTAssertEqual([self totalLinkAnnotationsInDocument:document], (NSUInteger)1,
+                  @"Only the valid link's annotation should exist anywhere in the document");
+
+    PDFPage *tocPage = [document pageAtIndex:0];
+    NSArray<PDFAnnotation *> *tocAnnotations = [self linkAnnotationsOnPage:tocPage];
+    XCTAssertEqual(tocAnnotations.count, (NSUInteger)1);
+    if (tocAnnotations.count == 1 && [tocAnnotations.firstObject.action isKindOfClass:[PDFActionGoTo class]]) {
+        PDFActionGoTo *goTo = (PDFActionGoTo *)tocAnnotations.firstObject.action;
+        XCTAssertEqual([document indexForPage:goTo.destination.page], (NSUInteger)1,
+                      @"The valid 'Real' link must still resolve to the correct heading page");
+    }
+}
+
+#pragma mark - Test 10: Partial TOC-Occurrence Mismatch
+
+/**
+ * Two MPPDFAnchorLinks share the SAME linkText ("Repeat"), but the PDF
+ * contains only ONE drawn occurrence of that text (a single TOC-style
+ * entry on page 0) -- there is no second "Repeat" anywhere in the document.
+ * Both links target a slug that resolves to a genuinely-drawn heading
+ * ("Target" on page 1), so the shared destText is resolvable; the only
+ * thing limiting the second link is the shortage of source occurrences.
+ *
+ * Per design §4 Step4, tocAvailable = MIN(tocCount("Repeat")=2,
+ * allMatches.count=1) = 1, so only ONE TOC selection exists for "Repeat".
+ * The first link (k=0) binds to it and resolves normally. The second link
+ * (k=1) hits `k >= tocSelections.count` and must be silently skipped: no
+ * throw, no annotation, and the first link's annotation must be completely
+ * unaffected.
+ */
+- (void)testSecondLinkWithSharedTextButNoSecondOccurrenceIsSkipped
+{
+    NSMutableArray<MPPDFTestDrawItem *> *items = [NSMutableArray array];
+    [items addObject:[MPPDFTestDrawItem itemWithText:@"Repeat" fontSize:12.0 pageIndex:0
+                                        topLeftPoint:CGPointMake(72, 72)]];   // sole "Repeat" occurrence
+    [items addObject:[MPPDFTestDrawItem itemWithText:@"Target" fontSize:24.0 pageIndex:1
+                                        topLeftPoint:CGPointMake(72, 72)]];   // the heading both links target
+
+    NSArray<NSValue *> *rects = nil;
+    PDFDocument *document = [self documentFromDrawItems:items drawnRects:&rects];
+
+    NSArray<MPPDFAnchorLink *> *links = @[
+        [MPPDFAnchorLink linkWithText:@"Repeat" slug:@"target-heading"],
+        [MPPDFAnchorLink linkWithText:@"Repeat" slug:@"target-heading"],
+    ];
+    NSArray<MPPDFAnchorHeading *> *headings = @[
+        [MPPDFAnchorHeading headingWithSlug:@"target-heading" text:@"Target"],
+    ];
+
+    __block NSUInteger added = 99;
+    XCTAssertNoThrow(added = [MPPDFAnchorInjector injectLinksIntoDocument:document
+                                                                      links:links
+                                                                   headings:headings]);
+    XCTAssertEqual(added, (NSUInteger)1,
+                  @"Only the first of two links sharing linkText 'Repeat' can be matched to the "
+                  @"single drawn TOC occurrence; the second must be silently skipped");
+    XCTAssertEqual([self totalLinkAnnotationsInDocument:document], (NSUInteger)1,
+                  @"Exactly one annotation total: the skipped second link must not add anything");
+
+    PDFPage *tocPage = [document pageAtIndex:0];
+    NSArray<PDFAnnotation *> *tocAnnotations = [self linkAnnotationsOnPage:tocPage];
+    XCTAssertEqual(tocAnnotations.count, (NSUInteger)1,
+                  @"Exactly one annotation for 'Repeat' should land on the page holding its sole occurrence");
+    if (tocAnnotations.count == 1 && [tocAnnotations.firstObject.action isKindOfClass:[PDFActionGoTo class]]) {
+        PDFActionGoTo *goTo = (PDFActionGoTo *)tocAnnotations.firstObject.action;
+        XCTAssertEqual([document indexForPage:goTo.destination.page], (NSUInteger)1,
+                      @"The one resolved link must still land on the correct heading page");
+    }
 }
 
 @end
