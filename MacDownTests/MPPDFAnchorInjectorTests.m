@@ -7,16 +7,18 @@
 //  Anchor Links in Exported PDF").
 //
 //  Fixture PDFs are generated in-test with real, selectable text. The
-//  entire multi-page fixture is drawn in a SINGLE pass into ONE
-//  CGPDFContext (see -documentFromDrawItems:drawnRects: below): each page
-//  is opened with CGPDFContextBeginPage, an NSGraphicsContext wrapping
-//  that CGContext is made current, every item destined for that page is
-//  drawn via -[NSAttributedString drawAtPoint:] in Helvetica (a standard
-//  base-14 PDF font with reliable ToUnicode/encoding support), and the
-//  page is closed with CGPDFContextEndPage. There is no cross-document
-//  merge anywhere: the finished PDF data is loaded exactly once via
-//  -[PDFDocument initWithData:], so every page -- not just page 0 --
-//  carries genuinely searchable text that -[PDFDocument
+//  entire multi-page fixture is drawn into ONE tall NSView (see
+//  -documentFromDrawItems:drawnRects: below and MPPDFTestPrintView) which
+//  is handed to NSPrintOperation -- the exact same AppKit printing path
+//  MacDown's real "Export to PDF" feature uses. AppKit's automatic
+//  vertical pagination slices that single tall view into one printed page
+//  per page-height, and (unlike a raw, hand-rolled multi-page
+//  CGPDFContext, which was found to embed genuinely searchable text on
+//  only its FIRST page) this path reliably embeds correct, portable
+//  ToUnicode/encoding text on EVERY resulting page. There is no
+//  cross-document merge anywhere: the finished PDF file is loaded exactly
+//  once via -[PDFDocument initWithURL:], so every page -- not just page 0
+//  -- carries genuinely searchable text that -[PDFDocument
 //  findString:withOptions:] can locate. No WebView is involved anywhere in
 //  this file.
 //
@@ -87,6 +89,111 @@ static const CGFloat kMPTestPageHeight = 792.0;
 static const CGFloat kMPTestTolerance = 2.0;
 
 
+#pragma mark - Print-Based Fixture View
+
+/**
+ * A single, TALL NSView holding every draw item for a whole fixture
+ * document, stacked page-by-page from top to bottom: its frame is
+ * `pageWidth` wide and `pageHeight * pageCount` tall.
+ *
+ * -documentFromDrawItems:drawnRects: hands this view to an
+ * NSPrintOperation configured with an NSPrintInfo whose paper size is
+ * exactly `pageWidth` x `pageHeight` and whose vertical pagination is
+ * automatic. That is exactly the AppKit printing path MacDown's own PDF
+ * export feature uses, and AppKit reliably slices this one tall view into
+ * `pageCount` separate printed pages, top-to-bottom -- unlike a raw,
+ * hand-rolled multi-page CGPDFContext, which was found (across 3 CI runs)
+ * to embed genuinely `-findString:withOptions:`-searchable text on only
+ * its FIRST page.
+ *
+ * The view is FLIPPED (`-isFlipped` returns YES), so (0, 0) is its
+ * top-left corner and y grows downward -- both across the whole tall view
+ * and within each `pageHeight`-tall slice. Each MPPDFTestDrawItem's own
+ * `topLeftPoint` is already specified in that same top-left, y-down
+ * "reading order" convention (see MPPDFTestDrawItem's header comment), so
+ * an item destined for `pageIndex` k is placed with a single addition:
+ *
+ *     viewY = k * pageHeight + topLeftPoint.y
+ *     viewX = topLeftPoint.x
+ *
+ * Because the print paper is exactly `pageHeight` tall and pagination is
+ * automatic/vertical-only, AppKit is guaranteed to cut the tall view into
+ * slices `[k * pageHeight, (k + 1) * pageHeight)` -- so every item whose
+ * `viewY` (as computed above) falls in slice k is printed on (0-indexed)
+ * page k, i.e. exactly the page the test author requested via
+ * `item.pageIndex`.
+ *
+ * In a FLIPPED view, `-[NSAttributedString drawAtPoint:]` places the
+ * string's TOP-left corner at the given point and the glyphs flow
+ * downward from there -- matching `topLeftPoint`'s own top-left, y-down
+ * convention exactly, so (unlike the old CGPDFContext path, which had to
+ * hand-convert top-left input into the PDF's native bottom-left/y-up space
+ * using measured font metrics) no coordinate flip or font-metrics
+ * prediction is needed here at all.
+ */
+@interface MPPDFTestPrintView : NSView
+- (instancetype)initWithItems:(NSArray<MPPDFTestDrawItem *> *)items
+                    pageWidth:(CGFloat)pageWidth
+                   pageHeight:(CGFloat)pageHeight
+                    pageCount:(NSUInteger)pageCount;
+@end
+
+@implementation MPPDFTestPrintView {
+    NSArray<MPPDFTestDrawItem *> *_items;
+    CGFloat _pageHeight;
+}
+
+- (instancetype)initWithItems:(NSArray<MPPDFTestDrawItem *> *)items
+                    pageWidth:(CGFloat)pageWidth
+                   pageHeight:(CGFloat)pageHeight
+                    pageCount:(NSUInteger)pageCount
+{
+    NSRect frame = NSMakeRect(0, 0, pageWidth, pageHeight * (CGFloat)pageCount);
+    self = [super initWithFrame:frame];
+    if (self) {
+        _items = [items copy];
+        _pageHeight = pageHeight;
+    }
+    return self;
+}
+
+- (BOOL)isFlipped
+{
+    return YES;
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    [[NSColor whiteColor] setFill];
+    NSRectFill(self.bounds);
+
+    for (MPPDFTestDrawItem *item in _items) {
+        // Use a standard PDF base-14 font (Helvetica) rather than the
+        // private San Francisco system UI font: Helvetica is always
+        // present on macOS and reliably carries a correct
+        // ToUnicode/encoding mapping when printed to PDF, keeping the
+        // drawn glyphs text-extractable via
+        // -[PDFDocument findString:withOptions:].
+        NSFont *font = [NSFont fontWithName:@"Helvetica" size:item.fontSize];
+        if (!font) {
+            font = [NSFont userFontOfSize:item.fontSize]; // ultra-safe fallback
+        }
+        NSDictionary *attrs = @{NSFontAttributeName: font};
+        NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
+                                                                          attributes:attrs];
+
+        // See the class comment above: topLeftPoint is already top-left,
+        // y-down within its own page, so placing it in this flipped tall
+        // view is just an offset by that page's slice of pageHeight.
+        CGFloat viewX = item.topLeftPoint.x;
+        CGFloat viewY = (CGFloat)item.pageIndex * _pageHeight + item.topLeftPoint.y;
+        [attrString drawAtPoint:NSMakePoint(viewX, viewY)];
+    }
+}
+
+@end
+
+
 #pragma mark - Test Case
 
 @interface MPPDFAnchorInjectorTests : XCTestCase
@@ -102,27 +209,26 @@ static const CGFloat kMPTestTolerance = 2.0;
  * (US Letter) PDF document, one page per distinct pageIndex referenced by
  * `items`.
  *
- * The WHOLE multi-page document is produced in a SINGLE pass into ONE
- * CGPDFContext (writing into an NSMutableData via a CGDataConsumer) --
- * there is no per-page NSView rendering and no cross-document
- * `-insertPage:` merge anywhere. For each page, `CGPDFContextBeginPage` is
- * called with the shared 612x792 media box, an NSGraphicsContext wrapping
- * that CGContext is pushed as the current graphics context (unflipped, so
- * (0,0) is the bottom-left corner -- the same convention as a PDF page),
- * every item destined for that page is drawn via `-[NSAttributedString
- * drawAtPoint:]` in Helvetica, and the page is closed with
- * `CGPDFContextEndPage`. Once every page has been drawn, the context is
- * closed and the finished PDF bytes are loaded exactly once via
- * `-[PDFDocument initWithData:]`.
+ * The WHOLE multi-page document is produced by printing ONE tall
+ * MPPDFTestPrintView (see its class comment above) through a real
+ * NSPrintOperation -- the same AppKit printing path MacDown's own PDF
+ * export feature uses -- rather than by hand-assembling a CGPDFContext or
+ * merging separate per-page PDFDocuments via `-insertPage:`. The
+ * NSPrintInfo's paper size is fixed at `kMPTestPageWidth` x
+ * `kMPTestPageHeight` with all margins zeroed, horizontal pagination set
+ * to fit the page width, and vertical pagination left automatic, so
+ * AppKit auto-paginates the tall view into one printed page per
+ * `kMPTestPageHeight` slice. The operation is run synchronously
+ * (`-runOperation`), saving directly to a unique temp file, which is then
+ * loaded exactly once via `-[PDFDocument initWithURL:]` and removed.
  *
- * Because every page's glyphs are emitted through the same single-pass
- * CGPDFContext (rather than being assembled by copying PDFPage objects
- * between separate PDFDocuments via `-insertPage:`, which is what dropped
- * searchable text on pages 1+ previously), and because Helvetica is one of
- * the 14 standard PDF fonts with reliable, portable ToUnicode/encoding
- * support (unlike the private San Francisco system font), the resulting
- * text is `-findString:withOptions:`-searchable on EVERY page, not just
- * page 0.
+ * Because this is the exact printing path known to embed correct,
+ * portable ToUnicode/encoding text on EVERY page (unlike a raw multi-page
+ * CGPDFContext, which was found across 3 CI runs to only keep page 0
+ * genuinely searchable), and because Helvetica is one of the 14 standard
+ * PDF fonts with reliable, portable ToUnicode/encoding support (unlike the
+ * private San Francisco system font), the resulting text is
+ * `-findString:withOptions:`-searchable on EVERY page, not just page 0.
  *
  * After assembly, the document's `.string` is force-accessed (and the
  * document is round-tripped once through `-dataRepresentation` /
@@ -150,74 +256,43 @@ static const CGFloat kMPTestTolerance = 2.0;
         pageCount = MAX(pageCount, item.pageIndex + 1);
     }
 
-    CGRect mediaBox = CGRectMake(0, 0, kMPTestPageWidth, kMPTestPageHeight);
+    MPPDFTestPrintView *printView = [[MPPDFTestPrintView alloc] initWithItems:items
+                                                                     pageWidth:kMPTestPageWidth
+                                                                    pageHeight:kMPTestPageHeight
+                                                                     pageCount:pageCount];
 
-    NSMutableData *pdfData = [NSMutableData data];
-    CGDataConsumerRef consumer = CGDataConsumerCreateWithCFData((__bridge CFMutableDataRef)pdfData);
-    XCTAssertTrue(consumer != NULL, @"Failed to create a CGDataConsumer for the fixture PDF");
-    if (consumer == NULL) {
-        return nil;
-    }
+    NSString *tempFileName = [NSString stringWithFormat:@"MPPDFAnchorInjectorTests-%@.pdf",
+                               [[NSProcessInfo processInfo] globallyUniqueString]];
+    NSURL *tempURL = [NSURL fileURLWithPath:[NSTemporaryDirectory()
+                                              stringByAppendingPathComponent:tempFileName]];
 
-    CGContextRef pdfContext = CGPDFContextCreate(consumer, &mediaBox, NULL);
-    CGDataConsumerRelease(consumer);
-    XCTAssertTrue(pdfContext != NULL, @"Failed to create the single fixture CGPDFContext");
-    if (pdfContext == NULL) {
-        return nil;
-    }
+    NSPrintInfo *printInfo = [[NSPrintInfo alloc] init];
+    printInfo.paperSize = NSMakeSize(kMPTestPageWidth, kMPTestPageHeight);
+    printInfo.topMargin = 0;
+    printInfo.bottomMargin = 0;
+    printInfo.leftMargin = 0;
+    printInfo.rightMargin = 0;
+    printInfo.horizontalPagination = NSFitPagination;
+    printInfo.verticalPagination = NSAutoPagination;
+    printInfo.jobDisposition = NSPrintSaveJob;
+    [printInfo.dictionary setObject:tempURL forKey:NSPrintJobSavingURL];
 
-    for (NSUInteger pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-        CGPDFContextBeginPage(pdfContext, NULL);
+    NSPrintOperation *printOperation = [NSPrintOperation printOperationWithView:printView
+                                                                       printInfo:printInfo];
+    printOperation.showsPrintPanel = NO;
+    printOperation.showsProgressPanel = NO;
 
-        NSGraphicsContext *previousContext = [NSGraphicsContext currentContext];
-        // `flipped:NO` matches the PDF page's own native bottom-left,
-        // y-up coordinate space, so each item's precomputed bottom-left
-        // draw point can be used as-is via -[NSAttributedString drawAtPoint:].
-        NSGraphicsContext *pageGraphicsContext = [NSGraphicsContext graphicsContextWithCGContext:pdfContext
-                                                                                          flipped:NO];
-        [NSGraphicsContext setCurrentContext:pageGraphicsContext];
+    BOOL ranSuccessfully = [printOperation runOperation];
+    XCTAssertTrue(ranSuccessfully, @"NSPrintOperation failed to run while generating the fixture PDF");
 
-        [[NSColor whiteColor] setFill];
-        NSRectFill(NSRectFromCGRect(mediaBox));
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    XCTAssertTrue([fileManager fileExistsAtPath:tempURL.path],
+                  @"NSPrintOperation should have synchronously saved the fixture PDF to disk");
 
-        for (MPPDFTestDrawItem *item in items) {
-            if (item.pageIndex != pageIndex) {
-                continue;
-            }
+    PDFDocument *document = [[PDFDocument alloc] initWithURL:tempURL];
+    [fileManager removeItemAtPath:tempURL.path error:NULL];
 
-            // Use a standard PDF base-14 font (Helvetica) rather than the
-            // private San Francisco system UI font: Helvetica is always
-            // present on macOS and reliably carries a correct
-            // ToUnicode/encoding mapping when drawn into a CGPDFContext,
-            // keeping the drawn glyphs text-extractable via
-            // -[PDFDocument findString:withOptions:].
-            NSFont *font = [NSFont fontWithName:@"Helvetica" size:item.fontSize];
-            if (!font) {
-                font = [NSFont userFontOfSize:item.fontSize]; // ultra-safe fallback
-            }
-            NSDictionary *attrs = @{NSFontAttributeName: font};
-            NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
-                                                                              attributes:attrs];
-            NSSize measured = attrString.size;
-
-            // Top-left -> bottom-left conversion: for a page of height H,
-            // an item whose origin is `topLeftPoint` (y grows downward) is
-            // drawn with its bottom-left corner at
-            // (x, H - topLeftPoint.y - measuredHeight).
-            CGFloat pdfX = item.topLeftPoint.x;
-            CGFloat pdfY = kMPTestPageHeight - item.topLeftPoint.y - measured.height;
-            [attrString drawAtPoint:NSMakePoint(pdfX, pdfY)];
-        }
-
-        [NSGraphicsContext setCurrentContext:previousContext];
-        CGPDFContextEndPage(pdfContext);
-    }
-
-    CGPDFContextClose(pdfContext);
-    CGContextRelease(pdfContext);
-
-    PDFDocument *document = [[PDFDocument alloc] initWithData:pdfData];
-    XCTAssertNotNil(document, @"Failed to load the single-pass generated fixture PDF data");
+    XCTAssertNotNil(document, @"Failed to load the NSPrintOperation-generated fixture PDF");
     if (document == nil) {
         return nil;
     }
@@ -226,7 +301,7 @@ static const CGFloat kMPTestTolerance = 2.0;
                   @"Fixture should have one page per requested pageIndex");
 
     // Defensively force a full, synchronous text-index parse -- both on the
-    // freshly-generated document and again after a round trip through
+    // freshly-loaded document and again after a round trip through
     // -dataRepresentation/-initWithData: -- before this fixture is handed
     // to the engine or measured below.
     (void)document.string;
