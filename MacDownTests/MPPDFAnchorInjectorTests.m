@@ -256,11 +256,6 @@ static const CGFloat kMPTestTolerance = 2.0;
         pageCount = MAX(pageCount, item.pageIndex + 1);
     }
 
-    MPPDFTestPrintView *printView = [[MPPDFTestPrintView alloc] initWithItems:items
-                                                                     pageWidth:kMPTestPageWidth
-                                                                    pageHeight:kMPTestPageHeight
-                                                                     pageCount:pageCount];
-
     NSString *tempFileName = [NSString stringWithFormat:@"MPPDFAnchorInjectorTests-%@.pdf",
                                [[NSProcessInfo processInfo] globallyUniqueString]];
     NSURL *tempURL = [NSURL fileURLWithPath:[NSTemporaryDirectory()
@@ -276,6 +271,26 @@ static const CGFloat kMPTestTolerance = 2.0;
     printInfo.verticalPagination = NSAutoPagination;
     printInfo.jobDisposition = NSPrintSaveJob;
     [printInfo.dictionary setObject:tempURL forKey:NSPrintJobSavingURL];
+
+    // AppKit auto-paginates the tall view against the printer's IMAGEABLE
+    // page height, not the nominal paper height: the virtual "Save as PDF"
+    // printer imposes small fixed unprintable margins that zeroing the user
+    // margins does not remove, so the imageable height is a few points less
+    // than kMPTestPageHeight. Sizing the view by the nominal 792pt made the
+    // view an exact multiple of 792, but AppKit sliced it against the shorter
+    // imageable height and so produced pageCount+1 pages (off by exactly one).
+    // Size the view (and place items) by the ACTUAL imageable height so the
+    // tall view is exactly pageCount imageable-slices tall -> exactly pageCount
+    // pages, and each pageIndex-k item lands on printed page k.
+    CGFloat effectivePageHeight = printInfo.imageablePageBounds.size.height;
+    if (effectivePageHeight <= 0) {
+        effectivePageHeight = kMPTestPageHeight;
+    }
+
+    MPPDFTestPrintView *printView = [[MPPDFTestPrintView alloc] initWithItems:items
+                                                                     pageWidth:kMPTestPageWidth
+                                                                    pageHeight:effectivePageHeight
+                                                                     pageCount:pageCount];
 
     NSPrintOperation *printOperation = [NSPrintOperation printOperationWithView:printView
                                                                        printInfo:printInfo];
