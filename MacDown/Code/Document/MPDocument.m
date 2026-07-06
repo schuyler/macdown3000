@@ -9,8 +9,7 @@
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
 #import <JJPluralForm/JJPluralForm.h>
-#import <hoedown/html.h>
-#import "hoedown_html_patch.h"
+#import <cmark-gfm/mdmark.h>
 #import "HGMarkdownHighlighter.h"
 #import "MPUtilities.h"
 #import "MPAutosaving.h"
@@ -135,34 +134,31 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 @end
 
 
-@implementation MPPreferences (Hoedown)
+// Preference-to-flag mapping for the cmark-gfm (mdmark) pipeline.
+//
+// Preferences with no cmark-gfm equivalent are no longer mapped (issue #77
+// decision D-9): extensionFencedCode (fenced code is core CommonMark,
+// always on), extensionIntraEmphasis (CommonMark fixes the intra-word
+// emphasis rules: `*` always applies, `_` never does), extensionQuote,
+// extensionSuperscript and extensionUnderline (dropped; see CHANGELOG).
+@implementation MPPreferences (Markdown)
 - (int)extensionFlags
 {
     int flags = 0;
     if (self.extensionAutolink)
-        flags |= HOEDOWN_EXT_AUTOLINK;
-    if (self.extensionFencedCode)
-        flags |= HOEDOWN_EXT_FENCED_CODE;
+        flags |= MDMARK_EXT_AUTOLINK;
     if (self.extensionFootnotes)
-        flags |= HOEDOWN_EXT_FOOTNOTES;
+        flags |= MDMARK_EXT_FOOTNOTES;
     if (self.extensionHighlight)
-        flags |= HOEDOWN_EXT_HIGHLIGHT;
-    if (!self.extensionIntraEmphasis)
-        flags |= HOEDOWN_EXT_NO_INTRA_EMPHASIS;
-    if (self.extensionQuote)
-        flags |= HOEDOWN_EXT_QUOTE;
+        flags |= MDMARK_EXT_HIGHLIGHT;
     if (self.extensionStrikethough)
-        flags |= HOEDOWN_EXT_STRIKETHROUGH;
-    if (self.extensionSuperscript)
-        flags |= HOEDOWN_EXT_SUPERSCRIPT;
+        flags |= MDMARK_EXT_STRIKETHROUGH;
     if (self.extensionTables)
-        flags |= HOEDOWN_EXT_TABLES;
-    if (self.extensionUnderline)
-        flags |= HOEDOWN_EXT_UNDERLINE;
+        flags |= MDMARK_EXT_TABLES;
     if (self.htmlMathJax)
-        flags |= HOEDOWN_EXT_MATH;
+        flags |= MDMARK_EXT_MATH;
     if (self.htmlMathJaxInlineDollar)
-        flags |= HOEDOWN_EXT_MATH_EXPLICIT;
+        flags |= MDMARK_EXT_MATH_EXPLICIT;
     return flags;
 }
 
@@ -170,13 +166,13 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 {
     int flags = 0;
     if (self.htmlTaskList)
-        flags |= HOEDOWN_HTML_USE_TASK_LIST;
+        flags |= MDMARK_HTML_USE_TASK_LIST;
     if (self.htmlLineNumbers)
-        flags |= HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS;
+        flags |= MDMARK_HTML_BLOCKCODE_LINE_NUMBERS;
     if (self.htmlHardWrap)
-        flags |= HOEDOWN_HTML_HARD_WRAP;
+        flags |= MDMARK_HTML_HARD_WRAP;
     if (self.htmlCodeBlockAccessory == MPCodeBlockAccessoryCustom)
-        flags |= HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+        flags |= MDMARK_HTML_BLOCKCODE_INFORMATION;
     return flags;
 }
 @end
@@ -3779,9 +3775,11 @@ to link outside that scope.", \
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
  * Returns the modified markdown, or the original if index is out of bounds.
  *
- * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
- * rendering behavior. Nested list items get lower indices than their parent.
- * Related to GitHub issue #269.
+ * Indices are assigned in document order, matching the mdmark (cmark-gfm)
+ * renderer, which emits data-checkbox-index top-down as items appear in the
+ * source. (hoedown assigned them child-before-parent because its callbacks
+ * fired bottom-up; that reordering is gone with the parser migration.)
+ * Related to GitHub issues #269 and #77.
  */
 + (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
 {
@@ -3851,49 +3849,13 @@ to link outside that scope.", \
     if (checkboxes.count == 0)
         return markdown;
 
-    // Compute depth-first order using a stack-based algorithm.
-    // This matches hoedown's behavior where nested items are rendered before their parent.
-    // Algorithm: For each checkbox, pop stack items with indent >= current indent, then push.
-    NSMutableArray *stack = [NSMutableArray array];
-    NSMutableArray *depthFirstOrder = [NSMutableArray array];
-
-    for (NSUInteger i = 0; i < checkboxes.count; i++)
-    {
-        NSDictionary *current = checkboxes[i];
-        NSUInteger currentIndent = [current[@"indent"] unsignedIntegerValue];
-
-        // Pop items from stack that are NOT parents of this item
-        while (stack.count > 0)
-        {
-            NSDictionary *top = stack.lastObject;
-            NSUInteger topIndent = [top[@"indent"] unsignedIntegerValue];
-            if (topIndent >= currentIndent)
-            {
-                [depthFirstOrder addObject:top];
-                [stack removeLastObject];
-            }
-            else
-            {
-                break;
-            }
-        }
-
-        [stack addObject:current];
-    }
-
-    // Pop remaining items from stack
-    while (stack.count > 0)
-    {
-        [depthFirstOrder addObject:stack.lastObject];
-        [stack removeLastObject];
-    }
-
     // Check if index is valid
-    if (index >= depthFirstOrder.count)
+    if (index >= checkboxes.count)
         return markdown;
 
-    // Find the target checkbox in depth-first order
-    NSDictionary *target = depthFirstOrder[index];
+    // The renderer assigns indices in document order, so the Nth rendered
+    // checkbox is the Nth source match.
+    NSDictionary *target = checkboxes[index];
     NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
 
     NSString *currentState = [markdown substringWithRange:checkboxContentRange];

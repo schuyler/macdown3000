@@ -7,9 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <hoedown/document.h>
+#import <cmark-gfm/mdmark.h>
 #import "MPRendererTestHelpers.h"
-#import "hoedown_html_patch.h"
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -210,7 +209,7 @@
  */
 - (void)testMathInCodeBlocksIgnored
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"mathjax-in-code"

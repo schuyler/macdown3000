@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Replace the Markdown engine: hoedown → cmark-gfm** (#77). MacDown now renders with GitHub's actively-maintained, CommonMark-compliant cmark-gfm (0.29.0.gfm.13, vendored), with a custom renderer preserving MacDown's HTML contract (heading anchor slugs, Prism code-block classes, interactive task lists, `[TOC]`). User-visible improvements: lists can directly follow paragraphs (#34), ordered lists keep their start number (#26 class), adjacent blockquotes stay separate (#27 class), image alt text follows the spec, and the invisible zero-width spaces that the old pipeline leaked into copied code snippets (#37 workaround) are gone. Spec-driven behavior changes to note: ATX headings now require a space after `#`; `~~~` at the start of a line opens a code fence (CommonMark tilde fences) instead of rendering tilde-wrapped text; table alignment is emitted as `align=` attributes; loose/tight list spacing follows CommonMark. SmartyPants now uses cmark's `--smart` typography. The following niche hoedown extensions have no cmark-gfm equivalent and are retired: superscript (`^text`), underline (`_text_` as `<u>`), quote (`"text"` as `<q>`), and the intra-word-emphasis toggle (CommonMark fixes the rules: `*` always applies within words, `_` never does). Highlight (`==mark==`) and TeX math protection (`$…$`/`$$…$$`/`\(…\)`/`\[…\]`) are re-implemented as custom cmark-gfm extensions and keep working.
+
 ### Added
 
 - Show a live word/character/character-no-spaces count for the current editor selection in the count widget, reverting to document totals when nothing is selected (#452)

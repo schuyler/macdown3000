@@ -7,9 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <hoedown/document.h>
+#import <cmark-gfm/mdmark.h>
 #import "MPRendererTestHelpers.h"
-#import "hoedown_html_patch.h"
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -203,7 +202,7 @@
 - (void)testCodeFenced
 {
     // Fenced code blocks require the FENCED_CODE extension
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"code-fenced"
@@ -215,8 +214,8 @@
 {
     // Test fenced code blocks with language tags
     // MacDown adds Prism CSS classes like "language-python"
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     [self verifyGoldenFile:@"code-languages"
             withExtensions:extFlags
@@ -260,7 +259,7 @@
 - (void)testTables
 {
     // Tables require the TABLES extension
-    int extFlags = HOEDOWN_EXT_TABLES;
+    int extFlags = MDMARK_EXT_TABLES;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"tables"
@@ -272,7 +271,7 @@
 {
     // Task lists are MacDown's custom rendering feature
     int extFlags = 0;
-    int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    int rendFlags = MDMARK_HTML_USE_TASK_LIST;
 
     [self verifyGoldenFile:@"task-lists"
             withExtensions:extFlags
@@ -288,7 +287,7 @@
 - (void)testCheckboxHasDataIndex
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Task one\n- [x] Task two";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -303,7 +302,7 @@
 - (void)testUppercaseCheckedCheckboxHasDataIndex
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [X] Done";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -320,7 +319,7 @@
 - (void)testMultipleCheckboxesHaveSequentialIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] First\n- [x] Second\n- [ ] Third\n- [x] Fourth";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -343,7 +342,7 @@
 - (void)testNestedCheckboxesHaveCorrectIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Parent\n  - [x] Child 1\n  - [ ] Child 2\n- [x] Another parent";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -367,7 +366,7 @@
 - (void)testMixedListsOnlyTaskItemsGetIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- Regular item\n- [ ] Task item\n- Another regular\n- [x] Another task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -390,7 +389,7 @@
 - (void)testNumberedTaskListsGetIndices
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"1. [ ] First task\n2. [x] Second task\n3. [ ] Third task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -411,7 +410,7 @@
 - (void)testUppercaseCheckboxRendersChecked
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [X] Capital X task";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -433,7 +432,7 @@
 - (void)testMixedCaseCheckboxesShareIndexSpace
 {
     self.delegate.extensions = 0;
-    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.renderer.rendererFlags = MDMARK_HTML_USE_TASK_LIST;
     self.dataSource.markdown = @"- [ ] Lower unchecked\n- [X] Capital checked\n- [x] Lower checked";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
@@ -450,7 +449,7 @@
 - (void)testStrikethrough
 {
     // Strikethrough requires the STRIKETHROUGH extension
-    int extFlags = HOEDOWN_EXT_STRIKETHROUGH;
+    int extFlags = MDMARK_EXT_STRIKETHROUGH;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"strikethrough"
@@ -461,7 +460,7 @@
 - (void)testAutolinks
 {
     // Autolinks require the AUTOLINK extension
-    int extFlags = HOEDOWN_EXT_AUTOLINK;
+    int extFlags = MDMARK_EXT_AUTOLINK;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"autolinks"
@@ -494,11 +493,11 @@
 - (void)testMixedComplex
 {
     // Complex document with multiple GFM features enabled
-    int extFlags = HOEDOWN_EXT_TABLES |
-                   HOEDOWN_EXT_FENCED_CODE |
-                   HOEDOWN_EXT_AUTOLINK |
-                   HOEDOWN_EXT_STRIKETHROUGH;
-    int rendFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    int extFlags = MDMARK_EXT_TABLES |
+                   0 /* fenced code: core CommonMark */ |
+                   MDMARK_EXT_AUTOLINK |
+                   MDMARK_EXT_STRIKETHROUGH;
+    int rendFlags = MDMARK_HTML_USE_TASK_LIST;
 
     [self verifyGoldenFile:@"mixed-complex"
             withExtensions:extFlags
@@ -508,8 +507,8 @@
 - (void)testEdgeCases
 {
     // Test edge cases like empty input, special characters, etc.
-    int extFlags = HOEDOWN_EXT_TABLES |
-                   HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = MDMARK_EXT_TABLES |
+                   0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"edge-cases"
@@ -517,19 +516,16 @@
              rendererFlags:rendFlags];
 }
 
-#pragma mark - Regression Tests for Known Hoedown Limitations
+#pragma mark - Regression Tests for Historical Parser Limitations
 
 /**
  * Regression test for Issue #34: Lists after colons
  *
- * NOTE: This issue is NOT currently fixed. Hoedown requires blank lines
- * before lists that follow paragraphs. This test documents the current
- * (non-ideal) behavior. Will be resolved by parser modernization (#77).
+ * FIXED by the cmark-gfm migration (#77): lists immediately following a
+ * paragraph now render as proper <ul>/<ol> elements per CommonMark, with
+ * no preprocessor workaround needed.
  *
- * Current behavior: Lists immediately following text with colons render
- * as paragraph text instead of proper <ul> or <ol> elements.
- *
- * Related: Issue #34, PR #70 (reverted)
+ * Related: Issue #34, PR #70 (reverted), Issue #77
  */
 - (void)testRegressionIssue34_ListsAfterColons
 {
@@ -546,15 +542,15 @@
 /**
  * Regression test for Issue #36: Code blocks without blank lines
  *
- * FIXED: The markdown preprocessor now inserts blank lines before fenced
- * code blocks that immediately follow text, ensuring Hoedown recognizes
- * them correctly.
+ * FIXED: cmark-gfm recognizes fenced code blocks that immediately follow
+ * text without any preprocessing (the hoedown-era blank-line insertion
+ * workaround was removed in #77).
  *
- * Related: Issue #36
+ * Related: Issue #36, Issue #77
  */
 - (void)testRegressionIssue36_CodeBlocksWithoutBlankLines
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"regression-issue36"
@@ -565,16 +561,16 @@
 /**
  * Regression test for Issue #37: Square brackets in code blocks
  *
- * FIXED: The markdown preprocessor inserts a zero-width space between
- * ] and : inside fenced code blocks, preventing Hoedown's is_ref() from
- * matching these patterns as reference links.
+ * FIXED: cmark-gfm never scans fenced code block content for reference
+ * links, so "]:" sequences render literally (the hoedown-era zero-width
+ * space injection workaround was removed in #77).
  *
- * Related: Issue #37
+ * Related: Issue #37, Issue #77
  */
 - (void)testRegressionIssue37_SquareBracketsInCode
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     [self verifyGoldenFile:@"regression-issue37"
             withExtensions:extFlags
@@ -584,11 +580,11 @@
 /**
  * Regression test for Issue #25: Adjacent shortcut links
  *
- * FIXED: The markdown preprocessor converts shortcut-style links [text]
- * to explicit form [text][] when followed by another [, preventing Hoedown
- * from misinterpreting the adjacent link syntax.
+ * FIXED: cmark-gfm parses adjacent shortcut-style links correctly with no
+ * preprocessing (the hoedown-era [text] -> [text][] rewrite was removed
+ * in #77).
  *
- * Related: Issue #25
+ * Related: Issue #25, Issue #77
  */
 - (void)testRegressionIssue25_AdjacentShortcutLinks
 {
@@ -658,7 +654,7 @@
  */
 - (void)testUnicodeComprehensive
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     [self verifyGoldenFile:@"unicode"
@@ -671,7 +667,7 @@
  */
 - (void)testMalformedMarkdown
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int extFlags = 0 /* fenced code: core CommonMark */ | MDMARK_EXT_TABLES;
     int rendFlags = 0;
 
     // Unclosed code block
@@ -702,7 +698,7 @@
  */
 - (void)testVeryLargeDocument
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE | HOEDOWN_EXT_TABLES;
+    int extFlags = 0 /* fenced code: core CommonMark */ | MDMARK_EXT_TABLES;
     int rendFlags = 0;
 
     // Generate a large markdown document (10,000 lines)
@@ -756,8 +752,9 @@
 }
 
 /**
- * MPPreprocessMarkdown Issue #254 workaround: list immediately after paragraph.
- * The regex that inserts a blank line uses \n, so it must also work with CRLF.
+ * List immediately after a paragraph (Issue #254, now native CommonMark
+ * behavior in cmark-gfm). CRLF input must render identically to LF after
+ * MPPreprocessMarkdown's line-ending normalization.
  */
 - (void)testListAfterParagraphWithCRLFLineEndings
 {
@@ -783,12 +780,13 @@
 }
 
 /**
- * MPPreprocessMarkdown Issue #36 workaround: fenced code block immediately after text.
- * The fence regex must also work when lines are terminated with CRLF.
+ * Fenced code block immediately after text (Issue #36, now parsed natively
+ * by cmark-gfm). CRLF input must render identically to LF after
+ * MPPreprocessMarkdown's line-ending normalization.
  */
 - (void)testFencedCodeAfterTextWithCRLFLineEndings
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
     int rendFlags = 0;
 
     NSString *lfMarkdown   = @"Text\n```\ncode\n```\n";
@@ -1014,57 +1012,63 @@
 
 #pragma mark - Empty Heading Crash Regression (#479)
 
-// A lone setext underline ('-' or '=') with no preceding text makes Hoedown
-// emit a heading whose content is empty. The slug buffer must not be created
-// with a zero unit, or Hoedown's hoedown_buffer_grow assertion aborts the
-// whole app on the background render queue. These render through the real
-// parse path, so before the fix they crash the test process outright.
-// Related to #479.
+// Hoedown treated a lone setext underline ('-' or '=') with no preceding
+// text as a heading with empty content, which crashed its slug buffer
+// (#479). cmark-gfm parses these inputs differently — '-' is an empty
+// bullet list item and '=' is a literal paragraph — so no empty heading is
+// ever produced. These inputs still render through the real parse path to
+// pin the new behavior and guard against crashes.
 
 - (void)testLoneHyphenHeadingDoesNotCrash
 {
+    // cmark-gfm: a lone '-' is an empty bullet list item, not an empty
+    // setext heading needing a fallback id (issue #77)
     NSString *html = [self renderMarkdown:@"-"
                            withExtensions:0
                             rendererFlags:0];
-    XCTAssertTrue([html containsString:@"id=\"section\""],
-                  @"Empty setext heading must render with the fallback id without "
+    XCTAssertTrue([html containsString:@"<ul>"] &&
+                  [html containsString:@"<li></li>"],
+                  @"A lone '-' must render as an empty list item without "
                   @"crashing. Got: %@", html);
 }
 
 - (void)testLoneEqualsHeadingDoesNotCrash
 {
+    // cmark-gfm: a lone '=' is a literal paragraph, not an empty setext
+    // heading needing a fallback id (issue #77)
     NSString *html = [self renderMarkdown:@"="
                            withExtensions:0
                             rendererFlags:0];
-    XCTAssertTrue([html containsString:@"id=\"section\""],
-                  @"Empty setext H1 heading must render with the fallback id "
-                  @"without crashing. Got: %@", html);
+    XCTAssertTrue([html containsString:@"<p>=</p>"],
+                  @"A lone '=' must render as a literal paragraph without "
+                  @"crashing. Got: %@", html);
 }
 
 - (void)testReportedHyphenCrashInputRenders
 {
-    // Exact document from the issue: it ends in a lone '-' after a blank line,
-    // which Hoedown treats as an empty setext heading underline.
+    // Exact document from the issue: it ends in a lone '-' after a blank
+    // line. cmark-gfm: the trailing '-' renders as an empty list item, not
+    // an empty heading with a fallback id (issue #77)
     NSString *html = [self renderMarkdown:@"_ - _ - _ -\n-\n\n-"
                            withExtensions:0
                             rendererFlags:0];
     XCTAssertNotNil(html,
                   @"Reported crash input must render to a non-nil string.");
-    XCTAssertTrue([html containsString:@"id=\"section\""],
-                  @"The trailing empty heading must render with the fallback id. "
+    XCTAssertTrue([html containsString:@"<li></li>"],
+                  @"The trailing lone '-' must render as an empty list item. "
                   @"Got: %@", html);
 }
 
 - (void)testEmptyHeadingWithTOCDoesNotCrash
 {
-    // The TOC header renderer has the same buffer-creation pattern and must
-    // also survive empty heading content.
+    // The TOC rendering pass parses the same document a second time and
+    // must also survive this input.
     self.delegate.renderTOC = YES;
     NSString *html = [self renderMarkdown:@"[TOC]\n\n-"
                            withExtensions:0
                             rendererFlags:0];
     XCTAssertNotNil(html,
-                  @"Empty heading with TOC enabled must render without crashing.");
+                  @"Lone '-' with TOC enabled must render without crashing.");
 }
 
 @end

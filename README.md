@@ -135,7 +135,7 @@ MacDown 3000 is Free Software under the MIT License. Contributions are welcome!
 
 Please [file an issue](https://github.com/schuyler/macdown3000/issues/new) on GitHub for bug reports, feature requests, or questions. **Please search first to make sure no-one has reported the same issue already** before opening one yourself.
 
-MacDown 3000 depends on other open source projects, such as [Hoedown](https://github.com/hoedown/hoedown) for Markdown-to-HTML rendering, [Prism](http://prismjs.com) for syntax highlighting (in code blocks), and [PEG Markdown Highlight](https://github.com/ali-rantakari/peg-markdown-highlight) for editor highlighting. If you find problems when using those particular features, you can also consider reporting them directly to upstream projects as well as to MacDown 3000's issue tracker.
+MacDown 3000 depends on other open source projects, such as [cmark-gfm](https://github.com/github/cmark-gfm) for Markdown-to-HTML rendering, [Prism](http://prismjs.com) for syntax highlighting (in code blocks), and [PEG Markdown Highlight](https://github.com/ali-rantakari/peg-markdown-highlight) for editor highlighting. If you find problems when using those particular features, you can also consider reporting them directly to upstream projects as well as to MacDown 3000's issue tracker.
 
 ## Support MacDown 3000
 

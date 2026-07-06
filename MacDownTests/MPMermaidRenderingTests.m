@@ -13,7 +13,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import <cmark-gfm/mdmark.h>
 
 
 #pragma mark - Test Class
@@ -51,7 +51,7 @@
 
 - (void)testMermaidCodeBlockProducesLanguageClass
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -65,7 +65,7 @@
 
 - (void)testMermaidCodeBlockPreservesGraphSource
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -84,7 +84,9 @@
 
 - (void)testMermaidCodeBlockWithoutFencedCodeExtension
 {
-    self.delegate.extensions = 0;  // No fenced code extension
+    // cmark-gfm: fenced code is core CommonMark and always enabled, so the
+    // language class is emitted even with no extension flags set (issue #77)
+    self.delegate.extensions = 0;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
@@ -92,8 +94,9 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer currentHtml];
 
-    XCTAssertFalse([html containsString:@"language-mermaid"],
-                   @"Without fenced code extension, no language-mermaid class");
+    XCTAssertTrue([html containsString:@"language-mermaid"],
+                  @"Fenced code is core CommonMark; the language-mermaid "
+                  @"class is emitted even with zero extension flags");
 }
 
 
@@ -103,7 +106,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -120,7 +123,7 @@
 {
     self.delegate.mermaid = NO;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -137,7 +140,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -154,7 +157,7 @@
 - (void)testRenderIfPreferencesChangedDetectsMermaidToggle
 {
     self.delegate.mermaid = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Initial render to cache state
@@ -173,7 +176,7 @@
 - (void)testRenderIfPreferencesChangedIgnoresWhenMermaidUnchanged
 {
     self.delegate.mermaid = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     // Initial render to cache state
@@ -192,7 +195,7 @@
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.styleName = @"GitHub2";
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
@@ -214,7 +217,7 @@
 
 - (void)testMultipleMermaidDiagramsInSameDocument
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -244,7 +247,7 @@
 
 - (void)testMermaidWithOtherFencedCodeBlocks
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -262,7 +265,7 @@
 
 - (void)testMermaidDiagramTypesPreserved
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown =
@@ -286,7 +289,7 @@
 
 - (void)testEmptyMermaidCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.dataSource.markdown = @"```mermaid\n\n```";
@@ -301,7 +304,7 @@
 
 - (void)testMermaidAfterReparse
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
 
@@ -322,7 +325,7 @@
 
 - (void)testMermaidDisabledAfterBeingEnabled
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
@@ -346,7 +349,7 @@
 
 - (void)testMermaidWithMathJax
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.delegate.mathJax = YES;
@@ -365,7 +368,7 @@
 
 - (void)testMermaidWithGraphviz
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.mermaid = YES;
     self.delegate.graphviz = YES;

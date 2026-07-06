@@ -13,7 +13,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
+#import <cmark-gfm/mdmark.h>
 
 
 #pragma mark - Test Class
@@ -51,7 +51,7 @@
 
 - (void)testDotCodeBlockProducesLanguageClass
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
@@ -65,7 +65,7 @@
 
 - (void)testDotCodeBlockPreservesGraphSource
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
@@ -82,7 +82,9 @@
 
 - (void)testDotCodeBlockWithoutFencedCodeExtension
 {
-    self.delegate.extensions = 0;  // No fenced code extension
+    // cmark-gfm: fenced code is core CommonMark and always enabled, so the
+    // language class is emitted even with no extension flags set (issue #77)
+    self.delegate.extensions = 0;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
@@ -90,8 +92,9 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer currentHtml];
 
-    XCTAssertFalse([html containsString:@"language-dot"],
-                   @"Without fenced code extension, no language-dot class");
+    XCTAssertTrue([html containsString:@"language-dot"],
+                  @"Fenced code is core CommonMark; the language-dot class "
+                  @"is emitted even with zero extension flags");
 }
 
 
@@ -101,7 +104,7 @@
 {
     self.delegate.graphviz = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -118,7 +121,7 @@
 {
     self.delegate.graphviz = NO;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -133,7 +136,7 @@
 {
     self.delegate.graphviz = YES;
     self.delegate.syntaxHighlighting = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     // Use render (MPAssetFullLink) so script URLs contain filenames
@@ -150,7 +153,7 @@
 - (void)testRenderIfPreferencesChangedDetectsGraphvizToggle
 {
     self.delegate.graphviz = NO;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     // Initial render to cache state
@@ -169,7 +172,7 @@
 - (void)testRenderIfPreferencesChangedIgnoresWhenGraphvizUnchanged
 {
     self.delegate.graphviz = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     // Initial render to cache state
@@ -188,7 +191,7 @@
 {
     self.delegate.graphviz = YES;
     self.delegate.syntaxHighlighting = YES;
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.styleName = @"GitHub2";
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
@@ -210,7 +213,7 @@
 
 - (void)testMultipleGraphvizDiagramsInSameDocument
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown =
@@ -240,7 +243,7 @@
 
 - (void)testGraphvizWithOtherFencedCodeBlocks
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown =
@@ -261,7 +264,7 @@
 
 - (void)testEmptyDotCodeBlock
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.dataSource.markdown = @"```dot\n\n```";
@@ -276,7 +279,7 @@
 
 - (void)testGraphvizAfterReparse
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
 
@@ -297,7 +300,7 @@
 
 - (void)testGraphvizDisabledAfterBeingEnabled
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
@@ -321,7 +324,7 @@
 
 - (void)testGraphvizWithMermaid
 {
-    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.extensions = 0 /* fenced code: core CommonMark */;
     self.delegate.syntaxHighlighting = YES;
     self.delegate.graphviz = YES;
     self.delegate.mermaid = YES;

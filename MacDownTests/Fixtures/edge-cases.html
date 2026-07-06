@@ -1,157 +1,83 @@
 <h1 id="edge-cases-and-special-characters">Edge Cases and Special Characters</h1>
-
 <h2 id="empty-lines">Empty Lines</h2>
-
 <p>This paragraph has an empty line after it.</p>
-
 <p>This paragraph has two empty lines before it.</p>
-
 <h2 id="special-characters">Special Characters</h2>
-
 <p>Ampersand: &amp; &amp;</p>
-
 <p>Less than: &lt; &lt;</p>
-
 <p>Greater than: &gt; &gt;</p>
-
-<p>Quotes: &quot;double&quot; and &#39;single&#39;</p>
-
+<p>Quotes: &quot;double&quot; and 'single'</p>
 <h2 id="escaping">Escaping</h2>
-
 <p>*Not italic*</p>
-
 <p>*<em>Not bold*</em></p>
-
 <p>[Not a link](example.com)</p>
-
 <p>`Not code`</p>
-
 <p>~~Not strikethrough~~</p>
-
 <h2 id="html-entities">HTML Entities</h2>
-
-<p>&copy; &reg; &trade;</p>
-
-<p>&mdash; &ndash;</p>
-
-<p>&nbsp; (non-breaking space)</p>
-
+<p>© ® ™</p>
+<p>— –</p>
+<p>  (non-breaking space)</p>
 <h2 id="unicode">Unicode</h2>
-
 <p>Emoji: 😀 🚀 ⭐</p>
-
 <p>Symbols: © ® ™ € £ ¥</p>
-
 <p>Math: × ÷ ± ∞</p>
-
 <p>Arrows: → ← ↑ ↓</p>
-
 <h2 id="edge-case-headers">Edge Case Headers</h2>
-
-<h1 id="no-space-after-hash">No space after hash</h1>
-
+<p>#No space after hash</p>
 <h1 id="trailing-hash">Trailing hash</h1>
-
-<h2 id="multiplehashes">Multiple##Hashes</h2>
-
+<p>##Multiple##Hashes##</p>
 <h2 id="consecutive-formatting">Consecutive Formatting</h2>
-
-<p><strong>Bold</strong><strong>More bold</strong></p>
-
-<p><em>Italic</em><em>Mixed bold</em></p>
-
-<p><strong><em>All together</em></strong></p>
-
+<p><strong>Bold****More bold</strong></p>
+<p><em>Italic**Mixed bold</em></p>
+<p><em><strong>All together</strong></em></p>
 <h2 id="malformed-markdown">Malformed Markdown</h2>
-
 <p>[Link without URL]</p>
-
 <p>![Image without URL]</p>
-
 <p>**Unclosed bold</p>
-
 <p>*Unclosed italic</p>
-
 <p>~~Unclosed strikethrough</p>
-
 <h2 id="line-breaks">Line Breaks</h2>
-
 <p>Line with two spaces at end
 Should create line break.</p>
-
 <p>Line without spaces
 Should not break.</p>
-
 <h2 id="tabs-vs-spaces">Tabs vs Spaces</h2>
-
 <div><pre><code class="language-none">Tab-indented text
 
 Four-space indented text</code></pre></div>
-
 <h2 id="mixed-whitespace">Mixed Whitespace</h2>
-
 <p>Text with    multiple    spaces.</p>
-
-<p>Text    with    tabs.</p>
-
+<p>Text	with	tabs.</p>
 <h2 id="url-edge-cases">URL Edge Cases</h2>
-
 <p>https://example.com/path?query=1&amp;other=2</p>
-
 <p>https://example.com/path#fragment</p>
-
 <p>ftp://files.example.com</p>
-
 <h2 id="numbers-and-punctuation">Numbers and Punctuation</h2>
-
-<ol>
+<ol start="100">
 <li>Not a list (no space).</li>
 </ol>
-
 <p>100.5 decimal number</p>
-
-<h1 id="1-hashtag-number">1 hashtag number</h1>
-
+<p>#1 hashtag number</p>
 <h2 id="backslashes">Backslashes</h2>
-
 <p>Backslash: \</p>
-
 <p>Path: C:\Users\Name</p>
-
 <p>Network: \\server\share</p>
-
 <h2 id="parentheses-and-brackets">Parentheses and Brackets</h2>
-
 <p>(Text in parentheses)</p>
-
 <p>[Text in brackets]</p>
-
 <p>{Text in braces}</p>
-
-<p><Text in angle brackets></p>
-
+<Text in angle brackets>
 <h2 id="consecutive-punctuation">Consecutive Punctuation</h2>
-
 <p>Multiple periods...</p>
-
 <p>Question marks???</p>
-
 <p>Exclamation points!!!</p>
-
 <p>Mixed?!?!</p>
-
 <h2 id="empty-elements">Empty Elements</h2>
-
 <p>[]</p>
-
 <p>()</p>
-
 <p>{}</p>
-
 <p>**</p>
-
 <p>__</p>
-
 <p>``</p>
-
-<hr>
+<h2 id="section"></h2>
+<hr />

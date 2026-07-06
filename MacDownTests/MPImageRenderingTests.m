@@ -22,8 +22,7 @@
 #import <XCTest/XCTest.h>
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
-#import "hoedown/document.h"
-#import "hoedown_html_patch.h"
+#import <cmark-gfm/mdmark.h>
 
 
 @interface MPImageRenderingTests : XCTestCase

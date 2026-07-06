@@ -1,44 +1,26 @@
 <h1 id="strikethrough-tests">Strikethrough Tests</h1>
-
 <h2 id="basic-strikethrough">Basic Strikethrough</h2>
-
 <p>This is <del>strikethrough text</del>.</p>
-
 <p><del>Entire line strikethrough</del></p>
-
 <h2 id="combined-with-other-formatting">Combined with Other Formatting</h2>
-
 <p>This is <del>strikethrough with <strong>bold</strong></del>.</p>
-
 <p>This is <del>strikethrough with <em>italic</em></del>.</p>
-
 <p>This is <strong>bold with <del>strikethrough</del></strong>.</p>
-
 <p>This is <em>italic with <del>strikethrough</del></em>.</p>
-
 <h2 id="multiple-strikethroughs">Multiple Strikethroughs</h2>
-
 <p><del>First</del> and <del>second</del> strikethrough.</p>
-
 <h2 id="edge-cases">Edge Cases</h2>
-
 <p>Not~strikethrough (single tilde).</p>
+<div><pre><code class="language-Too many tildes~~~">
+~~Strikethrough at start~~ of line.
 
-<p>~<del>Too many tildes</del>~</p>
+End of line ~~has strikethrough~~.
 
-<p><del>Strikethrough at start</del> of line.</p>
+## In Lists
 
-<p>End of line <del>has strikethrough</del>.</p>
+- ~~Strikethrough list item~~
+- Regular item
+- ~~Another strikethrough~~
 
-<h2 id="in-lists">In Lists</h2>
-
-<ul>
-<li><del>Strikethrough list item</del></li>
-<li>Regular item</li>
-<li><p><del>Another strikethrough</del></p></li>
-</ul>
-
-<ol>
-<li><del>Numbered strikethrough</del></li>
-<li>Regular numbered item</li>
-</ol>
+1. ~~Numbered strikethrough~~
+2. Regular numbered item</code></pre></div>

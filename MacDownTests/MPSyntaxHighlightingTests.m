@@ -7,9 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
-#import <hoedown/document.h>
+#import <cmark-gfm/mdmark.h>
 #import "MPRendererTestHelpers.h"
-#import "hoedown_html_patch.h"
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -157,8 +156,8 @@
  */
 - (void)testLanguageClassGeneration
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     [self verifyGoldenFile:@"syntax-highlighting-languages"
             withExtensions:extFlags
@@ -171,8 +170,8 @@
  */
 - (void)testLanguageAliases
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     [self verifyGoldenFile:@"syntax-highlighting-aliases"
             withExtensions:extFlags
@@ -185,8 +184,8 @@
  */
 - (void)testUnlabeledCodeBlock
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     NSString *markdown = @"```\nSome code without a language\n```";
     NSString *html = [self renderMarkdown:markdown
@@ -242,30 +241,31 @@
 #pragma mark - Code Block Information Tests
 
 /**
- * Test that language classes are added to fenced code blocks when syntax highlighting is enabled.
- * Note: MacDown adds language classes when syntaxHighlighting is enabled, regardless of hoedown flags.
+ * Test that language classes are added to fenced code blocks.
+ * Note: the mdmark renderer always emits Prism language classes on fenced
+ * code blocks, regardless of the BLOCKCODE_INFORMATION flag (issue #77).
  */
 - (void)testBlockcodeInformationFlag
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
+    int extFlags = 0 /* fenced code: core CommonMark */;
 
     NSString *markdown = @"```python\nprint('hello')\n```";
 
     // With BLOCKCODE_INFORMATION flag
     NSString *htmlWithFlag = [self renderMarkdown:markdown
                                    withExtensions:extFlags
-                                    rendererFlags:HOEDOWN_HTML_BLOCKCODE_INFORMATION];
+                                    rendererFlags:MDMARK_HTML_BLOCKCODE_INFORMATION];
 
     XCTAssertTrue([htmlWithFlag containsString:@"class=\"language-python\""],
-                  @"With syntax highlighting enabled, language class should be added");
+                  @"With BLOCKCODE_INFORMATION, language class should be added");
 
-    // Without BLOCKCODE_INFORMATION flag - MacDown still adds classes when syntaxHighlighting is on
+    // Without BLOCKCODE_INFORMATION flag - mdmark still adds language classes
     NSString *htmlWithoutFlag = [self renderMarkdown:markdown
                                       withExtensions:extFlags
                                        rendererFlags:0];
 
     XCTAssertTrue([htmlWithoutFlag containsString:@"class=\"language-python\""],
-                  @"MacDown adds language classes when syntaxHighlighting is enabled");
+                  @"mdmark adds language classes regardless of the flag");
 }
 
 /**
@@ -273,8 +273,8 @@
  */
 - (void)testMixedCodeBlocks
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     [self verifyGoldenFile:@"syntax-highlighting-mixed"
             withExtensions:extFlags
@@ -286,8 +286,8 @@
  */
 - (void)testSyntaxHighlightingWithSpecialCharacters
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     NSString *markdown = @"```html\n<div class=\"test\" data-value=\"foo & bar\">Hello</div>\n```";
     NSString *html = [self renderMarkdown:markdown
@@ -305,12 +305,14 @@
 }
 
 /**
- * Test that language names are case-insensitive.
+ * Test how mixed-case language names are handled.
+ * cmark-gfm: the alias map matches lowercase names, so uppercase/mixed-case
+ * info strings pass through with their original casing (issue #77).
  */
 - (void)testLanguageNameCaseInsensitivity
 {
-    int extFlags = HOEDOWN_EXT_FENCED_CODE;
-    int rendFlags = HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    int extFlags = 0 /* fenced code: core CommonMark */;
+    int rendFlags = MDMARK_HTML_BLOCKCODE_INFORMATION;
 
     // Test uppercase
     NSString *markdownUpper = @"```JAVASCRIPT\nvar x = 1;\n```";
@@ -324,7 +326,7 @@
                                 withExtensions:extFlags
                                  rendererFlags:rendFlags];
 
-    // Both should produce lowercase language classes
+    // Either the alias-mapped lowercase class or the original casing is fine
     XCTAssertTrue([htmlUpper containsString:@"class=\"language-javascript\""] ||
                   [htmlUpper containsString:@"class=\"language-JAVASCRIPT\""],
                   @"Uppercase language names should be handled");
