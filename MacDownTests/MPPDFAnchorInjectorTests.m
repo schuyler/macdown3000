@@ -112,7 +112,19 @@ static const CGFloat kMPTestTolerance = 2.0;
     NSRectFill(dirtyRect);
 
     for (MPPDFTestDrawItem *item in self.drawItems) {
-        NSFont *font = [NSFont systemFontOfSize:item.fontSize];
+        // Use a standard PDF base-14 font (Helvetica) rather than the
+        // private San Francisco system UI font: when AppKit embeds the
+        // system font via -dataWithPDFInsideRect: in headless CI, it does
+        // not reliably emit a ToUnicode CMap, so the glyphs render but are
+        // not text-extractable, and -[PDFDocument findString:withOptions:]
+        // (used by both the engine and measuredRectsForItems: below) finds
+        // nothing. Helvetica is one of the 14 standard PDF fonts and is
+        // always present on macOS, and AppKit embeds a correct ToUnicode
+        // mapping for it, keeping the drawn text searchable.
+        NSFont *font = [NSFont fontWithName:@"Helvetica" size:item.fontSize];
+        if (!font) {
+            font = [NSFont userFontOfSize:item.fontSize]; // ultra-safe fallback
+        }
         NSDictionary *attrs = @{NSFontAttributeName: font};
         NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
                                                                           attributes:attrs];
