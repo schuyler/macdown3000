@@ -6,14 +6,19 @@
 //  described in the design for GitHub issue #504 ("Clickable Internal
 //  Anchor Links in Exported PDF").
 //
-//  Fixture PDFs are generated in-test with real, selectable text. Each
-//  fixture page is drawn by an offscreen AppKit view (see
-//  MPPDFTestPageView below) and rasterized to PDF via -[NSView
-//  dataWithPDFInsideRect:] -- the same underlying AppKit text-layout path
-//  that produces the real export's searchable text via NSPrintOperation --
-//  so that -[PDFDocument findString:withOptions:] can genuinely locate the
-//  drawn text, the same way the real export pipeline's PDF-native text
-//  search does. No WebView is involved anywhere in this file.
+//  Fixture PDFs are generated in-test with real, selectable text. The
+//  entire multi-page fixture is drawn in a SINGLE pass into ONE
+//  CGPDFContext (see -documentFromDrawItems:drawnRects: below): each page
+//  is opened with CGPDFContextBeginPage, an NSGraphicsContext wrapping
+//  that CGContext is made current, every item destined for that page is
+//  drawn via -[NSAttributedString drawAtPoint:] in Helvetica (a standard
+//  base-14 PDF font with reliable ToUnicode/encoding support), and the
+//  page is closed with CGPDFContextEndPage. There is no cross-document
+//  merge anywhere: the finished PDF data is loaded exactly once via
+//  -[PDFDocument initWithData:], so every page -- not just page 0 --
+//  carries genuinely searchable text that -[PDFDocument
+//  findString:withOptions:] can locate. No WebView is involved anywhere in
+//  this file.
 //
 //  MPPDFAnchorInjector's +injectLinksIntoDocument:links:headings: is fully
 //  implemented (see MPPDFAnchorInjector.m): it uses -findString:withOptions:
@@ -82,67 +87,6 @@ static const CGFloat kMPTestPageHeight = 792.0;
 static const CGFloat kMPTestTolerance = 2.0;
 
 
-#pragma mark - Page View Helper
-
-// An offscreen, never-windowed NSView that draws exactly one fixture page's
-// worth of text items and is then rasterized via -dataWithPDFInsideRect:.
-// This is the SAME AppKit text-drawing/layout path AppKit uses when
-// producing PDF from a real print operation, so the glyphs it emits carry
-// standard, searchable text (unlike drawing directly into a bare
-// CGPDFContext, which does not reliably embed a ToUnicode mapping).
-//
-// NSView is UNFLIPPED by default (origin bottom-left, y-up) -- the same
-// space as a PDF page -- so `-isFlipped` is left at its default (NO) and
-// every item's precomputed bottom-left draw point is used as-is via
-// -[NSAttributedString drawAtPoint:].
-@interface MPPDFTestPageView : NSView
-@property (nonatomic, copy) NSArray<MPPDFTestDrawItem *> *drawItems;
-@end
-
-@implementation MPPDFTestPageView
-
-- (BOOL)isOpaque
-{
-    return YES;
-}
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [[NSColor whiteColor] setFill];
-    NSRectFill(dirtyRect);
-
-    for (MPPDFTestDrawItem *item in self.drawItems) {
-        // Use a standard PDF base-14 font (Helvetica) rather than the
-        // private San Francisco system UI font: when AppKit embeds the
-        // system font via -dataWithPDFInsideRect: in headless CI, it does
-        // not reliably emit a ToUnicode CMap, so the glyphs render but are
-        // not text-extractable, and -[PDFDocument findString:withOptions:]
-        // (used by both the engine and measuredRectsForItems: below) finds
-        // nothing. Helvetica is one of the 14 standard PDF fonts and is
-        // always present on macOS, and AppKit embeds a correct ToUnicode
-        // mapping for it, keeping the drawn text searchable.
-        NSFont *font = [NSFont fontWithName:@"Helvetica" size:item.fontSize];
-        if (!font) {
-            font = [NSFont userFontOfSize:item.fontSize]; // ultra-safe fallback
-        }
-        NSDictionary *attrs = @{NSFontAttributeName: font};
-        NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
-                                                                          attributes:attrs];
-        NSSize measured = attrString.size;
-
-        // Same top-left -> bottom-left conversion as the previous
-        // CGPDFContext-based fixture: for a page of height H, an item
-        // whose origin is `topLeftPoint` (y grows downward) is drawn with
-        // its bottom-left corner at (x, H - topLeftPoint.y - measuredHeight).
-        CGFloat pdfX = item.topLeftPoint.x;
-        CGFloat pdfY = kMPTestPageHeight - item.topLeftPoint.y - measured.height;
-        [attrString drawAtPoint:NSMakePoint(pdfX, pdfY)];
-    }
-}
-
-@end
-
-
 #pragma mark - Test Case
 
 @interface MPPDFAnchorInjectorTests : XCTestCase
@@ -154,20 +98,34 @@ static const CGFloat kMPTestTolerance = 2.0;
 #pragma mark - Fixture Building
 
 /**
- * Draws every item in `items` into a freshly generated PDF, one 612x792
- * (US Letter) media box per page.
+ * Draws every item in `items` into a freshly generated, single 612x792
+ * (US Letter) PDF document, one page per distinct pageIndex referenced by
+ * `items`.
  *
- * Each page is rendered independently by handing an offscreen
- * MPPDFTestPageView (never added to any window) the items destined for
- * that page, then calling `-[NSView dataWithPDFInsideRect:]` to capture
- * AppKit's own PDF rendering of that view -- the same code path a real
- * NSPrintOperation-driven PDF export uses, so the resulting page carries
- * genuinely searchable text. Each page's data is loaded as its own
- * one-page PDFDocument and its PDFPage is inserted into a combined
- * PDFDocument in order.
+ * The WHOLE multi-page document is produced in a SINGLE pass into ONE
+ * CGPDFContext (writing into an NSMutableData via a CGDataConsumer) --
+ * there is no per-page NSView rendering and no cross-document
+ * `-insertPage:` merge anywhere. For each page, `CGPDFContextBeginPage` is
+ * called with the shared 612x792 media box, an NSGraphicsContext wrapping
+ * that CGContext is pushed as the current graphics context (unflipped, so
+ * (0,0) is the bottom-left corner -- the same convention as a PDF page),
+ * every item destined for that page is drawn via `-[NSAttributedString
+ * drawAtPoint:]` in Helvetica, and the page is closed with
+ * `CGPDFContextEndPage`. Once every page has been drawn, the context is
+ * closed and the finished PDF bytes are loaded exactly once via
+ * `-[PDFDocument initWithData:]`.
  *
- * After assembly, the combined document's `.string` is force-accessed (and
- * the document is round-tripped once through `-dataRepresentation` /
+ * Because every page's glyphs are emitted through the same single-pass
+ * CGPDFContext (rather than being assembled by copying PDFPage objects
+ * between separate PDFDocuments via `-insertPage:`, which is what dropped
+ * searchable text on pages 1+ previously), and because Helvetica is one of
+ * the 14 standard PDF fonts with reliable, portable ToUnicode/encoding
+ * support (unlike the private San Francisco system font), the resulting
+ * text is `-findString:withOptions:`-searchable on EVERY page, not just
+ * page 0.
+ *
+ * After assembly, the document's `.string` is force-accessed (and the
+ * document is round-tripped once through `-dataRepresentation` /
  * `-initWithData:`) to guarantee PDFKit has fully built its text index
  * before any `-findString:withOptions:` call runs against it, eliminating
  * any lazy-parse race.
@@ -192,50 +150,90 @@ static const CGFloat kMPTestTolerance = 2.0;
         pageCount = MAX(pageCount, item.pageIndex + 1);
     }
 
-    NSRect pageFrame = NSMakeRect(0, 0, kMPTestPageWidth, kMPTestPageHeight);
-    PDFDocument *combinedDocument = [[PDFDocument alloc] init];
+    CGRect mediaBox = CGRectMake(0, 0, kMPTestPageWidth, kMPTestPageHeight);
 
-    for (NSUInteger pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-        NSMutableArray<MPPDFTestDrawItem *> *pageItems = [NSMutableArray array];
-        for (MPPDFTestDrawItem *item in items) {
-            if (item.pageIndex == pageIndex) {
-                [pageItems addObject:item];
-            }
-        }
-
-        MPPDFTestPageView *view = [[MPPDFTestPageView alloc] initWithFrame:pageFrame];
-        view.drawItems = pageItems;
-
-        NSData *pageData = [view dataWithPDFInsideRect:pageFrame];
-        XCTAssertNotNil(pageData, @"Failed to render fixture page %lu to PDF data",
-                        (unsigned long)pageIndex);
-        if (pageData == nil) {
-            continue;
-        }
-
-        PDFDocument *singlePageDocument = [[PDFDocument alloc] initWithData:pageData];
-        XCTAssertNotNil(singlePageDocument, @"Failed to load rendered fixture page %lu as a PDFDocument",
-                        (unsigned long)pageIndex);
-        if (singlePageDocument == nil || singlePageDocument.pageCount == 0) {
-            continue;
-        }
-
-        PDFPage *page = [singlePageDocument pageAtIndex:0];
-        [combinedDocument insertPage:page atIndex:combinedDocument.pageCount];
+    NSMutableData *pdfData = [NSMutableData data];
+    CGDataConsumerRef consumer = CGDataConsumerCreateWithCFData((__bridge CFMutableDataRef)pdfData);
+    XCTAssertTrue(consumer != NULL, @"Failed to create a CGDataConsumer for the fixture PDF");
+    if (consumer == NULL) {
+        return nil;
     }
 
-    XCTAssertEqual(combinedDocument.pageCount, pageCount,
+    CGContextRef pdfContext = CGPDFContextCreate(consumer, &mediaBox, NULL);
+    CGDataConsumerRelease(consumer);
+    XCTAssertTrue(pdfContext != NULL, @"Failed to create the single fixture CGPDFContext");
+    if (pdfContext == NULL) {
+        return nil;
+    }
+
+    for (NSUInteger pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+        CGPDFContextBeginPage(pdfContext, NULL);
+
+        NSGraphicsContext *previousContext = [NSGraphicsContext currentContext];
+        // `flipped:NO` matches the PDF page's own native bottom-left,
+        // y-up coordinate space, so each item's precomputed bottom-left
+        // draw point can be used as-is via -[NSAttributedString drawAtPoint:].
+        NSGraphicsContext *pageGraphicsContext = [NSGraphicsContext graphicsContextWithCGContext:pdfContext
+                                                                                          flipped:NO];
+        [NSGraphicsContext setCurrentContext:pageGraphicsContext];
+
+        [[NSColor whiteColor] setFill];
+        NSRectFill(NSRectFromCGRect(mediaBox));
+
+        for (MPPDFTestDrawItem *item in items) {
+            if (item.pageIndex != pageIndex) {
+                continue;
+            }
+
+            // Use a standard PDF base-14 font (Helvetica) rather than the
+            // private San Francisco system UI font: Helvetica is always
+            // present on macOS and reliably carries a correct
+            // ToUnicode/encoding mapping when drawn into a CGPDFContext,
+            // keeping the drawn glyphs text-extractable via
+            // -[PDFDocument findString:withOptions:].
+            NSFont *font = [NSFont fontWithName:@"Helvetica" size:item.fontSize];
+            if (!font) {
+                font = [NSFont userFontOfSize:item.fontSize]; // ultra-safe fallback
+            }
+            NSDictionary *attrs = @{NSFontAttributeName: font};
+            NSAttributedString *attrString = [[NSAttributedString alloc] initWithString:item.text
+                                                                              attributes:attrs];
+            NSSize measured = attrString.size;
+
+            // Top-left -> bottom-left conversion: for a page of height H,
+            // an item whose origin is `topLeftPoint` (y grows downward) is
+            // drawn with its bottom-left corner at
+            // (x, H - topLeftPoint.y - measuredHeight).
+            CGFloat pdfX = item.topLeftPoint.x;
+            CGFloat pdfY = kMPTestPageHeight - item.topLeftPoint.y - measured.height;
+            [attrString drawAtPoint:NSMakePoint(pdfX, pdfY)];
+        }
+
+        [NSGraphicsContext setCurrentContext:previousContext];
+        CGPDFContextEndPage(pdfContext);
+    }
+
+    CGPDFContextClose(pdfContext);
+    CGContextRelease(pdfContext);
+
+    PDFDocument *document = [[PDFDocument alloc] initWithData:pdfData];
+    XCTAssertNotNil(document, @"Failed to load the single-pass generated fixture PDF data");
+    if (document == nil) {
+        return nil;
+    }
+
+    XCTAssertEqual(document.pageCount, pageCount,
                   @"Fixture should have one page per requested pageIndex");
 
     // Defensively force a full, synchronous text-index parse -- both on the
-    // freshly-assembled document and again after a round trip through
+    // freshly-generated document and again after a round trip through
     // -dataRepresentation/-initWithData: -- before this fixture is handed
     // to the engine or measured below.
-    (void)combinedDocument.string;
-    NSData *roundTripData = combinedDocument.dataRepresentation;
+    (void)document.string;
+    NSData *roundTripData = document.dataRepresentation;
     PDFDocument *finalDocument = roundTripData ? [[PDFDocument alloc] initWithData:roundTripData] : nil;
     if (finalDocument == nil) {
-        finalDocument = combinedDocument;
+        finalDocument = document;
     }
     (void)finalDocument.string;
 
