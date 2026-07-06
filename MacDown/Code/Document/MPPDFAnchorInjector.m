@@ -203,6 +203,15 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
             NSRect sourceBounds = [sourceSel boundsForPage:sourcePage];
             CGFloat hSource = NSHeight(sourceBounds);
 
+            // Resolve to the document's canonical PDFPage: annotations added to
+            // the transient page vended by PDFSelection.pages are not persisted
+            // on the page pageAtIndex: returns (and would not be written out).
+            // Issue #504.
+            NSUInteger sourcePageIndex = [document indexForPage:sourcePage];
+            if (sourcePageIndex != NSNotFound) {
+                sourcePage = [document pageAtIndex:sourcePageIndex];
+            }
+
             // Step 5: resolve the destination.
             NSString *destText = slugToHeadingText[link.targetSlug ?: @""];
             if (MPPDFAnchorStringIsBlank(destText)) {
@@ -249,6 +258,15 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
                 continue;
             }
             NSRect destBounds = [destSel boundsForPage:destPage];
+
+            // Resolve to the document's canonical PDFPage for the same reason
+            // as sourcePage above: the PDFDestination must reference the page
+            // pageAtIndex: vends, or navigation/persistence would target a
+            // detached page wrapper. Issue #504.
+            NSUInteger destPageIndex = [document indexForPage:destPage];
+            if (destPageIndex != NSNotFound) {
+                destPage = [document pageAtIndex:destPageIndex];
+            }
 
             // Step 6: construct + attach the annotation. PDF pages are
             // bottom-left origin, so the top of the heading is NSMaxY.

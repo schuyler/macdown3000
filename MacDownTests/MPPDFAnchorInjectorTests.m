@@ -610,8 +610,13 @@ static const CGFloat kMPTestTolerance = 2.0;
                                         topLeftPoint:CGPointMake(72, 96)]];
     [items addObject:[MPPDFTestDrawItem itemWithText:@"EmptyTarget" fontSize:12.0 pageIndex:0
                                         topLeftPoint:CGPointMake(72, 120)]];
+    // Placed well clear of the top-of-page boundary (Issue #504): a couple
+    // of CI runs showed this occurrence intermittently not text-searchable
+    // when drawn right at the imageable-area edge, so it is drawn further
+    // down the page than the bare 72pt used elsewhere, giving it a
+    // comfortable margin on every side.
     [items addObject:[MPPDFTestDrawItem itemWithText:@"Real" fontSize:24.0 pageIndex:1
-                                        topLeftPoint:CGPointMake(72, 72)]];
+                                        topLeftPoint:CGPointMake(72, 200)]];
 
     NSArray<NSValue *> *rects = nil;
     PDFDocument *document = [self documentFromDrawItems:items drawnRects:&rects];
