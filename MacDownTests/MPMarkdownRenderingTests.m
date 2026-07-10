@@ -178,6 +178,81 @@
              rendererFlags:rendFlags];
 }
 
+- (void)testWikiLinksInBodyAndTable
+{
+    NSString *directory = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
+    [[NSFileManager defaultManager] createDirectoryAtPath:directory
+                              withIntermediateDirectories:YES
+                                               attributes:nil error:NULL];
+    for (NSString *name in @[@"note.md", @"中文 笔记.md"])
+    {
+        [@"# Target" writeToFile:[directory stringByAppendingPathComponent:name]
+                        atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    }
+    self.delegate.baseURL = [NSURL fileURLWithPath:directory isDirectory:YES];
+
+    NSString *markdown = @"See [[note]] and [[中文 笔记|友好名称]].\n\n"
+        @"| Link |\n| --- |\n| [[note|Table label]] |";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:HOEDOWN_EXT_TABLES
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@">note</a>"],
+                  @"A basic wiki link should render as a link");
+    XCTAssertTrue([html containsString:@">友好名称</a>"],
+                  @"A Chinese alias should be used as the link label");
+    XCTAssertTrue([html containsString:@">Table label</a>"],
+                  @"Wiki links should render inside tables");
+    XCTAssertTrue([html containsString:@"%E4%B8%AD%E6%96%87%20%E7%AC%94%E8%AE%B0.md"],
+                  @"Chinese names and spaces should be safely URL encoded");
+    [[NSFileManager defaultManager] removeItemAtPath:directory error:NULL];
+}
+
+- (void)testMissingAndUnsafeWikiLinksStayReadable
+{
+    NSString *directory = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
+    [[NSFileManager defaultManager] createDirectoryAtPath:directory
+                              withIntermediateDirectories:YES
+                                               attributes:nil error:NULL];
+    self.delegate.baseURL = [NSURL fileURLWithPath:directory isDirectory:YES];
+
+    NSString *html = [self renderMarkdown:
+        @"[[missing|Missing note]] [[../secret|Unsafe note]] [[image.png]]"
+                           withExtensions:0 rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@"Missing note"],
+                  @"Missing targets should keep a readable label");
+    XCTAssertTrue([html containsString:@"Unsafe note"],
+                  @"Unsafe targets should keep a readable label");
+    XCTAssertFalse([html containsString:@"<a href="],
+                   @"Missing, traversal, and non-Markdown targets must not link");
+    [[NSFileManager defaultManager] removeItemAtPath:directory error:NULL];
+}
+
+- (void)testWikiLinksInsideFencedCodeStayLiteral
+{
+    NSString *directory = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
+    [[NSFileManager defaultManager] createDirectoryAtPath:directory
+                              withIntermediateDirectories:YES
+                                               attributes:nil error:NULL];
+    [@"# Target" writeToFile:[directory stringByAppendingPathComponent:@"note.md"]
+                    atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    self.delegate.baseURL = [NSURL fileURLWithPath:directory isDirectory:YES];
+
+    NSString *html = [self renderMarkdown:@"```text\n[[note]]\n```"
+                           withExtensions:HOEDOWN_EXT_FENCED_CODE
+                            rendererFlags:HOEDOWN_HTML_BLOCKCODE_INFORMATION];
+
+    XCTAssertTrue([html containsString:@"[[note]]"],
+                  @"Wiki-link syntax in code fences should remain literal");
+    XCTAssertFalse([html containsString:@"<a href="],
+                   @"Code fence content must not become links");
+    [[NSFileManager defaultManager] removeItemAtPath:directory error:NULL];
+}
+
 - (void)testImages
 {
     int extFlags = 0;
