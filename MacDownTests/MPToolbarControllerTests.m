@@ -148,8 +148,8 @@
 - (void)testAllowedIdentifiersTotalCount
 {
     NSArray *allowed = [self.controller toolbarAllowedItemIdentifiers:nil];
-    // 14 custom + 3 system (flexible space, space, separator)
-    XCTAssertEqual(allowed.count, 17,
+    // 15 custom + 3 system (flexible space, space, separator)
+    XCTAssertEqual(allowed.count, 18,
                    @"Allowed identifiers should have 17 items: "
                    @"14 custom + flexible space + space + separator");
 }
@@ -272,8 +272,8 @@
 - (void)testSelectableIdentifiersCount
 {
     NSArray *selectable = [self.controller toolbarSelectableItemIdentifiers:nil];
-    XCTAssertEqual(selectable.count, 14,
-                   @"Selectable identifiers should have exactly 14 items (custom only, no system items)");
+    XCTAssertEqual(selectable.count, 15,
+                   @"Selectable identifiers should have exactly 15 items (custom only, no system items)");
 }
 
 - (void)testSelectableIdentifiersAcceptsNilToolbar
@@ -347,8 +347,8 @@
 - (void)testDefaultIdentifiersTotalCount
 {
     NSArray *defaults = [self.controller toolbarDefaultItemIdentifiers:nil];
-    XCTAssertEqual(defaults.count, 16,
-                   @"Default toolbar should have 16 items: 11 custom + 5 flexible spaces");
+    XCTAssertEqual(defaults.count, 17,
+                   @"Default toolbar should have 17 items: 12 custom + 5 flexible spaces");
 }
 
 - (void)testDefaultIdentifiersDoNotContainFixedSpaces
@@ -379,7 +379,7 @@
         @"copy-html",
         NSToolbarFlexibleSpaceItemIdentifier,
         @"layout",
-        @"preview-zoom"
+        @"document-zoom"
     ];
 
     XCTAssertEqual(defaults.count, expected.count,

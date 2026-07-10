@@ -417,17 +417,19 @@
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="QMZ-Ld-Nza"/>
                             <menuItem title="Zoom In" keyEquivalent="+" id="zIn-01-ABC">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <connections>
                                     <action selector="zoomIn:" target="-1" id="zIn-02-DEF"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Zoom Out" keyEquivalent="-" id="zOt-01-GHI">
-                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <connections>
                                     <action selector="zoomOut:" target="-1" id="zOt-02-JKL"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Actual Size" id="zRs-01-PQR">
+                            <menuItem title="Actual Size" keyEquivalent="0" id="zRs-01-PQR">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                 <connections>
                                     <action selector="resetZoom:" target="-1" id="zRs-02-STU"/>
                                 </connections>
@@ -437,25 +439,6 @@
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>
                                     <action selector="toggleFullScreen:" target="-1" id="7ez-RY-PkZ"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="zm0-Sp-aaa"/>
-                            <menuItem title="Actual Size" keyEquivalent="0" id="zm1-Ac-bbb">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                                <connections>
-                                    <action selector="actualPreviewSize:" target="-1" id="zm1-Ax-ccc"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Zoom In" keyEquivalent="+" id="zm2-In-ddd">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                                <connections>
-                                    <action selector="zoomPreviewIn:" target="-1" id="zm2-Ix-eee"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Zoom Out" keyEquivalent="-" id="zm3-Ou-fff">
-                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
-                                <connections>
-                                    <action selector="zoomPreviewOut:" target="-1" id="zm3-Ox-ggg"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -492,7 +475,8 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Strikethrough" keyEquivalent="-" id="9CN-Qi-Fln">
+                            <menuItem title="Strikethrough" id="9CN-Qi-Fln">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleStrikethrough:" target="-1" id="rUc-gb-x5q"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionStrikethough" id="kQ0-Wi-BPs">
@@ -502,7 +486,8 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Highlight" keyEquivalent="=" id="2Os-ij-Aup">
+                            <menuItem title="Highlight" id="2Os-ij-Aup">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleHighlight:" target="-1" id="Uda-cB-xYx"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionHighlight" id="9y2-h2-XrX">
@@ -557,7 +542,8 @@
                                                 <action selector="convertToH6:" target="-1" id="u4y-F9-JR3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paragraph" keyEquivalent="0" id="xN5-GU-ASF">
+                                        <menuItem title="Paragraph" id="xN5-GU-ASF">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="convertToParagraph:" target="-1" id="4BU-GT-Qyv"/>
                                             </connections>

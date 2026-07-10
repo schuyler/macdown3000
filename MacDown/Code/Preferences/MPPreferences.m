@@ -258,7 +258,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorUnorderedListMarkerType;
 
 @dynamic previewZoomRelativeToBaseFontSize;
-@dynamic previewZoomLevel;
+@dynamic documentZoomLevel;
 
 @dynamic htmlTemplateName;
 @dynamic htmlStyleName;
@@ -411,7 +411,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     self.htmlStyleName = kMPDefaultHtmlStyleName;
     self.htmlDefaultDirectoryUrl = [NSURL fileURLWithPath:NSHomeDirectory()
                                               isDirectory:YES];
-    self.previewZoomLevel = 1.0;
+    self.documentZoomLevel = 1.0;
 }
 
 /** Load default preferences when the app launches.
@@ -441,12 +441,12 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (![defaults objectForKey:@"editorAutoSave"])
         self.editorAutoSave = YES;
 
-    // Defensive default for preview zoom level. Migration v6 also handles
+    // Defensive default for document zoom level. Migration v6 also handles
     // this, but this branch protects against any path that bypasses the
     // migration code (e.g. a stale user defaults blob that already has a
     // higher MPMigrationVersion but lacks this key).
-    if (![defaults objectForKey:@"previewZoomLevel"])
-        self.previewZoomLevel = 1.0;
+    if (![defaults objectForKey:@"documentZoomLevel"])
+        self.documentZoomLevel = 1.0;
 
     // Apply preference migrations using version-based system.
     [self applyPreferencesMigrations];
@@ -465,7 +465,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  *              hide YAML front matter by default (Issue #307)
  * - Version 4: Clear stale split view autosave (Issue #309)
  * - Version 5: Auto-save preference default
- * - Version 6: Preview zoom level default (100%)
+ * - Version 6: Document zoom level default (100%)
  */
 - (NSInteger)effectiveMigrationVersion
 {
@@ -561,14 +561,14 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.editorAutoSave = YES;
     }
 
-    // Migration Version 6: Preview zoom level default
-    // Establish a 100% page-size multiplier baseline for the preview pane.
+    // Migration Version 6: Document zoom level default
+    // Establish a 100% baseline shared by the editor and preview panes.
     // Without this, existing users would inherit 0.0 (the implicit default
     // for a CGFloat NSNumber-backed preference), which would zero out the
     // preview on first launch after upgrade.
     if (currentVersion < 6)
     {
-        self.previewZoomLevel = 1.0;
+        self.documentZoomLevel = 1.0;
     }
 
     // Update to current version
