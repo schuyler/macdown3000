@@ -59,7 +59,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) NSInteger editorUnorderedListMarkerType;
 
 @property (assign) BOOL previewZoomRelativeToBaseFontSize;
-@property (assign) CGFloat previewZoomLevel;
+@property (assign) CGFloat documentZoomLevel;
 
 @property (assign) NSString *htmlTemplateName;
 @property (assign) NSString *htmlStyleName;

@@ -38,6 +38,7 @@
 
 @interface MPZoomTests : XCTestCase
 @property (strong) MPDocument *document;
+@property (assign) CGFloat originalZoomLevel;
 @end
 
 @implementation MPZoomTests
@@ -45,11 +46,14 @@
 - (void)setUp
 {
     [super setUp];
+    self.originalZoomLevel = [MPPreferences sharedInstance].documentZoomLevel;
+    [MPPreferences sharedInstance].documentZoomLevel = 1.0;
     self.document = [[MPDocument alloc] init];
 }
 
 - (void)tearDown
 {
+    [MPPreferences sharedInstance].documentZoomLevel = self.originalZoomLevel;
     self.document = nil;
     [super tearDown];
 }
@@ -285,7 +289,7 @@
 
 /**
  * After zooming, a preference change (setupEditor:), and another zoomIn:,
- * the multiplier should reflect both the original zoom and the new step.
+ * the multiplier should advance to the next persisted preset.
  * This exercises the multiplier state across a full zoom -> preference -> zoom cycle.
  */
 - (void)testZoomThenPreferenceChangeThenZoomAgain
@@ -296,9 +300,9 @@
 
     [self.document zoomIn:nil];
 
-    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 1.6, 0.001,
+    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 2.0, 0.001,
                                @"After zoom(1.5) -> setupEditor -> zoomIn, "
-                               @"multiplier should be 1.6");
+                               @"multiplier should advance to the 2.0 preset");
 }
 
 

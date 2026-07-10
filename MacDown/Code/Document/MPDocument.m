@@ -81,23 +81,23 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
             @"editorScrollsPastEnd", @"editorShowsInvisibleCharacters",
             @"htmlMathJax", @"htmlMathJaxInlineDollar",
-            @"previewZoomLevel", nil
+            @"documentZoomLevel", nil
         ];
     });
     return keys;
 }
 
 /**
- * Ordered list of preset preview zoom multipliers used by ⌘+/⌘- and the
+ * Ordered list of document zoom multipliers used by ⌘+/⌘- and the
  * toolbar dropdown. Kept as a single source of truth so the popup and the
  * snap-step helper cannot drift apart.
  */
-NS_INLINE NSArray<NSNumber *> *MPPreviewZoomLevels()
+NS_INLINE NSArray<NSNumber *> *MPDocumentZoomLevels()
 {
     static NSArray *levels = nil;
     static dispatch_once_t token;
     dispatch_once(&token, ^{
-        levels = @[@0.5, @0.75, @0.9, @1.0, @1.1, @1.25, @1.5, @2.0];
+        levels = @[@0.5, @0.75, @0.9, @1.0, @1.1, @1.25, @1.5, @2.0, @3.0];
     });
     return levels;
 }
@@ -333,7 +333,7 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 - (void)handleSyncScrollingDisabled;
 // Preview zoom helpers
 - (void)applyPreviewZoom;
-- (void)stepPreviewZoomDirection:(NSInteger)direction;
+- (void)stepDocumentZoomDirection:(NSInteger)direction;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -588,8 +588,6 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.volumeLocalityChecker = ^BOOL(NSString *path) {
         return [MPFileWatcher pathIsOnLocalVolume:path];
     };
-    self.zoomMultiplier = 1.0;
-
     return self;
 }
 
@@ -1127,22 +1125,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
             ? NSControlStateValueOn : NSControlStateValueOff;
         return self.editor != nil;
     }
-    else if (action == @selector(zoomPreviewIn:))
-    {
-        // Grey out ⌘+ once we are already at the maximum preset.
-        NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
-        CGFloat max = levels.lastObject.doubleValue;
-        return (self.preferences.previewZoomLevel < max - 1e-6);
-    }
-    else if (action == @selector(zoomPreviewOut:))
-    {
-        // Grey out ⌘- once we are already at the minimum preset.
-        NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
-        CGFloat min = levels.firstObject.doubleValue;
-        return (self.preferences.previewZoomLevel > min + 1e-6);
-    }
-    else if (action == @selector(actualPreviewSize:) ||
-             action == @selector(selectPreviewZoom:))
+    else if (action == @selector(selectDocumentZoom:))
     {
         return YES;
     }
@@ -2132,12 +2115,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
     else if (object == [NSUserDefaults standardUserDefaults])
     {
-        // Preview zoom changes only need to push a new page-size multiplier
-        // to the WebView; the rendered HTML is unaffected, so skip the
-        // editor setup / divider redraw path that other preferences need.
-        if ([keyPath isEqualToString:@"previewZoomLevel"])
+        // Document zoom is shared by every open window and drives both panes.
+        if ([keyPath isEqualToString:@"documentZoomLevel"])
         {
-            [self applyPreviewZoom];
+            [self applyCurrentZoom];
             return;
         }
         if (self.highlighter.isActive)
@@ -2891,22 +2872,25 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return self.zoomMultiplier;
 }
 
+- (CGFloat)zoomMultiplier
+{
+    CGFloat level = self.preferences.documentZoomLevel;
+    return level > 0.0 ? level : 1.0;
+}
+
+- (void)setZoomMultiplier:(CGFloat)zoomMultiplier
+{
+    self.preferences.documentZoomLevel =
+        MIN(MAX(zoomMultiplier, kMPMinZoom), kMPMaxZoom);
+}
+
 - (void)scaleWebview
 {
-    CGFloat scale = [self previewScale];
+    if (!self.preview)
+        return;
 
-#if 0
-    // Sadly, this doesn’t work correctly.
-    // It looks fine, but selections are offset relative to the mouse cursor.
-    NSScrollView *previewScrollView =
-    self.preview.mainFrame.frameView.documentView.enclosingScrollView;
-    NSClipView *previewContentView = previewScrollView.contentView;
-    [previewContentView scaleUnitSquareToSize:NSMakeSize(scale, scale)];
-    [previewContentView setNeedsDisplay:YES];
-#else
-    // Warning: this is private webkit API and NOT App Store-safe!
-    [self.preview setPageSizeMultiplier:scale];
-#endif
+    CGFloat scale = [self previewScale];
+    [self.preview setPageSizeMultiplier:(float)scale];
 }
 
 - (NSFont *)zoomedEditorFont
@@ -2915,7 +2899,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     if (!baseFont)
         return nil;
     CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
-    return [NSFont fontWithName:baseFont.fontName size:zoomedSize];
+    return [NSFont fontWithDescriptor:baseFont.fontDescriptor size:zoomedSize];
 }
 
 - (void)applyEditorFontAndParagraphStyle
@@ -2951,26 +2935,17 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)zoomIn:(id)sender
 {
-    if (self.zoomMultiplier >= kMPMaxZoom)
-        return;
-
-    self.zoomMultiplier = MIN(self.zoomMultiplier + 0.1, kMPMaxZoom);
-    [self applyCurrentZoom];
+    [self stepDocumentZoomDirection:+1];
 }
 
 - (IBAction)zoomOut:(id)sender
 {
-    if (self.zoomMultiplier <= kMPMinZoom)
-        return;
-    
-    self.zoomMultiplier = MAX(self.zoomMultiplier - 0.1, kMPMinZoom);
-    [self applyCurrentZoom];
+    [self stepDocumentZoomDirection:-1];
 }
 
 - (IBAction)resetZoom:(id)sender
 {
-    self.zoomMultiplier = 1.0;
-    [self applyCurrentZoom];
+    self.preferences.documentZoomLevel = 1.0;
 }
 
 - (void)applyCurrentZoom
@@ -4189,32 +4164,18 @@ to link outside that scope.", \
 }
 
 
-#pragma mark - Preview zoom
+#pragma mark - Document zoom
 
 /**
- * Push the user's preview-zoom preference into the underlying WebView.
- * Clamps the value to the supported [0.5, 2.0] range so a corrupt or
- * out-of-range preference cannot blank the preview pane. Silently does
- * nothing when the preview outlet is not yet wired (early launch / unit
- * tests instantiating MPDocument without the nib).
+ * Re-apply preview page zoom after WebKit reloads its main frame.
  */
 - (void)applyPreviewZoom
 {
-    if (!self.preview)
-        return;
-
-    CGFloat level = self.preferences.previewZoomLevel;
-    NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
-    CGFloat min = levels.firstObject.doubleValue;
-    CGFloat max = levels.lastObject.doubleValue;
-    if (level < min) level = min;
-    if (level > max) level = max;
-
-    [self.preview setPageSizeMultiplier:(float)level];
+    [self scaleWebview];
 }
 
 /**
- * Step the preview zoom by one preset in the requested direction.
+ * Step the shared document zoom by one preset in the requested direction.
  * @param direction +1 to zoom in, -1 to zoom out.
  *
  * If the current zoom matches a preset (within epsilon), step from that
@@ -4223,10 +4184,10 @@ to link outside that scope.", \
  * value; zooming out snaps down to the largest preset less than current.
  * Beeps when already at the bound.
  */
-- (void)stepPreviewZoomDirection:(NSInteger)direction
+- (void)stepDocumentZoomDirection:(NSInteger)direction
 {
-    NSArray<NSNumber *> *levels = MPPreviewZoomLevels();
-    CGFloat current = self.preferences.previewZoomLevel;
+    NSArray<NSNumber *> *levels = MPDocumentZoomLevels();
+    CGFloat current = self.preferences.documentZoomLevel;
     if (current <= 0) current = 1.0;
 
     // Find index of nearest preset to the current zoom.
@@ -4268,25 +4229,10 @@ to link outside that scope.", \
         NSBeep();
         return;
     }
-    self.preferences.previewZoomLevel = levels[(NSUInteger)targetIdx].doubleValue;
+    self.preferences.documentZoomLevel = levels[(NSUInteger)targetIdx].doubleValue;
 }
 
-- (IBAction)zoomPreviewIn:(id)sender
-{
-    [self stepPreviewZoomDirection:+1];
-}
-
-- (IBAction)zoomPreviewOut:(id)sender
-{
-    [self stepPreviewZoomDirection:-1];
-}
-
-- (IBAction)actualPreviewSize:(id)sender
-{
-    self.preferences.previewZoomLevel = 1.0;
-}
-
-- (IBAction)selectPreviewZoom:(id)sender
+- (IBAction)selectDocumentZoom:(id)sender
 {
     // Sender is an NSPopUpButton (toolbar) or NSMenuItem (future menu).
     // Both carry the target level as an NSNumber in representedObject.
@@ -4301,7 +4247,7 @@ to link outside that scope.", \
     }
     if ([level isKindOfClass:[NSNumber class]])
     {
-        self.preferences.previewZoomLevel = level.doubleValue;
+        self.preferences.documentZoomLevel = level.doubleValue;
     }
 }
 
