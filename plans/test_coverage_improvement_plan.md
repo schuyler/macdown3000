@@ -198,7 +198,7 @@ GitHub Actions macOS runners are:
 **Status:** ✅ **HTML EXPORT TESTS IMPLEMENTED** (Issue #30, Issue #234)
 - ✅ `MPHTMLExportTests.m` - Comprehensive HTML export testing (Issue #30)
 - ✅ `MPImageExportTests.m` - Base64 images, linked images, invalid URLs, alt text preservation (Issue #234)
-- ✅ `MPPDFAnchorInjectorTests.m` - Headless PDFKit annotation-injection engine for clickable internal anchor links (TOC → heading) in exported PDFs, 8 tests (Issue #504)
+- ✅ `MPPDFAnchorInjectorTests.m` - Headless PDFKit annotation-injection engine for clickable internal anchor links (TOC → heading) in exported PDFs, 11 tests (Issue #504)
 - ⏳ `MPExportTests.m` - General export operations (planned)
 - ⏳ General PDF generation tests (basic/images/styles - planned; anchor-link injection is covered above)
 
@@ -440,7 +440,7 @@ MacDownTests/
 │   ├── MPNotificationTests.m (✅ implemented - Issue #234 - notification observers)
 │   ├── MPHTMLExportTests.m (✅ implemented - Issue #30 - HTML export)
 │   ├── MPImageExportTests.m (✅ implemented - Issue #234 - image export)
-│   ├── MPPDFAnchorInjectorTests.m (✅ implemented - Issue #504 - PDF anchor-link injection, 8 tests)
+│   ├── MPPDFAnchorInjectorTests.m (✅ implemented - Issue #504 - PDF anchor-link injection, 11 tests)
 │   └── MPExportTests.m (planned - general export operations)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m
