@@ -222,7 +222,16 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (weak) IBOutlet NSToolbar *toolbar;
 @property (weak) IBOutlet MPDocumentSplitView *splitView;
 @property (weak) IBOutlet NSView *editorContainer;
-@property (unsafe_unretained) IBOutlet MPEditorView *editor;
+// unsafe_unretained here (unlike every sibling IBOutlet above, all `weak`)
+// dates back to the original 2014 project setup, predating this codebase's
+// adoption of `weak` IBOutlets, and was never updated. A raw, non-zeroing
+// pointer means that if the underlying MPEditorView is ever deallocated
+// and recreated (e.g. during window/layout churn), `editor` keeps pointing
+// at freed memory -- any later message to it (toggleForMarkupPrefix:suffix:,
+// .selectedRange, .string, ...) is then a dangling-pointer access, i.e.
+// EXC_BAD_ACCESS. `weak` makes the pointer nil itself out instead of
+// dangling, turning a crash into a safe no-op.
+@property (weak) IBOutlet MPEditorView *editor;
 @property (weak) IBOutlet NSLayoutConstraint *editorPaddingBottom;
 @property (weak) IBOutlet WebView *preview;
 @property (weak) IBOutlet NSPopUpButton *wordCountWidget;
