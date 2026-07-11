@@ -64,24 +64,70 @@ static BOOL MPPDFAnchorStringIsBlank(NSString *string)
     return trimmed.length == 0;
 }
 
-// h(sel) = NSHeight([sel boundsForPage:sel.pages.firstObject]), guarded: a
-// selection with no pages (shouldn't happen in practice, but defensively
-// possible) contributes a height of 0 rather than crashing.
-static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
+#pragma mark - MPPDFAnchorMatch
+
+// PDFKit vends the SAME PDFSelection instance across multiple -findString:
+// calls on one PDFDocument: a later search mutates an earlier selection's
+// string/bounds/pages in place. Caching arrays of live PDFSelection objects
+// up front (as -findString: returns them) and reading their geometry later,
+// after subsequent needle searches have run, silently reads clobbered
+// geometry. MPPDFAnchorMatch is a plain, immutable value snapshot of the
+// only per-match facts the engine needs -- page index (resolved against the
+// document's canonical page identity), on-page bounds, and rendered height
+// -- captured immediately after each -findString:withOptions: call, before
+// any later needle search can mutate the PDFSelection it came from.
+@interface MPPDFAnchorMatch : NSObject
+@property (nonatomic, assign, readonly) NSUInteger pageIndex;
+@property (nonatomic, assign, readonly) NSRect bounds;
+@property (nonatomic, assign, readonly) CGFloat height;
++ (instancetype)matchWithPageIndex:(NSUInteger)pageIndex bounds:(NSRect)bounds height:(CGFloat)height;
+@end
+
+@implementation MPPDFAnchorMatch
+
++ (instancetype)matchWithPageIndex:(NSUInteger)pageIndex bounds:(NSRect)bounds height:(CGFloat)height
 {
-    if (selection == nil) {
-        return 0.0;
+    MPPDFAnchorMatch *match = [[self alloc] init];
+    if (match) {
+        match->_pageIndex = pageIndex;
+        match->_bounds = bounds;
+        match->_height = height;
     }
-    NSArray<PDFPage *> *pages = selection.pages;
-    if (pages.count == 0) {
-        return 0.0;
+    return match;
+}
+
+@end
+
+// Snapshots every selection in `matches` into an MPPDFAnchorMatch immediately
+// (i.e. before any subsequent -findString: call can mutate the shared
+// PDFSelection instances). Selections with no resolvable page are skipped
+// defensively rather than crashing; this should not happen in practice.
+static NSArray<MPPDFAnchorMatch *> *MPPDFAnchorSnapshotMatches(NSArray<PDFSelection *> *matches,
+                                                                 PDFDocument *document)
+{
+    NSMutableArray<MPPDFAnchorMatch *> *snapshots = [NSMutableArray arrayWithCapacity:matches.count];
+    for (PDFSelection *selection in matches) {
+        if (selection == nil) {
+            continue;
+        }
+        NSArray<PDFPage *> *pages = selection.pages;
+        if (pages.count == 0) {
+            continue;
+        }
+        PDFPage *page = pages.firstObject;
+        if (page == nil) {
+            continue;
+        }
+        NSUInteger pageIndex = [document indexForPage:page];
+        if (pageIndex == NSNotFound) {
+            continue;
+        }
+        NSRect bounds = [selection boundsForPage:page];
+        [snapshots addObject:[MPPDFAnchorMatch matchWithPageIndex:pageIndex
+                                                             bounds:bounds
+                                                             height:NSHeight(bounds)]];
     }
-    PDFPage *page = pages.firstObject;
-    if (page == nil) {
-        return 0.0;
-    }
-    NSRect bounds = [selection boundsForPage:page];
-    return NSHeight(bounds);
+    return snapshots;
 }
 
 #pragma mark - MPPDFAnchorInjector
@@ -134,7 +180,15 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
         }
     }
 
-    NSMutableDictionary<NSString *, NSArray<PDFSelection *> *> *textToMatches = [NSMutableDictionary dictionary];
+    // PDFKit vends the SAME PDFSelection instance across successive
+    // -findString: calls on this document, mutating earlier selections'
+    // geometry in place as later needles are searched for. Snapshot each
+    // needle's matches into plain MPPDFAnchorMatch value objects
+    // IMMEDIATELY after its -findString: call returns -- before the next
+    // needle's -findString: call runs and clobbers them. The injection loop
+    // below reads exclusively from these snapshots, never from a live
+    // PDFSelection. Issue #504.
+    NSMutableDictionary<NSString *, NSArray<MPPDFAnchorMatch *> *> *textToMatches = [NSMutableDictionary dictionary];
     for (NSString *needle in needleTexts) {
         if (MPPDFAnchorStringIsBlank(needle)) {
             continue; // Defensive: never search for a blank string.
@@ -146,7 +200,7 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
             NSLog(@"[Issue #504] anchor link skipped due to exception: %@", exception);
             matches = nil;
         }
-        textToMatches[needle] = matches ?: @[];
+        textToMatches[needle] = MPPDFAnchorSnapshotMatches(matches ?: @[], document);
     }
 
     // tocCount(T): number of links whose linkText == T, for any text T (used
@@ -171,10 +225,10 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
             }
 
             NSString *linkText = link.linkText;
-            NSArray<PDFSelection *> *allMatches = textToMatches[linkText] ?: @[];
+            NSArray<MPPDFAnchorMatch *> *allMatches = textToMatches[linkText] ?: @[];
             NSUInteger tocCount = tocCountByText[linkText].unsignedIntegerValue;
             NSUInteger tocAvailable = MIN(tocCount, allMatches.count);
-            NSArray<PDFSelection *> *tocSelections =
+            NSArray<MPPDFAnchorMatch *> *tocSelections =
                 [allMatches subarrayWithRange:NSMakeRange(0, tocAvailable)];
 
             // Step 4: k-th link with this text maps to the k-th TOC
@@ -188,28 +242,20 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
                 continue; // Not enough TOC occurrences for this link; skip.
             }
 
-            PDFSelection *sourceSel = tocSelections[k];
-            if (sourceSel == nil) {
+            MPPDFAnchorMatch *sourceMatch = tocSelections[k];
+            if (sourceMatch == nil) {
                 continue;
             }
-            NSArray<PDFPage *> *sourcePages = sourceSel.pages;
-            if (sourcePages.count == 0) {
-                continue;
-            }
-            PDFPage *sourcePage = sourcePages.firstObject;
-            if (sourcePage == nil) {
-                continue;
-            }
-            NSRect sourceBounds = [sourceSel boundsForPage:sourcePage];
-            CGFloat hSource = NSHeight(sourceBounds);
+            NSRect sourceBounds = sourceMatch.bounds;
+            CGFloat hSource = sourceMatch.height;
 
             // Resolve to the document's canonical PDFPage: annotations added to
             // the transient page vended by PDFSelection.pages are not persisted
             // on the page pageAtIndex: returns (and would not be written out).
             // Issue #504.
-            NSUInteger sourcePageIndex = [document indexForPage:sourcePage];
-            if (sourcePageIndex != NSNotFound) {
-                sourcePage = [document pageAtIndex:sourcePageIndex];
+            PDFPage *sourcePage = [document pageAtIndex:sourceMatch.pageIndex];
+            if (sourcePage == nil) {
+                continue;
             }
 
             // Step 5: resolve the destination.
@@ -218,10 +264,10 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
                 continue; // Unknown/empty-text slug target; skip.
             }
 
-            NSArray<PDFSelection *> *destMatches = textToMatches[destText] ?: @[];
+            NSArray<MPPDFAnchorMatch *> *destMatches = textToMatches[destText] ?: @[];
             NSUInteger destTocCount = tocCountByText[destText].unsignedIntegerValue;
             NSUInteger destTocAvailable = MIN(destTocCount, destMatches.count);
-            NSArray<PDFSelection *> *bodyGroup =
+            NSArray<MPPDFAnchorMatch *> *bodyGroup =
                 [destMatches subarrayWithRange:NSMakeRange(destTocAvailable,
                                                             destMatches.count - destTocAvailable)];
             if (bodyGroup.count == 0) {
@@ -230,42 +276,34 @@ static CGFloat MPPDFAnchorSelectionHeight(PDFSelection *selection)
 
             // (i) Preferred: first body occurrence taller than the source
             // (a heading rendered larger than the TOC/body text).
-            PDFSelection *destSel = nil;
-            for (PDFSelection *candidate in bodyGroup) {
+            MPPDFAnchorMatch *destMatch = nil;
+            for (MPPDFAnchorMatch *candidate in bodyGroup) {
                 if (candidate == nil) {
                     continue;
                 }
-                if (MPPDFAnchorSelectionHeight(candidate) > hSource) {
-                    destSel = candidate;
+                if (candidate.height > hSource) {
+                    destMatch = candidate;
                     break;
                 }
             }
             // (ii) Fallback: first body occurrence in document order, so a
             // same-size heading (e.g. default-theme h5/h6) is never dropped.
-            if (destSel == nil) {
-                destSel = bodyGroup.firstObject;
+            if (destMatch == nil) {
+                destMatch = bodyGroup.firstObject;
             }
-            if (destSel == nil) {
+            if (destMatch == nil) {
                 continue;
             }
 
-            NSArray<PDFPage *> *destPages = destSel.pages;
-            if (destPages.count == 0) {
-                continue;
-            }
-            PDFPage *destPage = destPages.firstObject;
-            if (destPage == nil) {
-                continue;
-            }
-            NSRect destBounds = [destSel boundsForPage:destPage];
+            NSRect destBounds = destMatch.bounds;
 
             // Resolve to the document's canonical PDFPage for the same reason
             // as sourcePage above: the PDFDestination must reference the page
             // pageAtIndex: vends, or navigation/persistence would target a
             // detached page wrapper. Issue #504.
-            NSUInteger destPageIndex = [document indexForPage:destPage];
-            if (destPageIndex != NSNotFound) {
-                destPage = [document pageAtIndex:destPageIndex];
+            PDFPage *destPage = [document pageAtIndex:destMatch.pageIndex];
+            if (destPage == nil) {
+                continue;
             }
 
             // Step 6: construct + attach the annotation. PDF pages are

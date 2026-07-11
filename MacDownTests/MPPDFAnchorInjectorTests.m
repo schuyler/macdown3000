@@ -350,26 +350,56 @@ static const CGFloat kMPTestTolerance = 2.0;
 - (NSArray<NSValue *> *)measuredRectsForItems:(NSArray<MPPDFTestDrawItem *> *)items
                                     inDocument:(PDFDocument *)document
 {
-    NSMutableDictionary<NSString *, NSArray<PDFSelection *> *> *matchesByText = [NSMutableDictionary dictionary];
+    // PDFKit vends the SAME PDFSelection instance across successive
+    // -findString: calls on one document: a later search mutates an earlier
+    // search's returned selections in place (their .string, page, and bounds
+    // all change). Caching arrays of live PDFSelection objects here and
+    // reading their page/geometry LATER -- after this method has searched for
+    // a different item's text -- reads clobbered data, making a body heading
+    // on page >=1 appear to vanish. Snapshot each match's (pageIndex, bounds)
+    // into a plain value IMMEDIATELY after its -findString: call, before any
+    // later needle search can mutate it, and match items against those
+    // snapshots. Mirrors the same snapshot fix in MPPDFAnchorInjector.m.
+    // Issue #504.
+    NSMutableDictionary<NSString *, NSArray<NSNumber *> *> *pageIndexesByText = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSArray<NSValue *> *> *boundsByText = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSString *, NSNumber *> *consumedOnPage = [NSMutableDictionary dictionary];
     NSMutableArray<NSValue *> *rects = [NSMutableArray arrayWithCapacity:items.count];
 
     for (MPPDFTestDrawItem *item in items) {
-        NSArray<PDFSelection *> *matches = matchesByText[item.text];
-        if (matches == nil) {
-            matches = [document findString:item.text withOptions:0] ?: @[];
-            matchesByText[item.text] = matches;
-        }
-
-        NSMutableArray<PDFSelection *> *onThisPage = [NSMutableArray array];
-        for (PDFSelection *selection in matches) {
-            NSArray<PDFPage *> *pages = selection.pages;
-            if (pages.count == 0) {
-                continue;
+        NSArray<NSNumber *> *snapshotPageIndexes = pageIndexesByText[item.text];
+        if (snapshotPageIndexes == nil) {
+            NSArray<PDFSelection *> *matches = [document findString:item.text withOptions:0] ?: @[];
+            NSMutableArray<NSNumber *> *pageIndexSnapshots = [NSMutableArray array];
+            NSMutableArray<NSValue *> *boundsSnapshots = [NSMutableArray array];
+            // Read every selection's page + bounds NOW, before the next
+            // -findString: (for a different item text) can mutate them.
+            for (PDFSelection *selection in matches) {
+                NSArray<PDFPage *> *pages = selection.pages;
+                if (pages.count == 0) {
+                    continue;
+                }
+                PDFPage *page = pages.firstObject;
+                if (page == nil) {
+                    continue;
+                }
+                NSUInteger pageIndex = [document indexForPage:page];
+                if (pageIndex == NSNotFound) {
+                    continue;
+                }
+                [pageIndexSnapshots addObject:@(pageIndex)];
+                [boundsSnapshots addObject:[NSValue valueWithRect:[selection boundsForPage:page]]];
             }
-            PDFPage *page = pages.firstObject;
-            if (page != nil && [document indexForPage:page] == item.pageIndex) {
-                [onThisPage addObject:selection];
+            snapshotPageIndexes = pageIndexSnapshots;
+            pageIndexesByText[item.text] = pageIndexSnapshots;
+            boundsByText[item.text] = boundsSnapshots;
+        }
+        NSArray<NSValue *> *snapshotBounds = boundsByText[item.text];
+
+        NSMutableArray<NSValue *> *onThisPage = [NSMutableArray array];
+        for (NSUInteger i = 0; i < snapshotPageIndexes.count; i++) {
+            if (snapshotPageIndexes[i].unsignedIntegerValue == item.pageIndex) {
+                [onThisPage addObject:snapshotBounds[i]];
             }
         }
 
@@ -380,9 +410,7 @@ static const CGFloat kMPTestTolerance = 2.0;
 
         CGRect rect = CGRectZero;
         if (occurrenceIndex < onThisPage.count) {
-            PDFSelection *selection = onThisPage[occurrenceIndex];
-            PDFPage *page = selection.pages.firstObject;
-            rect = NSRectToCGRect([selection boundsForPage:page]);
+            rect = NSRectToCGRect([onThisPage[occurrenceIndex] rectValue]);
         } else {
             XCTFail(@"Could not locate drawn text '%@' on fixture page %lu via findString: -- "
                     @"the fixture's text may not be searchable", item.text, (unsigned long)item.pageIndex);
@@ -438,11 +466,37 @@ static const CGFloat kMPTestTolerance = 2.0;
 
 #pragma mark - Assertion Helpers
 
+// Whether a PDF annotation is a link annotation, robust across PDFKit's
+// slash convention. The injector builds link annotations with
+// -initWithBounds:forType:PDFAnnotationSubtypeLink..., which on this platform
+// yields a plain `PDFAnnotation` instance (NOT a `PDFAnnotationLink`
+// subclass), whose `.type` reads back as @"Link" while the
+// `PDFAnnotationSubtypeLink` constant is @"/Link" (leading slash). Comparing
+// `.type` directly to the constant -- or testing `isKindOfClass:
+// [PDFAnnotationLink class]` -- therefore both fail. Strip an optional leading
+// "/" from the constant before comparing, so this matches whether PDFKit
+// returns @"Link" or @"/Link".
+static BOOL MPTestAnnotationIsLink(PDFAnnotation *annotation)
+{
+    if (annotation == nil) {
+        return NO;
+    }
+    NSString *type = annotation.type;
+    if (type.length == 0) {
+        return NO;
+    }
+    NSString *subtype = PDFAnnotationSubtypeLink;
+    if ([subtype hasPrefix:@"/"]) {
+        subtype = [subtype substringFromIndex:1];
+    }
+    return [type isEqualToString:subtype];
+}
+
 - (NSArray<PDFAnnotation *> *)linkAnnotationsOnPage:(PDFPage *)page
 {
     NSMutableArray<PDFAnnotation *> *result = [NSMutableArray array];
     for (PDFAnnotation *annotation in page.annotations) {
-        if ([annotation.type isEqualToString:PDFAnnotationSubtypeLink]) {
+        if (MPTestAnnotationIsLink(annotation)) {
             [result addObject:annotation];
         }
     }
@@ -518,8 +572,8 @@ static const CGFloat kMPTestTolerance = 2.0;
             continue;
         }
 
-        XCTAssertEqualObjects(match.type, PDFAnnotationSubtypeLink,
-                              @"Injected annotation %lu should be a link annotation", (unsigned long)i);
+        XCTAssertTrue(MPTestAnnotationIsLink(match),
+                      @"Injected annotation %lu should be a link annotation", (unsigned long)i);
         XCTAssertTrue([match.action isKindOfClass:[PDFActionGoTo class]],
                       @"Injected annotation %lu's action should be a PDFActionGoTo", (unsigned long)i);
         if (![match.action isKindOfClass:[PDFActionGoTo class]]) {
