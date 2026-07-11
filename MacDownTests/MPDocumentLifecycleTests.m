@@ -24,7 +24,7 @@
 @interface MPDocument (ReloadTesting)
 @property (strong) MPRenderer *renderer;
 @property (strong) HGMarkdownHighlighter *highlighter;
-@property (unsafe_unretained) MPEditorView *editor;
+@property (weak) MPEditorView *editor;
 @property (copy) NSString *loadedString;
 - (void)reloadFromLoadedString;
 @property (nonatomic) BOOL isPreviewReady;

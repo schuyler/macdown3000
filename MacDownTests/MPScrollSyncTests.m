@@ -26,7 +26,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (strong) NSArray<NSNumber *> *editorHeaderLocations;
 @property (weak) WebView *preview;
 @property (strong) MPRenderer *renderer;
-@property (unsafe_unretained) MPEditorView *editor;
+@property (weak) MPEditorView *editor;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
 // Issue #436: pure helpers for reference-point classification and sequence alignment
