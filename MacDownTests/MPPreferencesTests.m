@@ -1050,6 +1050,29 @@
 }
 
 
+#pragma mark - Folders To Open Tests
+
+- (void)testFoldersToOpenRoundTripsThroughSharedSuite
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    NSArray *saved = prefs.foldersToOpen;            // preserve
+    @try
+    {
+        prefs.foldersToOpen = @[@"/tmp/one", @"/tmp/two"];
+        [prefs synchronize];
+        XCTAssertEqualObjects(prefs.foldersToOpen, (@[@"/tmp/one", @"/tmp/two"]));
+        prefs.foldersToOpen = nil;
+        [prefs synchronize];
+        XCTAssertNil(prefs.foldersToOpen);
+    }
+    @finally
+    {
+        prefs.foldersToOpen = saved;
+        [prefs synchronize];
+    }
+}
+
+
 #pragma mark - Front Matter Migration Tests (Issue #307)
 
 /**

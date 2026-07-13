@@ -19,6 +19,10 @@
 @property (nonatomic, readwrite) NSString *markdown;
 @property (nonatomic, readonly) NSString *html;
 
+/// When non-nil, this document's window is a folder workspace and shows a
+/// folder sidebar rooted at this URL.
+@property (nonatomic, copy) NSURL *workspaceRootURL;
+
 /**
  * Toggle the checkbox at the specified index in the markdown source.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.

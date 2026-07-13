@@ -13,4 +13,6 @@
 
 @property (nonatomic, readonly) MPPreferences *preferences;
 
+- (IBAction)openFolder:(id)sender;
+
 @end
