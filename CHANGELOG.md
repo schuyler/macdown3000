@@ -2,7 +2,33 @@
 
 ## [3000.0.7] - 2026-07-13
 
-This release brings a working Quick Look extension for Markdown files, anchor-link navigation via slug-based heading IDs, a live selection character/word count, a new GitHub Dark editor theme, safer file handling on remote and network volumes, and a wide range of fixes to toolbar behavior, preview rendering, table layout, and localized preference panes.
+### Added
+
+- Show a live word/character/character-no-spaces count for the current editor selection in the count widget, reverting to document totals when nothing is selected (#452)
+
+### Security
+
+- Restrict auto-created link targets to the current document's folder to prevent unauthorized file creation (#386)
+
+### Fixed
+
+- Fix a potential crash (EXC_BAD_ACCESS) reaching the editor through a dangling `MPDocument.editor` outlet, by making it a weak reference instead of `unsafe_unretained` (#1379) -- thanks @wltb (Roberto Bissanti) for the contribution!
+- Fix Homebrew detection in the Terminal preferences pane, which never actually worked: the subprocess launched a bare `brew` path that NSTask cannot resolve (it does not search `PATH`), so the check failed silently every time; MacDown now resolves Homebrew's absolute location before launching and modernizes the subprocess around `NSTask.terminationHandler` to avoid a preferences-pane hang risk (#526, #1379) -- thanks @wltb (Roberto Bissanti) for the contribution!
+- Replace deprecated `-insertText:` with `-insertText:replacementRange:` at the editor autocomplete and new-paragraph insertion sites (#1379) -- thanks @wltb (Roberto Bissanti) for the contribution!
+- Remove stale `location`/`supportText` outlet connections in the Terminal preferences nib that logged a "Failed to connect outlet" warning on every load (#1379) -- thanks @wltb (Roberto Bissanti) for the contribution!
+- Fix spurious "changed by another application" save conflicts and save failures on remote/FUSE-mounted volumes (e.g. SSHFS) by bypassing NSDocument's atomic temp-file-swap save for non-local destinations and writing directly instead; this should also stop the "does not support permanent version storage" prompt from appearing for those documents, since it's raised from the same code path (#371) -- thanks @gurple for the report!
+- Fix the Insert Table toolbar button doing nothing when the editor pane had focus, and corrupting the document when clicked repeatedly (a second table was inserted inside the first table's cell); every click now inserts a clean, well-separated table regardless of which pane has focus (#278) -- thanks @rcuisnier for the report!
+- Fix auto-reload silently breaking after an external editor's atomic save by making the local-volume watcher check fall back to the parent directory when the file is transiently missing; also guard resource-file watchers against remote volumes and tear down any prior watcher before re-arming (#478)
+- Fix the Preview pane still auto-scrolling toward the editor when typing after Sync Panes was turned off mid-session; toggling Sync Panes now takes effect immediately (settling the panes on disable, re-syncing on enable) without needing to reopen the document (#441) -- thanks @gregwillits!
+- Fix blank preview when opening saved or externally-originated documents: the real document file is no longer used as the preview's base resource, which WebKit on macOS 26 can silently refuse to load (e.g. files with the execute bit set by sync clients like OneDrive, or stale TCC/provenance state) (#431, #405) -- thanks @maskedspitz, @songjianbupt, and @craigrodger for the diagnosis!
+- Improve render-path responsiveness: single-pass word/character counting, cached body-extraction regex, and bounded renderer polling with cancellation (#388)
+- Restrict auto-created link targets to the current document's folder scope (#388)
+- Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
+
+<!-- rc-temp -->
+## [3000.0.7-rc.1] - 2026-06-26
+
+This release candidate brings a large batch of preview-rendering fixes, editor and toolbar improvements, new theming options, and several reporter-driven bug fixes. Highlights include fixes for blank previews, table layout and scrolling, pane sync on large files, and a hardened, more responsive preview pipeline.
 
 ### Added
 
