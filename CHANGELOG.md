@@ -1,88 +1,82 @@
 # Changelog
 
-## [Unreleased]
+## [3000.0.7] - 2026-07-13
+
+This release brings a working Quick Look extension for Markdown files, anchor-link navigation via slug-based heading IDs, a live selection character/word count, a new GitHub Dark editor theme, safer file handling on remote and network volumes, and a wide range of fixes to toolbar behavior, preview rendering, table layout, and localized preference panes — many reported and validated by users during release-candidate testing.
 
 ### Added
 
-- Show a live word/character/character-no-spaces count for the current editor selection in the count widget, reverting to document totals when nothing is selected (#452)
-
-### Security
-
-- Restrict auto-created link targets to the current document's folder to prevent unauthorized file creation (#386)
-
-### Fixed
-
-- Fix spurious "changed by another application" save conflicts and save failures on remote/FUSE-mounted volumes (e.g. SSHFS) by bypassing NSDocument's atomic temp-file-swap save for non-local destinations and writing directly instead; this should also stop the "does not support permanent version storage" prompt from appearing for those documents, since it's raised from the same code path (#371) -- thanks @gurple for the report!
-- Fix the Insert Table toolbar button doing nothing when the editor pane had focus, and corrupting the document when clicked repeatedly (a second table was inserted inside the first table's cell); every click now inserts a clean, well-separated table regardless of which pane has focus (#278) -- thanks @rcuisnier for the report!
-- Fix auto-reload silently breaking after an external editor's atomic save by making the local-volume watcher check fall back to the parent directory when the file is transiently missing; also guard resource-file watchers against remote volumes and tear down any prior watcher before re-arming (#478)
-- Fix the Preview pane still auto-scrolling toward the editor when typing after Sync Panes was turned off mid-session; toggling Sync Panes now takes effect immediately (settling the panes on disable, re-syncing on enable) without needing to reopen the document (#441) -- thanks @gregwillits!
-- Fix blank preview when opening saved or externally-originated documents: the real document file is no longer used as the preview's base resource, which WebKit on macOS 26 can silently refuse to load (e.g. files with the execute bit set by sync clients like OneDrive, or stale TCC/provenance state) (#431, #405) -- thanks @maskedspitz, @songjianbupt, and @craigrodger for the diagnosis!
-- Improve render-path responsiveness: single-pass word/character counting, cached body-extraction regex, and bounded renderer polling with cancellation (#388)
-- Restrict auto-created link targets to the current document's folder scope (#388)
-- Fix line enumeration in scroll sync header scanning to handle `\r\n` and bare `\r` line endings (#388)
-
-<!-- rc-temp -->
-## [3000.0.7-rc.1] - 2026-06-26
-
-This release candidate brings a large batch of preview-rendering fixes, editor and toolbar improvements, new theming options, and several reporter-driven bug fixes. Highlights include fixes for blank previews, table layout and scrolling, pane sync on large files, and a hardened, more responsive preview pipeline.
-
-### Added
-
-- Add GitHub Dark Default editor theme (PR #465) -- thanks @sks3691 for the contribution!
-- Add editor invisible character toggle (#43, PR #462) -- thanks @yusufm for the contribution!
-- Add File menu autosave toggle (#301, PR #459) -- thanks @Xylopyrographer for the report! thanks @yusufm for the contribution!
-- Add insert table toolbar action (#278, PR #420) -- thanks @rcuisnier for the report! thanks @yusufm for the contribution!
-- Add Selection character/word count (#452, PR #460) -- thanks @Telamonster for the report!
-- Persist preview-only startup mode (PR #383) -- thanks @yusufm for the contribution!
-- Emit slug-based heading IDs for anchor link navigation (#429, PR #430) -- thanks @falcon-enoc for the report and the contribution!
+- Add localized selection count strings to all locale files (#452, #501) -- thanks @Telamonster for the report!
+- Wire Quick Look extension into Xcode build (#284, #477) -- thanks @caius for the report!
+- Add GitHub Dark Default editor theme (#465) -- thanks @sks3691 for the contribution!
+- Add editor invisible character toggle (#43, #462) -- thanks @yusufm for the contribution!
+- Add File menu autosave toggle (#301, #459) -- thanks @Xylopyrographer for the report! thanks @yusufm for the contribution!
+- Add insert table toolbar action (#278, #420) -- thanks @rcuisnier for the report! thanks @yusufm for the contribution!
+- Add Selection character/word count (#452, #460) -- thanks @Telamonster for the report!
+- Persist preview-only startup mode (#383) -- thanks @yusufm for the contribution!
+- Emit slug-based heading IDs for anchor link navigation (#429, #430) -- thanks @falcon-enoc for the report and the contribution!
 
 ### Changed
 
-- Color HTML in default editor themes (#443, PR #458) -- thanks @gregwillits for the report!
-- Support uppercase task list checkboxes (#369, PR #410) -- thanks @gino-santerre-telus for the report! thanks @yusufm for the contribution!
-- Hide unparsable YAML front matter (#307, PR #413) -- thanks @yusufm for the contribution!
-- Make the toolbar fully delegate-driven so Flexible Space can be dropped (#313, PR #473) -- thanks @gregwillits for the report!
-- Extend wide-table horizontal scrolling to all themes (screen only) (#432, PR #468) -- thanks @dafi for the report!
-- Widen HTML preferences pane to fit theme controls (#397, PR #467) -- thanks @rcuisnier for the report!
-- Sort editor theme and rendering CSS preference menus (PR #404)
-- Improve render-path responsiveness (PR #388) -- thanks @yusufm for the contribution!
+- Dynamic preferences pane sizing for localized strings (#397, #481) -- thanks @rcuisnier for the report!
+- Color HTML in default editor themes (#443, #458) -- thanks @gregwillits for the report!
+- Support uppercase task list checkboxes (#369, #410) -- thanks @gino-santerre-telus for the report! thanks @yusufm for the contribution!
+- Hide unparsable YAML front matter (#307, #413) -- thanks @yusufm for the contribution!
+- Make the toolbar fully delegate-driven so Flexible Space can be dropped (#313, #473) -- thanks @gregwillits for the report!
+- Extend wide-table horizontal scrolling to all themes (screen only) (#432, #468) -- thanks @dafi for the report!
+- Widen HTML preferences pane to fit theme controls (#397, #467) -- thanks @rcuisnier for the report!
+- Sort editor theme and rendering CSS preference menus (#404)
+- Improve render-path responsiveness (#388) -- thanks @yusufm for the contribution!
 
 ### Fixed
 
-- Fix blank preview for documents with execute bit set (#431, #405, PR #454) -- thanks @maskedspitz and @b2sc for the reports!
-- Never use the document file as the preview base URL (#405, #431, PR #456) -- thanks @b2sc and @maskedspitz for the reports!
-- Normalize CRLF line endings on file load (#382, PR #398) -- thanks @Ariaflux for the report!
-- Cache-bust style/theme CSS on preview reload (#318, PR #474) -- thanks @gregwillits for the report!
-- Restore natural table width and horizontal scrolling (#432, PR #440) -- thanks @dafi for the report! thanks @samqbush for the contribution!
-- Keep editor and preview panes in sync on large files (#436, PR #464) -- thanks @KingMob for the report!
-- Honor Sync Panes toggle mid-session (#441, PR #463) -- thanks @gregwillits for the report!
-- Clear editor highlighting on reload (#378, PR #415) -- thanks @yusufm for the contribution!
-- Re-initialize task list handlers after DOM replacement (#376, PR #400)
-- Strip grey background from printed output (#387, PR #403) -- thanks @richb-hanover for the report!
-- Preserve custom Prism theme filename case (#315, PR #416) -- thanks @gregwillits for the report! thanks @yusufm for the contribution!
-- Mirror drag-collapse ratio on pane swap (#380, PR #414) -- thanks @yusufm for the contribution!
-- Fix preference pane layout for localized text wrapping (#397, PR #461) -- thanks @rcuisnier for the report!
-- Fix Settings panel layout clipping and field overlap (#397, PR #399) -- thanks @rcuisnier for the report!
-- Fix EXC_BAD_ACCESS when clicking grouped toolbar buttons (PR #393) -- thanks @yusufm for the contribution!
-- Guard nil-group and out-of-bounds index in grouped toolbar item selection (#394, PR #396)
-- Fix entitlements loss during app re-signing (#302, PR #472) -- thanks @whispersnowleopard for the report!
-- Open only the help document on first launch (#428, PR #445) -- thanks @mundijr for the report! thanks @1waterrj for the contribution!
-- Fix Xcode runtime warnings (PR #401) -- thanks @yusufm for the contribution!
+- Fix Quick Look extension entitlements stripped by release signing (#284, #494) -- thanks @caius for the report!
+- Fix toolbar buttons not dispatching when editor has focus (#278, #496) -- thanks @rcuisnier for the report!
+- Fix checkbox label clipping in localized preference panes (#397, #498) -- thanks @rcuisnier for the report!
+- Force toolbar redraw after preference pane switch (#500)
+- Bypass atomic safe-save on remote volumes to prevent spurious save conflicts and the "does not support permanent version storage" prompt on SSHFS and similar mounts (#371, #502) -- thanks @gurple for the report!
+- Harden file watching against transient paths and remote volumes (#478, #492)
+- Fix Insert Table toolbar regression: button now works regardless of which pane has focus, repeated clicks no longer nest tables (#278, #483) -- thanks @rcuisnier for the report!
+- Fix crash on empty Markdown headings from slug-based heading IDs (#479, #482) -- thanks @Telamonster for the report!
+- Skip file watchers on remote volumes (#371, #424) -- thanks @gurple for the report! thanks @yusufm for the contribution!
+- Re-highlight editor after preview checkbox toggle (#376, #480)
+- Fix blank preview for documents with execute bit set (#431, #405, #454) -- thanks @maskedspitz and @b2sc for the reports!
+- Never use the document file as the preview base URL (#405, #431, #456) -- thanks @b2sc and @maskedspitz for the reports!
+- Normalize CRLF line endings on file load (#382, #398) -- thanks @Ariaflux for the report!
+- Cache-bust style/theme CSS on preview reload (#318, #474) -- thanks @gregwillits for the report!
+- Restore natural table width and horizontal scrolling (#432, #440) -- thanks @dafi for the report! thanks @samqbush for the contribution!
+- Keep editor and preview panes in sync on large files (#436, #464) -- thanks @KingMob for the report!
+- Honor Sync Panes toggle mid-session (#441, #463) -- thanks @gregwillits for the report!
+- Clear editor highlighting on reload (#378, #415) -- thanks @yusufm for the contribution!
+- Re-initialize task list handlers after DOM replacement (#376, #400)
+- Strip grey background from printed output (#387, #403) -- thanks @richb-hanover for the report!
+- Preserve custom Prism theme filename case (#315, #416) -- thanks @gregwillits for the report! thanks @yusufm for the contribution!
+- Mirror drag-collapse ratio on pane swap (#380, #414) -- thanks @yusufm for the contribution!
+- Fix preference pane layout for localized text wrapping (#397, #461) -- thanks @rcuisnier for the report!
+- Fix Settings panel layout clipping and field overlap (#397, #399) -- thanks @rcuisnier for the report!
+- Fix EXC_BAD_ACCESS when clicking grouped toolbar buttons (#393) -- thanks @yusufm for the contribution!
+- Guard nil-group and out-of-bounds index in grouped toolbar item selection (#394, #396)
+- Fix entitlements loss during app re-signing (#302, #472) -- thanks @whispersnowleopard for the report!
+- Open only the help document on first launch (#428, #445) -- thanks @mundijr for the report! thanks @1waterrj for the contribution!
+- Fix Xcode runtime warnings (#401) -- thanks @yusufm for the contribution!
 
 ### Security
 
-- Harden Quick Look preview sandbox (PR #385) -- thanks @yusufm for the contribution!
-- Harden preview script boundaries (PR #384) -- thanks @yusufm for the contribution!
-- Restrict auto-created link targets (PR #386) -- thanks @yusufm for the contribution!
+- Harden Quick Look preview sandbox (#385) -- thanks @yusufm for the contribution!
+- Harden preview script boundaries (#384) -- thanks @yusufm for the contribution!
+- Restrict auto-created link targets (#386) -- thanks @yusufm for the contribution!
 
 ### Documentation
 
-- Fix and clarify line break example in help.md (PR #434) -- thanks @mjonss for the contribution!
+- Fix and clarify line break example in help.md (#434) -- thanks @mjonss for the contribution!
 
 ### Infrastructure
 
-- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; release-train RC process; website update for 3000.0.6.
-<!-- /rc-temp -->
+- Regression coverage for uppercase task list checkboxes, preview image rendering, and navigation completion; @primer/css and sass tooling bumps in the GitHub-style generator; CI and /review tooling updates; release-train RC process; website update for 3000.0.6; remove gh CLI install machinery from canned workflows.
+
+### Known Issues
+
+- On French and other localized builds, the Compilation tab of the Preferences window has a layout regression where the code-block syntax-coloration control overlaps adjacent text. This is cosmetic and does not affect functionality. Tracked in #397 and targeted for 3000.0.8.
 
 ## [3000.0.6] - 2026-04-18
 
