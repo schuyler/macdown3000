@@ -2,7 +2,7 @@
 
 ## [3000.0.7] - 2026-07-13
 
-This release brings a working Quick Look extension for Markdown files, anchor-link navigation via slug-based heading IDs, a live selection character/word count, a new GitHub Dark editor theme, safer file handling on remote and network volumes, and a wide range of fixes to toolbar behavior, preview rendering, table layout, and localized preference panes — many reported and validated by users during release-candidate testing.
+This release brings a working Quick Look extension for Markdown files, anchor-link navigation via slug-based heading IDs, a live selection character/word count, a new GitHub Dark editor theme, safer file handling on remote and network volumes, and a wide range of fixes to toolbar behavior, preview rendering, table layout, and localized preference panes.
 
 ### Added
 
