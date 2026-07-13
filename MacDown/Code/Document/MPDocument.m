@@ -38,6 +38,9 @@
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+static const CGFloat kMPMinZoom = 0.5;
+static const CGFloat kMPMaxZoom = 3.0;
+
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
@@ -77,10 +80,26 @@ NS_INLINE NSSet *MPEditorPreferencesToObserve()
             @"editorWidthLimited", @"editorMaximumWidth", @"editorLineSpacing",
             @"editorOnRight", @"editorStyleName", @"editorShowWordCount",
             @"editorScrollsPastEnd", @"editorShowsInvisibleCharacters",
-            @"htmlMathJax", @"htmlMathJaxInlineDollar", nil
+            @"htmlMathJax", @"htmlMathJaxInlineDollar",
+            @"documentZoomLevel", nil
         ];
     });
     return keys;
+}
+
+/**
+ * Ordered list of document zoom multipliers used by ⌘+/⌘- and the
+ * toolbar dropdown. Kept as a single source of truth so the popup and the
+ * snap-step helper cannot drift apart.
+ */
+NS_INLINE NSArray<NSNumber *> *MPDocumentZoomLevels()
+{
+    static NSArray *levels = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        levels = @[@0.5, @0.75, @0.9, @1.0, @1.1, @1.25, @1.5, @2.0, @3.0];
+    });
+    return levels;
 }
 
 NS_INLINE NSString *MPRectStringForAutosaveName(NSString *name)
@@ -294,6 +313,8 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Store file content in initializer until nib is loaded.
 @property (copy) NSString *loadedString;
 
+@property CGFloat zoomMultiplier;
+
 - (void)scaleWebview;
 - (void)syncScrollers;
 - (void)syncScrollersReverse;
@@ -319,6 +340,9 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Issue #441: Settle / re-sync the panes when Sync Panes is toggled mid-session.
 - (void)handleSyncScrollingEnabled;
 - (void)handleSyncScrollingDisabled;
+// Preview zoom helpers
+- (void)applyPreviewZoom;
+- (void)stepDocumentZoomDirection:(NSInteger)direction;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 
@@ -573,7 +597,6 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.volumeLocalityChecker = ^BOOL(NSString *path) {
         return [MPFileWatcher pathIsOnLocalVolume:path];
     };
-
     return self;
 }
 
@@ -1041,7 +1064,21 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     BOOL result = [super validateUserInterfaceItem:item];
     SEL action = item.action;
-    if (action == @selector(toggleToolbar:))
+    
+    // Zoom menu validation
+    if (action == @selector(zoomIn:))
+    {
+        return self.zoomMultiplier < kMPMaxZoom;
+    }
+    else if (action == @selector(zoomOut:))
+    {
+        return self.zoomMultiplier > kMPMinZoom;
+    }
+    else if (action == @selector(resetZoom:))
+    {
+        return fabs(self.zoomMultiplier - 1.0) > 0.001;
+    }
+    else if (action == @selector(toggleToolbar:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
         it.title = self.toolbarVisible ?
@@ -1096,6 +1133,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         it.state = self.preferences.editorShowsInvisibleCharacters
             ? NSControlStateValueOn : NSControlStateValueOff;
         return self.editor != nil;
+    }
+    else if (action == @selector(selectDocumentZoom:))
+    {
+        return YES;
     }
     return result;
 }
@@ -1339,6 +1380,13 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
     // Issue #16: Invoke deferred operation handlers after render completes
     [self invokeRenderCompletionHandlers];
+
+    // Re-apply the preview pane page-size multiplier. WebKit resets the
+    // multiplier when a new document loads, so each finished mainFrame load
+    // needs to restore the user's preference. Restrict to mainFrame so
+    // subframe (e.g. iframe) loads do not stomp the top-level zoom.
+    if (frame == sender.mainFrame)
+        [self applyPreviewZoom];
 }
 
 - (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error
@@ -1727,6 +1775,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
     // Fall back to full reload
     [self.preview.mainFrame loadHTMLString:html baseURL:baseUrl];
+    // Re-apply preview zoom immediately. The WebKit page-size multiplier
+    // is reset by a fresh load; calling it now (in addition to the
+    // didFinishLoadForFrame callback) shortens the visible window where
+    // the preview could briefly render at 100% before our preference
+    // takes effect.
+    [self applyPreviewZoom];
     self.currentBaseUrl = baseUrl;
     self.currentStyleName = newStyleName;
     self.currentHighlightingThemeName = newHighlightingTheme;
@@ -2070,6 +2124,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
     else if (object == [NSUserDefaults standardUserDefaults])
     {
+        // Document zoom is shared by every open window and drives both panes.
+        if ([keyPath isEqualToString:@"documentZoomLevel"])
+        {
+            [self applyCurrentZoom];
+            return;
+        }
         if (self.highlighter.isActive)
             [self setupEditor:keyPath];
         [self redrawDivider];
@@ -2464,7 +2524,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)toggleEditorPane:(id)sender
 {
+    BOOL wasVisible = self.editorVisible;
     [self toggleSplitterCollapsingEditorPane:YES];
+    if (self.editorVisible != wasVisible)
+        self.preferences.editorStartInPreviewMode = !self.editorVisible;
 }
 
 - (IBAction)toggleAutoSave:(id)sender
@@ -2663,32 +2726,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
             || [changedKey isEqualToString:@"editorStyleName"]
             || [changedKey isEqualToString:@"editorLineSpacing"])
     {
-        NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        style.lineSpacing = self.preferences.editorLineSpacing;
-
-        // Configure tab stops to match 4-space tab width (fixes #195)
-        NSFont *font = [self.preferences.editorBaseFont copy];
-        if (font)
-        {
-            NSDictionary *attrs = @{NSFontAttributeName: font};
-            CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
-            CGFloat tabInterval = spaceWidth * 4;
-
-            NSMutableArray *tabStops = [NSMutableArray array];
-            for (NSInteger i = 1; i <= 100; i++)
-            {
-                NSTextTab *tab = [[NSTextTab alloc]
-                    initWithTextAlignment:NSTextAlignmentLeft
-                                 location:tabInterval * i
-                                  options:@{}];
-                [tabStops addObject:tab];
-            }
-            style.tabStops = tabStops;
-        }
-
-        self.editor.defaultParagraphStyle = [style copy];
-        if (font)
-            self.editor.font = font;
+        [self applyEditorFontAndParagraphStyle];
         self.editor.textColor = nil;
         self.editor.backgroundColor = [NSColor clearColor];
         self.highlighter.styles = nil;
@@ -2837,30 +2875,100 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
 }
 
+- (CGFloat)previewScale
+{
+    if (self.preferences.previewZoomRelativeToBaseFontSize)
+    {
+        CGFloat fontSize = self.preferences.editorBaseFontSize;
+        if (fontSize > 0.0)
+        {
+            static const CGFloat defaultSize = 14.0;
+            return (fontSize / defaultSize) * self.zoomMultiplier;
+        }
+    }
+    return self.zoomMultiplier;
+}
+
+- (CGFloat)zoomMultiplier
+{
+    CGFloat level = self.preferences.documentZoomLevel;
+    return level > 0.0 ? level : 1.0;
+}
+
+- (void)setZoomMultiplier:(CGFloat)zoomMultiplier
+{
+    self.preferences.documentZoomLevel =
+        MIN(MAX(zoomMultiplier, kMPMinZoom), kMPMaxZoom);
+}
+
 - (void)scaleWebview
 {
-    if (!self.preferences.previewZoomRelativeToBaseFontSize)
+    if (!self.preview)
         return;
 
-    CGFloat fontSize = self.preferences.editorBaseFontSize;
-    if (fontSize <= 0.0)
-        return;
+    CGFloat scale = [self previewScale];
+    [self.preview setPageSizeMultiplier:(float)scale];
+}
 
-    static const CGFloat defaultSize = 14.0;
-    CGFloat scale = fontSize / defaultSize;
-    
-#if 0
-    // Sadly, this doesn’t work correctly.
-    // It looks fine, but selections are offset relative to the mouse cursor.
-    NSScrollView *previewScrollView =
-    self.preview.mainFrame.frameView.documentView.enclosingScrollView;
-    NSClipView *previewContentView = previewScrollView.contentView;
-    [previewContentView scaleUnitSquareToSize:NSMakeSize(scale, scale)];
-    [previewContentView setNeedsDisplay:YES];
-#else
-    // Warning: this is private webkit API and NOT App Store-safe!
-    [self.preview setPageSizeMultiplier:scale];
-#endif
+- (NSFont *)zoomedEditorFont
+{
+    NSFont *baseFont = self.preferences.editorBaseFont;
+    if (!baseFont)
+        return nil;
+    CGFloat zoomedSize = baseFont.pointSize * self.zoomMultiplier;
+    return [NSFont fontWithDescriptor:baseFont.fontDescriptor size:zoomedSize];
+}
+
+- (void)applyEditorFontAndParagraphStyle
+{
+    NSFont *font = [[self zoomedEditorFont] copy];
+
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    style.lineSpacing = self.preferences.editorLineSpacing;
+
+    // Configure tab stops to match 4-space tab width (fixes #195)
+    if (font)
+    {
+        NSDictionary *attrs = @{NSFontAttributeName: font};
+        CGFloat spaceWidth = [@" " sizeWithAttributes:attrs].width;
+        CGFloat tabInterval = spaceWidth * 4;
+
+        NSMutableArray *tabStops = [NSMutableArray array];
+        for (NSInteger i = 1; i <= 100; i++)
+        {
+            NSTextTab *tab = [[NSTextTab alloc]
+                initWithTextAlignment:NSTextAlignmentLeft
+                             location:tabInterval * i
+                              options:@{}];
+            [tabStops addObject:tab];
+        }
+        style.tabStops = tabStops;
+    }
+
+    self.editor.defaultParagraphStyle = [style copy];
+    if (font)
+        self.editor.font = font;
+}
+
+- (IBAction)zoomIn:(id)sender
+{
+    [self stepDocumentZoomDirection:+1];
+}
+
+- (IBAction)zoomOut:(id)sender
+{
+    [self stepDocumentZoomDirection:-1];
+}
+
+- (IBAction)resetZoom:(id)sender
+{
+    self.preferences.documentZoomLevel = 1.0;
+}
+
+- (void)applyCurrentZoom
+{
+    [self applyEditorFontAndParagraphStyle];
+    [self scaleWebview];
 }
 
 /**
@@ -4070,6 +4178,94 @@ to link outside that scope.", \
 
     // Restart file watching (descriptor may have become stale)
     [self startFileWatching];
+}
+
+
+#pragma mark - Document zoom
+
+/**
+ * Re-apply preview page zoom after WebKit reloads its main frame.
+ */
+- (void)applyPreviewZoom
+{
+    [self scaleWebview];
+}
+
+/**
+ * Step the shared document zoom by one preset in the requested direction.
+ * @param direction +1 to zoom in, -1 to zoom out.
+ *
+ * If the current zoom matches a preset (within epsilon), step from that
+ * preset. Otherwise snap to the nearest preset on the requested side:
+ * zooming in snaps up to the smallest preset greater than the current
+ * value; zooming out snaps down to the largest preset less than current.
+ * Beeps when already at the bound.
+ */
+- (void)stepDocumentZoomDirection:(NSInteger)direction
+{
+    NSArray<NSNumber *> *levels = MPDocumentZoomLevels();
+    CGFloat current = self.preferences.documentZoomLevel;
+    if (current <= 0) current = 1.0;
+
+    // Find index of nearest preset to the current zoom.
+    NSUInteger nearestIdx = 0;
+    CGFloat bestDiff = CGFLOAT_MAX;
+    for (NSUInteger i = 0; i < levels.count; i++)
+    {
+        CGFloat diff = fabs(levels[i].doubleValue - current);
+        if (diff < bestDiff)
+        {
+            bestDiff = diff;
+            nearestIdx = i;
+        }
+    }
+
+    NSInteger targetIdx;
+    const CGFloat eps = 1e-6;
+    if (fabs(levels[nearestIdx].doubleValue - current) < eps)
+    {
+        targetIdx = (NSInteger)nearestIdx + direction;
+    }
+    else if (direction > 0)
+    {
+        // Snap up to the smallest preset > current.
+        targetIdx = (NSInteger)nearestIdx;
+        if (levels[nearestIdx].doubleValue < current)
+            targetIdx++;
+    }
+    else
+    {
+        // Snap down to the largest preset < current.
+        targetIdx = (NSInteger)nearestIdx;
+        if (levels[nearestIdx].doubleValue > current)
+            targetIdx--;
+    }
+
+    if (targetIdx < 0 || targetIdx >= (NSInteger)levels.count)
+    {
+        NSBeep();
+        return;
+    }
+    self.preferences.documentZoomLevel = levels[(NSUInteger)targetIdx].doubleValue;
+}
+
+- (IBAction)selectDocumentZoom:(id)sender
+{
+    // Sender is an NSPopUpButton (toolbar) or NSMenuItem (future menu).
+    // Both carry the target level as an NSNumber in representedObject.
+    NSNumber *level = nil;
+    if ([sender isKindOfClass:[NSMenuItem class]])
+    {
+        level = [(NSMenuItem *)sender representedObject];
+    }
+    else if ([sender isKindOfClass:[NSPopUpButton class]])
+    {
+        level = [[(NSPopUpButton *)sender selectedItem] representedObject];
+    }
+    if ([level isKindOfClass:[NSNumber class]])
+    {
+        self.preferences.documentZoomLevel = level.doubleValue;
+    }
 }
 
 @end

@@ -27,4 +27,14 @@
  */
 + (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown;
 
+/**
+ * Set the shared document zoom to the level represented by the sender's
+ * representedObject (NSNumber). Sender may be an NSMenuItem or
+ * NSPopUpButton; the toolbar dropdown uses this entry point.
+ */
+- (IBAction)selectDocumentZoom:(id)sender;
+- (IBAction)zoomIn:(id)sender;
+- (IBAction)zoomOut:(id)sender;
+- (IBAction)resetZoom:(id)sender;
+
 @end
