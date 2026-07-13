@@ -93,6 +93,103 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
     return urls;
 }
 
+NS_INLINE NSString *MPEscapeMarkdownLinkLabel(NSString *label)
+{
+    label = [label stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    return [label stringByReplacingOccurrencesOfString:@"]" withString:@"\\]"];
+}
+
+/** Convert basic same-directory wiki links when the Markdown target exists. */
+NS_INLINE NSString *MPPreprocessWikiLinks(NSString *text, NSURL *baseURL)
+{
+    if (!text.length)
+        return text;
+
+    static NSRegularExpression *wikiLinkRegex = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        wikiLinkRegex = [NSRegularExpression
+            regularExpressionWithPattern:@"\\[\\[([^\\[\\]\\n]+)\\]\\]"
+                                  options:0 error:NULL];
+    });
+
+    NSURL *directoryURL = baseURL.hasDirectoryPath
+        ? baseURL : baseURL.URLByDeletingLastPathComponent;
+    NSCharacterSet *forbiddenPathCharacters = [NSCharacterSet
+        characterSetWithCharactersInString:@"/\\\\"];
+    NSCharacterSet *controlCharacters = [NSCharacterSet controlCharacterSet];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSMutableArray<NSString *> *processedLines = [NSMutableArray array];
+    __block NSString *activeFence = nil;
+
+    for (NSString *line in [text componentsSeparatedByString:@"\n"])
+    {
+        NSString *trimmed = [line stringByTrimmingCharactersInSet:
+            [NSCharacterSet whitespaceCharacterSet]];
+        NSString *fence = [trimmed hasPrefix:@"```"] ? @"```"
+            : ([trimmed hasPrefix:@"~~~"] ? @"~~~" : nil);
+        if (fence)
+        {
+            if (!activeFence)
+                activeFence = fence;
+            else if ([activeFence isEqualToString:fence])
+                activeFence = nil;
+            [processedLines addObject:line];
+            continue;
+        }
+        if (activeFence)
+        {
+            [processedLines addObject:line];
+            continue;
+        }
+
+        NSMutableString *processed = [line mutableCopy];
+        NSArray<NSTextCheckingResult *> *matches =
+            [wikiLinkRegex matchesInString:line options:0
+                                     range:NSMakeRange(0, line.length)];
+        for (NSTextCheckingResult *match in [matches reverseObjectEnumerator])
+        {
+            NSString *contents = [line substringWithRange:[match rangeAtIndex:1]];
+            NSArray<NSString *> *parts = [contents componentsSeparatedByString:@"|"];
+            NSString *target = [parts.firstObject
+                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+            NSString *label = parts.count > 1
+                ? [[parts subarrayWithRange:NSMakeRange(1, parts.count - 1)]
+                    componentsJoinedByString:@"|"] : target;
+            label = [label stringByTrimmingCharactersInSet:
+                [NSCharacterSet whitespaceCharacterSet]];
+            if (!label.length)
+                label = target;
+
+            BOOL safeTarget = target.length > 0
+                && [target rangeOfCharacterFromSet:forbiddenPathCharacters].location == NSNotFound
+                && [target rangeOfCharacterFromSet:controlCharacters].location == NSNotFound
+                && ![target isEqualToString:@"."]
+                && ![target isEqualToString:@".."];
+            NSString *filename = target;
+            if (safeTarget && !filename.pathExtension.length)
+                filename = [filename stringByAppendingPathExtension:@"md"];
+            if (safeTarget && ![filename.pathExtension.lowercaseString isEqualToString:@"md"])
+                safeTarget = NO;
+
+            NSURL *targetURL = safeTarget && directoryURL.isFileURL
+                ? [directoryURL URLByAppendingPathComponent:filename] : nil;
+            BOOL isDirectory = NO;
+            BOOL exists = targetURL
+                && [fileManager fileExistsAtPath:targetURL.path isDirectory:&isDirectory]
+                && !isDirectory;
+            NSString *escapedLabel = MPEscapeMarkdownLinkLabel(label);
+            NSString *replacement = exists
+                ? [NSString stringWithFormat:@"[%@](%@)", escapedLabel,
+                    targetURL.absoluteString]
+                : escapedLabel;
+            [processed replaceCharactersInRange:match.range withString:replacement];
+        }
+        [processedLines addObject:processed];
+    }
+    return [processedLines componentsJoinedByString:@"\n"];
+}
+
 /**
  * Preprocess markdown to work around Hoedown parser limitations.
  *
@@ -688,17 +785,14 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
-        // mermaid
-        if ([d rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
         // graphviz
         if ([d rendererHasGraphviz:self])
         {
             [scripts addObjectsFromArray:self.graphvizScripts];
         }
     }
+    if ([d rendererHasMermaid:self])
+        [scripts addObjectsFromArray:self.mermaidScripts];
     if ([d rendererHasMathJax:self])
         [scripts addObjectsFromArray:self.mathjaxScripts];
     return scripts;
@@ -776,6 +870,10 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         [markdown frontMatter:&offset];
         markdown = [markdown substringFromIndex:offset];
     }
+    NSURL *baseURL = nil;
+    if ([delegate respondsToSelector:@selector(rendererBaseURL:)])
+        baseURL = [delegate rendererBaseURL:self];
+    markdown = MPPreprocessWikiLinks(markdown, baseURL);
     int tocLevel = hasTOC ? kMPRendererTOCLevel : 0;
     hoedown_renderer *htmlRenderer = MPCreateHTMLRenderer(self, tocLevel);
     hoedown_renderer *tocRenderer = NULL;
@@ -888,15 +986,16 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         scriptsOption = MPAssetEmbedded;
         [styles addObjectsFromArray:self.prismStylesheets];
         [scripts addObjectsFromArray:self.prismScripts];
-        if ([self.delegate rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
         if ([self.delegate rendererHasGraphviz:self])
         {
             [scripts addObjectsFromArray:self.graphvizScripts];
         }
 
+    }
+    if ([self.delegate rendererHasMermaid:self])
+    {
+        scriptsOption = MPAssetEmbedded;
+        [scripts addObjectsFromArray:self.mermaidScripts];
     }
     if ([self.delegate rendererHasMathJax:self])
     {

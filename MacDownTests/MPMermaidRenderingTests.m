@@ -133,7 +133,7 @@
                    @"Should NOT include Mermaid init script when disabled");
 }
 
-- (void)testMermaidScriptsExcludedWhenSyntaxHighlightingDisabled
+- (void)testMermaidScriptsIncludedWhenSyntaxHighlightingDisabled
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = NO;
@@ -144,8 +144,10 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     [self.renderer render];
 
-    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.min.js"],
-                   @"Mermaid requires syntax highlighting to be enabled");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
+                  @"Mermaid should work independently of syntax highlighting");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
+                  @"Mermaid initialization should work without Prism");
 }
 
 
