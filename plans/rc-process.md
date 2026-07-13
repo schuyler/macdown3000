@@ -108,6 +108,32 @@ polluting the permanent changelog. The compromise:
   `main` so that `main`'s CHANGELOG carries the full release history. The release
   branch is deleted afterward — the release tag keeps its commits reachable.
 
+> **Get the _complete_ changelog.** The final `## [X.Y.Z]` section must cover
+> **everything** merged since the last stable — the whole `vLAST_STABLE..HEAD`
+> range on the release branch — not just the fixes made during the last RC
+> window. A release branch cut from `main` HEAD carries the entire batch (often
+> ~50 changes), so a section built from only the recent RC-era commits silently
+> drops the bulk of the release. The reliable source is the **last RC's
+> `rc-temp` snapshot**: `/release-candidate` already generated it from the full
+> range with attribution, so graduation should *re-head that block* as
+> `## [X.Y.Z]`, normalize `PR #N` → `#N` to match the published format, and add
+> a `### Known Issues` section if needed — **not** regenerate from scratch off a
+> partial commit list.
+
+> **Keep the summary lean.** The one-paragraph summary states what changed —
+> nothing more. Do **not** tack on process boilerplate like "many reported and
+> validated by users during release-candidate testing": reporter validation is
+> how the train *always* works, so restating it every release is redundant
+> noise. Describe the changes, not the process that produced them.
+
+> **Reconcile `main` at graduation, don't just append.** Early cycles leaked
+> `rc-temp` snapshots onto `main`; graduation must strip any stale `rc-temp`
+> block there too. `main` is not maintained with a rolling `[Unreleased]`
+> section between releases — the changelog is written at release time — so the
+> graduation commit on `main` should leave a bare `# Changelog` header followed
+> directly by the new `## [X.Y.Z]` section, with **no** `## [Unreleased]`
+> placeholder carried forward.
+
 ## Lifecycle of a change
 
 ```
@@ -195,12 +221,19 @@ Every other Sunday, in order:
    from issues whose changes shipped in this release. **Do not** remove
    `rc-broken` — those changes didn't ship and the label should stay until the
    fix is re-merged and re-enters a future RC.
-5. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
+5. **Delete the RC pre-releases.** Once the final is published, delete the
+   `vX.Y.Z-rc.*` GitHub **Releases** (they're superseded, and some ship
+   known-buggy DMGs users shouldn't be able to download). Delete only the
+   Release entries — **keep the git tags** (`gh release delete <tag> --yes`
+   *without* `--cleanup-tag`). The tags remain the permanent anchors for the RC
+   snapshots. The old validation-ping links to those RC downloads will 404;
+   that's fine, since graduated changes get re-pinged against the stable build.
+6. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
    cut `vX.Y.(Z+1)-rc.1` from the new `main` HEAD. This creates a fresh `release/X.Y.(Z+1)` branch,
    tags + builds + staples the pre-release, and posts validation comments to the
    new batch's reporters.
 
-Steps 3 and 5 are the two builds; everything else is bookkeeping the
+Steps 3 and 6 are the two builds; everything else is bookkeeping the
 `/release-candidate` and `/release` skills automate.
 
 ## Reporter validation comments
