@@ -108,17 +108,48 @@ polluting the permanent changelog. The compromise:
   `main` so that `main`'s CHANGELOG carries the full release history. The release
   branch is deleted afterward — the release tag keeps its commits reachable.
 
-> **Get the _complete_ changelog.** The final `## [X.Y.Z]` section must cover
-> **everything** merged since the last stable — the whole `vLAST_STABLE..HEAD`
-> range on the release branch — not just the fixes made during the last RC
-> window. A release branch cut from `main` HEAD carries the entire batch (often
-> ~50 changes), so a section built from only the recent RC-era commits silently
-> drops the bulk of the release. The reliable source is the **last RC's
-> `rc-temp` snapshot**: `/release-candidate` already generated it from the full
-> range with attribution, so graduation should *re-head that block* as
-> `## [X.Y.Z]`, normalize `PR #N` → `#N` to match the published format, and add
-> a `### Known Issues` section if needed — **not** regenerate from scratch off a
-> partial commit list.
+#### How to build the final changelog (get it complete)
+
+The final `## [X.Y.Z]` section must cover **everything** merged since the last
+stable — the whole `vLAST_STABLE..HEAD` range on the release branch — **not**
+just the fixes made during the last RC window. A release branch cut from `main`
+HEAD carries the entire batch (often ~50 changes across several RCs), so a
+section regenerated from only the recent RC-era commits **silently drops the
+bulk of the release**. This is the single easiest mistake to make here; it has
+happened.
+
+**Do this — start from the last RC snapshot, don't regenerate from scratch:**
+
+1. The authoritative complete list is the **last RC's `rc-temp` block** already
+   in the release branch's `CHANGELOG.md`. `/release-candidate` generated it
+   from the full `vLAST_STABLE..HEAD` range with reporter/contributor/tester
+   attribution across both repos. Reuse it — don't rebuild it.
+2. **Re-head** `## [X.Y.Z-rc.N] - <rc date>` → `## [X.Y.Z] - <release date>`.
+3. **Normalize** `(#ISSUE, PR #NNN)` → `(#ISSUE, #NNN)` — the published final
+   format uses bare numbers, no `PR` prefix (match the existing `[X.Y.(Z-1)]`
+   entry).
+4. **Rewrite the one-line summary** for the release as a whole (not "Nth release
+   candidate…"). Keep it lean — see below.
+5. **Add `### Known Issues`** if anything is shipping with a known defect (e.g. a
+   reported-but-not-fixed regression that isn't worth holding the train for).
+6. **Reflect reverts.** If any `rc-broken` commit was reverted on the branch,
+   drop its entry — the `rc-temp` snapshot predates the revert.
+
+**Verify before committing:** diff your final section's entries against
+`git log --oneline vLAST_STABLE..HEAD` (filtered to app-facing PRs). Every
+app-facing PR in the range should appear exactly once. If the section is much
+shorter than the range, you regenerated from a partial subset — start over from
+the `rc-temp` block.
+
+**Caveat for the _next_ cut's diff.** After graduation the stable tag lives on
+the (now-deleted) release branch, so `vX.Y.Z` is **not** an ancestor of `main`.
+The next `/release-candidate`'s "changes since last stable" diff
+(`git log vX.Y.Z..main`) therefore **over-reports**: it re-lists the previous
+release's fixes as their main-side (independently-merged) duplicate SHAs, and
+prints a `WARN: vX.Y.Z is not an ancestor of HEAD`. Filter those already-shipped
+PRs out — the genuinely new work is only the commits merged to `main` *after*
+the previous branch was cut. Ping only the new reporters, not the ones already
+credited last release.
 
 > **Keep the summary lean.** The one-paragraph summary states what changed —
 > nothing more. Do **not** tack on process boilerplate like "many reported and
