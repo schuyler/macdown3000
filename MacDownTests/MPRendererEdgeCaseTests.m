@@ -135,6 +135,36 @@
     XCTAssertNotNil(html, @"Should handle single newline");
 }
 
+- (void)testRendererFormatsGitHubAlertBlockquote
+{
+    self.dataSource.markdown = @"> [!WARNING]\n> Check this before release.";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = self.renderer.currentHtml;
+
+    XCTAssertTrue([html containsString:@"markdown-alert markdown-alert-warning"],
+                  @"Should render warning alert container");
+    XCTAssertTrue([html containsString:@"markdown-alert-title\">Warning"],
+                  @"Should render alert title");
+    XCTAssertTrue([html containsString:@"<p>Check this before release.</p>"],
+                  @"Should preserve alert body");
+    XCTAssertFalse([html containsString:@"[!WARNING]"],
+                   @"Should remove GitHub alert marker");
+}
+
+- (void)testRendererLeavesNormalBlockquoteAlone
+{
+    self.dataSource.markdown = @"> Ordinary quote";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = self.renderer.currentHtml;
+
+    XCTAssertTrue([html containsString:@"<blockquote>"],
+                  @"Should keep ordinary blockquotes");
+    XCTAssertFalse([html containsString:@"markdown-alert"],
+                   @"Should not convert ordinary blockquotes to alerts");
+}
+
 
 #pragma mark - Preview Security Tests
 
