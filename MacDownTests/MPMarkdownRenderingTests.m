@@ -145,6 +145,32 @@
 #endif
 }
 
+/**
+ * Extract every match of a regular expression's first capture group from a
+ * string, in order of appearance. Used by the duplicate-heading dedup tests
+ * to compare heading ids against TOC hrefs in document order (issue #503).
+ */
+- (NSArray<NSString *> *)matchesForPattern:(NSString *)pattern inString:(NSString *)string
+{
+    NSError *error = nil;
+    NSRegularExpression *regex =
+        [NSRegularExpression regularExpressionWithPattern:pattern
+                                                    options:0
+                                                      error:&error];
+    XCTAssertNil(error, @"Invalid regex pattern: %@", pattern);
+
+    NSMutableArray<NSString *> *results = [NSMutableArray array];
+    [regex enumerateMatchesInString:string
+                             options:0
+                               range:NSMakeRange(0, string.length)
+                          usingBlock:^(NSTextCheckingResult *match, NSMatchingFlags flags, BOOL *stop) {
+        if (match.numberOfRanges > 1) {
+            [results addObject:[string substringWithRange:[match rangeAtIndex:1]]];
+        }
+    }];
+    return results;
+}
+
 #pragma mark - Basic Markdown Tests
 
 - (void)testBasicHeaders
@@ -894,22 +920,27 @@
                   @"Heading id must skip every HTML entity. Got: %@", html);
 }
 
-// Documents the current slug contract: identical headings are not uniquified,
-// so "## C" and "## C++" both collapse to id="c". This pins the behavior so a
-// future change to deduplication is a conscious decision, not a silent side
-// effect.
+// Duplicate headings now dedup with github-slugger "-N" suffixes: the first
+// occurrence keeps the base slug, and each subsequent occurrence gets the
+// next available "-N" suffix (issue #503). "## C" and "## C++" both slugify
+// to "c"; the second becomes "c-1", not a second "id=\"c\"".
 
-- (void)testDuplicateHeadingsCollapseToSameId
+- (void)testDuplicateHeadingsGetDedupedIds
 {
     NSString *html = [self renderMarkdown:@"## C\n\n## C++\n"
                            withExtensions:0
                             rendererFlags:0];
+    XCTAssertTrue([html containsString:@"id=\"c\""],
+                  @"First heading should have id=\"c\". Got: %@", html);
+    XCTAssertTrue([html containsString:@"id=\"c-1\""],
+                  @"Second heading (also slugifying to \"c\") should dedup to id=\"c-1\". Got: %@", html);
+
     NSUInteger firstC = [html rangeOfString:@"id=\"c\""].location;
-    NSUInteger secondC = [html rangeOfString:@"id=\"c\""
-                                  options:0
-                                    range:NSMakeRange(firstC + 1, html.length - firstC - 1)].location;
-    XCTAssertNotEqual(firstC, NSNotFound, @"First heading should have id=\"c\". Got: %@", html);
-    XCTAssertNotEqual(secondC, NSNotFound, @"Second heading should also have id=\"c\". Got: %@", html);
+    NSUInteger secondC = [html rangeOfString:@"id=\"c-1\""].location;
+    XCTAssertNotEqual(firstC, NSNotFound);
+    XCTAssertNotEqual(secondC, NSNotFound);
+    XCTAssertLessThan(firstC, secondC,
+                      @"id=\"c\" must appear before id=\"c-1\" in document order. Got: %@", html);
 }
 
 // Because this PR changes both the heading id and the TOC href, lock in the
@@ -926,6 +957,215 @@
                   @"TOC entry must link to the heading slug. Got: %@", html);
     XCTAssertTrue([html containsString:@"id=\"foo-bar\""],
                   @"Heading must carry the matching id. Got: %@", html);
+}
+
+// Extends testTOCHrefMatchesHeadingId to duplicated headings (issue #503,
+// requirements §2.5 / §4.2a): every TOC href must exactly equal the
+// corresponding heading's id, in document order, including dedup suffixes.
+// All headings are levels <=6 (the real-app case; kMPRendererTOCLevel is
+// hardcoded to 6 in MPRenderer.m so every heading here is TOC-eligible).
+
+- (void)testTOCHrefMatchesHeadingIdForDuplicateHeadings
+{
+    self.delegate.renderTOC = YES;
+    NSString *markdown = @"[TOC]\n\n"
+                          @"## Overview\n\n"
+                          @"## Overview\n\n"
+                          @"### Details\n\n"
+                          @"## Overview\n\n"
+                          @"### Details\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *headingIds =
+        [self matchesForPattern:@"<h[1-6][^>]*\\bid=\"([^\"]+)\"" inString:html];
+    NSArray<NSString *> *tocHrefs =
+        [self matchesForPattern:@"href=\"#([^\"]+)\"" inString:html];
+
+    NSArray<NSString *> *expectedIds = @[@"overview", @"overview-1", @"details",
+                                          @"overview-2", @"details-1"];
+    XCTAssertEqualObjects(headingIds, expectedIds,
+                          @"Heading ids should dedup in document order. Got: %@", html);
+    XCTAssertEqualObjects(tocHrefs, expectedIds,
+                          @"TOC hrefs must exactly match heading ids, including dedup "
+                          @"suffixes, in document order. Got: %@", html);
+}
+
+// Canonical github-slugger dedup sequence (issue #503, requirements §2.1):
+// occurrences map keyed by generated slug; "Hello, Hello, Hello, World,
+// Hello" must yield "hello, hello-1, hello-2, world, hello-3".
+
+- (void)testDuplicateHeadingsDedupIdSequence
+{
+    NSString *markdown = @"## Hello\n\n## Hello\n\n## Hello\n\n## World\n\n## Hello\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *expectedIds = @[@"hello", @"hello-1", @"hello-2", @"world", @"hello-3"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected to find %@ starting at or after location %lu. Got: %@",
+                          needle, (unsigned long)searchLocation, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
+// While-loop edge case (requirements §3.2): a literal heading text that
+// collides with an already-generated suffixed slug must still get its own
+// unique suffix, not reuse "-1". "Hello, Hello 1, Hello" -> the third
+// heading's base slug "hello" is taken, so it tries "hello-1" -- but that
+// literal slug was already produced by the second heading's own text
+// ("Hello 1" -> "hello-1") -- so it must advance to "hello-2".
+
+- (void)testDuplicateHeadingsDedupWhileLoopHandlesSlugCollision
+{
+    NSString *markdown = @"## Hello\n\n## Hello 1\n\n## Hello\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *expectedIds = @[@"hello", @"hello-1", @"hello-2"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected to find %@ starting at or after location %lu (the third "
+                          @"heading must NOT collapse back to \"hello-1\"). Got: %@",
+                          needle, (unsigned long)searchLocation, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
+// Empty/"section" fallback dedup (requirements §2.3): the fallback
+// substitution to "section" must happen BEFORE dedup, so repeated
+// punctuation-only headings dedup as "section, section-1, section-2, ...".
+
+- (void)testEmptyHeadingsDedupWithSectionFallback
+{
+    NSString *markdown = @"## ¡¿?!\n\n## ¡¿?!\n\n## ¡¿?!\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *expectedIds = @[@"section", @"section-1", @"section-2"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected %@ in document order. Got: %@", needle, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
+// The literal-slug path (a heading whose text already slugifies to
+// "section") and the empty/punctuation-only fallback path (which also
+// produces the base slug "section") must share the same dedup namespace
+// (requirements §2.3): the fallback occurrence has to be treated as a
+// duplicate of the literal one, not slugified independently.
+- (void)testSectionFallbackSharesDedupNamespaceWithLiteralHeading
+{
+    NSString *markdown = @"## Section\n\n## ¡¿?!\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *expectedIds = @[@"section", @"section-1"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected %@ in document order. Got: %@", needle, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
+// Per-render stability (requirements §2.4): dedup state must reset at the
+// start of each render, so repeated renders of the same duplicated-heading
+// document are byte-stable (guards against a global/static counter that
+// keeps accumulating across renders).
+
+- (void)testDuplicateHeadingDedupIsStableAcrossRenders
+{
+    NSString *markdown = @"## Hello\n\n## Hello\n\n## Hello\n";
+    NSString *first = [self renderMarkdown:markdown withExtensions:0 rendererFlags:0];
+    NSString *second = [self renderMarkdown:markdown withExtensions:0 rendererFlags:0];
+    XCTAssertEqualObjects(first, second,
+                          @"Repeated renders of the same duplicated-heading document must "
+                          @"produce identical output (dedup state must reset per render).");
+}
+
+// Deep-heading desync guard (requirements §2.2 / §4.2b), exercised directly
+// via the C API. In the shipped app kMPRendererTOCLevel is hardcoded to 6
+// and Markdown headings never exceed level 6, so the TOC pass's
+// "level > toc_level" skip branch is unreachable through the normal
+// MPRenderer path (see testTOCHrefMatchesHeadingIdForDuplicateHeadings for
+// that primary, reachable guarantee). This test exercises the branch
+// directly: a level-3 duplicate is skipped from the TOC list (toc_level=2)
+// but must still consume a dedup suffix, so the second level-2 "Foo"
+// heading must get id="foo-2" in the HTML pass, and the TOC pass's href for
+// that same heading must also be "#foo-2" (not "#foo-1", which is what you
+// get if the skipped deep heading isn't counted).
+
+- (void)testTOCHrefMatchesIdWhenDeeperDuplicateConsumesSuffix
+{
+    NSString *markdown = @"## Foo\n\n### Foo\n\n## Foo\n";
+    NSData *markdownData = [markdown dataUsingEncoding:NSUTF8StringEncoding];
+    const char *bytes = (const char *)markdownData.bytes;
+    size_t length = markdownData.length;
+
+    mdmark_options options = {0};
+
+    char *renderedHtml = mdmark_render_html(bytes, length, &options);
+    XCTAssertTrue(renderedHtml != NULL, @"mdmark_render_html returned NULL");
+    NSString *html = [NSString stringWithUTF8String:renderedHtml];
+    free(renderedHtml);
+
+    char *renderedToc = mdmark_render_toc(bytes, length, &options, /*toc_level=*/2);
+    XCTAssertTrue(renderedToc != NULL, @"mdmark_render_toc returned NULL");
+    NSString *toc = [NSString stringWithUTF8String:renderedToc];
+    free(renderedToc);
+
+    NSArray<NSString *> *headingIds =
+        [self matchesForPattern:@"<h[1-6][^>]*\\bid=\"([^\"]+)\"" inString:html];
+    NSArray<NSString *> *tocHrefs =
+        [self matchesForPattern:@"href=\"#([^\"]+)\"" inString:toc];
+
+    XCTAssertEqualObjects(headingIds, (@[@"foo", @"foo-1", @"foo-2"]),
+                          @"HTML pass must dedup every heading in document order "
+                          @"regardless of level. Got: %@", html);
+    XCTAssertEqualObjects(tocHrefs, (@[@"foo", @"foo-2"]),
+                          @"TOC pass (toc_level=2) must skip the level-3 duplicate from "
+                          @"the list but still advance the dedup counter for it, so the "
+                          @"second level-2 heading's href must be \"foo-2\" (matching its "
+                          @"actual HTML id), not \"foo-1\". Got TOC: %@ / HTML: %@", toc, html);
 }
 
 // GitHub-slugger parity (github-slugger semantics). Unicode punctuation and

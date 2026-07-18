@@ -41,8 +41,104 @@ static int g_checkbox_index = 0;
 void mdmark_reset_checkbox_index(void) { g_checkbox_index = 0; }
 int mdmark_current_checkbox_index(void) { return g_checkbox_index; }
 
+#pragma mark - Heading slug dedup (issue #503)
+
+// Per-render duplicate-slug dedup, matching github-slugger semantics: a
+// purpose-built linear (slug,count) list, allocated via the render's
+// cmark_mem so it plays nicely with the Linux test harness. Not a global —
+// each render (HTML pass and TOC pass alike) owns its own stack-local
+// instance, so state resets automatically per render/per pass and no
+// mdmark_reset_* export is needed (contrast with g_checkbox_index above,
+// whose value must cross the C<->ObjC boundary and therefore has none of
+// these options).
+typedef struct slug_dedup_entry {
+  struct slug_dedup_entry *next;
+  char  *slug;   // NUL-terminated copy, owned via d->mem
+  size_t len;    // byte length excl NUL
+  int    count;  // occurrences[slug]
+} slug_dedup_entry;
+
+typedef struct slug_dedup {
+  cmark_mem        *mem;
+  slug_dedup_entry *head;
+} slug_dedup;
+
+static void slug_dedup_init(slug_dedup *d, cmark_mem *mem) {
+  d->mem = mem;
+  d->head = NULL;
+}
+
+static slug_dedup_entry *slug_dedup_find(slug_dedup *d, const char *s,
+                                         size_t len) {
+  for (slug_dedup_entry *e = d->head; e; e = e->next)
+    if (e->len == len && memcmp(e->slug, s, len) == 0)
+      return e;
+  return NULL;
+}
+
+static void slug_dedup_put(slug_dedup *d, const char *s, size_t len,
+                           int count) {
+  slug_dedup_entry *e = d->mem->calloc(1, sizeof(*e));
+  e->slug = d->mem->calloc(1, len + 1);
+  memcpy(e->slug, s, len);
+  e->len = len;
+  e->count = count;
+  e->next = d->head;
+  d->head = e;
+}
+
+static void slug_dedup_free(slug_dedup *d) {
+  slug_dedup_entry *e = d->head;
+  while (e) {
+    slug_dedup_entry *n = e->next;
+    d->mem->free(e->slug);
+    d->mem->free(e);
+    e = n;
+  }
+  d->head = NULL;
+}
+
+// Append the deduped form of base[0..base_len) to out, per github-slugger:
+// result = base; while occurrences[result] exists, occurrences[base]++ and
+// result = base + "-" + occurrences[base]; then occurrences[result] = 0.
+// NULL-tolerant: without a dedup map, just pass the base slug through
+// unchanged (used as a defensive fallback; state is never actually NULL on
+// the current call paths).
+static void slug_dedup_emit(slug_dedup *d, cmark_strbuf *out,
+                            const char *base, size_t base_len) {
+  if (!d) {
+    cmark_strbuf_put(out, (const unsigned char *)base, (bufsize_t)base_len);
+    return;
+  }
+
+  cmark_strbuf result = CMARK_BUF_INIT(d->mem);
+  cmark_strbuf_put(&result, (const unsigned char *)base, (bufsize_t)base_len);
+
+  // `base`/`base_len` are invariant across iterations, so resolve the base
+  // entry once up front rather than re-searching on every pass. Entering
+  // the loop means the while-condition found `result` (== `base` on the
+  // first pass) already registered, so `base` itself is registered too —
+  // `b` is guaranteed non-NULL whenever it is dereferenced inside the loop.
+  // On a first-occurrence slug the loop never runs, so a NULL `b` (base not
+  // yet registered) is never dereferenced.
+  slug_dedup_entry *b = slug_dedup_find(d, base, base_len);
+  while (slug_dedup_find(d, (const char *)result.ptr, result.size)) {
+    int n = ++b->count;
+    char suffix[16];
+    int slen = snprintf(suffix, sizeof(suffix), "-%d", n);
+    cmark_strbuf_clear(&result);
+    cmark_strbuf_put(&result, (const unsigned char *)base, (bufsize_t)base_len);
+    cmark_strbuf_put(&result, (const unsigned char *)suffix, (bufsize_t)slen);
+  }
+
+  slug_dedup_put(d, (const char *)result.ptr, result.size, 0);
+  cmark_strbuf_put(out, result.ptr, result.size);
+  cmark_strbuf_free(&result);
+}
+
 typedef struct {
     const mdmark_options *opts;
+    slug_dedup           *dedup;  // per-render dedup state (issue #503)
 } mdmark_render_state;
 
 static void escape_html(cmark_strbuf *dest, const unsigned char *source,
@@ -196,14 +292,19 @@ static const char *heading_inner_html(const char *rendered, size_t *out_len) {
   return start;
 }
 
-static void put_heading_slug(cmark_strbuf *out, cmark_node *heading) {
+// Emit the deduped id/href slug for `heading` into `out`. The "section"
+// empty-heading fallback is applied to the base slug before dedup (issue
+// #503, requirements §2.3), so repeated empty headings dedup as
+// "section, section-1, section-2, ..." rather than each claiming "section".
+static void put_heading_slug(cmark_strbuf *out, cmark_node *heading,
+                             slug_dedup *dedup) {
   char *rendered = render_heading_html(heading);
   cmark_strbuf slug = CMARK_BUF_INIT(cmark_node_mem(heading));
   if (rendered)
     mdmark_slugify(&slug, (const unsigned char *)rendered, strlen(rendered));
   if (slug.size == 0)
     cmark_strbuf_puts(&slug, "section");
-  cmark_strbuf_put(out, slug.ptr, slug.size);
+  slug_dedup_emit(dedup, out, (const char *)slug.ptr, slug.size);
   cmark_strbuf_free(&slug);
   free(rendered);
 }
@@ -433,7 +534,7 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
       // navigation, TOC anchors and scroll sync work (hoedown_html_patch's
       // rndr_header contract).
       cmark_strbuf_puts(html, " id=\"");
-      put_heading_slug(html, node);
+      put_heading_slug(html, node, state->dedup);
       cmark_strbuf_puts(html, "\">");
     } else {
       end_heading[3] = (char)('0' + node->as.heading.level);
@@ -726,7 +827,9 @@ static char *mdmark_render_html_ast(cmark_node *root, int cmark_options,
   cmark_strbuf html = CMARK_BUF_INIT(mem);
   cmark_event_type ev_type;
   cmark_node *cur;
-  mdmark_render_state state = {opts};
+  slug_dedup dedup;
+  slug_dedup_init(&dedup, mem);
+  mdmark_render_state state = {opts, &dedup};
   cmark_html_renderer renderer = {&html, NULL, NULL, 0, 0, &state};
   cmark_iter *iter = cmark_iter_new(root);
 
@@ -744,6 +847,7 @@ static char *mdmark_render_html_ast(cmark_node *root, int cmark_options,
   cmark_llist_free(mem, renderer.filter_extensions);
 
   cmark_iter_free(iter);
+  slug_dedup_free(&dedup);
   return result;
 }
 
@@ -839,6 +943,9 @@ char *mdmark_render_toc(const char *markdown, size_t length,
   int current_level = 0;
   int level_offset = 0;
 
+  slug_dedup dedup;
+  slug_dedup_init(&dedup, mem);
+
   cmark_iter *iter = cmark_iter_new(doc);
   cmark_event_type ev_type;
   while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
@@ -846,9 +953,21 @@ char *mdmark_render_toc(const char *markdown, size_t length,
     if (ev_type != CMARK_EVENT_ENTER || node->type != CMARK_NODE_HEADING)
       continue;
 
+    // MacDown: advance the dedup counter for EVERY heading, in document
+    // order, before the toc_level filter below -- including headings deeper
+    // than toc_level that never make it into the list. GitHub assigns an id
+    // to (and dedups across) every heading; if a skipped deep heading isn't
+    // counted here, a shallower heading sharing its base slug would get a
+    // dedup suffix that disagrees with the id the HTML pass gave it (issue
+    // #503).
+    cmark_strbuf slug = CMARK_BUF_INIT(mem);
+    put_heading_slug(&slug, node, &dedup);
+
     int level = node->as.heading.level;
-    if (level > toc_level)
+    if (level > toc_level) {
+      cmark_strbuf_free(&slug);
       continue;
+    }
 
     // Set the level offset if this is the first header of the document.
     if (current_level == 0)
@@ -875,8 +994,9 @@ char *mdmark_render_toc(const char *markdown, size_t length,
     }
 
     cmark_strbuf_puts(&ob, "<a href=\"#");
-    put_heading_slug(&ob, node);
+    cmark_strbuf_put(&ob, slug.ptr, slug.size);  // reuse the precomputed slug
     cmark_strbuf_puts(&ob, "\">");
+    cmark_strbuf_free(&slug);
 
     char *rendered = render_heading_html(node);
     if (rendered) {
@@ -889,6 +1009,7 @@ char *mdmark_render_toc(const char *markdown, size_t length,
     cmark_strbuf_puts(&ob, "</a>\n");
   }
   cmark_iter_free(iter);
+  slug_dedup_free(&dedup);
 
   while (current_level > 0) {
     cmark_strbuf_puts(&ob, "</li>\n</ul>\n");
