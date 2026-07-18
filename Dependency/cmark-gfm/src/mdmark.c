@@ -114,8 +114,15 @@ static void slug_dedup_emit(slug_dedup *d, cmark_strbuf *out,
   cmark_strbuf result = CMARK_BUF_INIT(d->mem);
   cmark_strbuf_put(&result, (const unsigned char *)base, (bufsize_t)base_len);
 
+  // `base`/`base_len` are invariant across iterations, so resolve the base
+  // entry once up front rather than re-searching on every pass. Entering
+  // the loop means the while-condition found `result` (== `base` on the
+  // first pass) already registered, so `base` itself is registered too —
+  // `b` is guaranteed non-NULL whenever it is dereferenced inside the loop.
+  // On a first-occurrence slug the loop never runs, so a NULL `b` (base not
+  // yet registered) is never dereferenced.
+  slug_dedup_entry *b = slug_dedup_find(d, base, base_len);
   while (slug_dedup_find(d, (const char *)result.ptr, result.size)) {
-    slug_dedup_entry *b = slug_dedup_find(d, base, base_len);
     int n = ++b->count;
     char suffix[16];
     int slen = snprintf(suffix, sizeof(suffix), "-%d", n);

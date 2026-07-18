@@ -1079,6 +1079,34 @@
     }
 }
 
+// The literal-slug path (a heading whose text already slugifies to
+// "section") and the empty/punctuation-only fallback path (which also
+// produces the base slug "section") must share the same dedup namespace
+// (requirements §2.3): the fallback occurrence has to be treated as a
+// duplicate of the literal one, not slugified independently.
+- (void)testSectionFallbackSharesDedupNamespaceWithLiteralHeading
+{
+    NSString *markdown = @"## Section\n\n## ¡¿?!\n";
+    NSString *html = [self renderMarkdown:markdown
+                           withExtensions:0
+                            rendererFlags:0];
+
+    NSArray<NSString *> *expectedIds = @[@"section", @"section-1"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected %@ in document order. Got: %@", needle, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
 // Per-render stability (requirements §2.4): dedup state must reset at the
 // start of each render, so repeated renders of the same duplicated-heading
 // document are byte-stable (guards against a global/static counter that
