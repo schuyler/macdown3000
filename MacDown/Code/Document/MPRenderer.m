@@ -688,16 +688,18 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
-        // mermaid
-        if ([d rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
-        // graphviz
-        if ([d rendererHasGraphviz:self])
-        {
-            [scripts addObjectsFromArray:self.graphvizScripts];
-        }
+    }
+    // Mermaid and Graphviz render from the language-* class (always
+    // emitted) via their own init scripts; they do not depend on Prism.
+    // Keep them out of the syntax-highlighting gate so diagrams render
+    // even when syntax highlighting is off (GitHub issue #533).
+    if ([d rendererHasMermaid:self])
+    {
+        [scripts addObjectsFromArray:self.mermaidScripts];
+    }
+    if ([d rendererHasGraphviz:self])
+    {
+        [scripts addObjectsFromArray:self.graphvizScripts];
     }
     if ([d rendererHasMathJax:self])
         [scripts addObjectsFromArray:self.mathjaxScripts];
