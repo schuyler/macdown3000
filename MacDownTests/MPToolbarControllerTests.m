@@ -17,6 +17,9 @@
 - (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender;
 - (void)standaloneToolbarItemClicked:(NSButton *)sender;
 - (void)dropdownMenuItemClicked:(NSMenuItem *)sender;
+- (void)setGroupSubitemEnabled:(BOOL)enabled
+                 forIdentifier:(NSString *)subitemIdentifier
+         inGroupWithIdentifier:(NSString *)groupIdentifier;
 @end
 
 
@@ -809,6 +812,73 @@
                           recorder.invokedSelectors);
         }
     }
+}
+
+
+#pragma mark - Extension-Dependent Item State Tests
+
+// Underline inserts _text_, which only renders as <u> when the Markdown
+// underline extension is on; otherwise it is plain emphasis and the button
+// silently produces italics. The toolbar must reflect that, as the Format
+// menu already does.
+
+- (NSSegmentedControl *)segmentedControlForGroupWithIdentifier:(NSString *)identifier
+{
+    NSToolbarItem *item = [self.controller toolbar:nil
+                             itemForItemIdentifier:identifier
+                         willBeInsertedIntoToolbar:YES];
+    return (NSSegmentedControl *)item.view;
+}
+
+- (void)testSetGroupSubitemEnabledDisablesOnlyTheNamedSegment
+{
+    NSSegmentedControl *control =
+        [self segmentedControlForGroupWithIdentifier:@"text-formatting-group"];
+
+    // bold(0), italic(1), underline(2)
+    [self.controller setGroupSubitemEnabled:NO
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+
+    XCTAssertFalse([control isEnabledForSegment:2],
+                   @"Underline segment should be disabled");
+    XCTAssertTrue([control isEnabledForSegment:0],
+                  @"Bold segment must be unaffected");
+    XCTAssertTrue([control isEnabledForSegment:1],
+                  @"Italic segment must be unaffected");
+}
+
+- (void)testSetGroupSubitemEnabledIsReversible
+{
+    NSSegmentedControl *control =
+        [self segmentedControlForGroupWithIdentifier:@"text-formatting-group"];
+
+    [self.controller setGroupSubitemEnabled:NO
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+    XCTAssertFalse([control isEnabledForSegment:2]);
+
+    [self.controller setGroupSubitemEnabled:YES
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+    XCTAssertTrue([control isEnabledForSegment:2],
+                  @"Re-enabling the extension must restore the segment");
+}
+
+- (void)testSetGroupSubitemEnabledWithUnknownIdentifiersDoesNothing
+{
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"nonexistent-subitem"
+                                       inGroupWithIdentifier:@"text-formatting-group"],
+                     @"Unknown subitem identifier must be ignored, not crash");
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"underline"
+                                       inGroupWithIdentifier:@"nonexistent-group"],
+                     @"Unknown group identifier must be ignored, not crash");
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"underline"
+                                       inGroupWithIdentifier:@"blockquote"],
+                     @"A standalone (non-group) identifier must be ignored, not crash");
 }
 
 

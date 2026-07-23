@@ -7,6 +7,7 @@
 //
 
 #import "MPToolbarController.h"
+#import "MPPreferences.h"
 
 // Because we're creating selectors for methods which aren't in this class
 #pragma GCC diagnostic ignored "-Wundeclared-selector"
@@ -35,6 +36,12 @@ static CGFloat itemWidth = 37;
      * created, so we can't set target = self.document at construction time.
      */
     NSMutableDictionary<NSString *, NSString *> *standaloneItemActions;
+
+    /**
+     * Observer token for NSUserDefaultsDidChangeNotification, used to keep
+     * extension-dependent buttons in sync when preferences change.
+     */
+    id userDefaultsObserverToken;
 }
 
 - (id)init
@@ -49,8 +56,26 @@ static CGFloat itemWidth = 37;
     self->toolbarItemIdentifierObjectDictionary = [NSMutableDictionary new];
     self->standaloneItemActions = [NSMutableDictionary new];
     [self setupToolbarItems];
-    
+
+    // Issue #320: use a block-based observer on the main queue, since
+    // NSUserDefaultsDidChangeNotification is not guaranteed to be delivered on
+    // the main thread and this updates toolbar UI.
+    __weak typeof(self) weakSelf = self;
+    self->userDefaultsObserverToken = [[NSNotificationCenter defaultCenter]
+        addObserverForName:NSUserDefaultsDidChangeNotification
+                    object:nil
+                     queue:[NSOperationQueue mainQueue]
+                usingBlock:^(NSNotification *notification) {
+        [weakSelf updateExtensionDependentItemStates];
+    }];
+
     return self;
+}
+
+- (void)dealloc
+{
+    if (self->userDefaultsObserverToken)
+        [[NSNotificationCenter defaultCenter] removeObserver:self->userDefaultsObserverToken];
 }
 
 
@@ -103,6 +128,50 @@ static CGFloat itemWidth = 37;
     ];
     
     self->toolbarItemIdentifiers = [self toolbarItemIdentifiersFromItemsArray:self->toolbarItems];
+
+    [self updateExtensionDependentItemStates];
+}
+
+/**
+ * Enable or disable a single segment of a grouped toolbar item, located by the
+ * subitem's identifier rather than a hard-coded index so the groups can be
+ * reordered without silently disabling the wrong button.
+ */
+- (void)setGroupSubitemEnabled:(BOOL)enabled
+                 forIdentifier:(NSString *)subitemIdentifier
+         inGroupWithIdentifier:(NSString *)groupIdentifier
+{
+    NSToolbarItemGroup *group = self->toolbarItemIdentifierObjectDictionary[groupIdentifier];
+    if (![group isKindOfClass:[NSToolbarItemGroup class]])
+        return;
+
+    NSSegmentedControl *segmentedControl = (NSSegmentedControl *)group.view;
+    if (![segmentedControl isKindOfClass:[NSSegmentedControl class]])
+        return;
+
+    NSUInteger index = [group.subitems indexOfObjectPassingTest:
+        ^BOOL(NSToolbarItem *item, NSUInteger idx, BOOL *stop) {
+            return [item.itemIdentifier isEqualToString:subitemIdentifier];
+        }];
+    if (index == NSNotFound || index >= (NSUInteger)segmentedControl.segmentCount)
+        return;
+
+    [segmentedControl setEnabled:enabled forSegment:(NSInteger)index];
+}
+
+/**
+ * Sync toolbar buttons whose markup only renders when a Markdown extension is
+ * enabled. Underline inserts _text_, which hoedown renders as <u> only with
+ * HOEDOWN_EXT_UNDERLINE; without it the same markup is ordinary emphasis and
+ * the button appears to produce italics. The Format menu already hides the
+ * matching command (MainMenu.xib binds its `hidden` to extensionUnderline),
+ * so the toolbar follows suit rather than offering a misleading control.
+ */
+- (void)updateExtensionDependentItemStates
+{
+    [self setGroupSubitemEnabled:[MPPreferences sharedInstance].extensionUnderline
+                   forIdentifier:@"underline"
+           inGroupWithIdentifier:@"text-formatting-group"];
 }
 
 /**
