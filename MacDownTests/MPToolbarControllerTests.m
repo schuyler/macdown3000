@@ -17,6 +17,9 @@
 - (void)selectedToolbarItemGroupItem:(NSSegmentedControl *)sender;
 - (void)standaloneToolbarItemClicked:(NSButton *)sender;
 - (void)dropdownMenuItemClicked:(NSMenuItem *)sender;
+- (void)setGroupSubitemEnabled:(BOOL)enabled
+                 forIdentifier:(NSString *)subitemIdentifier
+         inGroupWithIdentifier:(NSString *)groupIdentifier;
 @end
 
 
@@ -771,6 +774,111 @@
     XCTAssertNoThrow([self.controller selectedToolbarItemGroupItem:sender],
                      @"selectedToolbarItemGroupItem: must not throw for a valid "
                      @"group identifier and in-bounds selected segment");
+}
+
+- (void)testGroupedItemDispatchSendsSubitemActionToDocument
+{
+    // Clicking a segment in a grouped toolbar item must dispatch that
+    // subitem's own action (e.g. toggleStrong:) to the document. Previous
+    // group tests only covered crash-freedom and bounds, never which selector
+    // actually arrived, so a regression here could land unnoticed.
+    NSDictionary<NSString *, NSArray<NSString *> *> *expectedMappings = @{
+        @"indent-group":          @[@"unindent:", @"indent:"],
+        @"text-formatting-group": @[@"toggleStrong:", @"toggleEmphasis:", @"toggleUnderline:"],
+        @"heading-group":         @[@"convertToH1:", @"convertToH2:", @"convertToH3:"],
+        @"list-group":            @[@"toggleUnorderedList:", @"toggleOrderedList:"],
+    };
+
+    for (NSString *groupIdentifier in expectedMappings) {
+        NSArray<NSString *> *expectedActions = expectedMappings[groupIdentifier];
+
+        for (NSUInteger segment = 0; segment < expectedActions.count; segment++) {
+            NSString *expectedAction = expectedActions[segment];
+
+            MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+            self.controller.document = (MPDocument *)recorder;
+
+            NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+            sender.identifier = groupIdentifier;
+            sender.segmentCount = (NSInteger)expectedActions.count;
+            sender.selectedSegment = (NSInteger)segment;
+
+            [self.controller selectedToolbarItemGroupItem:sender];
+
+            XCTAssertTrue([recorder.invokedSelectors containsObject:expectedAction],
+                          @"Clicking segment %lu of '%@' should dispatch %@ to the "
+                          @"document. Got: %@",
+                          (unsigned long)segment, groupIdentifier, expectedAction,
+                          recorder.invokedSelectors);
+        }
+    }
+}
+
+
+#pragma mark - Extension-Dependent Item State Tests
+
+// Underline inserts _text_, which only renders as <u> when the Markdown
+// underline extension is on; otherwise it is plain emphasis and the button
+// silently produces italics. The toolbar must reflect that, as the Format
+// menu already does.
+
+- (NSSegmentedControl *)segmentedControlForGroupWithIdentifier:(NSString *)identifier
+{
+    NSToolbarItem *item = [self.controller toolbar:nil
+                             itemForItemIdentifier:identifier
+                         willBeInsertedIntoToolbar:YES];
+    return (NSSegmentedControl *)item.view;
+}
+
+- (void)testSetGroupSubitemEnabledDisablesOnlyTheNamedSegment
+{
+    NSSegmentedControl *control =
+        [self segmentedControlForGroupWithIdentifier:@"text-formatting-group"];
+
+    // bold(0), italic(1), underline(2)
+    [self.controller setGroupSubitemEnabled:NO
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+
+    XCTAssertFalse([control isEnabledForSegment:2],
+                   @"Underline segment should be disabled");
+    XCTAssertTrue([control isEnabledForSegment:0],
+                  @"Bold segment must be unaffected");
+    XCTAssertTrue([control isEnabledForSegment:1],
+                  @"Italic segment must be unaffected");
+}
+
+- (void)testSetGroupSubitemEnabledIsReversible
+{
+    NSSegmentedControl *control =
+        [self segmentedControlForGroupWithIdentifier:@"text-formatting-group"];
+
+    [self.controller setGroupSubitemEnabled:NO
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+    XCTAssertFalse([control isEnabledForSegment:2]);
+
+    [self.controller setGroupSubitemEnabled:YES
+                              forIdentifier:@"underline"
+                      inGroupWithIdentifier:@"text-formatting-group"];
+    XCTAssertTrue([control isEnabledForSegment:2],
+                  @"Re-enabling the extension must restore the segment");
+}
+
+- (void)testSetGroupSubitemEnabledWithUnknownIdentifiersDoesNothing
+{
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"nonexistent-subitem"
+                                       inGroupWithIdentifier:@"text-formatting-group"],
+                     @"Unknown subitem identifier must be ignored, not crash");
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"underline"
+                                       inGroupWithIdentifier:@"nonexistent-group"],
+                     @"Unknown group identifier must be ignored, not crash");
+    XCTAssertNoThrow([self.controller setGroupSubitemEnabled:NO
+                                               forIdentifier:@"underline"
+                                       inGroupWithIdentifier:@"blockquote"],
+                     @"A standalone (non-group) identifier must be ignored, not crash");
 }
 
 
