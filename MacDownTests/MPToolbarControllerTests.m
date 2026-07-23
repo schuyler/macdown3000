@@ -773,6 +773,44 @@
                      @"group identifier and in-bounds selected segment");
 }
 
+- (void)testGroupedItemDispatchSendsSubitemActionToDocument
+{
+    // Clicking a segment in a grouped toolbar item must dispatch that
+    // subitem's own action (e.g. toggleStrong:) to the document. Previous
+    // group tests only covered crash-freedom and bounds, never which selector
+    // actually arrived, so a regression here could land unnoticed.
+    NSDictionary<NSString *, NSArray<NSString *> *> *expectedMappings = @{
+        @"indent-group":          @[@"unindent:", @"indent:"],
+        @"text-formatting-group": @[@"toggleStrong:", @"toggleEmphasis:", @"toggleUnderline:"],
+        @"heading-group":         @[@"convertToH1:", @"convertToH2:", @"convertToH3:"],
+        @"list-group":            @[@"toggleUnorderedList:", @"toggleOrderedList:"],
+    };
+
+    for (NSString *groupIdentifier in expectedMappings) {
+        NSArray<NSString *> *expectedActions = expectedMappings[groupIdentifier];
+
+        for (NSUInteger segment = 0; segment < expectedActions.count; segment++) {
+            NSString *expectedAction = expectedActions[segment];
+
+            MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+            self.controller.document = (MPDocument *)recorder;
+
+            NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+            sender.identifier = groupIdentifier;
+            sender.segmentCount = (NSInteger)expectedActions.count;
+            sender.selectedSegment = (NSInteger)segment;
+
+            [self.controller selectedToolbarItemGroupItem:sender];
+
+            XCTAssertTrue([recorder.invokedSelectors containsObject:expectedAction],
+                          @"Clicking segment %lu of '%@' should dispatch %@ to the "
+                          @"document. Got: %@",
+                          (unsigned long)segment, groupIdentifier, expectedAction,
+                          recorder.invokedSelectors);
+        }
+    }
+}
+
 
 #pragma mark - Standalone Toolbar Item Dispatch Tests (Issue #278)
 

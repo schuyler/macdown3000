@@ -28,7 +28,9 @@ static CGFloat itemWidth = 37;
 
     /**
      * Map toolbar item identifier to the selector name (NSString) that should
-     * be dispatched to self.document when a standalone button is clicked.
+     * be dispatched to self.document when the item is clicked. Covers both
+     * standalone buttons and the subitems of grouped items, since every item
+     * is built by toolbarItemWithIdentifier:.
      * Needed because self.document is nil during init when toolbar items are
      * created, so we can't set target = self.document at construction time.
      */
@@ -136,15 +138,23 @@ static CGFloat itemWidth = 37;
 
     NSToolbarItem *selectedItem = selectedGroup.subitems[selectedIndex];
 
-    // Invoke the toolbar item's action on the document. Use performSelector:
-    // (rather than a raw IMP cast) so the ObjC ABI correctly sets up self,
-    // _cmd, and the sender argument. The previous IMP cast to `void (*)(id)`
-    // left _cmd and sender as uninitialized register values, which produced
-    // garbage senders like 0x400000000000bad0 and random EXC_BAD_ACCESS
-    // crashes when the invoked action (or its responder-chain validation)
-    // touched sender.
+    // Resolve the action from standaloneItemActions rather than from
+    // selectedItem.action. NSToolbarItem forwards -action to its custom view,
+    // and every item built by toolbarItemWithIdentifier: has an NSButton view
+    // whose action is standaloneToolbarItemClicked:. Reading selectedItem.action
+    // therefore yields that dispatch helper instead of the real selector, so
+    // -respondsToSelector: fails on the document and the click silently does
+    // nothing. The identifier map is the authoritative source in both paths.
+    //
+    // Invoke the action on the document with performSelector: (rather than a
+    // raw IMP cast) so the ObjC ABI correctly sets up self, _cmd, and the
+    // sender argument. The previous IMP cast to `void (*)(id)` left _cmd and
+    // sender as uninitialized register values, which produced garbage senders
+    // like 0x400000000000bad0 and random EXC_BAD_ACCESS crashes when the
+    // invoked action (or its responder-chain validation) touched sender.
     MPDocument *document = self.document;
-    SEL action = selectedItem.action;
+    NSString *actionName = self->standaloneItemActions[selectedItem.itemIdentifier];
+    SEL action = actionName ? NSSelectorFromString(actionName) : NULL;
     if (document && action && [document respondsToSelector:action])
     {
         #pragma clang diagnostic push
