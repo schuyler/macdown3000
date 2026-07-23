@@ -1287,7 +1287,6 @@
 				1FF16580199A6C950080D9A5 /* Fetch Prism Resources */,
 				E7FD807B2106CA8F0087F0A8 /* Transpile Styles */,
 				1FA6DE1F1941CC9E000409FB /* Resources */,
-				1F8A82A81952F19B00B6BF69 /* Update Build Number */,
 				905EF1B6196164E300FC3CE9 /* Copy Command Line Utility */,
 				1E02F0A95AAEBCEF65493F5F /* [CP] Copy Pods Resources */,
 				8DD02CA85834426992769538 /* Embed App Extensions */,
@@ -1565,22 +1564,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MacDown/Pods-MacDown-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		1F8A82A81952F19B00B6BF69 /* Update Build Number */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Update Build Number";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "bash Tools/update_build_number.sh\n";
 			showEnvVarsInLog = 0;
 		};
 		1FF16580199A6C950080D9A5 /* Fetch Prism Resources */ = {
