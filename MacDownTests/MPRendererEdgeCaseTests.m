@@ -610,6 +610,9 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                   @"when highlighting is off (issue #541)");
     XCTAssertFalse([html containsString:kMPTestPrismAbsenceMarker],
                    @"Prism should not be embedded when highlighting is off");
+    XCTAssertFalse([html containsString:@"function doGraphviz(engine) {"],
+                   @"Graphviz script should not be embedded when only "
+                   @"Mermaid is enabled");
 }
 
 - (void)testRendererWithGraphvizEnabled
@@ -628,6 +631,9 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                   @"when highlighting is off (issue #541)");
     XCTAssertFalse([html containsString:kMPTestPrismAbsenceMarker],
                    @"Prism should not be embedded when highlighting is off");
+    XCTAssertFalse([html containsString:@"mermaid.initialize("],
+                   @"Mermaid script should not be embedded when only "
+                   @"Graphviz is enabled");
 }
 
 - (void)testRendererExportDiagramsWithHighlightingOffBothPresent
@@ -723,6 +729,20 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
 
     XCTAssertTrue([html containsString:@"mermaid.initialize("],
                   @"Mermaid init script should be embedded independent of "
+                  @"the withStyles option");
+}
+
+- (void)testRendererExportGraphvizPresentWithoutStylesAndHighlightingOff
+{
+    self.delegate.graphviz = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"function doGraphviz(engine) {"],
+                  @"Graphviz init script should be embedded independent of "
                   @"the withStyles option");
 }
 
