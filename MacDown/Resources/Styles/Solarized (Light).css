@@ -85,6 +85,8 @@ h6 {
 }
 img {
   margin-bottom: 20px;
+  max-width: 100%;
+  height: auto;
 }
 h1 img,
 h2 img,
