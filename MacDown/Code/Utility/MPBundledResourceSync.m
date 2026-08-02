@@ -659,7 +659,11 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
     {
         // B3: the steady state is byte-identical, and a byte-identical
         // manifest is not rewritten — no write, no fsync, no log line.
-        NSData *existingData = [NSData dataWithContentsOfFile:manifestPath];
+        // A non-regular node at manifestPath (e.g. a FIFO) must not block
+        // here forever; treat it exactly like a missing manifest, as the
+        // row 8/9 readers already do.
+        NSData *existingData = MPPathIsRegularFile(manifestPath)
+            ? [NSData dataWithContentsOfFile:manifestPath] : nil;
         if (![manifestData isEqualToData:existingData])
         {
             NSError *writeError = nil;
@@ -768,6 +772,12 @@ static NSDictionary *MPManifestFilesObjectAtPath(NSString *path,
                                                  NSString *label)
 {
     if (!path)
+        return nil;
+
+    // A FIFO, socket, or other non-regular node left at this path must not
+    // block here indefinitely; treat it exactly like a missing manifest
+    // (rows 8, 9), the same guard row 10 applies to style/theme targets.
+    if (!MPPathIsRegularFile(path))
         return nil;
 
     NSData *data = [NSData dataWithContentsOfFile:path];
@@ -909,6 +919,7 @@ static BOOL MPRefreshFileAtPath(NSString *targetPath, NSString *bundlePath,
                           toURL:temporaryURL
                           error:error])
     {
+        [manager removeItemAtURL:temporaryURL error:NULL];
         return NO;
     }
 
