@@ -486,6 +486,50 @@
                           @"pruned (§7.5), got keys: %@", report.manifest.allKeys);
 }
 
+// A provenance entry is the only thing that distinguishes "we shipped this
+// once and no longer do" (a genuine row 7 orphan) from "the user made their
+// own style" — help.md:293 explicitly invites the latter. Counting the
+// user's own file as an orphan would put it in the summary log on every
+// launch forever, which contract §9 forbids.
+- (void)testRow07UserAuthoredFileWithNoProvenanceIsNotAnOrphan
+{
+    NSString *userRoot, *bundleRoot;
+    [self makeRootsUser:&userRoot bundle:&bundleRoot];
+
+    [self writeString:@"a" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/A.css"]];
+    NSString *aPath = [userRoot stringByAppendingPathComponent:@"Styles/A.css"];
+    [self writeString:@"a" toPath:aPath];
+    // Removed from the bundle, but we placed it once: a real orphan.
+    NSString *gonePath = [userRoot stringByAppendingPathComponent:@"Styles/GONE.css"];
+    [self writeString:@"old" toPath:gonePath];
+    // Never shipped by us at all: the user's own file.
+    NSString *minePath = [userRoot stringByAppendingPathComponent:@"Styles/Mine.css"];
+    [self writeString:@"mine" toPath:minePath];
+    [self writeProvenanceFiles:@{@"Styles/A.css": [self sha256OfString:@"a"],
+                                  @"Styles/GONE.css": [self sha256OfString:@"old"]}
+                         atPath:[self provenancePathForUserRoot:userRoot]];
+
+    NSDate *mineMod = [self modDateAtPath:minePath];
+
+    MPBundledResourceSyncReport *report =
+        MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
+
+    XCTAssertEqual(report.orphanedCount, 1u,
+                   @"Only Styles/GONE.css had a provenance entry, so only it "
+                   @"is an orphan; Styles/Mine.css is the user's own file");
+    XCTAssertTrue([self.fm fileExistsAtPath:minePath],
+                  @"The user's own file must be left on disk (row 7)");
+    XCTAssertEqualObjects([self.fm contentsAtPath:minePath],
+                          [@"mine" dataUsingEncoding:NSUTF8StringEncoding]);
+    XCTAssertEqualObjects([self modDateAtPath:minePath], mineMod,
+                          @"The user's own file must not be written to");
+    XCTAssertNil(report.manifest[@"Styles/Mine.css"],
+                 @"A file we never placed gets no provenance entry (row 7)");
+    XCTAssertEqualObjects([self.fm contentsAtPath:gonePath],
+                          [@"old" dataUsingEncoding:NSUTF8StringEncoding],
+                          @"The genuine orphan is still never deleted");
+}
+
 #pragma mark - Row 8: provenance manifest missing
 
 - (void)testRow08ManifestMissingClassifiesFromBundleAndHistory
@@ -936,6 +980,51 @@
                           @"design §4.2 step 6)");
     XCTAssertFalse(report2.manifestWritten);
     XCTAssertEqual(report2.copiedCount + report2.refreshedCount, 0u);
+}
+
+#pragma mark - §9: the summary log gate is silent in the steady state
+
+// The summary NSLog fires when copied + refreshed > 0, orphanedCount > 0, or
+// the manifest was rewritten. NSLog output is awkward to capture, so this
+// asserts the observable report the gate is computed from: for a user with a
+// custom style, every term must be zero/false on the second and every later
+// launch.
+- (void)testSteadyStateWithUserAuthoredFileLeavesLogGateClosed
+{
+    NSString *userRoot, *bundleRoot;
+    [self makeRootsUser:&userRoot bundle:&bundleRoot];
+
+    [self writeString:@"a" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/A.css"]];
+    // The user's own style, present before the very first sync and never
+    // shipped by us.
+    NSString *minePath = [userRoot stringByAppendingPathComponent:@"Styles/Mine.css"];
+    [self writeString:@"mine" toPath:minePath];
+
+    MPBundledResourceSyncReport *report1 =
+        MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
+
+    // Sanity: the first sync must actually have done work, or "quiet
+    // afterwards" would be satisfiable by a sync that never does anything.
+    XCTAssertEqual(report1.copiedCount, 1u,
+                   @"First sync must actually have copied Styles/A.css");
+    XCTAssertTrue(report1.manifestWritten);
+    XCTAssertEqual(report1.orphanedCount, 0u,
+                   @"The user's own file is not an orphan even on the first "
+                   @"sync — it never had a provenance entry to drop");
+
+    NSDate *mineMod1 = [self modDateAtPath:minePath];
+
+    MPBundledResourceSyncReport *report2 =
+        MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
+
+    XCTAssertEqual(report2.copiedCount + report2.refreshedCount, 0u);
+    XCTAssertEqual(report2.orphanedCount, 0u,
+                   @"A user-authored file must not be counted as an orphan, "
+                   @"or the summary log fires on every launch forever (§9)");
+    XCTAssertFalse(report2.manifestWritten);
+    XCTAssertEqualObjects([self modDateAtPath:minePath], mineMod1,
+                          @"The user's own file must still be untouched");
+    XCTAssertNil(report2.manifest[@"Styles/Mine.css"]);
 }
 
 #pragma mark - §7.4: symlinked directories

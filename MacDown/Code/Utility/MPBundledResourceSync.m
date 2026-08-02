@@ -655,7 +655,22 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
                     break;
                 case MPBundledResourceActionForget:
                     // Row 7 — the file stays on disk, the entry does not.
-                    report.orphanedCount += 1;
+                    //
+                    // Only a file we can prove the app itself placed is a
+                    // genuine orphan, and a provenance entry is that proof:
+                    // it means we shipped this path once and no longer do.
+                    // A target file with no entry is simply the user's own
+                    // — help.md:293 invites users to add custom CSS — so it
+                    // is not counted, and therefore never reaches the
+                    // summary log below. (It is not touched or recorded
+                    // either way; that part is row 7 regardless.)
+                    //
+                    // This also makes the count transient rather than
+                    // permanent: the first sync after we stop shipping a
+                    // file counts it once and drops its entry (§7.5), so
+                    // every later sync sees no entry and stays silent.
+                    if (provenance[key])
+                        report.orphanedCount += 1;
                     break;
             }
         }
@@ -693,8 +708,9 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
     // Step 6 — exactly one summary line when something changed, silent
     // otherwise. modifiedCount is deliberately excluded: a user with one
     // permanently-edited theme must not get a log line on every launch.
-    // orphanedCount is deliberately included: a mass-orphan event is
-    // notable, not a steady state.
+    // orphanedCount is deliberately included: it counts only files that
+    // carried a provenance entry (see MPBundledResourceActionForget above),
+    // so a mass-orphan event is notable and it is never a steady state.
     BOOL changed = (report.copiedCount + report.refreshedCount) > 0
         || report.orphanedCount > 0
         || report.manifestWritten;
