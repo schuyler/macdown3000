@@ -41,6 +41,11 @@
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
+// Issue #543: Window over which vnode write notifications for the document's
+// own file are collapsed into a single reload decision. External editors
+// commonly write a file in several chunks, and each write arrives separately.
+static const NSTimeInterval kMPExternalChangeCoalesceInterval = 0.25;
+
 // Issue #504: Reads the anchor-link model from the rendered preview DOM for
 // PDF export post-processing. An IIFE evaluated via the same
 // evaluateScript: bridge already proven by -updateHeaderLocations
@@ -320,6 +325,17 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
 @property (nonatomic) BOOL isSelfSaving;
+
+// Issue #543: State for collapsing bursts of external-change notifications.
+// externalChangeCoalescePending is set while a debounced decision is in flight;
+// externalChangePromptVisible is set while the keep/discard sheet is on screen,
+// so later notifications are dropped rather than queued behind it. The interval
+// and the presenter are injection seams, so tests can exercise this without
+// real timing or a real modal session.
+@property (nonatomic) BOOL externalChangeCoalescePending;
+@property (nonatomic) BOOL externalChangePromptVisible;
+@property (nonatomic) NSTimeInterval externalChangeCoalesceInterval;
+@property (nonatomic, copy) void (^externalChangePromptPresenter)(void (^)(BOOL));
 
 // Issue #371: Injection seam so tests can simulate a non-local save
 // destination without a real network mount. Defaults to
@@ -622,6 +638,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return [MPFileWatcher pathIsOnLocalVolume:path];
     };
 
+    // Issue #543: Tests shorten this so coalescing can be exercised quickly.
+    _externalChangeCoalesceInterval = kMPExternalChangeCoalesceInterval;
+
     return self;
 }
 
@@ -771,16 +790,47 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }];
 }
 
+// Issue #543: A reload can shorten the file out from under the caret, so both
+// ends of the previous selection have to be pulled back inside the new text.
++ (NSRange)selectionRange:(NSRange)range clampedToLength:(NSUInteger)length
+{
+    if (range.location == NSNotFound)
+        return NSMakeRange(0, 0);
+    if (range.location > length)
+        range.location = length;
+    if (range.length > length - range.location)
+        range.length = length - range.location;
+    return range;
+}
+
 - (void)reloadFromLoadedString
 {
     if (self.editor && self.renderer && self.highlighter)
     {
         if (self.loadedString)
         {
+            // Issue #543: Assigning the editor's whole string moves the
+            // insertion point back to the top of the document. That was easy
+            // to live with while reloads were rare, but an external change now
+            // reloads silently whenever there is nothing unsaved to lose, so
+            // the caret and scroll position are captured and put back. The
+            // selection is restored before the scroll because -setSelectedRange:
+            // does not scroll to reveal the selection, so the order is safe.
+            NSRange previousSelection = self.editor.selectedRange;
+            NSScrollView *scrollView = self.editor.enclosingScrollView;
+            NSRect previousVisibleRect =
+                scrollView ? self.editor.visibleRect : NSZeroRect;
+
             self.editor.string = self.loadedString;
             self.loadedString = nil;
             [self.highlighter clearHighlighting];
             [self.highlighter readClearTextStylesFromTextView];
+
+            self.editor.selectedRange =
+                [MPDocument selectionRange:previousSelection
+                           clampedToLength:self.editor.string.length];
+            if (scrollView)
+                [self.editor scrollRectToVisible:previousVisibleRect];
         }
 
         // Gap 8: Claim editor ownership before rendering so that the full-reload
@@ -4183,10 +4233,50 @@ to link outside that scope.", \
     [self.resourceWatcherSet stopAll];
 }
 
+// Entry point from the file watcher. Everything here is about deciding whether
+// a notification deserves a decision at all; the decision itself lives in
+// -processExternalFileChange.
 - (void)handleExternalFileChange
 {
     // Ignore if this was our own save
     if (self.isSelfSaving)
+        return;
+
+    // Issue #543: While the keep/discard sheet is up, drop further
+    // notifications rather than letting them pile up behind it. Nothing is
+    // lost by doing so: "Discard" reads the file at the moment it is clicked,
+    // so it already reflects every write that landed while the sheet was open.
+    if (self.externalChangePromptVisible)
+        return;
+
+    // Issue #543: Collapse a burst of write notifications into one decision,
+    // so a chunked external save produces a single dialog (or a single silent
+    // reload) instead of one per chunk.
+    if (self.externalChangeCoalescePending)
+        return;
+    self.externalChangeCoalescePending = YES;
+
+    __weak MPDocument *weakSelf = self;
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW,
+                      (int64_t)(self.externalChangeCoalesceInterval * NSEC_PER_SEC)),
+        dispatch_get_main_queue(), ^{
+            MPDocument *strongSelf = weakSelf;
+            if (!strongSelf)
+                return;
+            strongSelf.externalChangeCoalescePending = NO;
+            [strongSelf processExternalFileChange];
+        });
+}
+
+- (void)processExternalFileChange
+{
+    // Re-checked here as well as on the way in: the coalescing window can
+    // straddle the start of one of our own saves.
+    if (self.isSelfSaving)
+        return;
+
+    if (!self.fileURL || !self.fileURL.isFileURL)
         return;
 
     // Verify the file actually changed by checking modification date
@@ -4208,9 +4298,7 @@ to link outside that scope.", \
     }
 
     // File has been modified externally.
-    // When autosave is off, always prompt instead of silently reloading,
-    // so the user stays in control of what's in their editor.
-    if ([self isDocumentEdited] || !self.preferences.editorAutoSave)
+    if ([self shouldPromptBeforeReloadingExternalChanges])
     {
         [self promptForReloadWithExternalChanges];
     }
@@ -4220,7 +4308,46 @@ to link outside that scope.", \
     }
 }
 
+// Issue #543: The dialog exists to protect unsaved work, so it is only worth
+// showing when there is unsaved work to protect. It used to fire whenever Auto
+// Save was off as well, which meant anyone who keeps Auto Save off was asked to
+// confirm every external change even on a pristine document — nothing was at
+// stake and the only available answer was "Discard".
+- (BOOL)shouldPromptBeforeReloadingExternalChanges
+{
+    return [self isDocumentEdited];
+}
+
 - (void)promptForReloadWithExternalChanges
+{
+    // Issue #543: AppKit queues sheets rather than collapsing them, so without
+    // this guard a document could accumulate a stack of identical dialogs.
+    if (self.externalChangePromptVisible)
+        return;
+    self.externalChangePromptVisible = YES;
+
+    __weak MPDocument *weakSelf = self;
+    void (^completion)(BOOL) = ^(BOOL shouldReload) {
+        MPDocument *strongSelf = weakSelf;
+        if (!strongSelf)
+            return;
+        strongSelf.externalChangePromptVisible = NO;
+        if (shouldReload)
+            [strongSelf reloadFromDisk];
+    };
+
+    // Tests substitute a presenter so the surrounding logic can be exercised
+    // without entering a real modal session.
+    if (self.externalChangePromptPresenter)
+    {
+        self.externalChangePromptPresenter(completion);
+        return;
+    }
+
+    [self presentExternalChangeAlertWithCompletion:completion];
+}
+
+- (void)presentExternalChangeAlertWithCompletion:(void (^)(BOOL shouldReload))completion
 {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = NSLocalizedString(
@@ -4237,21 +4364,15 @@ to link outside that scope.", \
     if (window)
     {
         [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
-            if (response == NSAlertFirstButtonReturn)
-            {
-                [self reloadFromDisk];
-            }
-            // If "Keep" - do nothing, user keeps their changes
+            // "Keep" reports NO, and the caller then leaves the editor alone.
+            completion(response == NSAlertFirstButtonReturn);
         }];
     }
     else
     {
         // Fallback to modal if no window (shouldn't happen)
         NSModalResponse response = [alert runModal];
-        if (response == NSAlertFirstButtonReturn)
-        {
-            [self reloadFromDisk];
-        }
+        completion(response == NSAlertFirstButtonReturn);
     }
 }
 
