@@ -290,8 +290,18 @@ NSData *MPProvenanceManifestData(NSDictionary<NSString *, NSString *> *manifest)
     NSError *error = nil;
     // Sorted keys make the file diffable and make the B3 byte-comparison
     // in MPSyncBundledResourcesInPaths meaningful.
-    NSJSONWritingOptions options =
-        NSJSONWritingSortedKeys | NSJSONWritingPrettyPrinted;
+    //
+    // WithoutEscapingSlashes is load-bearing, not cosmetic. With
+    // PrettyPrinted alone, NSJSONSerialization emits "Styles\/GitHub.css",
+    // and every key in this file carries a '/' separator per §7.2 — so the
+    // on-disk manifest would match neither design §3.1's rendering of it
+    // nor its sibling BundledResourceHistory.json, which the Python
+    // generator writes with unescaped slashes.
+    //
+    // Available unconditionally here: the flag is macOS 10.15+ and the
+    // deployment target is macOS 11.0.
+    NSJSONWritingOptions options = NSJSONWritingSortedKeys
+        | NSJSONWritingPrettyPrinted | NSJSONWritingWithoutEscapingSlashes;
     NSData *json = [NSJSONSerialization dataWithJSONObject:document
                                                    options:options
                                                      error:&error];
