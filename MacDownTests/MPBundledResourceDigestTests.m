@@ -6,8 +6,13 @@
 //  MPBundledResourceSync: SHA-256 digesting, provenance/history manifest
 //  I/O, and the MPBundledResourceActionForFile decision table.
 //
-//  Written against the design and contract for GitHub issue #548, not
-//  against MPBundledResourceSync.m's current (deliberately stubbed) bodies.
+//  These tests were written against the design and contract before the
+//  implementation existed, so they follow the specification rather than
+//  mirroring the structure of MPBundledResourceSync.m.
+//
+//  The cited "contract §…" and "design §…" sections refer to the requirements
+//  and design documents posted on GitHub issue #548.
+//
 //  Related to GitHub issue #548.
 //
 

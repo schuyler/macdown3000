@@ -8,12 +8,20 @@
 //  permissions, case sensitivity, and the mandatory temp-root safety guard
 //  (design §9.2, contract §11, design §6 R6).
 //
-//  Written against the design (issue-548-design.md) and the contract
-//  (issue-548-requirements-v2.md), NOT against the implementation, which is
-//  a deliberate stub at the time these tests were written. Every test here
-//  must fail on assertions against the real behavior described in the
-//  contract's twelve-row decision table (contract §6) until
-//  MPBundledResourceSync.m is implemented.
+//  These tests were written against the specification before the
+//  implementation existed, so they follow the contract's twelve-row decision
+//  table (contract §6) rather than mirroring the structure of
+//  MPBundledResourceSync.m.
+//
+//  The cited "contract §…" and "design §…" sections refer to the requirements
+//  and design documents posted on GitHub issue #548.
+//
+//  HEADS UP, RUNNING THIS LOCALLY: MacDownTests is app-hosted, so launching
+//  the suite runs the real -[MPMainController copyFiles] against your own
+//  ~/Library/Application Support/MacDown 3000/. That used to be able only to
+//  add a missing bundled file; it can now atomically replace a pristine one
+//  so it matches the branch under test. Files you have edited yourself are
+//  never touched.
 //
 //  Related to GitHub issue #548.
 //
@@ -1272,7 +1280,7 @@
 
     XCTAssertTrue(report.aborted,
                   @"A single unreadable bundle directory must abort the "
-                  @"whole sync, per design §4.2 step 2 / contract R4");
+                  @"whole sync, per design §4.2 step 2 / design R4");
     NSData *manifestBytesAfter = [NSData dataWithContentsOfFile:manifestPath];
     XCTAssertEqualObjects(manifestBytesAfter, manifestBytesBefore,
                           @"Manifest bytes must be byte-identical — "

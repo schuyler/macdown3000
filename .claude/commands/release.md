@@ -32,6 +32,7 @@ Use TodoWrite to create a todo list for tracking progress:
 - Validate version and run pre-flight checks
 - Build and commit changelog
 - Create and push git tag
+- Regenerate and commit the bundled resource history
 - Monitor build and notarization
 - Complete release workflow
 ```
@@ -368,6 +369,19 @@ git push origin "v{VERSION}"
 
 If successful, the tag is now on GitHub and the release workflow will start within 1-2 minutes.
 
+#### 3d. Regenerate the Bundled Resource History
+
+The generator enumerates release tags, so this must run *after* the tag is pushed — files shipped in an untagged release can never be classified, which silently removes the recovery path for any user who later loses their provenance manifest.
+
+```bash
+Tools/generate-bundled-resource-history.sh
+git add MacDown/Resources/BundledResourceHistory.json
+git commit -m "Record bundled resource digests for v{VERSION}"
+git push origin main
+```
+
+If the script reports no changes, there is nothing to commit — continue.
+
 
 ### Step 4: Monitor Build Workflow
 
@@ -419,6 +433,7 @@ The website will update automatically after the workflow completes.
 Summary:
 - ✅ CHANGELOG.md and README.md updated and committed
 - ✅ Tag v{VERSION} created and pushed
+- ✅ Bundled resource history regenerated and committed
 - ✅ Build workflow triggered
 
 **What happens next:**

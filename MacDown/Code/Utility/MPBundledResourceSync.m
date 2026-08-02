@@ -5,6 +5,10 @@
 //  Keeps the bundled Styles and Themes in the user's Application Support
 //  directory up to date with the installed app, without ever overwriting a
 //  file the user has edited.
+//
+//  The cited "contract §…" and "design §…" sections refer to the requirements
+//  and design documents posted on GitHub issue #548.
+//
 //  Related to GitHub issue #548.
 //
 
@@ -660,8 +664,9 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
                     // genuine orphan, and a provenance entry is that proof:
                     // it means we shipped this path once and no longer do.
                     // A target file with no entry is simply the user's own
-                    // — help.md:293 invites users to add custom CSS — so it
-                    // is not counted, and therefore never reaches the
+                    // — the "CSS" section of help.md, under "The Rendering
+                    // Preference Pane", invites users to add custom CSS — so
+                    // it is not counted, and therefore never reaches the
                     // summary log below. (It is not touched or recorded
                     // either way; that part is row 7 regardless.)
                     //

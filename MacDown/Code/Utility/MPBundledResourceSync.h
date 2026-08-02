@@ -5,6 +5,10 @@
 //  Keeps the bundled Styles and Themes in the user's Application Support
 //  directory up to date with the installed app, without ever overwriting a
 //  file the user has edited.
+//
+//  The cited "contract §…" and "design §…" sections refer to the requirements
+//  and design documents posted on GitHub issue #548.
+//
 //  Related to GitHub issue #548.
 //
 
