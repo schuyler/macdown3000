@@ -552,4 +552,71 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
                    @"Untracked bundled CSS must not be cache-busted");
 }
 
+// Contract §10 of the bundled-resource refresh (GitHub issue #548):
+// "Cache-busting from #318 must keep working. The refresh changes file
+// *contents*, not paths or the reload path. Verify that a refreshed style is
+// picked up on the next preview render exactly as a user edit is."
+//
+// That refresh introduced a genuinely new situation: before it, the app never
+// rewrote an existing bundled file, so nothing exercised "the bytes at this
+// path changed while the file name stayed put". A cache keyed on the path
+// alone would keep serving the old CSS.
+//
+// WHAT THIS TEST PROVES. Rendering twice over the *same* style path, with
+// only the recorded stamp differing between the two renders, yields two
+// different <link> URLs, and the second render carries no trace of the first
+// URL. The stamp is therefore keyed on the recorded change, never on the path,
+// so a contents-only change can still produce a URL the legacy WebView has
+// never cached. It also proves nothing else in the reload path moved: strip
+// the two stamps and the two rendered documents are byte-identical.
+//
+// WHAT THIS TEST DOES NOT PROVE. It does not prove that a live WebView
+// refetches the stamped URL — that needs a real WebView and is out of reach
+// headlessly. It does not read or hash the stylesheet's bytes, and it cannot:
+// production records [[NSDate date] timeIntervalSince1970], never a content
+// digest (MPDocument.m:1837 when the resource watcher reports a change to a
+// watched file, MPDocument.m:2699-2707 for an explicit Reload), so no test can
+// show the stamp is a *function* of content. And it does not run
+// MPSyncBundledResourcesInPaths: the launch-time refresh happens inside
+// -[MPMainController init], before any document or WebView exists, so its own
+// first render has no cache to defeat. What is verified is the narrower but
+// still load-bearing claim — a stylesheet whose contents change under an
+// unchanged path is linked under a changed URL, exactly as a user edit of that
+// same file already is.
+- (void)testStyleLinkStampChangesWhenContentChangesUnderUnchangedPath
+{
+    NSString *stylePath = MPStylePathForName(self.delegate.styleName);
+    XCTAssertNotNil(stylePath, @"Active style should resolve to a path");
+
+    // The preview as it stood before the file's bytes changed.
+    [self.renderer setTimestamp:1750000000 forResourcePath:stylePath];
+    NSString *before = [self renderMarkdown:@"# Hello"];
+    XCTAssertTrue([before containsString:@"GitHub2.css?t=1750000000"],
+                  @"Baseline: the active style must be stamped before the "
+                  @"contents change");
+
+    // A refresh rewrites that same file. Its name — and therefore its file://
+    // URL — is untouched; only the recorded stamp moves.
+    [self.renderer setTimestamp:1750000042 forResourcePath:stylePath];
+    NSString *after = [self renderMarkdown:@"# Hello"];
+
+    XCTAssertTrue([after containsString:@"GitHub2.css?t=1750000042"],
+                  @"A stylesheet whose contents changed under an unchanged "
+                  @"path must be linked under the new stamp");
+    XCTAssertFalse([after containsString:@"GitHub2.css?t=1750000000"],
+                   @"The previous URL must be gone — that is the one the "
+                   @"WebView already holds, with the stale bytes");
+
+    NSString *beforeUnstamped =
+        [before stringByReplacingOccurrencesOfString:@"GitHub2.css?t=1750000000"
+                                          withString:@"GitHub2.css"];
+    NSString *afterUnstamped =
+        [after stringByReplacingOccurrencesOfString:@"GitHub2.css?t=1750000042"
+                                         withString:@"GitHub2.css"];
+    XCTAssertEqualObjects(afterUnstamped, beforeUnstamped,
+                          @"Only the cache-busting query may differ: the "
+                          @"refresh changes file contents, not paths and not "
+                          @"the reload path");
+}
+
 @end

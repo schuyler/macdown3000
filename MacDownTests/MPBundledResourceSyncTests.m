@@ -33,6 +33,7 @@
 #import <unistd.h>
 #import <CommonCrypto/CommonDigest.h>
 #import "MPBundledResourceSync.h"
+#import "MPUtilities.h"
 
 @interface MPBundledResourceSyncTests : XCTestCase
 @property (strong) NSString *tempDir;
@@ -1477,6 +1478,93 @@
                       @"Every written path must resolve under the injected "
                       @"fake user root, never a real one: %@", fullPath);
     }
+}
+
+#pragma mark - The real call site's assumption about the app bundle
+
+// Every other test in this file drives MPSyncBundledResourcesInPaths through
+// injected fake roots. The one call site that ships does not:
+//
+//     MPSyncBundledResourcesInPaths(MPDataDirectory(nil),
+//                                   [NSBundle mainBundle].resourcePath);
+//     — MPMainController.m:274-278
+//
+// and it depends on Styles/ and Themes/ being readable directories directly
+// inside that resource path. If a resource-layout change in project.pbxproj
+// ever moved, renamed or nested either of them, the sync would abort (see
+// MPBundledResourceSync.h on `aborted`: "either of the bundle's Styles and
+// Themes directories fails to enumerate"), write nothing, and never refresh
+// anybody's styles again — while every fake-root test above stayed green.
+// That is exactly the class of silent failure that
+// MacDownTests/MPTerminalPreferencesTests.m exhibits today, and this test is
+// the tripwire for it.
+//
+// WHY THIS TEST IS EXEMPT FROM makeRootsUser:bundle:. The temp-root safety
+// factory is mandatory for anything that calls the sync, because the sync
+// writes. This test never calls the sync and never writes anything: it only
+// reads the app bundle's own layout. The subject under test IS the real
+// bundle, so handing it a temp root would defeat the entire point. Calling
+// MPSyncBundledResourcesInPaths with the real roots — which would rewrite a
+// developer's actual ~/Library/Application Support themes — is precisely what
+// the factory exists to prevent, and this test deliberately does not do it.
+// The guard is not being bypassed; there is nothing here for it to guard.
+//
+// MacDownTests is app-hosted (TEST_HOST = BUNDLE_LOADER = MacDown 3000.app),
+// so [NSBundle mainBundle] here is the very bundle -[MPMainController
+// copyFiles] sees at launch.
+- (void)testAppBundleLaysOutStylesAndThemesWhereTheRealSyncCallLooks
+{
+    NSString *bundleResourceRoot = [NSBundle mainBundle].resourcePath;
+    XCTAssertNotNil(bundleResourceRoot,
+                    @"The app-hosted main bundle must have a resource path");
+
+    for (NSString *dirName in @[kMPStylesDirectoryName, kMPThemesDirectoryName])
+    {
+        NSString *dirPath =
+            [bundleResourceRoot stringByAppendingPathComponent:dirName];
+
+        NSError *attributesError = nil;
+        NSDictionary *attributes = [self.fm attributesOfItemAtPath:dirPath
+                                                             error:&attributesError];
+        XCTAssertNotNil(attributes,
+                        @"%@/ must exist as a direct child of the bundle's "
+                        @"resource path %@: %@",
+                        dirName, bundleResourceRoot, attributesError);
+        XCTAssertEqualObjects(attributes[NSFileType], NSFileTypeDirectory,
+                              @"%@/ must be a real directory, not a file or "
+                              @"a link", dirName);
+
+        NSError *enumerationError = nil;
+        NSArray<NSString *> *entries =
+            [self.fm contentsOfDirectoryAtPath:dirPath error:&enumerationError];
+        XCTAssertNotNil(entries,
+                        @"%@/ must be readable — an enumeration failure here "
+                        @"aborts the entire sync: %@",
+                        dirName, enumerationError);
+
+        NSUInteger regularFileCount = 0;
+        for (NSString *entry in entries)
+        {
+            NSString *entryPath = [dirPath stringByAppendingPathComponent:entry];
+            NSDictionary *entryAttributes =
+                [self.fm attributesOfItemAtPath:entryPath error:NULL];
+            if ([entryAttributes[NSFileType] isEqual:NSFileTypeRegular])
+                regularFileCount++;
+        }
+        XCTAssertGreaterThan(regularFileCount, 0u,
+                             @"%@/ must ship at least one regular file, or "
+                             @"the sync has nothing to copy or refresh",
+                             dirName);
+    }
+
+    // The shipped-history manifest lives at the same root and is what reaches
+    // the existing installed base (contract §5). If it ever stopped being
+    // copied into the bundle it would simply read as empty, every already
+    // installed user's files would classify as modified, and the refresh would
+    // silently never reach them — the same green-but-broken failure.
+    NSString *historyPath = MPHistoryManifestPathInRoot(bundleResourceRoot);
+    XCTAssertTrue([self.fm fileExistsAtPath:historyPath],
+                  @"%@ must ship inside the app bundle", historyPath);
 }
 
 @end
