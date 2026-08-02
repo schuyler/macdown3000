@@ -830,7 +830,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                 [MPDocument selectionRange:previousSelection
                            clampedToLength:self.editor.string.length];
             if (scrollView)
-                [self.editor scrollRectToVisible:previousVisibleRect];
+            {
+                // -[MPEditorView setString:] enqueues a content-geometry
+                // update when Scrolls Past End is on, which would resize the
+                // scrollable area out from under an immediate scroll. Going
+                // through the main queue puts this after that block.
+                MPEditorView *editor = self.editor;
+                [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    [editor scrollRectToVisible:previousVisibleRect];
+                }];
+            }
         }
 
         // Gap 8: Claim editor ownership before rendering so that the full-reload
