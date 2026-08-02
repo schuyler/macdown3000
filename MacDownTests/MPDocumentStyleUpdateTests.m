@@ -567,8 +567,10 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 // different <link> URLs, and the second render carries no trace of the first
 // URL. The stamp is therefore keyed on the recorded change, never on the path,
 // so a contents-only change can still produce a URL the legacy WebView has
-// never cached. It also proves nothing else in the reload path moved: strip
-// the two stamps and the two rendered documents are byte-identical.
+// never cached. It also proves nothing else about the rendered document
+// moved: strip the two stamps and the two rendered documents are
+// byte-identical — the reload path proper (MPDocument/WebView) is never
+// exercised here.
 //
 // WHAT THIS TEST DOES NOT PROVE. It does not prove that a live WebView
 // refetches the stamped URL — that needs a real WebView and is out of reach

@@ -1491,13 +1491,14 @@
 //
 // and it depends on Styles/ and Themes/ being readable directories directly
 // inside that resource path. If a resource-layout change in project.pbxproj
-// ever moved, renamed or nested either of them, the sync would abort (see
-// MPBundledResourceSync.h on `aborted`: "either of the bundle's Styles and
-// Themes directories fails to enumerate"), write nothing, and never refresh
-// anybody's styles again — while every fake-root test above stayed green.
-// That is exactly the class of silent failure that
-// MacDownTests/MPTerminalPreferencesTests.m exhibits today, and this test is
-// the tripwire for it.
+// ever moved, renamed or nested either of them, MPDirectoryEntryNames would
+// find nothing there — a missing directory is not an enumeration failure
+// (see MPBundledResourceSync.m) — so the sync would not abort. Instead every
+// file already on disk would classify as row 7 (Forget): its provenance
+// entry gets dropped and it is never refreshed again, silently, while every
+// fake-root test above stayed green. (An unreadable directory, or Styles/
+// replaced by a plain file, is the case that does abort.) This test is the
+// tripwire for the silent case.
 //
 // WHY THIS TEST IS EXEMPT FROM makeRootsUser:bundle:. The temp-root safety
 // factory is mandatory for anything that calls the sync, because the sync
