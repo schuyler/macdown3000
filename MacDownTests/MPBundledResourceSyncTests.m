@@ -20,6 +20,8 @@
 
 #import <XCTest/XCTest.h>
 #import <sys/stat.h>
+#import <errno.h>
+#import <string.h>
 #import <CommonCrypto/CommonDigest.h>
 #import "MPBundledResourceSync.h"
 
@@ -1027,6 +1029,11 @@
                          attributes:nil error:nil];
 
     [self writeString:@"v2" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/A.css"]];
+    // Companion normal file, absent from target, inside the SAME linked
+    // directory. It must be copied by this same sync — without this, an
+    // untouched symlink and an empty manifest are both satisfiable by a
+    // no-op stub.
+    [self writeString:@"n" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/NORMAL.css"]];
 
     NSString *externalDir = [self.tempDir stringByAppendingPathComponent:@"external-styles-2"];
     [self.fm createDirectoryAtPath:externalDir withIntermediateDirectories:YES
@@ -1050,6 +1057,12 @@
                           @"An entry inside a linked directory that is "
                           @"itself a symlink must still be skipped (row 10)");
     XCTAssertNil(report.manifest[@"Styles/A.css"]);
+    XCTAssertEqualObjects([self.fm contentsAtPath:
+                           [externalDir stringByAppendingPathComponent:@"NORMAL.css"]],
+                          [@"n" dataUsingEncoding:NSUTF8StringEncoding],
+                          @"Sanity check that this sync actually performed "
+                          @"real work inside the linked directory");
+    XCTAssertEqual(report.skippedCount, 1u);
 }
 
 #pragma mark - Bundle-side non-regular entries
@@ -1067,6 +1080,10 @@
     NSString *bundleLinkPath = [stylesBundleDir stringByAppendingPathComponent:@"LINK.css"];
     [self.fm createSymbolicLinkAtPath:bundleLinkPath
                    withDestinationPath:outsidePath error:nil];
+    // Companion regular bundle file, absent from target, that must
+    // actually be copied by this same sync — without this, "the symlink
+    // was not copied" is trivially satisfiable by a no-op stub.
+    [self writeString:@"n" toPath:[stylesBundleDir stringByAppendingPathComponent:@"NORMAL.css"]];
 
     MPBundledResourceSyncReport *report =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
@@ -1077,6 +1094,12 @@
                    @"A symlink in the bundle must not be copied");
     XCTAssertEqual(report.failedCount, 0u,
                    @"A non-regular bundle entry is ignored, not a failure");
+    XCTAssertEqualObjects([self.fm contentsAtPath:
+                           [userRoot stringByAppendingPathComponent:@"Styles/NORMAL.css"]],
+                          [@"n" dataUsingEncoding:NSUTF8StringEncoding],
+                          @"Sanity check that this sync actually performed "
+                          @"real work alongside ignoring the bundle symlink");
+    XCTAssertEqual(report.copiedCount, 1u);
 }
 
 #pragma mark - §9.2: bundle-enumeration guard (R4)
@@ -1247,7 +1270,15 @@
 
     // Sync once so the manifest exists, then lock the directory down so a
     // rewrite attempt fails.
-    MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
+    MPBundledResourceSyncReport *report1 =
+        MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
+    NSString *manifestPath = [self provenancePathForUserRoot:userRoot];
+    // Sanity check: the first, unrestricted sync must actually have
+    // written a real manifest — otherwise "manifestWritten == NO" on the
+    // second run proves nothing.
+    XCTAssertTrue(report1.manifestWritten);
+    XCTAssertTrue([self.fm fileExistsAtPath:manifestPath]);
+    XCTAssertGreaterThan(report1.manifest.count, 0u);
 
     // A new bundle file forces a manifest change on the next run.
     [self writeString:@"b" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/B.css"]];
