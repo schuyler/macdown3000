@@ -22,6 +22,7 @@
 #import <sys/stat.h>
 #import <errno.h>
 #import <string.h>
+#import <unistd.h>
 #import <CommonCrypto/CommonDigest.h>
 #import "MPBundledResourceSync.h"
 
@@ -520,7 +521,7 @@
                           [@"v3" dataUsingEncoding:NSUTF8StringEncoding],
                           @"B.css already equals bundle -> untouched");
     XCTAssertEqualObjects([NSSet setWithArray:report.manifest.allKeys],
-                          [NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]]);
+                          ([NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]]));
 }
 
 - (void)testRow08ManifestMissingNeverOverwritesUnknownBytes
@@ -586,7 +587,7 @@
 
     XCTAssertFalse(report.aborted);
     XCTAssertEqualObjects([NSSet setWithArray:report.manifest.allKeys],
-                          [NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]],
+                          ([NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]]),
                           @"A corrupt manifest must degrade to exactly the "
                           @"row-8 (missing manifest) outcome");
     XCTAssertEqualObjects([self.fm contentsAtPath:[userRoot stringByAppendingPathComponent:@"Styles/C.css"]],
