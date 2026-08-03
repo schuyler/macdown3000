@@ -84,7 +84,7 @@ These are non-negotiable. Violating any of them is a workflow failure.
 
 ## Subagent Models
 
-- **Design and research** (Groucho, requirements research, requirements
+- **Design and research** (Architect, requirements research, requirements
   drafting): default model.
 - **Everything else** (implementation, tests, reviews, docs, triage): specify
   `model: "sonnet"`.
@@ -101,11 +101,11 @@ task after every review:
 - Interpret requirements → review → gate
 - Post requirements interpretation to issue
 - Create issue branch
-- Design (Groucho) → review → gate
+- Design (Architect) → review → gate
 - Baseline test gate: run full suite, record count
 - Red TDD: write failing tests → review → gate
 - Green: implement → review → gate
-- Documentation (Harpo) → review → gate
+- Documentation (Documenter) → review → gate
 - Final test gate: all tests pass, count ≥ baseline
 - Requirements gate: changes meet the documented requirements
 - Commit, push, note CI run ID
@@ -186,10 +186,10 @@ All subsequent work happens on this branch.
 
 ### Step 5: Design → Review → Gate
 
-Consult Groucho (default model, background):
+Consult the Architect (default model, background):
 
 ```
-/dev:groucho
+Act as the Architect (architecture & design specialist).
 
 I need architectural guidance for implementing GitHub issue #{number}: {title}
 
@@ -208,9 +208,9 @@ Please analyze the codebase and recommend:
 ```
 
 Then launch a *separate* review subagent (Sonnet, background) to review
-Groucho's design against the requirements: soundness, completeness, risks,
+the Architect's design against the requirements: soundness, completeness, risks,
 convention fit. Gate on the result. On failure, create a fix tranche
-(re-consult Groucho with the findings) and loop.
+(re-consult the Architect with the findings) and loop.
 
 ### Step 6: Baseline Test Gate
 
@@ -237,16 +237,16 @@ Blocked Protocol — do not build on a broken baseline.
 Skip only if the requirements document (Step 2) concluded the work cannot be
 test-driven — and that conclusion survived review.
 
-Consult Zeppo (Sonnet, background) for test design: what tests to write,
+Consult the Tester (Sonnet, background) for test design: what tests to write,
 structure and organization, edge cases to cover, and an approach that fits
 this Objective-C/Cocoa project. Then launch an implementation subagent
-(Sonnet, background) to write the failing tests from Zeppo's design. The
+(Sonnet, background) to write the failing tests from the Tester's design. The
 tests must fail for the right reason (feature absent, not compile errors
 unrelated to intent — in this Objective-C project new API may need stubs to
 compile; the assertion failures are what must demonstrate the missing
 behavior).
 
-Have Zeppo (Sonnet, background) review the written tests: do they validate
+Have the Tester (Sonnet, background) review the written tests: do they validate
 the requirements, cover the edge cases from Step 2, and follow project
 testing conventions (headless — no window/WebView — so they can only verify
 state transitions and crash-freedom; be honest in test descriptions)? Gate.
@@ -267,10 +267,10 @@ Gate each stream. Fix tranches loop as usual.
 
 ### Step 9: Documentation → Review → Gate
 
-Consult Harpo (Sonnet, background):
+Consult the Documenter (Sonnet, background):
 
 ```
-/dev:harpo
+Act as the Documenter (documentation specialist).
 
 I've completed work on GitHub issue #{number}: {title}
 
@@ -286,7 +286,7 @@ that needs to reflect these changes.
 - Keep changes minimal and focused
 ```
 
-Review Harpo's edits with a separate subagent — every factual claim in
+Review the Documenter's edits with a separate subagent — every factual claim in
 updated docs must be verified against the actual code (subagents hallucinate
 variable names, enum values, and method signatures). Gate.
 
@@ -378,9 +378,9 @@ gh run view $RUN_ID --repo schuyler/macdown3000
 - **failure:** enter the CI fix-review loop. Never diagnose or fix CI
   failures yourself:
   1. Fetch logs: `gh run view $RUN_ID --repo schuyler/macdown3000 --log`
-  2. Zeppo (Sonnet, background) diagnoses root cause and recommends a fix
+  2. The Tester (Sonnet, background) diagnoses root cause and recommends a fix
   3. An implementation subagent applies the fix
-  4. Chico (Sonnet, background) reviews the fix — gate
+  4. The Reviewer (Sonnet, background) reviews the fix — gate
   5. Commit, push, note the new run ID, loop
   6. A cycle counts as progress only if the specific failure the fix
      targeted no longer occurs in the next run. More than 3 cycles without
@@ -446,12 +446,13 @@ except nothing is posted as a GitHub review (it's our own PR), and findings
 are *fixed*, not suggested.
 
 1. **Dispatch all four agents in parallel** (single message, four Task
-   calls, all Sonnet, background): Groucho (architectural fit), Chico
-   (code quality), Zeppo (test coverage), Harpo (documentation drift — do
-   NOT flag missing changelog entries; the maintainer handles those at
-   release time). Give each the PR diff and the requirements document.
-   Findings tagged blocker / important / suggestion / nit.
-2. **Chico triage pass** (Sonnet, background): bucket every finding into
+   calls, all Sonnet, background): the Architect (architectural fit), the
+   Reviewer (code quality), the Tester (test coverage), the Documenter
+   (documentation drift — do NOT flag missing changelog entries; the
+   maintainer handles those at release time). Give each the PR diff and the
+   requirements document. Findings tagged blocker / important / suggestion /
+   nit.
+2. **Reviewer triage pass** (Sonnet, background): bucket every finding into
    (1) must fix now, (2) worth fixing now if cheap, (3) note for the
    maintainer. Be conservative about bucket 1 — the criteria from `/review`
    apply (correctness bugs, leaks, crash risks, security, regressions,

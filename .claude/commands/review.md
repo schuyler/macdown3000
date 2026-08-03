@@ -4,7 +4,7 @@ description: Review a GitHub pull request with parallel agent collaboration; req
 
 # GitHub Pull Request Review
 
-Review an inbound pull request by gathering perspectives from all four Marx Brothers subagents in parallel, having Chico triage which findings are worth asking the submitter to change, and posting a respectful review **only after explicit user approval**.
+Review an inbound pull request by gathering perspectives from all four role-based subagents in parallel, having the Reviewer triage which findings are worth asking the submitter to change, and posting a respectful review **only after explicit user approval**.
 
 ## Configuration
 
@@ -37,7 +37,7 @@ Use TodoWrite to track progress:
 - Fetch linked issue context (if any)
 - Dispatch four agents in parallel for review
 - Combine raw findings
-- Run Chico triage pass
+- Run the Reviewer triage pass
 - Build draft review
 - Get user approval (REQUIRED gate)
 - Post review (or skip per user choice)
@@ -81,12 +81,12 @@ Every agent prompt MUST begin with this tone guideline (verbatim):
 
 Per-agent prompt focus:
 
-#### 3a. Groucho — Architectural Review
+#### 3a. Architect — Architectural Review
 
 ```
-/dev:groucho
-
 {tone guideline}
+
+Act as the Architect (architecture & design specialist).
 
 Please review pull request #{number} for architectural fit.
 
@@ -103,12 +103,12 @@ Assess:
 Return findings tagged blocker / important / suggestion / nit.
 ```
 
-#### 3b. Chico — Code Review
+#### 3b. Reviewer — Code Review
 
 ```
-/dev:chico
-
 {tone guideline}
+
+Act as the Reviewer (code review & quality specialist).
 
 Please review pull request #{number} for code quality.
 
@@ -126,12 +126,12 @@ Assess:
 Return findings tagged blocker / important / suggestion / nit.
 ```
 
-#### 3c. Zeppo — Test Coverage Review
+#### 3c. Tester — Test Coverage Review
 
 ```
-/dev:zeppo
-
 {tone guideline}
+
+Act as the Tester (testing specialist).
 
 Please review pull request #{number} from a testing perspective.
 
@@ -149,12 +149,12 @@ Assess:
 Return findings tagged blocker / important / suggestion / nit.
 ```
 
-#### 3d. Harpo — Documentation Drift Review
+#### 3d. Documenter — Documentation Drift Review
 
 ```
-/dev:harpo
-
 {tone guideline}
+
+Act as the Documenter (documentation specialist).
 
 Please review pull request #{number} for documentation drift.
 
@@ -180,31 +180,31 @@ Collect all four agents' raw outputs verbatim before continuing.
 Locally (no agent call), merge the four reports into a single structured document grouped by source agent and severity. Keep substance unchanged — this step only organizes. Example shape:
 
 ```
-## Groucho (architecture)
+## Architect (architecture)
 - [important] ...
 - [suggestion] ...
 
-## Chico (code quality)
+## Reviewer (code quality)
 - [blocker] ...
 - [nit] ...
 
-## Zeppo (testing)
+## Tester (testing)
 - ...
 
-## Harpo (docs)
+## Documenter (docs)
 - ...
 ```
 
 This combined document is the input to Step 5.
 
-### Step 5: Chico Triage Pass (Sonnet)
+### Step 5: Reviewer Triage Pass (Sonnet)
 
-Make a second Task call to Chico, on Sonnet:
+Make a second Task call to the Reviewer, on Sonnet:
 
 ```
-/dev:chico
+Act as the Reviewer (code review & quality specialist).
 
-You previously contributed to a four-agent review of pull request #{number}. Below are the combined findings from all four agents (Groucho, Chico, Zeppo, Harpo).
+You previously contributed to a four-agent review of pull request #{number}. Below are the combined findings from all four agents (Architect, Reviewer, Tester, Documenter).
 
 The PR submitter is a volunteer. Be judicious about what is actually worth asking them to change versus what we should handle ourselves or simply note.
 
@@ -243,22 +243,22 @@ Combined findings:
 Return three clearly-labeled buckets. For each item, include a short rationale for the bucket choice.
 ```
 
-Chico's bucket assignments are authoritative for what appears in the posted review.
+The Reviewer's bucket assignments are authoritative for what appears in the posted review.
 
 ### Step 6: Build the Draft Review
 
-Construct the Markdown review from Chico's bucket 1 and bucket 2 only. Use this template:
+Construct the Markdown review from the Reviewer's bucket 1 and bucket 2 only. Use this template:
 
 ```markdown
 Thanks for the PR, @{author}!
 
 ## Issues
 
-{Chico bucket 1 items — one bullet per issue, format: "**Short label:** one-sentence explanation of why it matters." If empty, omit this section entirely.}
+{Reviewer bucket 1 items — one bullet per issue, format: "**Short label:** one-sentence explanation of why it matters." If empty, omit this section entirely.}
 
 ## Suggestions
 
-{Chico bucket 2 items — one bullet per suggestion, at most one sentence each. If empty, omit this section entirely.}
+{Reviewer bucket 2 items — one bullet per suggestion, at most one sentence each. If empty, omit this section entirely.}
 ```
 
 **Conciseness rules (strict):**
@@ -334,8 +334,8 @@ Print a concise summary to the user:
 ```
 Review for PR #{number}: {title}
 
-Agents consulted (parallel, Sonnet): Groucho, Chico, Zeppo, Harpo
-Triage pass: Chico
+Agents consulted (parallel, Sonnet): Architect, Reviewer, Tester, Documenter
+Triage pass: Reviewer
 
 Disposition: {posted as comment-only / request-changes / approve, OR "draft only, not posted"}
 PR: {url}
@@ -351,8 +351,8 @@ Internal follow-up items (NOT posted to the submitter):
 2. **Thank the author first.** Every posted review's first line cordially thanks the submitter by handle.
 3. **Volunteer-respectful tone.** Run the tone checklist in Step 6 before showing any draft.
 4. **All four agents always run, in parallel, on Sonnet.** No conditional skipping. Single message with four Task calls.
-5. **Chico is invoked twice** — once in Step 3 as a peer reviewer alongside the others, once in Step 5 as the triage judge.
-6. **Bucket 3 stays internal.** Items Chico judges as not-the-submitter's-burden are shown to the user but never posted to GitHub.
+5. **The Reviewer is invoked twice** — once in Step 3 as a peer reviewer alongside the others, once in Step 5 as the triage judge.
+6. **Bucket 3 stays internal.** Items the Reviewer judges as not-the-submitter's-burden are shown to the user but never posted to GitHub.
 7. **No Co-authored-by trailers** (matches project convention).
 8. **Don't reference Claude Code or the subagents in the posted review.** No one cares, and it's not relevant to the submitter.
 9. **Never ask contributors about changelog entries.** Changelog entries are not the contributor's responsibility; the maintainer updates the changelog at release time. A missing or absent changelog entry must never be the basis of feedback to a submitter.
