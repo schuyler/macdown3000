@@ -22,7 +22,14 @@ static NSString * const MPWrappingCheckboxHeightIdentifier =
     @"MPWrappingCheckboxHeight";
 
 @interface MPPreferencesViewController ()
-@property (nonatomic, assign) NSSize englishDesignSize;
+
+/// Resolves the size @c contentView needs for the strings it is currently
+/// showing and pins it there. Three passes: width, then multi-line checkbox
+/// heights at that width, then height. Any pin left by a previous call is
+/// dropped first, so the routine is safe to re-run.
++ (NSSize)resolveSizingForContentView:(NSView *)contentView
+                            inWrapper:(NSView *)wrapper
+                          minimumSize:(NSSize)minimumSize;
 @end
 
 @implementation MPPreferencesViewController
@@ -38,9 +45,13 @@ static NSString * const MPWrappingCheckboxHeightIdentifier =
     [super loadView];  // loads NIB named after the concrete subclass
 
     NSView *contentView = self.view;
-    NSRect frame = contentView.frame;
-    self.englishDesignSize = frame.size;
 
+    // Testing seam — see contentDidLoadHook. Runs before any measurement, so a
+    // test substituting localized titles gets geometry from the real pipeline.
+    if (self.contentDidLoadHook)
+        self.contentDidLoadHook(contentView);
+
+    NSRect frame = contentView.frame;
     NSView *wrapper = [[NSView alloc] initWithFrame:frame];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
     [wrapper addSubview:contentView];
