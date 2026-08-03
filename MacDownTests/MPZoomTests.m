@@ -25,6 +25,44 @@
 - (CGFloat)previewScale;
 @end
 
+#pragma mark - Cross-Window Zoom Testing Category
+
+// Fix #4 (MPDocument.m ~line 800-816) extracted registration of the shared
+// documentZoomLevel KVO observer out of the nib-loading path into these two
+// methods so a headless test can drive it directly. They are declared only
+// in MPDocument.m's private class extension (~line 393-394), not in
+// MPDocument.h, so re-declare them here. -applyCurrentZoom and
+// -zoomMultiplier are already exposed by the ZoomTesting category above;
+// do not redeclare them here to avoid duplicate-declaration conflicts.
+@interface MPDocument (MPCrossWindowZoomTesting)
+- (void)registerSharedPreferenceObservers;
+- (void)unregisterSharedPreferenceObservers;
+@end
+
+#pragma mark - Cross-Window Zoom Spy Document
+
+// Spies on -applyCurrentZoom (MPDocument.m ~line 3171, the KVO handler side
+// effect invoked by -observeValueForKeyPath:... when the shared
+// documentZoomLevel default changes) so the test can prove the *handler
+// actually ran* on doc B, rather than merely reading doc B's zoomMultiplier
+// (which is a passthrough over the shared pref and would read the new value
+// regardless of whether doc B's observer ever fired).
+@interface MPZoomSpyDocument : MPDocument
+@property (nonatomic) NSInteger applyCurrentZoomCount;
+@property (nonatomic) CGFloat lastAppliedMultiplier;
+@end
+
+@implementation MPZoomSpyDocument
+
+- (void)applyCurrentZoom
+{
+    self.applyCurrentZoomCount++;
+    self.lastAppliedMultiplier = self.zoomMultiplier;
+    [super applyCurrentZoom];
+}
+
+@end
+
 #pragma mark - Mock Menu Item
 
 // Separate class from MPPaneToggleTests.m's MockMenuItem to avoid duplicate symbol.
@@ -355,6 +393,70 @@
                                @"After zoom(1.5) -> setupEditor -> zoomIn, "
                                @"multiplier should advance to the next preset "
                                @"in the list (2.0), per the preset-snap model");
+}
+
+
+/**
+ * Cross-window zoom propagation: when doc A changes the shared
+ * documentZoomLevel default, doc B's KVO handler must actually run.
+ *
+ * Every MPDocument KVO-registers on [NSUserDefaults standardUserDefaults]
+ * for the keys in MPEditorPreferencesToObserve() (MPDocument.m ~line 109),
+ * which includes "documentZoomLevel". -observeValueForKeyPath:... (~line
+ * 2179-2203) special-cases that key: it calls -applyCurrentZoom and returns
+ * immediately (~line 2194-2198), with no other code path that could also
+ * invoke -applyCurrentZoom for the same KVO change. So a single write to
+ * the shared documentZoomLevel pref must produce exactly one call to
+ * -applyCurrentZoom on every registered observer -- hence the exact ( == 1
+ * ) count assertion below, rather than a >= 1 relaxation.
+ *
+ * -setZoomMultiplier: (~line 3101-3105) is the writer: it clamps and stores
+ * into self.preferences.documentZoomLevel, which is @dynamic-backed by
+ * [NSUserDefaults standardUserDefaults] (MPPreferences.m line 261), so
+ * writing through doc A's zoomMultiplier is the same shared-pref write
+ * doc B's observer is watching.
+ *
+ * Doc B registers via -registerSharedPreferenceObservers directly (the
+ * headless entry point extracted from the nib-loading path in Fix #4)
+ * instead of via -makeWindowControllers/a loaded nib, keeping this test
+ * fully headless. Because doc B never goes through that nib path,
+ * -close's cleanup is gated on `needsToUnregister`, which is only set to
+ * YES from within that same path (~line 746) -- so -close would NOT
+ * unregister doc B here. Explicitly calling
+ * -unregisterSharedPreferenceObservers before releasing doc B is therefore
+ * required to avoid a KVO-observer-still-registered crash on dealloc.
+ *
+ * [super applyCurrentZoom] is headless-safe: it calls
+ * -applyEditorFontAndParagraphStyle, which only assigns to
+ * self.editor.defaultParagraphStyle/.font (~line 3151-3153) -- messaging
+ * the nil `editor` outlet in a headless doc B is a no-op, not a crash --
+ * and -scaleWebview, which guards `if (!self.preview) return;`
+ * (~line 3107-3110) before touching the (nil, headless) preview.
+ */
+- (void)testZoomChangeInDocAPropagatesToDocB
+{
+    MPZoomSpyDocument *docB = [[MPZoomSpyDocument alloc] init];
+    MPDocument *docA = [[MPDocument alloc] init];
+
+    // Known baseline on the shared pref, using the same accessor this
+    // file's setUp/tearDown already save and restore.
+    [MPPreferences sharedInstance].documentZoomLevel = 1.0;
+
+    [docB registerSharedPreferenceObservers];
+    docB.applyCurrentZoomCount = 0; // Ignore any registration-time noise.
+
+    docA.zoomMultiplier = 1.5; // Writes the shared documentZoomLevel pref.
+
+    XCTAssertEqual(docB.applyCurrentZoomCount, 1,
+        @"Doc B's zoom observer must fire exactly once when Doc A changes the shared zoom");
+    XCTAssertEqualWithAccuracy(docB.lastAppliedMultiplier, 1.5, 0.001,
+        @"Doc B must observe the propagated multiplier");
+
+    // REQUIRED: doc B registered outside the nib path, so -close's
+    // needsToUnregister-gated cleanup will not run for it.
+    [docB unregisterSharedPreferenceObservers];
+    docB = nil;
+    docA = nil;
 }
 
 
