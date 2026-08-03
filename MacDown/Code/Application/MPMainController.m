@@ -280,8 +280,11 @@ NS_INLINE void treat()
            withIntermediateDirectories:YES attributes:nil error:NULL];
     }
 
+    MPPruneStockStylesheetsInDirectory(MPDataDirectory(kMPStylesDirectoryName),
+                                        MPKnownStockStyleHashesByName());
+
     NSBundle *bundle = [NSBundle mainBundle];
-    for (NSString *key in @[kMPStylesDirectoryName, kMPThemesDirectoryName])
+    for (NSString *key in @[kMPThemesDirectoryName])
     {
         NSURL *dirSource = [bundle URLForResource:key withExtension:@""];
         NSURL *dirTarget = [NSURL fileURLWithPath:MPDataDirectory(key)];
