@@ -356,6 +356,12 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (nonatomic) NSTimeInterval externalChangeCoalesceInterval;
 @property (nonatomic, copy) void (^externalChangePromptPresenter)(void (^)(BOOL));
 
+// Issue #543: The scroll restore in -reloadFromLoadedString is deferred to a
+// later main-queue turn, so a second reload can start before the first's
+// restore runs. This generation counter lets a superseded restore no-op rather
+// than snap the viewport back to a stale rect, mirroring mathJaxRenderGeneration.
+@property (nonatomic) NSUInteger externalReloadScrollGeneration;
+
 // Issue #371: Injection seam so tests can simulate a non-local save
 // destination without a real network mount. Defaults to
 // +[MPFileWatcher pathIsOnLocalVolume:].
@@ -848,6 +854,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return range;
 }
 
+// Shared by three paths: the initial document open, a manual Revert, and an
+// external-change reload (silent or post-Discard). The selection/scroll
+// preservation below therefore affects all three — a change made here for one
+// caller changes the behaviour of the others too.
 - (void)reloadFromLoadedString
 {
     if (self.editor && self.renderer && self.highlighter)
@@ -880,8 +890,19 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                 // update when Scrolls Past End is on, which would resize the
                 // scrollable area out from under an immediate scroll. Going
                 // through the main queue puts this after that block.
+                //
+                // Because the restore is deferred, a second reload can start
+                // before this block runs; bump a generation and let a
+                // superseded block bail rather than snap back to a stale rect.
+                self.externalReloadScrollGeneration++;
+                NSUInteger expectedGeneration = self.externalReloadScrollGeneration;
                 MPEditorView *editor = self.editor;
+                __weak MPDocument *weakSelf = self;
                 [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+                    MPDocument *strongSelf = weakSelf;
+                    if (!strongSelf ||
+                        strongSelf.externalReloadScrollGeneration != expectedGeneration)
+                        return;
                     [editor scrollRectToVisible:previousVisibleRect];
                 }];
             }
@@ -4384,7 +4405,12 @@ to link outside that scope.", \
 
     // Issue #543: Collapse a burst of write notifications into one decision,
     // so a chunked external save produces a single dialog (or a single silent
-    // reload) instead of one per chunk.
+    // reload) instead of one per chunk. This is a leading-edge throttle, not a
+    // resetting debounce: the window opens on the first notification and fires
+    // once the interval elapses; later notifications inside it are dropped but
+    // do not extend it. A writer whose chunks are spaced further apart than the
+    // interval can therefore still produce more than one decision, which is an
+    // accepted trade-off for keeping ordinary fast local saves to one decision.
     if (self.externalChangeCoalescePending)
         return;
     self.externalChangeCoalescePending = YES;
