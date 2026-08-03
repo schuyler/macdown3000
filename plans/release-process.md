@@ -235,19 +235,6 @@ The recommended way to trigger a release is by creating and pushing a version ta
    - Workflow will create a **draft release**
    - Check the **Releases** page on GitHub
 
-6. **Regenerate the bundled resource history:**
-
-   The generator enumerates pushed release tags, so this must run *after* the tag is pushed — files shipped in an untagged release can never be classified, which silently breaks the recovery path for anyone who later loses their provenance manifest.
-
-   ```bash
-   Tools/generate-bundled-resource-history.sh
-   git add MacDown/Resources/BundledResourceHistory.json
-   git commit -m "Record bundled resource digests for v1.0.0"
-   git push origin main
-   ```
-
-   One consequence of this ordering: because the manifest is regenerated *after* the tag is cut, a release's own digests never ship inside that release's own app bundle — they first appear in the following release. This is unavoidable and harmless (a pristine file still matches the current bundle's digest directly), but it can surprise a reader checking a fresh install against its own release's manifest.
-
 ### Manual Trigger (Alternative)
 
 You can also manually trigger the workflow without creating a tag:

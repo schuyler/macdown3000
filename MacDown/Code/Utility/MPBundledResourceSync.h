@@ -16,8 +16,6 @@
 
 /// File name of the per-user provenance manifest, at the data-directory root.
 extern NSString * const kMPBundledResourceManifestFileName;   // BundledResourceManifest.json
-/// File name of the read-only shipped-history manifest, in the app bundle.
-extern NSString * const kMPBundledResourceHistoryFileName;    // BundledResourceHistory.json
 
 
 #pragma mark - Digests
@@ -58,15 +56,8 @@ BOOL MPWriteProvenanceManifestAtPath(
 /// Returns nil only if serialisation itself fails.
 NSData *MPProvenanceManifestData(NSDictionary<NSString *, NSString *> *manifest);
 
-/// Read the shipped-history manifest at `path`.
-/// Returns an empty (non-nil) dictionary on any failure, exactly as above.
-/// Digest arrays become NSSets; non-string and malformed members are dropped.
-NSDictionary<NSString *, NSSet<NSString *> *> *
-MPReadHistoryManifestAtPath(NSString *path);
-
-/// Canonical manifest locations, so callers and tests never hardcode literals.
+/// Canonical manifest location, so callers and tests never hardcode literals.
 NSString *MPProvenanceManifestPathInRoot(NSString *userDataRoot);
-NSString *MPHistoryManifestPathInRoot(NSString *bundleResourceRoot);
 
 
 #pragma mark - Classification
@@ -97,14 +88,15 @@ typedef NS_ENUM(NSInteger, MPBundledResourceAction) {
 ///                    orchestration.
 /// `bundleDigest`   — nil means the file is no longer shipped (row 7).
 /// `provenanceDigest` — nil means no entry (rows 8, 9, or a first sighting).
-/// `historyDigests` — may be nil or empty.
+///                    Provenance is forward-only: a file with no entry whose
+///                    bytes differ from the bundle is left alone, because
+///                    nothing proves the app wrote it.
 /// Total: every input combination returns a defined action.
 MPBundledResourceAction MPBundledResourceActionForFile(
     MPBundledResourceTargetState targetState,
     NSString *targetDigest,
     NSString *bundleDigest,
-    NSString *provenanceDigest,
-    NSSet<NSString *> *historyDigests);
+    NSString *provenanceDigest);
 
 
 #pragma mark - Sync
@@ -127,9 +119,8 @@ MPBundledResourceAction MPBundledResourceActionForFile(
 @end
 
 /// Testable variant that accepts explicit paths instead of using
-/// NSBundle mainBundle / MPDataDirectory. Both manifest paths are derived
-/// from the roots via MPProvenanceManifestPathInRoot /
-/// MPHistoryManifestPathInRoot.
+/// NSBundle mainBundle / MPDataDirectory. The manifest path is derived from
+/// `userDataRoot` via MPProvenanceManifestPathInRoot.
 ///
 /// Never raises, never returns nil, never aborts on a per-file failure.
 /// Returns an empty report with `aborted` set if either root is nil or

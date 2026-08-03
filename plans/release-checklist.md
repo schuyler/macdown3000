@@ -1,10 +1,9 @@
 # MacDown Release Checklist
 
-**Quick reference:** Only four manual steps are required to release MacDown:
+**Quick reference:** Only three manual steps are required to release MacDown:
 1. Update the changelog
 2. Tag and push the version
-3. Regenerate the bundled resource history
-4. Staple the DMG (after notarization)
+3. Staple the DMG (after notarization)
 
 See `plans/release-process.md` for detailed instructions.
 
@@ -47,23 +46,7 @@ See `plans/release-process.md` for detailed instructions.
 
 ---
 
-## Step 3: Regenerate the Bundled Resource History
-
-The new tag exists now, so record what shipped in it — files from an untagged
-release can never be classified, and the user who loses their provenance
-manifest loses the recovery path with it.
-
-- [ ] **Regenerate and commit the history manifest**
-  ```bash
-  Tools/generate-bundled-resource-history.sh
-  git add MacDown/Resources/BundledResourceHistory.json
-  git commit -m "Record bundled resource digests for v0.9.0"
-  git push origin main
-  ```
-
----
-
-## Step 4: Staple and Publish
+## Step 3: Staple and Publish
 
 Once you receive the notarization approval email:
 
@@ -95,8 +78,7 @@ The workflow handles everything else:
 - ✅ Submits for Apple notarization
 - ✅ Creates the GitHub release as a draft
 
-Your job is just updating the changelog, tagging, regenerating the bundled
-resource history, and stapling.
+Your job is just updating the changelog, tagging, and stapling.
 
 ---
 

@@ -25,11 +25,9 @@
 
 NSString * const kMPBundledResourceManifestFileName =
     @"BundledResourceManifest.json";
-NSString * const kMPBundledResourceHistoryFileName =
-    @"BundledResourceHistory.json";
 
-/// Schema version understood by both manifest readers. Anything else reads
-/// as corrupt and degrades to decision-table row 9, which is safe by design.
+/// Schema version understood by the manifest reader. Anything else reads as
+/// corrupt and degrades to decision-table row 9, which is safe by design.
 static const NSInteger kMPBundledResourceManifestVersion = 1;
 
 /// Bytes hashed per read(2). Fixed and bounded: a user who drops a very
@@ -298,9 +296,7 @@ NSData *MPProvenanceManifestData(NSDictionary<NSString *, NSString *> *manifest)
     // WithoutEscapingSlashes is load-bearing, not cosmetic. With
     // PrettyPrinted alone, NSJSONSerialization emits "Styles\/GitHub.css",
     // and every key in this file carries a '/' separator per §7.2 — so the
-    // on-disk manifest would match neither design §3.1's rendering of it
-    // nor its sibling BundledResourceHistory.json, which the Python
-    // generator writes with unescaped slashes.
+    // on-disk manifest would not match design §3.1's rendering of it.
     //
     // Available unconditionally here: the flag is macOS 10.15+ and the
     // deployment target is macOS 11.0.
@@ -321,44 +317,10 @@ NSData *MPProvenanceManifestData(NSDictionary<NSString *, NSString *> *manifest)
     return [data copy];
 }
 
-NSDictionary<NSString *, NSSet<NSString *> *> *
-MPReadHistoryManifestAtPath(NSString *path)
-{
-    NSDictionary *files = MPManifestFilesObjectAtPath(path, @"history");
-    if (!files)
-        return @{};
-
-    NSMutableDictionary<NSString *, NSSet<NSString *> *> *history =
-        [NSMutableDictionary dictionaryWithCapacity:files.count];
-    for (id key in files)
-    {
-        if (![key isKindOfClass:[NSString class]])
-            continue;
-        id digests = files[key];
-        if (![digests isKindOfClass:[NSArray class]])
-            continue;
-
-        NSMutableSet<NSString *> *set = [NSMutableSet set];
-        for (id digest in (NSArray *)digests)
-        {
-            if (MPDigestStringIsWellFormed(digest))
-                [set addObject:digest];
-        }
-        history[key] = [set copy];
-    }
-    return [history copy];
-}
-
 NSString *MPProvenanceManifestPathInRoot(NSString *userDataRoot)
 {
     return [userDataRoot
         stringByAppendingPathComponent:kMPBundledResourceManifestFileName];
-}
-
-NSString *MPHistoryManifestPathInRoot(NSString *bundleResourceRoot)
-{
-    return [bundleResourceRoot
-        stringByAppendingPathComponent:kMPBundledResourceHistoryFileName];
 }
 
 
@@ -368,8 +330,7 @@ MPBundledResourceAction MPBundledResourceActionForFile(
     MPBundledResourceTargetState targetState,
     NSString *targetDigest,
     NSString *bundleDigest,
-    NSString *provenanceDigest,
-    NSSet<NSString *> *historyDigests)
+    NSString *provenanceDigest)
 {
     // Row 10 — target exists but is not a regular file (symlink, directory,
     // FIFO, socket, device node). Skip entirely: never open, follow, hash,
@@ -401,14 +362,20 @@ MPBundledResourceAction MPBundledResourceActionForFile(
     // nil and are handled by exactly this expression — there is no separate
     // "no manifest" mode, which is the point of §6.1 step 3.
     //
+    // Provenance is forward-only: the only bytes we will ever overwrite are
+    // bytes this app recorded writing, or bytes identical to what the bundle
+    // currently ships. A file with no entry that differs from the bundle is
+    // therefore left alone — we cannot prove we put it there, and guessing
+    // wrong would destroy the user's work. Deleting it and relaunching is
+    // the documented way to get the bundled copy back (help.md).
+    //
     // -isEqualToString: is case-sensitive, and deliberately so (§7.2, §7.1).
     // Note this diverges from MPPrismThemeURLInRoot (MPUtilities.m:248),
     // which matches file names case-insensitively; normalising case here
     // would let two distinct entries collide on a case-insensitive volume.
     BOOL pristine =
         (provenanceDigest && [targetDigest isEqualToString:provenanceDigest])
-        || [targetDigest isEqualToString:bundleDigest]
-        || [historyDigests containsObject:targetDigest];
+        || [targetDigest isEqualToString:bundleDigest];
 
     // Row 5 — modified. Leave untouched. No backup, no .orig, no warning,
     // no prompt, and crucially no provenance entry (§6.1 step 6).
@@ -444,11 +411,8 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
 
     NSFileManager *manager = [NSFileManager defaultManager];
 
-    // Step 1 — both manifests degrade to @{} on missing or corrupt input,
+    // Step 1 — the manifest degrades to @{} on missing or corrupt input,
     // which is all rows 8 and 9 need (see MPBundledResourceActionForFile).
-    NSDictionary<NSString *, NSSet<NSString *> *> *history =
-        MPReadHistoryManifestAtPath(
-            MPHistoryManifestPathInRoot(bundleResourceRoot));
     NSString *manifestPath = MPProvenanceManifestPathInRoot(userDataRoot);
     NSDictionary<NSString *, NSString *> *provenance =
         MPReadProvenanceManifestAtPath(manifestPath);
@@ -599,8 +563,7 @@ MPBundledResourceSyncReport *MPSyncBundledResourcesInPaths(
             }
 
             MPBundledResourceAction action = MPBundledResourceActionForFile(
-                targetState, targetDigest, bundleDigest, provenance[key],
-                history[key]);
+                targetState, targetDigest, bundleDigest, provenance[key]);
 
             switch (action)
             {
@@ -794,7 +757,7 @@ static NSError *MPCocoaFileError(NSInteger code, NSString *path,
                            userInfo:userInfo];
 }
 
-/// The shared body of both manifest readers: read, parse, version-check and
+/// The body of the manifest reader: read, parse, version-check and
 /// unwrap the `files` object. Returns nil — never raises — when the file is
 /// missing, unreadable, not JSON, of an unexpected shape, or of an
 /// unrecognised schema version. A missing file is the ordinary first-run

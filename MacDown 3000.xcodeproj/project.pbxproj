@@ -161,7 +161,6 @@
 		504AC0000000000000000007 /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 504AC0000000000000000006 /* PDFKit.framework */; };
 		504AC0000000000000000008 /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 504AC0000000000000000006 /* PDFKit.framework */; };
 		6DF7634F7CFB0E718623C743 /* MPBundledResourceSync.m in Sources */ = {isa = PBXBuildFile; fileRef = BFB785FC2553E0F066BF4314 /* MPBundledResourceSync.m */; };
-		0EF7F855A6D63BC60A67CCE7 /* BundledResourceHistory.json in Resources */ = {isa = PBXBuildFile; fileRef = BFF7FCCC3D2D303F270D4F89 /* BundledResourceHistory.json */; };
 		7F018F1F3C7619EA26F737AC /* MPBundledResourceSyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 93338DE9459DD0BBABF0172B /* MPBundledResourceSyncTests.m */; };
 		276BBE5A1237B16170426444 /* MPBundledResourceDigestTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 90F20FA45DCC9EBE32F401EC /* MPBundledResourceDigestTests.m */; };
 /* End PBXBuildFile section */
@@ -728,7 +727,6 @@
 		504AC0000000000000000006 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
 		BBC74269D0EC21874A73003D /* MPBundledResourceSync.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPBundledResourceSync.h; sourceTree = "<group>"; };
 		BFB785FC2553E0F066BF4314 /* MPBundledResourceSync.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPBundledResourceSync.m; sourceTree = "<group>"; };
-		BFF7FCCC3D2D303F270D4F89 /* BundledResourceHistory.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = BundledResourceHistory.json; path = Resources/BundledResourceHistory.json; sourceTree = "<group>"; };
 		93338DE9459DD0BBABF0172B /* MPBundledResourceSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPBundledResourceSyncTests.m; sourceTree = "<group>"; };
 		90F20FA45DCC9EBE32F401EC /* MPBundledResourceDigestTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPBundledResourceDigestTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -931,7 +929,6 @@
 				1F3A47521953E84700293260 /* updateHeaderLocations.js */,
 				1F59491A1AB57C78007394CB /* syntax_highlighting.json */,
 				1F3FC8A91C85AE9F000965E1 /* MacDown.sdef */,
-				BFF7FCCC3D2D303F270D4F89 /* BundledResourceHistory.json */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -1524,7 +1521,6 @@
 				1FB3C0241E5061A2002AEB6A /* MPExportPanelAccessoryViewController.xib in Resources */,
 				3028039E1FD84EAC0055B0DA /* contribute.md in Resources */,
 				A2310231000000000001IMAG /* Images in Resources */,
-				0EF7F855A6D63BC60A67CCE7 /* BundledResourceHistory.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

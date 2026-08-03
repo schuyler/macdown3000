@@ -3,8 +3,8 @@
 //  MacDown 3000
 //
 //  Tests for the pure, non-filesystem-orchestrating half of
-//  MPBundledResourceSync: SHA-256 digesting, provenance/history manifest
-//  I/O, and the MPBundledResourceActionForFile decision table.
+//  MPBundledResourceSync: SHA-256 digesting, provenance manifest I/O, and
+//  the MPBundledResourceActionForFile decision table.
 //
 //  These tests were written against the design and contract before the
 //  implementation existed, so they follow the specification rather than
@@ -432,160 +432,12 @@ static NSString * const kHexModified =
                           @"the one well-formed entry must survive intact");
 }
 
-#pragma mark - History manifest
-
-- (void)testHistoryManifestReadParsesArraysIntoSets
-{
-    NSString *path = [self pathForName:@"history.json"];
-    NSString *json =
-        [NSString stringWithFormat:
-            @"{\"version\":1,\"tags\":[\"v1\"],\"files\":{"
-            @"\"Styles/A.css\":[\"%@\",\"%@\"]}}", kHexV1, kHexV2];
-    [json writeToFile:path
-           atomically:YES
-             encoding:NSUTF8StringEncoding
-                error:nil];
-
-    NSDictionary<NSString *, NSSet<NSString *> *> *result =
-        MPReadHistoryManifestAtPath(path);
-    NSSet<NSString *> *entry = result[@"Styles/A.css"];
-    XCTAssertNotNil(entry, @"key must be present");
-    XCTAssertTrue([entry isKindOfClass:[NSSet class]],
-                  @"digest arrays must be converted to NSSet, got %@",
-                  NSStringFromClass([entry class]));
-    XCTAssertEqualObjects(entry, ([NSSet setWithObjects:kHexV1, kHexV2, nil]),
-                          @"set must contain exactly the array's digests");
-}
-
-- (void)testHistoryManifestReadReturnsEmptyForMissingFile
-{
-    // Positive control, for the same reason as the provenance-manifest
-    // equivalent: an always-@{} reader must not be indistinguishable from
-    // a correct one here.
-    NSString *validPath = [self pathForName:@"history-control.json"];
-    NSString *validJSON =
-        [NSString stringWithFormat:
-            @"{\"version\":1,\"tags\":[],\"files\":{"
-            @"\"Styles/A.css\":[\"%@\"]}}", kHexV1];
-    [validJSON writeToFile:validPath
-                 atomically:YES
-                   encoding:NSUTF8StringEncoding
-                      error:nil];
-    NSDictionary *control = MPReadHistoryManifestAtPath(validPath);
-    XCTAssertEqual(control.count, (NSUInteger)1,
-                   @"positive control: a well-formed history manifest must "
-                   @"read back non-empty");
-
-    NSString *missingPath = [self pathForName:@"no-history.json"];
-    NSDictionary *result = MPReadHistoryManifestAtPath(missingPath);
-    XCTAssertNotNil(result, @"must never return nil");
-    XCTAssertEqual(result.count, (NSUInteger)0,
-                   @"a missing history manifest must degrade to an empty "
-                   @"dictionary");
-}
-
-- (void)testHistoryManifestReadIgnoresNonStringMembers
-{
-    NSString *path = [self pathForName:@"mixed-history.json"];
-    NSString *json =
-        [NSString stringWithFormat:
-            @"{\"version\":1,\"tags\":[],\"files\":{"
-            @"\"Styles/A.css\":[\"%@\",42,\"NOTHEX\",\"%@\"]}}",
-            kHexV1, kHexV2];
-    [json writeToFile:path
-           atomically:YES
-             encoding:NSUTF8StringEncoding
-                error:nil];
-
-    NSDictionary<NSString *, NSSet<NSString *> *> *result =
-        MPReadHistoryManifestAtPath(path);
-    NSSet<NSString *> *entry = result[@"Styles/A.css"];
-    XCTAssertEqualObjects(entry, ([NSSet setWithObjects:kHexV1, kHexV2, nil]),
-                          @"non-string (42) and malformed (\"NOTHEX\") "
-                          @"members must be dropped, valid ones kept, got "
-                          @"%@", entry);
-}
-
-- (void)testHistoryManifestReadHandlesTheShippedFileShape
-{
-    // The §3.2 example, verbatim.
-    NSString *json =
-        @"{\n"
-        @"  \"version\": 1,\n"
-        @"  \"tags\": [\n"
-        @"    \"v3000.0.0-beta.0\", \"v3000.0.0-beta.1\", "
-        @"\"v3000.0.0-beta.2\",\n"
-        @"    \"v3000.0.0-beta.3\", \"v3000.0.0\", \"v3000.0.1\", "
-        @"\"v3000.0.2\",\n"
-        @"    \"v3000.0.3-beta.1\", \"v3000.0.3\", \"v3000.0.4\", "
-        @"\"v3000.0.5\",\n"
-        @"    \"v3000.0.6\", \"v3000.0.7-rc.1\", \"v3000.0.7-rc.2\", "
-        @"\"v3000.0.7-rc.3\",\n"
-        @"    \"v3000.0.7\"\n"
-        @"  ],\n"
-        @"  \"files\": {\n"
-        @"    \"Styles/GitHub.css\": [\n"
-        @"      \"50b145c3b6ae27c8c1f0d2907f83eeade0feabbf082ed9827fd423f"
-        @"a02086328\",\n"
-        @"      \"673ad0add6f2ad0283f152bd0c4806fce92ac095a8c69331d71a6f"
-        @"b4835140a1\"\n"
-        @"    ],\n"
-        @"    \"Styles/GitHub2.css\": [\n"
-        @"      \"62ed816fefa18599c6b8dd0b3d81143459e799e335f77b81ddc165"
-        @"0178ddcefd\",\n"
-        @"      \"d526e3d22730267ba919c1af92c9ed826ccd8b681f516add89de9c"
-        @"e912a79938\"\n"
-        @"    ],\n"
-        @"    \"Themes/Mou Night+.style\": [\n"
-        @"      \"29ac097ec816c3f6c315ede0b0aba97ee0175ff9f83d65e18bb05a"
-        @"2906b5650e\",\n"
-        @"      \"39872c51d2972803efe27d7ea3114ce91c8718a07a3662c95b6a0b"
-        @"a65bed3f95\"\n"
-        @"    ]\n"
-        @"  }\n"
-        @"}\n";
-    NSString *path = [self pathForName:@"shipped-history.json"];
-    NSError *writeError = nil;
-    BOOL wrote = [json writeToFile:path
-                         atomically:YES
-                           encoding:NSUTF8StringEncoding
-                              error:&writeError];
-    XCTAssertTrue(wrote, @"fixture write failed: %@", writeError);
-
-    NSDictionary<NSString *, NSSet<NSString *> *> *result =
-        MPReadHistoryManifestAtPath(path);
-    XCTAssertEqual(result.count, (NSUInteger)3,
-                   @"exactly the three files in the §3.2 example, got "
-                   @"keys: %@", result.allKeys);
-    XCTAssertEqualObjects(result[@"Styles/GitHub.css"],
-        ([NSSet setWithObjects:
-            @"50b145c3b6ae27c8c1f0d2907f83eeade0feabbf082ed9827fd423f"
-            @"a02086328",
-            @"673ad0add6f2ad0283f152bd0c4806fce92ac095a8c69331d71a6f"
-            @"b4835140a1",
-            nil]));
-    XCTAssertEqualObjects(result[@"Styles/GitHub2.css"],
-        ([NSSet setWithObjects:
-            @"62ed816fefa18599c6b8dd0b3d81143459e799e335f77b81ddc165"
-            @"0178ddcefd",
-            @"d526e3d22730267ba919c1af92c9ed826ccd8b681f516add89de9c"
-            @"e912a79938",
-            nil]));
-    XCTAssertEqualObjects(result[@"Themes/Mou Night+.style"],
-        ([NSSet setWithObjects:
-            @"29ac097ec816c3f6c315ede0b0aba97ee0175ff9f83d65e18bb05a"
-            @"2906b5650e",
-            @"39872c51d2972803efe27d7ea3114ce91c8718a07a3662c95b6a0b"
-            @"a65bed3f95",
-            nil]));
-}
-
 #pragma mark - MPBundledResourceActionForFile truth table
 
 - (void)testActionSkipsNonRegularTargetEvenWhenBundleDigestMissing
 {
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetNonRegular, nil, nil, kHexProvenance, nil);
+        MPBundledResourceTargetNonRegular, nil, nil, kHexProvenance);
     XCTAssertEqual(result, MPBundledResourceActionSkip,
                    @"row 10 must win even when bundleDigest is nil (row 7 "
                    @"must not fire first)");
@@ -594,7 +446,7 @@ static NSString * const kHexModified =
     // keeping bundleDigest nil. This must now Forget (row 7), proving the
     // Skip above tracked targetState rather than being a constant answer.
     MPBundledResourceAction result2 = MPBundledResourceActionForFile(
-        MPBundledResourceTargetAbsent, nil, nil, kHexProvenance, nil);
+        MPBundledResourceTargetAbsent, nil, nil, kHexProvenance);
     XCTAssertEqual(result2, MPBundledResourceActionForget,
                    @"with bundleDigest nil and targetState no longer "
                    @"NonRegular, row 7 must fire");
@@ -603,8 +455,7 @@ static NSString * const kHexModified =
 - (void)testActionForgetsWhenBundleDigestIsNil
 {
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexTarget, nil, kHexProvenance,
-        nil);
+        MPBundledResourceTargetRegular, kHexTarget, nil, kHexProvenance);
     XCTAssertEqual(result, MPBundledResourceActionForget,
                    @"row 7: no longer shipped in the bundle, must Forget "
                    @"the entry without touching the file");
@@ -613,7 +464,7 @@ static NSString * const kHexModified =
 - (void)testActionCopiesWhenTargetAbsent
 {
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetAbsent, nil, kHexBundle, nil, nil);
+        MPBundledResourceTargetAbsent, nil, kHexBundle, nil);
     XCTAssertEqual(result, MPBundledResourceActionCopy,
                    @"rows 1/2/6: file shipped, absent on disk, must Copy");
 }
@@ -623,7 +474,7 @@ static NSString * const kHexModified =
     // targetDigest matches provenance (so it's pristine) but not the
     // current bundle contents (rows 3/12).
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexV1, kHexV2, kHexV1, nil);
+        MPBundledResourceTargetRegular, kHexV1, kHexV2, kHexV1);
     XCTAssertEqual(result, MPBundledResourceActionRefresh,
                    @"pristine (matches provenance) and differing from "
                    @"bundle must Refresh");
@@ -632,7 +483,7 @@ static NSString * const kHexModified =
 - (void)testActionRecordsOnlyWhenEqualsBundle
 {
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil, nil);
+        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil);
     XCTAssertEqual(result, MPBundledResourceActionRecordOnly,
                    @"row 4: already byte-equal to the bundle, must "
                    @"RecordOnly (no file write, backfill provenance)");
@@ -640,49 +491,41 @@ static NSString * const kHexModified =
 
 - (void)testActionSkipsWhenMatchesNothing
 {
-    NSSet<NSString *> *history = [NSSet setWithObject:kHexV1];
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexModified, kHexV2, kHexV1,
-        history);
+        MPBundledResourceTargetRegular, kHexModified, kHexV2, kHexV1);
     XCTAssertEqual(result, MPBundledResourceActionSkip,
-                   @"row 5: matches provenance, bundle, nor history — must "
-                   @"be left alone as modified");
+                   @"row 5: matches neither provenance nor bundle — must be "
+                   @"left alone as modified");
 
-    // Discriminating pair: add the exact targetDigest to history so it
+    // The same bytes with no provenance entry at all (row 8 with a manifest
+    // that has never recorded this file). Provenance is forward-only: with
+    // nothing proving the app wrote these bytes, they must still be left
+    // alone rather than refreshed from the bundle.
+    MPBundledResourceAction withoutEntry = MPBundledResourceActionForFile(
+        MPBundledResourceTargetRegular, kHexModified, kHexV2, nil);
+    XCTAssertEqual(withoutEntry, MPBundledResourceActionSkip,
+                   @"row 8: unknown bytes with no provenance entry must be "
+                   @"left alone, not adopted and refreshed");
+
+    // Discriminating pair: point provenance at the exact targetDigest so it
     // becomes pristine. Result must change to Refresh (differs from
-    // bundle), proving the Skip above depended on the actual inputs rather
+    // bundle), proving the Skips above depended on the actual inputs rather
     // than being a constant answer.
-    NSSet<NSString *> *historyWithMatch =
-        [NSSet setWithObjects:kHexV1, kHexModified, nil];
     MPBundledResourceAction result2 = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexModified, kHexV2, kHexV1,
-        historyWithMatch);
+        MPBundledResourceTargetRegular, kHexModified, kHexV2, kHexModified);
     XCTAssertEqual(result2, MPBundledResourceActionRefresh,
-                   @"once targetDigest is in history it becomes pristine; "
-                   @"differing from bundle must Refresh");
-}
-
-- (void)testActionTreatsHistoryMatchAsPristine
-{
-    // No provenance entry at all (rows 8/9 territory); the file's digest
-    // is found in shipped history instead, and differs from the current
-    // bundle, so it must be classified pristine-but-stale and refreshed.
-    NSSet<NSString *> *history = [NSSet setWithObject:kHexV1];
-    MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexV1, kHexV2, nil, history);
-    XCTAssertEqual(result, MPBundledResourceActionRefresh,
-                   @"row 8: history match without a provenance entry must "
-                   @"still be treated as pristine and refreshed to current "
-                   @"bundle bytes");
+                   @"once provenance records targetDigest it becomes "
+                   @"pristine; differing from bundle must Refresh");
 }
 
 - (void)testActionTreatsBundleMatchAsPristineWithoutProvenance
 {
     // No provenance entry, but the on-disk bytes already equal the
-    // bundle's, which by itself is sufficient to classify pristine.
+    // bundle's, which by itself is sufficient to classify pristine. This is
+    // what lets an already-up-to-date file get its entry backfilled, and so
+    // receive every future bundled fix.
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil,
-        [NSSet setWithObject:kHexV3]);
+        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil);
     XCTAssertEqual(result, MPBundledResourceActionRecordOnly,
                    @"row 8: no provenance entry, but target already equals "
                    @"bundle bytes, must RecordOnly — provenance is "
@@ -690,27 +533,11 @@ static NSString * const kHexModified =
                    @"pristine-ness");
 }
 
-- (void)testActionTreatsNilHistoryAsEmpty
-{
-    MPBundledResourceAction withNilHistory = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil, nil);
-    MPBundledResourceAction withEmptyHistory = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil,
-        [NSSet set]);
-    XCTAssertEqual(withNilHistory, withEmptyHistory,
-                   @"nil historyDigests must behave identically to an "
-                   @"empty NSSet");
-    XCTAssertEqual(withNilHistory, MPBundledResourceActionRecordOnly,
-                   @"sanity check on the shared result: bundle match with "
-                   @"no history must still RecordOnly");
-}
-
 - (void)testActionRejectsUppercaseHexDigestMatch
 {
     NSString *upperProvenance = [kHexV1 uppercaseString];
     MPBundledResourceAction caseMismatch = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexV1, kHexV2, upperProvenance,
-        nil);
+        MPBundledResourceTargetRegular, kHexV1, kHexV2, upperProvenance);
     XCTAssertEqual(caseMismatch, MPBundledResourceActionSkip,
                    @"§7.1: an uppercase-hex provenanceDigest must NOT "
                    @"case-insensitively match a lowercase targetDigest — "
@@ -718,7 +545,7 @@ static NSString * const kHexModified =
 
     // Discriminating pair: the exact same digest, same case, must match.
     MPBundledResourceAction caseMatch = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexV1, kHexV2, kHexV1, nil);
+        MPBundledResourceTargetRegular, kHexV1, kHexV2, kHexV1);
     XCTAssertEqual(caseMatch, MPBundledResourceActionRefresh,
                    @"the same digest in matching (lowercase) case must be "
                    @"treated as pristine, proving the Skip above was "
@@ -731,7 +558,7 @@ static NSString * const kHexModified =
     // targetDigest is unreachable from the real orchestration, but the
     // function is specified as total and must answer safely (Skip) here.
     MPBundledResourceAction result = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, nil, kHexBundle, nil, nil);
+        MPBundledResourceTargetRegular, nil, kHexBundle, nil);
     XCTAssertEqual(result, MPBundledResourceActionSkip,
                    @"an unclassifiable Regular target with a nil digest "
                    @"must be defensively skipped before any other check");
@@ -740,7 +567,7 @@ static NSString * const kHexModified =
     // supplied (and equals bundleDigest). Result must flip away from Skip,
     // proving the guard is keyed on targetDigest == nil specifically.
     MPBundledResourceAction withDigest = MPBundledResourceActionForFile(
-        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil, nil);
+        MPBundledResourceTargetRegular, kHexBundle, kHexBundle, nil);
     XCTAssertEqual(withDigest, MPBundledResourceActionRecordOnly,
                    @"supplying targetDigest must flip the result away from "
                    @"Skip");

@@ -174,20 +174,6 @@
     [data writeToFile:path atomically:YES];
 }
 
-- (void)writeHistoryFiles:(NSDictionary<NSString *, NSArray<NSString *> *> *)files
-                    atPath:(NSString *)path
-{
-    NSDictionary *doc = @{@"version": @1, @"tags": @[], @"files": files ?: @{}};
-    NSData *data = [NSJSONSerialization dataWithJSONObject:doc
-                                                     options:NSJSONWritingPrettyPrinted
-                                                       error:nil];
-    NSString *dir = [path stringByDeletingLastPathComponent];
-    if (![self.fm fileExistsAtPath:dir])
-        [self.fm createDirectoryAtPath:dir withIntermediateDirectories:YES
-                             attributes:nil error:nil];
-    [data writeToFile:path atomically:YES];
-}
-
 - (unsigned long long)inodeAtPath:(NSString *)path
 {
     NSDictionary *attrs = [self.fm attributesOfItemAtPath:path error:nil];
@@ -203,11 +189,6 @@
 - (NSString *)provenancePathForUserRoot:(NSString *)userRoot
 {
     return MPProvenanceManifestPathInRoot(userRoot);
-}
-
-- (NSString *)historyPathForBundleRoot:(NSString *)bundleRoot
-{
-    return MPHistoryManifestPathInRoot(bundleRoot);
 }
 
 #pragma mark - Row 1: first run ever, data directory absent
@@ -370,8 +351,6 @@
     [self writeString:@"MY EDITS" toPath:userPath];
     [self writeProvenanceFiles:@{@"Styles/A.css": [self sha256OfString:@"v1"]}
                          atPath:[self provenancePathForUserRoot:userRoot]];
-    [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"]]}
-                      atPath:[self historyPathForBundleRoot:bundleRoot]];
 
     MPBundledResourceSyncReport *report =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
@@ -400,8 +379,6 @@
     [self writeProvenanceFiles:@{@"Styles/A.css": [self sha256OfString:@"v1"],
                                   @"Styles/B.css": [self sha256OfString:@"v1"]}
                          atPath:[self provenancePathForUserRoot:userRoot]];
-    [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"]]}
-                      atPath:[self historyPathForBundleRoot:bundleRoot]];
 
     MPBundledResourceSyncReport *report =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
@@ -541,8 +518,12 @@
 
 #pragma mark - Row 8: provenance manifest missing
 
-- (void)testRow08ManifestMissingClassifiesFromBundleAndHistory
+- (void)testRow08ManifestMissingClassifiesFromBundleAlone
 {
+    // With no provenance manifest, the current bundle bytes are the ONLY
+    // evidence available. A file that already equals them is adopted
+    // (RecordOnly, so it receives every future bundled fix); a file that
+    // differs is left strictly alone, because nothing proves we wrote it.
     NSString *userRoot, *bundleRoot;
     [self makeRootsUser:&userRoot bundle:&bundleRoot];
     // No provenance file written at all.
@@ -554,27 +535,32 @@
     NSString *aPath = [userRoot stringByAppendingPathComponent:@"Styles/A.css"];
     NSString *bPath = [userRoot stringByAppendingPathComponent:@"Styles/B.css"];
     NSString *cPath = [userRoot stringByAppendingPathComponent:@"Styles/C.css"];
+    // A.css holds an older bundled version, but nothing on this machine
+    // records that we put it there. It stays as it is.
     [self writeString:@"v1" toPath:aPath];
     [self writeString:@"v3" toPath:bPath];
     [self writeString:@"mine" toPath:cPath];
-
-    [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"],
-                                                   [self sha256OfString:@"v2"]]}
-                      atPath:[self historyPathForBundleRoot:bundleRoot]];
 
     MPBundledResourceSyncReport *report =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
 
     XCTAssertFalse(report.aborted);
     XCTAssertEqualObjects([self.fm contentsAtPath:aPath],
-                          [@"v3" dataUsingEncoding:NSUTF8StringEncoding],
-                          @"A.css matches history -> pristine -> refreshed "
-                          @"to current bundle bytes");
+                          [@"v1" dataUsingEncoding:NSUTF8StringEncoding],
+                          @"A.css differs from the bundle and has no "
+                          @"provenance entry -> left alone, not refreshed");
     XCTAssertEqualObjects([self.fm contentsAtPath:bPath],
                           [@"v3" dataUsingEncoding:NSUTF8StringEncoding],
                           @"B.css already equals bundle -> untouched");
     XCTAssertEqualObjects([NSSet setWithArray:report.manifest.allKeys],
-                          ([NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]]));
+                          ([NSSet setWithArray:@[@"Styles/B.css"]]),
+                          @"only the file we can prove is pristine gets an "
+                          @"entry, got keys: %@", report.manifest.allKeys);
+    XCTAssertEqual(report.unchangedCount, 1u);
+    XCTAssertEqual(report.refreshedCount, 0u);
+    XCTAssertEqual(report.modifiedCount, 2u,
+                   @"A.css and C.css are both unprovable -> both counted as "
+                   @"modified and left untouched");
 }
 
 - (void)testRow08ManifestMissingNeverOverwritesUnknownBytes
@@ -590,20 +576,22 @@
     [self writeString:@"v3" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/B.css"]];
     [self writeString:@"v3" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/C.css"]];
 
+    NSString *aPath = [userRoot stringByAppendingPathComponent:@"Styles/A.css"];
     NSString *cPath = [userRoot stringByAppendingPathComponent:@"Styles/C.css"];
-    [self writeString:@"v1" toPath:[userRoot stringByAppendingPathComponent:@"Styles/A.css"]];
+    [self writeString:@"v1" toPath:aPath];
+    // B.css already equals the bundle, so it is adopted. It is the positive
+    // control: without it, every assertion below would be satisfiable by a
+    // stub that does nothing at all.
     [self writeString:@"v3" toPath:[userRoot stringByAppendingPathComponent:@"Styles/B.css"]];
     [self writeString:@"mine" toPath:cPath];
-
-    [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"],
-                                                   [self sha256OfString:@"v2"]]}
-                      atPath:[self historyPathForBundleRoot:bundleRoot]];
-    // Deliberately: no history entry at all for C.css, and its bytes match
-    // neither the current bundle nor any known history digest.
 
     MPBundledResourceSyncReport *report =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
 
+    XCTAssertEqualObjects(report.manifest[@"Styles/B.css"],
+                          [self sha256OfString:@"v3"],
+                          @"positive control: the provably pristine file "
+                          @"must have been adopted by this same sync");
     XCTAssertEqualObjects([self.fm contentsAtPath:cPath],
                           [@"mine" dataUsingEncoding:NSUTF8StringEncoding],
                           @"C.css's unrecognised bytes must be left "
@@ -611,7 +599,12 @@
     XCTAssertNil(report.manifest[@"Styles/C.css"],
                 @"C.css must get no provenance entry — a manifest entry "
                 @"would misrepresent bytes we did not place");
-    XCTAssertEqual(report.modifiedCount, 1u);
+    XCTAssertEqualObjects([self.fm contentsAtPath:aPath],
+                          [@"v1" dataUsingEncoding:NSUTF8StringEncoding],
+                          @"A.css's bytes are equally unprovable and must "
+                          @"also be left completely alone");
+    XCTAssertNil(report.manifest[@"Styles/A.css"]);
+    XCTAssertEqual(report.modifiedCount, 2u);
 }
 
 #pragma mark - Row 9: provenance manifest corrupt
@@ -627,9 +620,6 @@
     [self writeString:@"v1" toPath:[userRoot stringByAppendingPathComponent:@"Styles/A.css"]];
     [self writeString:@"v3" toPath:[userRoot stringByAppendingPathComponent:@"Styles/B.css"]];
     [self writeString:@"mine" toPath:[userRoot stringByAppendingPathComponent:@"Styles/C.css"]];
-    [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"],
-                                                   [self sha256OfString:@"v2"]]}
-                      atPath:[self historyPathForBundleRoot:bundleRoot]];
 
     // Truncated JSON, simulating corruption.
     [self writeString:@"{\"version\":1,\"files\":"
@@ -640,9 +630,12 @@
 
     XCTAssertFalse(report.aborted);
     XCTAssertEqualObjects([NSSet setWithArray:report.manifest.allKeys],
-                          ([NSSet setWithArray:@[@"Styles/A.css", @"Styles/B.css"]]),
+                          ([NSSet setWithArray:@[@"Styles/B.css"]]),
                           @"A corrupt manifest must degrade to exactly the "
-                          @"row-8 (missing manifest) outcome");
+                          @"row-8 (missing manifest) outcome: only B.css, "
+                          @"which equals the bundle, is provable");
+    XCTAssertEqualObjects([self.fm contentsAtPath:[userRoot stringByAppendingPathComponent:@"Styles/A.css"]],
+                          [@"v1" dataUsingEncoding:NSUTF8StringEncoding]);
     XCTAssertEqualObjects([self.fm contentsAtPath:[userRoot stringByAppendingPathComponent:@"Styles/C.css"]],
                           [@"mine" dataUsingEncoding:NSUTF8StringEncoding]);
 }
@@ -663,9 +656,16 @@
 
         [self writeString:@"v3" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/A.css"]];
         NSString *aPath = [userRoot stringByAppendingPathComponent:@"Styles/A.css"];
-        [self writeString:@"v1" toPath:aPath];
-        [self writeHistoryFiles:@{@"Styles/A.css": @[[self sha256OfString:@"v1"]]}
-                          atPath:[self historyPathForBundleRoot:bundleRoot]];
+        // Equal to the bundle, so row 8 adopts it (RecordOnly). This is the
+        // observable proof that the malformed manifest was read as missing
+        // rather than aborting the sync: an aborted or failed run records
+        // nothing at all.
+        [self writeString:@"v3" toPath:aPath];
+        // Differing bytes with no usable provenance entry: they must survive
+        // the degradation untouched.
+        NSString *bPath = [userRoot stringByAppendingPathComponent:@"Styles/B.css"];
+        [self writeString:@"v3" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/B.css"]];
+        [self writeString:@"mine" toPath:bPath];
         [self writeString:body toPath:[self provenancePathForUserRoot:userRoot]];
 
         MPBundledResourceSyncReport *report =
@@ -677,6 +677,11 @@
                               @"body=%@ must degrade to row 8", body);
         XCTAssertEqualObjects(report.manifest[@"Styles/A.css"],
                               [self sha256OfString:@"v3"], @"body=%@", body);
+        XCTAssertEqualObjects([self.fm contentsAtPath:bPath],
+                              [@"mine" dataUsingEncoding:NSUTF8StringEncoding],
+                              @"body=%@ must not overwrite unprovable bytes",
+                              body);
+        XCTAssertNil(report.manifest[@"Styles/B.css"], @"body=%@", body);
 
         // A valid manifest must exist on disk afterwards.
         NSDictionary *onDisk = [self readManifestJSONRawAtPath:
@@ -960,7 +965,6 @@
     // satisfiable by a stub that never writes on either run.
     [self writeString:@"n" toPath:[bundleRoot stringByAppendingPathComponent:@"Styles/NORMAL.css"]];
     [self writeProvenanceFiles:@{} atPath:[self provenancePathForUserRoot:userRoot]];
-    [self writeHistoryFiles:@{} atPath:[self historyPathForBundleRoot:bundleRoot]];
 
     MPBundledResourceSyncReport *report1 =
         MPSyncBundledResourcesInPaths(userRoot, bundleRoot);
@@ -1557,15 +1561,6 @@
                              @"the sync has nothing to copy or refresh",
                              dirName);
     }
-
-    // The shipped-history manifest lives at the same root and is what reaches
-    // the existing installed base (contract §5). If it ever stopped being
-    // copied into the bundle it would simply read as empty, every already
-    // installed user's files would classify as modified, and the refresh would
-    // silently never reach them — the same green-but-broken failure.
-    NSString *historyPath = MPHistoryManifestPathInRoot(bundleResourceRoot);
-    XCTAssertTrue([self.fm fileExistsAtPath:historyPath],
-                  @"%@ must ship inside the app bundle", historyPath);
 }
 
 @end

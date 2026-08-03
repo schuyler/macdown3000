@@ -292,7 +292,7 @@ This is where I keep preferences relating to how I render and style the parsed m
 
 You can choose different css files for me to use to render your html. You can even customize or add your own custom css files.
 
-I also keep the built-in css files up to date on my own, so you always have the latest fixes without doing anything. If you've customized one, though, I'll never overwrite it. Want the newest bundled version instead? Delete your copy and relaunch me, and I'll put a fresh one back in its place.
+I also keep the built-in css files up to date on my own, so the fixes I ship reach you without you doing anything. If you've customized one, though, I'll never overwrite it — and if I'm not sure a file is one I put there, I leave it alone rather than guess. Either way, if you want the bundled version back, delete your copy and relaunch me, and I'll put a fresh one in its place.
 
 ### Syntax Highlighting
 
@@ -358,7 +358,7 @@ My editor provides syntax highlighting. You can edit the base font and the color
 
 You can also edit, or even add new themes if you want to! Just click the ***Reveal*** button, and start moving things around. Remember to use the correct file extension (`.styles`), though. I’m picky about that.
 
-I keep the built-in themes up to date the same way — automatically, and without ever touching one you've edited yourself. If you want the latest version of a theme you changed, just delete it and relaunch me, and I'll restore the bundled copy.
+I keep the built-in themes up to date the same way — automatically, and without ever touching one you've edited yourself. If you want the bundled version of a theme back, whatever state yours is in, just delete it and relaunch me, and I'll restore it.
 
 I offer auto-completion and other functions to ease your editing experience. If you don't like it, however, you can turn them off.
 
