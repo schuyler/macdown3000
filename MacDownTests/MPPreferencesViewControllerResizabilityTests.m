@@ -688,11 +688,24 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 
                 if (isEditor)
                 {
+                    // intrinsic vs one-line is the diagnostic that matters for
+                    // why the pane never widens: Auto Layout only pushes a
+                    // container wider through the child's *intrinsic* width at
+                    // its compression-resistance priority. If intrinsic tracks
+                    // the frame rather than the width the title needs, there is
+                    // no unmet demand for fittingSize to pick up.
                     NSLog(@"[#530] %@ w=%.1f | checkbox %.1fx%.1f at (%.1f,%.1f) "
-                          @"needs 1-line %.1f wrapped %.1fx%.1f | %@",
+                          @"intrinsic %.1f needs 1-line %.1f wrapped %.1fx%.1f "
+                          @"compH=%.0f hugH=%.0f | %@",
                           where, paneWidth, NSWidth(box), NSHeight(box),
-                          NSMinX(box), NSMinY(box), oneLine.width,
-                          wrapped.width, wrapped.height, checkbox.title);
+                          NSMinX(box), NSMinY(box),
+                          checkbox.intrinsicContentSize.width, oneLine.width,
+                          wrapped.width, wrapped.height,
+                          [checkbox contentCompressionResistancePriorityForOrientation:
+                              NSLayoutConstraintOrientationHorizontal],
+                          [checkbox contentHuggingPriorityForOrientation:
+                              NSLayoutConstraintOrientationHorizontal],
+                          checkbox.title);
                 }
 
                 // A non-positive frame means the layout collapsed rather than
@@ -736,6 +749,32 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
                             NSStringFromRect(b.frame), a.title, b.title]];
                     }
                 }
+            }
+
+            // Probe: what width does the content actually ask for, versus what
+            // loadView pinned it to? loadView takes MAX(fittingSize.width,
+            // designWidth), so a pane stuck at its English design width in every
+            // locale means fittingSize is not seeing the localized demand at
+            // all. Done last, and restored immediately, so it cannot perturb the
+            // measurements above.
+            NSLayoutConstraint *widthPin = nil;
+            for (NSLayoutConstraint *c in content.constraints)
+            {
+                if (c.firstItem == content && c.secondItem == nil
+                    && c.relation == NSLayoutRelationEqual
+                    && c.firstAttribute == NSLayoutAttributeWidth)
+                    widthPin = c;
+            }
+            if (widthPin)
+            {
+                widthPin.active = NO;
+                [wrapper layoutSubtreeIfNeeded];
+                CGFloat unpinnedFitting = content.fittingSize.width;
+                widthPin.active = YES;
+                [wrapper layoutSubtreeIfNeeded];
+
+                NSLog(@"[#530fit] %@ pinned=%.1f unpinnedFitting=%.1f",
+                      where, widthPin.constant, unpinnedFitting);
             }
         }
     }
