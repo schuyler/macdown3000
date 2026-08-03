@@ -268,6 +268,15 @@ static NSArray<NSNumber *> *MPToolbarDocumentZoomLevels(void)
     }
 }
 
+- (void)documentZoomPopUpClicked:(NSMenuItem *)sender
+{
+    MPDocument *document = self.document;
+    if (document)
+    {
+        [document selectDocumentZoom:sender];
+    }
+}
+
 
 #pragma mark - NSToolbarDelegate
 - (NSArray<NSString *> *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
@@ -463,9 +472,13 @@ static NSArray<NSNumber *> *MPToolbarDocumentZoomLevels(void)
  * Factory method for the document-zoom popup. Unlike the layout dropdown
  * this is a regular (non-pull-down) NSPopUpButton: the currently selected
  * item is shown as the button label so the user sees the active zoom
- * percentage at a glance. Each menu item is wired to
- * -selectDocumentZoom: on the document, with the target zoom level
- * (NSNumber) attached as the item's representedObject.
+ * percentage at a glance. Each menu item carries the target zoom level
+ * (NSNumber) as its representedObject, but since self.document is nil at
+ * construction time (see the ivar block comment above), target/action are
+ * wired to -documentZoomPopUpClicked: on self, which resolves self.document
+ * lazily at click time and forwards to -selectDocumentZoom:, following the
+ * same deferred-dispatch idiom as -standaloneToolbarItemClicked: and
+ * -dropdownMenuItemClicked:.
  */
 - (NSToolbarItem *)toolbarItemDocumentZoomPopUpWithIdentifier:(NSString *)itemIdentifier label:(NSString *)label
 {
@@ -485,8 +498,8 @@ static NSArray<NSNumber *> *MPToolbarDocumentZoomLevels(void)
         [popupButton addItemWithTitle:title];
         NSMenuItem *added = [popupButton lastItem];
         added.representedObject = level;
-        added.target = self.document;
-        added.action = @selector(selectDocumentZoom:);
+        added.target = self;
+        added.action = @selector(documentZoomPopUpClicked:);
     }
 
     toolbarItem.view = popupButton;
