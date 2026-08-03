@@ -65,6 +65,11 @@ gh run view $RUN_ID --repo schuyler/macdown3000 --log
 - Must start with `claude/` and end with session ID
 - Example: `claude/fix-rendering-bug-01Y4ommV4yZoApvin8ddozbw`
 
+### Writing Style for PRs, Comments, and Documentation
+- Describe the factual state of the code: what it does, how it works, what changed, and why.
+- Never narrate history or development process. The past doesn't matter; only the current state and how it differs from what immediately came before it.
+- Be succinct. If a sentence doesn't help someone understand the code, cut it.
+
 ## The Rule of Two
 
 This project's agent workflow is governed by the Rule of Two: no change reaches `main` without a different agent reviewing it. The coordinator may do work itself or dispatch subagents for it — that part is flexible. What is non-negotiable is that a subagent review happens before anything is committed or pushed.
