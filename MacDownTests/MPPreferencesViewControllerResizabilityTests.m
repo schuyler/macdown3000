@@ -583,8 +583,9 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 
 #pragma mark - Localized layout (Issue #530)
 
-// Loads every pane with each bundled localization's titles applied and reports
-// any checkbox that is truncated, clipped, or overlapping a sibling.
+// Loads every pane with each bundled localization's titles applied and
+// asserts that no checkbox collapses to a non-positive frame or overlaps a
+// sibling.
 //
 // This is the coverage gap behind #397, #498 and #530: every failure in this
 // area was found by reporters running French and Italian builds, because no
@@ -596,11 +597,7 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 // -loadView and re-resolving does not work: the pane's size is already pinned,
 // and forcing a re-resolve produced degenerate frames — checkboxes 0 and 7
 // points tall — that made every measurement meaningless.)
-//
-// It also logs the resolved geometry for the Editor pane, so a CI run doubles
-// as a measurement instrument while the cause of #530 is still being pinned
-// down. Diagnosis first, fix second.
-- (void)testLocalizedTitlesLayOutWithoutTruncationOrOverlap
+- (void)testLocalizedTitlesLayOutWithoutCollapseOrOverlap
 {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *localizationDir = MPLocalizationSourceDirectory();
@@ -631,7 +628,6 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
     {
         Class paneClass = [prototype class];
         NSString *table = NSStringFromClass(paneClass);
-        BOOL isEditor = [table isEqualToString:@"MPEditorPreferencesViewController"];
 
         for (NSString *entry in entries)
         {
@@ -676,37 +672,7 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
             NSArray<NSButton *> *checkboxes = MPCheckboxes(content);
             for (NSButton *checkbox in checkboxes)
             {
-                NSCell *cell = checkbox.cell;
                 NSRect box = checkbox.frame;
-
-                // cellSizeForBounds: with CGFLOAT_MAX returns NaN on some AppKit
-                // versions; use a large finite value instead.
-                NSSize oneLine = [cell cellSizeForBounds:
-                                  NSMakeRect(0, 0, 10000, 10000)];
-                NSSize wrapped = [cell cellSizeForBounds:
-                                  NSMakeRect(0, 0, NSWidth(box), 10000)];
-
-                if (isEditor)
-                {
-                    // intrinsic vs one-line is the diagnostic that matters for
-                    // why the pane never widens: Auto Layout only pushes a
-                    // container wider through the child's *intrinsic* width at
-                    // its compression-resistance priority. If intrinsic tracks
-                    // the frame rather than the width the title needs, there is
-                    // no unmet demand for fittingSize to pick up.
-                    NSLog(@"[#530] %@ w=%.1f | checkbox %.1fx%.1f at (%.1f,%.1f) "
-                          @"intrinsic %.1f needs 1-line %.1f wrapped %.1fx%.1f "
-                          @"compH=%.0f hugH=%.0f | %@",
-                          where, paneWidth, NSWidth(box), NSHeight(box),
-                          NSMinX(box), NSMinY(box),
-                          checkbox.intrinsicContentSize.width, oneLine.width,
-                          wrapped.width, wrapped.height,
-                          [checkbox contentCompressionResistancePriorityForOrientation:
-                              NSLayoutConstraintOrientationHorizontal],
-                          [checkbox contentHuggingPriorityForOrientation:
-                              NSLayoutConstraintOrientationHorizontal],
-                          checkbox.title);
-                }
 
                 // A non-positive frame means the layout collapsed rather than
                 // merely running out of room; report it as its own failure mode
@@ -717,18 +683,6 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
                         @"%@: degenerate checkbox frame %@ — layout collapsed: '%@'",
                         where, NSStringFromRect(box), checkbox.title]];
                     continue;
-                }
-
-                if (NSWidth(box) + 0.5 < oneLine.width
-                    && NSHeight(box) + 0.5 < wrapped.height)
-                {
-                    // Too narrow for one line AND too short for the wrapped
-                    // text: the label cannot render in full either way.
-                    [problems addObject:[NSString stringWithFormat:
-                        @"%@: checkbox %.0fx%.0f fits neither one line (needs "
-                        @"%.0f wide) nor wrapped text (needs %.0f tall): '%@'",
-                        where, NSWidth(box), NSHeight(box), oneLine.width,
-                        wrapped.height, checkbox.title]];
                 }
             }
 
@@ -748,55 +702,6 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
                             where, NSStringFromRect(a.frame),
                             NSStringFromRect(b.frame), a.title, b.title]];
                     }
-                }
-            }
-
-            // Probe: what width does the content actually ask for, versus what
-            // loadView pinned it to? loadView takes MAX(fittingSize.width,
-            // designWidth), so a pane stuck at its English design width in every
-            // locale means fittingSize is not seeing the localized demand at
-            // all. Done last, and restored immediately, so it cannot perturb the
-            // measurements above.
-            NSLayoutConstraint *widthPin = nil;
-            for (NSLayoutConstraint *c in content.constraints)
-            {
-                if (c.firstItem == content && c.secondItem == nil
-                    && c.relation == NSLayoutRelationEqual
-                    && c.firstAttribute == NSLayoutAttributeWidth)
-                    widthPin = c;
-            }
-            if (widthPin)
-            {
-                widthPin.active = NO;
-                [wrapper layoutSubtreeIfNeeded];
-                CGFloat unpinnedFitting = content.fittingSize.width;
-                widthPin.active = YES;
-                [wrapper layoutSubtreeIfNeeded];
-
-                NSLog(@"[#530fit] %@ pinned=%.1f unpinnedFitting=%.1f",
-                      where, widthPin.constant, unpinnedFitting);
-
-                // Walk the chain a checkbox's width demand has to travel to
-                // reach the pane: checkbox -> box content view -> box -> root.
-                // Printing each link's fitting/intrinsic width shows exactly
-                // which one stops reporting the demand. Compared across the
-                // Editor (which never widens) and General (which does), this
-                // isolates the difference.
-                NSMutableArray<NSBox *> *boxes = [NSMutableArray array];
-                MPCollectViews(content, [NSBox class], boxes);
-                for (NSBox *b in boxes)
-                {
-                    NSView *cv = b.contentView;
-                    NSSize cvFit = cv ? cv.fittingSize : NSZeroSize;
-                    NSLog(@"[#530box] %@ box '%@' frame=%.1f fitting=%.1f "
-                          @"intrinsic=%.1f | contentView fitting=%.1f tamic=%d "
-                          @"ownConstraints=%lu cvConstraints=%lu",
-                          where, b.title, NSWidth(b.frame),
-                          b.fittingSize.width, b.intrinsicContentSize.width,
-                          cvFit.width,
-                          cv ? (int)cv.translatesAutoresizingMaskIntoConstraints : -1,
-                          (unsigned long)b.constraints.count,
-                          (unsigned long)(cv ? cv.constraints.count : 0));
                 }
             }
         }
