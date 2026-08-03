@@ -890,15 +890,20 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         scriptsOption = MPAssetEmbedded;
         [styles addObjectsFromArray:self.prismStylesheets];
         [scripts addObjectsFromArray:self.prismScripts];
-        if ([self.delegate rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
-        if ([self.delegate rendererHasGraphviz:self])
-        {
-            [scripts addObjectsFromArray:self.graphvizScripts];
-        }
-
+    }
+    // Mermaid and Graphviz render from the language-* class (always
+    // emitted) via their own init scripts; they do not depend on Prism.
+    // Keep them out of the highlighting gate so diagrams export even
+    // when syntax highlighting is off (GitHub issue #541).
+    if ([self.delegate rendererHasMermaid:self])
+    {
+        scriptsOption = MPAssetEmbedded;
+        [scripts addObjectsFromArray:self.mermaidScripts];
+    }
+    if ([self.delegate rendererHasGraphviz:self])
+    {
+        scriptsOption = MPAssetEmbedded;
+        [scripts addObjectsFromArray:self.graphvizScripts];
     }
     if ([self.delegate rendererHasMathJax:self])
     {

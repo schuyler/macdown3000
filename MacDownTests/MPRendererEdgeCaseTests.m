@@ -16,6 +16,15 @@
 #import "hoedown_html_patch.h"
 
 
+// Substring proving Prism was NOT embedded. Confirmed absent from the
+// bundled diagram assets (mermaid.min.js, mermaid.init.js, viz.js,
+// viz.init.js), so a false absence-check pass can't come from a diagram
+// script instead of real Prism content. Only ever asserted as ABSENT: the
+// Prism submodule may not be checked out in this environment, so its real
+// content cannot be reliably asserted present here (GitHub issue #541).
+static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
+
+
 #pragma mark - Test Class
 
 @interface MPRendererEdgeCaseTests : XCTestCase
@@ -45,6 +54,20 @@
     self.dataSource = nil;
     self.delegate = nil;
     [super tearDown];
+}
+
+
+#pragma mark - Helpers
+
+// Counts non-overlapping occurrences of `substring` within `string`. Used
+// to guard against double-inclusion regressions (e.g. a diagram init
+// script being embedded twice).
+- (NSUInteger)mp_occurrencesOfSubstring:(NSString *)substring
+                               inString:(NSString *)string
+{
+    if (string.length == 0 || substring.length == 0)
+        return 0;
+    return [string componentsSeparatedByString:substring].count - 1;
 }
 
 
@@ -565,7 +588,8 @@
     self.dataSource.markdown = @"Inline $x^2$ and display:\n\n$$\\sum_{i=1}^n x_i$$";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle MathJax content");
 }
@@ -577,9 +601,18 @@
     self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle Mermaid diagrams");
+    XCTAssertTrue([html containsString:@"mermaid.initialize("],
+                  @"Mermaid init script should be embedded in exports even "
+                  @"when highlighting is off (issue #541)");
+    XCTAssertFalse([html containsString:kMPTestPrismAbsenceMarker],
+                   @"Prism should not be embedded when highlighting is off");
+    XCTAssertFalse([html containsString:@"function doGraphviz(engine) {"],
+                   @"Graphviz script should not be embedded when only "
+                   @"Mermaid is enabled");
 }
 
 - (void)testRendererWithGraphvizEnabled
@@ -589,9 +622,148 @@
     self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle Graphviz diagrams");
+    XCTAssertTrue([html containsString:@"function doGraphviz(engine) {"],
+                  @"Graphviz init script should be embedded in exports even "
+                  @"when highlighting is off (issue #541)");
+    XCTAssertFalse([html containsString:kMPTestPrismAbsenceMarker],
+                   @"Prism should not be embedded when highlighting is off");
+    XCTAssertFalse([html containsString:@"mermaid.initialize("],
+                   @"Mermaid script should not be embedded when only "
+                   @"Graphviz is enabled");
+}
+
+- (void)testRendererExportDiagramsWithHighlightingOffBothPresent
+{
+    self.delegate.mermaid = YES;
+    self.delegate.graphviz = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```\n\n"
+                               @"```dot\ndigraph G { A -> B }\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"mermaid.initialize("],
+                  @"Mermaid init script should be embedded when both "
+                  @"diagram types are enabled and highlighting is off");
+    XCTAssertTrue([html containsString:@"function doGraphviz(engine) {"],
+                  @"Graphviz init script should be embedded when both "
+                  @"diagram types are enabled and highlighting is off");
+}
+
+- (void)testRendererExportMermaidWithHighlightingOnIncludedOnce
+{
+    self.delegate.mermaid = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+
+    XCTAssertEqual(
+        [self mp_occurrencesOfSubstring:@"mermaid.initialize("
+                               inString:html],
+        (NSUInteger)1,
+        @"Mermaid init script should be embedded exactly once when "
+        @"highlighting is also on, guarding against double inclusion");
+}
+
+- (void)testRendererExportMermaidAndGraphvizWithHighlightingOnIncludedOnce
+{
+    self.delegate.mermaid = YES;
+    self.delegate.graphviz = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```\n\n"
+                               @"```dot\ndigraph G { A -> B }\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:YES];
+
+    XCTAssertEqual(
+        [self mp_occurrencesOfSubstring:@"mermaid.initialize("
+                               inString:html],
+        (NSUInteger)1,
+        @"Mermaid init script should appear exactly once");
+    XCTAssertEqual(
+        [self mp_occurrencesOfSubstring:@"function doGraphviz(engine) {"
+                               inString:html],
+        (NSUInteger)1,
+        @"Graphviz init script should appear exactly once");
+}
+
+- (void)testRendererExportWithDiagramsDisabledOmitsBothScripts
+{
+    self.delegate.mermaid = NO;
+    self.delegate.graphviz = NO;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```\n\n"
+                               @"```dot\ndigraph G { A -> B }\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertFalse([html containsString:@"mermaid.initialize("],
+                   @"Mermaid script should not be embedded when Mermaid is "
+                   @"disabled");
+    XCTAssertFalse([html containsString:@"function doGraphviz(engine) {"],
+                   @"Graphviz script should not be embedded when Graphviz "
+                   @"is disabled");
+}
+
+- (void)testRendererExportMermaidPresentWithoutStylesAndHighlightingOff
+{
+    self.delegate.mermaid = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"mermaid.initialize("],
+                  @"Mermaid init script should be embedded independent of "
+                  @"the withStyles option");
+}
+
+- (void)testRendererExportGraphvizPresentWithoutStylesAndHighlightingOff
+{
+    self.delegate.graphviz = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```dot\ndigraph G { A -> B }\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"function doGraphviz(engine) {"],
+                  @"Graphviz init script should be embedded independent of "
+                  @"the withStyles option");
+}
+
+- (void)testRendererExportMermaidWithMathJaxAndHighlightingOff
+{
+    self.delegate.mermaid = YES;
+    self.delegate.mathJax = YES;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"Inline $x^2$\n\n"
+                               @"```mermaid\ngraph TD;\n    A-->B;\n```";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"mermaid.initialize("],
+                  @"Mermaid init script should be embedded even when "
+                  @"MathJax is also enabled and highlighting is off");
+    XCTAssertTrue([html containsString:@"MathJax.Hub.Config("],
+                  @"MathJax init script should still be embedded alongside "
+                  @"Mermaid");
 }
 
 
@@ -603,7 +775,8 @@
     self.dataSource.markdown = @"# First\n\n## Second\n\n### Third\n\nContent here.";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
 
     XCTAssertNotNil(html, @"Should render with TOC");
 }
@@ -614,7 +787,8 @@
     self.dataSource.markdown = @"Just a paragraph with no headings.";
 
     [self.renderer parseMarkdown:self.dataSource.markdown];
-    NSString *html = [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:YES highlighting:NO];
 
     XCTAssertNotNil(html, @"Should handle TOC with no headings");
 }
