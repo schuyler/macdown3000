@@ -584,12 +584,14 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 #pragma mark - Localized layout (Issue #530)
 
 // Loads every pane with each bundled localization's titles applied and
-// asserts that no checkbox collapses to a non-positive frame or overlaps a
-// sibling.
+// asserts that no wrapping checkbox clips its localized title, collapses to a
+// non-positive frame, or overlaps a sibling.
 //
 // This is the coverage gap behind #397, #498 and #530: every failure in this
 // area was found by reporters running French and Italian builds, because no
-// test had ever exercised pane geometry under a non-English locale.
+// test had ever exercised pane geometry under a non-English locale. The
+// truncation check below is the direct guard for #530 — a French Editor label
+// cut off because its checkbox was not allocated enough height to wrap.
 //
 // Titles are substituted through -contentDidLoadHook, i.e. before -loadView
 // resolves and pins the pane's size, so the geometry measured here is what the
@@ -597,7 +599,7 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 // -loadView and re-resolving does not work: the pane's size is already pinned,
 // and forcing a re-resolve produced degenerate frames — checkboxes 0 and 7
 // points tall — that made every measurement meaningless.)
-- (void)testLocalizedTitlesLayOutWithoutCollapseOrOverlap
+- (void)testLocalizedTitlesLayOutWithoutTruncationCollapseOrOverlap
 {
     NSFileManager *fm = [NSFileManager defaultManager];
     NSString *localizationDir = MPLocalizationSourceDirectory();
@@ -683,6 +685,31 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
                         @"%@: degenerate checkbox frame %@ — layout collapsed: '%@'",
                         where, NSStringFromRect(box), checkbox.title]];
                     continue;
+                }
+
+                // The reported #530 symptom: the localized label is cut off. A
+                // wrapping checkbox never truncates horizontally — it wraps — so
+                // the only way it clips is vertically, when its allocated height
+                // is shorter than the height its title needs at the width it was
+                // given. Measure the wrapped height at the checkbox's *actual*
+                // frame width (a finite bound; CGFLOAT_MAX yields NaN on some
+                // AppKit versions) and require the frame to be at least that
+                // tall. This is what the pane's height pass is supposed to
+                // guarantee via +addHeightConstraintsForWrappingCheckboxesInView:
+                // it fails here if that allocation is ever wrong for a locale.
+                NSCell *cell = checkbox.cell;
+                if (cell.lineBreakMode == NSLineBreakByWordWrapping)
+                {
+                    NSSize needed = [cell cellSizeForBounds:
+                                     NSMakeRect(0, 0, NSWidth(box), 10000)];
+                    if (NSHeight(box) + 0.5 < needed.height)
+                    {
+                        [problems addObject:[NSString stringWithFormat:
+                            @"%@: checkbox %.0fx%.0f clips its wrapped title "
+                            @"(needs %.0f tall at that width): '%@'",
+                            where, NSWidth(box), NSHeight(box), needed.height,
+                            checkbox.title]];
+                    }
                 }
             }
 
