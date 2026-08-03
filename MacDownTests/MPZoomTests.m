@@ -71,24 +71,24 @@
 }
 
 /**
- * After calling zoomIn:nil the multiplier should increase by 0.1 (to 1.1).
+ * zoomIn:/zoomOut: route through -stepDocumentZoomDirection: (MPDocument.m,
+ * defined ~line 4409), which steps across the fixed, non-uniform preset
+ * list returned by MPDocumentZoomLevels() (MPDocument.m ~line 133-141):
+ *   0.5, 0.75, 0.9, 1.0, 1.1, 1.25, 1.5, 2.0, 3.0
+ * From an exact preset it moves one entry in the requested direction; from
+ * an off-preset value it snaps to the nearest preset on the requested side
+ * (see the corrected "SnapsFromOffGrid" tests below, and the equivalent
+ * coverage of the private helper itself in MPPreviewZoomTests.m).
+ * There is no flat +/-0.1 step for arbitrary starting values: e.g. zoomIn:
+ * from 1.25 lands on 1.5, not 1.35, and zoomIn: from 0.75 lands on 0.9, not
+ * 0.85. The two tests that used to live here (testZoomInIncrementsMultiplier /
+ * testZoomOutDecrementsMultiplier) asserted 1.0 -> 1.1 and 1.0 -> 0.9, which
+ * happen to be numerically correct at exactly 1.0 (a preset immediately
+ * flanked by 0.9 and 1.1) but whose docstrings claimed a general flat-0.1
+ * stepping rule that the shipped preset-snap model does not follow. They
+ * were removed in favor of the off-grid snap tests below, which exercise
+ * the actual preset-list/snap behavior rather than a coincidental data point.
  */
-- (void)testZoomInIncrementsMultiplier
-{
-    [self.document zoomIn:nil];
-    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 1.1, 0.001,
-                               @"zoomIn: should increment multiplier by 0.1");
-}
-
-/**
- * After calling zoomOut:nil the multiplier should decrease by 0.1 (to 0.9).
- */
-- (void)testZoomOutDecrementsMultiplier
-{
-    [self.document zoomOut:nil];
-    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 0.9, 0.001,
-                               @"zoomOut: should decrement multiplier by 0.1");
-}
 
 /**
  * Setting multiplier to 2.0 then calling resetZoom:nil should restore 1.0.
@@ -140,6 +140,45 @@
                                 @"Rapid zoom sequence must not go below minimum (0.5)");
     XCTAssertLessThanOrEqual(m, 3.0 + 0.001,
                              @"Rapid zoom sequence must not exceed maximum (3.0)");
+}
+
+/**
+ * zoomIn: from an off-preset multiplier must snap UP to the nearest preset
+ * on the requested side, using the same model exercised against the
+ * private helper directly in MPPreviewZoomTests.m
+ * (-testSnapFromOffPresetUpRoundsUp). Per -stepDocumentZoomDirection:
+ * (MPDocument.m ~line 4409-4454): when the current value does not match a
+ * preset within epsilon, zooming in snaps to the smallest preset greater
+ * than the current value. 1.05 sits equidistant between the 1.0 and 1.1
+ * presets (MPDocumentZoomLevels(), MPDocument.m ~line 138); the nearest-index
+ * scan (MPDocument.m ~line 4416-4426) keeps the first minimum found, i.e.
+ * 1.0, and since 1.0 < 1.05 the "snap up" branch (~line 4434-4440)
+ * advances one further to 1.1.
+ */
+- (void)testZoomInSnapsUpFromOffGridMultiplier
+{
+    self.document.zoomMultiplier = 1.05;
+    [self.document zoomIn:nil];
+    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 1.1, 0.001,
+                               @"zoomIn: from an off-grid 1.05 should snap up "
+                               @"to the next preset above (1.1)");
+}
+
+/**
+ * zoomOut: from an off-preset multiplier must snap DOWN to the nearest
+ * preset on the requested side (MPDocument.m ~line 4441-4447), mirroring
+ * -testSnapFromOffPresetDownRoundsDown in MPPreviewZoomTests.m. From 1.05,
+ * the nearest-index scan again lands on the 1.0 preset; since 1.0 is not
+ * greater than 1.05 the "snap down" branch does not decrement further, so
+ * the result is 1.0.
+ */
+- (void)testZoomOutSnapsDownFromOffGridMultiplier
+{
+    self.document.zoomMultiplier = 1.05;
+    [self.document zoomOut:nil];
+    XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 1.0, 0.001,
+                               @"zoomOut: from an off-grid 1.05 should snap down "
+                               @"to the next preset below (1.0)");
 }
 
 
@@ -291,8 +330,20 @@
  * After zooming, a preference change (setupEditor:), and another zoomIn:,
  * the multiplier should advance to the next persisted preset.
  * This exercises the multiplier state across a full zoom -> preference -> zoom cycle.
+ *
+ * CORRECTED replacement for the removed testZoomThenPreferenceChangeThenZoomAgain:
+ * the original test's numeric expectation (1.5 -> 2.0) was actually already
+ * correct, but its docstring attributed that to a flat-model "advance by
+ * 0.1 per step" story, which is not what the code does. Per
+ * MPDocumentZoomLevels() (MPDocument.m ~line 133-141) the preset list is
+ * ..., 1.25, 1.5, 2.0, 3.0 - so 1.5 is itself an exact preset, and
+ * -stepDocumentZoomDirection: (MPDocument.m ~line 4409, exact-match branch
+ * ~line 4430-4433) simply advances to the very next entry in that list,
+ * which is 2.0, not "1.5 + 0.1". setupEditor: (MPDocument.m ~line 2887)
+ * does not read or write documentZoomLevel, so it cannot perturb the
+ * multiplier between the two zoom calls; this test still confirms that.
  */
-- (void)testZoomThenPreferenceChangeThenZoomAgain
+- (void)testZoomThenPreferenceChangeThenZoomAgainSnapsToNextPreset
 {
     self.document.zoomMultiplier = 1.5;
     XCTAssertNoThrow([self.document setupEditor:@"editorBaseFontInfo"],
@@ -302,7 +353,8 @@
 
     XCTAssertEqualWithAccuracy(self.document.zoomMultiplier, 2.0, 0.001,
                                @"After zoom(1.5) -> setupEditor -> zoomIn, "
-                               @"multiplier should advance to the 2.0 preset");
+                               @"multiplier should advance to the next preset "
+                               @"in the list (2.0), per the preset-snap model");
 }
 
 
