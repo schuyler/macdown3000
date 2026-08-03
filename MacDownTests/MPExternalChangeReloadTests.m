@@ -119,6 +119,23 @@
         runUntilDate:[NSDate dateWithTimeIntervalSinceNow:interval]];
 }
 
+// A fixed-duration spin assumes the coalescing window reliably elapses within
+// some fixed margin over externalChangeCoalesceInterval. Under a loaded or
+// coverage-instrumented CI runner that margin isn't reliable, and the spin can
+// expire before dispatch_after's block has actually run — this polls in short
+// increments instead, returning as soon as the count is reached (or the
+// generous timeout is, whichever comes first), so the common case is still
+// fast and a slow one doesn't produce a false failure.
+- (void)waitForProcessCount:(NSUInteger)count
+                  onDocument:(MPCoalescingSpyDocument *)doc
+                     timeout:(NSTimeInterval)timeout
+{
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:timeout];
+    while (doc.processCount < count && deadline.timeIntervalSinceNow > 0)
+        [[NSRunLoop currentRunLoop]
+            runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+}
+
 - (MPCoalescingSpyDocument *)coalescingDocument
 {
     MPCoalescingSpyDocument *doc = [[MPCoalescingSpyDocument alloc] init];
@@ -199,7 +216,7 @@
     for (NSUInteger i = 0; i < 5; i++)
         [doc handleExternalFileChange];
 
-    [self spinRunLoopForInterval:0.2];
+    [self waitForProcessCount:1 onDocument:doc timeout:5.0];
 
     XCTAssertEqual(doc.processCount, 1u,
                    @"Five notifications inside the coalescing window must "
@@ -213,9 +230,9 @@
     MPCoalescingSpyDocument *doc = [self coalescingDocument];
 
     [doc handleExternalFileChange];
-    [self spinRunLoopForInterval:0.2];
+    [self waitForProcessCount:1 onDocument:doc timeout:5.0];
     [doc handleExternalFileChange];
-    [self spinRunLoopForInterval:0.2];
+    [self waitForProcessCount:2 onDocument:doc timeout:5.0];
 
     XCTAssertEqual(doc.processCount, 2u,
                    @"A notification arriving after the window closed is a "
@@ -249,7 +266,7 @@
 
     doc.externalChangePromptVisible = NO;
     [doc handleExternalFileChange];
-    [self spinRunLoopForInterval:0.2];
+    [self waitForProcessCount:1 onDocument:doc timeout:5.0];
 
     XCTAssertEqual(doc.processCount, 1u,
                    @"Dropping notifications must stop as soon as the dialog "
