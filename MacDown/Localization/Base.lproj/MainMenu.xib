@@ -475,8 +475,7 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Strikethrough" id="9CN-Qi-Fln">
-                                <modifierMask key="keyEquivalentModifierMask"/>
+                            <menuItem title="Strikethrough" keyEquivalent="X" id="9CN-Qi-Fln">
                                 <connections>
                                     <action selector="toggleStrikethrough:" target="-1" id="rUc-gb-x5q"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionStrikethough" id="kQ0-Wi-BPs">
@@ -542,8 +541,8 @@
                                                 <action selector="convertToH6:" target="-1" id="u4y-F9-JR3"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Paragraph" id="xN5-GU-ASF">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                        <menuItem title="Paragraph" keyEquivalent="0" id="xN5-GU-ASF">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="convertToParagraph:" target="-1" id="4BU-GT-Qyv"/>
                                             </connections>
