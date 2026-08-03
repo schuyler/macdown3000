@@ -775,6 +775,29 @@ static NSUInteger MPApplyLocalizedTitles(NSView *view,
 
                 NSLog(@"[#530fit] %@ pinned=%.1f unpinnedFitting=%.1f",
                       where, widthPin.constant, unpinnedFitting);
+
+                // Walk the chain a checkbox's width demand has to travel to
+                // reach the pane: checkbox -> box content view -> box -> root.
+                // Printing each link's fitting/intrinsic width shows exactly
+                // which one stops reporting the demand. Compared across the
+                // Editor (which never widens) and General (which does), this
+                // isolates the difference.
+                NSMutableArray<NSBox *> *boxes = [NSMutableArray array];
+                MPCollectViews(content, [NSBox class], boxes);
+                for (NSBox *b in boxes)
+                {
+                    NSView *cv = b.contentView;
+                    NSSize cvFit = cv ? cv.fittingSize : NSZeroSize;
+                    NSLog(@"[#530box] %@ box '%@' frame=%.1f fitting=%.1f "
+                          @"intrinsic=%.1f | contentView fitting=%.1f tamic=%d "
+                          @"ownConstraints=%lu cvConstraints=%lu",
+                          where, b.title, NSWidth(b.frame),
+                          b.fittingSize.width, b.intrinsicContentSize.width,
+                          cvFit.width,
+                          cv ? (int)cv.translatesAutoresizingMaskIntoConstraints : -1,
+                          (unsigned long)b.constraints.count,
+                          (unsigned long)(cv ? cv.constraints.count : 0));
+                }
             }
         }
     }
