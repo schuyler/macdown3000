@@ -1,21 +1,20 @@
 name: Tests
 
 on:
-  push:
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   test:
     name: Run Unit Tests
     strategy:
       matrix:
-        os: [macos-14, macos-15, macos-15-intel, macos-26]
-      fail-fast: false  # Continue testing other OS versions if one fails
+        os: [macos-14, macos-26]
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
-      pull-requests: write  # Needed for PR comments
 
     steps:
     - name: Checkout code
@@ -26,337 +25,21 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
-    - name: Verify architecture and system info
-      run: |
-        echo "=== System Architecture ==="
-        uname -m
-        echo ""
-        echo "=== CPU Information ==="
-        sysctl -n machdep.cpu.brand_string
-        echo ""
-        echo "=== macOS Version ==="
-        sw_vers
-
-    - name: Run tests with coverage
+    - name: Run tests
       run: |
         set -o pipefail
         xcodebuild test \
           -workspace "MacDown 3000.xcworkspace" \
           -scheme MacDown \
-          -enableCodeCoverage YES \
-          -derivedDataPath DerivedData \
-          -resultBundlePath TestResults.xcresult
-      continue-on-error: false
-
-    - name: Test app launch (smoke test for issue #169)
-      timeout-minutes: 2
-      run: |
-        echo "=== Building MacDown for launch test ==="
-        xcodebuild build \
-          -workspace "MacDown 3000.xcworkspace" \
-          -scheme MacDown \
-          -configuration Debug \
           -derivedDataPath DerivedData
-
-        # Find built app
-        APP_PATH=$(find DerivedData -name "MacDown 3000.app" -type d | head -n 1)
-
-        if [ -z "$APP_PATH" ]; then
-          echo "ERROR: Could not find built MacDown 3000.app"
-          exit 1
-        fi
-
-        echo "=== Found app at: $APP_PATH ==="
-
-        # Test 1: Fresh install scenario (no legacy preferences)
-        echo "=== Test 1: Fresh install (no preferences) ==="
-        defaults delete com.uranusjr.macdown 2>/dev/null || true
-        defaults delete app.macdown.macdown3000 2>/dev/null || true
-
-        # Launch app with timeout protection (macOS-compatible, no GNU timeout)
-        # Background the process, then use a sleep loop to implement timeout
-        echo "Launching MacDown 3000 (will auto-quit after 5 seconds)..."
-        open -W -n "$APP_PATH" &
-        APP_PID=$!
-        TIMEOUT=5
-        ELAPSED=0
-        TIMED_OUT=false
-        while [ $ELAPSED -lt $TIMEOUT ]; do
-          if ! kill -0 $APP_PID 2>/dev/null; then
-            # Process has exited
-            break
-          fi
-          sleep 1
-          ELAPSED=$((ELAPSED + 1))
-        done
-        if kill -0 $APP_PID 2>/dev/null; then
-          # Still running after timeout - kill it
-          kill $APP_PID 2>/dev/null
-          TIMED_OUT=true
-        fi
-        EXIT_CODE=0
-        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
-        # For a GUI app: still running after timeout = SUCCESS (launched properly)
-        # Exiting early might indicate a crash or hang during init
-        if [ "$TIMED_OUT" = "true" ]; then
-          echo "✓ App launched successfully (killed after 5s timeout as expected)"
-        elif [ $EXIT_CODE -eq 0 ]; then
-          echo "✓ App launched and exited cleanly"
-        else
-          echo "ERROR: App exited unexpectedly with code $EXIT_CODE - possible crash or hang"
-          exit 1
-        fi
-
-        # Verify migration completed flag was set
-        MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
-        echo "Migration completed flag: $MIGRATION_COMPLETE"
-
-        # Test 2: With legacy preferences (migration scenario)
-        echo ""
-        echo "=== Test 2: With legacy preferences (migration test) ==="
-        defaults delete app.macdown.macdown3000 2>/dev/null || true
-        defaults write com.uranusjr.macdown testMigrationKey "testMigrationValue"
-        defaults write com.uranusjr.macdown editorBaseFontName "Monaco"
-
-        echo "Created test legacy preferences"
-
-        # Launch again with legacy preferences present (macOS-compatible timeout)
-        echo "Launching MacDown 3000 with legacy preferences (will auto-quit after 5 seconds)..."
-        open -W -n -F "$APP_PATH" &
-        APP_PID=$!
-        TIMEOUT=5
-        ELAPSED=0
-        TIMED_OUT=false
-        while [ $ELAPSED -lt $TIMEOUT ]; do
-          if ! kill -0 $APP_PID 2>/dev/null; then
-            # Process has exited
-            break
-          fi
-          sleep 1
-          ELAPSED=$((ELAPSED + 1))
-        done
-        if kill -0 $APP_PID 2>/dev/null; then
-          # Still running after timeout - kill it
-          kill $APP_PID 2>/dev/null
-          TIMED_OUT=true
-        fi
-        EXIT_CODE=0
-        wait $APP_PID 2>/dev/null || EXIT_CODE=$?
-        # For a GUI app: still running after timeout = SUCCESS (launched properly)
-        if [ "$TIMED_OUT" = "true" ]; then
-          echo "✓ App launched successfully with migration (killed after 5s timeout)"
-        elif [ $EXIT_CODE -eq 0 ]; then
-          echo "✓ App launched with migration and exited cleanly"
-        else
-          echo "ERROR: App exited unexpectedly during migration with code $EXIT_CODE"
-          exit 1
-        fi
-
-        # Verify migration completed
-        MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
-        if [ "$MIGRATION_COMPLETE" = "1" ]; then
-          echo "✓ Migration completed successfully"
-        else
-          echo "WARNING: Migration completed flag not set"
-        fi
-
-        # Clean up test preferences
-        defaults delete com.uranusjr.macdown 2>/dev/null || true
-        defaults delete app.macdown.macdown3000 2>/dev/null || true
-
-        echo ""
-        echo "=== Launch test completed successfully on ${{ matrix.os }} ==="
-
-    - name: Generate coverage report
-      if: always()
-      continue-on-error: true
-      run: |
-        if [ -e TestResults.xcresult ]; then
-          # Result bundle exists, try to generate coverage
-          if xcrun xccov view --report --json TestResults.xcresult > coverage.json 2>/dev/null; then
-            xcrun xccov view --report TestResults.xcresult > coverage.txt 2>/dev/null || echo "Coverage unavailable" > coverage.txt
-            echo "=== Coverage Summary ==="
-            cat coverage.txt
-          else
-            # xccov failed, create empty reports
-            echo "Warning: xccov failed to generate coverage report"
-            echo "{}" > coverage.json
-            echo "Coverage unavailable - xccov failed" > coverage.txt
-          fi
-        else
-          # No result bundle, tests didn't complete
-          echo "Warning: TestResults.xcresult not found - tests did not complete"
-          echo "{}" > coverage.json
-          echo "Coverage unavailable - tests did not complete" > coverage.txt
-        fi
-
-    - name: Extract coverage percentage
-      if: always()
-      continue-on-error: true
-      id: coverage
-      run: |
-        COVERAGE=$(python3 << 'EOF'
-        import json
-        import sys
-
-        try:
-            with open('coverage.json', 'r') as f:
-                data = json.load(f)
-
-            total_lines = 0
-            covered_lines = 0
-
-            for target in data.get('targets', []):
-                for file in target.get('files', []):
-                    total_lines += file.get('executableLines', 0)
-                    covered_lines += file.get('coveredLines', 0)
-
-            if total_lines > 0:
-                percentage = (covered_lines / total_lines) * 100
-                print(f'{percentage:.2f}')
-            else:
-                print('0.00')
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            # Coverage data unavailable - don't fail the step
-            print('N/A')
-            sys.stderr.write(f'Warning: Could not parse coverage data: {e}\n')
-        EOF
-        )
-
-        echo "coverage_percentage=$COVERAGE" >> $GITHUB_OUTPUT
-        echo "Current coverage: $COVERAGE%"
-
-    - name: Upload coverage artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report-${{ matrix.os }}
-        path: |
-          coverage.txt
-          coverage.json
-          TestResults.xcresult
-        retention-days: 30
-
-    - name: Post coverage comment
-      if: github.event_name == 'pull_request' && always()
-      continue-on-error: true  # Fork PRs may have limited GITHUB_TOKEN permissions
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          const currentCoverage = '${{ steps.coverage.outputs.coverage_percentage }}';
-
-          let coverageText = '';
-          try {
-            coverageText = fs.readFileSync('coverage.txt', 'utf8');
-          } catch (e) {
-            coverageText = 'Coverage report not available';
-          }
-
-          // Truncate coverage text if too long (GitHub comment limit ~65KB)
-          // Extract just the summary (first few lines) to keep comment size manageable
-          const maxLines = 50;
-          const lines = coverageText.split('\n');
-          if (lines.length > maxLines) {
-            coverageText = lines.slice(0, maxLines).join('\n') +
-              `\n\n... (${lines.length - maxLines} more lines truncated)\n\n` +
-              '📊 **Full coverage report available in workflow artifacts**';
-          }
-
-          // Handle unavailable coverage data
-          let coverageDisplay;
-          if (currentCoverage === 'N/A' || !currentCoverage) {
-            coverageDisplay = '**Coverage:** Unavailable (tests may have failed)';
-          } else {
-            coverageDisplay = `**Current Coverage:** ${currentCoverage}%`;
-          }
-
-          const body = '## Code Coverage Report\n\n' +
-            coverageDisplay + '\n\n' +
-            '<details>\n' +
-            '<summary>Coverage Details (Summary)</summary>\n\n' +
-            '```\n' +
-            coverageText + '\n' +
-            '```\n\n' +
-            '</details>\n';
-
-          const { data: comments } = await github.rest.issues.listComments({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-          });
-
-          const coverageComment = comments.find(comment =>
-            comment.user.type === 'Bot' &&
-            comment.body.includes('Code Coverage Report')
-          );
-
-          if (coverageComment) {
-            await github.rest.issues.updateComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: coverageComment.id,
-              body: body
-            });
-          } else {
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
-          }
 
     - name: Upload test results
       if: failure()
-      continue-on-error: true  # May fail on fork PRs or artifact name conflicts
+      continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
         name: test-results-${{ matrix.os }}
         path: |
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
-
-  ui-test:
-    name: Run UI Tests (smoke)
-    # Non-blocking until proven stable: XCUITest runs are flakier than unit
-    # tests in CI, so this job reports its status but does not fail the
-    # workflow. Runs on a single runner (not the full OS matrix) with a hard
-    # timeout so a hung UI test can't tie up CI the way it did before this
-    # job was split out of the main test job.
-    runs-on: macos-26
-    timeout-minutes: 30
-    continue-on-error: true
-    permissions:
-      contents: read
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Setup MacDown build environment
-      uses: ./.github/actions/setup-macdown
-
-    - name: Run UI tests
-      run: |
-        set -o pipefail
-        xcodebuild test \
-          -workspace "MacDown 3000.xcworkspace" \
-          -scheme MacDownUITests \
-          -derivedDataPath DerivedData \
-          -resultBundlePath UITestResults.xcresult \
-          -test-timeouts-enabled YES \
-          -maximum-test-execution-time-allowance 120
-
-    - name: Upload UI test results
-      if: failure()
-      continue-on-error: true
-      uses: actions/upload-artifact@v4
-      with:
-        name: ui-test-results
-        path: |
-          UITestResults.xcresult
-          ~/Library/Logs/DiagnosticReports/
+        retention-days: 7

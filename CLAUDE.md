@@ -67,18 +67,15 @@ gh run view $RUN_ID --repo schuyler/macdown3000 --log
 
 ## The Rule of Two
 
-This project's agent workflow is governed by the Rule of Two: no single agent both does work and blesses it. Every artifact has two different hands on it — one to produce it, one to review it.
+This project's agent workflow is governed by the Rule of Two: no change reaches `main` without a different agent reviewing it. The coordinator may do work itself or dispatch subagents for it — that part is flexible. What is non-negotiable is that a subagent review happens before anything is committed or pushed.
 
-- **Core principle.** Every piece of work an agent performs — no matter how small or mechanical it looks — must be reviewed and approved by a *different* agent before it proceeds. Work is *made* by a subagent and *reviewed* by a subagent, and the reviewer is never the same agent that produced the work.
-- **The coordinator only orchestrates.** The top-level coordinating agent does not do the work itself and does not substitute its own judgment for a review. Its job is to dispatch subagents, route artifacts between them, and conserve its own context window so the workflow can run to completion. Subagents are the ones who read the code and docs and make the calls; the coordinator just orchestrates.
-- **It applies to everything.** There are no exceptions and no "too trivial to review" carve-outs. The rule covers requirements interpretation, design, tests, implementation, documentation, CI fixes, merge/rebase conflict resolutions, and fixes made during self-review alike.
-- **Two distinct review gates.** Design and implementation are reviewed separately, at two separate gates:
-  - A **design-review gate**, before implementation begins.
-  - An **implementation-review gate**, after implementation is done.
-  
-  Each gate passes only when its review turns up no blocker/critical or important issues.
-- **Model tiers.** Implementation subagents may run on Sonnet. Design review and implementation review must be performed by Opus 4.8.
-- **Mandatory re-review loop.** If a review returns any critical or important feedback, the work must be corrected and then sent back for another review. The coordinator may not unilaterally decide a fix is good enough and skip the re-review — re-review is mandatory even when the fix looks simple or purely mechanical, because a later review round can surface problems that were obscured by the issues found in an earlier round. Loop fix → re-review until a round comes back with no critical or important findings. Unreviewed work never proceeds.
+- **Core principle.** No change — no matter how small, mechanical, or explicitly specified by the user — may be committed or pushed until a subagent that did not make the change has reviewed and approved the current state of the branch.
+- **Two distinct review gates.** Design and implementation are reviewed separately, at two separate gates: a **design-review gate**, before implementation begins, and an **implementation-review gate**, after implementation is done. Each gate passes only when its review turns up no blocker/critical or important issues.
+- **Reviews must be performed by Opus subagents.**
+- **Full-branch re-review, always.** Any change — including a fix made to address a review finding — invalidates prior approval. The next review must cover the entire diff from `main`, not just the newest edits. Reviewing only the latest batch of changes lets small "obviously fine" fixes accumulate unreviewed; this is not allowed.
+- **Mandatory re-review loop.** Critical or important feedback requires a fix followed by a fresh full-branch review. No unilaterally deciding a fix is good enough to skip re-review, no matter how simple or mechanical it looks.
+- **Watch for the rationalization.** The rule most often breaks when an agent decides a change is "trivial" or "just what the user asked for" and skips review on that basis. That is exactly when review is most likely to be skipped, and most needed.
+- **Operational check.** If you're about to commit or push without a review subagent having approved the current state of the branch, stop. That's the signal you skipped a step.
 
 ## Network Retry Policy
 
