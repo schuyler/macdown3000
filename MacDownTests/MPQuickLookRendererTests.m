@@ -755,6 +755,35 @@
                   @"Quick Look punctuation-only heading must fall back to the 'section' id. Got: %@", html);
 }
 
+// Duplicate-slug dedup mirror (issue #503). Quick Look calls
+// mdmark_render_html directly and shares put_heading_slug with the preview
+// path, so the same github-slugger dedup sequence must hold. This is
+// id-dedup ONLY -- Quick Look has no TOC path (no renderTOC, no [TOC]
+// splice, no href concept), so there is nothing to assert parity against;
+// see MPMarkdownRenderingTests for the full id/TOC parity coverage.
+
+- (void)testQuickLookDuplicateHeadingsDedupIdSequence
+{
+    NSString *markdown = @"## Hello\n\n## Hello\n\n## Hello\n\n## World\n\n## Hello\n";
+    NSString *html = [self.renderer renderMarkdown:markdown];
+
+    NSArray<NSString *> *expectedIds = @[@"hello", @"hello-1", @"hello-2", @"world", @"hello-3"];
+    NSUInteger searchLocation = 0;
+    for (NSString *expectedId in expectedIds) {
+        NSString *needle = [NSString stringWithFormat:@"id=\"%@\"", expectedId];
+        NSRange range = [html rangeOfString:needle
+                                     options:0
+                                       range:NSMakeRange(searchLocation, html.length - searchLocation)];
+        XCTAssertNotEqual(range.location, NSNotFound,
+                          @"Expected to find %@ starting at or after location %lu. Got: %@",
+                          needle, (unsigned long)searchLocation, html);
+        if (range.location == NSNotFound) {
+            break;
+        }
+        searchLocation = range.location + range.length;
+    }
+}
+
 // Hoedown treated a bare setext underline ('-') as a heading with empty
 // content, which crashed its slug buffer (#479). cmark-gfm parses a lone
 // '-' as an empty bullet list item instead, so no empty heading exists;
