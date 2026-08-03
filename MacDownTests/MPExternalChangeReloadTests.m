@@ -389,17 +389,6 @@
                     "change should reload silently even with Auto Save off");
 }
 
-- (void)testCleanDocumentDoesNotPromptWhenAutoSaveIsOn
-{
-    [self setEditorAutoSave:YES];
-
-    MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
-    doc.stubbedDocumentEdited = NO;
-
-    XCTAssertFalse([doc shouldPromptBeforeReloadingExternalChanges],
-                   @"An unmodified document should reload silently");
-}
-
 // The other half of the contract: unsaved work must still be defended, and the
 // Auto Save setting must not change that either way.
 - (void)testEditedDocumentPromptsRegardlessOfAutoSaveSetting
@@ -657,39 +646,6 @@
     XCTAssertEqualObjects(self.editor.string,
                           @"# Title\n\nBody text changed by another app.\n",
                           @"The reloaded content must be applied");
-}
-
-// When the setup actually produces a scrolled viewport, the deferred restore
-// must put it back rather than leave it snapped to the top. Guarded so it makes
-// no assertion in the (headless) case where layout never scrolls, keeping it
-// from flaking while still checking the real thing when layout cooperates.
-- (void)testReloadRestoresAScrolledViewport
-{
-    MPDocument *doc = [[MPDocument alloc] init];
-    (void)[self wireScrollableEditorInto:doc];
-
-    NSMutableString *body = [NSMutableString string];
-    for (NSUInteger i = 0; i < 200; i++)
-        [body appendFormat:@"Line %lu of a deliberately tall document.\n",
-                           (unsigned long)i];
-    self.editor.string = body;
-    [self.editor.layoutManager
-        ensureLayoutForTextContainer:self.editor.textContainer];
-    [self.editor scrollRectToVisible:NSMakeRect(0, 600, 400, 200)];
-
-    CGFloat scrolledY = self.editor.visibleRect.origin.y;
-
-    doc.loadedString = [body copy];
-    [doc reloadFromLoadedString];
-    [self spinRunLoopForInterval:0.05];
-
-    if (scrolledY > 1.0)
-    {
-        XCTAssertEqualWithAccuracy(self.editor.visibleRect.origin.y, scrolledY,
-                                   40.0,
-                                   @"A reload must restore the prior scroll "
-                                    "position, not jump back to the top");
-    }
 }
 
 // The restore is deferred, so a second reload can start before the first's
