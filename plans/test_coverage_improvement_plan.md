@@ -157,6 +157,7 @@ GitHub Actions macOS runners are:
 - `MPScrollSyncTests.m` - ✅ COMPLETED (78 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, editing-state-aware sync - Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - `MPDocumentLifecycleTests.m` - ✅ COMPLETED (Document dirty flags, revert behavior, encoding detection, file conflicts - Issue #234)
 - `MPNotificationTests.m` - ✅ COMPLETED (NSNotificationCenter observer patterns, preference change notifications, theme/font changes - Issue #234)
+- `MPExternalChangeReloadTests.m` - ✅ COMPLETED (30 tests, external-change coalescing, prompt re-entrancy guard, decision-path guards end-to-end, prompt-vs-silent decision, selection clamping, caret/scroll restoration - Issue #543)
 
 **Estimated Impact:**
 - Coverage: +3-5%
@@ -441,6 +442,7 @@ MacDownTests/
 │   ├── MPHTMLExportTests.m (✅ implemented - Issue #30 - HTML export)
 │   ├── MPImageExportTests.m (✅ implemented - Issue #234 - image export)
 │   ├── MPPDFAnchorInjectorTests.m (✅ implemented - Issue #504 - PDF anchor-link injection, 11 tests)
+│   ├── MPExternalChangeReloadTests.m (✅ implemented - Issue #543 - external-change coalescing, prompt guard, decision path, caret/scroll restoration, 30 tests)
 │   └── MPExportTests.m (planned - general export operations)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m

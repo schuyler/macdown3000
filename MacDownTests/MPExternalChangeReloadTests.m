@@ -25,6 +25,7 @@
 @property (nonatomic) BOOL externalChangeCoalescePending;
 @property (nonatomic) BOOL externalChangePromptVisible;
 @property (nonatomic) NSTimeInterval externalChangeCoalesceInterval;
+@property (nonatomic) NSUInteger externalReloadScrollGeneration;
 @property (nonatomic, copy) void (^externalChangePromptPresenter)(void (^)(BOOL));
 @property (strong) MPRenderer *renderer;
 @property (strong) HGMarkdownHighlighter *highlighter;
@@ -64,6 +65,24 @@
 @end
 
 
+// Runs the real -processExternalFileChange, but counts the two outcomes it can
+// reach instead of touching disk or showing a sheet. This lets the decision
+// method's own guards (self-save re-check, file-URL guard, modification-date
+// check, prompt-vs-silent branch) be exercised end-to-end rather than only in
+// isolated pieces.
+@interface MPProcessSpyDocument : MPDocument
+@property (nonatomic) NSUInteger reloadCount;
+@property (nonatomic) NSUInteger promptCount;
+@property (nonatomic) BOOL stubbedDocumentEdited;
+@end
+
+@implementation MPProcessSpyDocument
+- (void)reloadFromDisk { self.reloadCount++; }
+- (void)promptForReloadWithExternalChanges { self.promptCount++; }
+- (BOOL)isDocumentEdited { return self.stubbedDocumentEdited; }
+@end
+
+
 // Renderer and highlighter stand-ins, so reloadFromLoadedString's
 // (editor && renderer && highlighter) guard is satisfied without kicking off
 // real background work.
@@ -86,6 +105,7 @@
 
 @interface MPExternalChangeReloadTests : XCTestCase
 @property (strong) MPEditorView *editor;
+@property (strong) NSScrollView *scrollView;
 @end
 
 
@@ -118,9 +138,52 @@
                                                       waitInterval:0.0];
 }
 
+// Embeds the editor in a real NSScrollView so reloadFromLoadedString's
+// scroll-restoration branch (only taken when the editor has an enclosing scroll
+// view) is actually entered. Returns the scroll view for the caller to drive.
+- (NSScrollView *)wireScrollableEditorInto:(MPDocument *)doc
+{
+    NSScrollView *scrollView =
+        [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    scrollView.hasVerticalScroller = YES;
+    MPEditorView *editor =
+        [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    editor.verticallyResizable = YES;
+    editor.horizontallyResizable = NO;
+    scrollView.documentView = editor;
+
+    // The scroll view must outlive this method: reloadFromLoadedString only
+    // takes its restoration branch while editor.enclosingScrollView is non-nil.
+    self.scrollView = scrollView;
+    self.editor = editor;
+    doc.editor = editor;
+    doc.renderer = [[MPInertRenderer alloc] init];
+    doc.highlighter = [[MPInertHighlighter alloc] initWithTextView:editor
+                                                      waitInterval:0.0];
+    return scrollView;
+}
+
+// Writes a throwaway file and schedules its removal, returning its URL. Used by
+// the tests that drive the real -processExternalFileChange, which reads the
+// file's on-disk modification date.
+- (NSURL *)writeTempFileWithContents:(NSString *)contents
+{
+    NSString *name = [NSString stringWithFormat:@"MPExtChange-%@.md",
+                      [[NSProcessInfo processInfo] globallyUniqueString]];
+    NSURL *url = [[NSURL fileURLWithPath:NSTemporaryDirectory()]
+                  URLByAppendingPathComponent:name];
+    [contents writeToURL:url atomically:YES
+                encoding:NSUTF8StringEncoding error:NULL];
+    [self addTeardownBlock:^{
+        [[NSFileManager defaultManager] removeItemAtURL:url error:NULL];
+    }];
+    return url;
+}
+
 - (void)tearDown
 {
     self.editor = nil;
+    self.scrollView = nil;
     [super tearDown];
 }
 
@@ -286,11 +349,20 @@
 
 // The regression this issue reports: Auto Save off used to force a dialog even
 // when the document was pristine and there was nothing to keep.
-- (void)testCleanDocumentDoesNotPromptWhenAutoSaveIsOff
+// editorAutoSave is a shared singleton setting, so it is restored in a teardown
+// block rather than inline — a failed assertion mid-test would otherwise skip an
+// inline restore and leak the change into every test that follows.
+- (void)setEditorAutoSave:(BOOL)autoSave
 {
     MPPreferences *prefs = [MPPreferences sharedInstance];
     BOOL original = prefs.editorAutoSave;
-    prefs.editorAutoSave = NO;
+    [self addTeardownBlock:^{ prefs.editorAutoSave = original; }];
+    prefs.editorAutoSave = autoSave;
+}
+
+- (void)testCleanDocumentDoesNotPromptWhenAutoSaveIsOff
+{
+    [self setEditorAutoSave:NO];
 
     MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
     doc.stubbedDocumentEdited = NO;
@@ -298,44 +370,125 @@
     XCTAssertFalse([doc shouldPromptBeforeReloadingExternalChanges],
                    @"An unmodified document has nothing to lose, so an external "
                     "change should reload silently even with Auto Save off");
-
-    prefs.editorAutoSave = original;
 }
 
 - (void)testCleanDocumentDoesNotPromptWhenAutoSaveIsOn
 {
-    MPPreferences *prefs = [MPPreferences sharedInstance];
-    BOOL original = prefs.editorAutoSave;
-    prefs.editorAutoSave = YES;
+    [self setEditorAutoSave:YES];
 
     MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
     doc.stubbedDocumentEdited = NO;
 
     XCTAssertFalse([doc shouldPromptBeforeReloadingExternalChanges],
                    @"An unmodified document should reload silently");
-
-    prefs.editorAutoSave = original;
 }
 
 // The other half of the contract: unsaved work must still be defended, and the
 // Auto Save setting must not change that either way.
 - (void)testEditedDocumentPromptsRegardlessOfAutoSaveSetting
 {
-    MPPreferences *prefs = [MPPreferences sharedInstance];
-    BOOL original = prefs.editorAutoSave;
-
     MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
     doc.stubbedDocumentEdited = YES;
 
-    prefs.editorAutoSave = YES;
+    [self setEditorAutoSave:YES];
     XCTAssertTrue([doc shouldPromptBeforeReloadingExternalChanges],
                   @"Unsaved changes must always be defended by a dialog");
 
-    prefs.editorAutoSave = NO;
+    [self setEditorAutoSave:NO];
     XCTAssertTrue([doc shouldPromptBeforeReloadingExternalChanges],
                   @"Unsaved changes must always be defended by a dialog");
+}
 
-    prefs.editorAutoSave = original;
+
+#pragma mark - Decision Path End-to-End (Issue #543)
+
+// These drive the real -processExternalFileChange (not a spy override) so its
+// own guards are exercised together, the way they ship.
+
+// The coalescing window can straddle the start of one of our own saves, so the
+// decision method re-checks isSelfSaving even though the entry point already did.
+- (void)testProcessDoesNothingDuringASelfSave
+{
+    MPProcessSpyDocument *doc = [[MPProcessSpyDocument alloc] init];
+    doc.isSelfSaving = YES;
+
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(doc.reloadCount, 0u,
+                   @"A change seen mid self-save must not reload");
+    XCTAssertEqual(doc.promptCount, 0u,
+                   @"A change seen mid self-save must not prompt");
+}
+
+// An untitled document has no file on disk to reconcile against.
+- (void)testProcessDoesNothingWithoutAFileURL
+{
+    MPProcessSpyDocument *doc = [[MPProcessSpyDocument alloc] init];
+    XCTAssertNil(doc.fileURL, @"Precondition: the document has no file URL");
+
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(doc.reloadCount, 0u,
+                   @"With no backing file there is nothing to reload");
+    XCTAssertEqual(doc.promptCount, 0u,
+                   @"With no backing file there is nothing to prompt about");
+}
+
+// A spurious notification whose on-disk date is no newer than what we last read
+// is not a real change and must not reload.
+- (void)testProcessDoesNotReloadWhenModificationDateIsUnchanged
+{
+    NSURL *url = [self writeTempFileWithContents:@"on disk\n"];
+    NSDate *diskDate = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:url.path error:NULL][NSFileModificationDate];
+
+    MPProcessSpyDocument *doc = [[MPProcessSpyDocument alloc] init];
+    doc.fileURL = url;
+    doc.fileModificationDate = diskDate;
+    doc.stubbedDocumentEdited = NO;
+
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(doc.reloadCount, 0u,
+                   @"A notification with no newer content on disk must not "
+                    "trigger a reload");
+    XCTAssertEqual(doc.promptCount, 0u);
+}
+
+// A genuinely newer file with nothing unsaved locally reloads silently.
+- (void)testProcessReloadsSilentlyWhenFileIsNewerAndDocumentIsClean
+{
+    NSURL *url = [self writeTempFileWithContents:@"newer on disk\n"];
+
+    MPProcessSpyDocument *doc = [[MPProcessSpyDocument alloc] init];
+    doc.fileURL = url;
+    doc.fileModificationDate = [NSDate distantPast];   // disk is newer
+    doc.stubbedDocumentEdited = NO;
+
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(doc.reloadCount, 1u,
+                   @"A newer file with nothing unsaved must reload silently");
+    XCTAssertEqual(doc.promptCount, 0u,
+                   @"A clean document must not be interrupted with a dialog");
+}
+
+// The same newer file, but with unsaved local work, must ask before discarding.
+- (void)testProcessPromptsWhenFileIsNewerAndDocumentIsEdited
+{
+    NSURL *url = [self writeTempFileWithContents:@"newer on disk\n"];
+
+    MPProcessSpyDocument *doc = [[MPProcessSpyDocument alloc] init];
+    doc.fileURL = url;
+    doc.fileModificationDate = [NSDate distantPast];   // disk is newer
+    doc.stubbedDocumentEdited = YES;
+
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(doc.promptCount, 1u,
+                   @"Unsaved work plus a newer file on disk must prompt");
+    XCTAssertEqual(doc.reloadCount, 0u,
+                   @"A prompt must not also silently reload");
 }
 
 
@@ -461,6 +614,88 @@
 
     XCTAssertEqual(self.editor.selectedRange.location, 5u);
     XCTAssertEqual(self.editor.selectedRange.length, 2u);
+}
+
+
+#pragma mark - Scroll Restoration Across Reload (Issue #543)
+
+// With the editor inside a scroll view, reloadFromLoadedString takes its
+// deferred scroll-restoration branch. The restore runs a later main-queue turn,
+// so the run loop has to be spun before its effect is visible. This exercises
+// the branch a follow-up commit had to fix, end-to-end, without crashing.
+- (void)testReloadWithAScrollViewRestoresSelectionAndDoesNotThrow
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    (void)[self wireScrollableEditorInto:doc];
+    self.editor.string = @"# Title\n\nOriginal body text.\n";
+    self.editor.selectedRange = NSMakeRange(12, 0);
+
+    doc.loadedString = @"# Title\n\nBody text changed by another app.\n";
+    XCTAssertNoThrow([doc reloadFromLoadedString]);
+    [self spinRunLoopForInterval:0.05];   // let the deferred scroll block run
+
+    XCTAssertEqual(self.editor.selectedRange.location, 12u,
+                   @"The caret must survive a reload even on the scroll-view "
+                    "path");
+    XCTAssertEqualObjects(self.editor.string,
+                          @"# Title\n\nBody text changed by another app.\n",
+                          @"The reloaded content must be applied");
+}
+
+// When the setup actually produces a scrolled viewport, the deferred restore
+// must put it back rather than leave it snapped to the top. Guarded so it makes
+// no assertion in the (headless) case where layout never scrolls, keeping it
+// from flaking while still checking the real thing when layout cooperates.
+- (void)testReloadRestoresAScrolledViewport
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    (void)[self wireScrollableEditorInto:doc];
+
+    NSMutableString *body = [NSMutableString string];
+    for (NSUInteger i = 0; i < 200; i++)
+        [body appendFormat:@"Line %lu of a deliberately tall document.\n",
+                           (unsigned long)i];
+    self.editor.string = body;
+    [self.editor.layoutManager
+        ensureLayoutForTextContainer:self.editor.textContainer];
+    [self.editor scrollRectToVisible:NSMakeRect(0, 600, 400, 200)];
+
+    CGFloat scrolledY = self.editor.visibleRect.origin.y;
+
+    doc.loadedString = [body copy];
+    [doc reloadFromLoadedString];
+    [self spinRunLoopForInterval:0.05];
+
+    if (scrolledY > 1.0)
+    {
+        XCTAssertEqualWithAccuracy(self.editor.visibleRect.origin.y, scrolledY,
+                                   40.0,
+                                   @"A reload must restore the prior scroll "
+                                    "position, not jump back to the top");
+    }
+}
+
+// The restore is deferred, so a second reload can start before the first's
+// block runs. Bumping the generation on each reload lets the earlier block
+// bail; here two reloads must leave the generation at 2, so the first block's
+// captured value no longer matches and its stale scroll is skipped.
+- (void)testASecondReloadSupersedesTheFirstScrollRestore
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    (void)[self wireScrollableEditorInto:doc];
+    self.editor.string = @"first content";
+
+    doc.loadedString = @"second content";
+    [doc reloadFromLoadedString];          // schedules restore, generation -> 1
+    doc.loadedString = @"third content";
+    [doc reloadFromLoadedString];          // schedules restore, generation -> 2
+
+    XCTAssertEqual(doc.externalReloadScrollGeneration, 2u,
+                   @"Each reload must advance the scroll-restore generation so "
+                    "a superseded restore no-ops instead of applying a stale "
+                    "viewport");
+
+    [self spinRunLoopForInterval:0.05];    // drain both blocks; only the last acts
 }
 
 @end
