@@ -67,6 +67,104 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     return checkboxes;
 }
 
+#pragma mark - Localized-string helpers (Issue #530)
+
+/// The repository's MacDown/Localization directory, derived from this file's own
+/// compile-time path. The panes' English titles live only in the Base XIB (there
+/// is no en.lproj strings file for them), and the English/ObjectID pairing needed
+/// to map them survives only in the source .strings comments — Xcode's
+/// CopyStringsFile phase discards comments, and the shipped keys are button
+/// *cell* IDs that no runtime API can recover from a view. So the mapping has to
+/// come from the source tree.
+static NSString *MPLocalizationSourceDirectory(void)
+{
+    NSString *testsDir = [@(__FILE__) stringByDeletingLastPathComponent];
+    NSString *repoRoot = [testsDir stringByDeletingLastPathComponent];
+    return [[repoRoot stringByAppendingPathComponent:@"MacDown"]
+            stringByAppendingPathComponent:@"Localization"];
+}
+
+/// Parses one localized .strings file into an English title -> localized title
+/// map. Values come from -dictionaryWithContentsOfFile: (which handles the
+/// legacy-plist format, escapes and encoding); the English side and the class
+/// come from the `/* Class = "…"; title = "…"; ObjectID = "…"; */` comment that
+/// genstrings writes above each entry. Returns nil for a file that is empty or
+/// unreadable. Only title-bearing classes that drive layout width are included;
+/// NSMenuItem and NSSegmentedCell labels are deliberately skipped.
+static NSDictionary<NSString *, NSString *> *MPLocalizedTitleMap(NSString *path)
+{
+    NSDictionary *values = [NSDictionary dictionaryWithContentsOfFile:path];
+    if (values.count == 0)
+        return nil;
+
+    NSString *source = [NSString stringWithContentsOfFile:path
+                                             usedEncoding:NULL error:NULL];
+    if (!source)
+        source = [NSString stringWithContentsOfFile:path
+                                           encoding:NSUTF8StringEncoding error:NULL];
+    if (!source)
+        return nil;
+
+    static NSRegularExpression *comment = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        comment = [NSRegularExpression regularExpressionWithPattern:
+                   @"Class = \"([^\"]+)\"; title = \"(.*)\"; ObjectID = \"([^\"]+)\";"
+                                                            options:0 error:NULL];
+    });
+
+    NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
+    [comment enumerateMatchesInString:source options:0
+                                range:NSMakeRange(0, source.length)
+                           usingBlock:^(NSTextCheckingResult *match,
+                                        NSMatchingFlags flags, BOOL *stop) {
+        NSString *className = [source substringWithRange:[match rangeAtIndex:1]];
+        NSString *english   = [source substringWithRange:[match rangeAtIndex:2]];
+        NSString *objectID  = [source substringWithRange:[match rangeAtIndex:3]];
+
+        if (![className isEqualToString:@"NSButtonCell"]
+            && ![className isEqualToString:@"NSTextFieldCell"]
+            && ![className isEqualToString:@"NSBox"])
+            return;
+
+        NSString *localized = values[[objectID stringByAppendingString:@".title"]];
+        if (english.length && localized.length)
+            map[english] = localized;
+    }];
+    return map;
+}
+
+/// Retitles every control in @c view whose current (English) title appears in
+/// @c titles, and returns how many were changed. Matching on the live title is
+/// what makes this safe without object IDs: a bound numeric field's stringValue
+/// never collides with a label or checkbox title.
+static NSUInteger MPApplyLocalizedTitles(NSView *view,
+                                         NSDictionary<NSString *, NSString *> *titles)
+{
+    NSUInteger applied = 0;
+    if ([view isKindOfClass:[NSButton class]])
+    {
+        NSButton *button = (NSButton *)view;
+        NSString *localized = titles[button.title];
+        if (localized) { button.title = localized; applied++; }
+    }
+    else if ([view isKindOfClass:[NSBox class]])
+    {
+        NSBox *box = (NSBox *)view;
+        NSString *localized = box.title ? titles[box.title] : nil;
+        if (localized) { box.title = localized; applied++; }
+    }
+    else if ([view isKindOfClass:[NSTextField class]])
+    {
+        NSTextField *field = (NSTextField *)view;
+        NSString *localized = titles[field.stringValue];
+        if (localized) { field.stringValue = localized; applied++; }
+    }
+    for (NSView *sub in view.subviews)
+        applied += MPApplyLocalizedTitles(sub, titles);
+    return applied;
+}
+
 @interface MPPreferencesViewControllerResizabilityTests : XCTestCase
 @end
 
@@ -314,8 +412,8 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
 
 // The HTML pane's CSS theme popup and its Reveal/Reload controls were clipped
 // at the original 430pt design width, most visibly with long theme names such
-// as the bundled "GitHub Dark Default". loadView pins each pane to its XIB
-// design width (it never widens, only grows height), so the design width itself
+// as the bundled "GitHub Dark Default". Since #481 loadView treats the XIB
+// design width as a floor and widens from there, so the design width itself
 // must stay wide enough. This guards against the pane being narrowed back to the
 // cramped value. (Issue #419.)
 - (void)testHtmlPaneIsWideEnoughForThemeControls
@@ -481,6 +579,215 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
             @"%@ pane: resolved width (%g) is suspiciously wide",
             name, widthPin.constant);
     }];
+}
+
+#pragma mark - Box anchoring (Issue #530)
+
+// A grouping box's children must be constrained to the NSBox, not to the box's
+// content view. NSBox sizes its content view imperatively, and with
+// translatesAutoresizingMaskIntoConstraints = YES that frame enters the layout
+// engine as required-priority constants — a one-way street. Anything pinned to
+// the content view is therefore force-fixed at the box's current size: long
+// localized labels are truncated because compression resistance (750) loses to
+// a required constraint, and the requirement never reaches the pane's
+// fittingSize, so the pane cannot widen to fit them. Worse, once the vertical
+// chain is fully determined, a required height constraint (the one
+// +addHeightConstraintsForWrappingCheckboxesInView: adds for wrapped text) makes
+// the system unsatisfiable, and AppKit breaks an arbitrary constraint —
+// producing a stretched checkbox overlapping its neighbours.
+//
+// The General and Markdown panes anchor their box children to the box and lay
+// out correctly in French and Italian; the Editor pane anchored them to the
+// content view and did not. (Issue #530.)
+- (void)testBoxChildrenAreConstrainedToTheBoxNotItsContentView
+{
+    [self.allControllers enumerateKeysAndObjectsUsingBlock:
+     ^(NSString *name, MPPreferencesViewController *vc, BOOL *stop) {
+        NSView *content = MPContentView(vc);
+        NSMutableArray<NSBox *> *boxes = [NSMutableArray array];
+        MPCollectViews(content, [NSBox class], boxes);
+        for (NSBox *box in boxes)
+        {
+            NSView *contentView = box.contentView;
+            if (!contentView || !contentView.translatesAutoresizingMaskIntoConstraints)
+                continue;   // a constraint-driven content view is safe
+
+            for (NSLayoutConstraint *c in contentView.constraints)
+            {
+                // AppKit installs private NSLayoutConstraint subclasses of its
+                // own (NSContentSizeLayoutConstraint,
+                // NSAutoresizingMaskLayoutConstraint). Only author constraints
+                // are plain NSLayoutConstraint — the same filter
+                // testGroupingBoxesHaveNoFixedHeight uses.
+                if (![c isMemberOfClass:[NSLayoutConstraint class]])
+                    continue;
+
+                BOOL referencesContentView =
+                    (c.firstItem == contentView || c.secondItem == contentView);
+                XCTAssertFalse(referencesContentView,
+                    @"%@ pane: box '%@' has a child pinned to its autoresized "
+                    @"content view instead of to the box itself — localized "
+                    @"labels will truncate and the box cannot grow (found %@)",
+                    name, box.title, c);
+            }
+        }
+    }];
+}
+
+// Loads every pane with each bundled localization's titles applied and checks
+// that nothing is truncated, clipped, or overlapping. This is the test that
+// would have caught #530: every prior failure in this area (#397, #498, #530)
+// was found by human reporters running French and Italian builds, because no
+// test exercised pane geometry under any non-English locale.
+//
+// Titles are substituted after -loadView, so the sizing has to be re-resolved
+// through the real algorithm (+resolveSizingForContentView:inWrapper:minimumSize:)
+// rather than measured against the frozen English width.
+- (void)testLocalizedTitlesLayOutWithoutTruncationOrOverlap
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *localizationDir = MPLocalizationSourceDirectory();
+
+    BOOL isDirectory = NO;
+    BOOL exists = [fm fileExistsAtPath:localizationDir isDirectory:&isDirectory];
+    XCTAssertTrue(exists && isDirectory,
+        @"Localization sources not found at %@. This test reads them from the "
+        @"source tree (see MPLocalizationSourceDirectory); if the layout moved, "
+        @"update that helper rather than letting this test silently pass.",
+        localizationDir);
+    if (!exists || !isDirectory)
+        return;
+
+    NSArray<NSString *> *entries =
+        [[fm contentsOfDirectoryAtPath:localizationDir error:NULL]
+         sortedArrayUsingSelector:@selector(compare:)];
+
+    NSMutableSet<NSString *> *localesExercised = [NSMutableSet set];
+    NSUInteger controlsRetitled = 0;
+
+    // Collected rather than asserted inline: 5 panes x 23 locales x 7 checkboxes
+    // would bury the CI log in near-identical failures. Report a bounded,
+    // readable sample with a total instead.
+    NSMutableArray<NSString *> *problems = [NSMutableArray array];
+
+    for (MPPreferencesViewController *prototype in self.allControllers.allValues)
+    {
+        Class paneClass = [prototype class];
+        NSString *table = NSStringFromClass(paneClass);
+
+        for (NSString *entry in entries)
+        {
+            if (![entry hasSuffix:@".lproj"] || [entry isEqualToString:@"Base.lproj"])
+                continue;
+
+            NSString *path = [[localizationDir stringByAppendingPathComponent:entry]
+                              stringByAppendingPathComponent:
+                              [table stringByAppendingPathExtension:@"strings"]];
+            if (![fm fileExistsAtPath:path])
+                continue;   // coverage is uneven; not every pane has every locale
+
+            NSDictionary<NSString *, NSString *> *titles = MPLocalizedTitleMap(path);
+            if (titles.count == 0)
+                continue;   // e.g. sv.lproj's Terminal strings file is empty
+
+            MPPreferencesViewController *vc = [[paneClass alloc] init];
+            NSView *wrapper = vc.view;          // triggers loadView
+            NSView *content = wrapper.subviews.firstObject;
+
+            NSUInteger applied = MPApplyLocalizedTitles(content, titles);
+            if (applied == 0)
+                continue;
+            controlsRetitled += applied;
+            [localesExercised addObject:entry];
+
+            NSSize resolved =
+                [MPPreferencesViewController resolveSizingForContentView:content
+                                                               inWrapper:wrapper
+                                                             minimumSize:vc.englishDesignSize];
+            [wrapper layoutSubtreeIfNeeded];
+
+            NSString *where = [NSString stringWithFormat:@"%@ pane, %@",
+                               table, entry];
+
+            if (resolved.width >= 2000)
+            {
+                [problems addObject:[NSString stringWithFormat:
+                    @"%@: resolved width %g is suspiciously wide",
+                    where, resolved.width]];
+            }
+
+            NSArray<NSButton *> *checkboxes = MPCheckboxes(content);
+            for (NSButton *checkbox in checkboxes)
+            {
+                NSCell *cell = checkbox.cell;
+                CGFloat frameWidth = NSWidth(checkbox.frame);
+
+                // cellSizeForBounds: with CGFLOAT_MAX returns NaN on some AppKit
+                // versions; use a large finite value instead.
+                NSSize oneLine = [cell cellSizeForBounds:
+                                  NSMakeRect(0, 0, 10000, 10000)];
+                if (frameWidth + 0.5 < oneLine.width)
+                {
+                    [problems addObject:[NSString stringWithFormat:
+                        @"%@: checkbox is %g wide but needs %g for its title "
+                        @"— the pane must widen to fit localized text: '%@'",
+                        where, frameWidth, oneLine.width, checkbox.title]];
+                }
+
+                NSSize wrapped = [cell cellSizeForBounds:
+                                  NSMakeRect(0, 0, frameWidth, 10000)];
+                if (NSHeight(checkbox.frame) + 0.5 < wrapped.height)
+                {
+                    [problems addObject:[NSString stringWithFormat:
+                        @"%@: checkbox is %g tall but its text needs %g "
+                        @"— the label is clipped: '%@'",
+                        where, NSHeight(checkbox.frame), wrapped.height,
+                        checkbox.title]];
+                }
+            }
+
+            // Siblings must not collide. This is the most direct assertion for
+            // the reported symptom: a checkbox stretched over its neighbours.
+            for (NSUInteger i = 0; i < checkboxes.count; i++)
+            {
+                for (NSUInteger j = i + 1; j < checkboxes.count; j++)
+                {
+                    NSButton *a = checkboxes[i], *b = checkboxes[j];
+                    if (a.superview != b.superview)
+                        continue;
+                    if (NSIntersectsRect(a.frame, b.frame))
+                    {
+                        [problems addObject:[NSString stringWithFormat:
+                            @"%@: checkboxes overlap (%@ vs %@): '%@' / '%@'",
+                            where, NSStringFromRect(a.frame),
+                            NSStringFromRect(b.frame), a.title, b.title]];
+                    }
+                }
+            }
+        }
+    }
+
+    if (problems.count)
+    {
+        NSUInteger shown = MIN((NSUInteger)12, problems.count);
+        NSArray<NSString *> *sample =
+            [problems subarrayWithRange:NSMakeRange(0, shown)];
+        XCTFail(@"%lu localized layout problem(s) across %lu localization(s); "
+                @"first %lu:\n  %@",
+                (unsigned long)problems.count,
+                (unsigned long)localesExercised.count,
+                (unsigned long)shown,
+                [sample componentsJoinedByString:@"\n  "]);
+    }
+
+    // Guard against the test quietly becoming a no-op if the .strings parsing
+    // or the source path ever breaks.
+    XCTAssertGreaterThanOrEqual(localesExercised.count, 20U,
+        @"expected at least 20 localizations to be exercised, got %lu (%@)",
+        (unsigned long)localesExercised.count,
+        [[localesExercised allObjects] componentsJoinedByString:@", "]);
+    XCTAssertGreaterThan(controlsRetitled, 0U,
+        @"no controls were retitled — the .strings comment parsing is broken");
 }
 
 #pragma mark - Toolbar tab highlight (Issue #499)

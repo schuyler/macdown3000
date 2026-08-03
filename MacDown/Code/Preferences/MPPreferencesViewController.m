@@ -15,6 +15,16 @@ NSString * const MPDidRequestPreviewRenderNotification =
 NSString * const MPDidRequestEditorSetupNotification =
     @"MPDidRequestEditorSetupNotificationName";
 
+/// Marks the constraints added by
+/// +addHeightConstraintsForWrappingCheckboxesInView: so a repeat call can
+/// replace them instead of stacking a second one on the same checkbox.
+static NSString * const MPWrappingCheckboxHeightIdentifier =
+    @"MPWrappingCheckboxHeight";
+
+@interface MPPreferencesViewController ()
+@property (nonatomic, assign) NSSize englishDesignSize;
+@end
+
 @implementation MPPreferencesViewController
 
 - (id)init
@@ -29,8 +39,7 @@ NSString * const MPDidRequestEditorSetupNotification =
 
     NSView *contentView = self.view;
     NSRect frame = contentView.frame;
-    CGFloat englishDesignWidth  = NSWidth(frame);
-    CGFloat englishDesignHeight = NSHeight(frame);
+    self.englishDesignSize = frame.size;
 
     NSView *wrapper = [[NSView alloc] initWithFrame:frame];
     contentView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -42,14 +51,50 @@ NSString * const MPDidRequestEditorSetupNotification =
         [contentView.centerYAnchor constraintEqualToAnchor:wrapper.centerYAnchor],
     ]];
 
+    NSSize resolved = [[self class] resolveSizingForContentView:contentView
+                                                      inWrapper:wrapper
+                                                    minimumSize:frame.size];
+
+    // Update the wrapper frame so MASPreferences reads the correct minimum size.
+    NSRect wrapperFrame = wrapper.frame;
+    wrapperFrame.size = resolved;
+    wrapper.frame = wrapperFrame;
+
+    self.view = wrapper;
+}
+
+/// Deactivates any width/height pin previously applied to @c contentView by
+/// +resolveSizingForContentView:inWrapper:minimumSize:, so the sizing passes
+/// start from an unpinned view. Identified structurally — an = constraint from
+/// the content view to no second item — which is the same shape the tests in
+/// MPPreferencesViewControllerResizabilityTests.m look for.
+static void MPDeactivateSizePins(NSView *contentView)
+{
+    for (NSLayoutConstraint *c in [contentView.constraints copy])
+    {
+        if (c.firstItem != contentView || c.secondItem != nil
+            || c.relation != NSLayoutRelationEqual)
+            continue;
+        if (c.firstAttribute == NSLayoutAttributeWidth
+            || c.firstAttribute == NSLayoutAttributeHeight)
+            c.active = NO;
+    }
+}
+
++ (NSSize)resolveSizingForContentView:(NSView *)contentView
+                            inWrapper:(NSView *)wrapper
+                          minimumSize:(NSSize)minimumSize
+{
+    MPDeactivateSizePins(contentView);
+
     // --- Pass 1: resolve width ---
     // Apply a >= floor so the pane never shrinks below the English design width,
     // then ask Auto Layout for the width the content actually needs.
     NSLayoutConstraint *widthFloor =
-        [contentView.widthAnchor constraintGreaterThanOrEqualToConstant:englishDesignWidth];
+        [contentView.widthAnchor constraintGreaterThanOrEqualToConstant:minimumSize.width];
     widthFloor.active = YES;
     [wrapper layoutSubtreeIfNeeded];
-    CGFloat width = MAX(contentView.fittingSize.width, englishDesignWidth);
+    CGFloat width = MAX(contentView.fittingSize.width, minimumSize.width);
     widthFloor.active = NO;
 
     // Pin the resolved width with an = constraint for the height pass.
@@ -64,14 +109,14 @@ NSString * const MPDidRequestEditorSetupNotification =
     // at the pinned width, then add explicit height constraints where the cell
     // reports it needs more than intrinsicContentSize provides.
     [wrapper layoutSubtreeIfNeeded];
-    [[self class] addHeightConstraintsForWrappingCheckboxesInView:contentView];
+    [self addHeightConstraintsForWrappingCheckboxesInView:contentView];
 
     // --- Pass 2: resolve height at the resolved width ---
     NSLayoutConstraint *heightFloor =
-        [contentView.heightAnchor constraintGreaterThanOrEqualToConstant:englishDesignHeight];
+        [contentView.heightAnchor constraintGreaterThanOrEqualToConstant:minimumSize.height];
     heightFloor.active = YES;
     [wrapper layoutSubtreeIfNeeded];
-    CGFloat height = MAX(contentView.fittingSize.height, englishDesignHeight);
+    CGFloat height = MAX(contentView.fittingSize.height, minimumSize.height);
     heightFloor.active = NO;
 
     // Pin the resolved height.
@@ -79,12 +124,7 @@ NSString * const MPDidRequestEditorSetupNotification =
         [contentView.heightAnchor constraintEqualToConstant:height];
     heightPin.active = YES;
 
-    // Update the wrapper frame so MASPreferences reads the correct minimum size.
-    NSRect wrapperFrame = wrapper.frame;
-    wrapperFrame.size = NSMakeSize(width, height);
-    wrapper.frame = wrapperFrame;
-
-    self.view = wrapper;
+    return NSMakeSize(width, height);
 }
 
 /// Recursively collects checkbox-style NSButtons (regularSquare bezel) from the
@@ -108,6 +148,16 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
 
     for (NSButton *checkbox in checkboxes)
     {
+        // Drop the constraint a previous call left behind. It was measured at
+        // whatever width applied then; keeping it would floor the checkbox at a
+        // stale height, and repeated calls would pile up constraints that never
+        // get released.
+        for (NSLayoutConstraint *c in [checkbox.constraints copy])
+        {
+            if ([c.identifier isEqualToString:MPWrappingCheckboxHeightIdentifier])
+                [checkbox removeConstraint:c];
+        }
+
         NSCell *cell = checkbox.cell;
         if (cell.lineBreakMode != NSLineBreakByWordWrapping)
             continue;
@@ -131,6 +181,7 @@ static void MPCollectCheckboxes(NSView *view, NSMutableArray<NSButton *> *out)
             NSLayoutConstraint *heightConstraint =
                 [checkbox.heightAnchor
                     constraintGreaterThanOrEqualToConstant:ceil(cellSize.height)];
+            heightConstraint.identifier = MPWrappingCheckboxHeightIdentifier;
             heightConstraint.active = YES;
         }
     }
