@@ -79,7 +79,6 @@ static NSString * const kMPAnchorModelJS = @"(function() {"
 static const CGFloat kMPMinZoom = 0.5;
 static const CGFloat kMPMaxZoom = 3.0;
 
-
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
 {
     if (!key.length)
@@ -388,6 +387,11 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Preview zoom helpers
 - (void)applyPreviewZoom;
 - (void)stepDocumentZoomDirection:(NSInteger)direction;
+// Fix #4: Extracted from -windowControllerDidLoadNib:/-close so a headless
+// test can register/unregister the shared-preference (zoom) KVO observer
+// without needing a loaded nib.
+- (void)registerSharedPreferenceObservers;
+- (void)unregisterSharedPreferenceObservers;
 // Commit 8 (gap 9): MathJax generation counter accessor (used by tests via category)
 - (NSUInteger)mathJaxRenderGeneration;
 // Issue #504: PDF export post-processing (clickable internal anchor links).
@@ -658,8 +662,6 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     [super windowControllerDidLoadNib:controller];
 
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
     // All files use their absolute path to keep their window states.
     NSString *autosaveName = kMPDefaultAutosaveName;
     if (self.fileURL)
@@ -684,11 +686,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.renderer.dataSource = self;
     self.renderer.delegate = self;
 
-    for (NSString *key in MPEditorPreferencesToObserve())
-    {
-        [defaults addObserver:self forKeyPath:key
-                      options:NSKeyValueObservingOptionNew context:NULL];
-    }
+    [self registerSharedPreferenceObservers];
     for (NSString *key in MPEditorKeysToObserve())
     {
         [self.editor addObserver:self forKeyPath:key
@@ -795,6 +793,28 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }];
 }
 
+// Fix #4: Extracted from -windowControllerDidLoadNib: so a headless test can
+// register the shared-preference (zoom) KVO observer directly, without a
+// loaded nib. Touches only the standardUserDefaults singleton -- no nib
+// outlets involved.
+- (void)registerSharedPreferenceObservers
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    for (NSString *key in MPEditorPreferencesToObserve())
+    {
+        [defaults addObserver:self forKeyPath:key
+                      options:NSKeyValueObservingOptionNew context:NULL];
+    }
+}
+
+// Fix #4: Extracted from -close (see -registerSharedPreferenceObservers).
+- (void)unregisterSharedPreferenceObservers
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    for (NSString *key in MPEditorPreferencesToObserve())
+        [defaults removeObserver:self forKeyPath:key];
+}
+
 - (void)reloadFromLoadedString
 {
     if (self.editor && self.renderer && self.highlighter)
@@ -866,10 +886,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-        for (NSString *key in MPEditorPreferencesToObserve())
-            [defaults removeObserver:self forKeyPath:key];
+        [self unregisterSharedPreferenceObservers];
         for (NSString *key in MPEditorKeysToObserve())
             [self.editor removeObserver:self forKeyPath:key];
     }
@@ -3148,7 +3165,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)resetZoom:(id)sender
 {
-    self.preferences.documentZoomLevel = 1.0;
+    self.zoomMultiplier = 1.0;
 }
 
 - (void)applyCurrentZoom
@@ -4469,7 +4486,7 @@ to link outside that scope.", \
     }
     if ([level isKindOfClass:[NSNumber class]])
     {
-        self.preferences.documentZoomLevel = level.doubleValue;
+        self.zoomMultiplier = level.doubleValue;
     }
 }
 
