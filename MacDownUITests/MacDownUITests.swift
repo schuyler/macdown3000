@@ -13,7 +13,8 @@ final class MacDownUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         // Disable state restoration to get consistent initial state
-        app.launchArguments = ["-ApplePersistenceIgnoreState", "YES"]
+        app.launchArguments = ["-ApplePersistenceIgnoreState", "YES",
+                               "-MPDisableUpdater", "YES"]
         app.launch()
     }
 

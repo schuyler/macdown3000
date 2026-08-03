@@ -65,7 +65,6 @@
 		1F9A14ED194EEE9900D1C6A9 /* MPMainController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F9A14EB194EEE9900D1C6A9 /* MPMainController.m */; };
 		1F9A14EF194EEEDD00D1C6A9 /* Styles in Resources */ = {isa = PBXBuildFile; fileRef = 1F9A14EE194EEEDD00D1C6A9 /* Styles */; };
 		1F9A14F4194EF6A600D1C6A9 /* Themes in Resources */ = {isa = PBXBuildFile; fileRef = 1F9A14F3194EF6A600D1C6A9 /* Themes */; };
-		1FA6CDB91952D2CD008D5CA0 /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = 1FA6CDB81952D2CD008D5CA0 /* dsa_pub.pem */; };
 		1FA6DE251941CC9E000409FB /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FA6DE241941CC9E000409FB /* Cocoa.framework */; };
 		1FA6DE481941CC9E000409FB /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FA6DE241941CC9E000409FB /* Cocoa.framework */; };
 		1FB3C0241E5061A2002AEB6A /* MPExportPanelAccessoryViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1FB3C0221E5061A2002AEB6A /* MPExportPanelAccessoryViewController.xib */; };
@@ -494,7 +493,6 @@
 		1F9A14EB194EEE9900D1C6A9 /* MPMainController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MPMainController.m; path = Code/Application/MPMainController.m; sourceTree = "<group>"; };
 		1F9A14EE194EEEDD00D1C6A9 /* Styles */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Styles; path = Resources/Styles; sourceTree = "<group>"; };
 		1F9A14F3194EF6A600D1C6A9 /* Themes */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Themes; path = Resources/Themes; sourceTree = "<group>"; };
-		1FA6CDB81952D2CD008D5CA0 /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = dsa_pub.pem; path = Resources/dsa_pub.pem; sourceTree = "<group>"; };
 		1FA6DE211941CC9E000409FB /* MacDown 3000.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MacDown 3000.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		1FA6DE241941CC9E000409FB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		1FA6DE271941CC9E000409FB /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -923,7 +921,6 @@
 				1F8A82D819533E9300B6BF69 /* Prism */,
 				1F4C8E99194AE0B9004BF82E /* MarkdownDocument.icns */,
 				1F0D9DA6194AC8CB008E1856 /* Credits.rtf */,
-				1FA6CDB81952D2CD008D5CA0 /* dsa_pub.pem */,
 				1F3A47511953E84700293259 /* help.md */,
 				1F3A47521953E84700293260 /* updateHeaderLocations.js */,
 				1F59491A1AB57C78007394CB /* syntax_highlighting.json */,
@@ -1507,7 +1504,6 @@
 				1F0D9DB4194AC9EE008E1856 /* MainMenu.xib in Resources */,
 				1FBDFE9C196170FE00BEEA70 /* Extensions in Resources */,
 				1F41FF7B1C8EEE9200FD9886 /* Templates in Resources */,
-				1FA6CDB91952D2CD008D5CA0 /* dsa_pub.pem in Resources */,
 				1F27896B1973BEB100EE696A /* Localizable.strings in Resources */,
 				1F0D9DAD194AC8EF008E1856 /* Images.xcassets in Resources */,
 				1F0D9DAA194AC8CB008E1856 /* Credits.rtf in Resources */,

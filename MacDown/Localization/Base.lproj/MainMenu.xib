@@ -25,8 +25,11 @@
                                     <action selector="orderFrontStandardAboutPanel:" target="-1" id="Exp-CZ-Vem"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check for Updates… (unavailable)" enabled="NO" id="8xL-1V-VPX">
+                            <menuItem title="Check for Updates…" id="8xL-1V-VPX">
                                 <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="checkForUpdates:" target="eq0-c4-vgQ" id="upd-ck-Act"/>
+                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">

@@ -25,9 +25,9 @@
                         <rect key="frame" x="1" y="1" width="317" height="38"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jet-bG-trd">
+                            <button translatesAutoresizingMaskIntoConstraints="NO" id="jet-bG-trd">
                                 <rect key="frame" x="16" y="12" width="285" height="18"/>
-                                <buttonCell key="cell" type="check" title="Include pre-releases (unavailable)" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
+                                <buttonCell key="cell" type="check" title="Include pre-releases" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="vbz-fv-8BX">
                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
