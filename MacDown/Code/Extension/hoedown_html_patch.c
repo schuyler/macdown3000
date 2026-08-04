@@ -346,6 +346,16 @@ void hoedown_patch_render_header(
     hoedown_buffer_free(slug);
 }
 
+// hrule replacement that emits nothing, used when the user has opted to hide
+// horizontal rules (e.g. redundant `---` section separators when headings
+// already provide visual separation via theme CSS).
+void hoedown_patch_render_hrule_hidden(
+    hoedown_buffer *ob, const hoedown_renderer_data *data)
+{
+    (void)ob;
+    (void)data;
+}
+
 // Adds a "toc" class to the outmost UL element to support TOC styling.
 void hoedown_patch_render_toc_header(
     hoedown_buffer *ob, const hoedown_buffer *content, int level,

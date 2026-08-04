@@ -65,6 +65,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) NSString *htmlStyleName;
 @property (assign) BOOL htmlDetectFrontMatter;
 @property (assign) BOOL htmlTaskList;
+@property (assign) BOOL htmlHideHorizontalRules;
 @property (assign) BOOL htmlHardWrap;
 @property (assign) BOOL htmlMathJax;
 @property (assign) BOOL htmlMathJaxInlineDollar;

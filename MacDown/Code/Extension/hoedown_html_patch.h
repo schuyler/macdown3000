@@ -12,6 +12,7 @@
 static unsigned int HOEDOWN_HTML_USE_TASK_LIST = (1 << 4);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS = (1 << 5);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_INFORMATION = (1 << 6);
+static unsigned int HOEDOWN_HTML_HIDE_HORIZONTAL_RULES = (1 << 7);
 
 // Reset the checkbox index counter. Call this before rendering a document.
 void hoedown_patch_reset_checkbox_index(void);
@@ -45,5 +46,10 @@ void hoedown_patch_render_header(
 void hoedown_patch_render_toc_header(
      hoedown_buffer *ob, const hoedown_buffer *content, int level,
      const hoedown_renderer_data *data);
+
+// hrule replacement that emits nothing, for use when
+// HOEDOWN_HTML_HIDE_HORIZONTAL_RULES is set.
+void hoedown_patch_render_hrule_hidden(
+    hoedown_buffer *ob, const hoedown_renderer_data *data);
 
 #endif

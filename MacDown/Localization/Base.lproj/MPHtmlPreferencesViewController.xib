@@ -18,7 +18,7 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="Hz6-mo-xeY">
-            <rect key="frame" x="0.0" y="0.0" width="482" height="367"/>
+            <rect key="frame" x="0.0" y="0.0" width="482" height="391"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ez-nk-c3q">
@@ -220,6 +220,16 @@
                         <binding destination="-2" name="value" keyPath="self.preferences.htmlHardWrap" id="sGz-hW-fNw"/>
                     </connections>
                 </button>
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="hR1-le-Hru">
+                    <rect key="frame" x="106" y="63" width="281" height="18"/>
+                    <buttonCell key="cell" type="check" title="Hide horizontal rules" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hR2-le-Hru">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <binding destination="-2" name="value" keyPath="self.preferences.htmlHideHorizontalRules" id="hR3-le-Hru"/>
+                    </connections>
+                </button>
                 <button translatesAutoresizingMaskIntoConstraints="NO" id="RCL-iK-kgx">
                     <rect key="frame" x="106" y="53" width="281" height="18"/>
                     <buttonCell key="cell" type="check" title="Scale preview based on editor font size" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="aWw-Wb-pBl">
@@ -284,7 +294,10 @@
                 <constraint firstItem="2I4-c8-jan" firstAttribute="leading" secondItem="Dd4-T9-cLi" secondAttribute="trailing" constant="8" id="Gsh-B6-5di"/>
                 <constraint firstItem="HzY-ws-XRq" firstAttribute="top" secondItem="u5h-MS-cR3" secondAttribute="bottom" constant="8" id="HPL-dT-fDu"/>
                 <constraint firstItem="M0W-YD-Ouk" firstAttribute="top" secondItem="2I4-c8-jan" secondAttribute="bottom" constant="9" id="I3l-Fb-wX6"/>
-                <constraint firstItem="RCL-iK-kgx" firstAttribute="top" secondItem="lxX-Pm-dhn" secondAttribute="bottom" constant="6" id="IMk-Bn-BvA"/>
+                <constraint firstItem="RCL-iK-kgx" firstAttribute="top" secondItem="hR1-le-Hru" secondAttribute="bottom" constant="6" id="IMk-Bn-BvA"/>
+                <constraint firstItem="hR1-le-Hru" firstAttribute="top" secondItem="lxX-Pm-dhn" secondAttribute="bottom" constant="6" id="hR4-le-Hru"/>
+                <constraint firstItem="hR1-le-Hru" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="hR5-le-Hru"/>
+                <constraint firstItem="hR1-le-Hru" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="hR6-le-Hru"/>
                 <constraint firstItem="ysT-Br-eSf" firstAttribute="leading" secondItem="Zna-RM-nBO" secondAttribute="leading" constant="22" id="IRH-Nz-63Z"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="leading" secondItem="Zna-RM-nBO" secondAttribute="leading" constant="97" id="KkK-vj-D89"/>
                 <constraint firstItem="Zna-RM-nBO" firstAttribute="leading" secondItem="Dd4-T9-cLi" secondAttribute="leading" id="LYa-bl-lUy"/>
