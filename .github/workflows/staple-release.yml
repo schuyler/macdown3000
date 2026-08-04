@@ -251,6 +251,8 @@ jobs:
           echo "✅ Checksums generated"
 
       - name: Final comprehensive verification
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔍 Running final comprehensive verification before publishing..."
 
@@ -306,6 +308,14 @@ jobs:
             exit 1
           fi
           echo "    Entitlement present: com.apple.security.app-sandbox (Quick Look extension)"
+
+          # Sparkle's nested components in the published app (issue #553)
+          echo "  ✓ Checking Sparkle component signatures..."
+          if ! bash Tools/verify_sparkle_signature.sh \
+                 "/tmp/final-verify/MacDown 3000.app" "$APPLE_TEAM_ID"; then
+            hdiutil detach /tmp/final-verify
+            exit 1
+          fi
 
           # Get app version for logging
           APP_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" \

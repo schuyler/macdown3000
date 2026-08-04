@@ -14,7 +14,7 @@ See `plans/release-process.md` for detailed instructions.
 
 ## Prerequisite (One-Time): Auto-Update Readiness
 
-Sparkle 2 auto-updates are wired up in the app but **inert** until three
+Sparkle 2 auto-updates are wired up in the app but **inert** until the
 release-blockers below are cleared, by the maintainer, before the first real
 release that should offer auto-updates. None of these are per-release steps
 — once each is resolved, it never needs to be redone for later releases.
@@ -38,15 +38,16 @@ release that should offer auto-updates. None of these are per-release steps
   wherever `generate_keys -x <file>` exports it, if you need an out-of-band
   backup). It has no place in this repository.
 
-- [ ] **Fix the release workflow's re-signing of Sparkle's nested components
-  (issue #553, open).** The release workflow's `codesign --force --deep
-  --strict` pass reaches into the embedded `Sparkle.framework` and
-  overwrites its nested XPC components (Installer.xpc, Downloader.xpc,
-  Autoupdate, Updater.app) with the outer app's signing identity, instead of
-  doing the inside-out re-sign Sparkle actually needs. That breaks signature
-  verification and notarization for any release that embeds Sparkle — not
-  just ones advertising auto-update. Issue #553 states plainly: "Releases
-  are blocked until this lands."
+- [x] **Sparkle's nested components are re-signed for notarization (issue
+  #553).** Sparkle ships from CocoaPods ad-hoc signed, and the pod's embed
+  phase re-signs only the framework's top level, without hardened runtime or a
+  secure timestamp — which notarization rejects for any release that embeds
+  Sparkle, not just ones advertising auto-update. `Tools/sign_sparkle.sh`
+  re-signs the XPC services, `Autoupdate`, `Updater.app`, and the framework
+  inside-out with the release identity, and
+  `Tools/verify_sparkle_signature.sh` asserts Developer ID authority, hardened
+  runtime, team identifier, and a secure timestamp at three gates. No
+  per-release action is required.
 
 **Not yet implemented:** generating and hosting signed `appcast.xml` files
 (the feed at `SUFeedURL`) is a separate follow-up. There is no automation in
