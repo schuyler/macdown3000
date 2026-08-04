@@ -445,3 +445,4 @@ See Step 5 above for stapling instructions.
    - Pushing the tag
 5. **No Co-authored-by trailers** - Never add "Co-authored-by:" to commits
 6. **Clear error messages** - When things fail, show the actual error and let the user decide next steps
+7. **Sparkle signing key** - Before the first real (non-prerelease) release meant to offer auto-updates, confirm `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value. See `plans/release-checklist.md` → "Prerequisite (One-Time): Sparkle Update Signing Key".

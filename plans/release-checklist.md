@@ -5,7 +5,41 @@
 2. Tag and push the version
 3. Staple the DMG (after notarization)
 
+(There's also a one-time Sparkle signing-key prerequisite before the first update-enabled release — see below.)
+
 See `plans/release-process.md` for detailed instructions.
+
+---
+
+## Prerequisite (One-Time): Sparkle Update Signing Key
+
+Sparkle 2 auto-updates are wired up in the app but **inert** until this is
+done once, by the maintainer, before the first real release that should offer
+auto-updates. This is not a per-release step — once the real key is in place,
+it never needs to be redone for later releases.
+
+- [ ] **Generate the EdDSA signing keypair**
+  ```bash
+  ./Pods/Sparkle/bin/generate_keys
+  ```
+  Sparkle 2.9.5 is vendored via CocoaPods; this tool ships at
+  `Pods/Sparkle/bin/generate_keys` after `bundle exec pod install`. It stores
+  the private key in the maintainer's macOS Keychain and prints the matching
+  public key.
+
+- [ ] **Replace the placeholder public key** in `MacDown/MacDown-Info.plist`
+  — the `SUPublicEDKey` value currently ships as a placeholder (base64 of 32
+  zero bytes; see the inline comment above it in the plist) and will never
+  validate a real update signature. Paste the printed public key in its place.
+
+- [ ] **Never commit the private key.** It belongs only in the Keychain (or
+  wherever `generate_keys -x <file>` exports it, if you need an out-of-band
+  backup). It has no place in this repository.
+
+**Not yet implemented:** generating and hosting signed `appcast.xml` files
+(the feed at `SUFeedURL`) is a separate follow-up. There is no automation in
+this repo today that produces or publishes an appcast, or hosts one at
+macdown.app.
 
 ---
 
@@ -95,5 +129,5 @@ Your job is just updating the changelog, tagging, and stapling.
 
 ---
 
-**Last updated:** 2025-11-21
+**Last updated:** 2026-08-03
 **Philosophy:** Only actual manual steps are in this checklist. Everything else is automated.
