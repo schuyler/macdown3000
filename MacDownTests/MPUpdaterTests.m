@@ -76,7 +76,7 @@
                  @"dsa_pub.pem must no longer ship in the bundle");
 }
 
-// T4 -- passes with the zero-key placeholder AND with the real key, but
+// T4 -- passes with the placeholder key AND with the real key, but
 // catches a missing, truncated, or non-base64 key.
 - (void)testEdDSAPublicKeyIsPresentAndWellFormed
 {
@@ -127,10 +127,25 @@
     id updater = [updaterController valueForKey:@"updater"];
     XCTAssertNotNil(updater,
                     @"Updater controller must have an updater");
+    // Reading canCheckForUpdates synchronously here (no waitForExpectations)
+    // is safe: MPUpdaterDisabled() prevents -startUpdater from ever being
+    // called under XCTest, so there is no async initialization to race --
+    // the updater controller exists but was never told to check anything.
     BOOL canCheckForUpdates =
         [[updater valueForKey:@"canCheckForUpdates"] boolValue];
     XCTAssertFalse(canCheckForUpdates,
                    @"canCheckForUpdates must be NO before startUpdater");
+
+    // Pin the actual gating method (-validateMenuItem:), not just the
+    // underlying property: a regression that hardcodes YES would still
+    // pass every assertion above.
+    NSMenuItem *checkForUpdatesItem =
+        [[NSMenuItem alloc] initWithTitle:@"Check for Updates…"
+                                    action:@selector(checkForUpdates:)
+                             keyEquivalent:@""];
+    XCTAssertFalse([delegate validateMenuItem:checkForUpdatesItem],
+                   @"validateMenuItem: must disable Check for Updates while "
+                   @"canCheckForUpdates is NO");
 }
 
 #pragma mark - Channel mapping (updateIncludesPreReleases -> allowed channels)

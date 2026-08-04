@@ -5,18 +5,18 @@
 2. Tag and push the version
 3. Staple the DMG (after notarization)
 
-(There's also a one-time Sparkle signing-key prerequisite before the first update-enabled release — see below.)
+(There's also a one-time auto-update readiness prerequisite before the first update-enabled release — see below.)
 
 See `plans/release-process.md` for detailed instructions.
 
 ---
 
-## Prerequisite (One-Time): Sparkle Update Signing Key
+## Prerequisite (One-Time): Auto-Update Readiness
 
-Sparkle 2 auto-updates are wired up in the app but **inert** until this is
-done once, by the maintainer, before the first real release that should offer
-auto-updates. This is not a per-release step — once the real key is in place,
-it never needs to be redone for later releases.
+Sparkle 2 auto-updates are wired up in the app but **inert** until three
+release-blockers below are cleared, by the maintainer, before the first real
+release that should offer auto-updates. None of these are per-release steps
+— once each is resolved, it never needs to be redone for later releases.
 
 - [ ] **Generate the EdDSA signing keypair**
   ```bash
@@ -29,12 +29,23 @@ it never needs to be redone for later releases.
 
 - [ ] **Replace the placeholder public key** in `MacDown/MacDown-Info.plist`
   — the `SUPublicEDKey` value currently ships as a placeholder (base64 of 32
-  zero bytes; see the inline comment above it in the plist) and will never
-  validate a real update signature. Paste the printed public key in its place.
+  arbitrary non-zero bytes, `0x01..0x20`; see the inline comment above it in
+  the plist) and will never validate a real update signature. Paste the
+  printed public key in its place.
 
 - [ ] **Never commit the private key.** It belongs only in the Keychain (or
   wherever `generate_keys -x <file>` exports it, if you need an out-of-band
   backup). It has no place in this repository.
+
+- [ ] **Fix the release workflow's re-signing of Sparkle's nested components
+  (issue #553, open).** The release workflow's `codesign --force --deep
+  --strict` pass reaches into the embedded `Sparkle.framework` and
+  overwrites its nested XPC components (Installer.xpc, Downloader.xpc,
+  Autoupdate, Updater.app) with the outer app's signing identity, instead of
+  doing the inside-out re-sign Sparkle actually needs. That breaks signature
+  verification and notarization for any release that embeds Sparkle — not
+  just ones advertising auto-update. Issue #553 states plainly: "Releases
+  are blocked until this lands."
 
 **Not yet implemented:** generating and hosting signed `appcast.xml` files
 (the feed at `SUFeedURL`) is a separate follow-up. There is no automation in
