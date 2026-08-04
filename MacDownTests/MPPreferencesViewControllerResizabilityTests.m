@@ -494,17 +494,12 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
 {
     MPGeneralPreferencesViewController *vc =
         [[MPGeneralPreferencesViewController alloc] init];
-    NSView *content = MPContentView(vc);
+    MPContentView(vc);  // triggers loadView
 
-    NSButton *checkbox = nil;
-    for (NSButton *button in MPCheckboxes(content))
-    {
-        if ([button.title isEqualToString:@"Include pre-releases"])
-        {
-            checkbox = button;
-            break;
-        }
-    }
+    // KVC, not dot syntax: includePreReleasesCheckbox is a private IBOutlet
+    // declared in a class extension, not the public header (same pattern as
+    // the updaterController/updater access in MPUpdaterTests.m).
+    NSButton *checkbox = [vc valueForKey:@"includePreReleasesCheckbox"];
     XCTAssertNotNil(checkbox,
         @"General pane: expected an 'Include pre-releases' checkbox");
     XCTAssertTrue(checkbox.enabled,

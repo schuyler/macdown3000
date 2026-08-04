@@ -119,8 +119,14 @@
     // MPMainController.h, and this file deliberately avoids importing
     // Sparkle headers (see the class-extension comment above).
     MPMainController *delegate = (MPMainController *)NSApp.delegate;
+    XCTAssertNotNil(delegate,
+                    @"NSApp.delegate must be the real MPMainController");
     id updaterController = delegate.updaterController;
+    XCTAssertNotNil(updaterController,
+                    @"MPMainController must create its updater controller");
     id updater = [updaterController valueForKey:@"updater"];
+    XCTAssertNotNil(updater,
+                    @"Updater controller must have an updater");
     BOOL canCheckForUpdates =
         [[updater valueForKey:@"canCheckForUpdates"] boolValue];
     XCTAssertFalse(canCheckForUpdates,
