@@ -34,6 +34,9 @@
 #import "MPResourceWatcherSet.h"
 #import "MPHTMLResourceURLs.h"
 #import "MPURLSecurityPolicy.h"
+#import "MPFolderSidebarViewController.h"
+#import "MPSidebarSplitView.h"
+#import "MPSidebarSyncCoordinator.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 // Issue #504: PDF export post-processing (clickable internal anchor links).
 #import <PDFKit/PDFKit.h>
@@ -248,7 +251,8 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
      WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
 #endif
-     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate>
+     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate,
+     MPFolderSidebarDelegate>
 
 typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeWord,
@@ -372,6 +376,10 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 
 // Issue #110: Watch local resources for cache-busting
 @property (strong) MPResourceWatcherSet *resourceWatcherSet;
+
+// Folder-workspace sidebar support
+@property (nonatomic, strong) MPFolderSidebarViewController *sidebarController;
+@property (nonatomic, strong) MPSidebarSplitView *outerSplitView;
 
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
@@ -687,6 +695,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 - (void)windowControllerDidLoadNib:(NSWindowController *)controller
 {
     [super windowControllerDidLoadNib:controller];
+    [self installFolderSidebarForController:controller];
 
     // All files use their absolute path to keep their window states.
     NSString *autosaveName = kMPDefaultAutosaveName;
@@ -854,6 +863,280 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return range;
 }
 
+#pragma mark - Folder sidebar
+
+// Canonicalise on the way in, so one folder is one workspace however it was
+// reached. `macdown /tmp/proj` and File > Open Folder... on the same directory
+// otherwise produce file:///tmp/proj/ and file:///private/tmp/proj/, which the
+// sync coordinator would treat as two unrelated workspaces -- silently, since
+// everything except sync canonicalises already.
+- (void)setWorkspaceRootURL:(NSURL *)workspaceRootURL
+{
+    _workspaceRootURL =
+        [workspaceRootURL.URLByResolvingSymlinksInPath copy] ?: [workspaceRootURL copy];
+}
+
+- (void)installFolderSidebarForController:(NSWindowController *)controller
+{
+    if (!self.workspaceRootURL)
+        return;
+
+    NSWindow *window = controller.window;
+    NSView *content = window.contentView;
+    MPDocumentSplitView *inner = self.splitView;
+    if (!inner || inner.superview != content)
+        return;   // unexpected hierarchy; skip rather than corrupt the window
+
+    self.sidebarController =
+        [[MPFolderSidebarViewController alloc] initWithRootURL:self.workspaceRootURL];
+    self.sidebarController.sidebarDelegate = self;
+
+    MPSidebarSplitView *outer =
+        [[MPSidebarSplitView alloc] initWithFrame:content.bounds];
+    outer.vertical = YES;
+    outer.dividerStyle = NSSplitViewDividerStyleThin;
+    outer.delegate = self.sidebarController;          // NOT MPDocument
+    // No autosaveName: width persistence + cross-tab sync is owned by
+    // MPSidebarSyncCoordinator; a shared NSSplitView autosave would fight it.
+    outer.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+    [inner removeFromSuperview];
+
+    NSView *sidebarView = self.sidebarController.view;
+    // Start at this workspace's shared width so this tab matches its siblings.
+    CGFloat startWidth = [[MPSidebarSyncCoordinator sharedCoordinator]
+        sidebarWidthForRoot:self.workspaceRootURL];
+
+    [outer addSubview:sidebarView];                   // index 0 = leading sidebar
+    [outer addSubview:inner];                         // index 1 = editor/preview
+
+    // The sidebar is pinned to a fixed width by the delegate's
+    // -splitView:resizeSubviewsWithOldSize: (holding priorities don't pin during
+    // an autoresize — NSSplitView falls back to proportional resizing).
+    outer.frame = content.bounds;
+    [content addSubview:outer];
+    self.outerSplitView = outer;
+    [outer adjustSubviews];
+    [outer setPosition:startWidth ofDividerAtIndex:0];
+
+    // Match this workspace's visibility (a new tab opened while the sidebar was
+    // hidden in its sibling tabs should also start hidden).
+    if (![[MPSidebarSyncCoordinator sharedCoordinator]
+              sidebarVisibleForRoot:self.workspaceRootURL])
+        [self hideSidebarPane];
+
+    // Live sync across tabs. Width is reported only on a genuine divider drag
+    // (see -outerSplitDidResize:), so opening a tab or resizing the window never
+    // nudges the shared width. Observers are removed in -close (removeObserver:self).
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self selector:@selector(outerSplitDidResize:)
+               name:NSSplitViewDidResizeSubviewsNotification object:outer];
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self selector:@selector(sidebarSyncDidChange:)
+               name:MPSidebarSyncDidChangeNotification object:nil];
+}
+
+// Propagate a width change ONLY when it comes from the user dragging the
+// divider. The same notification also fires for programmatic -setPosition:,
+// window resizing, and tab insertion; those must not broadcast (that reset the
+// shared width every time a tab opened). MPSidebarSplitView knows when it is
+// inside a divider-drag tracking loop, which -[NSApp currentEvent] cannot
+// reliably tell apart from a layout-triggered resize.
+- (void)outerSplitDidResize:(NSNotification *)note
+{
+    if (!self.outerSplitView.isDraggingDivider)
+        return;
+    NSView *sidebarView = self.sidebarController.view;
+    if (sidebarView.superview != self.outerSplitView)
+        return;
+    CGFloat w = NSWidth(sidebarView.frame);
+    if (w > 0)
+        [[MPSidebarSyncCoordinator sharedCoordinator]
+            setSidebarWidth:w forRoot:self.workspaceRootURL source:self];
+}
+
+// Whether the sidebar is actually on screen. The pane can be absent (hidden via
+// ⌘\, which removes it so no divider is drawn) or present but collapsed to zero
+// width by a divider drag; both read as not visible.
+- (BOOL)isSidebarVisible
+{
+    NSView *sidebarView = self.sidebarController.view;
+    if (!self.outerSplitView || sidebarView.superview != self.outerSplitView)
+        return NO;
+    return ![self.outerSplitView isSubviewCollapsed:sidebarView];
+}
+
+- (void)showSidebarPane
+{
+    NSSplitView *outer = self.outerSplitView;
+    NSView *sidebarView = self.sidebarController.view;
+    if (!outer)
+        return;
+    // The coordinator is the single source of truth for this workspace's
+    // width; it is the only one that sees this tab's own divider drags, which
+    // -sidebarSyncDidChange: skips because it ignores its own broadcasts.
+    CGFloat w = [[MPSidebarSyncCoordinator sharedCoordinator]
+        sidebarWidthForRoot:self.workspaceRootURL];
+    if (sidebarView.superview == outer)
+    {
+        // Present but dragged shut: reopen it at the workspace's width. A
+        // collapsed pane is left hidden by AppKit, and it can also be re-added
+        // in that state, so clear it here rather than rely on -setPosition:.
+        if ([outer isSubviewCollapsed:sidebarView] || sidebarView.hidden)
+        {
+            sidebarView.hidden = NO;
+            [outer setPosition:w ofDividerAtIndex:0];
+        }
+        return;
+    }
+    sidebarView.hidden = NO;
+    [outer addSubview:sidebarView positioned:NSWindowBelow relativeTo:self.splitView];
+    [outer adjustSubviews];
+    [outer setPosition:w ofDividerAtIndex:0];
+}
+
+- (void)hideSidebarPane
+{
+    NSSplitView *outer = self.outerSplitView;
+    NSView *sidebarView = self.sidebarController.view;
+    if (!outer || sidebarView.superview != outer)
+        return;
+    [sidebarView removeFromSuperview];          // removing the pane draws no divider
+    [outer adjustSubviews];
+}
+
+- (IBAction)toggleFolderSidebar:(id)sender
+{
+    if (!self.sidebarController || !self.outerSplitView)
+        return;
+    BOOL shown = self.isSidebarVisible;
+    if (shown)
+        [self hideSidebarPane];
+    else
+        [self showSidebarPane];
+    // Broadcast so the other tabs of THIS workspace match.
+    [[MPSidebarSyncCoordinator sharedCoordinator]
+        setSidebarVisible:!shown forRoot:self.workspaceRootURL source:self];
+}
+
+// Another tab of the SAME workspace changed the shared width/visibility: match
+// it here. Changes from a window open on a different folder are ignored — those
+// are independent workspaces that happen to share the process.
+- (void)sidebarSyncDidChange:(NSNotification *)note
+{
+    if (note.object == self)
+        return;                                  // ignore our own change
+    NSString *kind = note.userInfo[MPSidebarSyncKindKey];
+    NSURL *root = note.userInfo[MPSidebarSyncRootKey];
+    if (![root.absoluteString isEqualToString:self.workspaceRootURL.absoluteString])
+        return;                                  // a different workspace
+
+    MPSidebarSyncCoordinator *coord = [MPSidebarSyncCoordinator sharedCoordinator];
+    if ([kind isEqualToString:MPSidebarSyncKindWidth])
+    {
+        CGFloat width = [coord sidebarWidthForRoot:self.workspaceRootURL];
+        if (self.sidebarController.view.superview == self.outerSplitView)
+            [self.outerSplitView setPosition:width ofDividerAtIndex:0];
+    }
+    else if ([kind isEqualToString:MPSidebarSyncKindVisible])
+    {
+        if ([coord sidebarVisibleForRoot:self.workspaceRootURL])
+            [self showSidebarPane];
+        else
+            [self hideSidebarPane];
+    }
+}
+
++ (MPDocument *)openDocumentForFileURL:(NSURL *)url
+{
+    NSDocument *doc =
+        [[NSDocumentController sharedDocumentController] documentForURL:url];
+    return [doc isKindOfClass:[MPDocument class]] ? (MPDocument *)doc : nil;
+}
+
+// What to show the user when opening a sidebar file produced no document.
+// Returns nil when there is nothing worth reporting. Split out from the
+// presentation so it can be tested without putting a modal alert on screen.
++ (NSError *)sidebarOpenErrorForError:(NSError *)error URL:(NSURL *)url
+{
+    // The user cancelling (e.g. at an authentication prompt) is not a failure.
+    if ([error.domain isEqualToString:NSCocoaErrorDomain]
+        && error.code == NSUserCancelledError)
+    {
+        return nil;
+    }
+    if (error)
+        return error;
+
+    // No document and no error: synthesise one rather than fail silently.
+    NSString *fmt = NSLocalizedString(@"The file “%@” could not be opened.",
+                                      @"Sidebar file open failure");
+    NSMutableDictionary *info = [NSMutableDictionary dictionary];
+    info[NSLocalizedDescriptionKey] =
+        [NSString stringWithFormat:fmt, url.lastPathComponent ?: @""];
+    if (url)
+        info[NSURLErrorKey] = url;
+    return [NSError errorWithDomain:NSCocoaErrorDomain
+                               code:NSFileReadUnknownError userInfo:info];
+}
+
+- (void)presentSidebarOpenError:(NSError *)error forURL:(NSURL *)url
+{
+    NSError *toShow = [MPDocument sidebarOpenErrorForError:error URL:url];
+    if (toShow)
+        [self presentError:toShow];
+}
+
+- (void)folderSidebar:(MPFolderSidebarViewController *)sidebar
+   didActivateFileURL:(NSURL *)url
+{
+    // 1. Already open? Just raise that tab. The highlight belongs in the tab
+    //    that displays the file, which is the one being raised — not this one,
+    //    which goes on showing whatever it had.
+    MPDocument *existing = [MPDocument openDocumentForFileURL:url];
+    if (existing)
+    {
+        [existing showWindows];
+        [existing.sidebarController selectFileURL:url];
+        return;
+    }
+
+    // 2. Open without display so we can set the workspace root before the
+    //    nib loads (so the new tab gets its own sidebar), then tab it in.
+    NSWindow *hostWindow = self.windowControllers.firstObject.window;
+    NSURL *root = self.workspaceRootURL;
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    [c openDocumentWithContentsOfURL:url display:NO
+                  completionHandler:^(NSDocument *opened, BOOL wasOpen, NSError *err) {
+        if (wasOpen)
+        {
+            // Its nib has already loaded, so setting workspaceRootURL now would
+            // be ignored while still overwriting the root it syncs against.
+            [opened showWindows];
+            if ([opened isKindOfClass:[MPDocument class]])
+                [((MPDocument *)opened).sidebarController selectFileURL:url];
+            return;
+        }
+        if (![opened isKindOfClass:[MPDocument class]])
+        {
+            // display:NO opts out of NSDocumentController's automatic error
+            // alert, so a file that was deleted or is unreadable would fail
+            // silently — report it ourselves.
+            [self presentSidebarOpenError:err forURL:url];
+            return;
+        }
+        MPDocument *mp = (MPDocument *)opened;
+        mp.workspaceRootURL = root;
+        if (mp.windowControllers.count == 0)
+            [mp makeWindowControllers];
+        NSWindow *newWindow = mp.windowControllers.firstObject.window;
+        if (hostWindow && newWindow && newWindow != hostWindow)
+            [hostWindow addTabbedWindow:newWindow ordered:NSWindowAbove];
+        [mp showWindows];
+        [mp.sidebarController selectFileURL:url];
+    }];
+}
+
 // Shared by three paths: the initial document open, a manual Revert, and an
 // external-change reload (silent or post-Discard). The selection/scroll
 // preservation below therefore affects all three — a change made here for one
@@ -948,6 +1231,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
+        [self.sidebarController stopWatching];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
@@ -1029,9 +1313,27 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // If URL changed (Save As), restart watching the new file
     if (result && (!previousURL || ![url isEqual:previousURL]))
     {
-        // URL was updated by super, restart watching the new file
         dispatch_async(dispatch_get_main_queue(), ^{
+            // URL was updated by super, restart watching the new file
             [self startFileWatching];
+
+            // A new path also appeared on disk. Folder sidebars watch with
+            // kFSEventStreamCreateFlagIgnoreSelf (so ordinary re-saves don't
+            // cause a reload storm), which also means they never see files WE
+            // create — tell them directly.
+            //
+            // The test is on the document's own URL, not on `url`: a safe save
+            // hands -writeToURL: a path inside an NSItemReplacementDirectory
+            // and swaps it into place afterwards, so `url` is never the file
+            // the user ends up with. By the time this block runs NSDocument has
+            // updated fileURL, so a change against previousURL means a first
+            // save or a Save As — the cases that add a path to the tree.
+            NSURL *saved = self.fileURL;
+            if (saved && ![saved isEqual:previousURL])
+            {
+                [[MPSidebarSyncCoordinator sharedCoordinator]
+                    notifyFileSavedAtURL:saved source:self];
+            }
         });
     }
 
@@ -1284,6 +1586,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     else if (action == @selector(selectDocumentZoom:))
     {
         return YES;
+    }
+    else if (action == @selector(toggleFolderSidebar:))
+    {
+        NSMenuItem *it = ((NSMenuItem *)item);
+        BOOL hasWorkspace = (self.workspaceRootURL != nil);
+        BOOL shown = hasWorkspace && self.isSidebarVisible;
+        it.title = shown
+            ? NSLocalizedString(@"Hide Sidebar", @"View menu item")
+            : NSLocalizedString(@"Show Sidebar", @"View menu item");
+        return hasWorkspace;
     }
     return result;
 }

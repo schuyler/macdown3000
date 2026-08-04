@@ -23,4 +23,8 @@
     "Check for Updates…" main-menu item. */
 - (IBAction)checkForUpdates:(id)sender;
 
+/** Prompts for a directory and opens it as a folder workspace; target of the
+    "Open Folder…" main-menu item. */
+- (IBAction)openFolder:(id)sender;
+
 @end

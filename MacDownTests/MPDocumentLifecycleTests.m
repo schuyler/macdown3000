@@ -926,4 +926,16 @@
         @"The base URL must point at a non-existent sentinel, not a real file");
 }
 
+
+#pragma mark - Workspace Tests
+
+- (void)testWorkspaceRootURLDefaultsToNilAndIsSettable
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertNil(doc.workspaceRootURL);
+    NSURL *root = [NSURL fileURLWithPath:@"/tmp" isDirectory:YES];
+    doc.workspaceRootURL = root;
+    XCTAssertEqualObjects(doc.workspaceRootURL, root);
+}
+
 @end
