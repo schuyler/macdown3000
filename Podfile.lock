@@ -9,6 +9,7 @@ PODS:
   - M13OrderedDictionary (1.1.0)
   - MASPreferences (1.4.1)
   - PAPreferences (0.5)
+  - Sparkle (2.9.5)
 
 DEPENDENCIES:
   - GBCli (~> 1.1)
@@ -19,6 +20,7 @@ DEPENDENCIES:
   - M13OrderedDictionary (~> 1.1)
   - MASPreferences (~> 1.4)
   - PAPreferences (~> 0.5)
+  - Sparkle (~> 2.9)
 
 SPEC REPOS:
   https://github.com/MacDownApp/cocoapods-specs.git:
@@ -31,6 +33,7 @@ SPEC REPOS:
     - M13OrderedDictionary
     - MASPreferences
     - PAPreferences
+    - Sparkle
 
 SPEC CHECKSUMS:
   GBCli: e5f988fadb68e1e3c01919f134009fed9796fde0
@@ -41,7 +44,8 @@ SPEC CHECKSUMS:
   M13OrderedDictionary: 6e157fe9c82aa6b3cd7198f5c5c30c7a6834c4a6
   MASPreferences: 1ba2deb14086792857af44d22846fc4aae477fd9
   PAPreferences: 9f0ffb1e67174a0df001af9d3320166ceb9ee6f5
+  Sparkle: 3ed3ee66c8526fcba244d06edef5f009d3bbc6ba
 
-PODFILE CHECKSUM: 6964d8bb86249c9847e17b4975c7a2355b67b01e
+PODFILE CHECKSUM: c7fbc186665d30d0f56f34d3b10c619d24110611
 
 COCOAPODS: 1.16.2
