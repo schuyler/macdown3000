@@ -72,23 +72,37 @@ NS_INLINE NSString *MPStylePathForName(NSString *name)
         name = [name stringByAppendingPathExtension:@"css"];
     }
 
+    NSFileManager *manager = [NSFileManager defaultManager];
+
     // Look in Application Support first (user styles)
     NSArray *paths = NSSearchPathForDirectoriesInDomains(
         NSApplicationSupportDirectory, NSUserDomainMask, YES);
     if (paths.count > 0) {
         NSString *appSupportPath = [paths[0] stringByAppendingPathComponent:@"MacDown 3000/Styles"];
         NSString *stylePath = [appSupportPath stringByAppendingPathComponent:name];
-        if ([[NSFileManager defaultManager] fileExistsAtPath:stylePath]) {
+        if ([manager fileExistsAtPath:stylePath]) {
             return stylePath;
         }
     }
 
-    // Fall back to bundle resources
-    NSBundle *bundle = MPQuickLookBundle();
-    NSString *bundlePath = [bundle pathForResource:[name stringByDeletingPathExtension]
-                                            ofType:@"css"
-                                       inDirectory:@"Styles"];
-    return bundlePath;
+    // Fall back to bundle resources. Try the bundle that defines this class
+    // first -- the real answer in the shipped MacDownCore.framework / QuickLook
+    // extension -- then mainBundle as an additional fallback. This file is also
+    // compiled directly into the MacDownTests host (see MacDownTests target
+    // Sources), so -bundleForClass: can resolve to that host's own image there,
+    // which carries no Styles/ resources; mainBundle in that case is the actual
+    // test host app, which does.
+    for (NSBundle *bundle in @[MPQuickLookBundle(), [NSBundle mainBundle]]) {
+        NSString *resourcePath = bundle.resourcePath;
+        if (!resourcePath) continue;
+        NSString *bundlePath =
+            [NSString pathWithComponents:@[resourcePath, @"Styles", name]];
+        if ([manager fileExistsAtPath:bundlePath]) {
+            return bundlePath;
+        }
+    }
+
+    return nil;
 }
 
 /**

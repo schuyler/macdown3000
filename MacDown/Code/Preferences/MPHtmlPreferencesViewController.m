@@ -83,6 +83,14 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
         case 0:     // Reveal
         {
             NSString *dirPath = MPDataDirectory(kMPStylesDirectoryName);
+            NSFileManager *manager = [NSFileManager defaultManager];
+            if (![manager fileExistsAtPath:dirPath])
+            {
+                [manager createDirectoryAtPath:dirPath
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:nil];
+            }
             NSURL *url = [NSURL fileURLWithPath:dirPath];
             NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
             [workspace activateFileViewerSelectingURLs:@[url]];
@@ -144,10 +152,8 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     self.stylesheetSelect.enabled = NO;
     [self.stylesheetSelect removeAllItems];
 
-    NSArray *itemTitles = MPListEntriesForDirectory(
-        kMPStylesDirectoryName,
-        MPFileNameHasExtensionProcessor(kMPStyleFileExtension)
-    );
+    NSArray *itemTitles = MPListStylesheetsInPaths(
+        MPDataDirectory(nil), [NSBundle mainBundle].resourcePath);
     itemTitles = [itemTitles sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
 
     [self.stylesheetSelect addItemWithTitle:@""];
