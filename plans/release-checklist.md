@@ -1,9 +1,10 @@
 # MacDown Release Checklist
 
-**Quick reference:** Only three manual steps are required to release MacDown:
+**Quick reference:** Four manual steps are required to release MacDown:
 1. Update the changelog
 2. Tag and push the version
 3. Staple the DMG (after notarization)
+4. Triage the milestone's open issues (after publish)
 
 (There's also a one-time auto-update readiness prerequisite before the first update-enabled release — see below.)
 
@@ -113,6 +114,15 @@ Once you receive the notarization approval email:
 
 ---
 
+## Step 4: Triage the Milestone's Open Issues
+
+- [ ] **Review open issues in the release's milestone** and close any fully addressed by this release, with a comment citing the fixing PR
+  - Don't wait for the original submitter to confirm the fix — the changelog/PR content is sufficient evidence
+  - Flag ambiguous cases (unclear PR match, opt-in-only fix, suspected duplicate) for confirmation before closing
+  - See `.claude/commands/release.md` → "Step 7: Post-Release Milestone Issue Triage" for the full process
+
+---
+
 ## That's It
 
 The workflow handles everything else:
@@ -123,7 +133,7 @@ The workflow handles everything else:
 - ✅ Submits for Apple notarization
 - ✅ Creates the GitHub release as a draft
 
-Your job is just updating the changelog, tagging, and stapling.
+Your job is just updating the changelog, tagging, stapling, and triaging the milestone afterward.
 
 ---
 

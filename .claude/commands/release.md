@@ -1,5 +1,5 @@
 ---
-description: Semi-automated release workflow from changelog to stapling
+description: Semi-automated release workflow from changelog to stapling and post-release issue triage
 ---
 
 # Release Workflow
@@ -448,6 +448,30 @@ Summary:
 See Step 5 above for stapling instructions.
 
 
+### Step 7: Post-Release Milestone Issue Triage
+
+Once the release is published, review the open issues in that version's milestone (e.g. the `v{VERSION}` milestone) and close any that were fully addressed by this release.
+
+1. **List open issues in the milestone:**
+   ```bash
+   gh issue list --repo schuyler/macdown3000 --milestone "v{VERSION}" --state open --json number,title,body,url
+   ```
+
+2. **Cross-reference each issue against the changelog and its linked PR(s).** Don't rely on title-matching alone — read the PR description (`gh pr view {PR} --repo schuyler/macdown3000 --json title,body,files`) to confirm the underlying reported behavior was actually fixed, not just a related symptom.
+
+3. **Close every issue that was fully addressed by this release, regardless of whether the original submitter has confirmed the fix.** Waiting for reporter confirmation is not a precondition for closing — the changelog and PR content are sufficient evidence.
+
+4. **Comment on each closed issue** identifying the release and the fixing PR(s):
+   ```bash
+   gh issue close {NUM} --repo schuyler/macdown3000 --comment "Addressed in v{VERSION} via #{PR} (\"{brief description}\")."
+   ```
+
+5. **For ambiguous cases** — a PR whose description doesn't clearly reproduce the original complaint, an opt-in fix that doesn't change reported default behavior, or a suspected duplicate — flag it and confirm with Schuyler before closing rather than guessing.
+
+6. **Issues not addressed by this release** (deferred, or moved to a later milestone) need no action — leave them as-is.
+
+This is a manual review step, not run automatically as part of the tag/build/staple pipeline above.
+
 
 ## Important Reminders
 
@@ -460,3 +484,4 @@ See Step 5 above for stapling instructions.
 5. **No Co-authored-by trailers** - Never add "Co-authored-by:" to commits
 6. **Clear error messages** - When things fail, show the actual error and let the user decide next steps
 7. **Auto-update readiness** - Before the first real (non-prerelease) release meant to offer auto-updates, three blockers must be cleared: (a) `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value — Step 1 checks this mechanically and fails the release if it is; (b) issue #553 (Sparkle's nested XPC components get force-re-signed with the wrong identity) is closed; (c) `appcast.xml` generation/hosting exists for `SUFeedURL`. See `plans/release-checklist.md` → "Prerequisite (One-Time): Auto-Update Readiness".
+8. **Post-release issue triage doesn't wait on reporter confirmation** - Close milestone issues that the changelog/PRs show were fixed, even if the original submitter never replied to a test request.
