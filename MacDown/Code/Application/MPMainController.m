@@ -276,7 +276,9 @@ NS_INLINE void treat()
 
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    if (self.preferences.filesToOpen.count || self.preferences.pipedContentFileToOpen)
+    if (self.preferences.filesToOpen.count
+        || self.preferences.pipedContentFileToOpen
+        || self.preferences.foldersToOpen.count)
         return NO;
     return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
@@ -290,6 +292,7 @@ NS_INLINE void treat()
 {
     [self openPendingPipedContent];
     [self openPendingFiles];
+    [self openPendingFolders];
     treat();
 }
 
@@ -367,6 +370,41 @@ NS_INLINE void treat()
     }
 
     self.preferences.filesToOpen = nil;
+    [self.preferences synchronize];
+}
+
+- (IBAction)openFolder:(id)sender
+{
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseFiles = NO;
+    panel.canChooseDirectories = YES;
+    panel.allowsMultipleSelection = NO;
+    if ([panel runModal] == NSModalResponseOK && panel.URL)
+        [self openWorkspaceAtURL:panel.URL];
+}
+
+- (void)openWorkspaceAtURL:(NSURL *)url
+{
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    NSError *error = nil;
+    MPDocument *doc =
+        (MPDocument *)[c openUntitledDocumentAndDisplay:NO error:&error];
+    if (!doc)
+        return;
+    doc.workspaceRootURL = url;          // set BEFORE the nib loads the sidebar
+    [doc makeWindowControllers];
+    [doc showWindows];
+}
+
+- (void)openPendingFolders
+{
+    for (NSString *path in self.preferences.foldersToOpen)
+    {
+        NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+        if ([url checkResourceIsReachableAndReturnError:NULL])
+            [self openWorkspaceAtURL:url];
+    }
+    self.preferences.foldersToOpen = nil;
     [self.preferences synchronize];
 }
 
