@@ -270,14 +270,20 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 // kind lets validateHeaderLocationAlignment align the two sequences instead of blindly
 // assuming they correspond 1:1 by index. Header values equal the header level, matching
 // the kind codes emitted by updateHeaderLocations.js.
+//
+// Density fix (long header-sparse sections drift out of sync): paragraphs and list
+// items are also tracked as reference points, so no span between two reference points
+// is ever very long, bounding the linear-interpolation error between them.
 typedef NS_ENUM(NSInteger, MPReferenceKind) {
-    MPReferenceKindImage = 0,
-    MPReferenceKindH1    = 1,
-    MPReferenceKindH2    = 2,
-    MPReferenceKindH3    = 3,
-    MPReferenceKindH4    = 4,
-    MPReferenceKindH5    = 5,
-    MPReferenceKindH6    = 6,
+    MPReferenceKindImage     = 0,
+    MPReferenceKindH1        = 1,
+    MPReferenceKindH2        = 2,
+    MPReferenceKindH3        = 3,
+    MPReferenceKindH4        = 4,
+    MPReferenceKindH5        = 5,
+    MPReferenceKindH6        = 6,
+    MPReferenceKindParagraph = 7,
+    MPReferenceKindListItem  = 8,
 };
 
 @property (weak) IBOutlet NSToolbar *toolbar;
@@ -383,12 +389,24 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 
 - (void)scaleWebview;
 - (void)syncScrollers;
+- (void)syncScrollersToCursor;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
 - (void)validateHeaderLocationAlignment;
 // Issue #436: Pure helpers — no view/DOM dependencies, so they are unit-testable headless.
 + (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
                                           outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers;
+// Pure geometry helper for -syncScrollersToCursor — see its declaration further
+// down for full documentation. Declared here too so unit tests (via a category)
+// can call it directly with concrete numbers.
++ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY
+           editorContentHeight:(CGFloat)editorContentHeight
+           editorVisibleHeight:(CGFloat)editorVisibleHeight
+           editorScrollOffsetY:(CGFloat)editorScrollOffsetY
+          previewContentHeight:(CGFloat)previewContentHeight
+          previewVisibleHeight:(CGFloat)previewVisibleHeight
+        editorHeaderLocations:(NSArray<NSNumber *> *)editorHeaderLocations
+       webViewHeaderLocations:(NSArray<NSNumber *> *)webViewHeaderLocations;
 + (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs
           editorTypes:(NSArray<NSNumber *> *)editorTypes
             previewYs:(NSArray<NSNumber *> *)previewYs
@@ -2020,6 +2038,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 // revert to the document-wide totals.
 - (void)editorSelectionDidChange:(NSNotification *)notification
 {
+    // When Sync Panes is on, moving the cursor (click or arrow keys) refines the
+    // preview's scroll position to follow it, on top of the usual viewport-based
+    // sync. Runs independently of the word-count display preference below, since
+    // it is unrelated to that gate.
+    if (self.preferences.editorSyncScrolling && _scrollOwner == MPScrollOwnerNeither)
+    {
+        [self syncScrollersToCursor];
+    }
+
     if (!self.preferences.editorShowWordCount)
         return;
 
@@ -3366,10 +3393,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 /**
- * Issue #436: Classifies the reference points (ATX/setext headers and standalone images)
- * in a markdown string, returning their kind codes (see MPReferenceKind) in document
- * order, with the matching source line numbers via outLineNumbers. This mirrors the DOM
- * detection in updateHeaderLocations.js so the editor and preview sequences agree:
+ * Issue #436: Classifies the reference points (ATX/setext headers, standalone images,
+ * paragraphs, and list items) in a markdown string, returning their kind codes (see
+ * MPReferenceKind) in document order, with the matching source line numbers via
+ * outLineNumbers. This mirrors the DOM detection in updateHeaderLocations.js so the
+ * editor and preview sequences agree:
  *
  *   - Headers inside fenced code blocks (``` or ~~~) are skipped — the DOM renders them
  *     as <pre><code>, not <hN>.
@@ -3377,6 +3405,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  *   - ATX headers with 7+ hashes are not headers (CommonMark §4.2; Hoedown emits no <hN>),
  *     so they are treated as ordinary paragraph text.
  *   - Standalone whole-line images (inline or reference syntax) are kind 0.
+ *   - List item marker lines (unordered: '-'/'*'/'+'; ordered: digits followed by '.'
+ *     or ')') are kind 8, one reference point per marker line — continuation lines of
+ *     a multi-line list item are not additional reference points.
+ *   - The first line of each paragraph (a maximal run of non-blank, non-header,
+ *     non-list-item, non-HR, non-fence lines) is kind 7 — one reference point per
+ *     rendered <p>, matching how Hoedown collapses a contiguous run of text lines into
+ *     a single paragraph. A text line immediately followed by a setext underline is
+ *     NOT also emitted as a paragraph, since it becomes a header instead; committing
+ *     it is deferred via pendingParagraphLine until the following line is examined.
  *
  * Pure function: no view, layout, or DOM dependencies, so it is unit-testable headless.
  */
@@ -3397,6 +3434,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     static NSRegularExpression *imgRegex = nil;    // ![alt](url)
     static NSRegularExpression *imgRefRegex = nil; // ![alt][ref]
     static NSRegularExpression *hrRegex = nil;     // thematic break (-, *, _)
+    static NSRegularExpression *ulRegex = nil;     // unordered list item marker
+    static NSRegularExpression *olRegex = nil;     // ordered list item marker
     static dispatch_once_t regexOnceToken;
     dispatch_once(&regexOnceToken, ^{
         // Setext underlines: 0-3 leading spaces and trailing whitespace are allowed
@@ -3408,14 +3447,31 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
         imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
         hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
+        // Bullet marker + required space + content.
+        ulRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}[-*+][ \\t]+\\S" options:0 error:NULL];
+        // Number (1-9 digits) + '.' or ')' + required space + content.
+        olRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}[0-9]{1,9}[.)][ \\t]+\\S" options:0 error:NULL];
     });
 
     NSArray<NSString *> *lines = [markdown componentsSeparatedByString:@"\n"];
 
     // Setext underlines attach to a *paragraph* line. previousLineHadContent is true only
-    // after ordinary text — not after blanks, headers, HRs, images, or fence lines —
-    // so e.g. "# H\n---" is an ATX header followed by an HR, not a setext header.
+    // after ordinary text — not after blanks, headers, HRs, images, list items, or fence
+    // lines — so e.g. "# H\n---" is an ATX header followed by an HR, not a setext header.
     BOOL previousLineHadContent = NO;
+
+    // The most recently seen paragraph-start line, not yet committed as a reference
+    // point: since a text line immediately followed by a setext underline becomes a
+    // header (not a paragraph), committing a candidate paragraph start is deferred
+    // until the following line is known not to be a setext underline for it.
+    __block BOOL hasPendingParagraphLine = NO;
+    __block NSUInteger pendingParagraphLine = 0;
+
+    // Once a list-item marker line is seen, subsequent non-blank lines are treated as
+    // continuation lines of that same item (not a new paragraph) until a blank line (or
+    // another marker/header/image/HR/fence) ends the run. This keeps a multi-line list
+    // item from spawning a spurious paragraph reference point for its continuation text.
+    BOOL insideListItemContinuation = NO;
 
     // Fenced-code-block state. CommonMark: a fence opens with 3+ of ` or ~ (0-3 leading
     // spaces) and closes with a run of the same character at least as long, with nothing
@@ -3423,6 +3479,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     BOOL insideFence = NO;
     unichar fenceChar = 0;
     NSUInteger fenceLength = 0;
+
+    // Commits any pending (tentative) paragraph-start line as a real reference point.
+    // Called whenever the next line turns out NOT to be a setext underline for it.
+    void (^commitPendingParagraph)(void) = ^{
+        if (hasPendingParagraphLine) {
+            [kinds addObject:@(MPReferenceKindParagraph)];
+            [lineNumbers addObject:@(pendingParagraphLine)];
+            hasPendingParagraphLine = NO;
+        }
+    };
 
     for (NSUInteger lineNumber = 0; lineNumber < lines.count; lineNumber++) {
         NSString *line = lines[lineNumber];
@@ -3436,6 +3502,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (insideFence) {
             // Inside a fence: only a matching, long-enough, bare closing marker ends it.
             // Everything here (including the fence lines) is code, never a reference point.
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             if (isFenceMarker && markerChar == fenceChar
                     && markerLength >= fenceLength && !hasTrailingContent) {
                 insideFence = NO;
@@ -3446,6 +3514,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         if (isFenceMarker) {
             // Opens a fence. The opening line itself is never a reference point.
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             insideFence = YES;
             fenceChar = markerChar;
             fenceLength = markerLength;
@@ -3458,19 +3528,29 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (atxMatch) {
             NSUInteger hashCount = [atxMatch rangeAtIndex:1].length;
             if (hashCount >= 1 && hashCount <= 6) {
+                commitPendingParagraph();
+                insideListItemContinuation = NO;
                 [kinds addObject:@((NSInteger)hashCount)];
                 [lineNumbers addObject:@(lineNumber)];
                 previousLineHadContent = NO;
                 continue;
             }
             // 7+ hashes: ordinary paragraph text, which can still anchor a setext header.
+            if (!hasPendingParagraphLine && !previousLineHadContent) {
+                hasPendingParagraphLine = YES;
+                pendingParagraphLine = lineNumber;
+            }
             previousLineHadContent = YES;
             continue;
         }
 
-        // Setext underline (only valid directly under a paragraph line).
+        // Setext underline (only valid directly under a paragraph line). The pending
+        // paragraph line (if any) is the line this underline attaches to; it becomes a
+        // header instead of a paragraph, so drop the pending candidate without committing.
         if (previousLineHadContent
                 && [eqRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            hasPendingParagraphLine = NO;
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindH1)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3478,6 +3558,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         }
         if (previousLineHadContent
                 && [dashRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            hasPendingParagraphLine = NO;
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindH2)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3487,6 +3569,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         // Standalone whole-line image.
         if ([imgRegex numberOfMatchesInString:line options:0 range:full] > 0
                 || [imgRefRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindImage)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3495,19 +3579,57 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         // Thematic break: not a reference point, and not paragraph text either.
         if ([hrRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             previousLineHadContent = NO;
             continue;
         }
 
-        // Blank line breaks any setext context.
+        // Blank line breaks any setext context, any paragraph run, and any list-item
+        // continuation run.
         if ([[line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             previousLineHadContent = NO;
             continue;
         }
 
-        // Anything else is ordinary paragraph text that can anchor a setext underline.
+        // List item marker line: takes precedence over both paragraph and setext-header
+        // eligibility (CommonMark does not allow a setext heading to consume a list-item
+        // line). One reference point per marker line; continuation lines of the same item
+        // are ordinary text lines that don't match the marker pattern, so they fall
+        // through below and are tracked via insideListItemContinuation instead.
+        if ([ulRegex numberOfMatchesInString:line options:0 range:full] > 0
+                || [olRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = YES;
+            [kinds addObject:@(MPReferenceKindListItem)];
+            [lineNumbers addObject:@(lineNumber)];
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // A continuation line of the immediately preceding list item (e.g. an indented
+        // wrapped line) is not a separate reference point and does not start a new
+        // paragraph run.
+        if (insideListItemContinuation) {
+            previousLineHadContent = YES;
+            continue;
+        }
+
+        // Ordinary paragraph text that can anchor a setext underline. Only the FIRST
+        // line of a paragraph run becomes a tentative reference point; continuation
+        // lines (previousLineHadContent already YES) do not add another one.
+        if (!hasPendingParagraphLine && !previousLineHadContent) {
+            hasPendingParagraphLine = YES;
+            pendingParagraphLine = lineNumber;
+        }
         previousLineHadContent = YES;
     }
+
+    // End of document: any still-pending paragraph line was never followed by a setext
+    // underline, so commit it now.
+    commitPendingParagraph();
 
     if (outLineNumbers) *outLineNumbers = lineNumbers;
     return kinds;
@@ -3520,10 +3642,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  * The two detectors (editor regex vs preview DOM) can disagree mid-document; a single
  * extra point on one side shifts every later index, which is the "synced only at the
  * start and end" bug. This computes the longest common subsequence of the two *kind*
- * sequences (matching on the coarse image-vs-header class, since the two sides legitimately
- * disagree on exact header level) and keeps only the matched points on each side. An
- * unmatched point is dropped from whichever side it appears on, so the remaining points
- * stay aligned regardless of where the divergence occurs.
+ * sequences (matching on a coarse class — image, any header level, paragraph, or list
+ * item, since the two sides legitimately disagree on exact header level but must never
+ * cross-match a paragraph against a header, or a list item against either) and keeps
+ * only the matched points on each side. An unmatched point is dropped from whichever
+ * side it appears on, so the remaining points stay aligned regardless of where the
+ * divergence occurs.
  *
  * Fallback: if the type information is missing or inconsistent with the coordinate arrays
  * (e.g. callers/tests that set only the Y arrays), it degrades to the original behavior of
@@ -3551,9 +3675,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return;
     }
 
-    // Coarse class for matching: images match images, any header matches any header.
+    // Coarse class for matching: images match images, any header matches any header,
+    // paragraphs match only paragraphs, and list items match only list items — each
+    // gets its own class so the LCS never cross-matches, e.g., a paragraph against a
+    // header just because the coarser image-vs-everything-else split would have allowed it.
     NSInteger (^classOf)(NSNumber *) = ^NSInteger(NSNumber *kind) {
-        return kind.integerValue == MPReferenceKindImage ? 0 : 1;
+        NSInteger k = kind.integerValue;
+        if (k == MPReferenceKindImage) return 0;
+        if (k == MPReferenceKindParagraph) return 2;
+        if (k == MPReferenceKindListItem) return 3;
+        return 1; // any header level h1-h6
     };
 
     // LCS over the coarse class sequences. dp[i][j] = LCS length of editor[i..] / preview[j..].
@@ -3628,7 +3759,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  * Synchronizes preview pane scroll position with editor pane position.
  *
  * Algorithm:
- * 1. Find reference points (headers/images) before and after current editor position
+ * 1. Find reference points (headers/images/paragraphs/list items) before and after current editor position
  * 2. Calculate percentage scrolled between those reference points
  * 3. Apply same percentage between corresponding preview reference points
  * 4. Use "tapering" at document edges to center-align content mid-document but
@@ -3730,13 +3861,169 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 /**
+ * Synchronizes preview pane scroll position with the editor's cursor position,
+ * aligning the corresponding preview content to the same on-screen row as the
+ * cursor (rather than centering the viewport, as -syncScrollers does).
+ *
+ * Algorithm:
+ * 1. Find the reference points (headers/images/paragraphs/list items) before and after the cursor's
+ *    absolute position in the editor's full document.
+ * 2. Calculate what percentage of the way the cursor is between those points.
+ * 3. Apply that percentage between the corresponding preview reference points
+ *    to find the absolute preview Y that corresponds to the cursor's line.
+ * 4. Scroll the preview so that Y lands at the same distance from the top of
+ *    the preview pane as the cursor currently sits from the top of the editor
+ *    pane, so the two lines land on the same screen row.
+ */
+- (void)syncScrollersToCursor
+{
+    if (!self.editor)
+        return;                              // Headless / nib not yet loaded.
+    if (!self.editorVisible)
+        return;                              // Cursor position is meaningless when hidden.
+
+    NSRange selection = self.editor.selectedRange;
+    NSUInteger cursorLocation = MIN(selection.location, self.editor.string.length);
+
+    // Ask the layout manager for the line fragment containing the cursor's glyph, then
+    // take its origin — this is the reliable way to get a cursor's vertical position;
+    // boundingRectForGlyphRange: with a zero-length range returns a degenerate empty
+    // rect and cannot be used to locate the cursor.
+    NSLayoutManager *cursorLayoutManager = [self.editor layoutManager];
+    NSTextContainer *cursorTextContainer = [self.editor textContainer];
+    NSUInteger cursorGlyphIndex =
+        [cursorLayoutManager glyphIndexForCharacterAtIndex:cursorLocation];
+    NSRange lineGlyphRange;
+    NSRect cursorRect;
+    if (cursorGlyphIndex < cursorLayoutManager.numberOfGlyphs)
+    {
+        cursorRect = [cursorLayoutManager lineFragmentRectForGlyphAtIndex:cursorGlyphIndex
+                                                            effectiveRange:&lineGlyphRange];
+    }
+    else
+    {
+        // Cursor is at the very end of the document, past the last glyph: use the
+        // extra line fragment rect, which NSLayoutManager always keeps up to date
+        // for the position just after the last character.
+        cursorRect = [cursorLayoutManager extraLineFragmentRect];
+    }
+
+    CGFloat previewY = [MPDocument previewYForCursorY:NSMidY(cursorRect)
+                                   editorContentHeight:ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds))
+                                   editorVisibleHeight:ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds))
+                                   editorScrollOffsetY:NSMinY(self.editor.enclosingScrollView.contentView.bounds)
+                                  previewContentHeight:ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds))
+                                  previewVisibleHeight:ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds))
+                                   editorHeaderLocations:_editorHeaderLocations
+                                  webViewHeaderLocations:_webViewHeaderLocations];
+
+    NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
+    contentBounds.origin.y = previewY;
+
+    // Issue #342: No flag toggles needed — previewBoundsDidChange: is guarded
+    // by scrollOwner != MPScrollOwnerPreview, which suppresses the synchronous
+    // NSViewBoundsDidChangeNotification fired by this bounds assignment.
+    self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+
+    // Save this scroll position so it persists across preview refreshes
+    self.lastPreviewScrollTop = previewY;
+}
+
+/**
+ * Pure geometry helper for -syncScrollersToCursor, extracted so its math can be
+ * unit-tested with concrete numbers instead of live NSTextView/WebView geometry.
+ *
+ * Given the cursor's absolute Y position in the editor's full document, finds the
+ * corresponding absolute Y in the preview's full document (via the same
+ * reference-point bracketing/interpolation -syncScrollers uses), then converts the
+ * cursor's position within the editor's *visible viewport* to a FRACTION of that
+ * viewport's height, and applies that fraction against the preview's viewport
+ * height. The fraction (not a raw pixel offset) is what carries over correctly
+ * between the two panes, since they render at different scales (different fonts,
+ * line heights, and pane widths mean a given pixel offset represents a different
+ * amount of visual content in each).
+ */
++ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY
+           editorContentHeight:(CGFloat)editorContentHeight
+           editorVisibleHeight:(CGFloat)editorVisibleHeight
+           editorScrollOffsetY:(CGFloat)editorScrollOffsetY
+          previewContentHeight:(CGFloat)previewContentHeight
+          previewVisibleHeight:(CGFloat)previewVisibleHeight
+        editorHeaderLocations:(NSArray<NSNumber *> *)editorHeaderLocations
+       webViewHeaderLocations:(NSArray<NSNumber *> *)webViewHeaderLocations
+{
+    NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
+    CGFloat minY = 0;
+    CGFloat maxY = 0;
+    BOOL foundMaxY = NO;
+
+    // Bracket the cursor's absolute document position between the nearest reference
+    // points (headers/images/paragraphs/list items), with no viewport-centering taper: unlike -syncScrollers,
+    // we want the corresponding preview row to land at an exact screen position, not a
+    // centered one.
+    for (NSNumber *headerYNum in editorHeaderLocations) {
+        CGFloat headerY = [headerYNum floatValue];
+
+        if (headerY < cursorDocumentY)
+        {
+            relativeHeaderIndex += 1;
+            minY = headerY;
+        } else if (!foundMaxY)
+        {
+            maxY = headerY;
+            foundMaxY = YES;
+        }
+    }
+
+    if (!foundMaxY)
+    {
+        // No reference point after the cursor: interpolate to the end of the document.
+        maxY = editorContentHeight;
+    }
+
+    CGFloat cursorOffsetFromMin = MAX(0, cursorDocumentY - minY);
+    CGFloat spanY = maxY - minY;
+    CGFloat percentBetweenHeaders = (spanY < 0.001) ? 0 : MAX(0, MIN(1.0, cursorOffsetFromMin / spanY));
+
+    // Find the Y positions in the preview window that we're interpolating between.
+    CGFloat topHeaderY = 0;
+    CGFloat bottomHeaderY = previewContentHeight;
+
+    if ([webViewHeaderLocations count] > relativeHeaderIndex)
+    {
+        topHeaderY = floorf([webViewHeaderLocations[relativeHeaderIndex] doubleValue]);
+    }
+
+    if (!foundMaxY)
+    {
+        bottomHeaderY = previewContentHeight;
+    }
+    else if ([webViewHeaderLocations count] > relativeHeaderIndex + 1)
+    {
+        bottomHeaderY = ceilf([webViewHeaderLocations[relativeHeaderIndex + 1] doubleValue]);
+    }
+
+    // The absolute preview Y that corresponds to the cursor's line.
+    CGFloat matchingPreviewY = topHeaderY + (bottomHeaderY - topHeaderY) * percentBetweenHeaders;
+
+    // The cursor's position within the editor's visible viewport, as a fraction of
+    // that viewport's height.
+    CGFloat cursorFractionFromEditorTop = editorVisibleHeight < 0.001 ? 0 :
+        MAX(0, MIN(1.0, (cursorDocumentY - editorScrollOffsetY) / editorVisibleHeight));
+
+    CGFloat previewY = matchingPreviewY - cursorFractionFromEditorTop * previewVisibleHeight;
+    previewY = MAX(0, MIN(previewY, previewContentHeight - previewVisibleHeight));
+    return previewY;
+}
+
+/**
  * Synchronizes editor pane scroll position with preview pane position.
  *
  * This is the reverse of syncScrollers - when the user scrolls the preview,
  * this method scrolls the editor to the corresponding position.
  *
  * Algorithm:
- * 1. Find reference points (headers/images) before and after current preview position
+ * 1. Find reference points (headers/images/paragraphs/list items) before and after current preview position
  * 2. Calculate percentage scrolled between those reference points
  * 3. Apply same percentage between corresponding editor reference points
  * 4. Use "tapering" at document edges to center-align content mid-document but
