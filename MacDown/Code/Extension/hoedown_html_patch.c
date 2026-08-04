@@ -346,6 +346,58 @@ void hoedown_patch_render_header(
     hoedown_buffer_free(slug);
 }
 
+// Returns 1 if the rendered row content contains no visible text once HTML
+// tags and entities are stripped out (i.e. every cell in the row is empty).
+static int is_row_content_blank(const hoedown_buffer *content)
+{
+    if (!content || !content->size)
+        return 1;
+
+    int in_tag = 0;
+    for (size_t i = 0; i < content->size; i++)
+    {
+        uint8_t c = content->data[i];
+
+        if (in_tag)
+        {
+            if (c == '>') in_tag = 0;
+            continue;
+        }
+        if (c == '<')
+        {
+            in_tag = 1;
+            continue;
+        }
+        if (c == '&')
+        {
+            while (i + 1 < content->size && content->data[i + 1] != ';')
+                i++;
+            i++;
+            continue;
+        }
+        if (c != ' ' && c != '\t' && c != '\n' && c != '\r')
+            return 0;
+    }
+    return 1;
+}
+
+// rndr_table_header replacement that omits the <thead> element entirely when
+// every header cell is empty, so a header row like `| | |` doesn't render as
+// a blank header line. Related to a MacDown 3000 table-rendering fix.
+void hoedown_patch_render_table_header(
+    hoedown_buffer *ob, const hoedown_buffer *content,
+    const hoedown_renderer_data *data)
+{
+    (void)data;
+    if (is_row_content_blank(content))
+        return;
+
+    if (ob->size) hoedown_buffer_putc(ob, '\n');
+    HOEDOWN_BUFPUTSL(ob, "<thead>\n");
+    hoedown_buffer_put(ob, content->data, content->size);
+    HOEDOWN_BUFPUTSL(ob, "</thead>\n");
+}
+
 // Adds a "toc" class to the outmost UL element to support TOC styling.
 void hoedown_patch_render_toc_header(
     hoedown_buffer *ob, const hoedown_buffer *content, int level,
