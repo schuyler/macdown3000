@@ -139,14 +139,20 @@ Copyright © 2025 Schuyler Erle.</string>
 	<string>NSApplication</string>
 	<key>OSAScriptingDefinition</key>
 	<string>MacDown.sdef</string>
-	<!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later
-	<key>SUBetaFeedURL</key>
-	<string>https://macdown.app/sparkle/macdown3000/testing/appcast.xml</string>
 	<key>SUFeedURL</key>
 	<string>https://macdown.app/sparkle/macdown3000/stable/appcast.xml</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
-	-->
+	<!-- PLACEHOLDER KEY - NOT the real update-signing key.
+	     This is the base64 encoding of 32 arbitrary non-zero bytes (0x01..0x20);
+	     it is format-valid so the updater starts, but no update signature can
+	     ever verify against it, and it deliberately avoids the all-zero value
+	     (a degenerate/small-order Ed25519 point that some verifiers have
+	     mishandled) so the "can never verify" property doesn't rest on an
+	     untested edge case.
+	     The maintainer must replace it with the real EdDSA public key produced
+	     by Sparkle's `generate_keys` tool before shipping releases.
+	     The matching PRIVATE key must NEVER be committed to this repository. -->
+	<key>SUPublicEDKey</key>
+	<string>AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

@@ -483,6 +483,33 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }];
 }
 
+#pragma mark - Include pre-releases checkbox (Sparkle 2 migration, Issue #129)
+
+// Sparkle 1 had no channel concept, so the checkbox used to be permanently
+// force-disabled in -viewDidLoad (with an "(unavailable)" title suffix) until
+// Sparkle 2 landed. That override is gone now that channel-based pre-release
+// opt-in is implemented; this guards against it silently coming back and
+// re-disabling the control.
+- (void)testGeneralPanelIncludePreReleasesCheckboxIsNotForceDisabled
+{
+    MPGeneralPreferencesViewController *vc =
+        [[MPGeneralPreferencesViewController alloc] init];
+    MPContentView(vc);  // triggers loadView
+
+    // KVC, not dot syntax: includePreReleasesCheckbox is a private IBOutlet
+    // declared in a class extension, not the public header (same pattern as
+    // the updaterController/updater access in MPUpdaterTests.m).
+    NSButton *checkbox = [vc valueForKey:@"includePreReleasesCheckbox"];
+    XCTAssertNotNil(checkbox,
+        @"General pane: expected an 'Include pre-releases' checkbox");
+    XCTAssertTrue(checkbox.enabled,
+        @"Include pre-releases checkbox must not be force-disabled; its "
+        @"enabled state should be driven by normal AppKit defaults");
+    XCTAssertFalse([checkbox.title containsString:@"unavailable"],
+        @"Include pre-releases checkbox must not carry the retired "
+        @"'(unavailable)' title suffix");
+}
+
 #pragma mark - Toolbar tab highlight (Issue #499)
 
 // -viewDidAppear forces the toolbar to revalidate and the window to redraw

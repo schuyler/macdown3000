@@ -133,6 +133,24 @@
     [self.preferences synchronize];
 }
 
+- (void)testUpdateIncludesPreReleasesToggle
+{
+    BOOL original = self.preferences.updateIncludesPreReleases;
+
+    self.preferences.updateIncludesPreReleases = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.updateIncludesPreReleases,
+                  @"Pre-release opt-in should be ON");
+
+    self.preferences.updateIncludesPreReleases = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.updateIncludesPreReleases,
+                   @"Pre-release opt-in should be OFF");
+
+    self.preferences.updateIncludesPreReleases = original;
+    [self.preferences synchronize];
+}
+
 - (void)testStartInPreviewModeToggle
 {
     BOOL original = self.preferences.editorStartInPreviewMode;

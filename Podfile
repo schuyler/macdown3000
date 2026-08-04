@@ -16,8 +16,7 @@ target "MacDown" do
   pod 'LibYAML', '~> 0.1'
   pod 'M13OrderedDictionary', '~> 1.1'
   pod 'MASPreferences', '~> 1.4'
-  # Temporarily disabled - will upgrade to 2.8.1 later
-  # pod 'Sparkle', '~> 1.18', :inhibit_warnings => false
+  pod 'Sparkle', '~> 2.9'
 
   pod 'PAPreferences', '~> 0.5'
 end

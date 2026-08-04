@@ -88,6 +88,20 @@ if git tag -l "v${VERSION}" | grep -q "v${VERSION}"; then
 fi
 ```
 
+Verify the Sparkle signing key is real (real releases only — skip for prereleases):
+```bash
+if [[ "$IS_PRERELEASE" == "false" ]]; then
+  PLACEHOLDER_KEY="AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA="
+  CURRENT_KEY=$(/usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" MacDown/MacDown-Info.plist 2>/dev/null)
+  if [[ "$CURRENT_KEY" == "$PLACEHOLDER_KEY" ]]; then
+    echo "Error: SUPublicEDKey in MacDown/MacDown-Info.plist is still the placeholder value."
+    echo "This is a real (non-prerelease) release — Sparkle auto-updates will never verify with this key."
+    echo "See plans/release-checklist.md -> 'Prerequisite (One-Time): Auto-Update Readiness'."
+    exit 1
+  fi
+fi
+```
+
 
 ### Step 2: Interactive Changelog Building
 
@@ -445,3 +459,4 @@ See Step 5 above for stapling instructions.
    - Pushing the tag
 5. **No Co-authored-by trailers** - Never add "Co-authored-by:" to commits
 6. **Clear error messages** - When things fail, show the actual error and let the user decide next steps
+7. **Auto-update readiness** - Before the first real (non-prerelease) release meant to offer auto-updates, three blockers must be cleared: (a) `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value — Step 1 checks this mechanically and fails the release if it is; (b) issue #553 (Sparkle's nested XPC components get force-re-signed with the wrong identity) is closed; (c) `appcast.xml` generation/hosting exists for `SUFeedURL`. See `plans/release-checklist.md` → "Prerequisite (One-Time): Auto-Update Readiness".

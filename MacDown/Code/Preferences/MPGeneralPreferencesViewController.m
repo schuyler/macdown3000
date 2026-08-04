@@ -18,15 +18,6 @@
 
 @implementation MPGeneralPreferencesViewController
 
-#pragma mark - Lifecycle
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    // Pre-releases checkbox is disabled until Sparkle update support is implemented
-    self.includePreReleasesCheckbox.enabled = NO;
-}
-
 #pragma mark - MASPreferencesViewController
 
 - (NSString *)viewIdentifier
