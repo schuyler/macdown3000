@@ -65,7 +65,7 @@ EXPECTED_MACHO_COUNT=5
 for component in "${COMPONENTS[@]}"; do
     if [ ! -e "$component" ]; then
         echo "::error::expected Sparkle component is missing: $component" >&2
-        echo "::error::Sparkle's layout changed; update COMPONENTS in Tools/sign_sparkle.sh" >&2
+        echo "::error::Sparkle's layout changed; update COMPONENTS in Tools/sign_sparkle.sh and Tools/verify_sparkle_signature.sh" >&2
         exit 1
     fi
 done
@@ -81,7 +81,7 @@ MACHO_COUNT=$(find "$VERSION_DIR" -type f -exec file {} + \
     | grep -c "Mach-O" || true)
 if [ "$MACHO_COUNT" -ne "$EXPECTED_MACHO_COUNT" ]; then
     echo "::error::expected $EXPECTED_MACHO_COUNT Mach-O binaries under $VERSION_DIR, found $MACHO_COUNT" >&2
-    echo "::error::Sparkle's layout changed; update COMPONENTS in Tools/sign_sparkle.sh" >&2
+    echo "::error::Sparkle's layout changed; update COMPONENTS in Tools/sign_sparkle.sh and Tools/verify_sparkle_signature.sh" >&2
     exit 1
 fi
 
