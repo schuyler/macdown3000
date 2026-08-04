@@ -14,44 +14,93 @@ See `plans/release-process.md` for detailed instructions.
 
 ## Prerequisite (One-Time): Auto-Update Readiness
 
-Sparkle 2 auto-updates are wired up in the app but **inert** until three
+Sparkle 2 auto-updates are wired up in the app but **inert** until the
 release-blockers below are cleared, by the maintainer, before the first real
 release that should offer auto-updates. None of these are per-release steps
 — once each is resolved, it never needs to be redone for later releases.
 
-- [ ] **Generate the EdDSA signing keypair**
+- [x] **The EdDSA signing keypair exists**, generated with the `generate_keys`
+  tool Sparkle 2.9.5 vendors at `Pods/Sparkle/bin/generate_keys` (present
+  after `bundle exec pod install`). It writes the private key to the login
+  Keychain and prints the matching public key.
+
+  Use `generate_keys` rather than deriving a pair with another ed25519 tool.
+  A public half that doesn't match the private key yields a `SUPublicEDKey`
+  no signature can ever verify — indistinguishable from a working key until an
+  update is rejected in the field. (`generate_keys -f` imports a key produced
+  elsewhere, if that path is ever needed.)
+
+- [x] **The public key is in `MacDown/MacDown-Info.plist`** as `SUPublicEDKey`.
+  Every shipped build carries it, so it cannot be changed without stranding
+  existing installs — they reject updates signed by any other key.
+
+- [x] **The private key is backed up in 1Password**, as a Password item titled
+  `MacDown Sparkle EdDSA` in the `Personal` vault. This has to stay true before
+  any release that ships the public key above: if the private half is lost, no
+  existing install can ever be updated again. Nothing in the build or the
+  release workflow reads the key out of the Keychain, so it need not stay
+  there. To repeat the export — for a second backup, or after rotating:
   ```bash
-  ./Pods/Sparkle/bin/generate_keys
+  ./Pods/Sparkle/bin/generate_keys -x ~/sparkle-eddsa.key
+  pbcopy < ~/sparkle-eddsa.key
+  rm ~/sparkle-eddsa.key
   ```
-  Sparkle 2.9.5 is vendored via CocoaPods; this tool ships at
-  `Pods/Sparkle/bin/generate_keys` after `bundle exec pod install`. It stores
-  the private key in the maintainer's macOS Keychain and prints the matching
-  public key.
+  Write the export outside the working tree, as above — a private key sitting
+  in the repo root is one careless `git add` away from being published.
 
-- [ ] **Replace the placeholder public key** in `MacDown/MacDown-Info.plist`
-  — the `SUPublicEDKey` value currently ships as a placeholder (base64 of 32
-  arbitrary non-zero bytes, `0x01..0x20`; see the inline comment above it in
-  the plist) and will never validate a real update signature. Paste the
-  printed public key in its place.
+  The export is one base64 line: the 32-byte private seed, identical to the
+  password on the Keychain's "Private key for signing Sparkle updates" item.
+  Paste it from the clipboard into the 1Password item, then clear the
+  clipboard. Paste by hand rather than using `op item create`: assignments are
+  logged in shell history and visible to other local processes, per 1Password's
+  own warning. Piping the file through `pbcopy` keeps the key off the terminal,
+  out of shell history, and out of any session transcript.
 
-- [ ] **Never commit the private key.** It belongs only in the Keychain (or
-  wherever `generate_keys -x <file>` exports it, if you need an out-of-band
-  backup). It has no place in this repository.
+  There is no secure erase to reach for here — `rm -P` is documented on macOS
+  as having no effect. Treat the key as having existed in the clear on that
+  disk, and in any snapshot or backup taken while it did.
 
-- [ ] **Fix the release workflow's re-signing of Sparkle's nested components
-  (issue #553, open).** The release workflow's `codesign --force --deep
-  --strict` pass reaches into the embedded `Sparkle.framework` and
-  overwrites its nested XPC components (Installer.xpc, Downloader.xpc,
-  Autoupdate, Updater.app) with the outer app's signing identity, instead of
-  doing the inside-out re-sign Sparkle actually needs. That breaks signature
-  verification and notarization for any release that embeds Sparkle — not
-  just ones advertising auto-update. Issue #553 states plainly: "Releases
-  are blocked until this lands."
+  Once the key is in 1Password the Keychain item can be deleted; signing then
+  works from any machine, including CI.
 
-**Not yet implemented:** generating and hosting signed `appcast.xml` files
-(the feed at `SUFeedURL`) is a separate follow-up. There is no automation in
-this repo today that produces or publishes an appcast, or hosts one at
-macdown.app.
+- [x] **Sparkle's nested components are re-signed for notarization (issue
+  #553).** Sparkle ships from CocoaPods ad-hoc signed, and the pod's embed
+  phase re-signs only the framework's top level, without hardened runtime or a
+  secure timestamp — which notarization rejects for any release that embeds
+  Sparkle, not just ones advertising auto-update. `Tools/sign_sparkle.sh`
+  re-signs the XPC services, `Autoupdate`, `Updater.app`, and the framework
+  inside-out with the release identity, and
+  `Tools/verify_sparkle_signature.sh` asserts Developer ID authority, hardened
+  runtime, team identifier, and a secure timestamp at three gates. No
+  per-release action is required.
+
+- [ ] **Appcast generation and hosting (issue #554).** The remaining blocker.
+  Until a signed `appcast.xml` is served at `SUFeedURL`, auto-update stays
+  inert no matter what else in this section is checked.
+
+**The private key is never committed.** It belongs in 1Password and in the
+GitHub secret that appcast automation will read (issue #554). It has no place
+in this repository, and the export written by `generate_keys -x` is as
+sensitive as the key itself — delete it once it is stored.
+
+**Signing without the Keychain.** Both signing tools accept the key on
+standard input, so no machine needs Keychain access at publish time:
+
+```bash
+op read "op://Personal/MacDown Sparkle EdDSA/password" \
+  | ./Pods/Sparkle/bin/generate_appcast --ed-key-file - ./release-dmgs/
+```
+
+That needs the 1Password CLI (`brew install --cask 1password-cli`). Without
+it, copy the key from 1Password and substitute `pbpaste |` for `op read …|`.
+
+`sign_update` takes the same `--ed-key-file -`. Do not use `-s <key>`: it is
+deprecated in Sparkle 2.9.5 and unsupported for newly generated keys.
+
+**On the appcast:** no automation in this repo produces or publishes one, and
+nothing is served at `SUFeedURL` today. GitHub Pages serves macdown.app from
+`docs/` on `main`, so publishing the feed is a commit to
+`docs/sparkle/macdown3000/stable/appcast.xml` — see issue #554.
 
 ---
 

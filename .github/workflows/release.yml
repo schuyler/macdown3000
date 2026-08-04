@@ -377,7 +377,7 @@ jobs:
           marketing-version: ${{ env.VERSION }}
           build-number: ${{ env.BUILD_NUMBER }}
 
-      - name: Sign CLI binary explicitly
+      - name: Sign nested components and re-seal app bundle
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
@@ -417,6 +417,13 @@ jobs:
 
           echo "✅ CLI binary signed successfully"
 
+          # Sparkle ships from CocoaPods ad-hoc signed, and the pod's embed
+          # phase re-signs only the framework's top level, without hardened
+          # runtime or a timestamp. Notarization rejects all of it (issue #553).
+          echo "🔐 Re-signing Sparkle's nested components..."
+          bash Tools/sign_sparkle.sh "$IDENTITY" \
+            "build/MacDown 3000.app/Contents/Frameworks/Sparkle.framework"
+
           # Re-sign nested components inside-out to preserve per-component
           # entitlements. Using --deep would apply the app's entitlements to
           # ALL nested components, stripping the QL extension's sandbox
@@ -440,6 +447,8 @@ jobs:
           echo "✅ App bundle re-signed successfully"
 
       - name: Verify code signature
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔍 Verifying code signature..."
           codesign -vvv --deep --strict build/"MacDown 3000.app"
@@ -479,6 +488,12 @@ jobs:
           # Show CLI binary signature details
           echo "📋 CLI binary signature details:"
           codesign -dvv "$CLI_BINARY" 2>&1 | head -20
+
+          # --deep --strict above checks structural validity, not the signer
+          # identity of nested code, so it passes on ad-hoc Sparkle components
+          # that notarization would reject (issue #553).
+          bash Tools/verify_sparkle_signature.sh \
+            "build/MacDown 3000.app" "$APPLE_TEAM_ID"
 
           # Verify the app bundle still carries the file-access entitlement.
           # The post-build re-sign previously stripped entitlements, shipping builds
@@ -547,6 +562,8 @@ jobs:
           echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
       - name: Verify app bundle inside DMG
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔍 Verifying app bundle inside DMG..."
 
@@ -565,6 +582,13 @@ jobs:
           fi
 
           echo "✅ App bundle inside DMG is properly signed: $SIGNING_IDENTITY"
+
+          # Sparkle's nested components in the packaged app (issue #553)
+          if ! bash Tools/verify_sparkle_signature.sh \
+                 "/tmp/dmg-verify/MacDown 3000.app" "$APPLE_TEAM_ID"; then
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
 
           # Verify the packaged app still carries the file-access entitlement (issue #302)
           echo "🔍 Verifying app entitlements inside DMG..."

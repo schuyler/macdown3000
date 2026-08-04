@@ -141,18 +141,15 @@ Copyright © 2025 Schuyler Erle.</string>
 	<string>MacDown.sdef</string>
 	<key>SUFeedURL</key>
 	<string>https://macdown.app/sparkle/macdown3000/stable/appcast.xml</string>
-	<!-- PLACEHOLDER KEY - NOT the real update-signing key.
-	     This is the base64 encoding of 32 arbitrary non-zero bytes (0x01..0x20);
-	     it is format-valid so the updater starts, but no update signature can
-	     ever verify against it, and it deliberately avoids the all-zero value
-	     (a degenerate/small-order Ed25519 point that some verifiers have
-	     mishandled) so the "can never verify" property doesn't rest on an
-	     untested edge case.
-	     The maintainer must replace it with the real EdDSA public key produced
-	     by Sparkle's `generate_keys` tool before shipping releases.
-	     The matching PRIVATE key must NEVER be committed to this repository. -->
+	<!-- Public half of the EdDSA keypair Sparkle verifies updates against.
+	     Every shipped build carries this value, so changing it strands existing
+	     installs: they reject any update signed with a different key, and the
+	     replacement can only be delivered by manual download.
+	     The matching PRIVATE key must NEVER be committed to this repository.
+	     See plans/release-checklist.md for where it is stored and how the
+	     appcast is signed with it. -->
 	<key>SUPublicEDKey</key>
-	<string>AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=</string>
+	<string>dYc+fhKTMkIAQNFSmNbSMQTq2KMXgN9OqHiURc7oK1A=</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
