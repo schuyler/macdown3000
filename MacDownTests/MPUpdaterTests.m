@@ -105,14 +105,25 @@
 // T6 -- regression test for the D2/D5 guard: under XCTest the updater is
 // created but never started, so tests stay deterministic (no timers,
 // network, or permission prompts). An unstarted updater reports
-// canCheckForUpdates == NO, which validateMenuItem: surfaces.
+// canCheckForUpdates == NO. This must exercise the REAL app delegate
+// (NSApp.delegate, as T9 below does), not a manually-alloc'd controller --
+// a manually-alloc'd instance never receives -applicationDidFinishLaunching:,
+// so its updater is never even reached by the MPUpdaterDisabled() guard, and
+// the assertion would pass whether or not that guard exists at all. The real
+// delegate, by contrast, genuinely receives -applicationDidFinishLaunching:
+// during this hosted test run, so this pins the guard's actual effect.
 - (void)testUpdaterIsNotStartedUnderXCTest
 {
-    NSMenuItem *item =
-        [[NSMenuItem alloc] initWithTitle:@"Check for Updates…"
-                                   action:@selector(checkForUpdates:)
-                            keyEquivalent:@""];
-    XCTAssertFalse([self.controller validateMenuItem:item],
+    // KVC, not dot syntax: updaterController's static type
+    // (SPUStandardUpdaterController) is only forward-declared in
+    // MPMainController.h, and this file deliberately avoids importing
+    // Sparkle headers (see the class-extension comment above).
+    MPMainController *delegate = (MPMainController *)NSApp.delegate;
+    id updaterController = delegate.updaterController;
+    id updater = [updaterController valueForKey:@"updater"];
+    BOOL canCheckForUpdates =
+        [[updater valueForKey:@"canCheckForUpdates"] boolValue];
+    XCTAssertFalse(canCheckForUpdates,
                    @"canCheckForUpdates must be NO before startUpdater");
 }
 
