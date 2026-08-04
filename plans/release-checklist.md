@@ -35,7 +35,7 @@ release that should offer auto-updates. None of these are per-release steps
   existing installs — they reject updates signed by any other key.
 
 - [x] **The private key is backed up in 1Password**, as a Password item titled
-  `MacDown Sparkle EdDSA` in the `Private` vault. This has to stay true before
+  `MacDown Sparkle EdDSA` in the `Personal` vault. This has to stay true before
   any release that ships the public key above: if the private half is lost, no
   existing install can ever be updated again. Nothing in the build or the
   release workflow reads the key out of the Keychain, so it need not stay
@@ -74,6 +74,10 @@ release that should offer auto-updates. None of these are per-release steps
   runtime, team identifier, and a secure timestamp at three gates. No
   per-release action is required.
 
+- [ ] **Appcast generation and hosting (issue #554).** The remaining blocker.
+  Until a signed `appcast.xml` is served at `SUFeedURL`, auto-update stays
+  inert no matter what else in this section is checked.
+
 **The private key is never committed.** It belongs in 1Password and in the
 GitHub secret that appcast automation will read (issue #554). It has no place
 in this repository, and the export written by `generate_keys -x` is as
@@ -83,7 +87,7 @@ sensitive as the key itself — delete it once it is stored.
 standard input, so no machine needs Keychain access at publish time:
 
 ```bash
-op read "op://Private/MacDown Sparkle EdDSA/password" \
+op read "op://Personal/MacDown Sparkle EdDSA/password" \
   | ./Pods/Sparkle/bin/generate_appcast --ed-key-file - ./release-dmgs/
 ```
 
@@ -93,11 +97,10 @@ it, copy the key from 1Password and substitute `pbpaste |` for `op read …|`.
 `sign_update` takes the same `--ed-key-file -`. Do not use `-s <key>`: it is
 deprecated in Sparkle 2.9.5 and unsupported for newly generated keys.
 
-**Not yet implemented:** generating and hosting the signed `appcast.xml` feed
-at `SUFeedURL` is tracked as issue #554. There is no automation in this repo
-today that produces or publishes an appcast, and nothing is served at that
-path. Until it lands, auto-update stays inert even with a real keypair in
-place.
+**On the appcast:** no automation in this repo produces or publishes one, and
+nothing is served at `SUFeedURL` today. GitHub Pages serves macdown.app from
+`docs/` on `main`, so publishing the feed is a commit to
+`docs/sparkle/macdown3000/stable/appcast.xml` — see issue #554.
 
 ---
 
