@@ -318,6 +318,19 @@ The `update-website.yml` workflow automatically triggers after the stapling work
 
 No manual intervention required for website updates!
 
+#### Step 5: Publish the Appcast
+
+The website updates itself; the Sparkle feed does not. Installed copies are
+offered the release only once an `<item>` for it is committed to
+`docs/sparkle/macdown3000/stable/appcast.xml`, which is a manual step run with
+`Tools/update_appcast.py` after the release is published.
+
+See `plans/release-checklist.md` → "Step 4: Publish the Appcast" for the
+procedure. Sign the DMG downloaded from the release, never a local build: the
+stapling workflow rewrote and re-uploaded it, so a local `build/` DMG has
+different bytes and its signature and `length` would describe a file nobody
+downloads.
+
 ### Manual Stapling (If Needed)
 
 If the automated workflow fails or you need to staple manually:

@@ -43,3 +43,19 @@ jobs:
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
         retention-days: 7
+
+  appcast-script:
+    name: Appcast Script Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Stdlib only, and sign_update is stubbed, so this needs no Xcode, no
+    # CocoaPods and no macOS. The tests that pin appcast element names against
+    # the Sparkle framework binary skip when the pod is absent, as it is here.
+    - name: Run appcast script tests
+      run: python3 Tools/test_update_appcast.py

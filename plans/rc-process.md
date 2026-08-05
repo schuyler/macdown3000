@@ -247,7 +247,10 @@ Every other Sunday, in order:
    commit range on the branch, reflecting any reverts), updates `README.md`,
    tags the final release from the branch, cherry-picks the graduation commit
    onto `main`, and deletes the release branch. Everything still aboard the
-   branch ships.
+   branch ships. Once that tag has built, been stapled and been published,
+   publish the final's appcast item by hand — `plans/release-checklist.md` →
+   "Step 4: Publish the Appcast", with `--channel ""`. `/release` does not do
+   this.
 4. **Clear graduated labels.** Remove `rc-pending` and `rc-validated` labels
    from issues whose changes shipped in this release. **Do not** remove
    `rc-broken` — those changes didn't ship and the label should stay until the
@@ -259,10 +262,20 @@ Every other Sunday, in order:
    *without* `--cleanup-tag`). The tags remain the permanent anchors for the RC
    snapshots. The old validation-ping links to those RC downloads will 404;
    that's fine, since graduated changes get re-pinged against the stable build.
+
+   **Delete each RC's `<item>` block from
+   `docs/sparkle/macdown3000/stable/appcast.xml`, and commit that alongside
+   deleting the Releases.** An appcast item lives exactly as long as the
+   Release it points at: deleting the Release kills the enclosure URL, so a
+   surviving item would offer beta-channel users a download that 404s. Stable
+   items are never deleted, because stable Releases never are.
 6. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
    cut `vX.Y.(Z+1)-rc.1` from the new `main` HEAD. This creates a fresh `release/X.Y.(Z+1)` branch,
    tags + builds + staples the pre-release, and posts validation comments to the
-   new batch's reporters.
+   new batch's reporters. Then publish its appcast item by hand —
+   `plans/release-checklist.md` → "Step 4: Publish the Appcast", with
+   `--channel beta`, which is what confines it to users who opted into
+   pre-releases. `/release-candidate` does not do this.
 
 Steps 3 and 6 are the two builds; everything else is bookkeeping the
 `/release-candidate` and `/release` skills automate.
