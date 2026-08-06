@@ -16,6 +16,8 @@ test fixture -- or at anything else.
 import base64
 import email.utils
 import glob
+import hashlib
+import http.server
 import os
 import pty
 import re
@@ -23,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
@@ -1063,6 +1066,736 @@ class TestOutput(AppcastTestCase):
                                **{'--sign-update': missing})
         self.assertEqual(proc.returncode, 1)
         self.assertIn(missing, proc.stderr)
+
+
+class ReleaseModeTestCase(AppcastTestCase):
+    """Fixture for section 3.6 -- release mode derives every per-release
+    input from --release VERSION plus the state of the repo. Four seams
+    stand in for the real dependencies, mirroring --sign-update:
+
+    --git PATH              a stub recording its argv, serving canned
+                             rev-parse/rev-list/show output.
+    --stapler PATH          a stub recording its argv. Real usage is
+                             "xcrun stapler" (two words); tests only ever
+                             point this at a one-word stub path.
+    --pbxproj PATH          a synthetic project.pbxproj fixture.
+    --release-url-base URL  the same construction the real default
+                             (https://.../releases/download) uses, pointed
+                             at a local HTTP server so the download and the
+                             enclosure URL are both exercised without
+                             network access.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.pbxproj = os.path.join(self.tmp, 'project.pbxproj')
+        # tempfile.NamedTemporaryFile() (no dir=) honors TMPDIR, so pointing
+        # it here makes "no leftover temp file" assertable without knowing
+        # the implementation's temp file name.
+        self.download_tmp = tempfile.mkdtemp(dir=self.tmp, prefix='dl-tmp-')
+
+    # -- fixture helpers ----------------------------------------------------
+
+    def write_pbxproj(self, deployment_targets):
+        lines = ['\t\t\t\tMACOSX_DEPLOYMENT_TARGET = %s;\n' % v
+                for v in deployment_targets]
+        with open(self.pbxproj, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+
+    def write_changelog_file(self, text):
+        path = os.path.join(self.tmp, 'CHANGELOG.md')
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(text)
+        return path
+
+    def make_git(self, tag_exists=True, commit_count='4837',
+                changelog_path=None, name='git', argv_log=None):
+        """A stub standing in for git. Understands exactly the three
+        subcommands section 3.6 uses; anything else exits 1."""
+        def quote(value):
+            return "'" + value.replace("'", "'\\''") + "'"
+
+        argv_log = argv_log or os.path.join(self.tmp, name + '.argv')
+        body = (
+            '#!/bin/sh\n'
+            'printf "%s\\n" "$*" >> ' + quote(argv_log) + '\n'
+            'case "$1" in\n'
+            '  rev-parse) exit ' + ('0' if tag_exists else '1') + ' ;;\n'
+            '  rev-list) echo ' + quote(commit_count) + ' ;;\n'
+            '  show) ' + (
+                'cat ' + quote(changelog_path)
+                if changelog_path else 'exit 1'
+            ) + ' ;;\n'
+            '  *) exit 1 ;;\n'
+            'esac\n'
+        )
+        path = os.path.join(self.tmp, name)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(body)
+        os.chmod(path, 0o755)
+        return path
+
+    def make_stapler(self, returncode=0, name='stapler', argv_log=None):
+        def quote(value):
+            return "'" + value.replace("'", "'\\''") + "'"
+
+        argv_log = argv_log or os.path.join(self.tmp, name + '.argv')
+        body = (
+            '#!/bin/sh\n'
+            'printf "%s\\n" "$*" >> ' + quote(argv_log) + '\n'
+            'exit ' + str(returncode) + '\n'
+        )
+        path = os.path.join(self.tmp, name)
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(body)
+        os.chmod(path, 0o755)
+        return path
+
+    def start_dmg_server(self, files, requested=None):
+        """A local HTTP server serving `files` (relative path -> bytes), so
+        the download step and its non-200 case are exercised without
+        network access. `requested`, if given, collects each request path."""
+        root = tempfile.mkdtemp(dir=self.tmp, prefix='dmg-root-')
+        for relpath, data in files.items():
+            path = os.path.join(root, relpath)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'wb') as f:
+                f.write(data)
+
+        class Handler(http.server.SimpleHTTPRequestHandler):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, directory=root, **kwargs)
+
+            def log_message(self, *args):
+                pass
+
+            def do_GET(self):
+                if requested is not None:
+                    requested.append(self.path)
+                super().do_GET()
+
+        server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(thread.join, 5)
+        self.addCleanup(server.shutdown)
+        return 'http://127.0.0.1:%d' % server.server_port
+
+    # -- invocation -----------------------------------------------------------
+
+    def run_release(self, version='3000.1.0', extra=None, key=STUB_KEY,
+                    appcast=None, sign_update=None, git=None, stapler=None,
+                    pbxproj=None, release_url_base=None, dry_run=False,
+                    env=None, cwd=None):
+        argv = [
+            sys.executable, SCRIPT, '--release', version,
+            '--appcast', appcast if appcast is not None else self.appcast,
+            '--sign-update',
+            sign_update if sign_update is not None else self.sign_update,
+        ]
+        if git is not None:
+            argv += ['--git', git]
+        if stapler is not None:
+            argv += ['--stapler', stapler]
+        if pbxproj is not None:
+            argv += ['--pbxproj', pbxproj]
+        if release_url_base is not None:
+            argv += ['--release-url-base', release_url_base]
+        if dry_run:
+            argv.append('--dry-run')
+        argv += extra or []
+
+        full_env = dict(os.environ, TMPDIR=self.download_tmp)
+        if env:
+            full_env.update(env)
+
+        proc = subprocess.run(
+            argv, input=key.encode('utf-8'), capture_output=True,
+            cwd=cwd or self.tmp, timeout=30, env=full_env,
+        )
+        return subprocess.CompletedProcess(
+            proc.args, proc.returncode,
+            proc.stdout.decode('utf-8'), proc.stderr.decode('utf-8'),
+        )
+
+    def full_release_fixture(self, version='3000.1.0',
+                             description=DEFAULT_DESCRIPTION,
+                             commit_count='4837',
+                             deployment_targets=('11.0',),
+                             dmg_bytes=b'\x00' * 4096, requested=None):
+        """Everything release mode needs to run all the way through: a tag
+        that resolves, a changelog with the matching section, a
+        single-valued pbxproj, and a DMG at the canonical download path.
+        Returns (tag, kwargs) where kwargs splats straight into
+        run_release()."""
+        tag = 'v' + version
+        changelog = self.write_changelog_file(
+            '# Changelog\n\n## [%s] - 2026-08-06\n\n%s\n'
+            % (version, description))
+        git = self.make_git(tag_exists=True, commit_count=commit_count,
+                            changelog_path=changelog)
+        self.write_pbxproj(list(deployment_targets))
+        base = self.start_dmg_server(
+            {'%s/MacDown-%s.dmg' % (tag, version): dmg_bytes},
+            requested=requested)
+        stapler = self.make_stapler()
+        return tag, dict(version=version, git=git, stapler=stapler,
+                         pbxproj=self.pbxproj, release_url_base=base)
+
+
+class TestReleaseShapeRegex(ReleaseModeTestCase):
+    """Section 3.6 step 1."""
+
+    PLAIN_ACCEPTED = ['3000.1.0', '3000.1.0-rc.1', '3000.1.0-beta.2',
+                      '3000.1', '3000.1.2.3']
+    V_PREFIXED_ACCEPTED = ['v3000.1.0', 'v3000.1.0-rc.1']
+    REJECTED = ['3000.1.0-alpha.1', '3000.1.0-preview.1', '3000.1.0-rc-1',
+               '3000.1.0-rc.1-hotfix', '3000', '', '3000.1.0-rc',
+               '3000.1.0-rc.', '3000.1.0 ', '3000.1.0x']
+
+    def assert_shape_accepted(self, versions):
+        """An accepted shape reaches tag resolution -- proven by failing on
+        this always-missing-tag git stub with the git-fetch-tags message
+        rather than a shape complaint. Isolates step 1 from every step
+        after it.
+
+        Not self.subTest(): pytest's subtests plugin reports a subTest
+        failure as "SUBFAILED" but leaves the parent test PASSED, which
+        would misreport this Red-phase test as already green. Collecting
+        failures into one assertion avoids that."""
+        git = self.make_git(tag_exists=False)
+        problems = []
+        for version in versions:
+            proc = self.run_release(version=version, git=git)
+            if proc.returncode != 1 or 'git fetch --tags' not in proc.stderr:
+                problems.append((version, proc.returncode, proc.stderr))
+        self.assertEqual(problems, [])
+
+    def test_plain_accepted_shapes_proceed_past_the_shape_check(self):
+        self.assert_shape_accepted(self.PLAIN_ACCEPTED)
+
+    def test_v_prefixed_accepted_shapes_proceed_past_the_shape_check(self):
+        self.assert_shape_accepted(self.V_PREFIXED_ACCEPTED)
+
+    def test_rejected_shapes_are_refused(self):
+        # Also checks the failure isn't argparse's "required arguments"
+        # complaint: in release mode --dmg/--url/etc. are optional (3.2), so
+        # a real shape rejection never says this, no matter how it's worded.
+        problems = [
+            (version, proc.returncode, proc.stderr)
+            for version in self.REJECTED
+            for proc in [self.run_release(version=version)]
+            if proc.returncode != 1
+            or 'arguments are required' in proc.stderr
+        ]
+        self.assertEqual(problems, [])
+
+    def test_rejected_shape_error_names_the_offending_value(self):
+        named = [v for v in self.REJECTED if v.strip()]
+        problems = [
+            (version, proc.returncode, proc.stderr)
+            for version in named
+            for proc in [self.run_release(version=version)]
+            if proc.returncode != 1 or version not in proc.stderr
+        ]
+        self.assertEqual(problems, [])
+
+
+class TestReleaseFlagConflicts(ReleaseModeTestCase):
+    """Section 3.2 -- --release owns every per-release input; a partial
+    override is the transcription hazard release mode exists to remove."""
+
+    def test_release_with_dmg_is_refused(self):
+        proc = self.run_release(extra=['--dmg', self.dmg])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--dmg', proc.stderr)
+
+    def test_release_with_url_is_refused(self):
+        proc = self.run_release(
+            extra=['--url', 'https://example.com/a.dmg'])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--url', proc.stderr)
+
+    def test_release_with_description_file_is_refused(self):
+        proc = self.run_release(
+            extra=['--description-file', self.description])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--description-file', proc.stderr)
+
+    def test_release_with_bundle_version_is_refused(self):
+        proc = self.run_release(extra=['--bundle-version', '4837'])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--bundle-version', proc.stderr)
+
+    def test_release_with_short_version_is_refused(self):
+        proc = self.run_release(extra=['--short-version', '3000.1.0'])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--short-version', proc.stderr)
+
+    def test_release_with_minimum_system_version_is_refused(self):
+        proc = self.run_release(
+            extra=['--minimum-system-version', '11.0'])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--minimum-system-version', proc.stderr)
+
+    def test_release_with_channel_is_refused(self):
+        proc = self.run_release(extra=['--channel', 'beta'])
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('--channel', proc.stderr)
+
+
+class TestTagAndChannelDerivation(ReleaseModeTestCase):
+    """Section 3.6 step 2."""
+
+    def test_stable_version_derives_v_prefixed_tag_and_empty_channel(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIsNone(self.sole_item().find(SP + 'channel'))
+
+    def test_rc_suffix_derives_v_prefixed_tag_and_beta_channel(self):
+        version = '3000.1.0-rc.1'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.sole_item().findtext(SP + 'channel'), 'beta')
+
+    def test_beta_suffix_also_derives_beta_channel(self):
+        version = '3000.1.0-beta.2'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.sole_item().findtext(SP + 'channel'), 'beta')
+
+    def test_git_rev_parse_failure_names_git_fetch_tags(self):
+        git = self.make_git(tag_exists=False)
+        proc = self.run_release(version='3000.1.0', git=git)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('git fetch --tags', proc.stderr)
+
+    def test_v_prefixed_version_does_not_double_the_tag_prefix(self):
+        """--release v3000.1.0 is the same release as --release 3000.1.0
+        (3.2): the tag is v + version, not v + v3000.1.0. Runs the full
+        pipeline so a doubled prefix is caught wherever it would surface --
+        the tag handed to git, the DMG's download path, and the enclosure
+        URL -- rather than only the shape check."""
+        version = 'v3000.1.0'
+        short_version = '3000.1.0'
+        tag = 'v3000.1.0'
+        requested = []
+        changelog = self.write_changelog_file(
+            '# Changelog\n\n## [%s] - 2026-08-06\n\n%s\n'
+            % (short_version, DEFAULT_DESCRIPTION))
+        git = self.make_git(tag_exists=True, changelog_path=changelog)
+        self.write_pbxproj(['11.0'])
+        base = self.start_dmg_server(
+            {'%s/MacDown-%s.dmg' % (tag, short_version): b'\x00' * 4096},
+            requested=requested)
+        stapler = self.make_stapler()
+
+        proc = self.run_release(version=version, git=git, stapler=stapler,
+                                pbxproj=self.pbxproj, release_url_base=base)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+        rev_parse_calls = [
+            line.split() for line in
+            open(os.path.join(self.tmp, 'git.argv'),
+                encoding='utf-8').read().splitlines()
+            if line.split() and line.split()[0] == 'rev-parse'
+        ]
+        self.assertEqual(len(rev_parse_calls), 1)
+        self.assertIn(tag, rev_parse_calls[0])
+        self.assertNotIn('v' + tag, rev_parse_calls[0])
+
+        self.assertTrue(
+            any(p.endswith('/%s/MacDown-%s.dmg' % (tag, short_version))
+                for p in requested),
+            'requested paths: %r' % requested)
+
+        enclosure_url = self.sole_item().find('enclosure').get('url')
+        self.assertEqual(
+            enclosure_url,
+            '%s/%s/MacDown-%s.dmg' % (base, tag, short_version))
+
+
+class TestBundleVersionDerivation(ReleaseModeTestCase):
+    """Section 3.6 step 3."""
+
+    def test_bundle_version_is_the_rev_list_count_for_the_tag(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(
+            version=version, commit_count='9999')
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(self.sole_item().findtext(SP + 'version'), '9999')
+        calls = open(os.path.join(self.tmp, 'git.argv'),
+                    encoding='utf-8').read()
+        self.assertIn('rev-list', calls)
+        self.assertIn('--count', calls)
+        self.assertIn(tag, calls)
+
+
+class TestMinimumSystemVersionDerivation(ReleaseModeTestCase):
+    """Section 3.6 step 4."""
+
+    def test_single_distinct_value_across_matches_is_used(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(
+            version=version, deployment_targets=('11.0', '11.0', '11.0'))
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(
+            self.sole_item().findtext(SP + 'minimumSystemVersion'), '11.0')
+
+    def test_drift_across_matches_is_refused_and_lists_distinct_values(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(
+            version=version, deployment_targets=('11.0', '11.0', '12.0'))
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('11.0', proc.stderr)
+        self.assertIn('12.0', proc.stderr)
+
+    def test_zero_matches_is_refused_and_names_the_pbxproj_path(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(
+            version=version, deployment_targets=())
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn(self.pbxproj, proc.stderr)
+
+
+class TestChangelogExtraction(ReleaseModeTestCase):
+    """Section 3.6 step 5."""
+
+    def run_with_changelog(self, version, changelog_text):
+        tag = 'v' + version
+        changelog = self.write_changelog_file(changelog_text)
+        git = self.make_git(tag_exists=True, changelog_path=changelog)
+        self.write_pbxproj(['11.0'])
+        base = self.start_dmg_server(
+            {'%s/MacDown-%s.dmg' % (tag, version): b'\x00' * 4096})
+        stapler = self.make_stapler()
+        return tag, self.run_release(
+            version=version, git=git, stapler=stapler,
+            pbxproj=self.pbxproj, release_url_base=base)
+
+    def test_reads_the_changelog_via_git_show(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n\n'
+            '### Added\n\n- Thing\n')
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        calls = open(os.path.join(self.tmp, 'git.argv'),
+                    encoding='utf-8').read()
+        self.assertIn('show', calls)
+        self.assertIn('%s:CHANGELOG.md' % tag, calls)
+
+    def test_heading_with_trailing_date_is_matched_and_stripped(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n\n'
+            '### Added\n\n- Thing one\n')
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        description = self.sole_item().findtext('description').strip()
+        self.assertEqual(description, '### Added\n\n- Thing one')
+
+    def test_extraction_stops_before_the_next_heading(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n\n'
+            '### Added\n\n- Thing one\n\n'
+            '## [3000.0.9] - 2026-07-01\n\n### Fixed\n\n- Old thing\n')
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        description = self.sole_item().findtext('description')
+        self.assertIn('Thing one', description)
+        self.assertNotIn('Old thing', description)
+
+    def test_extraction_to_eof_when_no_next_heading(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n\n'
+            '### Added\n\n- Only thing\n')
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn('Only thing', self.sole_item().findtext('description'))
+
+    def test_rc_temp_fence_lines_are_stripped(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0-rc.1',
+            '# Changelog\n\n<!-- rc-temp -->\n'
+            '## [3000.1.0-rc.1] - 2026-08-06\n\n'
+            '### Added\n\n- Thing\n'
+            '<!-- /rc-temp -->\n')
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertNotIn('rc-temp', self.sole_item().findtext('description'))
+
+    def test_prefix_disambiguation_does_not_cross_match(self):
+        """## [3000.0.7-rc.1] must not satisfy a request for 3000.0.7's
+        section -- the closing bracket is part of the match."""
+        tag, proc = self.run_with_changelog(
+            '3000.0.7',
+            '# Changelog\n\n## [3000.0.7-rc.1] - 2026-08-06\n\n'
+            '### Added\n\n- RC only thing\n')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn(tag, proc.stderr)
+
+    def test_prefix_disambiguation_the_other_direction(self):
+        tag, proc = self.run_with_changelog(
+            '3000.0.7-rc.1',
+            '# Changelog\n\n## [3000.0.7] - 2026-08-06\n\n'
+            '### Added\n\n- Final only thing\n')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn(tag, proc.stderr)
+
+    def test_missing_heading_names_the_tag(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.0.9] - 2026-07-01\n\n'
+            '### Fixed\n\n- x\n')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn(tag, proc.stderr)
+
+    def test_empty_section_names_the_tag(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n'
+            '## [3000.0.9] - 2026-07-01\n\n### Fixed\n\n- x\n')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn(tag, proc.stderr)
+
+    def test_body_containing_cdata_terminator_names_the_offending_line(self):
+        tag, proc = self.run_with_changelog(
+            '3000.1.0',
+            '# Changelog\n\n## [3000.1.0] - 2026-08-06\n\n'
+            '### Added\n\n- Ends the section ]]> right here\n')
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('Ends the section ]]> right here', proc.stderr)
+
+
+class TestDmgDownload(ReleaseModeTestCase):
+    """Section 3.6 step 6."""
+
+    def test_http_get_targets_the_release_download_path(self):
+        version = '3000.1.0'
+        requested = []
+        tag, kwargs = self.full_release_fixture(
+            version=version, requested=requested)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(
+            any(p.endswith('/%s/MacDown-%s.dmg' % (tag, version))
+                for p in requested),
+            'requested paths: %r' % requested)
+
+    def test_non_200_names_the_url(self):
+        version = '3000.1.0'
+        tag = 'v' + version
+        changelog = self.write_changelog_file(
+            '# Changelog\n\n## [%s] - 2026-08-06\n\n%s\n'
+            % (version, DEFAULT_DESCRIPTION))
+        git = self.make_git(tag_exists=True, changelog_path=changelog)
+        self.write_pbxproj(['11.0'])
+        base = self.start_dmg_server({})  # nothing served -> every path 404s
+        stapler = self.make_stapler()
+        proc = self.run_release(version=version, git=git, stapler=stapler,
+                                pbxproj=self.pbxproj, release_url_base=base)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('%s/%s/MacDown-%s.dmg' % (base, tag, version),
+                      proc.stderr)
+
+    def test_temp_file_unlinked_on_success(self):
+        version = '3000.1.0'
+        requested = []
+        tag, kwargs = self.full_release_fixture(
+            version=version, requested=requested)
+        before = set(os.listdir(self.download_tmp))
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(requested, 'DMG was never downloaded')
+        self.assertEqual(set(os.listdir(self.download_tmp)), before,
+                         'temp file left behind')
+
+    def test_temp_file_unlinked_on_error_after_download(self):
+        version = '3000.1.0'
+        requested = []
+        tag, kwargs = self.full_release_fixture(
+            version=version, requested=requested)
+        kwargs['stapler'] = self.make_stapler(returncode=1)
+        before = set(os.listdir(self.download_tmp))
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 1)
+        self.assertTrue(requested, 'DMG was never downloaded')
+        self.assertEqual(set(os.listdir(self.download_tmp)), before,
+                         'temp file left behind')
+
+    def test_temp_file_unlinked_on_dry_run(self):
+        version = '3000.1.0'
+        requested = []
+        tag, kwargs = self.full_release_fixture(
+            version=version, requested=requested)
+        kwargs['dry_run'] = True
+        before = set(os.listdir(self.download_tmp))
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertTrue(requested, 'DMG was never downloaded')
+        self.assertEqual(set(os.listdir(self.download_tmp)), before,
+                         'temp file left behind')
+
+    def test_enclosure_url_is_the_release_url_matching_the_download(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        enclosure_url = self.sole_item().find('enclosure').get('url')
+        self.assertEqual(
+            enclosure_url,
+            '%s/%s/MacDown-%s.dmg' % (kwargs['release_url_base'], tag,
+                                      version))
+
+
+class TestStaplingCheck(ReleaseModeTestCase):
+    """Section 3.6 step 7."""
+
+    def test_stapler_is_invoked_with_validate_and_the_dmg(self):
+        """'validate' in the recorded argv isn't enough -- that also matches
+        a run with no path, or with the appcast's path, or with any other
+        wrong path. The stub hashes whatever it's handed as arg 2 while it
+        runs (before the downloaded DMG is cleaned up), so the digest has to
+        match the bytes the server actually served."""
+        version = '3000.1.0'
+        dmg_bytes = b'\x00' * 4096
+        tag, kwargs = self.full_release_fixture(
+            version=version, dmg_bytes=dmg_bytes)
+
+        def quote(value):
+            return "'" + value.replace("'", "'\\''") + "'"
+
+        argv_log = os.path.join(self.tmp, 'stapler.argv')
+        digest_log = os.path.join(self.tmp, 'stapler.digest')
+        stapler = os.path.join(self.tmp, 'hashing-stapler')
+        with open(stapler, 'w', encoding='utf-8') as f:
+            f.write(
+                '#!/bin/sh\n'
+                'printf "%s\\n" "$*" >> ' + quote(argv_log) + '\n'
+                'shasum -a 256 "$2" | cut -d " " -f 1 > '
+                + quote(digest_log) + '\n'
+                'exit 0\n'
+            )
+        os.chmod(stapler, 0o755)
+        kwargs['stapler'] = stapler
+
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+        with open(argv_log, encoding='utf-8') as f:
+            parts = f.read().split()
+        self.assertEqual(parts[0], 'validate')
+
+        with open(digest_log, encoding='utf-8') as f:
+            recorded_digest = f.read().strip()
+        self.assertEqual(
+            recorded_digest, hashlib.sha256(dmg_bytes).hexdigest(),
+            'stapler was not run against the downloaded DMG bytes')
+
+    def test_zero_exit_proceeds(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+    def test_nonzero_exit_tells_the_operator_to_wait_for_the_workflow(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        kwargs['stapler'] = self.make_stapler(returncode=1)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 1)
+        self.assertIn('staple-release.yml', proc.stderr)
+        self.assertIn(
+            'https://github.com/schuyler/macdown3000/actions', proc.stderr)
+
+
+class TestReleaseModeSigning(ReleaseModeTestCase):
+    """Section 3.6 step 8 -- same signing contract as explicit mode."""
+
+    def test_sign_update_is_invoked_the_same_way_as_explicit_mode(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(self.argv_log, encoding='utf-8') as f:
+            argv = f.read().splitlines()
+        self.assertIn('-p', argv)
+        self.assertIn('--ed-key-file', argv)
+        self.assertIn('-', argv)
+        with open(self.stdin_log, encoding='utf-8') as f:
+            self.assertEqual(f.read(), STUB_KEY)
+
+
+class TestReleaseModeIntegration(ReleaseModeTestCase):
+    """Section 3.6 flowing into section 3.3."""
+
+    def test_stable_release_mode_matches_explicit_mode_item_shape(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        release_text = self.read_appcast().decode('utf-8')
+
+        os.remove(self.appcast)
+        base = kwargs['release_url_base']
+        explicit = self.run_script(**{
+            '--url': '%s/%s/MacDown-%s.dmg' % (base, tag, version),
+            '--bundle-version': '4837',
+            '--short-version': version,
+            '--channel': '',
+        })
+        self.assertEqual(explicit.returncode, 0, explicit.stderr)
+        explicit_text = self.read_appcast().decode('utf-8')
+
+        self.assertEqual(mask_pub_dates(release_text),
+                         mask_pub_dates(explicit_text))
+
+    def test_rc_release_mode_produces_a_beta_channel_item(self):
+        version = '3000.1.0-rc.1'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn(b'<sparkle:channel>beta</sparkle:channel>',
+                      self.read_appcast())
+
+    def test_dry_run_runs_the_full_preflight_and_writes_no_file(self):
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        kwargs['dry_run'] = True
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertFalse(os.path.exists(self.appcast))
+        with open(self.stdin_log, encoding='utf-8') as f:
+            self.assertEqual(f.read(), STUB_KEY)
+        items = ET.fromstring(proc.stdout).findall('./channel/item')
+        self.assertEqual(len(items), 1)
+
+    def test_dry_run_output_is_the_bytes_a_real_run_writes(self):
+        """Section 4 step 1 has the operator approve a release by reading
+        this output before step 2 runs the same command for real -- so dry
+        run's stdout has to be the document the real run then writes. Only
+        pubDate legitimately differs between the two runs."""
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        self.assertFalse(os.path.exists(self.appcast))
+
+        dry_kwargs = dict(kwargs, dry_run=True)
+        dry = self.run_release(**dry_kwargs)
+        self.assertEqual(dry.returncode, 0, dry.stdout + dry.stderr)
+        self.assertFalse(os.path.exists(self.appcast))
+
+        real = self.run_release(**kwargs)
+        self.assertEqual(real.returncode, 0, real.stdout + real.stderr)
+        written = self.read_appcast().decode('utf-8')
+
+        self.assertEqual(mask_pub_dates(dry.stdout), mask_pub_dates(written))
 
 
 def sparkle_binary():
