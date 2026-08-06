@@ -21,9 +21,12 @@ import argparse
 import base64
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import format_datetime
@@ -34,13 +37,51 @@ SPARKLE_NS = 'http://www.andymatuschak.org/xml-namespaces/sparkle'
 
 DEFAULT_SIGN_UPDATE = './Pods/Sparkle/bin/sign_update'
 
+DEFAULT_APPCAST = 'docs/sparkle/macdown3000/stable/appcast.xml'
+
+DEFAULT_GIT = 'git'
+
+DEFAULT_STAPLER = 'xcrun stapler'
+
+DEFAULT_PBXPROJ = 'MacDown 3000.xcodeproj/project.pbxproj'
+
+DEFAULT_RELEASE_URL_BASE = (
+    'https://github.com/schuyler/macdown3000/releases/download')
+
 BUNDLE_VERSION_RE = re.compile(r'\A[A-Za-z0-9._-]+\Z')
 
 SIGNATURE_RE = re.compile(r'\A[A-Za-z0-9+/]+={0,2}\Z')
 
+RELEASE_VERSION_RE = re.compile(r'\A\d+(?:\.\d+)+(-(?:rc|beta)\.\d+)?\Z')
+
+DEPLOYMENT_TARGET_RE = re.compile(r'MACOSX_DEPLOYMENT_TARGET\s*=\s*([\d.]+)')
+
 ED25519_SIGNATURE_BYTES = 64
 
 CHANNELS = ('', 'beta')
+
+# Flags --release owns; a partial override alongside it is the transcription
+# hazard release mode exists to remove (3.2).
+RELEASE_CONFLICT_FLAGS = (
+    ('--dmg', 'dmg'),
+    ('--url', 'url'),
+    ('--description-file', 'description_file'),
+    ('--bundle-version', 'bundle_version'),
+    ('--short-version', 'short_version'),
+    ('--minimum-system-version', 'minimum_system_version'),
+    ('--channel', 'channel'),
+)
+
+# The same flags, required in explicit mode -- optional (default None) at
+# the argparse level so --release can detect whether they were passed.
+REQUIRED_EXPLICIT_FLAGS = (
+    ('--dmg', 'dmg'),
+    ('--url', 'url'),
+    ('--description-file', 'description_file'),
+    ('--bundle-version', 'bundle_version'),
+    ('--short-version', 'short_version'),
+    ('--minimum-system-version', 'minimum_system_version'),
+)
 
 ITEM_ANCHOR = '    <item>'
 CHANNEL_ANCHOR = '  </channel>'
@@ -125,6 +166,18 @@ def render_item(pub_date, bundle_version, short_version, channel,
     )
 
 
+def check_no_cdata_terminator(text):
+    """`]]>` cannot appear inside a CDATA section (3.4); reject it here with
+    a message naming the offending line rather than an opaque parse error
+    from the validating parse downstream."""
+    for line in text.splitlines():
+        if ']]>' in line:
+            raise Failure(
+                'the description contains "]]>", which cannot appear inside '
+                'a CDATA section, on this line:\n  %s\nReword it and re-run.'
+                % line)
+
+
 def read_description(path):
     """The changelog section for this release, normalized to LF and stripped
     to exactly the text that goes between the CDATA brackets."""
@@ -140,13 +193,7 @@ def read_description(path):
                       % (path, error))
 
     text = text.replace('\r\n', '\n').replace('\r', '\n')
-
-    for line in text.splitlines():
-        if ']]>' in line:
-            raise Failure(
-                'the description contains "]]>", which cannot appear inside '
-                'a CDATA section, on this line:\n  %s\nReword it and re-run.'
-                % line)
+    check_no_cdata_terminator(text)
 
     text = text.strip()
     if not text:
@@ -329,67 +376,198 @@ def check_arguments(args):
             'into the feed and rewrite it in place.'
             % (args.dmg, args.appcast))
 
-    if not os.path.isfile(args.sign_update):
+    check_sign_update(args.sign_update)
+
+
+def check_sign_update(path):
+    if not os.path.isfile(path):
         raise Failure('sign_update not found at %s (pass --sign-update, or '
-                      'run bundle exec pod install)' % args.sign_update)
+                      'run bundle exec pod install)' % path)
 
-    if not os.access(args.sign_update, os.X_OK):
-        raise Failure('sign_update at %s is not executable'
-                      % args.sign_update)
-
-
-def build_parser():
-    parser = Parser(description='Add one release to the Sparkle appcast.')
-    parser.add_argument('--appcast', required=True,
-                        help='the appcast to update, created if absent')
-    parser.add_argument('--dmg', required=True,
-                        help='the released DMG, downloaded from the GitHub '
-                             'release after stapling -- never a local build')
-    parser.add_argument('--url', required=True,
-                        help='the https:// URL the DMG is served from')
-    parser.add_argument('--description-file', required=True,
-                        help='Markdown release notes for this version')
-    parser.add_argument('--bundle-version', required=True,
-                        help='CFBundleVersion from the app in the DMG')
-    parser.add_argument('--short-version', required=True,
-                        help='CFBundleShortVersionString from the same app')
-    parser.add_argument('--minimum-system-version', required=True,
-                        help='LSMinimumSystemVersion from the same app')
-    parser.add_argument('--channel', default='',
-                        help='"beta" for a pre-release, "" for stable')
-    parser.add_argument('--sign-update', default=DEFAULT_SIGN_UPDATE,
-                        help='path to Sparkle\'s sign_update')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='print the resulting document instead of '
-                             'writing it; signs for real')
-    return parser
+    if not os.access(path, os.X_OK):
+        raise Failure('sign_update at %s is not executable' % path)
 
 
-def run(argv):
-    args = build_parser().parse_args(argv)
+def check_release_conflicts(args):
+    """--release owns every per-release input (3.2); a flag from explicit
+    mode alongside it is refused by name."""
+    for flag, attr in RELEASE_CONFLICT_FLAGS:
+        if getattr(args, attr) is not None:
+            raise Failure('--release cannot be combined with %s' % flag)
 
-    # Before anything else: an operator who forgets to pipe the key in should
-    # get an error, not a process that waits forever.
-    if sys.stdin.isatty():
-        raise Failure('the signing key must be piped in on stdin, e.g. '
-                      'op read "op://Personal/MacDown Sparkle EdDSA/password" '
-                      '| %s ...' % os.path.basename(sys.argv[0]))
 
-    check_arguments(args)
-    description = read_description(args.description_file)
-    key = sys.stdin.buffer.read()
+def check_required_explicit_arguments(args):
+    missing = [flag for flag, attr in REQUIRED_EXPLICIT_FLAGS
+              if getattr(args, attr) is None]
+    if missing:
+        raise Failure(
+            'the following arguments are required: %s' % ', '.join(missing))
 
-    signature = sign(args.sign_update, args.dmg, key)
 
+def release_version_and_channel(version):
+    """(short_version, channel) from an operator-supplied --release VERSION,
+    accepted with or without a leading 'v' (3.6 step 1-2). Fails closed: an
+    unrecognized shape is an error, never a silent stable classification."""
+    short_version = version[1:] if version.startswith('v') else version
+    match = RELEASE_VERSION_RE.fullmatch(short_version)
+    if not match:
+        raise Failure(
+            '--release %r does not look like a released version -- expected '
+            'e.g. 3000.1.0 or 3000.1.0-rc.1' % version)
+    channel = 'beta' if match.group(1) else ''
+    return short_version, channel
+
+
+def run_git(git, subcommand_args):
+    # DEVNULL keeps the signing key on stdin from reaching the child.
+    try:
+        return subprocess.run(
+            [git] + subcommand_args,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as error:
+        raise Failure('cannot run %s: %s' % (git, error))
+
+
+def resolve_tag(git, tag):
+    completed = run_git(git, ['rev-parse', tag])
+    if completed.returncode != 0:
+        raise Failure(
+            'tag %s not found locally. Run git fetch --tags and try again.'
+            % tag)
+
+
+def bundle_version_for_tag(git, tag):
+    completed = run_git(git, ['rev-list', '--count', tag])
+    if completed.returncode != 0:
+        raise Failure(
+            'git rev-list --count %s failed: %s'
+            % (tag, completed.stderr.decode('utf-8', 'replace').strip()))
+    value = completed.stdout.decode('utf-8', 'replace').strip()
+    if not value.isdigit():
+        raise Failure(
+            'git rev-list --count %s did not print a number: %r'
+            % (tag, value))
+    return value
+
+
+def minimum_system_version_from_pbxproj(path):
+    try:
+        with open(path, encoding='utf-8') as handle:
+            text = handle.read()
+    except OSError as error:
+        raise Failure('cannot read --pbxproj %s: %s' % (path, error))
+
+    values = sorted(set(DEPLOYMENT_TARGET_RE.findall(text)))
+    if not values:
+        raise Failure(
+            'no MACOSX_DEPLOYMENT_TARGET found in --pbxproj %s' % path)
+    if len(values) > 1:
+        raise Failure(
+            'MACOSX_DEPLOYMENT_TARGET disagrees across --pbxproj %s: %s'
+            % (path, ', '.join(values)))
+    return values[0]
+
+
+def changelog_for_tag(git, tag):
+    completed = run_git(git, ['show', '%s:CHANGELOG.md' % tag])
+    if completed.returncode != 0:
+        raise Failure(
+            'git show %s:CHANGELOG.md failed: %s'
+            % (tag, completed.stderr.decode('utf-8', 'replace').strip()))
+    try:
+        return completed.stdout.decode('utf-8')
+    except UnicodeDecodeError as error:
+        raise Failure('CHANGELOG.md at %s is not UTF-8: %s' % (tag, error))
+
+
+def changelog_section(text, short_version, tag):
+    """The section of CHANGELOG.md for `short_version`, at `tag` (3.6 step
+    5). The heading's closing bracket is part of the match, so "3000.0.7"
+    never matches a "3000.0.7-rc.1" heading or vice versa."""
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    lines = text.split('\n')
+    heading = '## [%s]' % short_version
+
+    start = next(
+        (i for i, line in enumerate(lines) if line.startswith(heading)),
+        None)
+    if start is None:
+        raise Failure(
+            'CHANGELOG.md at %s has no "%s" heading' % (tag, heading))
+
+    end = next(
+        (i for i in range(start + 1, len(lines))
+         if lines[i].startswith('## [')),
+        len(lines))
+
+    body_lines = [
+        line for line in lines[start + 1:end]
+        if line not in ('<!-- rc-temp -->', '<!-- /rc-temp -->')
+    ]
+    body = '\n'.join(body_lines)
+    check_no_cdata_terminator(body)
+
+    body = body.strip()
+    if not body:
+        raise Failure(
+            'CHANGELOG.md at %s has an empty section for %s' % (tag, heading))
+    return body
+
+
+def download_dmg(url):
+    """The released DMG, into a private temp file honoring $TMPDIR (3.6
+    step 6). The caller unlinks it on every exit path."""
+    try:
+        response = urllib.request.urlopen(url)
+    except urllib.error.HTTPError as error:
+        raise Failure('GET %s failed: HTTP %d' % (url, error.code))
+    except urllib.error.URLError as error:
+        raise Failure('GET %s failed: %s' % (url, error.reason))
+
+    with response:
+        if response.status != 200:
+            raise Failure('GET %s failed: HTTP %d' % (url, response.status))
+        data = response.read()
+
+    handle = tempfile.NamedTemporaryFile(delete=False)
+    try:
+        handle.write(data)
+    finally:
+        handle.close()
+    return handle.name
+
+
+def check_stapled(stapler, dmg_path):
+    try:
+        completed = subprocess.run(
+            shlex.split(stapler) + ['validate', dmg_path],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except OSError as error:
+        raise Failure('cannot run %s: %s' % (stapler, error))
+    if completed.returncode != 0:
+        raise Failure(
+            'stapler validate failed on %s. Wait for the staple-release.yml '
+            'workflow to finish, then check '
+            'https://github.com/schuyler/macdown3000/actions.' % dmg_path)
+
+
+def finish_publish(args, bundle_version, short_version, channel,
+                   minimum_system_version, description, url, length,
+                   signature):
+    """Section 3.3: render the item, splice or create, validate once, then
+    write or print it. Shared by explicit and release mode so neither
+    reimplements the splice/validate/write story."""
     item = render_item(
         pub_date=format_datetime(datetime.now(timezone.utc)),
-        bundle_version=args.bundle_version,
-        short_version=args.short_version,
-        channel=args.channel,
-        minimum_system_version=args.minimum_system_version,
+        bundle_version=bundle_version,
+        short_version=short_version,
+        channel=channel,
+        minimum_system_version=minimum_system_version,
         description=description,
-        url=args.url,
-        length=os.path.getsize(args.dmg),
+        url=url,
+        length=length,
         signature=signature,
     )
 
@@ -404,7 +582,7 @@ def run(argv):
     else:
         document = DOCUMENT_HEAD + item + DOCUMENT_TAIL
 
-    validate(document, args.bundle_version, args.appcast, existed)
+    validate(document, bundle_version, args.appcast, existed)
 
     if args.dry_run:
         # Through the buffer, so the document is UTF-8 whatever the locale
@@ -415,8 +593,114 @@ def run(argv):
 
     write_atomically(args.appcast, document)
     sys.stdout.write('appcast updated: %s (%s)\n'
-                     % (args.bundle_version, args.short_version))
+                     % (bundle_version, short_version))
     return 0
+
+
+def build_parser():
+    parser = Parser(description='Add one release to the Sparkle appcast.')
+    parser.add_argument('--release',
+                        help='the published version to derive every '
+                             'per-release input from, e.g. 3000.1.0')
+    parser.add_argument('--appcast', default=DEFAULT_APPCAST,
+                        help='the appcast to update, created if absent')
+    parser.add_argument('--dmg',
+                        help='the released DMG, downloaded from the GitHub '
+                             'release after stapling -- never a local build')
+    parser.add_argument('--url',
+                        help='the https:// URL the DMG is served from')
+    parser.add_argument('--description-file',
+                        help='Markdown release notes for this version')
+    parser.add_argument('--bundle-version',
+                        help='CFBundleVersion from the app in the DMG')
+    parser.add_argument('--short-version',
+                        help='CFBundleShortVersionString from the same app')
+    parser.add_argument('--minimum-system-version',
+                        help='LSMinimumSystemVersion from the same app')
+    parser.add_argument('--channel',
+                        help='"beta" for a pre-release, "" for stable')
+    parser.add_argument('--sign-update', default=DEFAULT_SIGN_UPDATE,
+                        help='path to Sparkle\'s sign_update')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='print the resulting document instead of '
+                             'writing it; signs for real')
+    parser.add_argument('--git', default=DEFAULT_GIT,
+                        help='the git executable (--release mode)')
+    parser.add_argument('--stapler', default=DEFAULT_STAPLER,
+                        help='the stapler command, possibly with arguments '
+                             '(--release mode)')
+    parser.add_argument('--pbxproj', default=DEFAULT_PBXPROJ,
+                        help='Xcode project file to read '
+                             'MACOSX_DEPLOYMENT_TARGET from (--release mode)')
+    parser.add_argument('--release-url-base', default=DEFAULT_RELEASE_URL_BASE,
+                        help='GitHub release download base URL, used for '
+                             'both the download and the enclosure URL '
+                             '(--release mode)')
+    return parser
+
+
+def run_explicit(args):
+    if args.channel is None:
+        args.channel = ''
+    check_arguments(args)
+    description = read_description(args.description_file)
+    key = sys.stdin.buffer.read()
+
+    signature = sign(args.sign_update, args.dmg, key)
+
+    return finish_publish(
+        args, bundle_version=args.bundle_version,
+        short_version=args.short_version, channel=args.channel,
+        minimum_system_version=args.minimum_system_version,
+        description=description, url=args.url,
+        length=os.path.getsize(args.dmg), signature=signature)
+
+
+def run_release(args):
+    check_sign_update(args.sign_update)
+
+    short_version, channel = release_version_and_channel(args.release)
+    tag = 'v' + short_version
+
+    resolve_tag(args.git, tag)
+    bundle_version = bundle_version_for_tag(args.git, tag)
+    minimum_system_version = minimum_system_version_from_pbxproj(
+        args.pbxproj)
+    description = changelog_section(
+        changelog_for_tag(args.git, tag), short_version, tag)
+
+    url = '%s/%s/MacDown-%s.dmg' % (args.release_url_base, tag, short_version)
+    dmg_path = download_dmg(url)
+    try:
+        check_stapled(args.stapler, dmg_path)
+        key = sys.stdin.buffer.read()
+        signature = sign(args.sign_update, dmg_path, key)
+
+        return finish_publish(
+            args, bundle_version=bundle_version, short_version=short_version,
+            channel=channel, minimum_system_version=minimum_system_version,
+            description=description, url=url,
+            length=os.path.getsize(dmg_path), signature=signature)
+    finally:
+        os.unlink(dmg_path)
+
+
+def run(argv):
+    args = build_parser().parse_args(argv)
+
+    # Before anything else: an operator who forgets to pipe the key in should
+    # get an error, not a process that waits forever.
+    if sys.stdin.isatty():
+        raise Failure('the signing key must be piped in on stdin, e.g. '
+                      'op read "op://Personal/MacDown Sparkle EdDSA/password" '
+                      '| %s ...' % os.path.basename(sys.argv[0]))
+
+    if args.release is not None:
+        check_release_conflicts(args)
+        return run_release(args)
+
+    check_required_explicit_arguments(args)
+    return run_explicit(args)
 
 
 def main(argv):
