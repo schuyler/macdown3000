@@ -11,9 +11,10 @@ Tests and prose documentation are the implementer's to write.
   `docs/sparkle/macdown3000/stable/appcast.xml`, creating the file if absent. Signs the DMG
   itself, taking the EdDSA key on stdin. Release mode (§3.6) derives every per-release input
   from the version and the state of the repo; the explicit flags remain as the recovery
-  escape hatch. The render/splice/validate core is stdlib-only; release mode adds `git` (for
-  the tag→bundle-version count and to enumerate the tag), `stapler` (already required for
-  building), and one HTTP GET for the DMG.
+  escape hatch. `--appcast` defaults to the canonical feed path in both modes (D8). The
+  render/splice/validate core is stdlib-only; release mode adds `git` (for the tag→bundle-
+  version count and to enumerate the tag), `stapler` (already required for building), and
+  one HTTP GET for the DMG.
 - **`plans/release-checklist.md` "Step 4: Publish the Appcast"** rewritten from the
   explicit-mode invocation it currently carries to the release-mode command in §4, plus
   the commit that publishes it.
@@ -300,8 +301,8 @@ the key. Derivations, in order, all before signing:
    the tag.
 6. **DMG bytes** — HTTP GET
    `https://github.com/schuyler/macdown3000/releases/download/TAG/MacDown-VERSION.dmg`
-   into a private temp file (`tempfile.NamedTemporaryFile` with `delete=False`, mode
-   `0600`). Non-200 → error naming the URL. The temp file is unlinked on every exit
+   into a private temp file (`tempfile.NamedTemporaryFile(delete=False)`, which creates it
+   at 0o600). Non-200 → error naming the URL. The temp file is unlinked on every exit
    path — success, any error after the download, and `--dry-run` alike — via a `finally`
    block or equivalent. The enclosure URL is the canonical release URL, matching the
    bytes we downloaded and signed.
@@ -341,8 +342,13 @@ op read "op://Personal/MacDown Sparkle EdDSA/password" \
 ```
 
 2. Run the same command without `--dry-run`.
-3. `git commit -am "Publish 3000.1.0 appcast" && git push`. GitHub Pages serves the feed at
+3. Add the appcast by path — `git commit -am` skips untracked files, and the first-ever
+   publish creates `docs/sparkle/` — then commit and push. GitHub Pages serves the feed at
    `SUFeedURL`.
+   ```bash
+   git add docs/sparkle/macdown3000/stable/appcast.xml
+   git commit -m "Publish 3000.1.0 appcast" && git push
+   ```
 4. Confirm the feed is live once Pages rebuilds: fetch `SUFeedURL` and check it parses.
 
 Everything per-release — which DMG, which versions, which channel, which changelog section —

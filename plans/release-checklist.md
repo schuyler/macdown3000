@@ -182,122 +182,53 @@ Installed copies only learn about a release when an `<item>` for it appears in
 `docs/sparkle/macdown3000/stable/appcast.xml`. Run this from a clean `main`
 with `bundle exec pod install` done, after the release is published.
 
-The rest of this step assumes:
+`--release` derives every per-release input — the DMG, both versions, the
+channel, the changelog section — from the version string and the state of the
+repo; the operator supplies only the version and the signing key.
 
-```bash
-VERSION=3000.1.0                        # the release, without the leading v
-DMG=~/Downloads/MacDown-${VERSION}.dmg
-```
+**The first published item should be a pre-release**, so any residual mistake
+reaches only opted-in users.
 
-- [ ] **Download the DMG from the GitHub release — never sign a local build.**
-  Stapling rewrites the DMG in place and re-uploads it, and `create-dmg` output
-  is not reproducible, so any local `build/` DMG has different bytes from the
-  one users download. Signing the wrong file yields a signature and a `length`
-  describing bytes nobody fetches; every client rejects the update, and nothing
-  catches it — the dry run below produces the same wrong signature. Verify the
-  download against `MacDown-${VERSION}.dmg.sha256`, uploaded alongside it.
-  Download both, then verify from the directory holding them, since the
-  checksum file names the DMG without a path:
-  ```bash
-  (cd "$(dirname "$DMG")" && shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256")
-  ```
+**Prerequisite: wait for `staple-release.yml` to succeed** —
+https://github.com/schuyler/macdown3000/actions. `--release` downloads the
+released DMG and runs `xcrun stapler validate` on it; running before that
+workflow finishes makes the check fail, and `--release` doesn't accept `--dmg`
+as a workaround.
 
-- [ ] **Read the versions out of the app inside the DMG**, so they describe the
-  build being advertised rather than the working tree:
-  ```bash
-  MOUNT=/tmp/macdown-appcast-dmg
-  hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT" "$DMG"
-  PLIST="$MOUNT/MacDown 3000.app/Contents/Info.plist"
-  plist_value() { /usr/libexec/PlistBuddy -c "Print :$1" "$PLIST"; }
-
-  BUNDLE_VERSION=$(plist_value CFBundleVersion)
-  SHORT_VERSION=$(plist_value CFBundleShortVersionString)
-  MIN_SYSTEM=$(plist_value LSMinimumSystemVersion)
-
-  printf 'CFBundleVersion            %s\n' "$BUNDLE_VERSION"
-  printf 'CFBundleShortVersionString %s\n' "$SHORT_VERSION"
-  printf 'LSMinimumSystemVersion     %s\n' "$MIN_SYSTEM"
-  printf 'SUPublicEDKey              %s\n' "$(plist_value SUPublicEDKey)"
-
-  hdiutil detach "$MOUNT"
-  ```
-  Keep these in the shell rather than copying them by hand — the publish
-  command below uses them directly.
-
-  Mount at an explicit path rather than letting it land in `/Volumes`. Every
-  MacDown DMG carries the volume name `MacDown 3000`, so if one is already
-  mounted — an earlier release opened in Finder, or this one double-clicked to
-  look inside — macOS attaches this one as `/Volumes/MacDown 3000 1`, and
-  reading `/Volumes/MacDown 3000` would report a different build's versions
-  against this release's URL. Nothing downstream would catch that. If anything
-  aborts between `attach` and `detach`, the retry fails with `Resource busy` —
-  run `hdiutil detach "$MOUNT"` first.
-
-  **Stop if `SUPublicEDKey` is missing, or is the placeholder**
-  `AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=`. A build with no key carries
-  no updater at all, and an item for it would advertise, to every installed
-  copy, an update that silently removes their ability to receive the next one.
-  A build carrying the placeholder can never verify any signature, and users
-  who dismiss the broken update with **Skip This Version** are never re-offered
-  it even after a corrected item is published. Check this here for every
-  release: `/release` compares against the placeholder only for non-prereleases
-  (`.claude/commands/release.md` → Step 1), and a pre-release is exactly what
-  gets published to this feed first.
-
-- [ ] **Extract this release's changelog section at the tag**, not from `main`.
-  The two legitimately differ: `plans/rc-process.md` documents an RC-only block
-  that lives on the release branch and never reaches `main`.
-  ```bash
-  git fetch --tags
-  git show "v${VERSION}:CHANGELOG.md" > /tmp/changelog-at-tag.md
-  ```
-  Fetch first: RC tags are cut on `release/*` branches, so a clean `main`
-  may not have them and `git show` would fail on an unknown object.
-  Copy this version's section into `/tmp/section.md`, dropping the
-  `<!-- rc-temp -->` and `<!-- /rc-temp -->` fence lines. They are invisible
-  under `sparkle:format="markdown"` on macOS 12+, but macOS 11 falls back to
-  plain text and shows them literally.
-
-- [ ] **Dry run first.** Append `--dry-run` to the command below and read the
-  document it prints — the bytes the real run will write, down to the
-  signature and the `length`, with only `<pubDate>` regenerated. It signs for
-  real, so pipe the key in the same way; a bad key or a missing
-  `sign_update` surfaces here rather than after the fact.
-
-- [ ] **Publish.**
+- [ ] **Dry-run and read the output.** It signs for real and runs the stapling
+  check for real — the only thing it skips is writing the file — so a bad key,
+  a missing `sign_update`, or an unstapled DMG surfaces here rather than after
+  a real publish.
   ```bash
   op read "op://Personal/MacDown Sparkle EdDSA/password" \
-    | python3 Tools/update_appcast.py \
-        --appcast docs/sparkle/macdown3000/stable/appcast.xml \
-        --dmg "$DMG" \
-        --url "https://github.com/schuyler/macdown3000/releases/download/v${VERSION}/MacDown-${VERSION}.dmg" \
-        --bundle-version "$BUNDLE_VERSION" \
-        --short-version "$SHORT_VERSION" \
-        --minimum-system-version "$MIN_SYSTEM" \
-        --description-file /tmp/section.md \
-        --channel ""
+    | python3 Tools/update_appcast.py --release 3000.1.0 --dry-run
   ```
-  Nothing may follow the last flag on its line. The dry run appends
-  `--dry-run` to this command, and a trailing comment would swallow it,
-  turning the intended pre-flight into a real publish.
 
-  **Pre-release tags take `--channel beta`; stable tags take `--channel ""`.**
-  Getting this wrong on a pre-release offers it to every user. Nothing
-  validates the flag against the tag, because the script never sees the tag.
+- [ ] **Run the same command without `--dry-run`.**
 
-  A version already in the feed is a hard error with no override — it means
-  either a re-run of a publish that already succeeded, or a `CFBundleVersion`
-  collision between release branches (#564). To recover from a genuinely bad
-  item, delete that `<item>` block by hand and re-run.
-
-- [ ] **Commit the one file to `main` and push.** GitHub Pages then serves it
-  at `SUFeedURL`.
+- [ ] **Commit and push.** The appcast is untracked on the first-ever publish,
+  so add it by path — `git commit -am` would silently skip it.
+  ```bash
+  git add docs/sparkle/macdown3000/stable/appcast.xml
+  git commit -m "Publish 3000.1.0 appcast" && git push
+  ```
+  GitHub Pages serves the feed at `SUFeedURL`.
 
 - [ ] **Confirm the feed is live** once Pages has rebuilt:
   ```bash
   curl -sSf https://macdown.app/sparkle/macdown3000/stable/appcast.xml \
     | xmllint --noout -
   ```
+
+A version already in the feed is a hard error with no override — it means
+either a re-run of a publish that already succeeded, or a `CFBundleVersion`
+collision between release branches (#564). To recover from a genuinely bad
+item, delete that `<item>` block by hand and re-run.
+
+Explicit mode (`--dmg`, `--url`, `--description-file`, `--channel`, and the
+rest) is the recovery path for incidents the derivation can't handle — see
+`python3 Tools/update_appcast.py --help` or
+`plans/sparkle-appcast-automation.md` §3.2.
 
 ---
 

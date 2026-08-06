@@ -249,8 +249,8 @@ Every other Sunday, in order:
    onto `main`, and deletes the release branch. Everything still aboard the
    branch ships. Once that tag has built, been stapled and been published,
    publish the final's appcast item by hand — `plans/release-checklist.md` →
-   "Step 4: Publish the Appcast", with `--channel ""`. `/release` does not do
-   this.
+   "Step 4: Publish the Appcast" (`--release` derives the stable channel from
+   the version string). `/release` does not do this.
 4. **Clear graduated labels.** Remove `rc-pending` and `rc-validated` labels
    from issues whose changes shipped in this release. **Do not** remove
    `rc-broken` — those changes didn't ship and the label should stay until the
@@ -273,9 +273,9 @@ Every other Sunday, in order:
    cut `vX.Y.(Z+1)-rc.1` from the new `main` HEAD. This creates a fresh `release/X.Y.(Z+1)` branch,
    tags + builds + staples the pre-release, and posts validation comments to the
    new batch's reporters. Then publish its appcast item by hand —
-   `plans/release-checklist.md` → "Step 4: Publish the Appcast", with
-   `--channel beta`, which is what confines it to users who opted into
-   pre-releases. `/release-candidate` does not do this.
+   `plans/release-checklist.md` → "Step 4: Publish the Appcast" (`--release`
+   derives the `beta` channel from the `-rc.N` suffix, confining it to users
+   who opted into pre-releases). `/release-candidate` does not do this.
 
 Steps 3 and 6 are the two builds; everything else is bookkeeping the
 `/release-candidate` and `/release` skills automate.
