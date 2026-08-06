@@ -154,8 +154,7 @@ The enclosing document, written only when the file does not exist:
 ### 3.2 CLI
 
 ```
-update_appcast.py --release VERSION [--dmg PATH] [--appcast PATH]
-                  [--sign-update PATH] [--dry-run]
+update_appcast.py --release VERSION [--appcast PATH] [--sign-update PATH] [--dry-run]
 
 update_appcast.py --dmg PATH --url URL --description-file PATH
                   --bundle-version V --short-version V --minimum-system-version V
@@ -163,11 +162,14 @@ update_appcast.py --dmg PATH --url URL --description-file PATH
 ```
 
 The first form is release mode (§3.6); the second is explicit mode, the recovery escape
-hatch. `--release` combined with `--url`, `--description-file`, `--bundle-version`,
+hatch. `--release` combined with `--dmg`, `--url`, `--description-file`, `--bundle-version`,
 `--short-version`, `--minimum-system-version`, or `--channel` is an error — a partial
-override is exactly the transcription hazard release mode removes. `--dmg` is legal in
-both modes; in release mode it's the "I already have the stapled DMG locally" shortcut
-that skips the download.
+override is exactly the transcription hazard release mode removes. In particular, a local
+DMG passed with `--dmg` is not the DMG users will download: `create-dmg` output is not
+reproducible and stapling mutates the file in place (§4), so `--dmg` alongside `--release`
+would sign bytes different from the enclosure URL's, and every client's signature check
+would fail silently. Release mode owns the DMG source; explicit mode is where the operator
+supplies one.
 
 Signing is the only mode: the key is read from **stdin** and `length` is the DMG's size on
 disk. No precomputed-signature path — nothing in phase 1 needs one.
@@ -269,11 +271,15 @@ the key. Derivations, in order, all before signing:
    an error naming the offending value. Fail-closed: an unrecognized shape does not
    silently classify as stable, because "wrong channel on a pre-release offers it to
    every user" (§5) is exactly the failure mode release mode is supposed to eliminate.
+   Deliberately narrower than `release.yml:148`'s `-(beta|alpha|rc)` pre-release
+   detection: an `-alpha.N` tag would build in CI but be un-publishable via release mode.
+   The project doesn't use alphas; if that changes, widen this regex explicitly.
 2. **Tag** = `v` + VERSION, and **channel** = `beta` if the pre-release group is
    present, `""` otherwise. If `git rev-parse TAG` fails, error naming
    `git fetch --tags` — RC tags are cut on release branches a clean `main` may not have.
-3. **Bundle version** = `git rev-list --count TAG`. Same command as
-   `Tools/utils.sh:get_bundle_version()`, so the number matches what the build embedded.
+3. **Bundle version** = `git rev-list --count TAG`. Same commit count
+   `Tools/utils.sh:get_bundle_version()` produced at build time — the CI checkout puts
+   the tag at HEAD, so the numbers agree.
 4. **Minimum system version** — extract `MACOSX_DEPLOYMENT_TARGET` from
    `MacDown 3000.xcodeproj/project.pbxproj` with a regex; the source plist holds only the
    literal `${MACOSX_DEPLOYMENT_TARGET}` placeholder that Xcode resolves at build time.
@@ -281,19 +287,24 @@ the key. Derivations, in order, all before signing:
    script asserts one distinct value across all matches and errors naming the drift if
    not. No new dependency — this is a stdlib file read.
 5. **Description** — `git show TAG:CHANGELOG.md`, then extract the section whose heading
-   is exactly `## [VERSION]` (including the closing bracket, so `## [3000.0.7]` and
-   `## [3000.0.7-rc.1]` never collide), up to the next `## [` heading or EOF, stripping
-   the heading itself and any `<!-- rc-temp -->` / `<!-- /rc-temp -->` fence lines. The
-   result is validated by the same rules as `--description-file` (UTF-8, non-empty, no
-   `]]>`). Missing heading, empty section, or an invalid body → error naming the tag.
-   Reading from the tag rather than the working tree is what makes this work for RC
-   publishes: `plans/rc-process.md:99-103` puts each RC's `## [X.Y.Z-rc.N]` block in a
-   `rc-temp` fence on the release branch, stripped at graduation, so the entry never
-   lives on `main` — but it always lives on the tag.
-6. **DMG bytes** — if `--dmg PATH` was passed, use that; otherwise HTTP GET
-   `https://github.com/schuyler/macdown3000/releases/download/TAG/MacDown-VERSION.dmg` into
-   a private temp file. Non-200 → error naming the URL. The enclosure URL is the same
-   canonical URL either way, whether we downloaded or the operator supplied a local copy.
+   line begins with `## [VERSION]` — the closing bracket is part of the match, so
+   `## [3000.0.7]` and `## [3000.0.7-rc.1]` never collide; what follows on the same line
+   (`- YYYY-MM-DD`, per `CHANGELOG.md`'s convention) is ignored. Take everything up to
+   the next `## [` heading or EOF, stripping the heading line itself and any
+   `<!-- rc-temp -->` / `<!-- /rc-temp -->` fence lines. The result is validated by the
+   same rules as `--description-file` (UTF-8, non-empty, no `]]>`). Missing heading,
+   empty section, or an invalid body → error naming the tag. Reading from the tag rather
+   than the working tree is what makes this work for RC publishes: `plans/rc-process.md`
+   puts each RC's `## [X.Y.Z-rc.N]` block in a `rc-temp` fence on the release branch,
+   stripped at graduation, so the entry never lives on `main` — but it always lives on
+   the tag.
+6. **DMG bytes** — HTTP GET
+   `https://github.com/schuyler/macdown3000/releases/download/TAG/MacDown-VERSION.dmg`
+   into a private temp file (`tempfile.NamedTemporaryFile` with `delete=False`, mode
+   `0600`). Non-200 → error naming the URL. The temp file is unlinked on every exit
+   path — success, any error after the download, and `--dry-run` alike — via a `finally`
+   block or equivalent. The enclosure URL is the canonical release URL, matching the
+   bytes we downloaded and signed.
 7. **Stapling check** — `xcrun stapler validate DMG` must exit 0. `stapler` ships with Xcode
    command-line tools (already required for building); the `xcrun` prefix matches
    `staple-release.yml:208,225`. This is the one guard release mode
@@ -335,10 +346,10 @@ op read "op://Personal/MacDown Sparkle EdDSA/password" \
 4. Confirm the feed is live once Pages rebuilds: fetch `SUFeedURL` and check it parses.
 
 Everything per-release — which DMG, which versions, which channel, which changelog section —
-is derived by release mode (§3.6). The one thing you have to time is step 0: **wait for
-`staple-release.yml` to succeed** on https://github.com/schuyler/macdown3000/actions. If
-you run before it does, `stapler validate` on the downloaded DMG will refuse, but the check
-depends on you not passing `--dmg` at some other pre-stapled local build.
+is derived by release mode (§3.6). The one prerequisite is timing: **wait for
+`staple-release.yml` to succeed** on https://github.com/schuyler/macdown3000/actions
+before running step 1. If you run before it does, `stapler validate` on the downloaded
+DMG will refuse, and release mode won't accept `--dmg` as a workaround (§3.2).
 
 The first published item should be a pre-release, so any residual mistake reaches only
 opted-in users. The download and stapling check that release mode does exist because the
