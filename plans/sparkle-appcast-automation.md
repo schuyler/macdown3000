@@ -3,29 +3,24 @@
 Implementation guide for `Tools/update_appcast.py` and a documented manual publishing step.
 Tests and prose documentation are the implementer's to write.
 
-**Two deliberate limits.** Wiring this into `staple-release.yml` is phase 2 (§7) — phase 1
-publishes by hand, so the script gets exercised across a few real releases before anything
-unattended depends on it. And **the script never rewrites existing feed content**: it renders
-one item, splices it in, and validates the result. That constraint removes the round-trip
-fixed point, and with it most of what makes this kind of tool hard.
-
-> **Evidence rule.** Sparkle's headers *declare* ObjC API, which the compiler enforces —
-> those are trustworthy. They also *describe the appcast XML vocabulary in prose*, which
-> nothing enforces, and where they do it they are wrong: `SUAppcastItem.h:167` names an
-> attribute Sparkle does not read. Every schema claim below comes from the framework binary
-> or from executing the tools.
-
 ---
 
 ## 1. What gets built
 
-- **`Tools/update_appcast.py`** — stdlib-only Python. Renders one `<item>` into
+- **`Tools/update_appcast.py`** — Python. Renders one `<item>` into
   `docs/sparkle/macdown3000/stable/appcast.xml`, creating the file if absent. Signs the DMG
-  itself, taking the EdDSA key on stdin.
-- **A release-checklist step** giving the command an operator runs after a release is
-  stapled, plus the commit that publishes it.
-- **One line in `plans/rc-process.md` step 5**, deleting the RC's `<item>` when its Release is
-  deleted at graduation (§4).
+  itself, taking the EdDSA key on stdin. Release mode (§3.6) derives every per-release input
+  from the version and the state of the repo; the explicit flags remain as the recovery
+  escape hatch. The render/splice/validate core is stdlib-only; release mode adds `git` (for
+  the tag→bundle-version count and to enumerate the tag), `stapler` (already required for
+  building), and one HTTP GET for the DMG.
+- **`plans/release-checklist.md` "Step 4: Publish the Appcast"** rewritten from the
+  explicit-mode invocation it currently carries to the release-mode command in §4, plus
+  the commit that publishes it.
+- **Two edits to `plans/rc-process.md`**: reconcile the `--channel ""` reference at
+  `:252` and the `--channel beta` reference at `:277` to the release-mode form, since
+  `--channel` is refused alongside `--release` (§3.2). Step 5's RC-item-deletion line is
+  already in place (§4).
 
 macdown.app is GitHub Pages serving `docs/` from `main`, so publishing is a commit — not
 SSH, not separate hosting.
@@ -46,7 +41,7 @@ SSH, not separate hosting.
 - Errors exit non-zero. Empty stdin → rc=1, and **no silent Keychain fallback** while
   `--ed-key-file -` is present.
 - **There is no public-key input**, so nothing here can confirm the secret matches the
-  `SUPublicEDKey` in shipped builds. See D3 and §7.
+  `SUPublicEDKey` in shipped builds. See D3.
 
 The operator runs this from `main`, where Sparkle is in the Podfile, so
 `./Pods/Sparkle/bin/sign_update` exists after `bundle exec pod install`.
@@ -86,7 +81,7 @@ it. `guid` has 0 occurrences; omitting it is right.
 ### 2.3 Hosting
 
 `SUFeedURL` is `https://macdown.app/sparkle/macdown3000/stable/appcast.xml`; `SUPublicEDKey`
-holds the real key (`MacDown-Info.plist:142-152`).
+holds the real key (`MacDown-Info.plist:151-152`).
 
 Jekyll renders only files beginning with YAML front matter, so a file starting `<?xml …?>` is
 copied byte-for-byte; `docs/_config.yml` excludes only `Gemfile`, `Gemfile.lock`, `README.md`,
@@ -103,13 +98,9 @@ copied byte-for-byte; `docs/_config.yml` excludes only `Gemfile`, `Gemfile.lock`
 duplicate rather than assuming versions are unique per release. `plans/rc-process.md:127,248` —
 graduating an RC adds a commit, so an RC and its final never collide.
 
-`LSMinimumSystemVersion` resolves in the built app (`11.0` today). Read it from the app inside
-the DMG per build; hardcoding drifts.
-
-**Why the script does not re-emit existing content:** `ElementTree.tostring` does not preserve
-CDATA (`<![CDATA[a & b]]>` comes back as `a &amp; b`), silently drops comments and processing
-instructions, and parses a DOCTYPE with internal entities without complaint. Round-tripping the
-feed would mean defending against all three. Splicing means none of them can reach us.
+`LSMinimumSystemVersion` in the source plist is the literal string
+`${MACOSX_DEPLOYMENT_TARGET}`; Xcode resolves it at build time. §3.6 step 4 reads the
+value from `project.pbxproj` instead.
 
 ---
 
@@ -145,13 +136,6 @@ Sparkle always allows channel-less items.
 displays this; it exists so a human reading the feed sees something. `<pubDate>` is now, UTC.
 The CDATA body is bracketed by exactly one newline on each side.
 
-**Deliberately omitted.** Item-level `<link>` — in Sparkle 2 that is `infoURL`, feeding the
-informational-update path, not a web link; it puts the item one
-`<sparkle:informationalUpdate>` away from being non-downloadable. `<guid>` — absent from the
-binary. `sparkle:installationType` — `.dmg` infers `application`. `application/octet-stream`
-over the accurate `x-apple-diskimage` because `type` is RSS metadata Sparkle never reads for
-dispatch, and it matches `generate_appcast`.
-
 The enclosing document, written only when the file does not exist:
 
 ```xml
@@ -170,16 +154,28 @@ The enclosing document, written only when the file does not exist:
 ### 3.2 CLI
 
 ```
-update_appcast.py --appcast PATH --dmg PATH --url URL --description-file PATH
+update_appcast.py --release VERSION [--dmg PATH] [--appcast PATH]
+                  [--sign-update PATH] [--dry-run]
+
+update_appcast.py --dmg PATH --url URL --description-file PATH
                   --bundle-version V --short-version V --minimum-system-version V
-                  [--channel {"",beta}] [--sign-update PATH] [--dry-run]
+                  [--appcast PATH] [--channel {"",beta}] [--sign-update PATH] [--dry-run]
 ```
+
+The first form is release mode (§3.6); the second is explicit mode, the recovery escape
+hatch. `--release` combined with `--url`, `--description-file`, `--bundle-version`,
+`--short-version`, `--minimum-system-version`, or `--channel` is an error — a partial
+override is exactly the transcription hazard release mode removes. `--dmg` is legal in
+both modes; in release mode it's the "I already have the stapled DMG locally" shortcut
+that skips the download.
 
 Signing is the only mode: the key is read from **stdin** and `length` is the DMG's size on
 disk. No precomputed-signature path — nothing in phase 1 needs one.
 
 | Flag | Rule |
 |---|---|
+| `--release` | the version of a published GitHub release, accepted with or without the leading `v`; the tag is `v` + version |
+| `--appcast` | defaults to `docs/sparkle/macdown3000/stable/appcast.xml` in both modes (D8) |
 | `--dmg` | must exist, be readable, end in `.dmg`, and not resolve to the same path as `--appcast` (§3.3) |
 | `--url` | must be `https://` |
 | `--channel` | exactly `""` (default) or `beta` |
@@ -198,22 +194,16 @@ forever — that is the failure an operator hits under time pressure.
 3. **If it exists** — splice the rendered item in as text, immediately before the first
    `    <item>` line, or before the `  </channel>` line if there are none. **If neither anchor
    is found, exit 1.**
-4. **Validate the result, once.** Parse the resulting bytes with `ElementTree`; then count the
-   items whose `<sparkle:version>` equals the incoming one. Exit 1 unless the document parses
-   and that count is exactly 1.
-5. **Write atomically** — temp file beside the target, then `os.replace()`. Leave no temp file
-   on any error path.
-
-**Step 4 is the whole safety story, and it is one pass.** A malformed existing file, a
-control character in the description, an unescaped `&` in the URL, a corrupt splice, a
-re-publish of a version already in the feed, a pre-existing duplicate — every one of them
-fails here, before anything is written. Do not reimplement these as separate checks. When it
-fails on an existing file, say in the message that the existing file may already have been
-malformed, because the script cannot tell the two apart and the operator can.
-
-**The existing file's bytes are never rewritten.** Only an insertion. So no round-trip fixed
-point is required, existing items cannot drift, and the ElementTree behaviors in §2.4 cannot
-damage anything. Preserve this property; it is why the rest of the design is small.
+4. **Validate the result, once.** Parse the resulting bytes with `ElementTree`; count the
+   items whose `<sparkle:version>` equals the incoming one. Exit 1 unless the document
+   parses and that count is exactly 1. On failure with an existing appcast, the error
+   message must note the existing file may already have been malformed — the script cannot
+   tell the two apart and the operator can. This one pass catches a malformed existing
+   file, a control character in the description, an unescaped `&` in the URL, a corrupt
+   splice, a re-publish of a version already in the feed, and a pre-existing duplicate.
+   Do not reimplement these as separate checks.
+5. **Write atomically** — temp file beside the target, then `os.replace()`. Leave no temp
+   file on any error path.
 
 **Two guards on the signing subprocess**, because `sign_update` has a second mode that would
 otherwise defeat all of the above. Given an XML file it *embeds* the signature — its own help
@@ -269,71 +259,104 @@ delete that `<item>` block and re-run; say so in the error message.
 The key never appears in argv, in an environment variable, or in a temp file — stdin to the
 script, stdin to the `sign_update` subprocess.
 
+### 3.6 Release mode
+
+`--release VERSION` derives every per-release input; the operator supplies the version and
+the key. Derivations, in order, all before signing:
+
+1. **Shape** — VERSION must fullmatch `\d+(\.\d+)+(-(rc|beta)\.\d+)?`; anything else
+   (`-alpha.1`, `-preview.N`, `-rc-1`, `-rc.1-hotfix`, bare `3000`, trailing garbage) is
+   an error naming the offending value. Fail-closed: an unrecognized shape does not
+   silently classify as stable, because "wrong channel on a pre-release offers it to
+   every user" (§5) is exactly the failure mode release mode is supposed to eliminate.
+2. **Tag** = `v` + VERSION, and **channel** = `beta` if the pre-release group is
+   present, `""` otherwise. If `git rev-parse TAG` fails, error naming
+   `git fetch --tags` — RC tags are cut on release branches a clean `main` may not have.
+3. **Bundle version** = `git rev-list --count TAG`. Same command as
+   `Tools/utils.sh:get_bundle_version()`, so the number matches what the build embedded.
+4. **Minimum system version** — extract `MACOSX_DEPLOYMENT_TARGET` from
+   `MacDown 3000.xcodeproj/project.pbxproj` with a regex; the source plist holds only the
+   literal `${MACOSX_DEPLOYMENT_TARGET}` placeholder that Xcode resolves at build time.
+   The pbxproj currently carries the setting at 12 sites, all agreeing on `11.0`; the
+   script asserts one distinct value across all matches and errors naming the drift if
+   not. No new dependency — this is a stdlib file read.
+5. **Description** — `git show TAG:CHANGELOG.md`, then extract the section whose heading
+   is exactly `## [VERSION]` (including the closing bracket, so `## [3000.0.7]` and
+   `## [3000.0.7-rc.1]` never collide), up to the next `## [` heading or EOF, stripping
+   the heading itself and any `<!-- rc-temp -->` / `<!-- /rc-temp -->` fence lines. The
+   result is validated by the same rules as `--description-file` (UTF-8, non-empty, no
+   `]]>`). Missing heading, empty section, or an invalid body → error naming the tag.
+   Reading from the tag rather than the working tree is what makes this work for RC
+   publishes: `plans/rc-process.md:99-103` puts each RC's `## [X.Y.Z-rc.N]` block in a
+   `rc-temp` fence on the release branch, stripped at graduation, so the entry never
+   lives on `main` — but it always lives on the tag.
+6. **DMG bytes** — if `--dmg PATH` was passed, use that; otherwise HTTP GET
+   `https://github.com/schuyler/macdown3000/releases/download/TAG/MacDown-VERSION.dmg` into
+   a private temp file. Non-200 → error naming the URL. The enclosure URL is the same
+   canonical URL either way, whether we downloaded or the operator supplied a local copy.
+7. **Stapling check** — `xcrun stapler validate DMG` must exit 0. `stapler` ships with Xcode
+   command-line tools (already required for building); the `xcrun` prefix matches
+   `staple-release.yml:208,225`. This is the one guard release mode
+   adds beyond what §3.3 already does, and it closes the specific failure of running the
+   script before `staple-release.yml` finishes: `release.yml` uploads an unstapled DMG that
+   the stapler workflow replaces in place, so an early download signs bytes users will
+   never see. If not stapled → error telling the operator to wait for the workflow and
+   check https://github.com/schuyler/macdown3000/actions.
+8. **Sign** — `sign_update -p --ed-key-file - DMG`, key on stdin, as in explicit mode. The
+   §3.3 guards against `sign_update`'s XML-embedding mode still apply.
+
+From there the flow is §3.3 unchanged: render, splice, single validating parse, write
+atomically. `--dry-run` runs the full derivation, download, stapling check and signing —
+its purpose is a real pre-flight — but writes no file. The stdin TTY check and the key
+path are identical in both modes.
+
+Release mode runs on macOS (needs `stapler`) with network access. Explicit mode keeps
+working with just Python and `sign_update`, which is what makes it the recovery path.
+
 ---
 
 ## 4. Publishing a release
 
-Documented in `plans/release-checklist.md`. After the stapling workflow finishes, from a clean
-`main` with `bundle exec pod install` done:
+Documented in `plans/release-checklist.md`. After the release is published **and the
+`staple-release.yml` workflow has finished** (check
+https://github.com/schuyler/macdown3000/actions), from any checkout that has the tag
+locally and `bundle exec pod install` done:
 
-1. **Download `MacDown-${VERSION}.dmg` from the GitHub release. Never sign a local build.**
-   Stapling mutates the DMG in place (`staple-release.yml:221`) and re-uploads it with
-   `--clobber` (`:347-350`), so the released asset and any local `build/` DMG have different
-   bytes — and `create-dmg` output is not reproducible anyway. Signing the wrong file yields a
-   signature and a `length` describing bytes nobody downloads, every client rejects the update,
-   and nothing catches it: `--dry-run` produces the same wrong signature, and the parse in
-   §3.3 cannot see it. Verify the download against `MacDown-${VERSION}.dmg.sha256`, uploaded
-   alongside it.
-2. Mount it read-only; read `CFBundleVersion`, `CFBundleShortVersionString` and
-   `LSMinimumSystemVersion` from `MacDown 3000.app/Contents/Info.plist` with PlistBuddy.
-   **If the app has no `SUPublicEDKey`, stop** — that build carries no updater (Sparkle is
-   commented out of the Podfile on release branches cut before this work), and an item for it
-   would advertise, to every installed copy, an update that silently removes their ability to
-   receive the next one.
-3. Extract the release's section from `CHANGELOG.md` **at the tag**, not from `main` — the two
-   legitimately differ, and `plans/rc-process.md:100-103` documents an RC-only block present on
-   the release branch and not on main. Strip the `<!-- rc-temp -->` / `<!-- /rc-temp -->` fence
-   lines: invisible under `sparkle:format="markdown"` on macOS 12+, but macOS 11 falls back to
-   plain text and shows them literally.
-4. Run the exact command below with `--dry-run` appended, and read the output. It signs for
-   real, so it needs the key piped in the same way.
-5. Run it again without `--dry-run`:
+1. Dry-run and read the output — the bytes the real run will write:
 
 ```bash
 op read "op://Personal/MacDown Sparkle EdDSA/password" \
-  | python3 Tools/update_appcast.py \
-      --appcast docs/sparkle/macdown3000/stable/appcast.xml \
-      --dmg ~/Downloads/MacDown-3000.1.0.dmg \
-      --url https://github.com/schuyler/macdown3000/releases/download/v3000.1.0/MacDown-3000.1.0.dmg \
-      --bundle-version 4837 --short-version 3000.1.0 --minimum-system-version 11.0 \
-      --description-file /tmp/section.md \
-      --channel ""
+  | python3 Tools/update_appcast.py --release 3000.1.0 --dry-run
 ```
 
-Use `--channel beta` for a pre-release tag. Nothing may follow the last flag on its line —
-step 4 appends `--dry-run` to this command, and a trailing comment would swallow it, turning
-the intended pre-flight into a real publish.
+2. Run the same command without `--dry-run`.
+3. `git commit -am "Publish 3000.1.0 appcast" && git push`. GitHub Pages serves the feed at
+   `SUFeedURL`.
+4. Confirm the feed is live once Pages rebuilds: fetch `SUFeedURL` and check it parses.
 
-6. Commit the one file to `main` and push. GitHub Pages serves it at `SUFeedURL`.
+Everything per-release — which DMG, which versions, which channel, which changelog section —
+is derived by release mode (§3.6). The one thing you have to time is step 0: **wait for
+`staple-release.yml` to succeed** on https://github.com/schuyler/macdown3000/actions. If
+you run before it does, `stapler validate` on the downloaded DMG will refuse, but the check
+depends on you not passing `--dmg` at some other pre-stapled local build.
 
-**Pre-release tags take `--channel beta`; stable tags take `--channel ""`.** Getting this wrong
-on a pre-release pushes it to every user. The first published item should be a pre-release, so
-a mistake reaches only opted-in users.
+The first published item should be a pre-release, so any residual mistake reaches only
+opted-in users. The download and stapling check that release mode does exist because the
+released asset is the only correct input: stapling mutates the DMG in place
+(`staple-release.yml:221`) and re-uploads it with `--clobber` (`:347-350`), so a local
+`build/` DMG has different bytes from what users fetch, and a signature over the wrong bytes
+is rejected by every client while looking valid in every parse. Explicit mode still relies
+on the operator for all of this; use it only for incident recovery.
 
 ### An item's lifetime matches its GitHub Release's
 
-`plans/rc-process.md:252-256` **deletes the `vX.Y.Z-rc.*` Releases at graduation** — keeping the
-tags, but removing the downloads, because some RCs ship known-buggy DMGs. An RC's enclosure URL
-therefore dies the moment the final ships, and nothing in this design removes items.
-
-So when an RC graduates, **delete its `<item>` block from
-`docs/sparkle/macdown3000/stable/appcast.xml` in the same commit that deletes the RC Releases**
-— `plans/rc-process.md` step 5 gains that line. Otherwise beta-channel users are offered a
-download that 404s, in the window between graduation and the final's publish.
-
-This is the general rule, and it is the only case where the operator removes an item by hand
-outside of incident recovery: **an appcast item lives exactly as long as the release it points
-at.** Stable items are never deleted, because stable releases never are.
+`plans/rc-process.md:252-256` deletes the `vX.Y.Z-rc.*` Releases at graduation (tags stay;
+downloads go). An RC's enclosure URL dies the moment the final ships, and this script does
+not remove items. So when an RC graduates, **delete its `<item>` block from
+`docs/sparkle/macdown3000/stable/appcast.xml` in the same commit that deletes the RC
+Releases** — `plans/rc-process.md` step 5 carries that instruction. Otherwise beta-channel
+users are offered a download that 404s until the final publishes. Stable items are never
+deleted; stable releases never are.
 
 ---
 
@@ -343,20 +366,15 @@ Almost everything fails closed: any error exits 1 with the file byte-identical, 
 means the live feed is never half-written, and `--dry-run` before every publish makes the rest
 of it unreachable. That is the point of doing this by hand first.
 
-Two failures are not caught by the script.
+**Signing the pre-stapled DMG.** `release.yml` uploads before notarization; the signature
+would be over bytes users never see. §3.6 step 7's `xcrun stapler validate` catches this.
 
-**A wrong signing key is not detected** (D3). Every client rejects the update with a signature
-error. Republishing fixes it — but not for everyone. Users who dismiss the broken update with
-**Skip This Version** record it in `SUSkippedVersion` (verified in the binary, with
-`SUSkippedMajorVersion` and the menu string), and Sparkle presents that alert *before* download
-and signature verification, so it is reachable. Republishing keeps the same
-`<sparkle:version>`, so the corrected item is never re-offered to them and they wait for the
-following release. Sparkle's escape hatch `sparkle:ignoreSkippedUpgradesBelowVersion` (8
-occurrences in the binary) exists; this design does not emit it.
+**A wrong signing key** publishes an update every client rejects. Neither mode verifies key
+identity (D3); the first-publish-is-pre-release rule bounds the blast radius.
 
-**A wrong `--channel` on a pre-release** offers it to every user. Recovery is to delete the
-item block and re-run. Nothing validates the flag against the tag, because the script never
-sees the tag.
+**A wrong channel on a pre-release** offers it to every user. Release mode's strict-shape
+regex (§3.6 step 2) either derives the right channel or errors — it never guesses. Explicit
+mode doesn't validate; recovery is to delete the item block and re-run.
 
 ---
 
@@ -364,76 +382,32 @@ sees the tag.
 
 - **D1 — Splice, never re-emit.** The script renders one item and inserts it; existing bytes
   are never rewritten, and a single parse of the result (§3.3 step 4) is the entire validation
-  story. This removes the round-trip fixed point and everything hanging off it — a strict
-  schema for existing content, CR normalization on read, comment/PI/DOCTYPE detection,
-  byte-stability across releases. **This is the decision the rest of the design depends on.**
-- **D2 — Phase the work.** Script first, workflow second (§7). Publishing by hand costs about
-  ten minutes per release and buys real evidence before anything unattended runs.
-- **D3 — Phase 1 does not verify the signing key's identity.** The operator holds the key and
-  runs the command deliberately, so a stale-secret mixup is far less likely than in CI. Phase 2
-  should verify it — §7 records a mechanism that costs almost nothing.
-- **D4 — No backfill.** The feed starts with the first release published after merge.
-  Backfilling would require downloading and signing every historical DMG, and older installs
-  reach the newest item by version comparison anyway.
+  story. **This is the decision the rest of the design depends on.**
+- **D2 — Phase the work.** Script first, workflow automation deferred. Publishing by hand
+  costs a few minutes per release and buys real evidence before anything unattended runs.
+- **D3 — Neither mode verifies the signing key's identity.** The operator holds the key and
+  runs the command deliberately, from their own machine, so a stale-secret mixup is unlikely.
+  When we're wrong, the failure is bounded by §4's rule that the first publish is a
+  pre-release, so only opted-in users see it.
+- **D4 — No backfill.** The feed starts with the first release published after merge. Older
+  installs reach the newest item by version comparison anyway.
 - **D5 — The `stable/` path segment stays.** Beta items live in the same file behind
   `<sparkle:channel>`. Mildly misleading, but baked into every shipped build's `SUFeedURL`.
-
-**Cut as unnecessary:** the canonical re-serializer and its fixed point; the strict-schema
-parser; `--force` and the field-by-field conflict comparison; monotonicity warnings; the
-CDATA `]]>` splitter; `--title`; `--pub-date`; `--length`/`--signature`. Each was machinery
-guarding a problem that splicing, or a single validating parse, removes.
+- **D6 — One script, two modes.** Release mode lives inside `update_appcast.py` rather than a
+  wrapper: one entry point, one flag surface, and the derivations sit behind the same guards
+  and single validating parse as the explicit inputs.
+- **D7 — Release mode adds one guard: `xcrun stapler validate` on the DMG.** It closes the
+  specific happy-path failure of running the script before `staple-release.yml` finishes,
+  using a tool already required for building.
+- **D8 — `--appcast` defaults to the canonical feed path.** There is exactly one feed; the
+  flag remains for tests and incident recovery.
 
 ---
 
-## 7. Phase 2 — workflow automation, deferred
+## 7. Residuals
 
-Not designed here. Findings against an earlier full-automation draft, recorded so phase 2 does
-not rediscover them:
-
-- **Step placement.** `staple-release.yml`'s point of no return is "Update release with stapled
-  DMG" (`:338`), which uploads with `--clobber`; everything after it is un-re-runnable because
-  the already-stapled guard (`:208-212`) validates the DMG downloaded *from the release*. Note
-  "Update release notes" is at `:364` — **after** `:338`. The stapled DMG exists locally from
-  `:216`, so signing and metadata extraction belong between "Final comprehensive verification"
-  (ends `:336`) and `:338`.
-- **The tag tree.** After `git checkout "$TAG"` (`:60-66`), every path in the workspace resolves
-  against the *tag's* tree, not the workflow's commit. Any new shared script must be staged out
-  of the workspace (e.g. into `$RUNNER_TEMP`) before that line, or it will not exist for older
-  tags. `staple-release.yml:314` already has this latent bug, harmlessly, because it sits
-  before `:338`.
-- **Verify the key, cheaply.** The check is *not* deriving the public half from the private key
-  — that needs Ed25519 on macOS, which LibreSSL cannot do. It is verifying the signature just
-  produced against the `SUPublicEDKey` read out of the app: public inputs only, stock OpenSSL 3
-  on ubuntu. Prefix the bare 32-byte key with `302a300506032b6570032100` to make an SPKI DER,
-  then `openssl pkeyutl -verify -pubin -inkey pub.pem -rawin -in FILE -sigfile sig.bin`.
-  Correct key verifies; wrong key exits 1. This closes the wrong-key failure in §5.
-- **Fail closed.** A skip-the-appcast gate must be written on *every* path and asserted to be
-  exactly `true` or `false` by its consumer. Gating on `!= 'true'` makes the unset string the
-  publishing state, so a typo silently publishes an item for an app with no updater.
-- **`update-website.yml`.** Its push retry (`:230-246`) has no `git pull --rebase`, and `:17`
-  gates on the whole run's conclusion. Anything committing to `main` during a staple run must
-  account for both.
-- **Sparkle tooling.** `staple-release.yml` runs no CocoaPods toolchain at all, so a pinned,
-  checksum-verified release tarball extracted into a named directory beats adding Bundler and
-  CocoaPods to the most safety-critical workflow in the repo.
-- **RC item removal.** Automating publication does not automate the deletion in §4 — graduation
-  is a separate workflow. Either automate that removal too, or the feed accumulates dead RC
-  enclosure URLs. Removing an item means editing existing content, which is the one thing the
-  phase 1 script deliberately cannot do.
-- **Extraction contract.** If changelog extraction is factored into a script, specify its input
-  contract explicitly — the existing awk (`:382-392`) reads a *named file* and takes the version
-  via `-v ver=`, so a caller that pipes to it silently reads the wrong changelog rather than
-  failing.
-
-## 8. Risks
-
-- **Nothing verifies Sparkle parses the emitted feed correctly** — only that the names appear in
-  its binary. Bounded by publishing a pre-release first.
-- **Nothing verifies the signing key is the right key** in phase 1 (D3).
-- **Publishing is manual and can be forgotten.** Lower-consequence than the automated failure it
-  replaces, but it belongs in the release checklist rather than folklore.
-- **Nobody currently owns verifying the feed is served.** After the first published item, someone
-  must confirm `SUFeedURL` returns 200, parses, and drives a real install.
-- **#564 will eventually produce a `CFBundleVersion` collision.** The script refuses rather than
-  corrupting the feed. It does not fix the underlying problem.
+- **Nobody currently owns verifying the feed is served.** After the first published item,
+  someone must confirm `SUFeedURL` returns 200, parses, and drives a real install.
+- **#564 will eventually produce a `CFBundleVersion` collision** — the script refuses rather
+  than corrupting the feed, but does not fix the underlying problem.
 </content>
