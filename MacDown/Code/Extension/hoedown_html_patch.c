@@ -6,7 +6,6 @@
 //  Copyright (c) 2014 Tzu-ping Chung . All rights reserved.
 //
 
-#include <stdlib.h>
 #include <string.h>
 #include <hoedown/escape.h>
 #include <hoedown/document.h>
@@ -347,7 +346,7 @@ void hoedown_patch_render_header(
     hoedown_buffer_free(slug);
 }
 
-// Returns 1 if the tag starting at content->data[i] (the '<') is a void
+// Returns 1 if the tag starting at content->data[i] (the '<') is a replaced
 // element that always renders visible content of its own (e.g. <img>),
 // independent of any text nodes around it.
 static int is_replaced_element_tag(const hoedown_buffer *content, size_t i)
@@ -403,15 +402,29 @@ static int is_whitespace_entity(const hoedown_buffer *content, size_t amp,
 
     if (content->data[start] == '#')
     {
-        // Numeric reference: &#160; / &#xA0; (NBSP) — anything else counts
-        // as visible content.
+        // Numeric reference: &#160; / &#xA0; (NBSP), &#8194; (ENSP), etc.
+        // Anything else counts as visible content. Parsed manually (not via
+        // strtol) since `content` is not NUL-terminated.
         size_t k = start + 1;
         int is_hex = (k < semi && (content->data[k] == 'x' ||
                                     content->data[k] == 'X'));
         if (is_hex) k++;
-        long value = strtol((const char *)content->data + k, NULL,
-                             is_hex ? 16 : 10);
-        return value == 0x00A0;
+        if (k >= semi)
+            return 0;
+
+        uint32_t value = 0;
+        for (; k < semi; k++)
+        {
+            uint8_t c = content->data[k];
+            int digit;
+            if (c >= '0' && c <= '9') digit = c - '0';
+            else if (is_hex && c >= 'a' && c <= 'f') digit = c - 'a' + 10;
+            else if (is_hex && c >= 'A' && c <= 'F') digit = c - 'A' + 10;
+            else return 0;
+            value = value * (is_hex ? 16 : 10) + (uint32_t)digit;
+        }
+        return value == 0x00A0 || value == 0x2002 || value == 0x2003 ||
+               value == 0x2009;
     }
 
     static const char *whitespace_entities[] = { "nbsp", "ensp", "emsp", "thinsp" };

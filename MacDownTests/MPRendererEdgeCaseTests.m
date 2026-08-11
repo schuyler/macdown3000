@@ -373,6 +373,42 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                    @"A header row with only whitespace entities like &nbsp; is still blank");
 }
 
+- (void)testRendererOmitsTheadWhenHeaderCellContainsOnlyNumericNbsp
+{
+    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.dataSource.markdown = @"| &#160; | |\n|---|---|\n| 1 | 2 |";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertFalse([html containsString:@"<thead>"],
+                   @"A header row with only a numeric NBSP reference is still blank");
+}
+
+- (void)testRendererKeepsTheadWhenHeaderCellContainsUppercaseImageTag
+{
+    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.dataSource.markdown = @"| <IMG SRC=\"img.png\"> | |\n|---|---|\n| 1 | 2 |";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<thead>"],
+                  @"Tag-name matching for replaced elements should be case-insensitive");
+}
+
+- (void)testRendererKeepsTheadWhenOneOfSeveralHeaderCellsHasContent
+{
+    self.delegate.extensions = HOEDOWN_EXT_TABLES;
+    self.dataSource.markdown = @"| | Header | |\n|---|---|---|\n| 1 | 2 | 3 |";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:@"<thead>"],
+                  @"A header row is not blank if any single cell has visible content");
+}
+
 
 #pragma mark - Malformed HTML in Code Blocks Tests
 
