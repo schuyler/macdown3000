@@ -91,3 +91,13 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (nonatomic, assign) NSString *pipedContentFileToOpen;
 
 @end
+
+
+// Composes user-facing preferences into the flag bitmasks Hoedown expects.
+// Implemented in MPDocument.m.
+@interface MPPreferences (Hoedown)
+
+@property (nonatomic, readonly) int extensionFlags;
+@property (nonatomic, readonly) int rendererFlags;
+
+@end

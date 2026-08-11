@@ -8,6 +8,7 @@
 
 #import <XCTest/XCTest.h>
 #import "MPPreferences.h"
+#import "hoedown_html_patch.h"
 
 @interface MPPreferencesTests : XCTestCase
 @property MPPreferences *preferences;
@@ -212,6 +213,22 @@
     self.preferences.extensionTables = originalTables;
     self.preferences.extensionStrikethough = originalStrike;
     [self.preferences synchronize];
+}
+
+
+- (void)testHideHorizontalRulesFlagComposition
+{
+    BOOL original = self.preferences.htmlHideHorizontalRules;
+
+    self.preferences.htmlHideHorizontalRules = YES;
+    XCTAssertTrue((self.preferences.rendererFlags & HOEDOWN_HTML_HIDE_HORIZONTAL_RULES) != 0,
+                  @"rendererFlags should include HOEDOWN_HTML_HIDE_HORIZONTAL_RULES when the preference is on");
+
+    self.preferences.htmlHideHorizontalRules = NO;
+    XCTAssertTrue((self.preferences.rendererFlags & HOEDOWN_HTML_HIDE_HORIZONTAL_RULES) == 0,
+                  @"rendererFlags should not include HOEDOWN_HTML_HIDE_HORIZONTAL_RULES when the preference is off");
+
+    self.preferences.htmlHideHorizontalRules = original;
 }
 
 

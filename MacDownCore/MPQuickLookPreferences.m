@@ -21,6 +21,7 @@ static NSString * const kMPExtensionFencedCodeKey = @"extensionFencedCode";
 static NSString * const kMPExtensionAutolinkKey = @"extensionAutolink";
 static NSString * const kMPExtensionStrikethroughKey = @"extensionStrikethough"; // Note: typo matches original
 static NSString * const kMPHtmlTaskListKey = @"htmlTaskList";
+static NSString * const kMPHtmlHideHorizontalRulesKey = @"htmlHideHorizontalRules";
 
 // Default values
 static NSString * const kMPDefaultStyleName = @"GitHub2";
@@ -122,6 +123,12 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 - (BOOL)extensionStrikethrough
 {
     return [self boolPreferenceForKey:kMPExtensionStrikethroughKey
+                         defaultValue:YES];
+}
+
+- (BOOL)hideHorizontalRules
+{
+    return [self boolPreferenceForKey:kMPHtmlHideHorizontalRulesKey
                          defaultValue:YES];
 }
 
