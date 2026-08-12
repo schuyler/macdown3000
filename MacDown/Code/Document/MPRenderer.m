@@ -249,9 +249,7 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
 NS_INLINE NSString *MPEscapeHTMLAttribute(NSString *value);
 NS_INLINE NSString *MPEscapeHTMLText(NSString *value);
 NS_INLINE NSString *MPPreviewContentSecurityPolicy(void);
-NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken,
-                                      NSString *tableLayoutBridgeToken);
-NS_INLINE NSString *MPPreviewTableLayoutsTag(NSString *json);
+NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken);
 
 NS_INLINE NSString *MPGetHTML(
     NSString *title, NSString *headTags, NSString *body, NSArray *styles,
@@ -337,7 +335,6 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 @property BOOL manualRender;
 @property (copy) NSString *highlightingThemeName;
 @property (nonatomic, copy, readwrite) NSString *checkboxBridgeToken;
-@property (nonatomic, copy, readwrite) NSString *tableLayoutBridgeToken;
 
 // Issue #110: Cache-busting timestamps for local resources
 @property (strong) NSMutableDictionary<NSString *, NSNumber *> *resourceTimestamps;
@@ -512,28 +509,14 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
            @"script-src 'self' file: https://cdnjs.cloudflare.com 'unsafe-eval'";
 }
 
-NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken,
-                                      NSString *tableLayoutBridgeToken)
+NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
 {
     NSString *csp = MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy());
     NSString *checkboxToken = MPEscapeHTMLAttribute(checkboxBridgeToken);
-    NSString *tableToken = MPEscapeHTMLAttribute(tableLayoutBridgeToken);
     return [NSString stringWithFormat:
         @"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n"
-         "<meta name=\"macdown-checkbox-token\" content=\"%@\">\n"
-         "<meta name=\"macdown-table-layout-token\" content=\"%@\">",
-        csp, checkboxToken, tableToken];
-}
-
-NS_INLINE NSString *MPPreviewTableLayoutsTag(NSString *json)
-{
-    if (!json.length)
-        json = @"{}";
-    json = [json stringByReplacingOccurrencesOfString:@"</"
-                                           withString:@"<\\/"];
-    return [NSString stringWithFormat:
-        @"<script type=\"application/json\" id=\"macdown-table-layouts\">%@</script>\n",
-        json];
+         "<meta name=\"macdown-checkbox-token\" content=\"%@\">",
+        csp, checkboxToken];
 }
 
 
@@ -846,22 +829,14 @@ NS_INLINE NSString *MPPreviewTableLayoutsTag(NSString *json)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *body = self.currentHtml;
-
-    NSString *layoutJSON = nil;
-    if ([self.dataSource respondsToSelector:@selector(rendererTableLayoutsJSON:)])
-        layoutJSON = [self.dataSource rendererTableLayoutsJSON:self];
-    NSString *layoutTag = MPPreviewTableLayoutsTag(layoutJSON);
     NSString *previewBody = body ?: @"";
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     if (!self.checkboxBridgeToken.length)
         self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
-    if (!self.tableLayoutBridgeToken.length)
-        self.tableLayoutBridgeToken = NSUUID.UUID.UUIDString;
-    NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken,
-                                           self.tableLayoutBridgeToken);
+    NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
     NSString *html = MPGetHTML(
-        title, headTags, [layoutTag stringByAppendingString:previewBody],
+        title, headTags, previewBody,
         self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
 

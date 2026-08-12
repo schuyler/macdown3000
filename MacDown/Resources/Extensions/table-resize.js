@@ -1,12 +1,16 @@
 /**
  * Live-preview Markdown table column resizing.
  *
- * Widths are persisted by the native app through x-macdown-table-layout URLs.
+ * Widths are ephemeral: kept only in this script's in-memory sessionWidths
+ * map, never written back to the document or persisted to disk. They survive
+ * incremental preview updates (typing) because the preview's JS context
+ * persists across DOM replacement, but reset on a full preview reload.
  * This script only runs in the editor preview; exports do not include it.
  */
 (function () {
   var MIN_WIDTH = 48;
   var resizing = null;
+  var sessionWidths = {};
 
   function headerText(table) {
     var cells = table.querySelectorAll('thead th');
@@ -33,23 +37,6 @@
     return index + ':' + hashString(headerText(table));
   }
 
-  function currentLayouts() {
-    var node = document.getElementById('macdown-table-layouts');
-    if (!node) {
-      return {};
-    }
-    try {
-      return JSON.parse(node.textContent || '{}') || {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  function bridgeToken() {
-    var tokenMeta = document.querySelector('meta[name="macdown-table-layout-token"]');
-    return tokenMeta ? tokenMeta.getAttribute('content') : '';
-  }
-
   function ensureColgroup(table, columnCount) {
     var colgroup = table.querySelector('colgroup');
     if (!colgroup) {
@@ -67,21 +54,6 @@
 
   function setColumnWidth(col, width) {
     col.style.width = Math.max(MIN_WIDTH, Math.round(width)) + 'px';
-  }
-
-  function sendLayout(action, table, column, width) {
-    var token = bridgeToken();
-    if (!token) {
-      return;
-    }
-    var url = 'x-macdown-table-layout://' + action +
-      '?token=' + encodeURIComponent(token) +
-      '&table=' + encodeURIComponent(table) +
-      '&column=' + encodeURIComponent(column);
-    if (width !== null && width !== undefined) {
-      url += '&width=' + encodeURIComponent(Math.round(width));
-    }
-    window.location = url;
   }
 
   function headerCells(table) {
@@ -103,7 +75,7 @@
     }
   }
 
-  function initTable(table, index, layouts) {
+  function initTable(table, index) {
     var cells = headerCells(table);
     if (!cells.length) {
       return;
@@ -116,7 +88,7 @@
     table.classList.add('macdown-resizable-table');
 
     var colgroup = ensureColgroup(table, cells.length);
-    var saved = layouts[key] || {};
+    var saved = sessionWidths[key] || {};
     for (var i = 0; i < cells.length; i++) {
       var savedWidth = saved[String(i)];
       if (savedWidth !== undefined && savedWidth !== null) {
@@ -152,7 +124,13 @@
           event.preventDefault();
           event.stopPropagation();
           colgroup.children[columnIndex].style.width = '';
-          sendLayout('reset', key, columnIndex, null);
+          var tableWidths = sessionWidths[key];
+          if (tableWidths) {
+            delete tableWidths[String(columnIndex)];
+            if (!Object.keys(tableWidths).length) {
+              delete sessionWidths[key];
+            }
+          }
         });
 
         cell.appendChild(handle);
@@ -174,17 +152,21 @@
     }
     var width = parseFloat(resizing.col.style.width);
     if (isFinite(width)) {
-      sendLayout('set', resizing.table, resizing.column, width);
+      var tableWidths = sessionWidths[resizing.table];
+      if (!tableWidths) {
+        tableWidths = {};
+        sessionWidths[resizing.table] = tableWidths;
+      }
+      tableWidths[String(resizing.column)] = width;
     }
     resizing = null;
     document.documentElement.classList.remove('macdown-table-resizing');
   });
 
   window.macdownInitTableResize = function () {
-    var layouts = currentLayouts();
     var tables = document.querySelectorAll('table');
     for (var i = 0; i < tables.length; i++) {
-      initTable(tables[i], i, layouts);
+      initTable(tables[i], i);
     }
   };
 

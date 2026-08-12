@@ -191,8 +191,6 @@ MacDown/Resources/Prism/*
 
 # Bundler binstubs
 bin/
-.bundle/
-vendor/bundle/
 
 # Claude Code plugins (installed via SessionStart hook)
 .claude/plugins/

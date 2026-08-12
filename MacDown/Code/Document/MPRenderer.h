@@ -25,7 +25,6 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 @property (weak) id<MPRendererDataSource> dataSource;
 @property (weak) id<MPRendererDelegate> delegate;
 @property (nonatomic, copy, readonly) NSString *checkboxBridgeToken;
-@property (nonatomic, copy, readonly) NSString *tableLayoutBridgeToken;
 
 - (void)parseAndRenderNow;
 - (void)parseAndRenderLater;
@@ -52,9 +51,6 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (BOOL)rendererLoading;
 - (NSString *)rendererMarkdown:(MPRenderer *)renderer;
 - (NSString *)rendererHTMLTitle:(MPRenderer *)renderer;
-
-@optional
-- (NSString *)rendererTableLayoutsJSON:(MPRenderer *)renderer;
 
 @end
 
