@@ -129,7 +129,7 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 - (BOOL)hideHorizontalRules
 {
     return [self boolPreferenceForKey:kMPHtmlHideHorizontalRulesKey
-                         defaultValue:YES];
+                         defaultValue:NO];
 }
 
 - (int)extensionFlags

@@ -454,7 +454,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     if (![defaults objectForKey:@"editorAutoSave"])
         self.editorAutoSave = YES;
     if (![defaults objectForKey:@"htmlHideHorizontalRules"])
-        self.htmlHideHorizontalRules = YES;
+        self.htmlHideHorizontalRules = NO;
 
     // Defensive default for document zoom level. Migration v6 also handles
     // this, but this branch protects against any path that bypasses the
