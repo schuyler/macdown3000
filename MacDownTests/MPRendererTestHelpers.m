@@ -16,7 +16,6 @@
     if (self) {
         self.markdown = @"";
         self.title = @"";
-        self.tableLayoutsJSON = @"{}";
     }
     return self;
 }
@@ -34,11 +33,6 @@
 - (NSString *)rendererHTMLTitle:(MPRenderer *)renderer
 {
     return self.title;
-}
-
-- (NSString *)rendererTableLayoutsJSON:(MPRenderer *)renderer
-{
-    return self.tableLayoutsJSON;
 }
 
 @end
