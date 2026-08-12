@@ -9,6 +9,8 @@
 #ifndef MacDown_hoedown_html_patch_h
 #define MacDown_hoedown_html_patch_h
 
+#include <hoedown/document.h>
+
 static unsigned int HOEDOWN_HTML_USE_TASK_LIST = (1 << 4);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS = (1 << 5);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_INFORMATION = (1 << 6);
