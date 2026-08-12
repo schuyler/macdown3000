@@ -13,6 +13,7 @@ jobs:
         os: [macos-14, macos-26]
       fail-fast: false
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -31,7 +32,9 @@ jobs:
         xcodebuild test \
           -workspace "MacDown 3000.xcworkspace" \
           -scheme MacDown \
-          -derivedDataPath DerivedData
+          -derivedDataPath DerivedData \
+          -test-timeouts-enabled YES \
+          -maximum-test-execution-time-allowance 120
 
     - name: Upload test results
       if: failure()

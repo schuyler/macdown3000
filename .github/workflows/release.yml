@@ -168,12 +168,15 @@ jobs:
         uses: ./.github/actions/setup-macdown
 
       - name: Run tests before release
+        timeout-minutes: 30
         run: |
           echo "🧪 Running unit tests to ensure code quality before release..."
           xcodebuild test \
             -workspace "MacDown 3000.xcworkspace" \
             -scheme MacDown \
-            -derivedDataPath DerivedData
+            -derivedDataPath DerivedData \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120
           echo "✅ All tests passed"
 
       # Keep in sync with the launch-test job in smoke-test.yml
