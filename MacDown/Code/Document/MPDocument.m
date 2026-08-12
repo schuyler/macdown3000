@@ -34,6 +34,9 @@
 #import "MPResourceWatcherSet.h"
 #import "MPHTMLResourceURLs.h"
 #import "MPURLSecurityPolicy.h"
+#import "MPFolderSidebarViewController.h"
+#import "MPSidebarSplitView.h"
+#import "MPSidebarSyncCoordinator.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 // Issue #504: PDF export post-processing (clickable internal anchor links).
 #import <PDFKit/PDFKit.h>
@@ -250,7 +253,8 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 101100
      WebEditingDelegate, WebFrameLoadDelegate, WebPolicyDelegate, WebResourceLoadDelegate, WebUIDelegate,
 #endif
-     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate>
+     MPAutosaving, MPRendererDataSource, MPRendererDelegate, MPResourceWatcherSetDelegate,
+     MPFolderSidebarDelegate>
 
 typedef NS_ENUM(NSUInteger, MPWordCountType) {
     MPWordCountTypeWord,
@@ -272,14 +276,20 @@ typedef NS_ENUM(NSUInteger, MPScrollOwner) {
 // kind lets validateHeaderLocationAlignment align the two sequences instead of blindly
 // assuming they correspond 1:1 by index. Header values equal the header level, matching
 // the kind codes emitted by updateHeaderLocations.js.
+//
+// Density fix (long header-sparse sections drift out of sync): paragraphs and list
+// items are also tracked as reference points, so no span between two reference points
+// is ever very long, bounding the linear-interpolation error between them.
 typedef NS_ENUM(NSInteger, MPReferenceKind) {
-    MPReferenceKindImage = 0,
-    MPReferenceKindH1    = 1,
-    MPReferenceKindH2    = 2,
-    MPReferenceKindH3    = 3,
-    MPReferenceKindH4    = 4,
-    MPReferenceKindH5    = 5,
-    MPReferenceKindH6    = 6,
+    MPReferenceKindImage     = 0,
+    MPReferenceKindH1        = 1,
+    MPReferenceKindH2        = 2,
+    MPReferenceKindH3        = 3,
+    MPReferenceKindH4        = 4,
+    MPReferenceKindH5        = 5,
+    MPReferenceKindH6        = 6,
+    MPReferenceKindParagraph = 7,
+    MPReferenceKindListItem  = 8,
 };
 
 @property (weak) IBOutlet NSToolbar *toolbar;
@@ -375,6 +385,10 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Issue #110: Watch local resources for cache-busting
 @property (strong) MPResourceWatcherSet *resourceWatcherSet;
 
+// Folder-workspace sidebar support
+@property (nonatomic, strong) MPFolderSidebarViewController *sidebarController;
+@property (nonatomic, strong) MPSidebarSplitView *outerSplitView;
+
 // Completion handlers for deferred operations when preview is hidden (issue #16)
 @property (strong) NSMutableArray<void (^)(void)> *renderCompletionHandlers;
 
@@ -385,12 +399,24 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 
 - (void)scaleWebview;
 - (void)syncScrollers;
+- (void)syncScrollersToCursor;
 - (void)syncScrollersReverse;
 - (void)updateHeaderLocations;
 - (void)validateHeaderLocationAlignment;
 // Issue #436: Pure helpers — no view/DOM dependencies, so they are unit-testable headless.
 + (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
                                           outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers;
+// Pure geometry helper for -syncScrollersToCursor — see its declaration further
+// down for full documentation. Declared here too so unit tests (via a category)
+// can call it directly with concrete numbers.
++ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY
+           editorContentHeight:(CGFloat)editorContentHeight
+           editorVisibleHeight:(CGFloat)editorVisibleHeight
+           editorScrollOffsetY:(CGFloat)editorScrollOffsetY
+          previewContentHeight:(CGFloat)previewContentHeight
+          previewVisibleHeight:(CGFloat)previewVisibleHeight
+        editorHeaderLocations:(NSArray<NSNumber *> *)editorHeaderLocations
+       webViewHeaderLocations:(NSArray<NSNumber *> *)webViewHeaderLocations;
 + (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs
           editorTypes:(NSArray<NSNumber *> *)editorTypes
             previewYs:(NSArray<NSNumber *> *)previewYs
@@ -689,6 +715,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 - (void)windowControllerDidLoadNib:(NSWindowController *)controller
 {
     [super windowControllerDidLoadNib:controller];
+    [self installFolderSidebarForController:controller];
 
     // All files use their absolute path to keep their window states.
     NSString *autosaveName = kMPDefaultAutosaveName;
@@ -856,6 +883,280 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return range;
 }
 
+#pragma mark - Folder sidebar
+
+// Canonicalise on the way in, so one folder is one workspace however it was
+// reached. `macdown /tmp/proj` and File > Open Folder... on the same directory
+// otherwise produce file:///tmp/proj/ and file:///private/tmp/proj/, which the
+// sync coordinator would treat as two unrelated workspaces -- silently, since
+// everything except sync canonicalises already.
+- (void)setWorkspaceRootURL:(NSURL *)workspaceRootURL
+{
+    _workspaceRootURL =
+        [workspaceRootURL.URLByResolvingSymlinksInPath copy] ?: [workspaceRootURL copy];
+}
+
+- (void)installFolderSidebarForController:(NSWindowController *)controller
+{
+    if (!self.workspaceRootURL)
+        return;
+
+    NSWindow *window = controller.window;
+    NSView *content = window.contentView;
+    MPDocumentSplitView *inner = self.splitView;
+    if (!inner || inner.superview != content)
+        return;   // unexpected hierarchy; skip rather than corrupt the window
+
+    self.sidebarController =
+        [[MPFolderSidebarViewController alloc] initWithRootURL:self.workspaceRootURL];
+    self.sidebarController.sidebarDelegate = self;
+
+    MPSidebarSplitView *outer =
+        [[MPSidebarSplitView alloc] initWithFrame:content.bounds];
+    outer.vertical = YES;
+    outer.dividerStyle = NSSplitViewDividerStyleThin;
+    outer.delegate = self.sidebarController;          // NOT MPDocument
+    // No autosaveName: width persistence + cross-tab sync is owned by
+    // MPSidebarSyncCoordinator; a shared NSSplitView autosave would fight it.
+    outer.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+
+    [inner removeFromSuperview];
+
+    NSView *sidebarView = self.sidebarController.view;
+    // Start at this workspace's shared width so this tab matches its siblings.
+    CGFloat startWidth = [[MPSidebarSyncCoordinator sharedCoordinator]
+        sidebarWidthForRoot:self.workspaceRootURL];
+
+    [outer addSubview:sidebarView];                   // index 0 = leading sidebar
+    [outer addSubview:inner];                         // index 1 = editor/preview
+
+    // The sidebar is pinned to a fixed width by the delegate's
+    // -splitView:resizeSubviewsWithOldSize: (holding priorities don't pin during
+    // an autoresize — NSSplitView falls back to proportional resizing).
+    outer.frame = content.bounds;
+    [content addSubview:outer];
+    self.outerSplitView = outer;
+    [outer adjustSubviews];
+    [outer setPosition:startWidth ofDividerAtIndex:0];
+
+    // Match this workspace's visibility (a new tab opened while the sidebar was
+    // hidden in its sibling tabs should also start hidden).
+    if (![[MPSidebarSyncCoordinator sharedCoordinator]
+              sidebarVisibleForRoot:self.workspaceRootURL])
+        [self hideSidebarPane];
+
+    // Live sync across tabs. Width is reported only on a genuine divider drag
+    // (see -outerSplitDidResize:), so opening a tab or resizing the window never
+    // nudges the shared width. Observers are removed in -close (removeObserver:self).
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self selector:@selector(outerSplitDidResize:)
+               name:NSSplitViewDidResizeSubviewsNotification object:outer];
+    [[NSNotificationCenter defaultCenter]
+        addObserver:self selector:@selector(sidebarSyncDidChange:)
+               name:MPSidebarSyncDidChangeNotification object:nil];
+}
+
+// Propagate a width change ONLY when it comes from the user dragging the
+// divider. The same notification also fires for programmatic -setPosition:,
+// window resizing, and tab insertion; those must not broadcast (that reset the
+// shared width every time a tab opened). MPSidebarSplitView knows when it is
+// inside a divider-drag tracking loop, which -[NSApp currentEvent] cannot
+// reliably tell apart from a layout-triggered resize.
+- (void)outerSplitDidResize:(NSNotification *)note
+{
+    if (!self.outerSplitView.isDraggingDivider)
+        return;
+    NSView *sidebarView = self.sidebarController.view;
+    if (sidebarView.superview != self.outerSplitView)
+        return;
+    CGFloat w = NSWidth(sidebarView.frame);
+    if (w > 0)
+        [[MPSidebarSyncCoordinator sharedCoordinator]
+            setSidebarWidth:w forRoot:self.workspaceRootURL source:self];
+}
+
+// Whether the sidebar is actually on screen. The pane can be absent (hidden via
+// ⌘\, which removes it so no divider is drawn) or present but collapsed to zero
+// width by a divider drag; both read as not visible.
+- (BOOL)isSidebarVisible
+{
+    NSView *sidebarView = self.sidebarController.view;
+    if (!self.outerSplitView || sidebarView.superview != self.outerSplitView)
+        return NO;
+    return ![self.outerSplitView isSubviewCollapsed:sidebarView];
+}
+
+- (void)showSidebarPane
+{
+    NSSplitView *outer = self.outerSplitView;
+    NSView *sidebarView = self.sidebarController.view;
+    if (!outer)
+        return;
+    // The coordinator is the single source of truth for this workspace's
+    // width; it is the only one that sees this tab's own divider drags, which
+    // -sidebarSyncDidChange: skips because it ignores its own broadcasts.
+    CGFloat w = [[MPSidebarSyncCoordinator sharedCoordinator]
+        sidebarWidthForRoot:self.workspaceRootURL];
+    if (sidebarView.superview == outer)
+    {
+        // Present but dragged shut: reopen it at the workspace's width. A
+        // collapsed pane is left hidden by AppKit, and it can also be re-added
+        // in that state, so clear it here rather than rely on -setPosition:.
+        if ([outer isSubviewCollapsed:sidebarView] || sidebarView.hidden)
+        {
+            sidebarView.hidden = NO;
+            [outer setPosition:w ofDividerAtIndex:0];
+        }
+        return;
+    }
+    sidebarView.hidden = NO;
+    [outer addSubview:sidebarView positioned:NSWindowBelow relativeTo:self.splitView];
+    [outer adjustSubviews];
+    [outer setPosition:w ofDividerAtIndex:0];
+}
+
+- (void)hideSidebarPane
+{
+    NSSplitView *outer = self.outerSplitView;
+    NSView *sidebarView = self.sidebarController.view;
+    if (!outer || sidebarView.superview != outer)
+        return;
+    [sidebarView removeFromSuperview];          // removing the pane draws no divider
+    [outer adjustSubviews];
+}
+
+- (IBAction)toggleFolderSidebar:(id)sender
+{
+    if (!self.sidebarController || !self.outerSplitView)
+        return;
+    BOOL shown = self.isSidebarVisible;
+    if (shown)
+        [self hideSidebarPane];
+    else
+        [self showSidebarPane];
+    // Broadcast so the other tabs of THIS workspace match.
+    [[MPSidebarSyncCoordinator sharedCoordinator]
+        setSidebarVisible:!shown forRoot:self.workspaceRootURL source:self];
+}
+
+// Another tab of the SAME workspace changed the shared width/visibility: match
+// it here. Changes from a window open on a different folder are ignored — those
+// are independent workspaces that happen to share the process.
+- (void)sidebarSyncDidChange:(NSNotification *)note
+{
+    if (note.object == self)
+        return;                                  // ignore our own change
+    NSString *kind = note.userInfo[MPSidebarSyncKindKey];
+    NSURL *root = note.userInfo[MPSidebarSyncRootKey];
+    if (![root.absoluteString isEqualToString:self.workspaceRootURL.absoluteString])
+        return;                                  // a different workspace
+
+    MPSidebarSyncCoordinator *coord = [MPSidebarSyncCoordinator sharedCoordinator];
+    if ([kind isEqualToString:MPSidebarSyncKindWidth])
+    {
+        CGFloat width = [coord sidebarWidthForRoot:self.workspaceRootURL];
+        if (self.sidebarController.view.superview == self.outerSplitView)
+            [self.outerSplitView setPosition:width ofDividerAtIndex:0];
+    }
+    else if ([kind isEqualToString:MPSidebarSyncKindVisible])
+    {
+        if ([coord sidebarVisibleForRoot:self.workspaceRootURL])
+            [self showSidebarPane];
+        else
+            [self hideSidebarPane];
+    }
+}
+
++ (MPDocument *)openDocumentForFileURL:(NSURL *)url
+{
+    NSDocument *doc =
+        [[NSDocumentController sharedDocumentController] documentForURL:url];
+    return [doc isKindOfClass:[MPDocument class]] ? (MPDocument *)doc : nil;
+}
+
+// What to show the user when opening a sidebar file produced no document.
+// Returns nil when there is nothing worth reporting. Split out from the
+// presentation so it can be tested without putting a modal alert on screen.
++ (NSError *)sidebarOpenErrorForError:(NSError *)error URL:(NSURL *)url
+{
+    // The user cancelling (e.g. at an authentication prompt) is not a failure.
+    if ([error.domain isEqualToString:NSCocoaErrorDomain]
+        && error.code == NSUserCancelledError)
+    {
+        return nil;
+    }
+    if (error)
+        return error;
+
+    // No document and no error: synthesise one rather than fail silently.
+    NSString *fmt = NSLocalizedString(@"The file “%@” could not be opened.",
+                                      @"Sidebar file open failure");
+    NSMutableDictionary *info = [NSMutableDictionary dictionary];
+    info[NSLocalizedDescriptionKey] =
+        [NSString stringWithFormat:fmt, url.lastPathComponent ?: @""];
+    if (url)
+        info[NSURLErrorKey] = url;
+    return [NSError errorWithDomain:NSCocoaErrorDomain
+                               code:NSFileReadUnknownError userInfo:info];
+}
+
+- (void)presentSidebarOpenError:(NSError *)error forURL:(NSURL *)url
+{
+    NSError *toShow = [MPDocument sidebarOpenErrorForError:error URL:url];
+    if (toShow)
+        [self presentError:toShow];
+}
+
+- (void)folderSidebar:(MPFolderSidebarViewController *)sidebar
+   didActivateFileURL:(NSURL *)url
+{
+    // 1. Already open? Just raise that tab. The highlight belongs in the tab
+    //    that displays the file, which is the one being raised — not this one,
+    //    which goes on showing whatever it had.
+    MPDocument *existing = [MPDocument openDocumentForFileURL:url];
+    if (existing)
+    {
+        [existing showWindows];
+        [existing.sidebarController selectFileURL:url];
+        return;
+    }
+
+    // 2. Open without display so we can set the workspace root before the
+    //    nib loads (so the new tab gets its own sidebar), then tab it in.
+    NSWindow *hostWindow = self.windowControllers.firstObject.window;
+    NSURL *root = self.workspaceRootURL;
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    [c openDocumentWithContentsOfURL:url display:NO
+                  completionHandler:^(NSDocument *opened, BOOL wasOpen, NSError *err) {
+        if (wasOpen)
+        {
+            // Its nib has already loaded, so setting workspaceRootURL now would
+            // be ignored while still overwriting the root it syncs against.
+            [opened showWindows];
+            if ([opened isKindOfClass:[MPDocument class]])
+                [((MPDocument *)opened).sidebarController selectFileURL:url];
+            return;
+        }
+        if (![opened isKindOfClass:[MPDocument class]])
+        {
+            // display:NO opts out of NSDocumentController's automatic error
+            // alert, so a file that was deleted or is unreadable would fail
+            // silently — report it ourselves.
+            [self presentSidebarOpenError:err forURL:url];
+            return;
+        }
+        MPDocument *mp = (MPDocument *)opened;
+        mp.workspaceRootURL = root;
+        if (mp.windowControllers.count == 0)
+            [mp makeWindowControllers];
+        NSWindow *newWindow = mp.windowControllers.firstObject.window;
+        if (hostWindow && newWindow && newWindow != hostWindow)
+            [hostWindow addTabbedWindow:newWindow ordered:NSWindowAbove];
+        [mp showWindows];
+        [mp.sidebarController selectFileURL:url];
+    }];
+}
+
 // Shared by three paths: the initial document open, a manual Revert, and an
 // external-change reload (silent or post-Discard). The selection/scroll
 // preservation below therefore affects all three — a change made here for one
@@ -950,6 +1251,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         // Issue #290: Stop file watching to prevent leaks
         [self stopFileWatching];
+        [self.sidebarController stopWatching];
 
         // Need to cleanup these so that callbacks won't crash the app.
         [self.highlighter deactivate];
@@ -1031,9 +1333,27 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // If URL changed (Save As), restart watching the new file
     if (result && (!previousURL || ![url isEqual:previousURL]))
     {
-        // URL was updated by super, restart watching the new file
         dispatch_async(dispatch_get_main_queue(), ^{
+            // URL was updated by super, restart watching the new file
             [self startFileWatching];
+
+            // A new path also appeared on disk. Folder sidebars watch with
+            // kFSEventStreamCreateFlagIgnoreSelf (so ordinary re-saves don't
+            // cause a reload storm), which also means they never see files WE
+            // create — tell them directly.
+            //
+            // The test is on the document's own URL, not on `url`: a safe save
+            // hands -writeToURL: a path inside an NSItemReplacementDirectory
+            // and swaps it into place afterwards, so `url` is never the file
+            // the user ends up with. By the time this block runs NSDocument has
+            // updated fileURL, so a change against previousURL means a first
+            // save or a Save As — the cases that add a path to the tree.
+            NSURL *saved = self.fileURL;
+            if (saved && ![saved isEqual:previousURL])
+            {
+                [[MPSidebarSyncCoordinator sharedCoordinator]
+                    notifyFileSavedAtURL:saved source:self];
+            }
         });
     }
 
@@ -1286,6 +1606,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     else if (action == @selector(selectDocumentZoom:))
     {
         return YES;
+    }
+    else if (action == @selector(toggleFolderSidebar:))
+    {
+        NSMenuItem *it = ((NSMenuItem *)item);
+        BOOL hasWorkspace = (self.workspaceRootURL != nil);
+        BOOL shown = hasWorkspace && self.isSidebarVisible;
+        it.title = shown
+            ? NSLocalizedString(@"Hide Sidebar", @"View menu item")
+            : NSLocalizedString(@"Show Sidebar", @"View menu item");
+        return hasWorkspace;
     }
     return result;
 }
@@ -2022,6 +2352,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 // revert to the document-wide totals.
 - (void)editorSelectionDidChange:(NSNotification *)notification
 {
+    // When Sync Panes is on, moving the cursor (click or arrow keys) refines the
+    // preview's scroll position to follow it, on top of the usual viewport-based
+    // sync. Runs independently of the word-count display preference below, since
+    // it is unrelated to that gate.
+    if (self.preferences.editorSyncScrolling && _scrollOwner == MPScrollOwnerNeither)
+    {
+        [self syncScrollersToCursor];
+    }
+
     if (!self.preferences.editorShowWordCount)
         return;
 
@@ -3368,10 +3707,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 /**
- * Issue #436: Classifies the reference points (ATX/setext headers and standalone images)
- * in a markdown string, returning their kind codes (see MPReferenceKind) in document
- * order, with the matching source line numbers via outLineNumbers. This mirrors the DOM
- * detection in updateHeaderLocations.js so the editor and preview sequences agree:
+ * Issue #436: Classifies the reference points (ATX/setext headers, standalone images,
+ * paragraphs, and list items) in a markdown string, returning their kind codes (see
+ * MPReferenceKind) in document order, with the matching source line numbers via
+ * outLineNumbers. This mirrors the DOM detection in updateHeaderLocations.js so the
+ * editor and preview sequences agree:
  *
  *   - Headers inside fenced code blocks (``` or ~~~) are skipped — the DOM renders them
  *     as <pre><code>, not <hN>.
@@ -3379,6 +3719,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  *   - ATX headers with 7+ hashes are not headers (CommonMark §4.2; Hoedown emits no <hN>),
  *     so they are treated as ordinary paragraph text.
  *   - Standalone whole-line images (inline or reference syntax) are kind 0.
+ *   - List item marker lines (unordered: '-'/'*'/'+'; ordered: digits followed by '.'
+ *     or ')') are kind 8, one reference point per marker line — continuation lines of
+ *     a multi-line list item are not additional reference points.
+ *   - The first line of each paragraph (a maximal run of non-blank, non-header,
+ *     non-list-item, non-HR, non-fence lines) is kind 7 — one reference point per
+ *     rendered <p>, matching how Hoedown collapses a contiguous run of text lines into
+ *     a single paragraph. A text line immediately followed by a setext underline is
+ *     NOT also emitted as a paragraph, since it becomes a header instead; committing
+ *     it is deferred via pendingParagraphLine until the following line is examined.
  *
  * Pure function: no view, layout, or DOM dependencies, so it is unit-testable headless.
  */
@@ -3399,6 +3748,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     static NSRegularExpression *imgRegex = nil;    // ![alt](url)
     static NSRegularExpression *imgRefRegex = nil; // ![alt][ref]
     static NSRegularExpression *hrRegex = nil;     // thematic break (-, *, _)
+    static NSRegularExpression *ulRegex = nil;     // unordered list item marker
+    static NSRegularExpression *olRegex = nil;     // ordered list item marker
     static dispatch_once_t regexOnceToken;
     dispatch_once(&regexOnceToken, ^{
         // Setext underlines: 0-3 leading spaces and trailing whitespace are allowed
@@ -3410,14 +3761,31 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         imgRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\([^)]*\\)$" options:0 error:NULL];
         imgRefRegex = [NSRegularExpression regularExpressionWithPattern:@"^!\\[[^\\]]*\\]\\[[^\\]]*\\]$" options:0 error:NULL];
         hrRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}(([-][ ]*){3,}|([*][ ]*){3,}|([_][ ]*){3,})$" options:0 error:NULL];
+        // Bullet marker + required space + content.
+        ulRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}[-*+][ \\t]+\\S" options:0 error:NULL];
+        // Number (1-9 digits) + '.' or ')' + required space + content.
+        olRegex = [NSRegularExpression regularExpressionWithPattern:@"^[ ]{0,3}[0-9]{1,9}[.)][ \\t]+\\S" options:0 error:NULL];
     });
 
     NSArray<NSString *> *lines = [markdown componentsSeparatedByString:@"\n"];
 
     // Setext underlines attach to a *paragraph* line. previousLineHadContent is true only
-    // after ordinary text — not after blanks, headers, HRs, images, or fence lines —
-    // so e.g. "# H\n---" is an ATX header followed by an HR, not a setext header.
+    // after ordinary text — not after blanks, headers, HRs, images, list items, or fence
+    // lines — so e.g. "# H\n---" is an ATX header followed by an HR, not a setext header.
     BOOL previousLineHadContent = NO;
+
+    // The most recently seen paragraph-start line, not yet committed as a reference
+    // point: since a text line immediately followed by a setext underline becomes a
+    // header (not a paragraph), committing a candidate paragraph start is deferred
+    // until the following line is known not to be a setext underline for it.
+    __block BOOL hasPendingParagraphLine = NO;
+    __block NSUInteger pendingParagraphLine = 0;
+
+    // Once a list-item marker line is seen, subsequent non-blank lines are treated as
+    // continuation lines of that same item (not a new paragraph) until a blank line (or
+    // another marker/header/image/HR/fence) ends the run. This keeps a multi-line list
+    // item from spawning a spurious paragraph reference point for its continuation text.
+    BOOL insideListItemContinuation = NO;
 
     // Fenced-code-block state. CommonMark: a fence opens with 3+ of ` or ~ (0-3 leading
     // spaces) and closes with a run of the same character at least as long, with nothing
@@ -3425,6 +3793,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     BOOL insideFence = NO;
     unichar fenceChar = 0;
     NSUInteger fenceLength = 0;
+
+    // Commits any pending (tentative) paragraph-start line as a real reference point.
+    // Called whenever the next line turns out NOT to be a setext underline for it.
+    void (^commitPendingParagraph)(void) = ^{
+        if (hasPendingParagraphLine) {
+            [kinds addObject:@(MPReferenceKindParagraph)];
+            [lineNumbers addObject:@(pendingParagraphLine)];
+            hasPendingParagraphLine = NO;
+        }
+    };
 
     for (NSUInteger lineNumber = 0; lineNumber < lines.count; lineNumber++) {
         NSString *line = lines[lineNumber];
@@ -3438,6 +3816,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (insideFence) {
             // Inside a fence: only a matching, long-enough, bare closing marker ends it.
             // Everything here (including the fence lines) is code, never a reference point.
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             if (isFenceMarker && markerChar == fenceChar
                     && markerLength >= fenceLength && !hasTrailingContent) {
                 insideFence = NO;
@@ -3448,6 +3828,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         if (isFenceMarker) {
             // Opens a fence. The opening line itself is never a reference point.
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             insideFence = YES;
             fenceChar = markerChar;
             fenceLength = markerLength;
@@ -3460,19 +3842,29 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (atxMatch) {
             NSUInteger hashCount = [atxMatch rangeAtIndex:1].length;
             if (hashCount >= 1 && hashCount <= 6) {
+                commitPendingParagraph();
+                insideListItemContinuation = NO;
                 [kinds addObject:@((NSInteger)hashCount)];
                 [lineNumbers addObject:@(lineNumber)];
                 previousLineHadContent = NO;
                 continue;
             }
             // 7+ hashes: ordinary paragraph text, which can still anchor a setext header.
+            if (!hasPendingParagraphLine && !previousLineHadContent) {
+                hasPendingParagraphLine = YES;
+                pendingParagraphLine = lineNumber;
+            }
             previousLineHadContent = YES;
             continue;
         }
 
-        // Setext underline (only valid directly under a paragraph line).
+        // Setext underline (only valid directly under a paragraph line). The pending
+        // paragraph line (if any) is the line this underline attaches to; it becomes a
+        // header instead of a paragraph, so drop the pending candidate without committing.
         if (previousLineHadContent
                 && [eqRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            hasPendingParagraphLine = NO;
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindH1)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3480,6 +3872,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         }
         if (previousLineHadContent
                 && [dashRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            hasPendingParagraphLine = NO;
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindH2)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3489,6 +3883,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         // Standalone whole-line image.
         if ([imgRegex numberOfMatchesInString:line options:0 range:full] > 0
                 || [imgRefRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             [kinds addObject:@(MPReferenceKindImage)];
             [lineNumbers addObject:@(lineNumber)];
             previousLineHadContent = NO;
@@ -3497,19 +3893,57 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
         // Thematic break: not a reference point, and not paragraph text either.
         if ([hrRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             previousLineHadContent = NO;
             continue;
         }
 
-        // Blank line breaks any setext context.
+        // Blank line breaks any setext context, any paragraph run, and any list-item
+        // continuation run.
         if ([[line stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = NO;
             previousLineHadContent = NO;
             continue;
         }
 
-        // Anything else is ordinary paragraph text that can anchor a setext underline.
+        // List item marker line: takes precedence over both paragraph and setext-header
+        // eligibility (CommonMark does not allow a setext heading to consume a list-item
+        // line). One reference point per marker line; continuation lines of the same item
+        // are ordinary text lines that don't match the marker pattern, so they fall
+        // through below and are tracked via insideListItemContinuation instead.
+        if ([ulRegex numberOfMatchesInString:line options:0 range:full] > 0
+                || [olRegex numberOfMatchesInString:line options:0 range:full] > 0) {
+            commitPendingParagraph();
+            insideListItemContinuation = YES;
+            [kinds addObject:@(MPReferenceKindListItem)];
+            [lineNumbers addObject:@(lineNumber)];
+            previousLineHadContent = NO;
+            continue;
+        }
+
+        // A continuation line of the immediately preceding list item (e.g. an indented
+        // wrapped line) is not a separate reference point and does not start a new
+        // paragraph run.
+        if (insideListItemContinuation) {
+            previousLineHadContent = YES;
+            continue;
+        }
+
+        // Ordinary paragraph text that can anchor a setext underline. Only the FIRST
+        // line of a paragraph run becomes a tentative reference point; continuation
+        // lines (previousLineHadContent already YES) do not add another one.
+        if (!hasPendingParagraphLine && !previousLineHadContent) {
+            hasPendingParagraphLine = YES;
+            pendingParagraphLine = lineNumber;
+        }
         previousLineHadContent = YES;
     }
+
+    // End of document: any still-pending paragraph line was never followed by a setext
+    // underline, so commit it now.
+    commitPendingParagraph();
 
     if (outLineNumbers) *outLineNumbers = lineNumbers;
     return kinds;
@@ -3522,10 +3956,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  * The two detectors (editor regex vs preview DOM) can disagree mid-document; a single
  * extra point on one side shifts every later index, which is the "synced only at the
  * start and end" bug. This computes the longest common subsequence of the two *kind*
- * sequences (matching on the coarse image-vs-header class, since the two sides legitimately
- * disagree on exact header level) and keeps only the matched points on each side. An
- * unmatched point is dropped from whichever side it appears on, so the remaining points
- * stay aligned regardless of where the divergence occurs.
+ * sequences (matching on a coarse class — image, any header level, paragraph, or list
+ * item, since the two sides legitimately disagree on exact header level but must never
+ * cross-match a paragraph against a header, or a list item against either) and keeps
+ * only the matched points on each side. An unmatched point is dropped from whichever
+ * side it appears on, so the remaining points stay aligned regardless of where the
+ * divergence occurs.
  *
  * Fallback: if the type information is missing or inconsistent with the coordinate arrays
  * (e.g. callers/tests that set only the Y arrays), it degrades to the original behavior of
@@ -3553,9 +3989,16 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return;
     }
 
-    // Coarse class for matching: images match images, any header matches any header.
+    // Coarse class for matching: images match images, any header matches any header,
+    // paragraphs match only paragraphs, and list items match only list items — each
+    // gets its own class so the LCS never cross-matches, e.g., a paragraph against a
+    // header just because the coarser image-vs-everything-else split would have allowed it.
     NSInteger (^classOf)(NSNumber *) = ^NSInteger(NSNumber *kind) {
-        return kind.integerValue == MPReferenceKindImage ? 0 : 1;
+        NSInteger k = kind.integerValue;
+        if (k == MPReferenceKindImage) return 0;
+        if (k == MPReferenceKindParagraph) return 2;
+        if (k == MPReferenceKindListItem) return 3;
+        return 1; // any header level h1-h6
     };
 
     // LCS over the coarse class sequences. dp[i][j] = LCS length of editor[i..] / preview[j..].
@@ -3630,7 +4073,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  * Synchronizes preview pane scroll position with editor pane position.
  *
  * Algorithm:
- * 1. Find reference points (headers/images) before and after current editor position
+ * 1. Find reference points (headers/images/paragraphs/list items) before and after current editor position
  * 2. Calculate percentage scrolled between those reference points
  * 3. Apply same percentage between corresponding preview reference points
  * 4. Use "tapering" at document edges to center-align content mid-document but
@@ -3732,13 +4175,169 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 /**
+ * Synchronizes preview pane scroll position with the editor's cursor position,
+ * aligning the corresponding preview content to the same on-screen row as the
+ * cursor (rather than centering the viewport, as -syncScrollers does).
+ *
+ * Algorithm:
+ * 1. Find the reference points (headers/images/paragraphs/list items) before and after the cursor's
+ *    absolute position in the editor's full document.
+ * 2. Calculate what percentage of the way the cursor is between those points.
+ * 3. Apply that percentage between the corresponding preview reference points
+ *    to find the absolute preview Y that corresponds to the cursor's line.
+ * 4. Scroll the preview so that Y lands at the same distance from the top of
+ *    the preview pane as the cursor currently sits from the top of the editor
+ *    pane, so the two lines land on the same screen row.
+ */
+- (void)syncScrollersToCursor
+{
+    if (!self.editor)
+        return;                              // Headless / nib not yet loaded.
+    if (!self.editorVisible)
+        return;                              // Cursor position is meaningless when hidden.
+
+    NSRange selection = self.editor.selectedRange;
+    NSUInteger cursorLocation = MIN(selection.location, self.editor.string.length);
+
+    // Ask the layout manager for the line fragment containing the cursor's glyph, then
+    // take its origin — this is the reliable way to get a cursor's vertical position;
+    // boundingRectForGlyphRange: with a zero-length range returns a degenerate empty
+    // rect and cannot be used to locate the cursor.
+    NSLayoutManager *cursorLayoutManager = [self.editor layoutManager];
+    NSTextContainer *cursorTextContainer = [self.editor textContainer];
+    NSUInteger cursorGlyphIndex =
+        [cursorLayoutManager glyphIndexForCharacterAtIndex:cursorLocation];
+    NSRange lineGlyphRange;
+    NSRect cursorRect;
+    if (cursorGlyphIndex < cursorLayoutManager.numberOfGlyphs)
+    {
+        cursorRect = [cursorLayoutManager lineFragmentRectForGlyphAtIndex:cursorGlyphIndex
+                                                            effectiveRange:&lineGlyphRange];
+    }
+    else
+    {
+        // Cursor is at the very end of the document, past the last glyph: use the
+        // extra line fragment rect, which NSLayoutManager always keeps up to date
+        // for the position just after the last character.
+        cursorRect = [cursorLayoutManager extraLineFragmentRect];
+    }
+
+    CGFloat previewY = [MPDocument previewYForCursorY:NSMidY(cursorRect)
+                                   editorContentHeight:ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds))
+                                   editorVisibleHeight:ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds))
+                                   editorScrollOffsetY:NSMinY(self.editor.enclosingScrollView.contentView.bounds)
+                                  previewContentHeight:ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds))
+                                  previewVisibleHeight:ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds))
+                                   editorHeaderLocations:_editorHeaderLocations
+                                  webViewHeaderLocations:_webViewHeaderLocations];
+
+    NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
+    contentBounds.origin.y = previewY;
+
+    // Issue #342: No flag toggles needed — previewBoundsDidChange: is guarded
+    // by scrollOwner != MPScrollOwnerPreview, which suppresses the synchronous
+    // NSViewBoundsDidChangeNotification fired by this bounds assignment.
+    self.preview.enclosingScrollView.contentView.bounds = contentBounds;
+
+    // Save this scroll position so it persists across preview refreshes
+    self.lastPreviewScrollTop = previewY;
+}
+
+/**
+ * Pure geometry helper for -syncScrollersToCursor, extracted so its math can be
+ * unit-tested with concrete numbers instead of live NSTextView/WebView geometry.
+ *
+ * Given the cursor's absolute Y position in the editor's full document, finds the
+ * corresponding absolute Y in the preview's full document (via the same
+ * reference-point bracketing/interpolation -syncScrollers uses), then converts the
+ * cursor's position within the editor's *visible viewport* to a FRACTION of that
+ * viewport's height, and applies that fraction against the preview's viewport
+ * height. The fraction (not a raw pixel offset) is what carries over correctly
+ * between the two panes, since they render at different scales (different fonts,
+ * line heights, and pane widths mean a given pixel offset represents a different
+ * amount of visual content in each).
+ */
++ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY
+           editorContentHeight:(CGFloat)editorContentHeight
+           editorVisibleHeight:(CGFloat)editorVisibleHeight
+           editorScrollOffsetY:(CGFloat)editorScrollOffsetY
+          previewContentHeight:(CGFloat)previewContentHeight
+          previewVisibleHeight:(CGFloat)previewVisibleHeight
+        editorHeaderLocations:(NSArray<NSNumber *> *)editorHeaderLocations
+       webViewHeaderLocations:(NSArray<NSNumber *> *)webViewHeaderLocations
+{
+    NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
+    CGFloat minY = 0;
+    CGFloat maxY = 0;
+    BOOL foundMaxY = NO;
+
+    // Bracket the cursor's absolute document position between the nearest reference
+    // points (headers/images/paragraphs/list items), with no viewport-centering taper: unlike -syncScrollers,
+    // we want the corresponding preview row to land at an exact screen position, not a
+    // centered one.
+    for (NSNumber *headerYNum in editorHeaderLocations) {
+        CGFloat headerY = [headerYNum floatValue];
+
+        if (headerY < cursorDocumentY)
+        {
+            relativeHeaderIndex += 1;
+            minY = headerY;
+        } else if (!foundMaxY)
+        {
+            maxY = headerY;
+            foundMaxY = YES;
+        }
+    }
+
+    if (!foundMaxY)
+    {
+        // No reference point after the cursor: interpolate to the end of the document.
+        maxY = editorContentHeight;
+    }
+
+    CGFloat cursorOffsetFromMin = MAX(0, cursorDocumentY - minY);
+    CGFloat spanY = maxY - minY;
+    CGFloat percentBetweenHeaders = (spanY < 0.001) ? 0 : MAX(0, MIN(1.0, cursorOffsetFromMin / spanY));
+
+    // Find the Y positions in the preview window that we're interpolating between.
+    CGFloat topHeaderY = 0;
+    CGFloat bottomHeaderY = previewContentHeight;
+
+    if ([webViewHeaderLocations count] > relativeHeaderIndex)
+    {
+        topHeaderY = floorf([webViewHeaderLocations[relativeHeaderIndex] doubleValue]);
+    }
+
+    if (!foundMaxY)
+    {
+        bottomHeaderY = previewContentHeight;
+    }
+    else if ([webViewHeaderLocations count] > relativeHeaderIndex + 1)
+    {
+        bottomHeaderY = ceilf([webViewHeaderLocations[relativeHeaderIndex + 1] doubleValue]);
+    }
+
+    // The absolute preview Y that corresponds to the cursor's line.
+    CGFloat matchingPreviewY = topHeaderY + (bottomHeaderY - topHeaderY) * percentBetweenHeaders;
+
+    // The cursor's position within the editor's visible viewport, as a fraction of
+    // that viewport's height.
+    CGFloat cursorFractionFromEditorTop = editorVisibleHeight < 0.001 ? 0 :
+        MAX(0, MIN(1.0, (cursorDocumentY - editorScrollOffsetY) / editorVisibleHeight));
+
+    CGFloat previewY = matchingPreviewY - cursorFractionFromEditorTop * previewVisibleHeight;
+    previewY = MAX(0, MIN(previewY, previewContentHeight - previewVisibleHeight));
+    return previewY;
+}
+
+/**
  * Synchronizes editor pane scroll position with preview pane position.
  *
  * This is the reverse of syncScrollers - when the user scrolls the preview,
  * this method scrolls the editor to the corresponding position.
  *
  * Algorithm:
- * 1. Find reference points (headers/images) before and after current preview position
+ * 1. Find reference points (headers/images/paragraphs/list items) before and after current preview position
  * 2. Calculate percentage scrolled between those reference points
  * 3. Apply same percentage between corresponding editor reference points
  * 4. Use "tapering" at document edges to center-align content mid-document but

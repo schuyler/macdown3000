@@ -775,6 +775,95 @@
 }
 
 
+#pragma mark - Grouped Toolbar Item Dispatch Tests (Issue #566)
+
+- (void)testGroupedDispatchAllActionMappings
+{
+    // Verify every grouped/segmented toolbar item dispatches the correct
+    // action. Keyed by (group identifier, segment index, segment count)
+    // since that's what selectedToolbarItemGroupItem: actually receives
+    // from a segmented control's identifier and selectedSegment -- the 10
+    // individual subitem identifiers (e.g. "bold") are not independently
+    // reachable via toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:.
+    NSArray<NSArray *> *expectedMappings = @[
+        @[@"indent-group", @0, @2, @"unindent:"],
+        @[@"indent-group", @1, @2, @"indent:"],
+        @[@"text-formatting-group", @0, @3, @"toggleStrong:"],
+        @[@"text-formatting-group", @1, @3, @"toggleEmphasis:"],
+        @[@"text-formatting-group", @2, @3, @"toggleUnderline:"],
+        @[@"heading-group", @0, @3, @"convertToH1:"],
+        @[@"heading-group", @1, @3, @"convertToH2:"],
+        @[@"heading-group", @2, @3, @"convertToH3:"],
+        @[@"list-group", @0, @2, @"toggleUnorderedList:"],
+        @[@"list-group", @1, @2, @"toggleOrderedList:"],
+    ];
+
+    for (NSArray *mapping in expectedMappings) {
+        NSString *groupIdentifier = mapping[0];
+        NSInteger segmentIndex = [mapping[1] integerValue];
+        NSInteger segmentCount = [mapping[2] integerValue];
+        NSString *expectedAction = mapping[3];
+
+        MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+        self.controller.document = (MPDocument *)recorder;
+
+        NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+        sender.identifier = groupIdentifier;
+        sender.segmentCount = segmentCount;
+        sender.selectedSegment = segmentIndex;
+
+        [self.controller selectedToolbarItemGroupItem:sender];
+
+        XCTAssertTrue([recorder.invokedSelectors containsObject:expectedAction],
+                      @"selectedToolbarItemGroupItem: with group '%@' segment %ld "
+                      @"should dispatch %@ to the document. Got: %@",
+                      groupIdentifier, (long)segmentIndex, expectedAction,
+                      recorder.invokedSelectors);
+    }
+}
+
+- (void)testGroupedDispatchWithNoDocumentDoesNotCrash
+{
+    NSSegmentedControl *sender = [[NSSegmentedControl alloc] init];
+    sender.identifier = @"indent-group";
+    sender.segmentCount = 2;
+    sender.selectedSegment = 0;
+
+    XCTAssertNoThrow([self.controller selectedToolbarItemGroupItem:sender],
+                     @"selectedToolbarItemGroupItem: must not crash when document is nil");
+}
+
+- (void)testGroupedToolbarItemGroupsTargetToolbarController
+{
+    // Pins the wiring: each group's view must be an NSSegmentedControl
+    // targeting the toolbar controller via selectedToolbarItemGroupItem:,
+    // with its identifier matching the group identifier the dispatch
+    // lookup keys on. Guards against a future refactor silently breaking
+    // this again.
+    NSArray *groupIdentifiers = @[@"indent-group", @"text-formatting-group",
+                                   @"heading-group", @"list-group"];
+
+    for (NSString *identifier in groupIdentifiers) {
+        NSToolbarItem *item = [self.controller toolbar:nil
+                                 itemForItemIdentifier:identifier
+                             willBeInsertedIntoToolbar:YES];
+        XCTAssertTrue([item.view isKindOfClass:[NSSegmentedControl class]],
+                      @"Group '%@' view should be an NSSegmentedControl", identifier);
+
+        NSSegmentedControl *segmentedControl = (NSSegmentedControl *)item.view;
+        XCTAssertEqual(segmentedControl.target, self.controller,
+                       @"Group '%@' segmented control must target the toolbar controller",
+                       identifier);
+        XCTAssertEqual(segmentedControl.action, @selector(selectedToolbarItemGroupItem:),
+                       @"Group '%@' segmented control must use selectedToolbarItemGroupItem:",
+                       identifier);
+        XCTAssertEqualObjects(segmentedControl.identifier, identifier,
+                              @"Group '%@' segmented control identifier must match the "
+                              @"group identifier the dispatch lookup keys on", identifier);
+    }
+}
+
+
 #pragma mark - Standalone Toolbar Item Dispatch Tests (Issue #278)
 
 - (void)testStandaloneButtonsTargetToolbarController

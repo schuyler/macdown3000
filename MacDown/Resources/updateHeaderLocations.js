@@ -1,7 +1,7 @@
 /**
- * Detects reference points (headers and standalone images) in the preview document.
- * Returns parallel arrays of y-coordinates and kind codes (in document order) for
- * scroll synchronization.
+ * Detects reference points (headers, standalone images, paragraphs, and list items)
+ * in the preview document. Returns parallel arrays of y-coordinates and kind codes
+ * (in document order) for scroll synchronization.
  *
  * Standalone images are defined as:
  * - An image alone in a paragraph
@@ -12,8 +12,22 @@
  * in sync, because the editor (regex over markdown) and the preview (this DOM query)
  * can disagree about which reference points exist mid-document. Each reference point is
  * therefore tagged with a "kind" code so the ObjC side can align the two sequences:
- *   - image  -> 0
- *   - header -> header level (h1 -> 1, h2 -> 2, ... h6 -> 6)
+ *   - image     -> 0
+ *   - header    -> header level (h1 -> 1, h2 -> 2, ... h6 -> 6)
+ *   - paragraph -> 7
+ *   - listitem  -> 8
+ *
+ * Density fix: paragraphs and list items are tracked in addition to headers/images so
+ * long header-sparse sections of a document still have closely-spaced reference points,
+ * bounding the linear-interpolation error used to sync scroll position between them.
+ * A <p> whose only content is a standalone image is skipped here (it's already counted
+ * as that image's reference point, and double-counting would waste an alignment slot at
+ * nearly the same Y position without adding useful density). An <li> whose only content
+ * is a nested <ul>/<ol> (no other text/inline content) is skipped too, since it doesn't
+ * correspond to a distinct line of visible text. List items nested inside blockquotes,
+ * tables, or other lists are NOT filtered out — density is wanted everywhere, and any
+ * editor/DOM disagreement is reconciled by the alignment algorithm on the ObjC side, not
+ * here.
  *
  * @returns {{ys: Array<number>, kinds: Array<number>}} Parallel arrays of y-coordinates
  *          and kind codes for reference points, in document order.
@@ -24,6 +38,8 @@
 
         var headers = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
         var images = document.querySelectorAll('img');
+        var paragraphs = document.querySelectorAll('p');
+        var listItems = document.querySelectorAll('li');
         var result = [];
 
         // Collect all headers
@@ -32,6 +48,7 @@
         }
 
         // Filter images to only include standalone images
+        var standaloneImageParents = [];
         for (var i = 0; i < images.length; i++) {
             var img = images[i];
             var parent = img.parentElement;
@@ -70,6 +87,48 @@
 
             if (isStandalone) {
                 result.push({node: img, type: 'image'});
+                // Track the <p> (if any) that wraps this standalone image, so the
+                // paragraph pass below doesn't also emit a reference point for it.
+                if (parent && parent.tagName === 'P') {
+                    standaloneImageParents.push(parent);
+                } else if (parent && parent.tagName === 'A' && parent.parentElement
+                           && parent.parentElement.tagName === 'P') {
+                    standaloneImageParents.push(parent.parentElement);
+                }
+            }
+        }
+
+        // Collect paragraphs, skipping any that are themselves just a wrapper around
+        // an already-counted standalone image.
+        for (var i = 0; i < paragraphs.length; i++) {
+            var p = paragraphs[i];
+            var isStandaloneImageWrapper = false;
+            for (var j = 0; j < standaloneImageParents.length; j++) {
+                if (standaloneImageParents[j] === p) {
+                    isStandaloneImageWrapper = true;
+                    break;
+                }
+            }
+            if (!isStandaloneImageWrapper) {
+                result.push({node: p, type: 'paragraph'});
+            }
+        }
+
+        // Collect list items, skipping any whose only content is a nested list.
+        for (var i = 0; i < listItems.length; i++) {
+            var li = listItems[i];
+            var onlyChildIsNestedList = false;
+            if (li.children.length === 1) {
+                var onlyChild = li.children[0];
+                if ((onlyChild.tagName === 'UL' || onlyChild.tagName === 'OL')) {
+                    // No other text/inline content alongside the nested list.
+                    var text = (li.textContent || '').replace(/\s+/g, '');
+                    var nestedText = (onlyChild.textContent || '').replace(/\s+/g, '');
+                    onlyChildIsNestedList = (text === nestedText);
+                }
+            }
+            if (!onlyChildIsNestedList) {
+                result.push({node: li, type: 'listitem'});
             }
         }
 
@@ -92,6 +151,10 @@
             ys.push(window.scrollY + rect.top);
             if (item.type === 'image') {
                 kinds.push(0);
+            } else if (item.type === 'paragraph') {
+                kinds.push(7);
+            } else if (item.type === 'listitem') {
+                kinds.push(8);
             } else {
                 // tagName is like 'H3'; the second character is the header level.
                 var level = parseInt(String(item.node.tagName).charAt(1), 10);

@@ -19,6 +19,18 @@
 @property (nonatomic, readwrite) NSString *markdown;
 @property (nonatomic, readonly) NSString *html;
 
+/// When non-nil, this document's window is a folder workspace and shows a
+/// folder sidebar rooted at this URL.
+///
+/// Must be set BEFORE -makeWindowControllers: the sidebar is installed while
+/// the window's nib loads, so setting this afterwards is silently ignored and
+/// the window comes up with no sidebar. Open the document with display:NO, set
+/// this, then make the window controllers.
+///
+/// Stored with symlinks resolved, so that one folder is one workspace however
+/// it was reached.
+@property (nonatomic, copy) NSURL *workspaceRootURL;
+
 /**
  * Toggle the checkbox at the specified index in the markdown source.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.

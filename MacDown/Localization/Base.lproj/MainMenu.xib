@@ -83,6 +83,12 @@
                                     <action selector="openDocument:" target="-1" id="bVn-NM-KNZ"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Open Folder…" id="F0l-dr-Op1">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openFolder:" target="eq0-c4-vgQ" id="F0l-dr-ac1"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Open Recent" id="tXI-mr-wws">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Open Recent" systemMenu="recentDocuments" id="oas-Oc-fiZ">
@@ -370,6 +376,12 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="View" id="EQZ-Zp-VNE">
                         <items>
+                            <menuItem title="Show Sidebar" keyEquivalent="\" id="Sd1-br-Tg1">
+                                <connections>
+                                    <action selector="toggleFolderSidebar:" target="-1" id="Sd1-br-ac1"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Sd1-br-Sep"/>
                             <menuItem title="Render Markdown" keyEquivalent="r" id="Vh1-jg-bbV">
                                 <connections>
                                     <action selector="render:" target="-1" id="rvl-Jx-Hji"/>

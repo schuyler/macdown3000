@@ -326,16 +326,13 @@
                             <constraint firstItem="CXK-QF-WSK" firstAttribute="trailing" secondItem="NV7-zh-ydN" secondAttribute="trailing" id="AQ1-uk-f4c"/>
                             <constraint firstItem="tes-GA-Mpn" firstAttribute="trailing" secondItem="hSa-rl-wPT" secondAttribute="trailing" id="Jex-pw-2gL"/>
                             <constraint firstItem="CXK-QF-WSK" firstAttribute="leading" secondItem="NV7-zh-ydN" secondAttribute="leading" id="Jog-tE-o4J"/>
-                            <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="leading" secondItem="74B-GJ-2mO" secondAttribute="leading" constant="18" id="LJK-mi-lpf"/>
                             <constraint firstItem="tes-GA-Mpn" firstAttribute="top" secondItem="B3N-s7-0vd" secondAttribute="bottom" constant="6" symbolic="YES" id="U3w-XL-gGs"/>
                             <constraint firstItem="B3N-s7-0vd" firstAttribute="leading" secondItem="tes-GA-Mpn" secondAttribute="leading" id="Wfq-28-56B"/>
                             <constraint firstItem="hSa-rl-wPT" firstAttribute="top" secondItem="tes-GA-Mpn" secondAttribute="bottom" constant="6" symbolic="YES" id="Y1m-UM-0l9"/>
                             <constraint firstItem="nxG-74-mdM" firstAttribute="leading" secondItem="CXK-QF-WSK" secondAttribute="leading" id="YwU-dH-Mge"/>
                             <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="trailing" secondItem="nxG-74-mdM" secondAttribute="trailing" id="ZAd-tl-l1P"/>
                             <constraint firstItem="CXK-QF-WSK" firstAttribute="top" secondItem="nxG-74-mdM" secondAttribute="bottom" constant="6" symbolic="YES" id="aW2-NT-82W"/>
-                            <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="top" secondItem="74B-GJ-2mO" secondAttribute="top" constant="10" id="b9w-5h-zxO"/>
                             <constraint firstItem="NV7-zh-ydN" firstAttribute="trailing" secondItem="B3N-s7-0vd" secondAttribute="trailing" id="cWK-H1-qNQ"/>
-                            <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="centerX" secondItem="74B-GJ-2mO" secondAttribute="centerX" id="huD-PM-wSU"/>
                             <constraint firstItem="nxG-74-mdM" firstAttribute="top" secondItem="Hdc-ZZ-0Bg" secondAttribute="bottom" constant="6" symbolic="YES" id="iJr-Z6-ysx"/>
                             <constraint firstItem="NV7-zh-ydN" firstAttribute="leading" secondItem="B3N-s7-0vd" secondAttribute="leading" id="jTd-bf-Yb9"/>
                             <constraint firstItem="B3N-s7-0vd" firstAttribute="trailing" secondItem="tes-GA-Mpn" secondAttribute="trailing" id="jV2-c9-FVF"/>
@@ -343,9 +340,14 @@
                             <constraint firstItem="NV7-zh-ydN" firstAttribute="top" secondItem="CXK-QF-WSK" secondAttribute="bottom" constant="6" symbolic="YES" id="oAM-9C-rnP"/>
                             <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="leading" secondItem="nxG-74-mdM" secondAttribute="leading" id="pGd-1r-h4g"/>
                             <constraint firstItem="B3N-s7-0vd" firstAttribute="top" secondItem="NV7-zh-ydN" secondAttribute="bottom" constant="6" symbolic="YES" id="z6Q-dF-r1X"/>
-                            <constraint firstAttribute="bottom" secondItem="hSa-rl-wPT" secondAttribute="bottom" constant="10" id="397-bm-hSa"/>
                         </constraints>
                     </view>
+                    <constraints>
+                        <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="leading" secondItem="6JP-Pc-JFd" secondAttribute="leading" constant="19" id="LJK-mi-lpf"/>
+                        <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="top" secondItem="6JP-Pc-JFd" secondAttribute="top" constant="25" id="b9w-5h-zxO"/>
+                        <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="centerX" secondItem="6JP-Pc-JFd" secondAttribute="centerX" id="huD-PM-wSU"/>
+                        <constraint firstAttribute="bottom" secondItem="hSa-rl-wPT" secondAttribute="bottom" constant="11" id="397-bm-hSa"/>
+                    </constraints>
                 </box>
             </subviews>
             <constraints>

@@ -426,6 +426,7 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
     htmlRenderer->header = hoedown_patch_render_header;
     if (flags & HOEDOWN_HTML_HIDE_HORIZONTAL_RULES)
         htmlRenderer->hrule = hoedown_patch_render_hrule_hidden;
+    htmlRenderer->table_header = hoedown_patch_render_table_header;
 
     hoedown_html_renderer_state_extra *extra =
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));

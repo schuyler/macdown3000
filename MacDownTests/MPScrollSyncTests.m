@@ -38,6 +38,15 @@ static const NSUInteger MPScrollOwnerNeither = 2;
          previewTypes:(NSArray<NSNumber *> *)previewTypes
       alignedEditorYs:(NSArray<NSNumber *> **)outEditorYs
      alignedPreviewYs:(NSArray<NSNumber *> **)outPreviewYs;
+// Pure geometry helper backing -syncScrollersToCursor (cursor-follow scroll sync)
++ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY
+           editorContentHeight:(CGFloat)editorContentHeight
+           editorVisibleHeight:(CGFloat)editorVisibleHeight
+           editorScrollOffsetY:(CGFloat)editorScrollOffsetY
+          previewContentHeight:(CGFloat)previewContentHeight
+          previewVisibleHeight:(CGFloat)previewVisibleHeight
+        editorHeaderLocations:(NSArray<NSNumber *> *)editorHeaderLocations
+       webViewHeaderLocations:(NSArray<NSNumber *> *)webViewHeaderLocations;
 @property (strong) NSArray<NSNumber *> *webViewHeaderTypes;
 @property (strong) NSArray<NSNumber *> *editorHeaderTypes;
 - (void)syncScrollers;
@@ -1643,6 +1652,99 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     XCTAssertEqual(locations.count, 0U, @"Null body should return empty array");
 }
 
+/**
+ * C6 — Paragraph and list-item detection: a <p> and an <li> inside a <ul> are
+ * detected as kind 7 and kind 8 respectively.
+ * Issue #436: density fix — paragraphs/list-items are additional reference-point kinds.
+ */
+- (void)testJSHeaderLocationsParagraphAndListItem
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    [context evaluateScript:
+        @"var window = {scrollY: 0};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var p0 = {getBoundingClientRect:function(){return {top:10};}, tagName:'P',\n"
+        @"          parentElement:null, children:[],\n"
+        @"          compareDocumentPosition:function(o){return o===li0?4:0;}};\n"
+        @"var li0 = {getBoundingClientRect:function(){return {top:50};}, tagName:'LI',\n"
+        @"           parentElement:null, children:[], textContent:'item',\n"
+        @"           compareDocumentPosition:function(o){return o===p0?2:0;}};\n"
+        @"var document = {\n"
+        @"    body: {},\n"
+        @"    querySelectorAll: function(sel) {\n"
+        @"        if (sel === 'h1, h2, h3, h4, h5, h6') return [];\n"
+        @"        if (sel === 'img') return [];\n"
+        @"        if (sel === 'p') return [p0];\n"
+        @"        if (sel === 'li') return [li0];\n"
+        @"        return [];\n"
+        @"    }\n"
+        @"};\n"];
+
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result[@"ys"] toArray];
+    NSArray *kinds = [result[@"kinds"] toArray];
+
+    XCTAssertEqual(locations.count, 2U, @"Should return the paragraph and the list item");
+    XCTAssertEqualObjects(kinds, (@[@7, @8]),
+                          @"kinds should be [7 (paragraph), 8 (listitem)] in document order");
+    XCTAssertEqualWithAccuracy([locations[0] floatValue], 10.0, 0.5, @"paragraph y is scrollY(0)+top(10)");
+    XCTAssertEqualWithAccuracy([locations[1] floatValue], 50.0, 0.5, @"list item y is scrollY(0)+top(50)");
+}
+
+/**
+ * C7 — A <p> whose only content is a standalone <img> is NOT double-counted: it
+ * contributes one reference point (the image, kind 0), not also a paragraph (kind 7).
+ * Issue #436: double-counting the same visual line wastes an alignment slot.
+ */
+- (void)testJSHeaderLocationsStandaloneImageParagraphNotDoubleCounted
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    if (!script) {
+        XCTFail(@"updateHeaderLocations.js not found in bundle");
+        return;
+    }
+
+    JSContext *context = [[JSContext alloc] init];
+    context.exceptionHandler = ^(JSContext *ctx, JSValue *exception) { };
+
+    [context evaluateScript:
+        @"var window = {scrollY: 0};\n"
+        @"var Node = {DOCUMENT_POSITION_FOLLOWING: 4, DOCUMENT_POSITION_PRECEDING: 2};\n"
+        @"var img0 = {tagName:'IMG', getBoundingClientRect:function(){return {top:20};},\n"
+        @"            compareDocumentPosition:function(o){return 0;}};\n"
+        @"var p0 = {getBoundingClientRect:function(){return {top:20};}, tagName:'P',\n"
+        @"          parentElement:null, children:[img0],\n"
+        @"          compareDocumentPosition:function(o){return 0;}};\n"
+        @"img0.parentElement = p0;\n"
+        @"var document = {\n"
+        @"    body: {},\n"
+        @"    querySelectorAll: function(sel) {\n"
+        @"        if (sel === 'h1, h2, h3, h4, h5, h6') return [];\n"
+        @"        if (sel === 'img') return [img0];\n"
+        @"        if (sel === 'p') return [p0];\n"
+        @"        if (sel === 'li') return [];\n"
+        @"        return [];\n"
+        @"    }\n"
+        @"};\n"];
+
+    JSValue *result = [context evaluateScript:script];
+    NSArray *locations = [result[@"ys"] toArray];
+    NSArray *kinds = [result[@"kinds"] toArray];
+
+    XCTAssertEqual(locations.count, 1U,
+                   @"A <p> wrapping only a standalone image must contribute exactly one reference point");
+    XCTAssertEqualObjects(kinds, (@[@0]),
+                          @"The single reference point must be the image (kind 0), not the paragraph (kind 7)");
+}
+
 #pragma mark - Issue #342: Group D — Header Array Alignment Safety
 
 /**
@@ -2217,26 +2319,30 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierSevenHashesNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"####### G"], @[],
-                          @"A2: 7 hashes is not a header in CommonMark/Hoedown (Issue #436)");
+    // Issue #436 density fix: 7+ hashes is ordinary paragraph text, so it's now a
+    // paragraph reference point (kind 7) rather than no reference point at all.
+    XCTAssertEqualObjects([self kindsFor:@"####### G"], (@[@7]),
+                          @"A2: 7 hashes is not a header in CommonMark/Hoedown, so it's treated as a paragraph (Issue #436)");
 }
 
 - (void)testClassifierEightHashesNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"######## H"], @[],
-                          @"A3: 8 hashes is not a header (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"######## H"], (@[@7]),
+                          @"A3: 8 hashes is not a header, so it's treated as a paragraph (Issue #436)");
 }
 
 - (void)testClassifierATXRequiresSpace
 {
-    XCTAssertEqualObjects([self kindsFor:@"#NoSpace"], @[],
-                          @"A4: ATX header requires a space after the hashes (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"#NoSpace"], (@[@7]),
+                          @"A4: ATX header requires a space after the hashes; without it, this is paragraph text (Issue #436)");
 }
 
 - (void)testClassifierBareHashNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"#"], @[],
-                          @"A5: a bare '#' with no following space/text is not a header (Issue #436)");
+    // A bare "#" with nothing after it fails the ATX regex (which requires \s after the
+    // hashes) and is ordinary (empty-looking but non-blank) paragraph text.
+    XCTAssertEqualObjects([self kindsFor:@"#"], (@[@7]),
+                          @"A5: a bare '#' with no following space/text is not a header, so it's a paragraph (Issue #436)");
 }
 
 - (void)testClassifierATXLeadingSpacesAllowed
@@ -2247,8 +2353,11 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierATXFourLeadingSpacesNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"    # C"], @[],
-                          @"A8: 4 leading spaces is indented code, not a header (Issue #436)");
+    // 4-space indented code is not detected as code by this classifier (it only tracks
+    // fences), so it falls through as ordinary paragraph text — a paragraph reference
+    // point, not a header.
+    XCTAssertEqualObjects([self kindsFor:@"    # C"], (@[@7]),
+                          @"A8: 4 leading spaces is indented code, not a header — treated as a paragraph (Issue #436)");
 }
 
 // --- Setext headers ---
@@ -2273,14 +2382,19 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierSetextAfterBlankLineIsNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"Text\n\n---"], @[],
-                          @"B4: a blank line breaks setext context, so '---' is an HR (Issue #436)");
+    // "Text" is a paragraph (line 0); the blank line commits it and breaks setext
+    // context, so the trailing '---' is an HR (no reference point), not a header.
+    XCTAssertEqualObjects([self kindsFor:@"Text\n\n---"], (@[@7]),
+                          @"B4: a blank line breaks setext context, so '---' is an HR, leaving just the paragraph (Issue #436)");
 }
 
 - (void)testClassifierEqualsAfterBlankIsNotHeader
 {
-    XCTAssertEqualObjects([self kindsFor:@"Text\n\n==="], @[],
-                          @"B5: '===' not directly under content is not a setext header (Issue #436)");
+    // "===" is not an HR pattern (hrRegex only matches runs of -, *, or _), and with no
+    // preceding paragraph context it isn't a setext underline either — so it falls
+    // through as its own paragraph line, giving two paragraph reference points.
+    XCTAssertEqualObjects([self kindsFor:@"Text\n\n==="], (@[@7, @7]),
+                          @"B5: '===' not directly under content is not a setext header — both lines are separate paragraphs (Issue #436)");
 }
 
 - (void)testClassifierTwoDashesSetext
@@ -2313,8 +2427,10 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierStandaloneDashHR
 {
-    XCTAssertEqualObjects([self kindsFor:@"---\n\ntext"], @[],
-                          @"C1: a leading '---' is an HR (Issue #436)");
+    // The leading '---' has no preceding content, so it's an HR (no reference point);
+    // "text" on the last line is still a paragraph reference point.
+    XCTAssertEqualObjects([self kindsFor:@"---\n\ntext"], (@[@7]),
+                          @"C1: a leading '---' is an HR, leaving just the trailing paragraph (Issue #436)");
 }
 
 - (void)testClassifierAsteriskHR
@@ -2400,8 +2516,11 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierFourLeadingSpacesIsNotAFence
 {
+    // The 4-space-indented "    ```" is not recognized as a fence marker, so it is
+    // ordinary paragraph text (a paragraph reference point) and '# Fake' right after it
+    // is a real ATX header, not swallowed code.
     XCTAssertEqualObjects([self kindsFor:@"# A\n\n    ```\n# Fake\n\n## B"],
-                          (@[@1, @1, @2]),
+                          (@[@1, @7, @1, @2]),
                           @"D9: a 4-space-indented marker is not a fence, so '# Fake' is a real header (Issue #436)");
 }
 
@@ -2428,14 +2547,16 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
 - (void)testClassifierInlineImageInTextIgnored
 {
-    XCTAssertEqualObjects([self kindsFor:@"text ![x](y.png) more"], @[],
-                          @"E3: an image inline with text is not a reference point (Issue #436)");
+    // The image itself isn't standalone, but the line is still ordinary paragraph
+    // text, so it now yields a paragraph reference point rather than nothing.
+    XCTAssertEqualObjects([self kindsFor:@"text ![x](y.png) more"], (@[@7]),
+                          @"E3: an image inline with text is not an image reference point, but the line is a paragraph (Issue #436)");
 }
 
 - (void)testClassifierImageWithTrailingTextIgnored
 {
-    XCTAssertEqualObjects([self kindsFor:@"![x](y.png) caption"], @[],
-                          @"E5: an image with trailing text is not standalone (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"![x](y.png) caption"], (@[@7]),
+                          @"E5: an image with trailing text is not standalone, but the line is a paragraph (Issue #436)");
 }
 
 - (void)testClassifierHeaderThenImage
@@ -2453,8 +2574,12 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     NSArray<NSNumber *> *lines = nil;
     NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:md outLineNumbers:&lines];
 
-    XCTAssertEqualObjects(kinds, (@[@1, @2, @0, @3, @0]),
-                          @"F1: mixed document yields headers and standalone images only (Issue #436)");
+    // Issue #436 density fix: "intro", "text ![inline](s.png) text", and
+    // "[f2]: f2.png" are all ordinary paragraph text lines, so they now also
+    // contribute paragraph reference points (kind 7) alongside the headers and
+    // standalone images.
+    XCTAssertEqualObjects(kinds, (@[@1, @7, @2, @0, @7, @3, @0, @7]),
+                          @"F1: mixed document yields headers, standalone images, and paragraphs (Issue #436)");
     XCTAssertEqual(lines.count, kinds.count,
                    @"F1: line numbers must run parallel to kinds (Issue #436)");
     for (NSUInteger i = 1; i < lines.count; i++) {
@@ -2485,6 +2610,150 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 {
     XCTAssertEqualObjects([self kindsFor:@"# A\n"], (@[@1]),
                           @"A trailing newline must not add a spurious reference point (Issue #436)");
+}
+
+// --- Paragraphs ---
+
+- (void)testClassifierSingleLineParagraphBetweenHeaders
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"# H1\n\ntext\n\n## H2"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@1, @7, @2]),
+                          @"H1: a single-line paragraph between two headers is a paragraph reference point (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0, @2, @4]),
+                          @"H1: the paragraph reference point is at its own line number (Issue #436)");
+}
+
+- (void)testClassifierMultiLineParagraphIsOneReferencePoint
+{
+    XCTAssertEqualObjects([self kindsFor:@"line one\nline two\nline three"], (@[@7]),
+                          @"H2: a multi-line paragraph (no blank line between lines) yields exactly one paragraph reference point (Issue #436)");
+}
+
+- (void)testClassifierMultiLineParagraphAtFirstLine
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"line one\nline two\nline three"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@7]),
+                          @"H2b: multi-line paragraph yields one paragraph reference point (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0]),
+                          @"H2b: the paragraph reference point is at the FIRST line of the paragraph (Issue #436)");
+}
+
+- (void)testClassifierTwoParagraphsSeparatedByBlankLine
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"para one\n\npara two"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@7, @7]),
+                          @"H3: two paragraphs separated by a blank line yield two paragraph reference points (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0, @2]),
+                          @"H3: each paragraph reference point is at its own first line (Issue #436)");
+}
+
+- (void)testClassifierParagraphThenSetextIsOnlyHeader
+{
+    XCTAssertEqualObjects([self kindsFor:@"Some Text\n==="], (@[@1]),
+                          @"H4: a paragraph line immediately followed by a setext underline yields ONLY the header, "
+                          @"not also a paragraph reference point (Issue #436)");
+}
+
+- (void)testClassifierParagraphThenOrdinaryLineNoExtraParagraph
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"first line\nsecond line"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@7]),
+                          @"H5: a paragraph line followed by an ordinary (non-setext) line yields one paragraph "
+                          @"reference point, not two (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0]),
+                          @"H5: the paragraph reference point is at the first line (Issue #436)");
+}
+
+- (void)testClassifierStandaloneImageNotDoubleCountedAsParagraph
+{
+    XCTAssertEqualObjects([self kindsFor:@"text before\n\n![alt](img.png)\n\ntext after"],
+                          (@[@7, @0, @7]),
+                          @"H9: a standalone image adjacent to paragraph text is counted once as an image, "
+                          @"not also as a paragraph (Issue #436)");
+}
+
+// --- List items ---
+
+- (void)testClassifierUnorderedListThreeItems
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"- one\n- two\n- three"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@8, @8, @8]),
+                          @"H6: an unordered list with 3 items yields 3 list-item reference points (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0, @1, @2]),
+                          @"H6: one list-item reference point per marker line (Issue #436)");
+}
+
+- (void)testClassifierOrderedListItems
+{
+    XCTAssertEqualObjects([self kindsFor:@"1. one\n2. two"], (@[@8, @8]),
+                          @"H7: an ordered list yields list-item reference points (Issue #436)");
+    XCTAssertEqualObjects([self kindsFor:@"1) one\n2) two"], (@[@8, @8]),
+                          @"H7b: ')' is also a valid ordered-list delimiter (Issue #436)");
+}
+
+- (void)testClassifierListItemThenDashesNotSetext
+{
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:@"- item\n---"
+                                                                outLineNumbers:&lines];
+    XCTAssertEqualObjects(kinds, (@[@8]),
+                          @"H8: a list item followed by '---' is not retroactively turned into a setext header — "
+                          @"the list item is emitted, and '---' is treated as an HR, not a header (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0]),
+                          @"H8: the list-item reference point is at the marker line (Issue #436)");
+}
+
+- (void)testClassifierListItemContinuationLineNoExtraReference
+{
+    XCTAssertEqualObjects([self kindsFor:@"- item one\n  continued text\n- item two"], (@[@8, @8]),
+                          @"H10: an indented continuation line of a list item is not a separate reference point (Issue #436)");
+}
+
+// --- Mixed / integration ---
+
+- (void)testClassifierFullMixedDocument
+{
+    NSString *md = @"# Section One\n\nintro paragraph\n\n"
+                   @"- alpha\n- beta\n- gamma\n\n"
+                   @"## Section Two\n\n"
+                   @"1. first\n2. second\n\n"
+                   @"![Figure](fig.png)\n\n"
+                   @"closing paragraph line one\nclosing paragraph line two";
+    NSArray<NSNumber *> *lines = nil;
+    NSArray<NSNumber *> *kinds = [MPDocument editorReferenceKindsForMarkdown:md outLineNumbers:&lines];
+
+    // Hand-traced line numbers (0-indexed):
+    //  0: # Section One         -> H1
+    //  1: (blank)
+    //  2: intro paragraph       -> paragraph
+    //  3: (blank)
+    //  4: - alpha                -> list item
+    //  5: - beta                 -> list item
+    //  6: - gamma                -> list item
+    //  7: (blank)
+    //  8: ## Section Two        -> H2
+    //  9: (blank)
+    // 10: 1. first                -> list item
+    // 11: 2. second               -> list item
+    // 12: (blank)
+    // 13: ![Figure](fig.png)    -> image
+    // 14: (blank)
+    // 15: closing paragraph line one   -> paragraph (first line)
+    // 16: closing paragraph line two   (continuation, not a reference point)
+    XCTAssertEqualObjects(kinds, (@[@1, @7, @8, @8, @8, @2, @8, @8, @0, @7]),
+                          @"H11: full mixed document matches hand-traced kinds (Issue #436)");
+    XCTAssertEqualObjects(lines, (@[@0, @2, @4, @5, @6, @8, @10, @11, @13, @15]),
+                          @"H11: full mixed document matches hand-traced line numbers (Issue #436)");
 }
 
 #pragma mark - Issue #436: Group Q — Reference-point aligner (LCS)
@@ -2591,6 +2860,124 @@ static const NSUInteger MPScrollOwnerNeither = 2;
                     previewYs:@[@11, @21, @31] types:@[@1, @1, @1]
                  expectEditor:@[@10, @20, @30] expectPreview:@[@11, @21, @31]
                       message:@"G11: inconsistent type counts fall back to MIN-count truncation (Issue #436)"];
+}
+
+- (void)testAlignParagraphDoesNotMatchHeader
+{
+    // Editor: [H1, Paragraph]; Preview: [H1, H2]. Even though the counts line up,
+    // a paragraph must never be treated as matching a header — only the H1 pair
+    // should align; the mismatched paragraph/H2 entries are dropped from both sides.
+    [self assertAlignEditorYs:@[@10, @20] types:@[@1, @7]
+                    previewYs:@[@11, @21] types:@[@1, @2]
+                 expectEditor:@[@10] expectPreview:@[@11]
+                      message:@"G12: a paragraph reference point never aligns with a header, even when counts match (Issue #436)"];
+}
+
+- (void)testAlignListItemDoesNotMatchParagraphOrHeader
+{
+    // Editor: [ListItem]; Preview: [Paragraph] — distinct classes, no match.
+    [self assertAlignEditorYs:@[@10] types:@[@8]
+                    previewYs:@[@11] types:@[@7]
+                 expectEditor:@[] expectPreview:@[]
+                      message:@"G13: a list-item reference point never aligns with a paragraph reference point (Issue #436)"];
+}
+
+#pragma mark - previewYForCursorY: (cursor-follow scroll sync geometry)
+
+/**
+ * No reference points on either side of the cursor: the whole document is one span.
+ * editorContentHeight=3000, editorVisibleHeight=1000, editorScrollOffsetY=0,
+ * previewContentHeight=4000, previewVisibleHeight=800, cursorDocumentY=200.
+ * percentBetweenHeaders = 200/3000 = 0.0667; matchingPreviewY = 4000*0.0667 = 266.67.
+ * cursorFraction = (200-0)/1000 = 0.2; previewY = 266.67 - 0.2*800 = 106.67.
+ */
+- (void)testPreviewYForCursorYNoReferencePoints
+{
+    CGFloat previewY = [MPDocument previewYForCursorY:200
+                                   editorContentHeight:3000
+                                   editorVisibleHeight:1000
+                                   editorScrollOffsetY:0
+                                  previewContentHeight:4000
+                                  previewVisibleHeight:800
+                                editorHeaderLocations:@[]
+                               webViewHeaderLocations:@[]];
+    XCTAssertEqualWithAccuracy(previewY, 106.67, 0.5,
+        @"With no reference points, previewY should follow the whole-document ratio, "
+        @"scaled from a viewport FRACTION (not a raw pixel offset)");
+}
+
+/**
+ * Regression test for the pane-scale bug: applying the cursor's raw pixel distance
+ * from the editor viewport's top directly as a preview pixel offset (instead of
+ * converting to a fraction of viewport height first) breaks whenever the editor and
+ * preview have different viewport heights — which they normally do, since they use
+ * different fonts/line heights. Same inputs as above, but with a much taller preview
+ * viewport (2400 instead of 800) to make a scale mismatch produce a clearly wrong
+ * (and easily distinguishable) answer if the bug regresses:
+ *   correct (fraction-based):  266.67 - 0.2*2400 = -213.33 -> clamped to 0
+ *   buggy (raw-pixel-based):   266.67 - 200       = 66.67
+ * These differ by far more than any reasonable tolerance, so this test fails loudly
+ * if the fraction conversion is ever dropped.
+ */
+- (void)testPreviewYForCursorYUsesViewportFractionNotRawPixels
+{
+    CGFloat previewY = [MPDocument previewYForCursorY:200
+                                   editorContentHeight:3000
+                                   editorVisibleHeight:1000
+                                   editorScrollOffsetY:0
+                                  previewContentHeight:4000
+                                  previewVisibleHeight:2400
+                                editorHeaderLocations:@[]
+                               webViewHeaderLocations:@[]];
+    XCTAssertEqualWithAccuracy(previewY, 0, 0.5,
+        @"previewY must be derived from the cursor's FRACTION of the editor viewport "
+        @"height, not its raw pixel distance from the viewport top — a raw-pixel "
+        @"calculation would return ~66.67 here instead of clamping to 0");
+}
+
+/**
+ * Cursor bracketed between two reference points (headers), with a nonzero editor
+ * scroll offset. editorHeaderLocations=[100, 500], webViewHeaderLocations=[150, 700].
+ * cursorDocumentY=300 falls between the two editor headers (100 and 500):
+ * percentBetweenHeaders = (300-100)/(500-100) = 0.5.
+ * matchingPreviewY = 150 + (700-150)*0.5 = 425.
+ * editorScrollOffsetY=250 (viewport scrolled so its top is at document Y=250);
+ * cursorFraction = (300-250)/1000 = 0.05.
+ * previewY = 425 - 0.05*800 = 385.
+ */
+- (void)testPreviewYForCursorYBetweenTwoHeaders
+{
+    CGFloat previewY = [MPDocument previewYForCursorY:300
+                                   editorContentHeight:3000
+                                   editorVisibleHeight:1000
+                                   editorScrollOffsetY:250
+                                  previewContentHeight:4000
+                                  previewVisibleHeight:800
+                                editorHeaderLocations:@[@100, @500]
+                               webViewHeaderLocations:@[@150, @700]];
+    XCTAssertEqualWithAccuracy(previewY, 385, 0.5,
+        @"previewY should interpolate between the two bracketing headers' preview "
+        @"positions, then offset by the cursor's viewport fraction");
+}
+
+/**
+ * Result must always be clamped within [0, previewContentHeight - previewVisibleHeight]
+ * even when the raw calculation would place the preview past the end of its content.
+ */
+- (void)testPreviewYForCursorYClampsToContentBounds
+{
+    CGFloat previewY = [MPDocument previewYForCursorY:2900
+                                   editorContentHeight:3000
+                                   editorVisibleHeight:1000
+                                   editorScrollOffsetY:2000
+                                  previewContentHeight:1000
+                                  previewVisibleHeight:800
+                                editorHeaderLocations:@[]
+                               webViewHeaderLocations:@[]];
+    XCTAssertGreaterThanOrEqual(previewY, 0,
+        @"previewY must never be negative");
+    XCTAssertLessThanOrEqual(previewY, 1000 - 800,
+        @"previewY must never scroll past the bottom of the preview's content");
 }
 
 @end
