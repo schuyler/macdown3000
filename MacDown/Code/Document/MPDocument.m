@@ -513,7 +513,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     };
 }
 
-
 /**
  * Issue #436: Scans a single line for a fenced-code-block marker (a run of 3+ backticks or
  * tildes, allowing 0-3 leading spaces). Returns YES and reports the marker character, its
@@ -674,7 +673,6 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     return _mathJaxRenderGeneration;
 }
-
 
 #pragma mark - Override
 
@@ -2167,6 +2165,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                     @"  body.innerHTML = html;"
                     @"  if(window.Prism){Prism.highlightAll();}"
                     @"  if(typeof window.macdownInitTaskList==='function'){window.macdownInitTaskList();}"
+                    @"  if(typeof window.macdownInitTableResize==='function'){window.macdownInitTableResize();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
@@ -4715,6 +4714,19 @@ to link outside that scope.", \
 
 #pragma mark - Interactive Checkbox Support (Issue #269)
 
+- (NSDictionary<NSString *, NSString *> *)queryItemsByNameForURL:(NSURL *)url
+{
+    NSURLComponents *components =
+        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSMutableDictionary *items = [NSMutableDictionary dictionary];
+    for (NSURLQueryItem *item in components.queryItems)
+    {
+        if (item.name.length && item.value)
+            items[item.name] = item.value;
+    }
+    return items;
+}
+
 /**
  * Handle the checkbox toggle URL from the preview.
  * URL format: x-macdown-checkbox://toggle/<index>
@@ -4724,17 +4736,7 @@ to link outside that scope.", \
     if (![url.host isEqualToString:@"toggle"])
         return;
 
-    NSURLComponents *components =
-        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
-    NSString *token = nil;
-    for (NSURLQueryItem *item in components.queryItems)
-    {
-        if ([item.name isEqualToString:@"token"])
-        {
-            token = item.value;
-            break;
-        }
-    }
+    NSString *token = [self queryItemsByNameForURL:url][@"token"];
     if (!token.length
         || ![token isEqualToString:self.renderer.checkboxBridgeToken])
     {

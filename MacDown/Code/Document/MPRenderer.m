@@ -512,11 +512,11 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
 NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
 {
     NSString *csp = MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy());
-    NSString *token = MPEscapeHTMLAttribute(checkboxBridgeToken);
+    NSString *checkboxToken = MPEscapeHTMLAttribute(checkboxBridgeToken);
     return [NSString stringWithFormat:
         @"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n"
          "<meta name=\"macdown-checkbox-token\" content=\"%@\">",
-        csp, token];
+        csp, checkboxToken];
 }
 
 
@@ -686,6 +686,10 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         NSURL *url = MPExtensionURL(@"tasklist", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
     }
+    {
+        NSURL *url = MPExtensionURL(@"table-resize", @"js");
+        [scripts addObject:[MPScript javaScriptWithURL:url]];
+    }
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
@@ -825,13 +829,15 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *body = self.currentHtml;
+    NSString *previewBody = body ?: @"";
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     if (!self.checkboxBridgeToken.length)
         self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
     NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
     NSString *html = MPGetHTML(
-        title, headTags, body, self.stylesheets, MPAssetFullLink,
+        title, headTags, previewBody,
+        self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
 
     // Issue #110 / #318: Apply cache-busting version stamps to local resource

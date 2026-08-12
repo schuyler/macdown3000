@@ -177,6 +177,12 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                   @"CSP should whitelist only bundled scripts and the MathJax CDN");
     XCTAssertTrue([html containsString:@"name=\"macdown-checkbox-token\""],
                   @"Preview HTML should include a checkbox bridge token");
+    XCTAssertTrue([html containsString:@"table-resize.js"],
+                  @"Preview HTML should include live table resizing behavior");
+    XCTAssertFalse([html containsString:@"name=\"macdown-table-layout-token\""],
+                   @"Ephemeral table resizing uses no native bridge token");
+    XCTAssertFalse([html containsString:@"id=\"macdown-table-layouts\""],
+                   @"Ephemeral table resizing uses no injected layout data");
     XCTAssertTrue(self.renderer.checkboxBridgeToken.length > 0,
                   @"Renderer should expose the active checkbox bridge token");
 }
@@ -212,6 +218,8 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                    @"Preview-only CSP should not be embedded into exports");
     XCTAssertFalse([html containsString:@"macdown-checkbox-token"],
                    @"Preview-only checkbox tokens should not leak into exports");
+    XCTAssertFalse([html containsString:@"table-resize.js"],
+                   @"Preview-only table resizing script should not leak into exports");
 }
 
 
