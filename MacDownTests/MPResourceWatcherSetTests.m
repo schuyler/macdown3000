@@ -167,6 +167,10 @@
 
 // Tests for GitHub issue #349: atomic-save recovery and initial timestamp seeding.
 
+// testDelegateCalledOnAtomicSave and testWatcherReestablishedAfterAtomicSave are
+// excluded from CI by -skip-testing: in .github/workflows/test.yml. The real rename(2)
+// they perform intermittently wedges the whole test host on GitHub's macOS runners,
+// producing no watchdog output and burning CI time. Both run normally locally.
 - (void)testDelegateCalledOnAtomicSave
 {
     // Create the watched file and register it.

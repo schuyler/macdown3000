@@ -26,7 +26,19 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    # The two skipped tests drive a real rename(2) over a watched file. On GitHub's
+    # runners that intermittently wedges the entire test host: the run goes silent from
+    # the moment the test starts, and not even XCTest's own execution-time-allowance
+    # watchdog reports it, which puts the stall below anything the test suite can catch.
+    # Observed three times on macos-14, never on macos-26, never reproduced locally.
+    # Both tests still run locally, where they are reliable.
+    #
+    # A step-level timeout fails only this step, so the reporting and upload steps
+    # below still run. A job-level timeout cancels them along with everything else.
+    # Ten minutes clears the slowest observed run (183s) plus two 120s watchdog
+    # recoveries.
     - name: Run tests
+      timeout-minutes: 10
       run: |
         set -o pipefail
         xcodebuild test \
@@ -34,7 +46,26 @@ jobs:
           -scheme MacDown \
           -derivedDataPath DerivedData \
           -test-timeouts-enabled YES \
-          -maximum-test-execution-time-allowance 120
+          -maximum-test-execution-time-allowance 120 \
+          -skip-testing:MacDownTests/MPResourceWatcherSetTests/testDelegateCalledOnAtomicSave \
+          -skip-testing:MacDownTests/MPResourceWatcherSetTests/testWatcherReestablishedAfterAtomicSave \
+          2>&1 | tee xcodebuild.log
+
+    # A test that wedges the host emits "started." with no matching result line, and
+    # produces no watchdog output to search for. Name it on the run summary so the
+    # next stall doesn't have to be diagnosed by reading the raw log.
+    - name: Report last test to start
+      if: failure()
+      run: |
+        NAME=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" xcodebuild.log 2>/dev/null | tail -1 || true)
+        if [ -z "$NAME" ]; then
+          echo "No test started; the run failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
+        elif grep -qF "Test Case '$NAME' passed" xcodebuild.log \
+          || grep -qF "Test Case '$NAME' failed" xcodebuild.log; then
+          echo "Last test to start (\`$NAME\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "\`$NAME\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
+        fi
 
     - name: Upload test results
       if: failure()
@@ -45,4 +76,5 @@ jobs:
         path: |
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
+          xcodebuild.log
         retention-days: 7
