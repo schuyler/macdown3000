@@ -26,19 +26,38 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
-    # The four skipped tests each intermittently wedge the entire test host on GitHub's
-    # runners: the run goes silent from the moment the test starts. Sometimes XCTest's
-    # execution-time-allowance watchdog fires and recovers the suite; sometimes it fires
-    # and the host still never resumes; sometimes it never reports at all. Which of those
-    # happens varies run to run rather than by test, so none of them can be relied on to
-    # fail cheaply. Observed on both macos-14 and macos-26, never reproduced locally.
-    # All four still run locally, where they are reliable.
+    # Spotlight indexing contends for disk with the build and tests, which GitHub's own
+    # maintainers cite as a cause of macOS runners going unresponsive. mdutil is itself a
+    # disk operation, so it gets a timeout: || true catches a refusal, not a hang.
+    - name: Disable Spotlight indexing
+      timeout-minutes: 1
+      run: sudo mdutil -a -i off || true
+
+    # Tests intermittently wedge the whole test host on GitHub's runners: the run goes
+    # silent from the moment a test starts. Sometimes XCTest's execution-time-allowance
+    # watchdog fires and recovers the suite, sometimes it fires and the host never resumes,
+    # sometimes it never reports at all. A wedged thread is in an uninterruptible kernel
+    # wait, which is why a kill cannot always clear it. Which test gets hit tracks position
+    # and disk pressure rather than test identity, so a second attempt usually succeeds.
     #
-    # A step-level timeout fails only this step, so the reporting and upload steps
-    # below still run. A job-level timeout cancels them along with everything else.
-    # Ten minutes clears the slowest observed run (183s) plus two 120s watchdog
-    # recoveries.
+    # continue-on-error is what makes the retry possible: without it a step timeout fails
+    # the job outright and no later step runs.
     - name: Run tests
+      id: t1
+      timeout-minutes: 8
+      continue-on-error: true
+      run: |
+        set -o pipefail
+        xcodebuild test \
+          -workspace "MacDown 3000.xcworkspace" \
+          -scheme MacDown \
+          -derivedDataPath DerivedData \
+          -test-timeouts-enabled YES \
+          -maximum-test-execution-time-allowance 120 \
+          2>&1 | tee xcodebuild.log
+
+    - name: Re-run tests
+      if: steps.t1.outcome == 'failure'
       timeout-minutes: 10
       run: |
         set -o pipefail
@@ -48,31 +67,39 @@ jobs:
           -derivedDataPath DerivedData \
           -test-timeouts-enabled YES \
           -maximum-test-execution-time-allowance 120 \
-          -skip-testing:MacDownTests/MPResourceWatcherSetTests/testDelegateCalledOnAtomicSave \
-          -skip-testing:MacDownTests/MPResourceWatcherSetTests/testWatcherReestablishedAfterAtomicSave \
-          -skip-testing:MacDownTests/MPWordCountUpdateTests/testPendingUpdatesCancelledOnClose \
-          -skip-testing:MacDownTests/MPPreviewViewControllerTests/testCompletionHandlerIsEventuallyCalledAfterNavigation \
-          2>&1 | tee xcodebuild.log
+          2>&1 | tee xcodebuild-retry.log
 
-    # A test that wedges the host emits "started." with no matching result line, and
-    # produces no watchdog output to search for. Name it on the run summary so the
-    # next stall doesn't have to be diagnosed by reading the raw log.
-    - name: Report last test to start
-      if: failure()
+    # The retry makes wedged runs green, so this summary is the only remaining signal that
+    # a wedge happened at all. It runs after both attempts, and examines each log on its
+    # own: a test that wedged in attempt 1 and passed in attempt 2 must still be reported,
+    # which a search across the combined logs would miss. always() is needed because a
+    # failed retry would otherwise skip the step that explains it.
+    - name: Report blocked tests
+      if: always() && steps.t1.outcome == 'failure'
       run: |
-        NAME=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" xcodebuild.log 2>/dev/null | tail -1 || true)
-        if [ -z "$NAME" ]; then
-          echo "No test started; the run failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
-        elif grep -qF "Test Case '$NAME' passed" xcodebuild.log \
-          || grep -qF "Test Case '$NAME' failed" xcodebuild.log \
-          || grep -qF "Test Case '$NAME' errored" xcodebuild.log; then
-          echo "Last test to start (\`$NAME\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
-        else
-          echo "\`$NAME\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
-        fi
+        report() {
+          local log="$1" label="$2"
+          [ -f "$log" ] || return 0
+          echo "### $label" >> "$GITHUB_STEP_SUMMARY"
+          local name
+          name=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" "$log" | tail -1 || true)
+          if [ -z "$name" ]; then
+            echo "No test started; failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
+          elif grep -qF "Test Case '$name' passed" "$log" \
+            || grep -qF "Test Case '$name' failed" "$log" \
+            || grep -qF "Test Case '$name' errored" "$log"; then
+            echo "Last test to start (\`$name\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "\`$name\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          grep -oE "Test Case '[^']*' exceeded execution time allowance" "$log" \
+            | sed 's/^/- recovered by watchdog: /' >> "$GITHUB_STEP_SUMMARY" || true
+        }
+        report xcodebuild.log "Attempt 1"
+        report xcodebuild-retry.log "Attempt 2"
 
     - name: Upload test results
-      if: failure()
+      if: steps.t1.outcome == 'failure' || failure()
       continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
@@ -81,4 +108,5 @@ jobs:
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
           xcodebuild.log
+          xcodebuild-retry.log
         retention-days: 7

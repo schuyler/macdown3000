@@ -215,9 +215,6 @@
  * primitive directly: schedule a trailing update, cancel it, run past
  * the throttle interval, and verify the update never fired.
  */
-// Excluded from CI by -skip-testing: in .github/workflows/test.yml. This test
-// intermittently wedges the whole test host on GitHub's runners, sometimes past the
-// point XCTest's watchdog can recover it. It runs normally locally.
 - (void)testPendingUpdatesCancelledOnClose
 {
     MPPreferences *prefs = [MPPreferences sharedInstance];
