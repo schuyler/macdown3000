@@ -141,6 +141,9 @@
                    @"it must wait for -webView:didFinishNavigation:");
 }
 
+// Excluded from CI by -skip-testing: in .github/workflows/test.yml. This test
+// intermittently wedges the whole test host on GitHub's runners, sometimes past the
+// point XCTest's watchdog can recover it. It runs normally locally.
 - (void)testCompletionHandlerIsEventuallyCalledAfterNavigation
 {
     // Verify the handler IS called, just not synchronously.

@@ -26,12 +26,13 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
-    # The two skipped tests drive a real rename(2) over a watched file. On GitHub's
-    # runners that intermittently wedges the entire test host: the run goes silent from
-    # the moment the test starts, and not even XCTest's own execution-time-allowance
-    # watchdog reports it, which puts the stall below anything the test suite can catch.
-    # Observed three times on macos-14, never on macos-26, never reproduced locally.
-    # Both tests still run locally, where they are reliable.
+    # The four skipped tests each intermittently wedge the entire test host on GitHub's
+    # runners: the run goes silent from the moment the test starts. Sometimes XCTest's
+    # execution-time-allowance watchdog fires and recovers the suite; sometimes it fires
+    # and the host still never resumes; sometimes it never reports at all. Which of those
+    # happens varies run to run rather than by test, so none of them can be relied on to
+    # fail cheaply. Observed on both macos-14 and macos-26, never reproduced locally.
+    # All four still run locally, where they are reliable.
     #
     # A step-level timeout fails only this step, so the reporting and upload steps
     # below still run. A job-level timeout cancels them along with everything else.
@@ -49,6 +50,8 @@ jobs:
           -maximum-test-execution-time-allowance 120 \
           -skip-testing:MacDownTests/MPResourceWatcherSetTests/testDelegateCalledOnAtomicSave \
           -skip-testing:MacDownTests/MPResourceWatcherSetTests/testWatcherReestablishedAfterAtomicSave \
+          -skip-testing:MacDownTests/MPWordCountUpdateTests/testPendingUpdatesCancelledOnClose \
+          -skip-testing:MacDownTests/MPPreviewViewControllerTests/testCompletionHandlerIsEventuallyCalledAfterNavigation \
           2>&1 | tee xcodebuild.log
 
     # A test that wedges the host emits "started." with no matching result line, and
@@ -61,7 +64,8 @@ jobs:
         if [ -z "$NAME" ]; then
           echo "No test started; the run failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
         elif grep -qF "Test Case '$NAME' passed" xcodebuild.log \
-          || grep -qF "Test Case '$NAME' failed" xcodebuild.log; then
+          || grep -qF "Test Case '$NAME' failed" xcodebuild.log \
+          || grep -qF "Test Case '$NAME' errored" xcodebuild.log; then
           echo "Last test to start (\`$NAME\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
         else
           echo "\`$NAME\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
