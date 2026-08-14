@@ -12,7 +12,7 @@
 #import <CoreServices/CoreServices.h>
 
 
-static NSString * const kMPMarkdownPasteboardType = @"net.daringfireball.markdown";
+static NSString * const kMPMarkdownInteropPasteboardType = @"app.macdown.markdown-interop";
 
 
 NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
@@ -170,21 +170,23 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         [self updateContentGeometry];
 }
 
-/** Overridden to advertise markdown UTType support for pasteboard operations.
+/** Overridden to advertise a Markdown interop UTType for pasteboard operations.
  */
 - (NSArray<NSPasteboardType> *)writablePasteboardTypes
 {
     NSMutableArray *types = [[super writablePasteboardTypes] mutableCopy];
-    if (![types containsObject:kMPMarkdownPasteboardType])
-        [types addObject:kMPMarkdownPasteboardType];
+    if (![types containsObject:kMPMarkdownInteropPasteboardType])
+        [types addObject:kMPMarkdownInteropPasteboardType];
     return types;
 }
 
-/** Overridden to include markdown UTType when copying to pasteboard.
+/** Overridden to include a Markdown interop UTType when copying to pasteboard.
  *
- * Adds net.daringfireball.markdown type to the pasteboard alongside standard
- * types, improving interoperability with Markdown-aware applications.
- * This method is called by both copy: and cut: operations.
+ * Adds app.macdown.markdown-interop to the pasteboard alongside standard
+ * types, improving interoperability with Markdown-aware applications. This
+ * type declares no filename extension, unlike net.daringfireball.markdown,
+ * which caused apps like Messages to treat copied text as a file attachment
+ * (issue #571). This method is called by both copy: and cut: operations.
  */
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard
                              types:(NSArray<NSPasteboardType> *)types
@@ -192,13 +194,13 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     // Let superclass handle standard types (plain text, RTF, etc.)
     BOOL success = [super writeSelectionToPasteboard:pboard types:types];
 
-    // Add markdown type if requested (without clearing existing pasteboard data)
-    if (success && [types containsObject:kMPMarkdownPasteboardType])
+    // Add markdown interop type if requested (without clearing existing pasteboard data)
+    if (success && [types containsObject:kMPMarkdownInteropPasteboardType])
     {
         NSString *selectedText = [[self string] substringWithRange:[self selectedRange]];
         NSData *markdownData = [selectedText dataUsingEncoding:NSUTF8StringEncoding];
-        [pboard addTypes:@[kMPMarkdownPasteboardType] owner:nil];
-        [pboard setData:markdownData forType:kMPMarkdownPasteboardType];
+        [pboard addTypes:@[kMPMarkdownInteropPasteboardType] owner:nil];
+        [pboard setData:markdownData forType:kMPMarkdownInteropPasteboardType];
     }
 
     return success;
