@@ -62,7 +62,8 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 {
     self.editorView.string = @"Hello World";
     self.editorView.selectedRange = NSMakeRange(0, self.editorView.string.length);
-    NSArray<NSPasteboardType> *typesWithoutInterop = @[NSPasteboardTypeString];
+    NSMutableArray<NSPasteboardType> *typesWithoutInterop = [[self.editorView writablePasteboardTypes] mutableCopy];
+    [typesWithoutInterop removeObject:kNewMarkdownInteropPasteboardType];
     BOOL success = [self.editorView writeSelectionToPasteboard:self.pasteboard types:typesWithoutInterop];
     XCTAssertTrue(success);
     XCTAssertFalse([self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]);
@@ -131,9 +132,19 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     XCTAssertFalse([self.pasteboard.types containsObject:kOldMarkdownPasteboardType]);
 
     if (!success) {
-        // Superclass declined to write anything; nothing should be on the
-        // pasteboard for the new type either.
-        XCTAssertFalse([self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]);
+        // Superclass declined to report success for a zero-length selection
+        // on an empty document. NSPasteboard's `.types` reflects declared
+        // type NAMES independently of whether data was ever written for
+        // them, so AppKit's own writeSelectionToPasteboard:types: may leave
+        // kNewMarkdownInteropPasteboardType listed in .types even though it
+        // never produced real content. MacDown's own code that writes
+        // interop DATA only runs when `success` is YES (see the
+        // `if (success && ...)` guard in -[MPEditorView
+        // writeSelectionToPasteboard:types:]), so it cannot have executed on
+        // this path. What matters for issue #571 is that no interop DATA
+        // exists here.
+        NSData *interopData = [self.pasteboard dataForType:kNewMarkdownInteropPasteboardType];
+        XCTAssertNil(interopData, @"no interop data should be written when the underlying write reports failure");
         return;
     }
 
