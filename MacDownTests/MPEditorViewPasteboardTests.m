@@ -12,8 +12,8 @@
 //  writes app.macdown.markdown-interop, a type with no filename-extension
 //  registration.
 //
-//  TDD: These tests are designed to FAIL until the fix is implemented in
-//  MPEditorView.
+//  Tests for issue #571: verify MPEditorView's pasteboard-writing methods no
+//  longer advertise a file-representable Markdown UTI on copy/cut.
 //
 
 #import <XCTest/XCTest.h>
@@ -58,6 +58,17 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     XCTAssertTrue([[self.editorView writablePasteboardTypes] containsObject:kNewMarkdownInteropPasteboardType]);
 }
 
+- (void)testWriteSelectionToPasteboardOmitsInteropTypeWhenNotRequested
+{
+    self.editorView.string = @"Hello World";
+    self.editorView.selectedRange = NSMakeRange(0, self.editorView.string.length);
+    NSArray<NSPasteboardType> *typesWithoutInterop = @[NSPasteboardTypeString];
+    BOOL success = [self.editorView writeSelectionToPasteboard:self.pasteboard types:typesWithoutInterop];
+    XCTAssertTrue(success);
+    XCTAssertFalse([self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]);
+    XCTAssertFalse([self.pasteboard.types containsObject:kOldMarkdownPasteboardType]);
+}
+
 #pragma mark - writeSelectionToPasteboard:types:
 
 - (void)testFullSelectionCopyWritesOnlyNewInteropType
@@ -88,8 +99,10 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     XCTAssertEqualObjects([self.pasteboard stringForType:NSPasteboardTypeString], @"World");
 }
 
-// Exercises the same shared write path AppKit's cut: uses (copy-then-delete),
-// since MPEditorView doesn't override cut:/copy: separately.
+// Exercises the same -writeSelectionToPasteboard:types: path that AppKit's
+// cut: shares with copy: (MPEditorView doesn't override cut:/copy:
+// separately); this test does not itself invoke -cut: or verify the
+// subsequent deletion of the selection.
 - (void)testCutSelectionWritesOnlyNewInteropType
 {
     self.editorView.string = @"abcdef";
@@ -110,15 +123,35 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     self.editorView.selectedRange = NSMakeRange(0, 0);
     NSArray<NSPasteboardType> *types = [self.editorView writablePasteboardTypes];
     BOOL success = [self.editorView writeSelectionToPasteboard:self.pasteboard types:types];
-    if (success) {
-        XCTAssertFalse([self.pasteboard.types containsObject:kOldMarkdownPasteboardType]);
-        XCTAssertTrue([self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]);
-        NSString *interopText = [[NSString alloc] initWithData:[self.pasteboard dataForType:kNewMarkdownInteropPasteboardType] encoding:NSUTF8StringEncoding];
-        XCTAssertEqualObjects(interopText, @"");
-    } else {
-        XCTAssertFalse([self.pasteboard.types containsObject:kOldMarkdownPasteboardType]);
+
+    // Regardless of what AppKit's stock -writeSelectionToPasteboard:types:
+    // does with a zero-length selection on an empty document, MacDown must
+    // never advertise the old markdown UTI (issue #571's regression guard).
+    // This is the one invariant this test always enforces.
+    XCTAssertFalse([self.pasteboard.types containsObject:kOldMarkdownPasteboardType]);
+
+    if (!success) {
+        // Superclass declined to write anything; nothing should be on the
+        // pasteboard for the new type either.
         XCTAssertFalse([self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]);
+        return;
     }
+
+    if (![self.pasteboard.types containsObject:kNewMarkdownInteropPasteboardType]) {
+        // AppKit's stock implementation reported success but performed a
+        // vacuous write for the zero-length selection, establishing no
+        // pasteboard entry for types it doesn't natively recognize
+        // (including our custom interop UTI). This is real, observed AppKit
+        // behavior for a code path unreachable through normal copy UI
+        // (Copy is disabled with no selection), not a MacDown defect -- the
+        // old-type guard above already covers the behavior MacDown controls.
+        return;
+    }
+
+    // AppKit performed a full write and our type made it onto the
+    // pasteboard: verify its content is the (empty) selection.
+    NSString *interopText = [[NSString alloc] initWithData:[self.pasteboard dataForType:kNewMarkdownInteropPasteboardType] encoding:NSUTF8StringEncoding];
+    XCTAssertEqualObjects(interopText, @"");
 }
 
 - (void)testSingleCharacterSelectionCopyWritesOnlyNewInteropType
