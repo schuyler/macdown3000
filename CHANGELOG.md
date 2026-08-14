@@ -3,7 +3,7 @@
 <!-- rc-temp -->
 ## [3000.0.8-rc.1] - 2026-08-14
 
-This release candidate adds folder workspaces, unified document zoom, and ephemeral draggable table-column resizing, migrates auto-updates to Sparkle 2, and fixes a batch of preview-rendering, toolbar-dispatch, and export regressions.
+This release candidate adds folder workspaces, unified document zoom, and ephemeral draggable table-column resizing, and fixes a batch of preview-rendering, toolbar-dispatch, and export regressions.
 
 ### Added
 
@@ -30,7 +30,7 @@ This release candidate adds folder workspaces, unified document zoom, and epheme
 
 ### Infrastructure
 
-- Migrate Sparkle auto-update integration from the deprecated SUUpdater API to Sparkle 2 (SPUStandardUpdaterController) with EdDSA signing, restoring the Check for Updates menu item and the "include pre-releases" preference, and re-sign Sparkle's nested components inside-out for notarization; auto-updates remain inactive until the appcast is live (#129, #553, PR #556, PR #557); streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
+- Streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
 <!-- /rc-temp -->
 
 ## [3000.0.7] - 2026-07-13
