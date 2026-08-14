@@ -81,6 +81,10 @@ This project's agent workflow is governed by the Rule of Two: no change reaches 
   - **important** — it doesn't meet requirements, *or* it changes tests to mask a bug, *or* it leaves behind a test that can't fail if the code it covers changed.
   - **cosmetic** — everything else. Cosmetic findings never fail a gate.
 
+  A finding reaches critical or important only if it names a specific scenario in which the problem occurs: the concrete inputs or state, and the wrong behaviour that follows. A hypothetical problem with no such scenario is cosmetic no matter how plausible it sounds, and does not fail the gate.
+
+  For a test that cannot fail, that scenario is the change to the code under test that ought to break the test and does not. Name it and the finding stands: an empty or circular test proves nothing and is *important*.
+
   A fix shaped as "stop presenting the failure" — suppressing an error, intercepting a dialog, swallowing an exception — is *important* under the test-masking clause unless the failure is genuinely absent afterwards.
 - **Requirements are outcomes, not design choices or constraints.** "CI stops hanging" is a requirement. "Keep the step timeout and drop the retry" is not — it is a mechanism, and mechanisms are answerable to a requirement rather than standing in for one. A requirements list whose entries are all mechanisms means the goal was never stated, and every downstream review inherits that gap. When a request names a mechanism and no goal, ask what the mechanism is for.
 - **Reviews must be performed by Opus subagents.**
