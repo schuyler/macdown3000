@@ -28,9 +28,6 @@ This release candidate adds folder workspaces, unified document zoom, and epheme
 - Omit an empty `<thead>` from pipe tables whose header row has no content (#558, PR #559) -- thanks @macnotes for the contribution!
 - Stop copy/cut from advertising a file-representable pasteboard type, which caused Messages.app to paste an attached `.md` file instead of inline text (#571, PR #572) -- thanks @Paraphraser for the report!
 
-### Infrastructure
-
-- Streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
 <!-- /rc-temp -->
 
 ## [3000.0.7] - 2026-07-13
