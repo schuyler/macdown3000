@@ -1,5 +1,43 @@
 # Changelog
 
+<!-- rc-temp -->
+## [3000.0.8-rc.1] - 2026-08-14
+
+This release candidate adds folder workspaces, unified document zoom, and ephemeral draggable table-column resizing, migrates auto-updates to Sparkle 2, and fixes a batch of preview-rendering, toolbar-dispatch, and export regressions.
+
+### Added
+
+- Add draggable table column resizing in the live preview: drag a column-boundary handle to resize live, double-click to reset; widths are held in memory only and reset on full preview reload or document close, with no document mutation (#451, PR #569) -- thanks @aseelye for the contribution!
+- Add folder workspaces: browse a folder of Markdown files in a hideable sidebar and open them as native macOS window tabs, via File > Open Folder… or `macdown .` (PR #493) -- thanks @fluxa (JM Fluxà) for the contribution!
+- Add unified document zoom: ⌘+ / ⌘− / ⌘0 and a toolbar preset dropdown drive one shared zoom level across every open document window, persisting across launches (#529, #518, #470, #335, PR #552) -- thanks @leevi2010-cursor for the contribution!
+
+### Changed
+
+- Migrate Sparkle auto-update integration from the deprecated SUUpdater API to Sparkle 2 (SPUStandardUpdaterController) with EdDSA signing, restoring the Check for Updates menu item and the "include pre-releases" preference; auto-updates remain inactive until the appcast is live (#129, PR #556)
+- Reduce "keep/discard" dialogs on external file changes: coalesce rapid write notifications, guard against re-entrant prompts, and reload silently when there are no unsaved edits, preserving caret and scroll position across reloads (#543, PR #550) -- thanks @Maarten-TL for the report!
+- Add paragraph and list-item scroll-sync reference points alongside headers/images, and follow the cursor (not just viewport scroll) when Sync Panes is on, reducing drift in header-sparse sections (#562, PR #563) -- thanks @macnotes for the contribution!
+
+### Fixed
+
+- Port four low-risk fixes from upstream MacDownApp/macdown#1379: fix a potential crash reaching the editor through a dangling outlet, correct Homebrew detection in the Terminal preferences pane (it never worked — `NSTask` cannot resolve a bare `brew` path), replace deprecated `-insertText:`, and remove stale xib outlet warnings (#526, PR #528) -- thanks @wltb (Roberto Bissanti) for the contribution!
+- Fix internal anchor links being lost in exported PDF by injecting PDF link annotations after export, so TOC and heading links are clickable (#504, PR #516) -- thanks @falcon-enoc for the report!
+- Fix Mermaid/Graphviz diagrams not rendering in the live preview when Syntax Highlighting is off (#533, PR #540) -- thanks @AgardnerAU for the report and the contribution!
+- Fix Mermaid/Graphviz diagrams not rendering in HTML export when "include highlighting" is off, the export-path counterpart of the preview fix above (#541, PR #542)
+- Add `img { max-width: 100% }` to the four bundled themes that lacked it (Clearness, Clearness Dark, Solarized Dark, Solarized Light), preventing wide images from overflowing the preview pane (#546, PR #547) -- thanks @versuchshaus (Stephan von Lingelsheim) for the contribution!
+- Fix bundled preview stylesheet fixes never reaching users who had already launched the app once; the user Styles directory is now an override layer with bundle fallback instead of a one-time copy (#548, PR #555)
+- Fix grouped toolbar buttons (Shift Left/Right, Bold, Italic, Underline, Heading 1-3, lists) visibly depressing but doing nothing — a regression in the click-dispatch selector lookup (#566, PR #567) -- thanks @massimo-cassandro for the report! thanks @stephane-bg for confirming!
+- Omit an empty `<thead>` from pipe tables whose header row has no content (#558, PR #559) -- thanks @macnotes for the contribution!
+- Stop copy/cut from advertising a file-representable pasteboard type, which caused Messages.app to paste an attached `.md` file instead of inline text (#571, PR #572) -- thanks @Paraphraser for the report!
+
+### Documentation
+
+- Document release-candidate graduation lessons and how to build the final changelog completely in `rc-process.md`; trim redundant process boilerplate from the 3000.0.7 changelog summary; document the Rule of Two in CLAUDE.md; add a writing style convention for PRs, comments, and docs; add post-release milestone issue triage as release step 4.
+
+### Infrastructure
+
+- Close every `MPDocument` a test creates when the test ends, ending an intermittent CI test-host stall caused by AppKit's autosave alert blocking on a headless run with no window to answer it (PR #570); re-sign Sparkle's nested components inside-out for notarization (#553, PR #557); fix an Editor preferences pane layout-constraint bug that hung a wrapping-checkbox CI test indefinitely, and add step-level timeouts to `xcodebuild test` invocations that lacked them (PR #568); streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
+<!-- /rc-temp -->
+
 ## [3000.0.7] - 2026-07-13
 
 ### Added
