@@ -167,17 +167,56 @@ jobs:
       - name: Setup MacDown build environment
         uses: ./.github/actions/setup-macdown
 
+      # Healthy runs finish in 2-4 minutes. The tight step timeout bounds the cost of a
+      # hung test host, and being step-level rather than job-level it leaves the report
+      # below to run.
       - name: Run tests before release
-        timeout-minutes: 30
+        timeout-minutes: 8
         run: |
+          set -o pipefail
           echo "🧪 Running unit tests to ensure code quality before release..."
           xcodebuild test \
             -workspace "MacDown 3000.xcworkspace" \
             -scheme MacDown \
             -derivedDataPath DerivedData \
             -test-timeouts-enabled YES \
-            -maximum-test-execution-time-allowance 120
+            -maximum-test-execution-time-allowance 120 \
+            2>&1 | tee xcodebuild.log
           echo "✅ All tests passed"
+
+      # A hung host produces no failure message of its own, only silence, so name the test
+      # that was running when the log stopped.
+      - name: Report blocked tests
+        if: failure()
+        run: |
+          log=xcodebuild.log
+          [ -f "$log" ] || exit 0
+          name=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" "$log" | tail -1 || true)
+          if [ -z "$name" ]; then
+            echo "No test started; failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
+          elif grep -qF "Test Case '$name' passed" "$log" \
+            || grep -qF "Test Case '$name' failed" "$log" \
+            || grep -qF "Test Case '$name' errored" "$log"; then
+            echo "Last test to start (\`$name\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "\`$name\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          grep -oE "Test Case '[^']*' exceeded execution time allowance" "$log" \
+            | sed 's/^/- recovered by watchdog: /' >> "$GITHUB_STEP_SUMMARY" || true
+
+      # The step summary names the blocked test but nothing more; the log and any crash
+      # reports are what a diagnosis needs after that.
+      - name: Upload test results
+        if: failure()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: |
+            ~/Library/Logs/DiagnosticReports/
+            DerivedData/Logs/Test/
+            xcodebuild.log
+          retention-days: 7
 
       # Keep in sync with the launch-test job in smoke-test.yml
       - name: Smoke test app launch

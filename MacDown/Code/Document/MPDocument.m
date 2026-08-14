@@ -5109,6 +5109,16 @@ to link outside that scope.", \
 
 - (void)presentExternalChangeAlertWithCompletion:(void (^)(BOOL shouldReload))completion
 {
+    // A process with no window has nobody to answer a prompt, so a modal session
+    // here would block the main thread for good. Answer it as "Keep": the one
+    // response that cannot lose unsaved work.
+    NSWindow *window = self.windowForSheet;
+    if (!window)
+    {
+        completion(NO);
+        return;
+    }
+
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = NSLocalizedString(
         @"File Modified Externally",
@@ -5120,20 +5130,10 @@ to link outside that scope.", \
     [alert addButtonWithTitle:NSLocalizedString(@"Discard", @"Discard changes button")];
     [alert addButtonWithTitle:NSLocalizedString(@"Keep", @"Keep local changes button")];
 
-    NSWindow *window = self.windowForSheet;
-    if (window)
-    {
-        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
-            // "Keep" reports NO, and the caller then leaves the editor alone.
-            completion(response == NSAlertFirstButtonReturn);
-        }];
-    }
-    else
-    {
-        // Fallback to modal if no window (shouldn't happen)
-        NSModalResponse response = [alert runModal];
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        // "Keep" reports NO, and the caller then leaves the editor alone.
         completion(response == NSAlertFirstButtonReturn);
-    }
+    }];
 }
 
 - (void)reloadFromDisk

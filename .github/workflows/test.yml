@@ -26,7 +26,11 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
+    # remaining steps, so the diagnostic steps below would never run, whereas a step-level
+    # one leaves them to fire on failure(). Healthy runs finish in about 2-4 minutes.
     - name: Run tests
+      timeout-minutes: 8
       run: |
         set -o pipefail
         xcodebuild test \
@@ -34,7 +38,29 @@ jobs:
           -scheme MacDown \
           -derivedDataPath DerivedData \
           -test-timeouts-enabled YES \
-          -maximum-test-execution-time-allowance 120
+          -maximum-test-execution-time-allowance 120 \
+          2>&1 | tee xcodebuild.log
+
+    # A hung host produces no failure message of its own, only silence, so name the test
+    # that was running when the log stopped. The last test to start having completed means
+    # the failure was something other than a stall.
+    - name: Report blocked tests
+      if: failure()
+      run: |
+        log=xcodebuild.log
+        [ -f "$log" ] || exit 0
+        name=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" "$log" | tail -1 || true)
+        if [ -z "$name" ]; then
+          echo "No test started; failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
+        elif grep -qF "Test Case '$name' passed" "$log" \
+          || grep -qF "Test Case '$name' failed" "$log" \
+          || grep -qF "Test Case '$name' errored" "$log"; then
+          echo "Last test to start (\`$name\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "\`$name\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
+        fi
+        grep -oE "Test Case '[^']*' exceeded execution time allowance" "$log" \
+          | sed 's/^/- recovered by watchdog: /' >> "$GITHUB_STEP_SUMMARY" || true
 
     - name: Upload test results
       if: failure()
@@ -45,4 +71,5 @@ jobs:
         path: |
           ~/Library/Logs/DiagnosticReports/
           DerivedData/Logs/Test/
+          xcodebuild.log
         retention-days: 7
