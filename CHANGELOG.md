@@ -13,7 +13,6 @@ This release candidate adds folder workspaces, unified document zoom, and epheme
 
 ### Changed
 
-- Migrate Sparkle auto-update integration from the deprecated SUUpdater API to Sparkle 2 (SPUStandardUpdaterController) with EdDSA signing, restoring the Check for Updates menu item and the "include pre-releases" preference; auto-updates remain inactive until the appcast is live (#129, PR #556)
 - Reduce "keep/discard" dialogs on external file changes: coalesce rapid write notifications, guard against re-entrant prompts, and reload silently when there are no unsaved edits, preserving caret and scroll position across reloads (#543, PR #550) -- thanks @Maarten-TL for the report!
 - Add paragraph and list-item scroll-sync reference points alongside headers/images, and follow the cursor (not just viewport scroll) when Sync Panes is on, reducing drift in header-sparse sections (#562, PR #563) -- thanks @macnotes for the contribution!
 
@@ -29,13 +28,9 @@ This release candidate adds folder workspaces, unified document zoom, and epheme
 - Omit an empty `<thead>` from pipe tables whose header row has no content (#558, PR #559) -- thanks @macnotes for the contribution!
 - Stop copy/cut from advertising a file-representable pasteboard type, which caused Messages.app to paste an attached `.md` file instead of inline text (#571, PR #572) -- thanks @Paraphraser for the report!
 
-### Documentation
-
-- Document release-candidate graduation lessons and how to build the final changelog completely in `rc-process.md`; trim redundant process boilerplate from the 3000.0.7 changelog summary; document the Rule of Two in CLAUDE.md; add a writing style convention for PRs, comments, and docs; add post-release milestone issue triage as release step 4.
-
 ### Infrastructure
 
-- Close every `MPDocument` a test creates when the test ends, ending an intermittent CI test-host stall caused by AppKit's autosave alert blocking on a headless run with no window to answer it (PR #570); re-sign Sparkle's nested components inside-out for notarization (#553, PR #557); fix an Editor preferences pane layout-constraint bug that hung a wrapping-checkbox CI test indefinitely, and add step-level timeouts to `xcodebuild test` invocations that lacked them (PR #568); streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
+- Migrate Sparkle auto-update integration from the deprecated SUUpdater API to Sparkle 2 (SPUStandardUpdaterController) with EdDSA signing, restoring the Check for Updates menu item and the "include pre-releases" preference, and re-sign Sparkle's nested components inside-out for notarization; auto-updates remain inactive until the appcast is live (#129, #553, PR #556, PR #557); streamline GitHub workflows to reduce CI usage; rename command subagents to role-based names and decouple them from the plugin.
 <!-- /rc-temp -->
 
 ## [3000.0.7] - 2026-07-13
