@@ -65,6 +65,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) NSString *htmlStyleName;
 @property (assign) BOOL htmlDetectFrontMatter;
 @property (assign) BOOL htmlTaskList;
+@property (assign) BOOL htmlHideHorizontalRules;
 @property (assign) BOOL htmlHardWrap;
 @property (assign) BOOL htmlMathJax;
 @property (assign) BOOL htmlMathJaxInlineDollar;
@@ -89,5 +90,15 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (nonatomic, assign) NSArray *filesToOpen;
 @property (nonatomic, assign) NSArray *foldersToOpen;
 @property (nonatomic, assign) NSString *pipedContentFileToOpen;
+
+@end
+
+
+// Composes user-facing preferences into the flag bitmasks Hoedown expects.
+// Implemented in MPDocument.m.
+@interface MPPreferences (Hoedown)
+
+@property (nonatomic, readonly) int extensionFlags;
+@property (nonatomic, readonly) int rendererFlags;
 
 @end

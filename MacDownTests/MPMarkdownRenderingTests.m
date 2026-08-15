@@ -491,6 +491,54 @@
              rendererFlags:rendFlags];
 }
 
+- (void)testHorizontalRulesHiddenWhenFlagSet
+{
+    int extFlags = 0;
+    int rendFlags = HOEDOWN_HTML_HIDE_HORIZONTAL_RULES;
+
+    NSString *markdown = @"Before rule.\n\n---\n\nAfter rule.\n\n***\n\n___";
+    NSString *html = [self renderMarkdown:markdown
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+
+    XCTAssertFalse([html containsString:@"<hr"],
+                   @"No <hr> should be emitted when HOEDOWN_HTML_HIDE_HORIZONTAL_RULES is set");
+    XCTAssertTrue([html containsString:@"Before rule."], @"Surrounding text should still render");
+    XCTAssertTrue([html containsString:@"After rule."], @"Surrounding text should still render");
+}
+
+- (void)testHorizontalRulesHiddenInBlockquotesAndLists
+{
+    int extFlags = 0;
+    int rendFlags = HOEDOWN_HTML_HIDE_HORIZONTAL_RULES;
+
+    NSString *markdown = @"> Quoted text.\n>\n> ---\n>\n> More quoted text.\n\n"
+                          @"- Item one\n- ---\n- Item two";
+    NSString *html = [self renderMarkdown:markdown
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+
+    XCTAssertFalse([html containsString:@"<hr"],
+                   @"No <hr> should be emitted inside blockquotes or lists");
+    XCTAssertTrue([html containsString:@"Quoted text."], @"Surrounding content should still render");
+    XCTAssertTrue([html containsString:@"Item one"], @"Surrounding content should still render");
+}
+
+- (void)testSetextHeadingNotTreatedAsHiddenRule
+{
+    int extFlags = 0;
+    int rendFlags = HOEDOWN_HTML_HIDE_HORIZONTAL_RULES;
+
+    NSString *markdown = @"Title\n---\n\nBody text.";
+    NSString *html = [self renderMarkdown:markdown
+                            withExtensions:extFlags
+                             rendererFlags:rendFlags];
+
+    XCTAssertTrue([html containsString:@"<h2"],
+                  @"A setext heading underline is not a horizontal rule and must still render as <h2>");
+    XCTAssertFalse([html containsString:@"<hr"], @"No actual rule was present in this input");
+}
+
 - (void)testMixedComplex
 {
     // Complex document with multiple GFM features enabled

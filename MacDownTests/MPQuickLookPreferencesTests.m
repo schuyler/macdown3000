@@ -98,6 +98,14 @@
                   @"Extension strikethrough should return a boolean");
 }
 
+- (void)testHideHorizontalRulesReturnsBoolean
+{
+    MPQuickLookPreferences *prefs = [MPQuickLookPreferences sharedPreferences];
+    BOOL hideRules = [prefs hideHorizontalRules];
+    XCTAssertTrue(hideRules == YES || hideRules == NO,
+                  @"Hide horizontal rules should return a boolean");
+}
+
 
 #pragma mark - Highlighting Theme Tests
 
