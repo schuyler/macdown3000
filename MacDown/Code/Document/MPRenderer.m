@@ -486,6 +486,28 @@ NS_INLINE NSString *MPEscapeHTMLText(NSString *value)
     return escaped;
 }
 
+/**
+ * Origin of kMPMathJaxCDN as a CSP source expression, e.g.
+ * "https://cdnjs.cloudflare.com".
+ *
+ * MathJax resolves its configuration, jax and fonts against the script
+ * element's own src, so every one of them comes from this origin. Deriving the
+ * source expression from the URL keeps the policy from drifting away from the
+ * URL actually loaded when the CDN changes.
+ */
+NS_INLINE NSString *MPMathJaxCDNOrigin(void)
+{
+    NSURLComponents *cdn = [NSURLComponents componentsWithString:kMPMathJaxCDN];
+    NSCAssert(cdn.scheme.length && cdn.host.length,
+              @"kMPMathJaxCDN must carry a scheme and host");
+    if (cdn.port)
+    {
+        return [NSString stringWithFormat:@"%@://%@:%@",
+                                          cdn.scheme, cdn.host, cdn.port];
+    }
+    return [NSString stringWithFormat:@"%@://%@", cdn.scheme, cdn.host];
+}
+
 NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
 {
     // MathJax 2.x relies on eval/new Function during startup, and bundled
@@ -496,17 +518,24 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
     // that source — the <img> container still lays out, but the bits never
     // load. MPImageRenderingTests pins this contract; update it deliberately
     // if you tighten the policy.
-    return @"default-src 'none'; "
-           @"base-uri 'none'; "
-           @"form-action 'none'; "
-           @"object-src 'none'; "
-           @"frame-src 'none'; "
-           @"img-src data: file: http: https:; "
-           @"media-src data: file: http: https:; "
-           @"style-src 'self' 'unsafe-inline' file:; "
-           @"font-src data: file:; "
-           @"connect-src http: https:; "
-           @"script-src 'self' file: https://cdnjs.cloudflare.com 'unsafe-eval'";
+    //
+    // font-src carries the MathJax origin for the same reason script-src does:
+    // the TeX faces are fetched from it, and blocking them makes the HTML-CSS
+    // output jax stall for its web-font timeout and then fall back to bitmap
+    // image fonts.
+    NSString *mathJax = MPMathJaxCDNOrigin();
+    return [NSString stringWithFormat:
+            @"default-src 'none'; "
+            @"base-uri 'none'; "
+            @"form-action 'none'; "
+            @"object-src 'none'; "
+            @"frame-src 'none'; "
+            @"img-src data: file: http: https:; "
+            @"media-src data: file: http: https:; "
+            @"style-src 'self' 'unsafe-inline' file:; "
+            @"font-src data: file: %@; "
+            @"connect-src http: https:; "
+            @"script-src 'self' file: %@ 'unsafe-eval'", mathJax, mathJax];
 }
 
 NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
