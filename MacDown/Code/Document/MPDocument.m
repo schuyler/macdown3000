@@ -3149,7 +3149,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)toggleEditorPane:(id)sender
 {
+    BOOL wasVisible = self.editorVisible;
     [self toggleSplitterCollapsingEditorPane:YES];
+    if (self.editorVisible != wasVisible)
+        self.preferences.editorStartInPreviewMode = !self.editorVisible;
 }
 
 - (IBAction)toggleAutoSave:(id)sender
