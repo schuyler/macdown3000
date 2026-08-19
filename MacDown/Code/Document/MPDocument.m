@@ -1792,14 +1792,46 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse fromDataSource:(WebDataSource *)dataSource
 {
-
+    // The MathJax loader is served from the bundle, carrying its "?config=…"
+    // query so MathJax still loads the right combined config.
     if ([[request.URL lastPathComponent] isEqualToString:@"MathJax.js"])
     {
         NSURLComponents *origComps = [NSURLComponents componentsWithURL:[request URL] resolvingAgainstBaseURL:YES];
         NSURLComponents *updatedComps = [NSURLComponents componentsWithURL:[[NSBundle mainBundle] URLForResource:@"MathJax" withExtension:@"js" subdirectory:@"MathJax"] resolvingAgainstBaseURL:NO];
         [updatedComps setQueryItems:[origComps queryItems]];
 
-        request = [NSURLRequest requestWithURL:[updatedComps URL]];
+        return [NSURLRequest requestWithURL:[updatedComps URL]];
+    }
+
+    // The TeX HTML-CSS web fonts also ship in the bundle. Serve them locally too:
+    // without the fonts local, the HTML-CSS output jax waits on a render-time
+    // web-font fetch and, when it times out, falls back to bitmap image fonts
+    // that pixelate on zoom. Any MathJax CDN resource whose path maps to a file
+    // present in the bundle is redirected; the rest (config, jax.js, fontdata.js)
+    // fall through to the CDN unchanged, so this only ever short-circuits a load
+    // to a file that exists. The "?V=…" query is dropped — a file: URL with a
+    // query may not resolve, which would fail the load back into the fallback.
+    NSURL *cdn = [NSURL URLWithString:kMPMathJaxCDN];
+    NSURL *url = request.URL;
+    if (cdn.host.length && [url.host isEqualToString:cdn.host])
+    {
+        // Directory on the CDN that holds MathJax.js, e.g.
+        // "/ajax/libs/mathjax/2.7.3/". The trailing slash keeps a sibling
+        // version directory (…/2.7.30/) from matching this one's prefix.
+        NSString *prefix = [[cdn.path stringByDeletingLastPathComponent]
+                            stringByAppendingString:@"/"];
+        if ([url.path hasPrefix:prefix])
+        {
+            NSString *subpath = [url.path substringFromIndex:prefix.length];
+            NSURL *mathJaxDir =
+                [[NSBundle mainBundle].resourceURL URLByAppendingPathComponent:@"MathJax"];
+            NSURL *local = [mathJaxDir URLByAppendingPathComponent:subpath];
+            if (subpath.length &&
+                [[NSFileManager defaultManager] fileExistsAtPath:local.path])
+            {
+                request = [NSURLRequest requestWithURL:local];
+            }
+        }
     }
 
     return request;
