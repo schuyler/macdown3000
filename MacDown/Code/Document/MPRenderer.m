@@ -23,7 +23,7 @@
 // of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
 // in to MathJax, then the WebResourceLoadDelegate can be removed from MPDocument
 // and MathJax.js can be removed from this project.
-static NSString * const kMPMathJaxCDN =
+NSString * const kMPMathJaxCDN =
     @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js"
     @"?config=TeX-AMS-MML_HTMLorMML";
 static NSString * const kMPPrismScriptDirectory = @"Prism/components";
