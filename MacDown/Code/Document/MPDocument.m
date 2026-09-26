@@ -4802,7 +4802,10 @@ to link outside that scope.", \
 
 /**
  * Toggle the checkbox at the specified index in the markdown source.
- * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
+ * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa. An
+ * indeterminate checkbox ([-], the partially-done state; see
+ * https://github.com/orgs/community/discussions/19199) becomes checked,
+ * matching how the platform treats a click on an indeterminate checkbox.
  * Returns the modified markdown, or the original if index is out of bounds.
  *
  * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
@@ -4814,10 +4817,10 @@ to link outside that scope.", \
     if (!markdown || markdown.length == 0)
         return markdown;
 
-    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], * [ ], etc.
+    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], - [-], etc.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX])\\]"
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX-])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX-])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
                                error:&error];
 
@@ -4923,11 +4926,12 @@ to link outside that scope.", \
     NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
 
     NSString *currentState = [markdown substringWithRange:checkboxContentRange];
-    NSString *newState;
-    if ([currentState isEqualToString:@" "])
-        newState = @"x";
-    else
-        newState = @" ";
+    // Open (" ") and indeterminate ("-") both resolve to done on a click, the
+    // way clicking an indeterminate checkbox behaves on macOS; "x"/"X" go
+    // back to open.
+    BOOL isOpen = [currentState isEqualToString:@"x"] ||
+                  [currentState isEqualToString:@"X"];
+    NSString *newState = isOpen ? @" " : @"x";
 
     NSMutableString *result = [markdown mutableCopy];
     [result replaceCharactersInRange:checkboxContentRange withString:newState];

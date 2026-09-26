@@ -36,6 +36,13 @@
 2. [x] Second task (completed)
 3. [ ] Third task
 
+## Indeterminate Tasks
+
+- [-] Partly done
+- [ ] Open task
+  - [-] Partly done subtask
+- [x] Done task
+
 ## Edge Cases
 
 - [] Invalid (no space)
@@ -43,3 +50,6 @@
 -[ ] Invalid (no space after dash)
 - [x ] Invalid (space before X)
 - [ x] Invalid (space after bracket)
+- [-] Valid indeterminate
+- [- ] Invalid (space after dash)
+- [--] Invalid (two dashes)
