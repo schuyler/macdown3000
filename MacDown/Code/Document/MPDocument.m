@@ -96,6 +96,46 @@ NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
     return [NSString stringWithFormat:@"editor%@%@", first, rest];
 }
 
+NS_INLINE NSString *MPPreviewResourceHTML(NSString *html)
+{
+    if (!html.length)
+        return nil;
+
+    NSRange start = [html rangeOfString:@"<head>"];
+    if (start.location == NSNotFound)
+        return nil;
+
+    NSRange searchRange = NSMakeRange(NSMaxRange(start),
+                                      html.length - NSMaxRange(start));
+    NSRange end = [html rangeOfString:@"</head>"
+                              options:0
+                                range:searchRange];
+    if (end.location == NSNotFound)
+        return nil;
+
+    NSMutableString *resources = [[html substringWithRange:NSMakeRange(
+        start.location, NSMaxRange(end) - start.location)] mutableCopy];
+
+    // The default template places linked and embedded scripts at the end of
+    // <body>, so the head alone is not a complete resource signature.
+    static NSRegularExpression *scriptRegex = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        scriptRegex = [[NSRegularExpression alloc]
+            initWithPattern:@"<script\\b[^>]*>.*?</script>"
+                    options:(NSRegularExpressionCaseInsensitive |
+                             NSRegularExpressionDotMatchesLineSeparators)
+                      error:NULL];
+    });
+    NSRange fullRange = NSMakeRange(0, html.length);
+    for (NSTextCheckingResult *match in
+         [scriptRegex matchesInString:html options:0 range:fullRange])
+    {
+        [resources appendString:[html substringWithRange:match.range]];
+    }
+    return resources;
+}
+
 NS_INLINE NSDictionary *MPEditorKeysToObserve()
 {
     static NSDictionary *keys = nil;
@@ -323,8 +363,7 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (strong) NSURL *pdfExportURL;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
-@property (copy) NSString *currentStyleName;
-@property (copy) NSString *currentHighlightingThemeName;
+@property (copy) NSString *currentPreviewResourceHTML;
 @property CGFloat lastPreviewScrollTop;
 @property (nonatomic, readonly) BOOL needsHtml;
 @property (nonatomic) NSUInteger totalWords;
@@ -2118,19 +2157,23 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         [self.resourceWatcherSet updateWatchedPaths:paths];
     }
 
-    // Check if CSS style or highlighting theme has changed.
-    // If either changed, we must do a full reload to update <head> with new CSS links.
-    NSString *newStyleName = self.preferences.htmlStyleName;
-    NSString *newHighlightingTheme = self.preferences.htmlHighlightingThemeName;
-    BOOL stylesChanged = !MPAreNilableStringsEqual(self.currentStyleName, newStyleName) ||
-                         !MPAreNilableStringsEqual(self.currentHighlightingThemeName, newHighlightingTheme);
+    // Body-only replacement preserves scroll position, but it also preserves
+    // every script and stylesheet from the previous page. Compare the generated
+    // head plus script tags so newly required Prism language components (and any
+    // other page resource) trigger a full load. This matters during initial open when
+    // an empty render can finish before the render containing the file's fenced
+    // code blocks. Related to GitHub issue #594.
+    NSString *newPreviewResourceHTML = MPPreviewResourceHTML(html);
+    BOOL resourcesChanged =
+        !MPAreNilableStringsEqual(self.currentPreviewResourceHTML,
+                                  newPreviewResourceHTML);
 
     // Try DOM replacement to preserve scroll position.
     // MathJax re-typesetting is handled via MathJax.Hub.Queue, which serializes
     // the async typesetting correctly. Scroll is restored after typesetting completes.
-    // Skip DOM replacement if styles changed, since <head> CSS links need updating.
+    // Skip DOM replacement if generated page resources changed.
     // Related to issue #325.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !stylesChanged)
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !resourcesChanged)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -2258,8 +2301,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // takes effect.
     [self applyPreviewZoom];
     self.currentBaseUrl = baseUrl;
-    self.currentStyleName = newStyleName;
-    self.currentHighlightingThemeName = newHighlightingTheme;
+    self.currentPreviewResourceHTML = newPreviewResourceHTML;
 }
 
 - (NSURL *)rendererBaseURL:(MPRenderer *)renderer
@@ -3213,11 +3255,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     if (themePath)
         [self.renderer setTimestamp:now forResourcePath:themePath];
 
-    // Issue #318: Reset cached names so renderer:didProduceHTMLOutput:
-    // sees a "change" (nil != currentPref) and takes the full HTML reload
-    // path instead of body-only DOM replacement.
-    self.currentStyleName = nil;
-    self.currentHighlightingThemeName = nil;
+    // Issue #318: Reset the cached resource signature so
+    // renderer:didProduceHTMLOutput: sees a change and takes the full HTML
+    // reload path instead of body-only DOM replacement.
+    self.currentPreviewResourceHTML = nil;
 }
 
 /**

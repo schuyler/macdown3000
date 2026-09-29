@@ -25,8 +25,7 @@
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
 @property (strong) NSURL *currentBaseUrl;
-@property (copy) NSString *currentStyleName;
-@property (copy) NSString *currentHighlightingThemeName;
+@property (copy) NSString *currentPreviewResourceHTML;
 @property (strong) NSArray<NSNumber *> *webViewHeaderLocations;
 @property (weak) WebView *preview;
 @property (strong) MPRenderer *renderer;
@@ -91,11 +90,11 @@
 - (void)testMathJaxStyleChangeForcesFullReload
 {
     self.document.isPreviewReady = YES;
-    self.document.currentStyleName = @"OldStyle";
+    self.document.currentPreviewResourceHTML = @"<head>old</head>";
     self.document.alreadyRenderingInWeb = NO;
 
-    // The preferences will have a different style name than currentStyleName,
-    // so stylesChanged will be YES. Full reload path should be taken.
+    // The generated head differs from the cached resource signature, so
+    // resourcesChanged will be YES. Full reload path should be taken.
     // On a nil WebView, loadHTMLString: is a no-op, but alreadyRenderingInWeb
     // will remain YES (only set to NO by didFinishLoadForFrame: or DOM replacement).
     NSString *html = @"<html><head></head><body>Test</body></html>";
