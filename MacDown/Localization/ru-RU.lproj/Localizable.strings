@@ -68,3 +68,6 @@
 "PreviewCalloutTitleImportant" = "Важно";
 "PreviewCalloutTitleCaution" = "Внимание";
 "PreviewToggleTitle" = "Предварительные требования";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Столбец %lu";

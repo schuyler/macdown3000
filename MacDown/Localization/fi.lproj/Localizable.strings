@@ -172,3 +172,6 @@
 "PreviewCalloutTitleImportant" = "Tärkeää";
 "PreviewCalloutTitleCaution" = "Huomio";
 "PreviewToggleTitle" = "Edellytykset";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Sarake %lu";

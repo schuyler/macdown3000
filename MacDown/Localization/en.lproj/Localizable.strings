@@ -59,3 +59,6 @@
 "PreviewCalloutTitleImportant" = "Important";
 "PreviewCalloutTitleCaution" = "Caution";
 "PreviewToggleTitle" = "Prerequisites";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Column %lu";

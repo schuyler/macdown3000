@@ -25,7 +25,14 @@
                          caretLocation:(NSUInteger *)outCaretLocation;
 @end
 
-static NSString *const kHeaderRow = @"| Column 1 | Column 2 | Column 3 |";
+static NSString *MPExpectedTableHeaderRow(void)
+{
+    NSString *format=NSLocalizedString(@"Column %lu", @"Default Markdown table column heading");
+    return [NSString stringWithFormat:@"| %@ | %@ | %@ |",
+        [NSString stringWithFormat:format,1ul],
+        [NSString stringWithFormat:format,2ul],
+        [NSString stringWithFormat:format,3ul]];
+}
 static NSString *const kSeparatorRow = @"| :---: | :---: | :---: |";
 static NSString *const kBodyRow = @"|  |  |  |";
 
@@ -85,7 +92,7 @@ static NSString *const kBodyRow = @"|  |  |  |";
     NSUInteger headerCount = 0;
     for (NSUInteger i = 0; i < lines.count; i++)
     {
-        if (![lines[i] isEqualToString:kHeaderRow])
+        if (![lines[i] isEqualToString:MPExpectedTableHeaderRow()])
             continue;
         headerCount++;
         XCTAssertLessThan(i + 2, lines.count,
@@ -136,7 +143,7 @@ static NSString *const kBodyRow = @"|  |  |  |";
     [self assertDocument:result hasIntactTableCount:1];
     [self assertCaret:caret inFirstCellOf:result];
     // No spurious leading blank line at the very start of the document.
-    XCTAssertTrue([result hasPrefix:kHeaderRow]);
+    XCTAssertTrue([result hasPrefix:MPExpectedTableHeaderRow()]);
 }
 
 #pragma mark - Caret at start / middle / end
@@ -279,7 +286,7 @@ static NSString *const kBodyRow = @"|  |  |  |";
     XCTAssertNotNil(inserted);
     XCTAssertEqual(replacement.location, (NSUInteger)0);
     XCTAssertEqual(replacement.length, (NSUInteger)0);
-    XCTAssertTrue([inserted hasPrefix:kHeaderRow]);
+    XCTAssertTrue([inserted hasPrefix:MPExpectedTableHeaderRow()]);
 }
 
 - (void)testGeneratedTablesRenderEveryCellCenteredForAll64Dimensions
@@ -306,6 +313,40 @@ static NSString *const kBodyRow = @"|  |  |  |";
     } @finally {
         prefs.extensionTables=savedTables;
     }
+}
+
+- (void)testTableHeadingTranslationsAreAvailableForAllApplicationLanguages
+{
+    NSArray *languages=@[@"ar",@"cs",@"da",@"da-DK",@"de",@"en",@"es",@"et",@"fi",@"fr",@"he",@"hi",@"is",@"it-IT",@"ja",@"ko-KR",@"nb-NO",@"nl-NL",@"pt-BR",@"ru-RU",@"sk",@"sv",@"tr",@"uk",@"zh-Hans",@"zh-Hant"];
+    for (NSString *language in languages) {
+        NSString *path=[NSBundle.mainBundle pathForResource:language ofType:@"lproj"];
+        XCTAssertNotNil(path,@"Missing language %@",language);
+        NSBundle *bundle=[NSBundle bundleWithPath:path];
+        NSString *format=[bundle localizedStringForKey:@"Column %lu" value:@"MISSING" table:nil];
+        XCTAssertNotEqualObjects(format,@"MISSING",@"Missing table heading in %@",language);
+        XCTAssertEqual([format componentsSeparatedByString:@"%lu"].count,2u);
+        NSString *withoutPlaceholder=[format stringByReplacingOccurrencesOfString:@"%lu" withString:@""];
+        XCTAssertFalse([withoutPlaceholder containsString:@"%"],@"Unexpected format specifier in %@",language);
+        XCTAssertFalse([format containsString:@"|"]);
+        XCTAssertFalse([format containsString:@"\n"]);
+    }
+    NSDictionary *expected=@{@"en":@"Column 1",@"fr":@"Colonne 1",@"de":@"Spalte 1",@"es":@"Columna 1"};
+    for (NSString *language in expected) {
+        NSBundle *bundle=[NSBundle bundleWithPath:[NSBundle.mainBundle pathForResource:language ofType:@"lproj"]];
+        NSString *format=[bundle localizedStringForKey:@"Column %lu" value:nil table:nil];
+        XCTAssertEqualObjects(([NSString stringWithFormat:format,1ul]),expected[language]);
+    }
+}
+
+- (void)testGeneratedHeadersFollowTheActiveApplicationLanguage
+{
+    NSString *markdown=[MPDocument tableInsertionForContent:@"" selectedRange:NSMakeRange(0,0) columns:3 rows:2 replacementRange:NULL caretLocation:NULL];
+    NSString *language=NSBundle.mainBundle.preferredLocalizations.firstObject;
+    NSLog(@"Table generation test language: %@",language);
+    if ([language isEqual:@"fr"]) {XCTAssertTrue([markdown hasPrefix:@"| Colonne 1 | Colonne 2 | Colonne 3 |\n"]);}
+    else if ([language isEqual:@"en"]) {XCTAssertTrue([markdown hasPrefix:@"| Column 1 | Column 2 | Column 3 |\n"]);}
+    else {XCTAssertTrue([markdown hasPrefix:MPExpectedTableHeaderRow()]);}
+    XCTAssertTrue([markdown containsString:@"| :---: | :---: | :---: |"]);
 }
 
 @end

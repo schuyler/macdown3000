@@ -99,3 +99,6 @@
 "PreviewCalloutTitleImportant" = "Mikilvægt";
 "PreviewCalloutTitleCaution" = "Varúð";
 "PreviewToggleTitle" = "Forkröfur";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Dálkur %lu";

@@ -126,3 +126,6 @@
 "PreviewCalloutTitleImportant" = "중요";
 "PreviewCalloutTitleCaution" = "주의";
 "PreviewToggleTitle" = "사전 요구 사항";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "열 %lu";

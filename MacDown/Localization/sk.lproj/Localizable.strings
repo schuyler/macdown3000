@@ -126,3 +126,6 @@
 "PreviewCalloutTitleImportant" = "Dôležité";
 "PreviewCalloutTitleCaution" = "Pozor";
 "PreviewToggleTitle" = "Predpoklady";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Stĺpec %lu";

@@ -172,3 +172,6 @@
 "PreviewCalloutTitleImportant" = "Важливо";
 "PreviewCalloutTitleCaution" = "Увага";
 "PreviewToggleTitle" = "Передумови";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Стовпець %lu";

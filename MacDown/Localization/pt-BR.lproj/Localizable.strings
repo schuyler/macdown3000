@@ -177,3 +177,6 @@
 "PreviewCalloutTitleImportant" = "Importante";
 "PreviewCalloutTitleCaution" = "Cuidado";
 "PreviewToggleTitle" = "Pré-requisitos";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Coluna %lu";

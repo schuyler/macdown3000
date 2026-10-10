@@ -3886,7 +3886,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     if (columns<1 || columns>8 || rows<1 || rows>8) return nil;
     NSMutableString *core=[NSMutableString stringWithString:@"|"];
-    for (NSUInteger column=1;column<=columns;column++) [core appendFormat:@" Column %lu |",(unsigned long)column];
+    NSString *headingFormat=NSLocalizedString(@"Column %lu", @"Default Markdown table heading; %lu is the column number.");
+    for (NSUInteger column=1;column<=columns;column++) {
+        NSString *heading=[NSString stringWithFormat:headingFormat,(unsigned long)column];
+        [core appendFormat:@" %@ |",heading];
+    }
     [core appendString:@"\n|"];
     for (NSUInteger column=0;column<columns;column++) [core appendString:@" :---: |"];
     NSUInteger caretOffsetInCore=2;

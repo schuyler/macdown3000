@@ -1218,14 +1218,14 @@
     },
     {
       "path": "MacDown/Code/Document/MPDocument.m",
-      "observed_sha256": "a6fae3944e7be9b2d058faa6823f54cdba9aec84e4c3ba7a3f888e3e9e931ddc",
+      "observed_sha256": "66991c1922bac6c43fa6b993b57087e1594cd9f37f03cb27a971cea2a47a97cb",
       "sha256": "93479bf016b912ee7b3b518e550190fd34b50f2e64b06a91d2b86eacbb528cea",
       "read": false,
       "analyzed": false,
       "validation_tested": false,
       "validation_without_test": false,
-      "state": "modifié après campagne04 — évolution ciblée testée, relecture intégrale à renouveler",
-      "evidence": "../../features/generated-tables-centered.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
         "diff de la correction des citations ; contrats et consommateurs concernés",
@@ -1235,7 +1235,8 @@
         "diff ciblé : bouton Texte normal, dimensions du tableau, grille de sélection et traduction française",
         "diff ciblé : détection des sélections de tableau, alignement Markdown de colonnes, restauration et tests du visualiseur",
         "diff ciblé : actualisation des polices du moteur de coloration après un changement de zoom ; contrats et tests de frappe",
-        "diff ciblé : centrage Markdown par défaut du générateur de tableaux et rendu des 64 dimensions"
+        "diff ciblé : centrage Markdown par défaut du générateur de tableaux et rendu des 64 dimensions",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "document",
       "review_decision": "Correction ciblée après audit ; la validation intégrale de la version précédente est conservée séparément. Aucun nouvel audit intégral du fichier déclaré.",
@@ -1266,7 +1267,10 @@
         "preuves/zoom-frappe-red.log",
         "preuves/zoom-frappe-final.log",
         "../../features/generated-tables-centered.md",
-        "preuves/tableaux-centres-final.log"
+        "preuves/tableaux-centres-final.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
       ],
       "historical_campaign04_validation": {
         "path": "MacDown/Code/Document/MPDocument.m",
@@ -4541,17 +4545,18 @@
     },
     {
       "path": "MacDown/Localization/ar.lproj/Localizable.strings",
-      "observed_sha256": "ac55dc60694b9be19d5d02d372d97f24d43dbbea8b0f78f4cae44d68ae73c46d",
+      "observed_sha256": "5bf310dc081e426ad5e3abdcd5f2c5a6cca487691aa60ab6dd3958f8d17e3ee9",
       "sha256": "ac55dc60694b9be19d5d02d372d97f24d43dbbea8b0f78f4cae44d68ae73c46d",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -4559,8 +4564,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/ar.lproj/Localizable.strings",
+        "observed_sha256": "ac55dc60694b9be19d5d02d372d97f24d43dbbea8b0f78f4cae44d68ae73c46d",
+        "sha256": "ac55dc60694b9be19d5d02d372d97f24d43dbbea8b0f78f4cae44d68ae73c46d",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/ar.lproj/MPDocument.strings",
@@ -4748,17 +4779,18 @@
     },
     {
       "path": "MacDown/Localization/cs.lproj/Localizable.strings",
-      "observed_sha256": "3abbf1d39cc9065f94488e29fa1c29d8816d873115414c3c8911f81468ab8386",
+      "observed_sha256": "11220c9d34f43ebeb1414a7e9f9dbfe9a4822d8aa3f2a5decb972e5aee9d3a0c",
       "sha256": "3abbf1d39cc9065f94488e29fa1c29d8816d873115414c3c8911f81468ab8386",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -4766,8 +4798,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/cs.lproj/Localizable.strings",
+        "observed_sha256": "3abbf1d39cc9065f94488e29fa1c29d8816d873115414c3c8911f81468ab8386",
+        "sha256": "3abbf1d39cc9065f94488e29fa1c29d8816d873115414c3c8911f81468ab8386",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/cs.lproj/MPDocument.strings",
@@ -4955,17 +5013,18 @@
     },
     {
       "path": "MacDown/Localization/da-DK.lproj/Localizable.strings",
-      "observed_sha256": "6beaa8fd1bbaef769dcc5e8cf8280550e4cec2c201ef3a6a8edf07133c6369b0",
+      "observed_sha256": "2f88a15c573216daa25c76e025468d8e650badb2da4cded725f079e57f7aae1a",
       "sha256": "6beaa8fd1bbaef769dcc5e8cf8280550e4cec2c201ef3a6a8edf07133c6369b0",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -4973,8 +5032,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/da-DK.lproj/Localizable.strings",
+        "observed_sha256": "6beaa8fd1bbaef769dcc5e8cf8280550e4cec2c201ef3a6a8edf07133c6369b0",
+        "sha256": "6beaa8fd1bbaef769dcc5e8cf8280550e4cec2c201ef3a6a8edf07133c6369b0",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/da-DK.lproj/MPDocument.strings",
@@ -5162,17 +5247,18 @@
     },
     {
       "path": "MacDown/Localization/da.lproj/Localizable.strings",
-      "observed_sha256": "bce0b037611b4a30836a9c964acab0a460d3a4768003e5debbcfa64085b105e1",
+      "observed_sha256": "89eb26a3ad116b74d31a54e95bd62ad39e410adcdcbfd2d32347b49f2ef1ed8f",
       "sha256": "bce0b037611b4a30836a9c964acab0a460d3a4768003e5debbcfa64085b105e1",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5180,8 +5266,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/da.lproj/Localizable.strings",
+        "observed_sha256": "bce0b037611b4a30836a9c964acab0a460d3a4768003e5debbcfa64085b105e1",
+        "sha256": "bce0b037611b4a30836a9c964acab0a460d3a4768003e5debbcfa64085b105e1",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/da.lproj/MainMenu.strings",
@@ -5231,17 +5343,18 @@
     },
     {
       "path": "MacDown/Localization/de.lproj/Localizable.strings",
-      "observed_sha256": "b6870d78a464d64a60a29b0ef49efc06a24ebbd7439a3ad3ac15e59127423b30",
+      "observed_sha256": "dc2023bd2ef8375fdc56ecff83005a3998cbdf8c78cbe4c1b9ed595b7aa59f78",
       "sha256": "b6870d78a464d64a60a29b0ef49efc06a24ebbd7439a3ad3ac15e59127423b30",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5249,8 +5362,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/de.lproj/Localizable.strings",
+        "observed_sha256": "b6870d78a464d64a60a29b0ef49efc06a24ebbd7439a3ad3ac15e59127423b30",
+        "sha256": "b6870d78a464d64a60a29b0ef49efc06a24ebbd7439a3ad3ac15e59127423b30",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/de.lproj/MPDocument.strings",
@@ -5461,17 +5600,18 @@
     },
     {
       "path": "MacDown/Localization/en.lproj/Localizable.strings",
-      "observed_sha256": "2a6f0a01b0ec4bb587b6f2d8b03d03e3644619c97afa54ec752cf6da76ba099e",
+      "observed_sha256": "ae5c03cfa813867721fed1baf7fe196482df3f3c9dba16e3d3884717f385ad1e",
       "sha256": "2a6f0a01b0ec4bb587b6f2d8b03d03e3644619c97afa54ec752cf6da76ba099e",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5479,8 +5619,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/en.lproj/Localizable.strings",
+        "observed_sha256": "2a6f0a01b0ec4bb587b6f2d8b03d03e3644619c97afa54ec752cf6da76ba099e",
+        "sha256": "2a6f0a01b0ec4bb587b6f2d8b03d03e3644619c97afa54ec752cf6da76ba099e",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/es.lproj/InfoPlist.strings",
@@ -5507,17 +5673,18 @@
     },
     {
       "path": "MacDown/Localization/es.lproj/Localizable.strings",
-      "observed_sha256": "0309201b8f54e11cd2ab6ff35a0b6cf2480325ab04e797c5a548103499143481",
+      "observed_sha256": "ce5ccea9d659ee6e2690840416328c2fc40b253590da079a87d7db8f36a5edc5",
       "sha256": "0309201b8f54e11cd2ab6ff35a0b6cf2480325ab04e797c5a548103499143481",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5525,8 +5692,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/es.lproj/Localizable.strings",
+        "observed_sha256": "0309201b8f54e11cd2ab6ff35a0b6cf2480325ab04e797c5a548103499143481",
+        "sha256": "0309201b8f54e11cd2ab6ff35a0b6cf2480325ab04e797c5a548103499143481",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/es.lproj/MPDocument.strings",
@@ -5714,17 +5907,18 @@
     },
     {
       "path": "MacDown/Localization/et.lproj/Localizable.strings",
-      "observed_sha256": "34b88967db8ac8821051ac8dddbf725b0eee873f67ee773eb8bbea68e2990b07",
+      "observed_sha256": "df11ae9baada227f56c102bfc7fa96aa01f1ae93600f23377a5cad1ddafaa728",
       "sha256": "34b88967db8ac8821051ac8dddbf725b0eee873f67ee773eb8bbea68e2990b07",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5732,8 +5926,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/et.lproj/Localizable.strings",
+        "observed_sha256": "34b88967db8ac8821051ac8dddbf725b0eee873f67ee773eb8bbea68e2990b07",
+        "sha256": "34b88967db8ac8821051ac8dddbf725b0eee873f67ee773eb8bbea68e2990b07",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/et.lproj/MPDocument.strings",
@@ -5921,17 +6141,18 @@
     },
     {
       "path": "MacDown/Localization/fi.lproj/Localizable.strings",
-      "observed_sha256": "e0013f6627e4455793d9c91797bc60816525747f02c2f6fee09529faaf884087",
+      "observed_sha256": "001aad81f7da42b893d186f37d30a997eadf88125fa24311114d9bcb2f331670",
       "sha256": "e0013f6627e4455793d9c91797bc60816525747f02c2f6fee09529faaf884087",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -5939,8 +6160,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/fi.lproj/Localizable.strings",
+        "observed_sha256": "e0013f6627e4455793d9c91797bc60816525747f02c2f6fee09529faaf884087",
+        "sha256": "e0013f6627e4455793d9c91797bc60816525747f02c2f6fee09529faaf884087",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/fi.lproj/MainMenu.strings",
@@ -5990,18 +6237,19 @@
     },
     {
       "path": "MacDown/Localization/fr.lproj/Localizable.strings",
-      "observed_sha256": "737886c25de79bb7af6359a4d24b59ae04219887371c30439fe979d99aa0d1b4",
+      "observed_sha256": "0c64ddf256858069e47d1476e02e2694397b7ee5548c504e304f6eb99ec3ddd0",
       "sha256": "89e38f5042c5baa7d5bed52c4eee47e5c5a4e39efb5723ad8d19e526c8d46bf4",
       "read": false,
       "analyzed": false,
       "validation_tested": false,
       "validation_without_test": false,
-      "state": "modifié après campagne04 — modification ciblée testée, relecture intégrale à renouveler",
-      "evidence": "../../features/normal-text-table-picker.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
         "entier",
-        "diff ciblé : bouton Texte normal, dimensions du tableau, grille de sélection et traduction française"
+        "diff ciblé : bouton Texte normal, dimensions du tableau, grille de sélection et traduction française",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6011,7 +6259,10 @@
         "preuves/campagne04-plural.log",
         "preuves/campagne04-ui-delivery-verified.log",
         "../../features/normal-text-table-picker.md",
-        "preuves/texte-normal-grille-tableau-final.log"
+        "preuves/texte-normal-grille-tableau-final.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
       ],
       "historical_validation_before_table_picker": {
         "sha256": "89e38f5042c5baa7d5bed52c4eee47e5c5a4e39efb5723ad8d19e526c8d46bf4",
@@ -6210,17 +6461,18 @@
     },
     {
       "path": "MacDown/Localization/he.lproj/Localizable.strings",
-      "observed_sha256": "e308e05d3102279c5bfe15106ec8dfc32cd4ac67cf3ef5483a1ead16e8646721",
+      "observed_sha256": "7217b21eeb9fd1a6505dabd7b1874f155cea081c032fa3d42516fd480aad26be",
       "sha256": "e308e05d3102279c5bfe15106ec8dfc32cd4ac67cf3ef5483a1ead16e8646721",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6228,8 +6480,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/he.lproj/Localizable.strings",
+        "observed_sha256": "e308e05d3102279c5bfe15106ec8dfc32cd4ac67cf3ef5483a1ead16e8646721",
+        "sha256": "e308e05d3102279c5bfe15106ec8dfc32cd4ac67cf3ef5483a1ead16e8646721",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/he.lproj/MPEditorPreferencesViewController.strings",
@@ -6348,17 +6626,18 @@
     },
     {
       "path": "MacDown/Localization/hi.lproj/Localizable.strings",
-      "observed_sha256": "e823653999ba524a88cd4e15b6ff81e6460fa382ce370bf1d61ee4c462629779",
+      "observed_sha256": "1fa05b7222591321c7dfc8eb432ff55fa53ae48864b325192611ea646b1438d2",
       "sha256": "e823653999ba524a88cd4e15b6ff81e6460fa382ce370bf1d61ee4c462629779",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6366,8 +6645,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/hi.lproj/Localizable.strings",
+        "observed_sha256": "e823653999ba524a88cd4e15b6ff81e6460fa382ce370bf1d61ee4c462629779",
+        "sha256": "e823653999ba524a88cd4e15b6ff81e6460fa382ce370bf1d61ee4c462629779",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/hi.lproj/MPEditorPreferencesViewController.strings",
@@ -6509,17 +6814,18 @@
     },
     {
       "path": "MacDown/Localization/is.lproj/Localizable.strings",
-      "observed_sha256": "3424eedfd3670a98723f741d512ac05476aca597f6c508c04d0dfa2781bd1036",
+      "observed_sha256": "4595297fb281b68dbe4c1bdc6e7803b0f3777ca03fdc6d6324ebc31cb2250aac",
       "sha256": "3424eedfd3670a98723f741d512ac05476aca597f6c508c04d0dfa2781bd1036",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6527,8 +6833,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/is.lproj/Localizable.strings",
+        "observed_sha256": "3424eedfd3670a98723f741d512ac05476aca597f6c508c04d0dfa2781bd1036",
+        "sha256": "3424eedfd3670a98723f741d512ac05476aca597f6c508c04d0dfa2781bd1036",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/is.lproj/MPDocument.strings",
@@ -6739,17 +7071,18 @@
     },
     {
       "path": "MacDown/Localization/it-IT.lproj/Localizable.strings",
-      "observed_sha256": "1faa431b76341affbba874a5869368df00888d67c222e2789279f25c27ab12bc",
+      "observed_sha256": "6ee9fd044210cfa47e4538ae589a9a65580020b4a8408dd394cda6e55bcabf3a",
       "sha256": "1faa431b76341affbba874a5869368df00888d67c222e2789279f25c27ab12bc",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6757,8 +7090,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/it-IT.lproj/Localizable.strings",
+        "observed_sha256": "1faa431b76341affbba874a5869368df00888d67c222e2789279f25c27ab12bc",
+        "sha256": "1faa431b76341affbba874a5869368df00888d67c222e2789279f25c27ab12bc",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/it-IT.lproj/MPDocument.strings",
@@ -6969,17 +7328,18 @@
     },
     {
       "path": "MacDown/Localization/ja.lproj/Localizable.strings",
-      "observed_sha256": "26522ec48065beb06abbb8dfdf04ac1cf75d3c81c949bc59828ff305c7fc798e",
+      "observed_sha256": "94dddba49ba1475606c5dd09b35322bf899dae83f4fbeac3e26f6c9d3786f001",
       "sha256": "26522ec48065beb06abbb8dfdf04ac1cf75d3c81c949bc59828ff305c7fc798e",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -6987,8 +7347,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/ja.lproj/Localizable.strings",
+        "observed_sha256": "26522ec48065beb06abbb8dfdf04ac1cf75d3c81c949bc59828ff305c7fc798e",
+        "sha256": "26522ec48065beb06abbb8dfdf04ac1cf75d3c81c949bc59828ff305c7fc798e",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/ja.lproj/MPDocument.strings",
@@ -7199,17 +7585,18 @@
     },
     {
       "path": "MacDown/Localization/ko-KR.lproj/Localizable.strings",
-      "observed_sha256": "c7179c7d803ce7e64ca4ea756fea979d8444cfd12dcd1f6e8140ed9de53ba8e4",
+      "observed_sha256": "e3e6c463d5e5136e0b5084af68c457a9c4e02572f79ed4756bd9fc59dbe6476c",
       "sha256": "c7179c7d803ce7e64ca4ea756fea979d8444cfd12dcd1f6e8140ed9de53ba8e4",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -7217,8 +7604,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/ko-KR.lproj/Localizable.strings",
+        "observed_sha256": "c7179c7d803ce7e64ca4ea756fea979d8444cfd12dcd1f6e8140ed9de53ba8e4",
+        "sha256": "c7179c7d803ce7e64ca4ea756fea979d8444cfd12dcd1f6e8140ed9de53ba8e4",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/ko-KR.lproj/MPDocument.strings",
@@ -7406,17 +7819,18 @@
     },
     {
       "path": "MacDown/Localization/nb-NO.lproj/Localizable.strings",
-      "observed_sha256": "afd75c2aee838e5c4a308fa56217c88a7f58a220b9a68e3d85ff2e8c1e423253",
+      "observed_sha256": "90f59340d5f8e4c9855a5a1dacb93c5edd625d027d03995c0fe45db70b1b145a",
       "sha256": "afd75c2aee838e5c4a308fa56217c88a7f58a220b9a68e3d85ff2e8c1e423253",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -7424,8 +7838,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/nb-NO.lproj/Localizable.strings",
+        "observed_sha256": "afd75c2aee838e5c4a308fa56217c88a7f58a220b9a68e3d85ff2e8c1e423253",
+        "sha256": "afd75c2aee838e5c4a308fa56217c88a7f58a220b9a68e3d85ff2e8c1e423253",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/nb-NO.lproj/MPDocument.strings",
@@ -7636,17 +8076,18 @@
     },
     {
       "path": "MacDown/Localization/nl-NL.lproj/Localizable.strings",
-      "observed_sha256": "d11150c2611e87861d6ca06754fe2531b1aebc44bf4927cf69dac8b8146f4f1e",
+      "observed_sha256": "4333550c5159cb11841b32645658f5974e44c2dae7c03aa5fdbc3a954b5f9a91",
       "sha256": "d11150c2611e87861d6ca06754fe2531b1aebc44bf4927cf69dac8b8146f4f1e",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -7654,8 +8095,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/nl-NL.lproj/Localizable.strings",
+        "observed_sha256": "d11150c2611e87861d6ca06754fe2531b1aebc44bf4927cf69dac8b8146f4f1e",
+        "sha256": "d11150c2611e87861d6ca06754fe2531b1aebc44bf4927cf69dac8b8146f4f1e",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/nl-NL.lproj/MPDocument.strings",
@@ -7866,17 +8333,18 @@
     },
     {
       "path": "MacDown/Localization/pt-BR.lproj/Localizable.strings",
-      "observed_sha256": "321bc23dfb9158f72be94909414964400e0de72a281cd57393fff4ba67ac7031",
+      "observed_sha256": "98cbf55da6cdf49931d3988632d0204ba4f0bd9afb619d12fac630063e267fd4",
       "sha256": "321bc23dfb9158f72be94909414964400e0de72a281cd57393fff4ba67ac7031",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -7884,8 +8352,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/pt-BR.lproj/Localizable.strings",
+        "observed_sha256": "321bc23dfb9158f72be94909414964400e0de72a281cd57393fff4ba67ac7031",
+        "sha256": "321bc23dfb9158f72be94909414964400e0de72a281cd57393fff4ba67ac7031",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/pt-BR.lproj/MPDocument.strings",
@@ -8073,17 +8567,18 @@
     },
     {
       "path": "MacDown/Localization/ru-RU.lproj/Localizable.strings",
-      "observed_sha256": "6e8560bdaa2f2520deb0e441ea76e21921520c7011e879c39ad8515e6e6fe4fa",
+      "observed_sha256": "a57a6ed921015bfa16b836fbfdf6a80fb911d39be437763c4b08e244ede40d7a",
       "sha256": "6e8560bdaa2f2520deb0e441ea76e21921520c7011e879c39ad8515e6e6fe4fa",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -8091,8 +8586,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/ru-RU.lproj/Localizable.strings",
+        "observed_sha256": "6e8560bdaa2f2520deb0e441ea76e21921520c7011e879c39ad8515e6e6fe4fa",
+        "sha256": "6e8560bdaa2f2520deb0e441ea76e21921520c7011e879c39ad8515e6e6fe4fa",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/ru-RU.lproj/MPDocument.strings",
@@ -8280,17 +8801,18 @@
     },
     {
       "path": "MacDown/Localization/sk.lproj/Localizable.strings",
-      "observed_sha256": "e475d556a6a40b1f3be9518ae517cf32a8e8ba8e512a57877adf565800dc9ee4",
+      "observed_sha256": "a7b5b44aace8bd25d737f4d92dac3e515c550dbad0d5127806b5eee21c35c9ef",
       "sha256": "e475d556a6a40b1f3be9518ae517cf32a8e8ba8e512a57877adf565800dc9ee4",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -8298,8 +8820,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/sk.lproj/Localizable.strings",
+        "observed_sha256": "e475d556a6a40b1f3be9518ae517cf32a8e8ba8e512a57877adf565800dc9ee4",
+        "sha256": "e475d556a6a40b1f3be9518ae517cf32a8e8ba8e512a57877adf565800dc9ee4",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/sk.lproj/MPDocument.strings",
@@ -8510,17 +9058,18 @@
     },
     {
       "path": "MacDown/Localization/sv.lproj/Localizable.strings",
-      "observed_sha256": "69f7bf3df66c76c6304dc49fd3ce8c6bbd462fb166890200b9eb3223ef359a61",
+      "observed_sha256": "2d8d61b4d8347fe378578e8ffb6f042a6d48517a257823d29080a339f68cfb26",
       "sha256": "69f7bf3df66c76c6304dc49fd3ce8c6bbd462fb166890200b9eb3223ef359a61",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -8528,8 +9077,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/sv.lproj/Localizable.strings",
+        "observed_sha256": "69f7bf3df66c76c6304dc49fd3ce8c6bbd462fb166890200b9eb3223ef359a61",
+        "sha256": "69f7bf3df66c76c6304dc49fd3ce8c6bbd462fb166890200b9eb3223ef359a61",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/sv.lproj/MPDocument.strings",
@@ -8717,17 +9292,18 @@
     },
     {
       "path": "MacDown/Localization/tr.lproj/Localizable.strings",
-      "observed_sha256": "188e286c71ff5eb52c103cc145a79663340cdac47bce1d91e7defdfe97cbb169",
+      "observed_sha256": "563e09536ef1a7db6f24913972ac56ed8637fd2f88eebe94ceb3dbf5eceb8110",
       "sha256": "188e286c71ff5eb52c103cc145a79663340cdac47bce1d91e7defdfe97cbb169",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -8735,8 +9311,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/tr.lproj/Localizable.strings",
+        "observed_sha256": "188e286c71ff5eb52c103cc145a79663340cdac47bce1d91e7defdfe97cbb169",
+        "sha256": "188e286c71ff5eb52c103cc145a79663340cdac47bce1d91e7defdfe97cbb169",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/tr.lproj/MPDocument.strings",
@@ -8924,17 +9526,18 @@
     },
     {
       "path": "MacDown/Localization/uk.lproj/Localizable.strings",
-      "observed_sha256": "1142fc8101f95fcb372b1e1850685c91a661e426eaf13c5c73672d87bee6dd61",
+      "observed_sha256": "b4886356e737cde8173ed037db6b588ccdf6db00a0e5ca15f7716f53e70517a6",
       "sha256": "1142fc8101f95fcb372b1e1850685c91a661e426eaf13c5c73672d87bee6dd61",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -8942,8 +9545,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/uk.lproj/Localizable.strings",
+        "observed_sha256": "1142fc8101f95fcb372b1e1850685c91a661e426eaf13c5c73672d87bee6dd61",
+        "sha256": "1142fc8101f95fcb372b1e1850685c91a661e426eaf13c5c73672d87bee6dd61",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/uk.lproj/MPEditorPreferencesViewController.strings",
@@ -9085,17 +9714,18 @@
     },
     {
       "path": "MacDown/Localization/zh-Hans.lproj/Localizable.strings",
-      "observed_sha256": "a5266099678453811da4f61f58888c9223c9b2a50ba4891a27df094ddfebaa18",
+      "observed_sha256": "e2828498ede41e9ba8e63735059901b6eefb1fa1d205b9eae4ef1c15c94a3b7f",
       "sha256": "a5266099678453811da4f61f58888c9223c9b2a50ba4891a27df094ddfebaa18",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -9103,8 +9733,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/zh-Hans.lproj/Localizable.strings",
+        "observed_sha256": "a5266099678453811da4f61f58888c9223c9b2a50ba4891a27df094ddfebaa18",
+        "sha256": "a5266099678453811da4f61f58888c9223c9b2a50ba4891a27df094ddfebaa18",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/zh-Hans.lproj/MPDocument.strings",
@@ -9315,17 +9971,18 @@
     },
     {
       "path": "MacDown/Localization/zh-Hant.lproj/Localizable.strings",
-      "observed_sha256": "8c74181c0e288c21330e3887c0b45d73d306f8dadc23bdcdd804ad2f831ca390",
+      "observed_sha256": "0241b3eefa29c02c80f97b2b6138b87f118065fd7009f995fb79d11490f4115b",
       "sha256": "8c74181c0e288c21330e3887c0b45d73d306f8dadc23bdcdd804ad2f831ca390",
-      "read": true,
-      "analyzed": true,
-      "validation_tested": true,
+      "read": false,
+      "analyzed": false,
+      "validation_tested": false,
       "validation_without_test": false,
-      "state": "validé avec tests",
-      "evidence": "preuves/campagne04-lecture.md",
+      "state": "modifié après campagne04 — traduction ciblée testée, relecture intégrale à renouveler",
+      "evidence": "../../features/localized-table-headings.md",
       "open_findings": [],
       "read_ranges": [
-        "entier"
+        "entier",
+        "diff ciblé : en-têtes de tableaux traduits, validité du format numérique et tests d’insertion en français et anglais"
       ],
       "review_flow": "localization",
       "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
@@ -9333,8 +9990,34 @@
         "preuves/campagne04-build-for-testing.log",
         "preuves/campagne04-native-final.log",
         "preuves/campagne04-plural.log",
-        "preuves/campagne04-ui-delivery-verified.log"
-      ]
+        "preuves/campagne04-ui-delivery-verified.log",
+        "../../features/localized-table-headings.md",
+        "preuves/tableau-langue-en.log",
+        "preuves/tableau-langue-fr.log"
+      ],
+      "historical_campaign04_validation": {
+        "path": "MacDown/Localization/zh-Hant.lproj/Localizable.strings",
+        "observed_sha256": "8c74181c0e288c21330e3887c0b45d73d306f8dadc23bdcdd804ad2f831ca390",
+        "sha256": "8c74181c0e288c21330e3887c0b45d73d306f8dadc23bdcdd804ad2f831ca390",
+        "read": true,
+        "analyzed": true,
+        "validation_tested": true,
+        "validation_without_test": false,
+        "state": "validé avec tests",
+        "evidence": "preuves/campagne04-lecture.md",
+        "open_findings": [],
+        "read_ranges": [
+          "entier"
+        ],
+        "review_flow": "localization",
+        "review_decision": "Toutes entrées de localisation, placeholders/forms/fallback et bindings de contrôleurs examinés ; qualité linguistique hors certification.",
+        "test_evidence": [
+          "preuves/campagne04-build-for-testing.log",
+          "preuves/campagne04-native-final.log",
+          "preuves/campagne04-plural.log",
+          "preuves/campagne04-ui-delivery-verified.log"
+        ]
+      }
     },
     {
       "path": "MacDown/Localization/zh-Hant.lproj/MPDocument.strings",

@@ -177,3 +177,6 @@
 "PreviewCalloutTitleImportant" = "重要";
 "PreviewCalloutTitleCaution" = "注意";
 "PreviewToggleTitle" = "前提条件";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "列 %lu";

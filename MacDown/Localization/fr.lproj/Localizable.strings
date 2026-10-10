@@ -190,3 +190,6 @@
 "PreviewToggleTitle" = "Pré-requis";
 
 "Table" = "Tableau";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Colonne %lu";

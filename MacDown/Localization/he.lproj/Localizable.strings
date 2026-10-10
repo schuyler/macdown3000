@@ -172,3 +172,6 @@
 "PreviewCalloutTitleImportant" = "חשוב";
 "PreviewCalloutTitleCaution" = "זהירות";
 "PreviewToggleTitle" = "דרישות קדם";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "עמודה %lu";

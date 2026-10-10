@@ -177,3 +177,6 @@
 "PreviewCalloutTitleImportant" = "مهم";
 "PreviewCalloutTitleCaution" = "تنبيه";
 "PreviewToggleTitle" = "المتطلبات الأساسية";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "العمود %lu";

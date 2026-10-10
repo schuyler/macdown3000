@@ -172,3 +172,6 @@
 "PreviewCalloutTitleImportant" = "महत्वपूर्ण";
 "PreviewCalloutTitleCaution" = "सावधानी";
 "PreviewToggleTitle" = "पूर्वापेक्षाएँ";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "स्तंभ %lu";

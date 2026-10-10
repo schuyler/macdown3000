@@ -102,3 +102,6 @@
 "PreviewCalloutTitleImportant" = "Önemli";
 "PreviewCalloutTitleCaution" = "Dikkat";
 "PreviewToggleTitle" = "Ön koşullar";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Sütun %lu";
