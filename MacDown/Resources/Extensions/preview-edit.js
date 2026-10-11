@@ -27,6 +27,7 @@
     var menu=panel.querySelector('[role=menu]'), opener=panel.querySelector('[data-mp-format-menu]');
     if(menu) menu.hidden=true;
     if(opener) opener.setAttribute('aria-expanded','false');
+    panel.removeAttribute('data-mp-menu-hover');
     cancelHoverPreview();
   }
   function cancelHoverPreview() {
@@ -296,9 +297,13 @@
       clearTimeout(menuTimer); menuTimer=setTimeout(closeMenu,150);
     }
     listen(opener,'mouseenter',openMenu);
-    listen(menu,'mouseenter',function(){clearTimeout(menuTimer);});
+    listen(menu,'mouseenter',function(){
+      clearTimeout(menuTimer); panel.setAttribute('data-mp-menu-hover','');
+    });
     listen(opener,'mouseleave',leaveMenu);
-    listen(menu,'mouseleave',leaveMenu);
+    listen(menu,'mouseleave',function(event){
+      panel.removeAttribute('data-mp-menu-hover'); leaveMenu(event);
+    });
     listen(menu,'focusout',function(event){
       if(!event.relatedTarget || !panel.contains(event.relatedTarget)) closeMenu();
     });
@@ -367,6 +372,9 @@
     var selector='.'+panelClass;
     panelStyle.textContent=selector+' [data-mp-table-alignment]{border-top:1px solid #666;margin:4px 2px 0;padding-top:4px} '+selector+' [data-mp-table-alignment][hidden]{display:none!important} '+selector+' button{font:inherit;color:#fff;background:#3c3c3c;border:1px solid #666;border-radius:4px;margin:2px;padding:6px;cursor:pointer;vertical-align:middle;width:36px;height:36px} '+selector+' svg{display:block;pointer-events:none} '+selector+' button:disabled{opacity:.5;cursor:default} '+selector+' [aria-pressed="true"],'+selector+' [data-mp-active]{color:#2784DE} '+selector+' [role="menu"]{position:absolute;box-sizing:border-box;width:260px;max-width:calc(100vw - 24px);max-height:calc(100vh - 16px);overflow:auto;background:#292929;color:#fff;border:1px solid #666;border-radius:8px;padding:8px;box-shadow:0 4px 20px #0005;margin:0} '+selector+' [role="menu"][hidden]{display:none!important} '+selector+' [data-mp-format-menu]{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:calc(100% - 4px);text-align:left;font-size:16px;line-height:22px} '+selector+' [data-mp-format-label]{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} '+selector+' [data-mp-format-menu]::after{content:"";display:block;flex-shrink:0;width:6px;height:6px;margin-right:3px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(45deg)} '+selector+' [role="group"]{display:block} '+selector+' [role="menu"] button{display:flex;align-items:center;gap:10px;width:calc(100% - 4px);height:auto;min-height:36px;text-align:left} '+selector+' [role="menu"] svg{flex-shrink:0} '+selector+' [role="separator"]{border-top:1px solid #666;margin:8px 2px} '+selector+' button:focus-visible{outline:2px solid #2784DE;outline-offset:1px} .'+runClass+'[contenteditable]{outline:2px solid #4385be;outline-offset:3px} @media print{'+selector+'{display:none!important}}';
     document.body.appendChild(panelStyle); document.body.appendChild(panel);
+    // Opacity on the panel itself would also fade its nested dropdown. Fade
+    // only the compact surface and its controls, keeping the menu opaque.
+    panelStyle.textContent+=selector+'[data-mp-menu-hover]{background:rgba(41,41,41,.08)!important;border-color:rgba(102,102,102,.08)!important;box-shadow:none!important} '+selector+'[data-mp-menu-hover] > :not([role="menu"]){opacity:.08}';
   }
   function begin(span) {
     if (active === span) return;
@@ -617,6 +625,7 @@
     showEditError('Mise en forme refusée : cette sélection ne peut pas être représentée correctement en Markdown. Sélectionnez un passage plus court.');
   },destroy:function(preservePanel){
     cancelHoverPreview();
+    if(panel) panel.removeAttribute('data-mp-menu-hover');
     clearTimeout(timer); clearTimeout(menuTimer); active=null;
     handlers.forEach(function(h){h[0].removeEventListener(h[1],h[2],false);});
     if(!preservePanel && panel && panel.parentNode) panel.parentNode.removeChild(panel);

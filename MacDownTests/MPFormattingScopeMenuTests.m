@@ -504,8 +504,16 @@
         [self waitUntil:^BOOL{return [[self JS:@"window.__menuCrossed"] boolValue];} description:@"Crossing into menu must not trigger delayed closure"];
         XCTAssertFalse([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue]);
         XCTAssertEqualObjects([self JS:@"document.activeElement.getAttribute('data-mp-option')"],@"toggle-h4");
+        XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('[data-mp-format-menu]')).opacity"],@"0.08");
+        XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('[role=menu]')).opacity"],@"1");
+        XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('#macdown-preview-format')).opacity"],@"1",@"The parent must not fade its dropdown");
+        [self JS:@"document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:document.querySelector('[data-mp-format-menu]')}))"];
+        XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('[data-mp-format-menu]')).opacity"],@"1");
+        XCTAssertFalse([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue]);
+        [self JS:@"document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseenter'))"];
         [self JS:@"document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
         XCTAssertTrue([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue]);
+        XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('[data-mp-format-menu]')).opacity"],@"1");
     }
     [self selectFromText:@"Heading" throughText:@"Heading"];
     [self JS:@"document.querySelector('[data-mp-format-menu]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:document.body}))"];
