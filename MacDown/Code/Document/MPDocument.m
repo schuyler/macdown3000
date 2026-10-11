@@ -6978,8 +6978,23 @@ to link outside that scope.", \
         NSUInteger longest = 0, run = 0;
         for (NSUInteger i=0;i<body.length;i++) { run=[body characterAtIndex:i]=='`'?run+1:0;longest=MAX(longest,run); }
         NSString *fence = [@"" stringByPaddingToLength:MAX((NSUInteger)3,longest+1) withString:@"`" startingAtIndex:0];
-        if (restoredSelection.location!=NSNotFound) restoredSelection.location+=fence.length+2;
-        body = [NSString stringWithFormat:@"\n%@\n%@\n%@\n",fence,body,fence];
+        NSString *ending=newline.length ? newline : [source containsString:@"\r\n"] ? @"\r\n" : @"\n";
+        NSCharacterSet *whitespace=NSCharacterSet.whitespaceAndNewlineCharacterSet;
+        BOOL blankBefore=NO,blankAfter=NO;
+        if (lineRange.location) {
+            NSRange previous=[source lineRangeForRange:NSMakeRange(lineRange.location-1,0)];
+            blankBefore=![[source substringWithRange:previous] stringByTrimmingCharactersInSet:whitespace].length;
+        }
+        if (NSMaxRange(lineRange)<source.length) {
+            NSRange next=[source lineRangeForRange:NSMakeRange(NSMaxRange(lineRange),0)];
+            blankAfter=![[source substringWithRange:next] stringByTrimmingCharactersInSet:whitespace].length;
+        }
+        // Separators survive when a fence is removed. Reuse those physical
+        // blank lines instead of growing the document on each conversion.
+        NSString *before=blankBefore ? @"" : ending,*after=blankAfter ? @"" : ending;
+        if (restoredSelection.location!=NSNotFound) restoredSelection.location+=before.length+fence.length+ending.length;
+        body = [NSString stringWithFormat:@"%@%@%@%@%@%@%@%@",before,fence,ending,body,ending,fence,ending,after];
+        newline=@""; // Both fence terminators and separators are already present.
     } else if ([value isEqualToString:@"math-block"]) {
         restoredSelection=NSMakeRange(NSNotFound,0); // Generated math is not mapped for editing.
         if (!self.preferences.htmlMathJax || [body containsString:@"$$"]) return NO;

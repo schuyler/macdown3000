@@ -1859,7 +1859,7 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
                 }
                 [self waitForExpectations:@[[[XCTNSPredicateExpectation alloc] initWithPredicate:
                     [NSPredicate predicateWithBlock:^BOOL(id o,NSDictionary *b){return !web.isLoading && !document.alreadyRenderingInWeb && [document.previewEditSource isEqualToString:editor.string];}] object:web]] timeout:10];
-                NSString *expected=index==3 ? @"\n```\nSelected\n```\n\n\nNeighbor.\n" : [NSString stringWithFormat:@"%@**Selected**\n\nNeighbor.\n",@[@"- ",@"1. ",@"- [ ] "][index]];
+                NSString *expected=index==3 ? @"\n```\nSelected\n```\n\nNeighbor.\n" : [NSString stringWithFormat:@"%@**Selected**\n\nNeighbor.\n",@[@"- ",@"1. ",@"- [ ] "][index]];
                 XCTAssertEqualObjects(editor.string,expected);
                 XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"getSelection().toString()"],@"Selected");
             }
@@ -1987,7 +1987,8 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
                 [NSApp sendAction:NSSelectorFromString(@"convertToCodeBlock:") to:document from:nil];
                 NSString *converted=[editor.string copy];
                 NSRange selected=editor.selectedRange;
-                XCTAssertTrue([converted containsString:@"```\ntitre dans callout"], @"%@", converted);
+                NSString *codeHeading=[NSString stringWithFormat:@"```%@titre dans callout",newline];
+                XCTAssertTrue([converted containsString:codeHeading], @"%@", converted);
                 XCTAssertFalse([[converted substringWithRange:selected] containsString:@"```"], @"The editor must select code content, excluding its fences");
                 XCTAssertTrue([converted hasPrefix:[@"::: {.callout-important}\n## Titre TEST du callout\n> citation dans callout\n" stringByReplacingOccurrencesOfString:@"\n" withString:newline]]);
                 XCTAssertTrue([converted hasSuffix:[@"\nencore test\n:::" stringByReplacingOccurrencesOfString:@"\n" withString:newline]]);
@@ -1996,6 +1997,56 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
                     XCTAssertEqualObjects(editor.string,converted,@"Repeated click %lu; includeEnding %@; newline %@; selection %@",(unsigned long)click,includeEnding,[newline debugDescription],NSStringFromRange(editor.selectedRange));
                     XCTAssertTrue(NSEqualRanges(editor.selectedRange,selected));
                     if (![editor.string isEqual:converted]) break;
+                }
+            } @finally {
+                document.preferences.extensionFencedCode=fenced;
+                [NSNotificationCenter.defaultCenter removeObserver:document name:NSTextViewDidChangeSelectionNotification object:editor];
+                window.contentView=nil; [window close]; [document close];
+            }
+        }
+    }
+}
+
+- (void)testSourceQuoteCodeAlternationDoesNotAccumulateBlankLines
+{
+    NSArray *sources=@[
+        @"::: {.callout-important}\n## Titre TEST du callout\n> citation dans callout\n> texte dans callout\n\nencore test\n:::",
+        @"::: {.callout-important}\n## Title\n\n> texte dans callout\n\nNeighbor\n:::",
+        @"> texte dans callout",
+        @"> texte dans callout\n",
+        @"Before\n \t\n> texte dans callout\n \t\nAfter"
+    ];
+    for (NSString *newline in @[@"\n",@"\r\n"]) {
+        for (NSString *source in sources) {
+            MPDocument *document=[MPDocument new];
+            MPEditorView *editor=[[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,500,300)];
+            MPRenderer *renderer=[MPRenderer new];
+            NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,600,400) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+            window.releasedWhenClosed=NO; [window.contentView addSubview:editor];
+            document.editor=editor; document.renderer=renderer;
+            renderer.delegate=(id<MPRendererDelegate>)document; renderer.dataSource=(id<MPRendererDataSource>)document;
+            editor.delegate=(id<NSTextViewDelegate>)document;
+            XCTAssertTrue([window makeFirstResponder:editor]);
+            [NSNotificationCenter.defaultCenter addObserver:document selector:NSSelectorFromString(@"editorSelectionDidChange:") name:NSTextViewDidChangeSelectionNotification object:editor];
+            BOOL fenced=document.preferences.extensionFencedCode;
+            @try {
+                document.preferences.extensionFencedCode=YES;
+                editor.string=[source stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+                editor.selectedRange=NSMakeRange([editor.string rangeOfString:@"texte dans callout"].location+3,0);
+                NSString *codeState=nil,*quoteState=nil;
+                for (NSUInteger cycle=0; cycle<10; cycle++) {
+                    [NSApp sendAction:NSSelectorFromString(@"convertToCodeBlock:") to:document from:nil];
+                    XCTAssertTrue([editor.string containsString:@"```"], @"Conversion must produce a fence: %@",editor.string);
+                    if (!codeState) codeState=editor.string.copy;
+                    XCTAssertEqualObjects(editor.string,codeState,@"Code state must remain stable at cycle %lu",(unsigned long)cycle);
+                    XCTAssertEqual(editor.selectedRange.length,0u,@"A caret must remain a caret");
+                    [NSApp sendAction:NSSelectorFromString(@"toggleBlockquote:") to:document from:nil];
+                    XCTAssertFalse([editor.string containsString:@"```"], @"Conversion must remove the fence: %@",editor.string);
+                    if (!quoteState) quoteState=editor.string.copy;
+                    XCTAssertEqualObjects(editor.string,quoteState,@"Quote state must remain stable at cycle %lu",(unsigned long)cycle);
+                    XCTAssertTrue([editor.string containsString:@"> texte dans callout"]);
+                    XCTAssertEqual(editor.selectedRange.length,0u);
+                    if (![editor.string isEqual:quoteState]) break;
                 }
             } @finally {
                 document.preferences.extensionFencedCode=fenced;
@@ -2304,9 +2355,9 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
 - (void)testPreviewQuoteToCodeRemovesOnlyStructuralPrefix
 {
     [self assertPreviewBlockSource:@"> Quotedword\n\nNeighbor.\n" texts:@[@"Quotedword"] value:@"code-block"
-        expected:@"\n```\nQuotedword\n```\n\n\nNeighbor.\n" HTML:@"Quotedword"];
+        expected:@"\n```\nQuotedword\n```\n\nNeighbor.\n" HTML:@"Quotedword"];
     [self assertPreviewBlockSource:@"> # Headingword\n\nNeighbor.\n" texts:@[@"Headingword"] value:@"code-block"
-        expected:@"\n```\nHeadingword\n```\n\n\nNeighbor.\n" HTML:@"Headingword"];
+        expected:@"\n```\nHeadingword\n```\n\nNeighbor.\n" HTML:@"Headingword"];
 }
 
 - (void)testPreviewCodeConversionPreservesRenderedLiteralMarkers
@@ -2353,7 +2404,7 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
 - (void)testPreviewMultilineQuoteToCodeRemovesEmptyStructuralLines
 {
     [self assertPreviewBlockSource:@"> first\n>\n> second\n\nNeighbor.\n" texts:@[@"first",@"second"] value:@"code-block"
-        expected:@"\n```\nfirst\n\nsecond\n```\n\n\nNeighbor.\n" HTML:@"first\n\nsecond"];
+        expected:@"\n```\nfirst\n\nsecond\n```\n\nNeighbor.\n" HTML:@"first\n\nsecond"];
     [self assertPreviewBlockSource:@"> > first\n> >\n> > second\n" texts:@[@"first",@"second"] value:@"code-block"
         expected:@"\n```\nfirst\n\nsecond\n```\n\n" HTML:@"first\n\nsecond"];
 }
