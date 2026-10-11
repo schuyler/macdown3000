@@ -521,6 +521,21 @@
     }
 }
 
+- (void)testPastedCalloutRendersInsideNestedListWithItsMarkdownContent
+{
+    NSPasteboard *pasteboard=[NSPasteboard pasteboardWithUniqueName];
+    [pasteboard setString:@"- Parent\n    - Action\n\n        <aside>\n        💡\n\n        **Consigne**\n\n        ```jsx\n        Bonjour,\n        ```\n\n        </aside>\n\n    - Next\n" forType:NSPasteboardTypeString];
+    XCTAssertTrue([self.editor readSelectionFromPasteboard:pasteboard type:NSPasteboardTypeString]);
+    NSString *converted=self.editor.string;
+    [pasteboard releaseGlobally];
+    XCTAssertTrue([converted containsString:@"        ::: {.callout-tip}"]);
+    [self loadSource:converted];
+    XCTAssertTrue([[self JS:@"!!document.querySelector('li .mp-callout-tip')"] boolValue]);
+    XCTAssertEqualObjects([self JS:@"document.querySelector('.mp-callout-tip strong').textContent"],@"Consigne");
+    XCTAssertEqualObjects([self JS:@"document.querySelector('.mp-callout-tip pre code').textContent"],@"Bonjour,");
+    XCTAssertEqualObjects([self JS:@"Array.from(document.querySelectorAll('li')).pop().textContent.trim()"],@"Next");
+}
+
 - (void)testNestedProcedureScrollsTheSamePassageInBothDirections
 {
     NSMutableString *fixture=[NSMutableString string];

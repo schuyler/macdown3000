@@ -128,6 +128,22 @@ NS_INLINE NSString *MPPreviewDefaultCalloutTitle(NSString *type, BOOL collapsibl
 // callout contents, rather than introducing another Markdown implementation.
 // Source ranges identify physical delimiter lines in this exact input; callers
 // must not apply ranges from a transformed/preprocessed input to original text.
+// An indented callout is a container only when a preceding list item owns
+// that indentation. Standalone indented examples retain code semantics.
+NS_INLINE BOOL MPCalloutHasListOwner(NSArray<NSString *> *lines, NSUInteger index, NSUInteger indentation)
+{
+    NSRegularExpression *item=[NSRegularExpression regularExpressionWithPattern:@"^([ \\t]*)(?:[-+*]|[0-9]+[.)])([ \\t]+)" options:0 error:NULL];
+    while (index) {
+        NSString *line=lines[--index];
+        if (![line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) continue;
+        NSUInteger width=0;while(width<line.length && ([line characterAtIndex:width]==' ' || [line characterAtIndex:width]=='\t')) width++;
+        if (width>=indentation) continue;
+        NSTextCheckingResult *match=[item firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
+        return match && NSMaxRange(match.range)<=indentation && indentation-NSMaxRange(match.range)<4;
+    }
+    return NO;
+}
+
 NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
 {
     if (![text containsString:@":::"]) return @{@"text":text, @"callouts":@[]};
@@ -137,10 +153,10 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
     NSArray *lines = [text componentsSeparatedByString:@"\n"];
     NSMutableArray *output = [lines mutableCopy], *stack = [NSMutableArray array], *pairs = [NSMutableArray array];
     NSRegularExpression *opening = [NSRegularExpression regularExpressionWithPattern:
-        @"^ {0,3}(:{3,})[ \\t]*\\{(.*)\\}[ \\t]*$" options:0 error:NULL];
+        @"^[ \\t]*(:{3,})[ \\t]*\\{(.*)\\}[ \\t]*$" options:0 error:NULL];
     NSRegularExpression *supported = [NSRegularExpression regularExpressionWithPattern:
         @"^\\.callout-(note|tip|warning|important|caution)(?:[ \\t]+collapse=(?:\\\"(true|false)\\\"|'(true|false)'|(true|false)))?[ \\t]*$" options:0 error:NULL];
-    NSRegularExpression *closing = [NSRegularExpression regularExpressionWithPattern:@"^ {0,3}:{3,}[ \\t]*$" options:0 error:NULL];
+    NSRegularExpression *closing = [NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*:{3,}[ \\t]*$" options:0 error:NULL];
     NSRegularExpression *code = [NSRegularExpression regularExpressionWithPattern:
         @"^[ \\t]*(?:>[ \\t]*)*(?:(?:[-*+]|\\d+[.)])[ \\t]+)?(`{3,}|~{3,})(.*)$" options:0 error:NULL];
     NSString *fence = nil;
@@ -172,12 +188,19 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
         BOOL literal = literalIndex < literals.count &&
             NSIntersectionRange(NSMakeRange(offset,line.length), literals[literalIndex].rangeValue).length > 0;
         offset = lineEnd;
-        if (literal) continue;
+        NSUInteger indentation=0;
+        while (indentation<line.length && ([line characterAtIndex:indentation]==' ' || [line characterAtIndex:indentation]=='\t')) indentation++;
+        NSString *indent=[line substringToIndex:indentation];
         NSTextCheckingResult *match = [opening firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
-        if (match) {
+        BOOL listContainer=match && indentation>=4 && MPCalloutHasListOwner(lines,i,indentation);
+        BOOL containerClose=stack.count && ([stack.lastObject[@"indent"] isEqualToString:indent] ||
+            (indentation<4 && [stack.lastObject[@"indent"] length]<4)) &&
+            [closing firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
+        if (literal && !(indentation>=4 && (listContainer || containerClose))) continue;
+        if (match && (indentation<4 || listContainer)) {
             NSString *attributes = [line substringWithRange:[match rangeAtIndex:2]];
             NSTextCheckingResult *valid = [supported firstMatchInString:attributes options:0 range:NSMakeRange(0,attributes.length)];
-            NSMutableDictionary *entry = [@{@"start":@(i),
+            NSMutableDictionary *entry = [@{@"start":@(i), @"indent":indent,
                 @"sourceOpenRange":[NSValue valueWithRange:NSMakeRange(lineStart,lineEnd-lineStart)]} mutableCopy];
             if (valid) {
                 entry[@"type"] = [attributes substringWithRange:[valid rangeAtIndex:1]];
@@ -185,7 +208,7 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
                     entry[@"collapse"] = [attributes substringWithRange:[valid rangeAtIndex:n]];
             }
             [stack addObject:entry];
-        } else if (stack.count && [closing firstMatchInString:line options:0 range:NSMakeRange(0,line.length)]) {
+        } else if (containerClose) {
             NSMutableDictionary *entry = stack.lastObject; [stack removeLastObject];
             if (!entry[@"type"]) continue;
             NSString *token = [prefix stringByAppendingFormat:@"%lu",(unsigned long)pairs.count];
@@ -195,8 +218,8 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
             NSUInteger contentStart = NSMaxRange([entry[@"sourceOpenRange"] rangeValue]);
             entry[@"sourceContentRange"] = [NSValue valueWithRange:NSMakeRange(contentStart,lineStart-contentStart)];
             entry[@"sourceOpen"] = lines[[entry[@"start"] unsignedIntegerValue]];
-            output[[entry[@"start"] unsignedIntegerValue]] = [NSString stringWithFormat:@"\n%@OPEN\n",token];
-            output[i] = [NSString stringWithFormat:@"\n%@CLOSE\n",token];
+            output[[entry[@"start"] unsignedIntegerValue]] = [NSString stringWithFormat:@"\n%@%@OPEN\n",indent,token];
+            output[i] = [NSString stringWithFormat:@"\n%@%@CLOSE\n",indent,token];
             [pairs addObject:entry];
         }
     }

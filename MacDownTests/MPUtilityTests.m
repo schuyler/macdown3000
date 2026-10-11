@@ -1226,6 +1226,7 @@
     for (NSString *literal in @[@"```markdown\n::: {.callout-note}\nLiteral\n:::\n```\n",
         @"~~~\n::: {.callout-note}\nLiteral\n:::\n~~~\n",
         @"    ::: {.callout-note}\n    Literal\n    :::\n",
+        @"- Action\n\n        ::: {.callout-note}\n        Literal\n        :::\n",
         @"`::: {.callout-note}\nLiteral\n:::`\n",
         @"::: {.callout-unknown}\nLiteral\n:::\n", @"::: {.callout-note unknown=\"yes\"}\nLiteral\n:::\n",
         @"::: {.callout-note}\nUnclosed\n"]) {

@@ -191,4 +191,74 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     XCTAssertNil(extension, @"the interop type must have no registered filename extension");
 }
 
+- (NSString *)pasteExternalMarkdown:(NSString *)text
+{
+    [self.pasteboard setString:text forType:NSPasteboardTypeString];
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard type:NSPasteboardTypeString]);
+    return self.editorView.string;
+}
+
+- (void)testNotionAsidePasteRemovesFormerIndentationAndPreservesFencedMessage
+{
+    NSString *copied=@"            <aside>\n            💡\n            \n            **Consigne**\n            ```jsx\n            Bonjour,\n            \n            Message.\n            ```\n            </aside>\n";
+    NSString *expected=@"::: {.callout-tip}\n💡\n\n**Consigne**\n```jsx\nBonjour,\n\nMessage.\n```\n:::\n";
+    XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+}
+
+- (void)testNotionPastePreservesNestedListsMultipleContainersAndLineEndings
+{
+    for (NSString *ending in @[@"\n",@"\r\n"]) {
+        NSString *copied=[@"Before\n\n- Action\n    <aside>\n    ⚠️\n    - Detail\n    </aside>\n\n<aside>\nOther\n<aside>\nNested\n</aside>\n</aside>\n" stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        NSString *expected=[@"Before\n\n- Action\n    ::: {.callout-warning}\n    ⚠️\n    - Detail\n    :::\n\n::: {.callout-note}\nOther\n::: {.callout-note}\nNested\n:::\n:::\n" stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        self.editorView.string=@"";
+        XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+    }
+}
+
+- (void)testLiteralAndMalformedAsidesRemainUnchangedOnPaste
+{
+    for (NSString *source in @[@"```html\n<aside>\nExample\n</aside>\n```",@"~~~html\n<aside>\nExample\n</aside>\n~~~",@"`<aside>`",@"``\n<aside>\nExample\n</aside>\n``",@"<aside>\nUnclosed",@"</aside>\nUnmatched",@"<aside>\n<aside>\nPartial\n</aside>",@"<aside class=\"custom\">Body</aside>"]) {
+        self.editorView.string=@"";
+        XCTAssertEqualObjects([self pasteExternalMarkdown:source],source);
+    }
+}
+
+- (void)testPasteIntoExistingCodeDoesNotConvertAsides
+{
+    NSString *copied=@"<aside>\n💡\nBody\n</aside>";
+    for (NSString *prefix in @[@"```html\n",@"~~~\n",@"A `",@"A ``",@"A ``\n",@"- Action\n\n        ",@"    ",@"\t"]) {
+        self.editorView.string=prefix;
+        self.editorView.selectedRange=NSMakeRange(prefix.length,0);
+        NSString *expected=[prefix stringByAppendingString:copied];
+        XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+    }
+}
+
+- (void)testPasteAtListContinuationCarriesIndentationToEveryLine
+{
+    self.editorView.string=@"- Action\n\n    ";
+    self.editorView.selectedRange=NSMakeRange(self.editorView.string.length,0);
+    XCTAssertEqualObjects([self pasteExternalMarkdown:@"<aside>\n💡\nBody\n</aside>"],@"- Action\n\n    ::: {.callout-tip}\n    💡\n    Body\n    :::");
+}
+
+- (void)testInternalMarkdownCopiesKeepLiteralAsides
+{
+    NSString *source=@"<aside>\nOriginal HTML\n</aside>";
+    [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+    XCTAssertEqualObjects([self pasteExternalMarkdown:source],source);
+}
+
+- (void)testConvertedPasteReplacesOnlySelectionAndCanBeUndone
+{
+    NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,500,300) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed=NO;window.contentView=self.editorView;
+    self.editorView.allowsUndo=YES;
+    self.editorView.string=@"Before OLD after";
+    self.editorView.selectedRange=NSMakeRange(7,3);
+    XCTAssertEqualObjects([self pasteExternalMarkdown:@"<aside>\nBody\n</aside>"],@"Before \n\n::: {.callout-note}\nBody\n:::\n\n after");
+    [self.editorView.undoManager undo];
+    XCTAssertEqualObjects(self.editorView.string,@"Before OLD after");
+    window.contentView=nil;[window close];
+}
+
 @end

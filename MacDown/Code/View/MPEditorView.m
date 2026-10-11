@@ -15,6 +15,119 @@
 static NSString * const kMPMarkdownInteropPasteboardType = @"app.macdown.markdown-interop";
 
 
+
+static NSUInteger MPInlineCodeDelimiterAfterLine(NSString *line, NSUInteger delimiter)
+{
+    for (NSUInteger i=0;i<line.length;i++) if ([line characterAtIndex:i]=='`') {
+        NSUInteger escapes=0;while(i>escapes && [line characterAtIndex:i-escapes-1]=='\\') escapes++;
+        if (escapes%2) continue;
+        NSUInteger width=1;while(i+width<line.length && [line characterAtIndex:i+width]=='`') width++;
+        if (!delimiter) delimiter=width;else if (width==delimiter) delimiter=0;
+        i+=width-1;
+    }
+    return delimiter;
+}
+
+// Notion's Markdown clipboard uses standalone HTML aside delimiters. Convert
+// paired containers only; fenced examples and malformed HTML stay literal.
+static NSString *MPConvertPastedAsides(NSString *text)
+{
+    if ([text rangeOfString:@"<aside>" options:NSCaseInsensitiveSearch].location==NSNotFound) return text;
+    NSArray<NSString *> *lines=[text componentsSeparatedByString:@"\n"];
+    NSMutableArray *output=lines.mutableCopy,*stack=[NSMutableArray array],*pairs=[NSMutableArray array];
+    NSRegularExpression *code=[NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*(?:>[ \\t]*)*(?:(?:[-+*]|[0-9]+[.)])[ \\t]+)?(`{3,}|~{3,})(.*)$" options:0 error:NULL];
+    NSString *fence=nil;
+    NSUInteger inlineDelimiter=0;
+    for (NSUInteger i=0;i<lines.count;i++) {
+        NSString *line=lines[i];
+        NSTextCheckingResult *match=[code firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
+        NSString *run=match ? [line substringWithRange:[match rangeAtIndex:1]] : nil;
+        if (fence) {
+            if (run && [run characterAtIndex:0]==[fence characterAtIndex:0] && run.length>=fence.length &&
+                ![[line substringWithRange:[match rangeAtIndex:2]] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) fence=nil;
+            continue;
+        }
+        if (inlineDelimiter) {inlineDelimiter=MPInlineCodeDelimiterAfterLine(line,inlineDelimiter);continue;}
+        if (run) {fence=run;continue;}
+        inlineDelimiter=MPInlineCodeDelimiterAfterLine(line,0);
+        NSString *trimmed=[line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].lowercaseString;
+        if ([trimmed isEqualToString:@"<aside>"]) [stack addObject:@(i)];
+        else if ([trimmed isEqualToString:@"</aside>"]) {
+            if (!stack.count) return text;
+            [pairs addObject:@{@"start":stack.lastObject,@"end":@(i)}];[stack removeLastObject];
+        }
+    }
+    if (stack.count || !pairs.count) return text;
+    // A standalone copied container can carry indentation from its former
+    // list in Notion. Remove the common margin, retaining relative indentation.
+    NSUInteger first=0,last=lines.count;
+    while (first<last && ![lines[first] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) first++;
+    while (last>first && ![lines[last-1] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) last--;
+    NSDictionary *outer=pairs.lastObject;
+    NSString *margin=@"";
+    if ([outer[@"start"] unsignedIntegerValue]==first && [outer[@"end"] unsignedIntegerValue]+1==last) {
+        NSString *line=lines[first];
+        NSUInteger width=0;while(width<line.length && ([line characterAtIndex:width]==' ' || [line characterAtIndex:width]=='\t')) width++;
+        margin=[line substringToIndex:width];
+        for (NSString *candidate in lines) if ([candidate stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length && ![candidate hasPrefix:margin]) {margin=@"";break;}
+    }
+    for (NSUInteger i=0;i<output.count;i++) if (margin.length && [output[i] hasPrefix:margin]) output[i]=[output[i] substringFromIndex:margin.length];
+    for (NSDictionary *pair in pairs) {
+        NSUInteger start=[pair[@"start"] unsignedIntegerValue],end=[pair[@"end"] unsignedIntegerValue];
+        NSString *line=output[start];
+        NSUInteger width=0;while(width<line.length && ([line characterAtIndex:width]==' ' || [line characterAtIndex:width]=='\t')) width++;
+        NSString *indent=[line substringToIndex:width],*ending=[line hasSuffix:@"\r"] ? @"\r" : @"";
+        NSString *type=@"note";
+        for (NSUInteger i=start+1;i<end;i++) {
+            NSString *content=[lines[i] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            if (!content.length) continue;
+            if ([content isEqualToString:@"💡"]) type=@"tip";
+            else if ([content isEqualToString:@"⚠️"] || [content isEqualToString:@"⚠"]) type=@"warning";
+            break;
+        }
+        output[start]=[NSString stringWithFormat:@"%@::: {.callout-%@}%@",indent,type,ending];
+        output[end]=[NSString stringWithFormat:@"%@:::%@",indent,[output[end] hasSuffix:@"\r"] ? @"\r" : @""];
+    }
+    return [output componentsJoinedByString:@"\n"];
+}
+
+static BOOL MPPasteIsInsideCode(NSString *source, NSUInteger location)
+{
+    NSString *prefix=[source substringToIndex:MIN(location,source.length)];
+    NSRegularExpression *code=[NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*(?:>[ \\t]*)*(?:(?:[-+*]|[0-9]+[.)])[ \\t]+)?(`{3,}|~{3,})(.*)$" options:0 error:NULL];
+    NSString *fence=nil;
+    NSUInteger inlineDelimiter=0;
+    for (NSString *line in [prefix componentsSeparatedByString:@"\n"]) {
+        if (!fence && inlineDelimiter) {inlineDelimiter=MPInlineCodeDelimiterAfterLine(line,inlineDelimiter);continue;}
+        NSTextCheckingResult *match=[code firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
+        if (!match) {if (!fence) inlineDelimiter=MPInlineCodeDelimiterAfterLine(line,0);continue;}
+        NSString *run=[line substringWithRange:[match rangeAtIndex:1]];
+        if (!fence) fence=run;
+        else if ([run characterAtIndex:0]==[fence characterAtIndex:0] && run.length>=fence.length &&
+            ![[line substringWithRange:[match rangeAtIndex:2]] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) fence=nil;
+    }
+    if (fence || inlineDelimiter) return YES;
+    NSString *line=[prefix componentsSeparatedByString:@"\n"].lastObject;
+    NSUInteger indentation=0;
+    while (indentation<line.length && ([line characterAtIndex:indentation]==' ' || [line characterAtIndex:indentation]=='\t')) indentation++;
+    if (indentation>=4 || [line hasPrefix:@"\t"]) {
+        NSArray *lines=[prefix componentsSeparatedByString:@"\n"];
+        BOOL inList=NO;
+        NSRegularExpression *item=[NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*(?:[-+*]|[0-9]+[.)])[ \\t]+" options:0 error:NULL];
+        for (NSInteger i=(NSInteger)lines.count-2;i>=0;i--) {
+            NSString *previous=lines[i];
+            if (![previous stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) continue;
+            NSUInteger width=0;while(width<previous.length && ([previous characterAtIndex:width]==' ' || [previous characterAtIndex:width]=='\t')) width++;
+            if (width>=indentation) continue;
+            NSTextCheckingResult *match=[item firstMatchInString:previous options:0 range:NSMakeRange(0,previous.length)];
+            inList=match && NSMaxRange(match.range)<=indentation && indentation-NSMaxRange(match.range)<4;break;
+        }
+        if (!inList) return YES;
+    }
+    return MPInlineCodeDelimiterAfterLine(line,0)!=0;
+}
+
+
 NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 {
     return (r1.origin.x == r2.origin.x && r1.origin.y == r2.origin.y
@@ -204,6 +317,39 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     }
 
     return success;
+}
+
+// Keep conversion in AppKit's pasteboard ingestion path so normal paste and
+// paste-and-match-style share undo, selection replacement and change delegates.
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pasteboard type:(NSPasteboardType)type
+{
+    if ([type isEqualToString:NSPasteboardTypeString] &&
+        ![pasteboard.types containsObject:kMPMarkdownInteropPasteboardType] &&
+        !MPPasteIsInsideCode(self.string,self.selectedRange.location)) {
+        NSString *original=[pasteboard stringForType:type];
+        NSString *converted=original ? MPConvertPastedAsides(original) : nil;
+        if (converted && ![converted isEqualToString:original]) {
+            NSRange selection=self.selectedRange;
+            NSUInteger start;
+            [self.string getLineStart:&start end:NULL contentsEnd:NULL forRange:NSMakeRange(selection.location,0)];
+            NSString *before=[self.string substringWithRange:NSMakeRange(start,selection.location-start)];
+            if ([before stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
+                converted=[@"\n\n" stringByAppendingString:converted];
+            else if (before.length) {
+                // The first line already follows the insertion point's margin;
+                // carry that margin to every subsequent pasted physical line.
+                converted=[converted stringByReplacingOccurrencesOfString:@"\n" withString:[@"\n" stringByAppendingString:before]];
+            }
+            NSUInteger selectionEnd=NSMaxRange(selection),contentsEnd;
+            [self.string getLineStart:NULL end:NULL contentsEnd:&contentsEnd forRange:NSMakeRange(selectionEnd,0)];
+            NSString *after=[self.string substringWithRange:NSMakeRange(selectionEnd,contentsEnd-selectionEnd)];
+            if ([after stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
+                converted=[converted stringByAppendingString:@"\n\n"];
+            [self insertText:converted replacementRange:selection];
+            return YES;
+        }
+    }
+    return [super readSelectionFromPasteboard:pasteboard type:type];
 }
 
 /** Overridden to linkify selected text when pasting a URL.
