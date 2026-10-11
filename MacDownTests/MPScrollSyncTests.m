@@ -76,6 +76,21 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)userDefaultsDidChange:(NSNotification *)notification;
 - (void)handleSyncScrollingEnabled;
 - (void)handleSyncScrollingDisabled;
+// Cursor-follow scroll sync
+- (void)syncScrollersToCursor;
+- (void)editorSelectionDidChange:(NSNotification *)notification;
+@end
+
+// Counts cursor-follow sync requests without touching any view geometry.
+@interface MPCursorSyncSpyDocument : MPDocument
+@property (nonatomic) NSUInteger cursorSyncCount;
+@end
+
+@implementation MPCursorSyncSpyDocument
+- (void)syncScrollersToCursor
+{
+    self.cursorSyncCount += 1;
+}
 @end
 
 @interface MPScrollSyncTests : XCTestCase
@@ -1307,6 +1322,99 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     XCTAssertEqual(doc.scrollOwner, MPScrollOwnerEditor,
                    @"editorTextDidChange: should set scrollOwner to MPScrollOwnerEditor (0)");
+}
+
+/**
+ * Runs everything already queued on the main queue, including work
+ * -editorSelectionDidChange: defers.
+ */
+- (void)drainMainQueue
+{
+    XCTestExpectation *drained = [self expectationWithDescription:@"main queue drained"];
+    dispatch_async(dispatch_get_main_queue(), ^{ [drained fulfill]; });
+    [self waitForExpectationsWithTimeout:2 handler:nil];
+}
+
+/**
+ * A selection change that is not part of a text edit (click, arrow key) makes
+ * the preview follow the cursor.
+ */
+- (void)testSelectionChangeAloneFollowsCursor
+{
+    MPCursorSyncSpyDocument *doc = [[MPCursorSyncSpyDocument alloc] init];
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedSync = prefs.editorSyncScrolling;
+
+    @try
+    {
+        prefs.editorSyncScrolling = YES;
+        doc.scrollOwner = MPScrollOwnerNeither;
+
+        [doc editorSelectionDidChange:nil];
+        [self drainMainQueue];
+
+        XCTAssertEqual(doc.cursorSyncCount, (NSUInteger)1,
+                       @"A selection change with no text edit should follow the cursor");
+    }
+    @finally
+    {
+        prefs.editorSyncScrolling = savedSync;
+    }
+}
+
+/**
+ * NSTextView posts the selection change before the text change when the user
+ * types, within one event-loop turn. The selection change must not scroll the
+ * preview, or every keystroke jumps it before the re-render restores it.
+ */
+- (void)testSelectionChangeDuringTypingDoesNotFollowCursor
+{
+    MPCursorSyncSpyDocument *doc = [[MPCursorSyncSpyDocument alloc] init];
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedSync = prefs.editorSyncScrolling;
+
+    @try
+    {
+        prefs.editorSyncScrolling = YES;
+        doc.scrollOwner = MPScrollOwnerNeither;
+
+        [doc editorSelectionDidChange:nil];
+        [doc editorTextDidChange:nil];
+        [self drainMainQueue];
+
+        XCTAssertEqual(doc.cursorSyncCount, (NSUInteger)0,
+                       @"A selection change followed by a text change in the same turn is typing");
+    }
+    @finally
+    {
+        prefs.editorSyncScrolling = savedSync;
+    }
+}
+
+/**
+ * With Sync Panes off, the cursor is never followed.
+ */
+- (void)testSelectionChangeWithSyncOffDoesNotFollowCursor
+{
+    MPCursorSyncSpyDocument *doc = [[MPCursorSyncSpyDocument alloc] init];
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL savedSync = prefs.editorSyncScrolling;
+
+    @try
+    {
+        prefs.editorSyncScrolling = NO;
+        doc.scrollOwner = MPScrollOwnerNeither;
+
+        [doc editorSelectionDidChange:nil];
+        [self drainMainQueue];
+
+        XCTAssertEqual(doc.cursorSyncCount, (NSUInteger)0,
+                       @"Sync Panes off should suppress cursor-follow");
+    }
+    @finally
+    {
+        prefs.editorSyncScrolling = savedSync;
+    }
 }
 
 /**
