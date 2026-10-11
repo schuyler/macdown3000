@@ -483,6 +483,38 @@
     }
 }
 
+- (void)testEveryCalloutTypeKeepsItsTitleHeadingSizeInPreviewAndAfterCommit
+{
+    NSMutableString *references=[NSMutableString string];
+    for (NSUInteger level=1;level<=6;level++)
+        [references appendFormat:@"%@ Reference%lu\n\n",[@"######" substringToIndex:level],(unsigned long)level];
+    for (id theme in @[@"GitHub2",NSNull.null]) {
+        self.document.preferences.htmlStyleName=theme==NSNull.null ? nil : theme;
+        for (NSUInteger level=1;level<=6;level++) {
+            NSString *heading=[@"######" substringToIndex:level];
+            NSString *source=[NSString stringWithFormat:@"%@::: {.callout-note}\n%@ Title\n\nBody\n:::\n",references,heading];
+            [self loadSource:source];
+            [self selectFromText:@"Body" throughText:@"Body"];
+            NSString *probe=[NSString stringWithFormat:@"(function(){var title=document.querySelector('.mp-callout-title > h%lu'),reference=Array.from(document.body.children).find(function(n){return n.tagName==='H%lu';});return JSON.stringify({title:parseFloat(getComputedStyle(title).fontSize),reference:parseFloat(getComputedStyle(reference).fontSize)});})()",(unsigned long)level,(unsigned long)level];
+            [self JS:@"document.querySelector('[data-mp-format-menu]').click()"];
+            for (NSString *type in @[@"note",@"tip",@"warning",@"important",@"caution"]) {
+                [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-option=callout-%@]').dispatchEvent(new MouseEvent('mouseenter'))",type]];
+                NSDictionary *sizes=[NSJSONSerialization JSONObjectWithData:[[self JS:probe] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+                XCTAssertNotNil(sizes);
+                XCTAssertEqualWithAccuracy([sizes[@"title"] doubleValue],[sizes[@"reference"] doubleValue],0.01,@"%@ H%lu follows theme %@",type,(unsigned long)level,theme);
+                XCTAssertEqualObjects(self.editor.string,source);
+            }
+            [self JS:@"document.querySelector('[data-mp-option=callout-caution]').click()"];
+            [self waitForFormatting];
+            NSDictionary *committed=[NSJSONSerialization JSONObjectWithData:[[self JS:probe] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+            XCTAssertEqualWithAccuracy([committed[@"title"] doubleValue],[committed[@"reference"] doubleValue],0.01);
+            NSString *expectedTitle=[NSString stringWithFormat:@"%@ Title\n",heading];
+            XCTAssertTrue([self.editor.string containsString:expectedTitle]);
+            XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Body");
+        }
+    }
+}
+
 - (void)testClickCommitsHoveredChoiceAndOtherChoicesNeverAccumulate
 {
     [self loadSource:@"Heading\n\nBody\n"];
