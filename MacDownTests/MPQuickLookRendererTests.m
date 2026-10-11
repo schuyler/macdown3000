@@ -107,6 +107,36 @@
 }
 
 
+- (void)testQuickLookIncludesSharedTaskListMarkerStyle
+{
+    NSString *HTML=[self.renderer renderMarkdown:@"- [ ] Task\n- Ordinary\n"];
+    XCTAssertTrue([HTML containsString:@"id=\"macdown-task-list-markers\""]);
+    XCTAssertTrue([HTML containsString:@"li.task-list-item{list-style-type:none!important;}"]);
+    XCTAssertTrue([HTML containsString:@"Ordinary"]);
+}
+
+- (void)testCodeWrappingPreferenceIsConsumedWithoutChangingLiteralCode
+{
+    CFStringRef domain = CFSTR("app.macdown.macdown3000");
+    CFStringRef key = CFSTR("htmlWrapCodeBlocks");
+    id original = CFBridgingRelease(CFPreferencesCopyValue(key, domain,
+        kCFPreferencesCurrentUser, kCFPreferencesAnyHost));
+    @try {
+        for (NSNumber *enabled in @[@NO, @YES, @NO]) {
+            CFPreferencesSetValue(key, (__bridge CFPropertyListRef)enabled, domain,
+                kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+            XCTAssertTrue(CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost));
+            NSString *html = [self.renderer renderMarkdown:@"```bash\necho abcdefghijklmnopqrstuvwxyz\n```"];
+            XCTAssertEqual([html containsString:@"id=\"macdown-code-wrapping\""], enabled.boolValue);
+            XCTAssertTrue([html containsString:@"echo abcdefghijklmnopqrstuvwxyz"]);
+        }
+    } @finally {
+        CFPreferencesSetValue(key, (__bridge CFPropertyListRef)original, domain,
+            kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        XCTAssertTrue(CFPreferencesSynchronize(domain, kCFPreferencesCurrentUser, kCFPreferencesAnyHost));
+    }
+}
+
 #pragma mark - Initialization Tests
 
 - (void)testInitializerCreatesValidInstance
@@ -218,7 +248,7 @@
     NSString *markdown = @"```\ncode block\n```";
     NSString *html = [self.renderer renderMarkdown:markdown];
 
-    XCTAssertTrue([html containsString:@"<pre>"],
+    XCTAssertTrue([html containsString:@"<pre "],
                   @"Should render fenced code blocks");
     XCTAssertTrue([html containsString:@"<code"],
                   @"Should include code element");
@@ -356,7 +386,7 @@
     NSString *html = [self.renderer renderMarkdown:markdown];
 
     // Should render as a code block, not a diagram
-    XCTAssertTrue([html containsString:@"<pre>"] || [html containsString:@"<code"],
+    XCTAssertTrue([html containsString:@"<pre "] || [html containsString:@"<code"],
                   @"Mermaid blocks should render as code, not diagrams");
 }
 
@@ -673,6 +703,18 @@
 
 #pragma mark - Heading Anchor ID Tests
 
+- (void)testRepeatedHeadingsUseTheSameUniqueIdsAsApplication
+{
+    NSString *html = [self.renderer renderMarkdown:@"# Repeat\n\n# Repeat\n\n# Repeat-1\n\n# Repeat\n\n# !!!\n\n# ???"];
+    for (NSString *slug in @[@"repeat", @"repeat-1", @"repeat-1-1", @"repeat-2", @"section", @"section-1"]) {
+        NSString *idAttribute = [NSString stringWithFormat:@"id=\"%@\"", slug];
+        XCTAssertEqual([html componentsSeparatedByString:idAttribute].count, 2U);
+    }
+    NSString *again = [self.renderer renderMarkdown:@"# Repeat"];
+    XCTAssertTrue([again containsString:@"id=\"repeat\""]);
+    XCTAssertFalse([again containsString:@"id=\"repeat-1\""]);
+}
+
 // Quick Look mirrors the preview slugify(), so heading ids must match exactly.
 // See MPMarkdownRenderingTests for the full slug contract.
 
@@ -843,6 +885,61 @@
                   @"without crashing. Got: %@", html);
 }
 
+- (void)testCodeFenceLanguageCannotInjectHTMLAttributes
+{
+    NSString *html = [self.renderer renderMarkdown:@"```js\"/><img/src=x>\ncontent\n```"];
+    XCTAssertFalse([html containsString:@"<img/src"]);
+    XCTAssertTrue([html containsString:@"language-js&quot;/&gt;&lt;img/src=x&gt;"]);
+}
+
+- (void)testQuickLookFencedCodePreservesListsAndReferenceDefinitions
+{
+    NSString *code = @"text\n- item\n[a] [b]\n[id]: https://example.com";
+    NSString *html = [self.renderer renderMarkdown:
+        [NSString stringWithFormat:@"````text\n%@\n````", code]];
+    XCTAssertTrue([html containsString:code]);
+    XCTAssertFalse([html containsString:@"macdown-code-"]);
+}
+
+- (void)testQuickLookTaskListsProduceDisabledCheckboxes
+{
+    NSString *html = [self.renderer renderMarkdown:@"- [ ] Todo\n- [x] Done"];
+    XCTAssertTrue([html containsString:@"type=\"checkbox\" data-checkbox-index=\"0\" disabled"]);
+    XCTAssertTrue([html containsString:@"type=\"checkbox\" checked data-checkbox-index=\"1\" disabled"]);
+}
+
+- (void)testQuickLookFenceBoundariesMatchApplicationCodeAndReferenceRules
+{
+    NSArray<NSArray<NSString *> *> *cases = @[
+        @[@"> ```\n> code\n\n[id]: https://example.com\n\n[id]", @"<a href=\"https://example.com\">id</a>"],
+        @[@"```lang`\n[id]: https://example.com\n```", @"[id]: https://example.com</code>"],
+        @[@"~~~lang~~~\n\n[id]: https://example.com\n\n[id]", @"<a href=\"https://example.com\">id</a>"],
+        @[@"   ```\ncode\n```\n[id]: https://example.com", @"code\n```\n[id]: https://example.com</code>"],
+        // Quick Look enables autolinks: the URL becomes an <a>, while the
+        // outer quote's reference-looking text remains visible prose.
+        @[@"> > ```\n> > code\n>\n> [id]: https://example.com\n>\n> [id]", @"<p>[id]: "],
+        @[@"`inline\n[a] [b]\n`", @"<code>inline\n[a] [b]\n</code>"],
+    ];
+    for (NSArray<NSString *> *testCase in cases) {
+        NSString *html = [self.renderer renderMarkdown:testCase[0]];
+        XCTAssertTrue([html containsString:testCase[1]], @"%@", testCase[0]);
+        XCTAssertFalse([html containsString:@"macdown-code-"], @"%@", testCase[0]);
+    }
+}
+
+- (void)testOversizedNumericEntitiesDoNotDiscardTableHeader
+{
+    // These overflow uint32_t to NBSP/ENSP. HTML renders invalid references
+    // visibly; they must not make the table header count as empty.
+    for (NSString *entity in @[@"&#4294967456;", @"&#x100002002;"]) {
+        NSString *markdown = [NSString stringWithFormat:@"| %@ |\n|---|\n| body |", entity];
+        NSString *html = [self.renderer renderMarkdown:markdown];
+        XCTAssertTrue([html containsString:@"<thead>"], @"%@", html);
+        XCTAssertTrue([html containsString:entity], @"%@", html);
+        XCTAssertTrue([html containsString:@"<td>body</td>"], @"%@", html);
+    }
+}
+
 @end
 
 #else
@@ -858,6 +955,7 @@
     NSLog(@"Quick Look tests are disabled. To enable, add ENABLE_QUICKLOOK_TESTS=1 to preprocessor macros.");
     NSLog(@"See plans/quick-look-xcode-setup.md for setup instructions.");
 }
+
 
 @end
 

@@ -1,0 +1,265 @@
+{
+  "revision": "bcb6c5bcb521865e33fb994a85a06dfef4ee0556",
+  "sources": [
+    {
+      "path": "MacDown/Code/Document/MPDocument.m",
+      "sha256": "f2a130c74ff27e646ebe6ec665285e756539aef5442b26b43f99ea66ab7d9fc6",
+      "lines": 6556,
+      "proof": "squashed-document-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPPreviewInlineTransaction.h",
+      "sha256": "618db0c670ad51b85755258eb1cc27dfdc49f8facd64f060be05cca31434c039",
+      "lines": 559,
+      "proof": "squashed-inline-count-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.h",
+      "sha256": "897256ea8bb4616dec80592c49c7e02c82bc1ad42f3a43f7c34cc23f213cba6d",
+      "lines": 84,
+      "proof": "squashed-renderer-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.m",
+      "sha256": "cd6b9a332b52f2a160d9c530d59c1fae3246642fa01679953d8c827cafb418e2",
+      "lines": 953,
+      "proof": "squashed-renderer-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Resources/Extensions/preview-edit.js",
+      "sha256": "72bb762a66c365f6ea8895882fea2f560a731aa7a8eddb6308a202605bcf7cf0",
+      "lines": 292,
+      "proof": "squashed-js-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.m",
+      "sha256": "1595fa2638565bbf1af3d46d22ebc7d47cec468a55c7802d715b8877550d3218",
+      "lines": 164,
+      "proof": "squashed-inline-count-pass2.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.h",
+      "sha256": "9412de885b8ff167500177ee83787e485eed5cd4d1ea2de781f4ea3d15ef40e2",
+      "lines": 40,
+      "proof": "squashed-source-heading.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.m",
+      "sha256": "2e6d7472c314e9f24f4236f1f5398cb92e2e3021e8f7162e5767af209c07da4f",
+      "lines": 805,
+      "proof": "squashed-source-heading.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    }
+  ],
+  "auxiliary_files": [
+    {
+      "path": "MacDownTests/BuildTools/inline_transactions_tests.m",
+      "sha256": "0c9b795a7550a62d56fe5f89816d7691f7be4f93d0c9bdcb662f60d5945a0938",
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/BuildTools/inline_transactions_tests.py",
+      "sha256": "49fd9a1b05cdc9cf5954dcf43754316e326eed26e384d4fa509405d51d530e39",
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPDocumentLifecycleTests.m",
+      "sha256": "6b4bfa45679e7bac3d6c84915fab75b7720ec8baa6bae2a4cb5f48a26f649c27",
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPMarkdownRenderingTests.m",
+      "sha256": "44f669b2b84c7a39c8b606798e90b6feedd0a79a3a31de9a6e24cbf97e1460a1",
+      "kind": "test"
+    },
+    {
+      "path": "MacDownUITests/MacDownUITests.swift",
+      "sha256": "19556d94b2a70aeb7bf3a4c15fe9a7930103f95572c5c5177748aa51b736dfed",
+      "kind": "test"
+    },
+    {
+      "path": "docs/features/edition-apercu-verification.json",
+      "sha256": "7dfb1cd04eebb207f6155f771791eefb68d9f68646d9c972c81e09876794b518",
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu-verification.md",
+      "sha256": "e1922a1c25fb0662d4334b97c944433e903b2a260847d39531c00d499921b5f6",
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu.md",
+      "sha256": "323189499102eb83a11a4d1390223e3d471498e20e24dee3d87e070e0be0322c",
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu.png",
+      "sha256": "f1fd020fdbd3ab832f0a197b562adb6c47b6a1b6f949d8e1cfdefe580325e3d2",
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "MacDownTests/MPUtilityTests.m",
+      "sha256": "9eeb1a1f7622d435cb8f79d2eaffbc55e30a5fcf8f33ab8b31dbe78fb88b5429",
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPSelectionCountTests.m",
+      "sha256": "89901ec35d7f9835dfe827086231a4991e47e663f5b617dd266b26cd75cea0d0",
+      "kind": "test"
+    }
+  ],
+  "original_squash_paths": [
+    "MacDown/Code/Document/MPDocument.m",
+    "MacDown/Code/Document/MPPreviewInlineTransaction.h",
+    "MacDown/Code/Document/MPRenderer.h",
+    "MacDown/Code/Document/MPRenderer.m",
+    "MacDown/Resources/Extensions/preview-edit.js",
+    "MacDownTests/BuildTools/inline_transactions_tests.m",
+    "MacDownTests/BuildTools/inline_transactions_tests.py",
+    "MacDownTests/MPDocumentLifecycleTests.m",
+    "MacDownTests/MPMarkdownRenderingTests.m",
+    "MacDownUITests/MacDownUITests.swift",
+    "docs/features/edition-apercu-verification.json",
+    "docs/features/edition-apercu-verification.md",
+    "docs/features/edition-apercu.md",
+    "docs/features/edition-apercu.png"
+  ],
+  "scope_reconciliation": {
+    "original_sources": 5,
+    "direct_dependencies_added": 3,
+    "active_sources": 8,
+    "omitted_original_sources": [],
+    "unexpected_source_mutations": []
+  },
+  "commits": [
+    "7219b60 fix: scope preview formatting errors to their selection",
+    "98966d7 ui: remove close button from preview formatting panel",
+    "3bb46bd fix: convert only selected preview block lines",
+    "9ea74f0 fix: exclude owned preview controls from document counts",
+    "7456e72 fix: preserve neighboring legacy color markup during preview formatting",
+    "adf7eed fix: consume proven Setext underlines during preview conversion",
+    "2625d6e fix: reject unproven legacy color ownership in nested selections",
+    "1a4d560 fix: scan preview formatting whitespace runs once",
+    "076d78c fix: require paragraph provenance before consuming Setext metadata",
+    "0aad66f fix: isolate preview controls from authored DOM identities",
+    "85ef5c4 fix: preserve rendered text when converting preview block prefixes",
+    "321a54a fix: carry preview selections through block transformations",
+    "e86f108 fix: queue rapid preview popup formatting through shared continuation",
+    "ee253cc fix: convert source headings using the document renderer",
+    "bcb6c5b fix: flush preview drafts before save normalization"
+  ],
+  "environment": {
+    "macOS": "26.6.2",
+    "macOS_build": "25G83",
+    "xcode": "Xcode 26.2\nBuild version 17C52",
+    "runtime_arch": "arm64",
+    "build_archs": [
+      "arm64",
+      "x86_64"
+    ],
+    "test_isolation": "/tmp/macdown-campaign03-xctest-vault.py; serial native/UI; user preferences verified restored"
+  },
+  "gates": [
+    {
+      "name": "native-full",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "tests": 1471,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 126.067,
+      "log": "build/SquashedPreviewAudit/pass2-native-full.log",
+      "log_sha256": "3d1267344db81aa292d34051ce3ddfbb994819fc3288d23ce069f932f846f29c",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_01-09-31-+0200.xcresult",
+      "preferences_restored_verified": true
+    },
+    {
+      "name": "inline-hoedown-contracts",
+      "command": "python3 MacDownTests/BuildTools/inline_transactions_tests.py",
+      "exit_code": 0,
+      "contracts": 65,
+      "log": "build/SquashedPreviewAudit/pass2-inline-final.log",
+      "log_sha256": "47c55aa471153f7d20930c27eea8aa29ce14bfd6145a0e616562ea9a5c81c2a7"
+    },
+    {
+      "name": "javascript-syntax",
+      "command": "node --check MacDown/Resources/Extensions/preview-edit.js",
+      "exit_code": 0
+    },
+    {
+      "name": "UI-full",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDownUITests -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "tests": 13,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 224.141,
+      "log": "build/SquashedPreviewAudit/pass2-ui-full.log",
+      "log_sha256": "62f936c766d189007b8dc7b2bc2e14dda5ec646274da5e3de78227d833f57cf0",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_01-11-52-+0200.xcresult",
+      "preferences_restored_verified": true
+    },
+    {
+      "name": "release-universal",
+      "command": "xcodebuild build -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -configuration Release -derivedDataPath build/SquashedPreviewAudit/Release -destination 'generic/platform=macOS' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "log": "build/SquashedPreviewAudit/pass2-release-universal.log",
+      "log_sha256": "2f285c030e741fb71d1a12fcf098f803ae7a5018f0126f50b397b032949848a8",
+      "bundle": "build/SquashedPreviewAudit/Release/Build/Products/Release/MacDown 3000.app",
+      "archs": [
+        "x86_64",
+        "arm64"
+      ],
+      "signature_command": "codesign --verify --deep --strict --verbose=2 build/SquashedPreviewAudit/Release/Build/Products/Release/MacDown 3000.app",
+      "signature_exit_code": 0,
+      "signature_log": "build/SquashedPreviewAudit/pass2-release-signature.log",
+      "signature_log_sha256": "b72b011bb847266c3019357a98c5a7c05b6813e32f53ecc306141d552b9f39ed",
+      "signature_kind": "ad hoc",
+      "preview_js_source_bundle_identical": true
+    },
+    {
+      "name": "latest-targets",
+      "exit_code": 0,
+      "tests": 7,
+      "failures": 0,
+      "seconds": 2.217,
+      "log": "build/SquashedPreviewAudit/pass2-final-targets-green.log",
+      "log_sha256": "8d00db6e0ec9a394c70c72d155d4a0020e52434deddbce518543efbebce2bfa5",
+      "preferences_restored_verified": true
+    }
+  ],
+  "status": "ready in verified scope",
+  "validated_source_count": 8,
+  "confirmed_open_defects": [],
+  "important_open_hypotheses": [],
+  "limitations": [
+    "Native/UI execution on arm64 macOS26.6.2 only; no Intel runtime or remote macOS matrix",
+    "Ad hoc local signature; no Developer ID, notarization or distribution",
+    "Not a fresh audit of all 483 files; scope is the squash and three necessary dependencies",
+    "Third-party libraries and full Markdown grammar not exhaustively certified",
+    "No installation, deployment or push"
+  ]
+}

@@ -42,6 +42,9 @@ target "MacDownQuickLook" do
 end
 
 post_install do |installer|
+  require_relative 'Tools/hoedown_patches'
+  MacDownHoedownPatches.apply(installer.sandbox.root.join('hoedown/src/document.c'))
+
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
       # Ensure all pods match the project's minimum deployment target

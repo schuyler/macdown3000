@@ -1,0 +1,237 @@
+{
+  "date": "2026-10-08",
+  "environment": {
+    "macOS": "26.6.2",
+    "Xcode": "26.2",
+    "test_architecture": "arm64",
+    "built_architectures": [
+      "arm64",
+      "x86_64"
+    ]
+  },
+  "full_suites_note": "Mixed selection correction: latest full native suite 1452 tests and two targeted UI sequences passed. Other UI tests were not rerun. The initial native run failed an unchanged zoom notification-count test; the final full run passed it without modifying that test or zoom code. Initial UI assertions were adapted to equivalent Markdown nesting and text-value accessibility, then both sequences passed. The final early size guard was then checked by the mixed-style native test (ten exact source scenarios) and 47 real-Hoedown contracts plus two additional exact-source assertions; no UI/event code changed in this final guard.",
+  "runs": [
+    {
+      "kind": "native_full",
+      "log": "build/ReaderFeatures/preview-edit-native-verified.log",
+      "sha256": "2ba2bb8fe658ce52ee7295483889b5188ecee42b3b96ed85f762381a7e1afa54",
+      "tests": 1450,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_19-59-47-+0200.xcresult"
+    },
+    {
+      "kind": "ui_full",
+      "log": "build/ReaderFeatures/preview-edit-ui-full.log",
+      "sha256": "ef52fae18ffc229040f70128843dac1354d1129d55399b7c80494fcc3da76ad1",
+      "tests": 12,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_20-01-14-+0200.xcresult"
+    },
+    {
+      "kind": "native_final_target",
+      "log": "build/ReaderFeatures/preview-edit-panel-native-verified.log",
+      "sha256": "ec6b9448cd7ae382866fce0aed80f8da52d4102cb7e1e5ab5302a53773f1f1ad",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_20-10-38-+0200.xcresult"
+    },
+    {
+      "kind": "ui_final_target",
+      "log": "build/ReaderFeatures/preview-edit-panel-responsive-ui.log",
+      "sha256": "3812de0963f00666b04dbf37fc2afabe7f9515ccf7823fec5643c415abebc602",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_20-09-22-+0200.xcresult"
+    },
+    {
+      "kind": "native_markdown_only_target",
+      "log": "build/ReaderFeatures/markdown-only-verified.log",
+      "sha256": "7da373a0c878ea58f94f1ee65a17dba3c6229961f62b2ac300991c602507790e",
+      "tests": 4,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_20-35-04-+0200.xcresult"
+    },
+    {
+      "kind": "native_markdown_cleanup_target",
+      "log": "build/ReaderFeatures/markdown-only-cleanup-verified.log",
+      "sha256": "cb255955eda488b6f0bedc6146f8e8d2d542e928c8da4a44c1574b7274c3682a",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_20-36-37-+0200.xcresult"
+    },
+    {
+      "kind": "native_markdown_final_full",
+      "log": "build/ReaderFeatures/preview-markdown-native-full.log",
+      "sha256": "d8c7910a2806b777ab8ecd9700d105633e6f204a1607f3cbab7270113c2c2031",
+      "tests": 1451,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_20-45-04-+0200.xcresult"
+    },
+    {
+      "kind": "ui_markdown_final_target",
+      "log": "build/ReaderFeatures/preview-markdown-ui-final.log",
+      "sha256": "d200cda05b7827add397efed6c4e10b426ce53facd38e1f942c312e4375b8926",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_20-50-15-+0200.xcresult"
+    },
+    {
+      "kind": "native_selection_target",
+      "log": "build/ReaderFeatures/preview-selection-native-target.log",
+      "sha256": "92ca4818d6db55aa2af246b33f37c1c5a20b47dc84d0cf4daa078b570aa517ef",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_21-42-21-+0200.xcresult"
+    },
+    {
+      "kind": "ui_selection_target",
+      "log": "build/ReaderFeatures/preview-selection-ui-target.log",
+      "sha256": "5aeb0d64dad83df95671bdb7e31b6259ad25919dbf329faf62e0081d633dbe22",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_21-43-20-+0200.xcresult"
+    },
+    {
+      "kind": "native_selection_final_full",
+      "log": "build/ReaderFeatures/preview-selection-native-full.log",
+      "sha256": "101c72e2aeea3be5980af7e0e17760c0a4d61c8d71aec4399c7757291301d362",
+      "tests": 1451,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_21-44-22-+0200.xcresult"
+    },
+    {
+      "kind": "ui_source_toolbar_target",
+      "log": "build/ReaderFeatures/preview-selection-source-toolbar-ui.log",
+      "sha256": "af684b18271bfea2665c28baf958f9b76b4f44c35b98c9d56665573fe393fb12",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_21-46-10-+0200.xcresult"
+    },
+    {
+      "kind": "native_retained_selection_target",
+      "log": "build/ReaderFeatures/preview-selection-retained-native-verified.log",
+      "sha256": "a6c6e27a13b527ff11bb595137eb7a456e0b0e4c61872a254d6f7da0116f6832",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_22-24-46-+0200.xcresult"
+    },
+    {
+      "kind": "native_retained_selection_final_full",
+      "log": "build/ReaderFeatures/preview-selection-retained-native-final.log",
+      "sha256": "3f78ebe367acf4d10860fdb1bc861d56f1ad735cf13a4a7f586bdc6efa898b17",
+      "tests": 1451,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_22-30-32-+0200.xcresult"
+    },
+    {
+      "kind": "ui_retained_selection_final_target",
+      "log": "build/ReaderFeatures/preview-selection-retained-ui-final.log",
+      "sha256": "fb19c45b6bccb96acc9bef3c90d7ebde1f68d71273799f55940c5342ff770d11",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_22-33-45-+0200.xcresult"
+    },
+    {
+      "kind": "native_panel_stability_target",
+      "log": "build/ReaderFeatures/preview-panel-stability-targeted.log",
+      "sha256": "c4e6d20f22ab0549bb43b7bde62fb3b8be4b4b2c28df86553d4c46b0620a89ef",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_22-50-07-+0200.xcresult"
+    },
+    {
+      "kind": "native_panel_stability_full",
+      "log": "build/ReaderFeatures/preview-panel-stability-native.log",
+      "sha256": "6fbce6d31c090db74082b9d0e0528c0ed83724c592b21c4a514106da2478bea5",
+      "tests": 1451,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_22-51-27-+0200.xcresult"
+    },
+    {
+      "kind": "ui_panel_state_accessibility_query_initial",
+      "log": "build/ReaderFeatures/preview-panel-stability-ui.log",
+      "sha256": "b812caea0be4a11dc35467b65fbbf2598c979a40c202cd98d1be6119a334250a",
+      "tests": 1,
+      "failures": 1,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_22-53-27-+0200.xcresult",
+      "note": "UI query looked only for simple buttons; aria-pressed controls are exposed as toggles. The label-based query preserves the same behavioral assertions."
+    },
+    {
+      "kind": "ui_panel_stability_final_target",
+      "log": "build/ReaderFeatures/preview-panel-stability-ui-final.log",
+      "sha256": "d841681300aef2146535ea38840c157efe8159f691091ffe5248a9a092afbe59",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_22-54-42-+0200.xcresult"
+    },
+    {
+      "kind": "native_mixed_initial",
+      "log": "build/ReaderFeatures/preview-mixed-native-full.log",
+      "sha256": "7e6b6146119cd0f987053f5f1f644ea2d1f4eda3d4b358e9d51c4440ee0afcbf",
+      "tests": 1452,
+      "failures": 1,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_23-40-34-+0200.xcresult",
+      "note": "Unchanged zoom notification-count test received two notifications instead of one; final full run passed without changing the test or zoom code."
+    },
+    {
+      "kind": "ui_mixed_initial",
+      "log": "build/ReaderFeatures/preview-mixed-ui-final.log",
+      "sha256": "066c99a513546e9177acdab727d70fae1dc0afc9a67d37f7fc6e836c5915db3d",
+      "tests": 2,
+      "failures": 2,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_23-42-46-+0200.xcresult",
+      "note": "Old UI assertion expected a different equivalent marker nesting; new static text query incorrectly searched only labels. Assertions now check the new nesting and typed text values; final UI run passes."
+    },
+    {
+      "kind": "ui_mixed_verified",
+      "log": "build/ReaderFeatures/preview-mixed-ui-verified.log",
+      "sha256": "2ffedc0800bb455930d41ecc5d6259d06349b6eb8916d682da4f74b6405a3652",
+      "tests": 2,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_23-44-09-+0200.xcresult"
+    },
+    {
+      "kind": "native_mixed_final_full",
+      "log": "build/ReaderFeatures/preview-mixed-native-verified.log",
+      "sha256": "3a1d9030911331086163c976e479528e64a62ae657b9c7a86ce67dea24fabe60",
+      "tests": 1452,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_23-45-23-+0200.xcresult"
+    },
+    {
+      "kind": "inline_real_hoedown_contracts",
+      "log": "build/ReaderFeatures/preview-inline-contracts-final.log",
+      "sha256": "8f05471dc9e91a6bd744a3e46c08a2012c387e405922d5b8a9271c7978ad7cbd",
+      "tests": 46,
+      "failures": 0,
+      "note": "Two additional exact-source assertions also passed; standalone real Hoedown, no mocked renderer."
+    },
+    {
+      "kind": "native_mixed_size_guard_target",
+      "log": "build/ReaderFeatures/preview-mixed-bounded-native.log",
+      "sha256": "f3a8ca70d1b2976dda9cffb89ef0303c56127a112068f3e9852fa98e8b330055",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_23-48-59-+0200.xcresult"
+    },
+    {
+      "kind": "inline_real_hoedown_bounded_contracts",
+      "log": "build/ReaderFeatures/preview-inline-contracts-bounded.log",
+      "sha256": "d974913b241aa3a0a700eb4c938ba7e380a2954556a703af2408c743a25cc01d",
+      "tests": 47,
+      "failures": 0
+    }
+  ],
+  "final_files_sha256": {
+    "MacDown/Code/Document/MPDocument.m": "be48148bec57df7324e39dcb2e2ddd372bb8057cc524283116f4034d66af134f",
+    "MacDown/Code/Document/MPRenderer.h": "897256ea8bb4616dec80592c49c7e02c82bc1ad42f3a43f7c34cc23f213cba6d",
+    "MacDown/Code/Document/MPRenderer.m": "cd6b9a332b52f2a160d9c530d59c1fae3246642fa01679953d8c827cafb418e2",
+    "MacDown/Resources/Extensions/preview-edit.js": "bd71f8571514d98a9164e6e16ca8c7f32882e7ac657336b9de51aa6d64d852c0",
+    "MacDownTests/MPDocumentLifecycleTests.m": "7ce1932f675a47061c91f7f1fdc3e5cf88b9705ad2f7994373015596c3252da1",
+    "MacDownUITests/MacDownUITests.swift": "19556d94b2a70aeb7bf3a4c15fe9a7930103f95572c5c5177748aa51b736dfed",
+    "docs/features/edition-apercu.png": "f1fd020fdbd3ab832f0a197b562adb6c47b6a1b6f949d8e1cfdefe580325e3d2",
+    "MacDown/Code/Document/MPPreviewInlineTransaction.h": "f0c09f9fb304606ba3af1007d69cc7bca377b979d6acb0fd3763125687657cb7",
+    "MacDownTests/BuildTools/inline_transactions_tests.m": "bcb8c3f17d90949803cd3d42b647055a8ddcbe57fae752b015de645282028dae",
+    "MacDownTests/BuildTools/inline_transactions_tests.py": "49fd9a1b05cdc9cf5954dcf43754316e326eed26e384d4fa509405d51d530e39"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "baseline_files": 482,
+  "physical_unknown": [
+    "Tools/release_asset_checksums.py"
+  ],
+  "symlinks": [],
+  "pruned_roots": {
+    "LICENSE": "Licences tierces et application, documentation légale sans code.",
+    "plans": "Documentation de conception et de procédures hors inventaire source.",
+    ".claude": "Configuration/instructions d’un autre assistant ; hors code applicatif et outils build exécutés.",
+    "MacDownUITests": "Tests UI examinés et exécutés pour les preuves, hors inventaire source principal.",
+    "docs": "Documentation et suivi d’audit, hors inventaire source principal.",
+    "notes": "Documentation technique hors inventaire source.",
+    "Pods": "Dépendances CocoaPods installées.",
+    "MacDownTests": "Tests et fixtures examinés pour les preuves, hors inventaire source principal.",
+    "build": "Compilations et sauvegardes locales, aucune donnée à auditer.",
+    ".git": "Métadonnées Git.",
+    "assets": "Démonstration Markdown et screenshot du README, données utilisateur de démonstration et non code applicatif.",
+    "Tools/GitHub-style-generator/node_modules": "Dépendances npm installées ; manifestes et intégration examinés, code fournisseur hors inventaire propre.",
+    "Dependency/prism": "Sous-module tiers Prism : interfaces et intégration examinées, code fournisseur hors inventaire propre.",
+    "MacDown/Resources/Prism": "Assemblage généré depuis Dependency/prism."
+  },
+  "ignored_artifacts_and_sensitive_paths_without_content_read": [],
+  "initial_unknown_reconciled": "Tools/release_asset_checksums.py ajouté par root au central ledger, lecture/analyse fraîche dans build72.",
+  "current_ledger_files": 483,
+  "current_unknown_remaining": []
+}

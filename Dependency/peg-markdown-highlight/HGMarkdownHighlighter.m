@@ -35,6 +35,8 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 	BOOL _styleDependenciesPending;
 	NSMutableArray *_styleParsingErrors;
 	CGFloat _defaultTextSize;
+    NSUInteger _parseGeneration;
+    dispatch_block_t _pendingParse;
 }
 
 @property(copy) NSColor *defaultTextColor;
@@ -170,22 +172,44 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 
 - (void) requestParsing
 {
-	[_parseHighlightsQueue cancelAllOperations];
-	[_parseHighlightsQueue addOperationWithBlock:^{
-		// Fetch the markdown (from the main thread)
-		__block NSString *markdown = nil;
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			markdown = [[self.targetTextView string] copy];
+    NSUInteger generation = ++_parseGeneration;
+    NSString *markdown = [self.targetTextView.string copy];
+    if (!markdown)
+        return;
+    int extensions = self.extensions;
+    [_parseHighlightsQueue cancelAllOperations];
+    __weak HGMarkdownHighlighter *weakSelf = self;
+    [_parseHighlightsQueue addOperationWithBlock:^{
+        pmh_element **result = NULL;
+        pmh_markdown_to_elements((char *)markdown.UTF8String, extensions, &result);
+        pmh_sort_elements_by_pos(result);
+        HGMarkdownHighlighter *highlighter = weakSelf;
+        if (!highlighter) {
+            pmh_free_elements(result);
+            return;
+        }
+        [highlighter convertOffsets:result text:markdown];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            HGMarkdownHighlighter *current = weakSelf;
+            if (!current || generation != current->_parseGeneration
+                    || ![current.targetTextView.string isEqualToString:markdown]) {
+                pmh_free_elements(result);
+                return;
+            }
+            [current cacheElementList:result];
+            [current applyVisibleRangeHighlighting];
         });
+    }];
+}
 
-        pmh_element **result = [self parseText:markdown];
-		[self convertOffsets:result text:markdown];
-
-		dispatch_sync(dispatch_get_main_queue(), ^{
-			[self cacheElementList:result];
-			[self applyVisibleRangeHighlighting];
-		});
-	}];
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    if (_pendingParse)
+        dispatch_block_cancel(_pendingParse);
+    [_parseHighlightsQueue cancelAllOperations];
+    if (_cachedElements)
+        pmh_free_elements(_cachedElements);
 }
 
 
@@ -220,6 +244,10 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 	[textStorage applyFontTraits:_clearFontTraitMask range:range];
 	[textStorage removeAttribute:NSBackgroundColorAttributeName range:range];
 	[textStorage removeAttribute:NSLinkAttributeName range:range];
+    [textStorage removeAttribute:NSUnderlineStyleAttributeName range:range];
+    NSFont *defaultFont = self.defaultTypingAttributes[NSFontAttributeName];
+    if (defaultFont)
+        [textStorage addAttribute:NSFontAttributeName value:defaultFont range:range];
     if (self.targetTextView.typingAttributes
         && self.resetTypingAttributes
         && self.defaultTypingAttributes[NSParagraphStyleAttributeName])
@@ -403,33 +431,40 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 
 - (void)textViewTextDidChange:(NSNotification *)notification
 {
-	if (!self.waitInterval) {
-		[self requestParsing];
-	}
-	else {
-		// Use GCD timers to prevent delays from UI interactions
-		dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, self.waitInterval * NSEC_PER_SEC);
-		dispatch_after(delayTime, dispatch_get_main_queue(), ^{
-			[self requestParsing];
-		});
-	}
+    ++_parseGeneration;
+    if (_pendingParse)
+        dispatch_block_cancel(_pendingParse);
+    if (!self.waitInterval) {
+        [self requestParsing];
+        return;
+    }
+    __weak HGMarkdownHighlighter *weakSelf = self;
+    _pendingParse = dispatch_block_create(0, ^{
+        HGMarkdownHighlighter *highlighter = weakSelf;
+        if (!highlighter)
+            return;
+        highlighter->_pendingParse = nil;
+        if (highlighter.isActive)
+            [highlighter requestParsing];
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, self.waitInterval * NSEC_PER_SEC),
+                   dispatch_get_main_queue(), _pendingParse);
 }
 
 - (void) textViewDidScroll:(NSNotification *)notification
 {
-	if (_cachedElements == NULL)
-		return;
-    
-	[_parseHighlightsQueue cancelAllOperations];
-	[_parseHighlightsQueue addOperationWithBlock:^{
-		// No need to over render, set a delay
-		usleep(1000000 * 0.1);
-
-		dispatch_async(dispatch_get_main_queue(), ^{
-			[self applyVisibleRangeHighlighting];
-		});
-	}];
+    if (_cachedElements == NULL)
+        return;
+    NSUInteger generation = _parseGeneration;
+    __weak HGMarkdownHighlighter *weakSelf = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        HGMarkdownHighlighter *highlighter = weakSelf;
+        if (highlighter && highlighter.isActive && highlighter->_parseGeneration == generation)
+            [highlighter applyVisibleRangeHighlighting];
+    });
 }
+
 
 
 - (NSArray *) getDefaultStyles
@@ -632,11 +667,15 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 {
 	if (_targetTextView == newTextView)
 		return;
+	BOOL wasActive = self.isActive;
+	[self deactivate];
 	
 	_targetTextView = newTextView;
 	
 	if (_targetTextView != nil)
 		[self readClearTextStylesFromTextView];
+    if (wasActive)
+        [self activate];
 }
 
 
@@ -652,7 +691,8 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 
 - (void) activate
 {
-	// todo: throw exception if targetTextView is nil?
+    if (self.isActive)
+        return;
 	
 	if (self.styles == nil)
 		self.styles = [self getDefaultStyles];
@@ -685,6 +725,12 @@ void styleparsing_error_callback(char *error_message, int line_number, void *con
 
 - (void) deactivate
 {
+    ++_parseGeneration;
+    [_parseHighlightsQueue cancelAllOperations];
+    if (_pendingParse) {
+        dispatch_block_cancel(_pendingParse);
+        _pendingParse = nil;
+    }
 	if (!self.isActive)
 		return;
 	

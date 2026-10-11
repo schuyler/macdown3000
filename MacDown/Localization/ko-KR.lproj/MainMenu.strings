@@ -153,7 +153,7 @@
 "NZX-Ev-sWt.title" = "좌측 3:1 우측";
 
 /* Class = "NSMenu"; title = "Open Recent"; ObjectID = "oas-Oc-fiZ"; */
-"oas-Oc-fiZ.title" = "기본 서체:";
+"oas-Oc-fiZ.title" = "최근 파일";
 
 /* Class = "NSMenuItem"; title = "Hide MacDown"; ObjectID = "Olw-nP-bQN"; */
 "Olw-nP-bQN.title" = "MacDown 가리기";
@@ -253,7 +253,7 @@
 "Xz5-n4-O0W.title" = "찾기...";
 
 /* Class = "NSMenuItem"; title = "Find and Replace…"; ObjectID = "YEy-JH-Tfz"; */
-"YEy-JH-Tfz.title" = "HTML...";
+"YEy-JH-Tfz.title" = "찾기 및 바꾸기...";
 
 /* Class = "NSMenuItem"; title = "Start Speaking"; ObjectID = "Ynk-f8-cLZ"; */
 "Ynk-f8-cLZ.title" = "말하기 시작";

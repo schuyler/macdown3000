@@ -1,0 +1,58 @@
+# Campagne 03 — UI, préférences, sidebar et localisations
+
+Départ neuf depuis `895d6c9`, lot `ui-locales.json`. Les 304 fichiers attribués ont été intégralement relus et analysés dans cette campagne : 32 sources/en-têtes Objective-C, 8 XIB Base, 47 manifestes de ressources et 217 tables de localisation. Les preuves individuelles, le SHA-256 de chaque version lue, les symboles/entrées, les contrats, la seconde passe et les gates restantes figurent dans `campagne03-ui.json`. Aucune preuve d’une campagne antérieure ne certifie ces lectures. Les gates natives ont maintenant été reçues : suite finale 1437 tests/0 échec, ressources/localisations réelles et export 26 locales, rouge/vert de la géométrie. 304/304 cases de validation technique sont maintenant soldées aux SHA finaux. La validation est distincte de la lecture et de l’analyse, et ne prétend pas certifier la qualité grammaticale de toutes les langues ni inspecter visuellement chaque écran traduit.
+
+## Parcours et seconde passe
+
+| Domaine | Contrats et branches examinés | Décision et preuve native finale |
+|---|---|---|
+| Préférences | défauts initiaux, propriétés dynamiques PAPreferences, migration 0–6/future, import domaine legacy, timeout/sémaphore, exclusion des résultats tardifs, conservation valeurs existantes, nettoyage autosave, taille de police/insets/espacement | Pas de défaut certain nouveau. MPPreferencesTests et layout cinq panneaux natifs verts. |
+| Terminal | répertoire absent/existant, lien correct/étranger/pendant, refus uninstall étranger, identification versions MacDown, PATH/prefix Homebrew, callback faible | L’installation explicite peut réserver le chemin CLI ; hypothèse de remplacement abusif non établie. Pas de suppression de cible. MPTerminalPreferencesTests/Homebrew natifs verts ; coffre restauré/vérifié par coordinateur. |
+| Sidebar | tri/casse extensions, lazy cache, cycles realpath, racine résolue, root précédent, restauration expansion/sélection, drag réellement utilisateur, bornes de largeur, événements tardifs stop/start watcher | Setter MPDocument canonise la racine avant coordination : hypothèse de divergence symlink rejetée. Suites natives watcher/sync/sidebar finales vertes. |
+| Éditeur et split | ratio deux panneaux, affichage/collapse, largeur maximale, scrollPastEnd différé/revérifié, paste URL sélection avec échappements/undo natif, drags, substitutions et masque de vérification | U03-03 idempotence viewport réel corrigé et rouge/vert intégré ; pasteboard/substitutions natifs verts. Pas de correction numérique spéculative. |
+| Toolbar | neuf zooms et bornes, factories/items, doc faible, actions ciblées, revalidation menus, restauration target/action, KVO/dealloc | Les presets du menu et de la toolbar exposent le même zoom consommateur MPDocument ; pas de pipeline de rendu alternatif ajouté. Suite AppKit toolbar finale verte. |
+| Export | deux BOOL et bindings styles/highlighting, options réellement consommées par export MPDocument | Mesure AppKit du vrai nib et titres exacts26locales : zéro overflow/bindings corrects. Hypothèse clipping rejetée. |
+| XIB | chaque nœud, IDs/outlets/actions/bindings/contraintes, attributs de cellules, fenêtres/menu/Touch Bar, limites de champs, tous les identifiants localisés | Références résolues ; nibs présents et consommateurs réellement chargés, bundle ressources + UI natifs verts. Limite de couverture visuelle expliquée ci-dessous. |
+| Localisations | chaque clé et valeur, formats, identité de cellule Base, labels/options, tables compteurs et formes JJPluralForm | Deux libellés fonctionnellement incorrects corrigés et bundle vert ; réserve arabe facultative sans remplacement inventé. Aucun certificat linguistique global des 26 langues. |
+| Assets | chaque entrée JSON, filename, idiom, scale, taille d’icône, présence et IHDR PNG | 47 manifestes cohérents ; inclusion et chargement des42imageset+icône du vrai bundle confirmés. |
+
+Les dépendances ont été consultées lorsque nécessaires, notamment MPDocument (éditeur, sidebar, export, previewScale), MPUtilities, MPFileWatcher, PAPreferences et JJPluralForm. Ces consultations ne certifient pas la lecture intégrale des fichiers appartenant aux autres lots. Les méthodes pertinentes du fournisseur JJPluralForm ont été relues, ainsi que l’intégralité de sa sélection des catégories et la suite de comptage ; le fournisseur n’est pas modifié.
+
+## Défauts et réserves
+
+- `UI03-ZHHANT-SCALE-LABEL` : `zh-Hant/MPHtmlPreferencesViewController.strings`, clé `aWw-Wb-pBl.title`, promet une mise à l’échelle selon la fenêtre. Le binding Base est `self.preferences.previewZoomRelativeToBaseFontSize` et MPDocument utilise la police éditeur/14. Proposition : `依編輯器字型大小縮放預覽`. Terminologie attestée par l’aide primaire [Mozilla zh-TW](https://support.mozilla.org/zh-TW/kb/font-size-and-zoom-increase-size-of-web-pages). Corrigé dans `43c2781` ; test réel bundle rouge avant, vert après (`bundle-zhHant.log`, `bundle-is.log`).
+- `UI03-IS-SUPERSCRIPT` : `is/MPMarkdownPreferencesViewController.strings`, clé `k2n-VN-cKT.title`, porte `Neðanmálsgrein` sur la case liée à `self.preferences.extensionSuperscript`. L’aide officielle [LibreOffice islandaise](https://help.libreoffice.org/latest/is/text/shared/01/05110700.html) nomme cette fonction `Háletur` et décrit explicitement le relèvement au-dessus de la ligne. Corrigé séparément dans `d3b4712` ; test réel bundle rouge avant, vert après (`bundle-is.log`).
+- `UI03-AR-GRAMMAR` : `ar/Localizable.strings` emploie règle 1 et deux formes. [Unicode CLDR](https://www.unicode.org/cldr/charts/47/supplemental/language_plural_rules.html) expose six catégories arabes. Le fournisseur JJRule12 ordonne ses six formes one/two/few/many/other/zero. Cela seul ne prouve pas que le contrat de ces libellés UI impose des phrases grammaticalisées plutôt que des étiquettes de compteur. Les sorties observées conservent les nombres et ne sont ni vides ni invalides ; réserve linguistique **facultative, non confirmée comme défaut technique**, sans hypothèse déterminante ouverte. Des libellés invariants (« عدد الكلمات », « عدد الأحرف » et « النص المحدد ») sont attestés dans le [parcours Apple Pages arabe](https://support.apple.com/ar-ae/guide/pages-ipad/tand47165437/ipados), mais imposer ce changement de style n’est pas requis par le contrat actuel. Aucune traduction arabe inventée, aucune certification grammaticale globale.
+
+
+- `U03-03` : dans un vrai NSScrollView, chaque `didChangeText` réutilisait la frame déjà agrandie ; la hauteur passait de 214 à 228 alors que contentRect restait à 28. `updateContentGeometry` reconstruit désormais la hauteur naturelle depuis MAX(contenu, viewport) en préservant la largeur, puis applique une seule fois l’offset existant. Contrat identique au clamp MPDocument setupEditor. Correction `c0cd3a1`, origine historique `6ab550b5` du 2014-09-12 vérifiée par root. Source finale MPEditorView.m intégralement relue (448 lignes), SHA final tracé en JSON. Harness intégré : viewport réel positif, 30 updates/30 strings, contenu long/court, activation différée, disable/re-enable. Baseline rouge conservée dans `build/AuditCampaign03/MPEditorView-before.m` ; logs `geometry-final-red.log` / `geometry-final-green.log`.
+
+## Tests réellement exécutés dans cette campagne
+
+| Exécution | Résultat | Limite |
+|---|---|---|
+| `bash MacDownTests/Localization/test_plural_rules.sh` | 126 contrôles, 0 échec, code 0 | Oracle explicite fr/pt-BR/is pour six compteurs et 0/1/2/11/21/101/111. |
+| `bash MacDownTests/Localization/test_plural_counts.sh` | 360 contrôles, 0 échec, code 0 | Oracle explicite ru-RU/uk/cs/sk et frontières jusqu’à 112. |
+| Sonde Foundation temporaire liée au vrai JJPluralForm | 3120 contrôles, code 0 | 26 locales × 6 compteurs × 20 entiers ; nombre conservé, résultat non vide, sans format brut/ERR. Ne certifie pas la grammaire. Source temporaire/log référencés en JSON. |
+| plutil/XML/JSON + en-têtes PNG | 204 tables non vides parsables, 13 tables vides recensées ; aucun doublon/ID orphelin ; 8 arbres XIB et 47 manifestes cohérents | Les 13 tables de zéro octet déclenchent normalement une erreur plutil NULL ; ce sont des placeholders de fallback, pas treize défauts démontrés. Le helper export réel exerce le fallback des tables export vides avec les labels Base. Toutes les entrées non vides sont identiques dans le bundle. |
+
+Les gates natives exécutées par le coordinateur et leurs logs ont été consultés :
+
+- `native-final.log` : 1437 tests, zéro échec, TEST SUCCEEDED, source finale ; couvre prefs/migrations/timeouts, sidebar/watchers/sync, toolbar, pasteboard/substitutions, consumers comptage, rendu/zoom et export.
+- `ui-layout-final.log` : 50 ressources chargées/présentes, 5184 entrées exactes dans le bundle, 26 locales, zéro overflow ; contrôles du vrai nib export avec titres réellement traduits, mesure bounded/frame, containment et absence overlap, clics vérifiant les BOOL liés. Les largeurs naturelles 219/208 des titres de/ja dépassent 189 mais leur hauteur bornée 32 est réellement allouée : wrapping correct, hypothèse de clipping rejetée.
+- `bundle-is.log` : deux libellés sémantiques corrigés, bindings exacts, cinq locales comptage : vert.
+- `geometry-final-red.log` : défaut reproduit avant correction ; `geometry-final-green.log` : parcours intégrés verts après. `ui-final.log` : UI finale 4 tests/0 échec et préférences restaurées/vérifiées par root.
+
+Le premier probe layout a rencontré un crash de harness dû au NSWindow releasedWhenClosed sous ARC ; corrigé dans le helper, pas attribué à l’application. La première sonde de géométrie détachée ne couvrait pas le viewport et ne constitue pas une preuve de non-bug ; elle a été remplacée par un vrai NSScrollView. Seuls les résultats corrigés servent à valider.
+
+Les suites ont été relues avant exécution. Aucun test UI, aucun xcodebuild, aucun accès/mutation aux préférences utilisateur réelles et aucune opération Git ne sont exécutés par ce sous-audit. Le coordinateur centralise ces gates et les trois commits UI séparés.
+
+## Requalification des exclusions
+
+- Les 217 tables et 8 XIB sont des ressources déclaratives exécutables par bindings/localisation : entièrement incluses et analysées, jamais exclues pour leur extension.
+- Les 47 JSON sont inclus et intégralement lus. Les images référencées sont des binaires de présentation : présence/format/dimensions vérifiés, pas présentées comme lignes de code relues ; chargement réel natif réussi dans ui-layout-final.log.
+- Vendor/Pods : dépendances consultées pour établir les contrats effectivement utilisés, pas suppression de legacy fournisseur ni certification exhaustive des dépendances hors lot.
+- Tests : harnesses Foundation de comptage, contrats bundle et géométrie éditeur lus comme preuves/consommateurs ; exécution AppKit et native bundle réservée au coordinateur. Leur appartenance hors lot n’est pas une exclusion de leur rôle probatoire.
+- Aucun legacy supprimé, aucun doublon de pipeline confirmé nécessitant une unification. Des contrôles différents (zoom menu/toolbar, préférences/rendu, événements propres/FSEvents) ont été recroisés avec leurs consommateurs plutôt que fusionnés sur leur seule similarité.
+
+La validation finale porte sur l’audit technique des sources, des références/bindings, des formats et nombres, des ressources réellement embarquées et des contrats natifs prouvés. Les contrôles de layout préférences incluent les cinq panneaux et titres forcés ×3 ; export inclut les textes exacts de 26 locales. Elle ne prétend pas à une révision linguistique native complète de toutes les traductions ni à une certification visuelle de chaque écran en chaque langue.

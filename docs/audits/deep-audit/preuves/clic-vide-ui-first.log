@@ -1,0 +1,19 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/BlankClickEvidence/clic-vide-ui-first.log
+SHA-256 full log: 4e5b028977f323b3ca0887b972e60be7e74a9d149a512cb06acbbbfe4f49a464
+
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' started.
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:456: error: -[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel] : XCTAssertTrue failed
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' failed (33.063 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' passed (49.849 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (74.198 seconds).
+Test Suite 'MacDownUITests' failed at 2026-10-10 16:07:43.187.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 157.111 (157.113) seconds
+Test Suite 'MacDownUITests.xctest' failed at 2026-10-10 16:07:43.188.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 157.111 (157.113) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 16:07:43.188.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 157.111 (157.114) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_16-05-01-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

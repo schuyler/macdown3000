@@ -25,6 +25,12 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 @property (weak) id<MPRendererDataSource> dataSource;
 @property (weak) id<MPRendererDelegate> delegate;
 @property (nonatomic, copy, readonly) NSString *checkboxBridgeToken;
+@property (nonatomic, copy, readonly) NSArray<NSNumber *> *checkboxSourceOffsets;
+@property (nonatomic, copy, readonly) NSString *checkboxSourceMarkdown;
+/// Generated callout tokens and their ranges in the original published Markdown.
+@property (nonatomic, copy, readonly) NSArray<NSDictionary *> *calloutSourceEntries;
+
++ (NSArray<NSNumber *> *)checkboxOffsetsForMarkdown:(NSString *)markdown;
 
 - (void)parseAndRenderNow;
 - (void)parseAndRenderLater;
@@ -33,6 +39,12 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (void)render;
 
 - (NSString *)currentHtml;
+/// Parse a snapshot with the current options without publishing or scheduling it.
+/// Own callout transport identities are omitted from this semantic HTML oracle;
+/// authored attributes and the published preview state are preserved.
+- (NSString *)HTMLForMarkdownSnapshot:(NSString *)markdown;
+/// Parser-owned callout ranges without changing the published preview.
+- (NSArray<NSDictionary *> *)calloutSourceEntriesForMarkdownSnapshot:(NSString *)markdown;
 - (NSString *)HTMLForExportWithStyles:(BOOL)withStyles
                          highlighting:(BOOL)withHighlighting;
 
@@ -70,6 +82,7 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html;
 
 @optional
+- (BOOL)rendererWrapsCodeBlocks:(MPRenderer *)renderer;
 /// Return the base URL for resolving relative resource paths.
 /// Used for cache-busting local resource URLs (issue #110).
 - (NSURL *)rendererBaseURL:(MPRenderer *)renderer;

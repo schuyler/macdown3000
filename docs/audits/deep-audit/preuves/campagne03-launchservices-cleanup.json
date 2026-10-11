@@ -1,0 +1,14 @@
+[
+  {
+    "path": "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app",
+    "unregister_exit": 0
+  },
+  {
+    "path": "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app",
+    "unregister_exit": 0
+  },
+  {
+    "existing_installed_app_registration_restored": true,
+    "exit": 0
+  }
+]

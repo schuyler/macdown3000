@@ -14,6 +14,7 @@
 @property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, strong) MPQuickLookRenderer *renderer;
 @property (nonatomic, copy) void (^pendingHandler)(NSError * _Nullable);
+@property (nonatomic, strong) WKNavigation *pendingNavigation;
 // Allows tests to substitute a synchronous WKWebView without starting the XPC web content process.
 @property (nonatomic, copy) WKWebView *(^webViewFactory)(WKWebViewConfiguration *config, NSRect frame);
 @end
@@ -59,6 +60,17 @@
 
 - (void)preparePreviewOfFileAtURL:(NSURL *)url completionHandler:(void (^)(NSError * _Nullable))handler
 {
+    // End the previous request before accepting a replacement, even if the
+    // new file cannot be read. Late callbacks belong to its own navigation.
+    void (^previousHandler)(NSError * _Nullable) = self.pendingHandler;
+    self.pendingHandler = nil;
+    self.pendingNavigation = nil;
+    if (previousHandler) {
+        previousHandler([NSError errorWithDomain:@"MPQuickLookError" code:3
+            userInfo:@{NSLocalizedDescriptionKey: @"Preview was replaced"}]);
+    }
+    if (!self.isViewLoaded) [self loadView];
+
     // Render markdown to HTML
     NSError *error = nil;
     NSString *html = [self.renderer renderMarkdownFromURL:url error:&error];
@@ -77,7 +89,7 @@
     // than a blank WKWebView. Use nil baseURL because the extension sandbox
     // only grants access to the specific file URL, not its parent directory.
     self.pendingHandler = handler;
-    [self.webView loadHTMLString:html baseURL:nil];
+    self.pendingNavigation = [self.webView loadHTMLString:html baseURL:nil];
 }
 
 - (void)preparePreviewOfSearchableItemWithIdentifier:(NSString *)identifier
@@ -105,31 +117,29 @@
     }
 }
 
+- (void)completeNavigation:(WKNavigation *)navigation error:(NSError *)error
+{
+    if (navigation != self.pendingNavigation || !self.pendingHandler)
+        return;
+    void (^handler)(NSError * _Nullable) = self.pendingHandler;
+    self.pendingHandler = nil;
+    self.pendingNavigation = nil;
+    handler(error);
+}
+
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
-    if (self.pendingHandler) {
-        void (^h)(NSError * _Nullable) = self.pendingHandler;
-        self.pendingHandler = nil;
-        h(nil);
-    }
+    [self completeNavigation:navigation error:nil];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if (self.pendingHandler) {
-        void (^h)(NSError * _Nullable) = self.pendingHandler;
-        self.pendingHandler = nil;
-        h(error);
-    }
+    [self completeNavigation:navigation error:error];
 }
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if (self.pendingHandler) {
-        void (^h)(NSError * _Nullable) = self.pendingHandler;
-        self.pendingHandler = nil;
-        h(error);
-    }
+    [self completeNavigation:navigation error:error];
 }
 
 - (void)webView:(WKWebView *)webView

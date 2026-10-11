@@ -10,6 +10,28 @@
 #import <hoedown/document.h>
 #import "MPRendererTestHelpers.h"
 #import "hoedown_html_patch.h"
+#import "MPDocument.h"
+#import "MPPreferences.h"
+#import "MPEditorView.h"
+#import <WebKit/WebKit.h>
+#import <JavaScriptCore/JavaScriptCore.h>
+#import "MPBlockquoteTestCases.h"
+
+@interface MPDocument (UnderlineTesting)
+@property (nonatomic, weak) MPEditorView *editor;
+- (IBAction)toggleUnderline:(id)sender;
+@end
+
+@interface MPDocument (CalloutStateTesting)
+@property (nonatomic, weak) MPEditorView *editor;
+@property (nonatomic, weak) WebView *preview;
+@property (nonatomic, strong) MPRenderer *renderer;
+@property (nonatomic) BOOL isPreviewReady;
+@property (nonatomic) BOOL alreadyRenderingInWeb;
+@property (nonatomic) NSUInteger previewRenderGeneration;
+- (void)reloadPreview:(id)sender;
+- (NSArray *)webView:(WebView *)sender contextMenuItemsForElement:(NSDictionary *)element defaultMenuItems:(NSArray *)items;
+@end
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -148,6 +170,99 @@
 
 #pragma mark - Basic Markdown Tests
 
+- (void)testMarkdownSnapshotsDoNotPublishOrChangeLivePreviewAndExportResources
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.syntaxHighlighting = YES;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST | HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    self.dataSource.markdown = @"- [ ] Published task\n\n```javascript\nconst published = 42;\n```\n";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+    NSString *publishedHTML = self.renderer.currentHtml;
+    NSString *publishedPage = self.delegate.lastHTML;
+    NSString *publishedToken = self.renderer.checkboxBridgeToken;
+    NSArray *publishedOffsets = self.renderer.checkboxSourceOffsets;
+    NSString *publishedMarkdown = self.renderer.checkboxSourceMarkdown;
+    NSArray *publishedCallouts = self.renderer.calloutSourceEntries;
+    NSString *publishedExport = [self.renderer HTMLForExportWithStyles:NO highlighting:YES];
+    XCTAssertTrue([publishedPage containsString:@"prism-javascript"]);
+
+    for (NSString *candidate in @[@"", @"- [x] Probe task\n\n```python\nprint('probe')\n```\n",
+                                 @"::: {.callout-note}\n## Probe title\n\nProbe body\n:::\n"]) {
+        NSString *snapshot = [self.renderer HTMLForMarkdownSnapshot:candidate];
+        XCTAssertNotNil(snapshot);
+        XCTAssertEqualObjects(self.renderer.currentHtml, publishedHTML);
+        XCTAssertEqualObjects(self.delegate.lastHTML, publishedPage);
+        XCTAssertEqualObjects(self.renderer.checkboxBridgeToken, publishedToken);
+        XCTAssertEqualObjects(self.renderer.checkboxSourceOffsets, publishedOffsets);
+        XCTAssertEqualObjects(self.renderer.checkboxSourceMarkdown, publishedMarkdown);
+        XCTAssertEqualObjects(self.renderer.calloutSourceEntries, publishedCallouts);
+        XCTAssertEqualObjects([self.renderer HTMLForExportWithStyles:NO highlighting:YES], publishedExport);
+    }
+    XCTAssertEqualObjects([self.renderer HTMLForMarkdownSnapshot:nil], @"");
+    [self.renderer render];
+    XCTAssertEqualObjects(self.delegate.lastHTML, publishedPage);
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"prism-python"]);
+}
+
+- (void)testMarkdownSnapshotUsesCurrentParseOptionsWithoutReplacingPublishedState
+{
+    [self.renderer parseMarkdown:@"Published **body**\n"];
+    NSString *published = self.renderer.currentHtml;
+    self.delegate.detectFrontMatter = YES;
+    self.delegate.renderTOC = YES;
+    self.delegate.extensions = HOEDOWN_EXT_UNDERLINE | HOEDOWN_EXT_STRIKETHROUGH;
+    NSString *source = @"---\ntitle: Private metadata\n---\n\n[TOC]\n\n## Visible heading\n\n_underlined_ and ~~deleted~~\n";
+    NSString *snapshot = [self.renderer HTMLForMarkdownSnapshot:source];
+    XCTAssertFalse([snapshot containsString:@"Private metadata"]);
+    XCTAssertTrue([snapshot containsString:@"href=\"#visible-heading\""]);
+    XCTAssertTrue([snapshot containsString:@"<u>underlined</u>"]);
+    XCTAssertTrue([snapshot containsString:@"<del>deleted</del>"]);
+    XCTAssertEqualObjects(self.renderer.currentHtml, published);
+
+    self.delegate.detectFrontMatter = NO;
+    self.delegate.renderTOC = NO;
+    self.delegate.extensions = 0;
+    snapshot = [self.renderer HTMLForMarkdownSnapshot:source];
+    XCTAssertTrue([snapshot containsString:@"Private metadata"]);
+    XCTAssertTrue([snapshot containsString:@"[TOC]"]);
+    XCTAssertTrue([snapshot containsString:@"<em>underlined</em>"]);
+    XCTAssertTrue([snapshot containsString:@"~~deleted~~"]);
+    XCTAssertEqualObjects(self.renderer.currentHtml, published);
+}
+
+- (void)testCalloutSnapshotsRemoveOnlyTheirOwnTransportIdentities
+{
+    NSString *source = @"<p data-macdown-callout-token=\"authored\">Authored identity</p>\n\n::: {.callout-caution}\n## Attention\n**Body**\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Prerequisites\nOther body\n:::\n";
+    self.dataSource.markdown = source;
+    [self.renderer parseMarkdown:source];
+    [self.renderer render];
+    NSString *publishedHTML = self.renderer.currentHtml;
+    NSString *publishedPage = self.delegate.lastHTML;
+    NSArray *publishedEntries = self.renderer.calloutSourceEntries;
+    NSString *publishedToken = self.renderer.checkboxBridgeToken;
+    XCTAssertEqual(publishedEntries.count,2u);
+    NSString *snapshot = [self.renderer HTMLForMarkdownSnapshot:source];
+    XCTAssertEqualObjects([self.renderer HTMLForMarkdownSnapshot:source],snapshot,
+        @"Equivalent callout snapshots have stable semantic HTML");
+    XCTAssertTrue([snapshot containsString:@"data-macdown-callout-token=\"authored\""],
+        @"An authored attribute remains part of the semantic oracle");
+    XCTAssertTrue([snapshot containsString:@"<aside class=\"mp-callout mp-callout-caution\">"]);
+    XCTAssertTrue([snapshot containsString:@"<details class=\"mp-callout mp-callout-note\">"]);
+    XCTAssertTrue([snapshot containsString:@"<strong>Body</strong>"]);
+    for (NSDictionary *entry in publishedEntries) {
+        NSString *attribute = [NSString stringWithFormat:@"data-macdown-callout-token=\"%@\"",entry[@"token"]];
+        XCTAssertTrue([publishedHTML containsString:attribute]);
+        XCTAssertTrue([publishedPage containsString:attribute]);
+        XCTAssertFalse([snapshot containsString:attribute]);
+    }
+    XCTAssertEqualObjects(self.renderer.currentHtml,publishedHTML);
+    XCTAssertEqualObjects(self.delegate.lastHTML,publishedPage);
+    XCTAssertEqualObjects(self.renderer.calloutSourceEntries,publishedEntries);
+    XCTAssertEqualObjects(self.renderer.checkboxBridgeToken,publishedToken);
+    XCTAssertEqualObjects(self.renderer.checkboxSourceMarkdown,source);
+}
+
 - (void)testBasicHeaders
 {
     int extFlags = 0;  // No extensions needed for basic headers
@@ -266,6 +381,95 @@
     [self verifyGoldenFile:@"tables"
             withExtensions:extFlags
              rendererFlags:rendFlags];
+}
+
+- (void)testHTMLExportRetainsTaskMarkerSuppressionWithOrWithoutTheme
+{
+    [self renderMarkdown:@"- [ ] Task\n- Ordinary\n" withExtensions:0 rendererFlags:HOEDOWN_HTML_USE_TASK_LIST];
+    for (NSNumber *styles in @[@NO,@YES]) {
+        NSString *HTML=[self.renderer HTMLForExportWithStyles:styles.boolValue highlighting:NO];
+        XCTAssertTrue([HTML containsString:@"id=\"macdown-task-list-markers\""]);
+        XCTAssertTrue([HTML containsString:@"li.task-list-item{list-style-type:none!important;}"]);
+        XCTAssertTrue([HTML containsString:@"<li>Ordinary</li>"]);
+        XCTAssertTrue([HTML containsString:@"type=\"checkbox\""]);
+    }
+}
+
+- (void)testTaskListCheckboxesReplaceBulletsWithoutChangingOrdinaryLists
+{
+    MPDocument *document=[MPDocument new];
+    WebView *web=[[WebView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    MPEditorView *editor=[[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    document.editor=editor; document.preview=web; document.renderer=[MPRenderer new];
+    document.renderer.dataSource=(id<MPRendererDataSource>)document;
+    document.renderer.delegate=(id<MPRendererDelegate>)document;
+    web.frameLoadDelegate=(id<WebFrameLoadDelegate>)document;
+    MPPreferences *preferences=document.preferences;
+    BOOL tasks=preferences.htmlTaskList,math=preferences.htmlMathJax;
+    BOOL mermaid=preferences.htmlMermaid,graphviz=preferences.htmlGraphviz;
+    NSString *style=preferences.htmlStyleName;
+    NSString *source=@"- [ ] erftgesqzsq\n- [ ] v\n- [ ] er\n- [x] checked\n    - Ordinary nested bullet\n\n1. Ordinary number\n2. [ ] Ordered task\n";
+    @try {
+        preferences.htmlTaskList=YES; preferences.htmlMathJax=NO;
+        preferences.htmlMermaid=NO; preferences.htmlGraphviz=NO;
+        for (NSString *theme in @[@"GitHub2",@"GitHub Tomorrow"]) {
+            preferences.htmlStyleName=theme;
+            document.renderer.rendererFlags=HOEDOWN_HTML_USE_TASK_LIST;
+            [self renderCalloutDocument:document source:source];
+            XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('li.task-list-item'),function(e){return getComputedStyle(e).listStyleType;}))"],@"[\"none\",\"none\",\"none\",\"none\",\"none\"]",@"%@",theme);
+            XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('li:not(.task-list-item)'),function(e){return getComputedStyle(e).listStyleType==='none';}))"],@"[false,false]",@"Ordinary nested bullets and numbering stay visible: %@",theme);
+            XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"String(document.querySelectorAll('input[type=checkbox]').length)"],@"5");
+            XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"String(document.querySelectorAll('input[checked]').length)"],@"1");
+            XCTAssertEqualObjects(editor.string,source);
+        }
+    } @finally {
+        web.frameLoadDelegate=nil; [document close];
+        preferences.htmlTaskList=tasks; preferences.htmlMathJax=math;
+        preferences.htmlMermaid=mermaid; preferences.htmlGraphviz=graphviz;
+        preferences.htmlStyleName=style;
+    }
+}
+
+- (void)testTaskCheckboxesOccupyMarkerColumnAndTextAlignsWithOrdinaryItems
+{
+    MPDocument *document=[MPDocument new];
+    WebView *web=[[WebView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    NSWindow *window=[[NSWindow alloc] initWithContentRect:web.frame styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed=NO;window.contentView=web;[window makeKeyAndOrderFront:nil];
+    MPEditorView *editor=[[MPEditorView alloc] initWithFrame:web.frame];
+    document.editor=editor; document.preview=web; document.renderer=[MPRenderer new];
+    document.renderer.dataSource=(id<MPRendererDataSource>)document;
+    document.renderer.delegate=(id<MPRendererDelegate>)document;
+    web.frameLoadDelegate=(id<WebFrameLoadDelegate>)document;
+    MPPreferences *p=document.preferences;
+    BOOL tasks=p.htmlTaskList,math=p.htmlMathJax,mermaid=p.htmlMermaid,graph=p.htmlGraphviz;
+    NSString *style=p.htmlStyleName;
+    NSString *source=@"- [ ] zaert\n- azerty\n\nzaertyt\n\n- Parent\n    - [x] nested task\n    - nested bullet\n\n1. [ ] ordered task\n\n2. ordered item\n";
+    @try {
+        p.htmlTaskList=YES;p.htmlMathJax=NO;p.htmlMermaid=NO;p.htmlGraphviz=NO;
+        for (NSString *theme in @[@"GitHub2",@"GitHub Tomorrow",@"Dracula",@"GitHub-2020",@"Github2 (dark)"]) {
+            p.htmlStyleName=theme;document.renderer.rendererFlags=HOEDOWN_HTML_USE_TASK_LIST;
+            [self renderCalloutDocument:document source:source];
+            [web stringByEvaluatingJavaScriptFromString:@"document.body.style.fontSize='24px'"];
+            NSArray *measurements=[[web.mainFrame.javaScriptContext evaluateScript:
+                @"(function(){function textStart(row){var w=document.createTreeWalker(row,NodeFilter.SHOW_TEXT),n;while(n=w.nextNode()){if(n.parentElement.closest('li')!==row)continue;var at=n.nodeValue.search(/\\S/);if(at<0)continue;var r=document.createRange();r.setStart(n,at);r.setEnd(n,at+1);return r.getBoundingClientRect().left;}return null;}return Array.from(document.querySelectorAll('ul,ol')).map(function(list){var rows=Array.from(list.children).filter(function(e){return e.tagName==='LI';}),task=rows.find(function(e){return e.classList.contains('task-list-item');}),ordinary=rows.find(function(e){return !e.classList.contains('task-list-item');});if(!task||!ordinary)return null;var box=task.querySelector('input[type=checkbox]').getBoundingClientRect(),item=task.getBoundingClientRect();return {task:textStart(task),ordinary:textStart(ordinary),boxLeft:box.left,boxRight:box.right,itemLeft:item.left,listLeft:list.getBoundingClientRect().left,width:box.width,itemFont:parseFloat(getComputedStyle(task).fontSize),boxFont:parseFloat(getComputedStyle(task.querySelector('input[type=checkbox]')).fontSize)};}).filter(Boolean);})()"] toArray];
+            XCTAssertEqual(measurements.count,3u,@"Tight, nested and loose ordered lists: %@",theme);
+            for (NSDictionary *m in measurements) {
+                XCTAssertNotEqualObjects(m[@"task"],NSNull.null);
+                XCTAssertNotEqualObjects(m[@"ordinary"],NSNull.null);
+                XCTAssertEqualWithAccuracy([m[@"task"] doubleValue],[m[@"ordinary"] doubleValue],0.5,@"Task and ordinary text must share their start: %@ %@",theme,m);
+                XCTAssertGreaterThan([m[@"width"] doubleValue],0.0);
+                XCTAssertEqualWithAccuracy([m[@"boxFont"] doubleValue],[m[@"itemFont"] doubleValue],0.01,@"The marker offset must scale with the list text, not the native input font: %@",theme);
+                XCTAssertLessThan([m[@"boxRight"] doubleValue],[m[@"itemLeft"] doubleValue],@"Checkbox belongs in the list-marker column: %@ %@",theme,m);
+                XCTAssertGreaterThanOrEqual([m[@"boxLeft"] doubleValue],[m[@"listLeft"] doubleValue],@"Checkbox remains inside list indentation: %@ %@",theme,m);
+            }
+            XCTAssertEqualObjects(editor.string,source);
+
+        }
+    } @finally {
+        web.frameLoadDelegate=nil;window.contentView=nil;[window close];[document close];
+        p.htmlTaskList=tasks;p.htmlMathJax=math;p.htmlMermaid=mermaid;p.htmlGraphviz=graph;p.htmlStyleName=style;
+    }
 }
 
 - (void)testTaskLists
@@ -565,9 +769,9 @@
 /**
  * Regression test for Issue #37: Square brackets in code blocks
  *
- * FIXED: The markdown preprocessor inserts a zero-width space between
- * ] and : inside fenced code blocks, preventing Hoedown's is_ref() from
- * matching these patterns as reference links.
+ * FIXED: The preprocessor protects reference-shaped code with per-parse
+ * markers that the block-code renderer removes, preserving the original
+ * code bytes without invisible characters in the rendered result.
  *
  * Related: Issue #37
  */
@@ -896,22 +1100,18 @@
                   @"Heading id must skip every HTML entity. Got: %@", html);
 }
 
-// Documents the current slug contract: identical headings are not uniquified,
-// so "## C" and "## C++" both collapse to id="c". This pins the behavior so a
-// future change to deduplication is a conscious decision, not a silent side
-// effect.
-
-- (void)testDuplicateHeadingsCollapseToSameId
+// Distinct headings whose punctuation collapses to the same base slug still
+// need distinct DOM destinations so links can target each section.
+- (void)testCollidingHeadingsHaveDistinctIds
 {
     NSString *html = [self renderMarkdown:@"## C\n\n## C++\n"
                            withExtensions:0
                             rendererFlags:0];
-    NSUInteger firstC = [html rangeOfString:@"id=\"c\""].location;
-    NSUInteger secondC = [html rangeOfString:@"id=\"c\""
-                                  options:0
-                                    range:NSMakeRange(firstC + 1, html.length - firstC - 1)].location;
-    XCTAssertNotEqual(firstC, NSNotFound, @"First heading should have id=\"c\". Got: %@", html);
-    XCTAssertNotEqual(secondC, NSNotFound, @"Second heading should also have id=\"c\". Got: %@", html);
+    XCTAssertTrue([html containsString:@"<h2 id=\"c\">C</h2>"],
+                  @"First heading keeps its base slug. Got: %@", html);
+    XCTAssertTrue([html containsString:@"<h2 id=\"c-1\">C++</h2>"],
+                  @"Colliding heading must have a distinct destination. Got: %@", html);
+    XCTAssertEqual([html componentsSeparatedByString:@"id=\"c\""].count, 2u);
 }
 
 // Because this PR changes both the heading id and the TOC href, lock in the
@@ -1162,6 +1362,54 @@
                   @"Got: %@", html);
 }
 
+- (void)assertUnderlineActionWithExtensionEnabled:(BOOL)enabled
+{
+    MPDocument *document = [[MPDocument alloc] init];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    document.editor = editor;
+    BOOL previous = document.preferences.extensionUnderline;
+    @try {
+        document.preferences.extensionUnderline = enabled;
+        editor.string = @"avant azerqzs après";
+        editor.selectedRange = NSMakeRange(6, 7);
+        [document toggleUnderline:nil];
+        XCTAssertEqualObjects(editor.string, @"avant _azerqzs_ après");
+        XCTAssertTrue(document.preferences.extensionUnderline);
+        XCTAssertEqualObjects([editor.string substringWithRange:editor.selectedRange], @"azerqzs");
+        NSString *html = [self renderMarkdown:editor.string
+                               withExtensions:HOEDOWN_EXT_UNDERLINE
+                                rendererFlags:0];
+        XCTAssertTrue([html containsString:@"<u>azerqzs</u>"], @"%@", html);
+        XCTAssertFalse([html containsString:@"<em>azerqzs</em>"], @"%@", html);
+        [document toggleUnderline:nil];
+        XCTAssertEqualObjects(editor.string, @"avant azerqzs après");
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(6, 7)));
+    } @finally {
+        document.preferences.extensionUnderline = previous;
+        [document close];
+    }
+}
+
+- (void)testUnderlineActionWithoutExtensionRendersUnderlineAndTogglesOff
+{
+    [self assertUnderlineActionWithExtensionEnabled:NO];
+}
+
+- (void)testUnderlineActionWithExtensionRendersUnderlineAndTogglesOff
+{
+    [self assertUnderlineActionWithExtensionEnabled:YES];
+}
+
+- (void)testAsterisksRemainItalicWithUnderlineExtension
+{
+    for (NSNumber *enabled in @[@NO, @YES]) {
+        NSString *html = [self renderMarkdown:@"*azerqzs*"
+                               withExtensions:enabled.boolValue ? HOEDOWN_EXT_UNDERLINE : 0
+                                rendererFlags:0];
+        XCTAssertTrue([html containsString:@"<em>azerqzs</em>"], @"%@", html);
+    }
+}
+
 - (void)testEmptyHeadingWithTOCDoesNotCrash
 {
     // The TOC header renderer has the same buffer-creation pattern and must
@@ -1172,6 +1420,266 @@
                             rendererFlags:0];
     XCTAssertNotNil(html,
                   @"Empty heading with TOC enabled must render without crashing.");
+}
+
+- (void)testBlockquoteStructureMatrixInsideAndOutsideCallouts
+{
+    for (NSDictionary *testCase in MPBlockquoteTestCases()) {
+        for (NSUInteger wrapper = 0; wrapper < 3; wrapper++) {
+            for (NSNumber *CRLF in @[@NO, @YES]) {
+                NSString *context = [NSString stringWithFormat:@"%@ / wrapper=%lu / CRLF=%@", testCase[@"name"], (unsigned long)wrapper, CRLF];
+                NSString *source = MPBlockquoteSource(testCase[@"source"], wrapper, CRLF.boolValue);
+                NSString *html = [self renderMarkdown:source withExtensions:HOEDOWN_EXT_SPACE_HEADERS | HOEDOWN_EXT_FENCED_CODE rendererFlags:0];
+                NSError *error = nil;
+                NSXMLDocument *DOM = MPBlockquoteDOM(html, &error);
+                XCTAssertNotNil(DOM, @"%@ / %@", context, error);
+                for (NSString *xpath in testCase[@"counts"]) {
+                    NSArray *nodes = MPBlockquoteNodes(DOM, xpath, &error);
+                    XCTAssertNotNil(nodes, @"%@ / %@ / %@", context, xpath, error);
+                    XCTAssertEqual(nodes.count, [testCase[@"counts"][xpath] unsignedIntegerValue], @"%@ / %@ / %@", context, xpath, html);
+                }
+                if (wrapper) {
+                    NSString *container = wrapper == 1 ? @"//aside" : @"//details";
+                    XCTAssertEqual(MPBlockquoteNodes(DOM, [container stringByAppendingString:@"//blockquote"], NULL).count,
+                                   MPBlockquoteNodes(DOM, @"//blockquote", NULL).count,
+                                   @"%@ / citation escaped its callout", context);
+                }
+            }
+        }
+    }
+}
+
+- (void)testUnquotedHeadingsEndBlockquotesInsideAndOutsideCallouts
+{
+    for (NSUInteger level = 1; level <= 6; level++) {
+        NSString *hashes = [@"######" substringToIndex:level];
+        for (NSNumber *insideCallout in @[@NO, @YES]) {
+            NSString *source = [NSString stringWithFormat:@"> citation\n%@ Outside\n\nAfter\n", hashes];
+            if (insideCallout.boolValue)
+                source = [NSString stringWithFormat:@"::: {.callout-important}\n## Title\n%@:::\n", source];
+            NSString *html = [self renderMarkdown:source withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+            NSRange quoteEnd = [html rangeOfString:@"</blockquote>"];
+            NSRange heading = [html rangeOfString:[NSString stringWithFormat:@">Outside</h%lu>", (unsigned long)level]];
+            XCTAssertNotEqual(quoteEnd.location, NSNotFound, @"%@", html);
+            XCTAssertNotEqual(heading.location, NSNotFound, @"%@", html);
+            XCTAssertLessThan(NSMaxRange(quoteEnd), heading.location, @"%@", html);
+            if (insideCallout.boolValue)
+                XCTAssertLessThan(NSMaxRange(heading), [html rangeOfString:@"</aside>"].location, @"%@", html);
+        }
+    }
+}
+
+- (void)testExplicitQuotedHeadingsAndLazyTextRemainInsideBlockquote
+{
+    NSString *html = [self renderMarkdown:@"> citation\ncontinued\n> # Quoted\n"
+                          withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+    XCTAssertTrue([html containsString:@"<p>citation\ncontinued</p>"], @"%@", html);
+    NSRange heading = [html rangeOfString:@">Quoted</h1>"];
+    XCTAssertNotEqual(heading.location, NSNotFound, @"%@", html);
+    XCTAssertLessThan(NSMaxRange(heading), [html rangeOfString:@"</blockquote>"].location, @"%@", html);
+
+    NSString *literal = [self renderMarkdown:@"> citation\n#hashtag\n"
+                             withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+    XCTAssertTrue([literal containsString:@"<p>citation\n#hashtag</p>"], @"%@", literal);
+}
+
+- (void)testQuartoCalloutsUseApplicationMarkdownRendererAndKeepTitleAnchors
+{
+    self.delegate.renderTOC = YES;
+    NSString *html = [self renderMarkdown:@"[TOC]\n\n::: {.callout-warning collapse=\"true\"}\n## Keep **this title**\n\nA *body*.\n:::\n"
+                              withExtensions:HOEDOWN_EXT_FENCED_CODE rendererFlags:0];
+    XCTAssertTrue([html containsString:@"<details class=\"mp-callout mp-callout-warning\" data-macdown-callout-token=\""]);
+    XCTAssertTrue([html containsString:@"<strong>this title</strong>"]);
+    XCTAssertTrue([html containsString:@"<em>body</em>"]);
+    XCTAssertFalse([html containsString:@"OPEN</p>"]);
+    XCTAssertFalse([html containsString:@"CLOSE</p>"]);
+    XCTAssertTrue([html containsString:@"@media print"]);
+    XCTAssertTrue([html containsString:@"id=\"keep-this-title\""]);
+    XCTAssertTrue([html containsString:@"href=\"#keep-this-title\""]);
+}
+
+- (void)testQuartoCalloutSyntaxInsideCodeIsLiteral
+{
+    NSString *html = [self renderMarkdown:@"```markdown\n::: {.callout-note}\nKeep literal\n:::\n```\n"
+                              withExtensions:HOEDOWN_EXT_FENCED_CODE rendererFlags:0];
+    XCTAssertFalse([html containsString:@"class=\"mp-callout"]);
+    XCTAssertTrue([html containsString:@".callout-note"]);
+}
+
+- (void)testCalloutSourceMetadataIncludesOnlyGeneratedContainers
+{
+    NSString *source = @"<div>\n::: {.callout-note collapse=\"true\"}\n## Raw title\nRaw body\n:::\n</div>\n\n::: {.callout-tip collapse=\"true\"}\n## Real title\nReal body\n:::\n";
+    NSString *html = [self renderMarkdown:source withExtensions:HOEDOWN_EXT_FENCED_CODE rendererFlags:0];
+    XCTAssertTrue([html containsString:@".callout-note"], @"Raw HTML keeps the original delimiter literal");
+    XCTAssertEqual(self.renderer.calloutSourceEntries.count,1u,
+        @"An unrendered source pair cannot authorize a callout conversion");
+    NSDictionary *entry = self.renderer.calloutSourceEntries.lastObject;
+    XCTAssertEqualObjects(entry[@"type"],@"tip");
+    NSRange opening = [source rangeOfString:@"::: {.callout-tip collapse=\"true\"}\n"];
+    XCTAssertTrue(NSEqualRanges([entry[@"sourceOpenRange"] rangeValue],opening));
+    NSString *attribute = [NSString stringWithFormat:@"data-macdown-callout-token=\"%@\"",entry[@"token"]];
+    XCTAssertTrue([html containsString:attribute]);
+}
+
+- (void)renderCalloutDocument:(MPDocument *)document source:(NSString *)source
+{
+    NSUInteger generation = document.previewRenderGeneration;
+    document.editor.string = source;
+    [document.renderer parseAndRenderNow];
+    XCTNSPredicateExpectation *rendered = [[XCTNSPredicateExpectation alloc]
+        initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+            return document.previewRenderGeneration > generation && document.isPreviewReady &&
+                !document.alreadyRenderingInWeb && !document.preview.isLoading;
+        }] object:document];
+    [self waitForExpectations:@[rendered] timeout:10];
+}
+
+- (void)testCalloutDisclosureStateSurvivesBodyReplacementAndResourceReload
+{
+    MPDocument *document = [MPDocument new];
+    WebView *web = [[WebView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    document.editor = editor; document.preview = web;
+    document.renderer = [MPRenderer new];
+    document.renderer.dataSource = (id<MPRendererDataSource>)document;
+    document.renderer.delegate = (id<MPRendererDelegate>)document;
+    web.frameLoadDelegate = (id<WebFrameLoadDelegate>)document;
+    MPPreferences *preferences = document.preferences;
+    BOOL math = preferences.htmlMathJax, mermaid = preferences.htmlMermaid;
+    BOOL graphviz = preferences.htmlGraphviz, sync = preferences.editorSyncScrolling;
+    BOOL highlight = preferences.htmlSyntaxHighlighting;
+    BOOL fenced = preferences.extensionFencedCode;
+    NSString *source = @"::: {.callout-note collapse=\"true\"}\n## Same title\nOuter body\n\n::: {.callout-note collapse=\"false\"}\n## Same title\nNested body\n:::\n\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Same title\nNeighbor body\n:::\n\n<details class=\"mp-callout mp-callout-note\" open><summary>Authored HTML</summary>Authored body</details>\n";
+    @try {
+        preferences.htmlMathJax = NO; preferences.htmlMermaid = NO;
+        preferences.htmlGraphviz = NO; preferences.editorSyncScrolling = NO;
+        preferences.htmlSyntaxHighlighting = YES;
+        preferences.extensionFencedCode = YES;
+        [self renderCalloutDocument:document source:source];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[false,true,false,true]");
+        [web stringByEvaluatingJavaScriptFromString:@"var a=document.querySelectorAll('details');a[0].open=true;a[1].open=false;a[2].open=true;a[3].open=false;window.calloutStateSentinel='survived';"];
+        NSString *formatted = [source stringByReplacingOccurrencesOfString:@"Outer body" withString:@"Outer **body**"];
+        [self renderCalloutDocument:document source:formatted];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"window.calloutStateSentinel"], @"survived", @"Unchanged resources use the actual body replacement path");
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[true,false,true,true]", @"Generated nested and duplicate callouts keep independent state; authored HTML retains its source default");
+        formatted = [formatted stringByReplacingCharactersInRange:[formatted rangeOfString:@"## Same title"]
+            withString:@"## Same *title*"];
+        [self renderCalloutDocument:document source:formatted];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[true,false,true,true]", @"Formatting a summary also preserves independent disclosure state");
+        NSString *withLanguage = [formatted stringByAppendingString:@"\n```javascript\nconst answer = 42;\n```\n"];
+        [self renderCalloutDocument:document source:withLanguage];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"typeof window.calloutStateSentinel"], @"undefined", @"New Prism resources exercise an actual full page load");
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[true,false,true,true]");
+        // Inserting source before the callouts must translate their anchors,
+        // rather than assigning a saved state to whichever block has that index.
+        [self renderCalloutDocument:document source:[@"Prefix paragraph.\n\n" stringByAppendingString:withLanguage]];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[true,false,true,true]");
+        // Removing the outer wrapper preserves the untouched nested callout and neighbor.
+        NSString *unwrapped = [withLanguage stringByReplacingOccurrencesOfString:@"::: {.callout-note collapse=\"true\"}\n## Same *title*\nOuter **body**" withString:@"## Same *title*\nOuter **body**"];
+        unwrapped = [unwrapped stringByReplacingOccurrencesOfString:@":::\n\n:::\n\n::: {.callout-note collapse=\"true\"}" withString:@":::\n\n::: {.callout-note collapse=\"true\"}"];
+        [self renderCalloutDocument:document source:unwrapped];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[false,true,true]");
+        XCTAssertEqualObjects(editor.string, unwrapped, @"View state never rewrites the source collapse attribute");
+    } @finally {
+        web.frameLoadDelegate = nil; [document close];
+        preferences.htmlMathJax = math; preferences.htmlMermaid = mermaid;
+        preferences.htmlGraphviz = graphviz; preferences.editorSyncScrolling = sync;
+        preferences.htmlSyntaxHighlighting = highlight;
+        preferences.extensionFencedCode = fenced;
+    }
+}
+
+- (void)testExplicitPreviewContextReloadResetsDisclosureToSourceDefaults
+{
+    MPDocument *document = [MPDocument new];
+    WebView *web = [[WebView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    document.editor = editor; document.preview = web;
+    document.renderer = [MPRenderer new];
+    document.renderer.dataSource = (id<MPRendererDataSource>)document;
+    document.renderer.delegate = (id<MPRendererDelegate>)document;
+    web.frameLoadDelegate = (id<WebFrameLoadDelegate>)document;
+    MPPreferences *preferences = document.preferences;
+    BOOL math = preferences.htmlMathJax, mermaid = preferences.htmlMermaid;
+    BOOL graphviz = preferences.htmlGraphviz, sync = preferences.editorSyncScrolling;
+    NSString *source = @"::: {.callout-note collapse=\"true\"}\n## Closed default\nFirst body\n:::\n\n::: {.callout-tip collapse=\"false\"}\n## Open default\nSecond body\n:::\n";
+    @try {
+        preferences.htmlMathJax = NO; preferences.htmlMermaid = NO;
+        preferences.htmlGraphviz = NO; preferences.editorSyncScrolling = NO;
+        [self renderCalloutDocument:document source:source];
+        [web stringByEvaluatingJavaScriptFromString:@"var a=document.querySelectorAll('details');a[0].open=true;a[1].open=false;"];
+        NSMenuItem *defaultReload = [[NSMenuItem alloc] initWithTitle:@"Reload" action:nil keyEquivalent:@""];
+        defaultReload.tag = WebMenuItemTagReload;
+        NSArray *menu = [document webView:web contextMenuItemsForElement:@{} defaultMenuItems:@[defaultReload]];
+        NSMenuItem *reload = menu.firstObject;
+        XCTAssertEqual(reload.target, document);
+        XCTAssertEqual(reload.action, @selector(reloadPreview:));
+        NSUInteger generation = document.previewRenderGeneration;
+        XCTAssertTrue([NSApp sendAction:reload.action to:reload.target from:reload]);
+        XCTNSPredicateExpectation *reloaded = [[XCTNSPredicateExpectation alloc]
+            initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+                return document.previewRenderGeneration > generation && document.isPreviewReady &&
+                    !document.alreadyRenderingInWeb && !web.isLoading;
+            }] object:document];
+        [self waitForExpectations:@[reloaded] timeout:10];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[false,true]");
+        XCTAssertEqualObjects(editor.string, source);
+        [web stringByEvaluatingJavaScriptFromString:@"document.querySelector('details').open=true;"];
+        [self renderCalloutDocument:document source:[source stringByReplacingOccurrencesOfString:@"First body" withString:@"First *body*"]];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"JSON.stringify(Array.prototype.map.call(document.querySelectorAll('details'),function(e){return e.open;}))"], @"[true,true]", @"Only the explicit reload resets state, not the following edit");
+    } @finally {
+        web.frameLoadDelegate = nil; [document close];
+        preferences.htmlMathJax = math; preferences.htmlMermaid = mermaid;
+        preferences.htmlGraphviz = graphviz; preferences.editorSyncScrolling = sync;
+    }
+}
+
+- (void)testCalloutDisclosureAnchorsUseOriginalCRLFSourceBeforePreprocessing
+{
+    MPDocument *document = [MPDocument new];
+    WebView *web = [[WebView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,640,480)];
+    document.editor = editor; document.preview = web;
+    document.renderer = [MPRenderer new];
+    document.renderer.dataSource = (id<MPRendererDataSource>)document;
+    document.renderer.delegate = (id<MPRendererDelegate>)document;
+    web.frameLoadDelegate = (id<WebFrameLoadDelegate>)document;
+    MPPreferences *preferences = document.preferences;
+    BOOL math = preferences.htmlMathJax, mermaid = preferences.htmlMermaid;
+    BOOL graphviz = preferences.htmlGraphviz, sync = preferences.editorSyncScrolling;
+    BOOL frontMatter = preferences.htmlDetectFrontMatter;
+    NSString *source = @"---\r\ntitle: State test\r\n---\r\n\r\n😀 Context\r\n- [ ] Task before callout\r\n\r\n::: {.callout-note collapse=\"true\"}\r\n## Title\r\nBody\r\n:::\r\n";
+    @try {
+        preferences.htmlMathJax = NO; preferences.htmlMermaid = NO;
+        preferences.htmlGraphviz = NO; preferences.editorSyncScrolling = NO;
+        preferences.htmlDetectFrontMatter = YES;
+        [self renderCalloutDocument:document source:source];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"String(document.querySelector('details').open)"], @"false");
+        XCTAssertEqual(document.renderer.calloutSourceEntries.count, 1u);
+        NSDictionary *entry = document.renderer.calloutSourceEntries.firstObject;
+        NSRange opening = [source rangeOfString:@"::: {.callout-note collapse=\"true\"}\r\n"];
+        NSRange closing = [source rangeOfString:@":::\r\n" options:NSBackwardsSearch];
+        XCTAssertTrue(NSEqualRanges([entry[@"sourceOpenRange"] rangeValue],opening));
+        XCTAssertTrue(NSEqualRanges([entry[@"sourceCloseRange"] rangeValue],closing));
+        XCTAssertTrue(NSEqualRanges([entry[@"sourceContentRange"] rangeValue],
+            NSMakeRange(NSMaxRange(opening),closing.location-NSMaxRange(opening))));
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:
+            @"document.querySelector('details').getAttribute('data-macdown-callout-token')"],entry[@"token"]);
+        [web stringByEvaluatingJavaScriptFromString:@"document.querySelector('details').open=true;"];
+        NSString *changed = [source stringByReplacingOccurrencesOfString:@"Body\r\n" withString:@"**Body**\r\n"];
+        [self renderCalloutDocument:document source:changed];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"String(document.querySelector('details').open)"], @"true");
+        changed = [changed stringByReplacingOccurrencesOfString:@"collapse=\"true\"" withString:@"collapse=\"false\""];
+        [web stringByEvaluatingJavaScriptFromString:@"document.querySelector('details').open=false;"];
+        [self renderCalloutDocument:document source:changed];
+        XCTAssertEqualObjects([web stringByEvaluatingJavaScriptFromString:@"String(document.querySelector('details').open)"], @"true", @"An explicit source change to collapse resets the default rather than inheriting the former wrapper's state");
+        XCTAssertEqualObjects(editor.string, changed);
+    } @finally {
+        web.frameLoadDelegate = nil; [document close];
+        preferences.htmlMathJax = math; preferences.htmlMermaid = mermaid;
+        preferences.htmlGraphviz = graphviz; preferences.editorSyncScrolling = sync;
+        preferences.htmlDetectFrontMatter = frontMatter;
+    }
 }
 
 @end

@@ -1,0 +1,2920 @@
+[
+  {
+    "path": "MacDown/Code/Application/MPExportPanelAccessoryViewController.h",
+    "sha256": "656b07ee87875aa5258a17f3268c84c2747607c68ba3cbd064644bcb1e7c5d8e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Application/MPExportPanelAccessoryViewController.m",
+    "sha256": "e37f5bc7a1533d3ff421eeebddc9dc456e72555a050eba762859fee91d915c3d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Application/MPMainController.h",
+    "sha256": "243032702a66bec45b0288295e5aec56d23bc58ba6d00d26f30e2302d7665596",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Application/MPMainController.m",
+    "sha256": "fee700c0ec78c29bec7a09a0562cd0d61c830655cc48eebe933ba25e2132ff3a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": [
+      "UI-007 corrigé, tests centralisés à exécuter",
+      "URL scheme line/column ignorées (limitation explicite préexistante)"
+    ]
+  },
+  {
+    "path": "MacDown/Code/Application/MPToolbarController.h",
+    "sha256": "c45bee13d502b03825313155b807a6d4c0d69e07404066b7e0352c10a9256ecd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Application/MPToolbarController.m",
+    "sha256": "4cf8981f419d01f5054d8203e3e55a75d893548bf672a3052417abb57b4064b0",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPEditorPreferencesViewController.h",
+    "sha256": "5c9f8399882aaef434e60b3d8d12e21508e1229481f16d84589eae9f77d446e5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPEditorPreferencesViewController.m",
+    "sha256": "6b12bf12fe47f7869d202eedf3a7f3c60b100ad81f8b6644440fb8c669c50912",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPGeneralPreferencesViewController.h",
+    "sha256": "2a7d3a84426c24b3ad157984d3c807d31662fcee7c065105c4a1b42e5ba3a16f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPGeneralPreferencesViewController.m",
+    "sha256": "4b16b9ff667f9f412289c10ecb159f63d5b3793e6fda0d0cc320104eca0cc315",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPHtmlPreferencesViewController.h",
+    "sha256": "9beb7de62cc892f606f664b4c035af9cd2cb20e1e9fa8831a4aa82a51f22460f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPHtmlPreferencesViewController.m",
+    "sha256": "c3f923395429ffe52394a7c9c00796f4d97d7c46bb3c1724a935e82bdd4b5900",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPMarkdownPreferencesViewController.h",
+    "sha256": "8fbbe0a0a5aed665a1827155ab8a45a46bf8c624dd87a395c6ea774871ae7698",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPMarkdownPreferencesViewController.m",
+    "sha256": "b6a006708edad119f8c658250fd4acdd3dd2a2164cf021b0017329a648701b25",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPPreferences.h",
+    "sha256": "8f999b55f2382e2cfa70825d28fb37781ec589137a02af4bea55db7a5acf2c1e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPPreferences.m",
+    "sha256": "5e8637e4bd6d59791afe9739d8fdb5f5b606b4fc7b922b178ee27c24c722ddf3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": [
+      "tests-centralises-a-executer"
+    ]
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPPreferencesViewController.h",
+    "sha256": "fc5407141d5bd0fdf4ab70710dfe8b316d2e8c30c27a0ad98efea86e67fa409f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPPreferencesViewController.m",
+    "sha256": "640394689721bef425d179c97c55d3753b7bba70bbe4540f37d44ba755dba0ac",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPTerminalPreferencesViewController.h",
+    "sha256": "585306c57bb4c53dd3792f4fdd3c6f786e96ecd50ee25845938720b8cae47b53",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Preferences/MPTerminalPreferencesViewController.m",
+    "sha256": "d1fe66fd53262cee2cf70e3358edd7f1126bcb1b66c1496cee86a8b2935313c0",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": [
+      "tests-centralises-a-executer"
+    ]
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFileNode.h",
+    "sha256": "40378502625b374bbb0cae180e7fae17437fc8eb894820955dc55429787072d5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFileNode.m",
+    "sha256": "b86a626856e4ae90fe6b11628e4436aebf24ae661cf043529373fe892e82d172",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFolderSidebarViewController.h",
+    "sha256": "ffb1bab4cc07cba00270c98d5e279b65507ff8d747d6c8f4ffba14ee19f1a851",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFolderSidebarViewController.m",
+    "sha256": "4bdfd6c0e6257f43c0f903b6c7f7299a66a54248ec83bcdafe991014ff39b5d2",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": [
+      "tests-centralises-a-executer"
+    ]
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFolderWatcher.h",
+    "sha256": "6fa9aa05202122ada20c665934642dcbf17aa18791edfb9fbbbb7abccb715b85",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPFolderWatcher.m",
+    "sha256": "d26a83fe8cd73c655289d53cdbda2d12aa94b0e867ccf809cd59cdacc88d63ad",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPSidebarSplitView.h",
+    "sha256": "c9f56a108c5b1bb8ca5c9ae006e4e90e87314b1b15590878bf5126e7b3e5a9b1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPSidebarSplitView.m",
+    "sha256": "5f8f7f2ba07d56cf6071bb10443bbb2ce85fcd10287866ca4e92354f6b376123",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPSidebarSyncCoordinator.h",
+    "sha256": "0e30d13c20f13372d96d614f998f251109b4b2a385db720069176431336a3f08",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Sidebar/MPSidebarSyncCoordinator.m",
+    "sha256": "bfa586bc60ac0695d8c3be05aa50c7198ff786145e0c8863349650240e2bc827",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/main.m",
+    "sha256": "d806c4913d7bf07d971688a6c57e1521b84e3e91ad2d8884f9ac0b8bb2bcc81f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/AppIcon.appiconset/Contents.json",
+    "sha256": "2d55c952e54746b6c80ed184411413e261e576411552d5700deb28625b16a9ab",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Contents.json",
+    "sha256": "972ec1fd42325872438eb085ac29e94f51c10788ec18ec5549439950866c541d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/Contents.json",
+    "sha256": "972ec1fd42325872438eb085ac29e94f51c10788ec18ec5549439950866c541d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/PreferencesEditor.imageset/Contents.json",
+    "sha256": "db68fe085f4b9801ac0955571a2e0318fe9f657b335b3d5df59abcabbb91b4b9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/PreferencesGeneral.imageset/Contents.json",
+    "sha256": "4437fa77a297d31ca1fa720c49ed30cde2c8f803b089bc51e4c7fd291c0189e1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/PreferencesMarkdown.imageset/Contents.json",
+    "sha256": "92b86b6bd3ed1fc82b4e9e234fde87696b144293611d257622ff1e3fb3961c96",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/PreferencesRendering.imageset/Contents.json",
+    "sha256": "bb6d2d8f53c0571ecabc7630aed34182bc3e9a83e5c064d904a474cafa6434c1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Preferences Icons/PreferencesTerminal.imageset/Contents.json",
+    "sha256": "4b466f49b9844ca550a4e32d3baa279e395b17e32d8dd2baffbe24eb5517cddf",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/Contents.json",
+    "sha256": "972ec1fd42325872438eb085ac29e94f51c10788ec18ec5549439950866c541d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconBlockquote.imageset/Contents.json",
+    "sha256": "a145b7675a7d9bfcc19fd4a9e67c9030979899fc51e5ad40acb1df6b0bc041a9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconBold.imageset/Contents.json",
+    "sha256": "41bf3cb94a3556425bfaad54137fdab559d3c12702d37cb0b6ba11806c0a431a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconComment.imageset/Contents.json",
+    "sha256": "189adf35c961e9805a31797e1c8ae86fe2be547146b889ff6fed21b69377a966",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconCopyHTML.imageset/Contents.json",
+    "sha256": "c9ab4cc9bf4a350b5595034e7c23562f9893d265e9de2c97e0b375b0f827228d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconEditorAndPreview.imageset/Contents.json",
+    "sha256": "370f3fb8c7c98b1120148ccd324ba5ce6c18d8bb3bf0d0d9bde24a947579e350",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHeading1.imageset/Contents.json",
+    "sha256": "04d4084c9fc72667dfabcb29614d0e7d7a67e9df35389707bc6a4a8e8f9723ec",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHeading2.imageset/Contents.json",
+    "sha256": "5317ac258dcf88be4c585e2ce1b7bcad9b7ba2dd6e0314025e5aa0e1a712ed78",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHeading3.imageset/Contents.json",
+    "sha256": "6a0629705f23bc4b172695cb543e9194b287b53d0a12dde7dad3b106875c2cdb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHideEditor.imageset/Contents.json",
+    "sha256": "44ffc3693fa11022eedbe1357e0d1aa60c91b9c7c639b94418ad6e4d52d2464a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHidePreview.imageset/Contents.json",
+    "sha256": "59d89fb85e49c9cf89801597e646230ce08121ec515c8540ae006f9c85464df5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconHighlight.imageset/Contents.json",
+    "sha256": "78fcd02f8026013f11be521bc9a25fec7b07011868cdb36de320dc6b38689685",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconImage.imageset/Contents.json",
+    "sha256": "5814d61240597f8fda44fe09b840971b2051e831b13e0c778dd56eedeb35f5cb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconInlineCode.imageset/Contents.json",
+    "sha256": "43d65364cf838207c2cfb5ebc160a577589ce9f96bf8bb0054f84780e010b443",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconItalic.imageset/Contents.json",
+    "sha256": "3dc3cf7bf3a15c19c52825bcc132a486b58c4ad050b010f038acf5f7a0ff8c55",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconLink.imageset/Contents.json",
+    "sha256": "66a9c81188d97a85409e874e8bd23002f4465b87de42d178ffca4764748502a9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconOrderedList.imageset/Contents.json",
+    "sha256": "a2a73d596addc40fc97702167e42063477d6292011664391d0ad62419da6a926",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconShiftLeft.imageset/Contents.json",
+    "sha256": "28502d4cf398395f86bc3423c24455b1d06fc79704fb5bfd54d83dc13ba8cb6a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconShiftRight.imageset/Contents.json",
+    "sha256": "24b3e2d617c8c89fea7178b8142ec579cb592365b22d511f8c23af3b23875ad3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconStrikethrough.imageset/Contents.json",
+    "sha256": "e77c50487d113b592fbb95e89a19ca97776b843685d8cfd6868b35ef8ca5cc11",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconUnderlined.imageset/Contents.json",
+    "sha256": "c0be5f16de2ba74db9f18829ca7c09e9d95b459b6252936e61380571bf993918",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/Toolbar Icons/ToolbarIconUnorderedList.imageset/Contents.json",
+    "sha256": "0e52a063bec816838878d343415c912cb63f919e007fa5da249d54f4e8538ebe",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/Contents.json",
+    "sha256": "972ec1fd42325872438eb085ac29e94f51c10788ec18ec5549439950866c541d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconBlockquote.imageset/Contents.json",
+    "sha256": "4818ccf05ca4165080f7ffa04d75629bfe19fd727484a91b8ccf543f5df6bb8d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconComment.imageset/Contents.json",
+    "sha256": "8b4cd66e231ab87e7db6de7ac6ad0275debc6e0f2f6144d2ac29b1bb477adcae",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconCopyHTML.imageset/Contents.json",
+    "sha256": "88108c3b24801ccab78f43adf3dc52f61dd387a5c3fec2d088e7aa7cefcbd792",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconEditorAndPreview.imageset/Contents.json",
+    "sha256": "ab8403ee86d7a48d8f9629a4f94f2b28036656029705ed145059b038ac71060f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconHeadings.imageset/Contents.json",
+    "sha256": "97923d7fee5f717f5b452122ba15869e3263fafb9bbe5f623145973a0ee400e6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconHideEditor.imageset/Contents.json",
+    "sha256": "972d73619015f8318fa90887e36c20b723b1427f07f08c505e976f978e40d830",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconHidePreview.imageset/Contents.json",
+    "sha256": "fd0629ddb48d848177eec5786e3e7c10e9ca3f6313db38a44f436eb094f8836b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconHighlight.imageset/Contents.json",
+    "sha256": "db5ed08775e0fdce5ef6cc95d4712f5b9637c2a53febbd089f56f36ca542e0ba",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconImage.imageset/Contents.json",
+    "sha256": "95cb5853898b8b55a5f408937d0727ff4d179189a84dfe03a1ede0f4e425994b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconInlineCode.imageset/Contents.json",
+    "sha256": "351cc8890128f4aca4ef5b231e16c761c652ef4798b51aa6d6c79ced61d89cc6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconLink.imageset/Contents.json",
+    "sha256": "8a53098a432134a1aa736d31f31f5bccd8be068302da6157fa34c424cf4c12e9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconOrderedList.imageset/Contents.json",
+    "sha256": "b16b171adfa1f6c86a4df9dc3edc1dfc82ff4a94e0b291e0ebe10c2b07b1625b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconShiftLeft.imageset/Contents.json",
+    "sha256": "2546f3fef2a19eb841af9b21b218be547c469b8a4d795bc8c48c07054ef20652",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconShiftRight.imageset/Contents.json",
+    "sha256": "8dfa5a1fb64cb650f439e3394d773a152d270153519e955c315274e5b9c17d58",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconStrikethrough.imageset/Contents.json",
+    "sha256": "3e19d7de15db1a8644360c5f86c9643be23d254539b6015359362312c4822851",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Images.xcassets/TouchBar Icons/TouchBarIconUnorderedList.imageset/Contents.json",
+    "sha256": "dd5a37ede0b903a0a02d955c8bc4cb0a5bda22a0bbf4e1663ce5c75931a204c6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPDocument.xib",
+    "sha256": "ac4899e95d5af32d792a5038a447330eeb560870d6df5a22c982b07415fb14d5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPEditorPreferencesViewController.xib",
+    "sha256": "63ba27c5cabb342d415750e1d3408aca53a974c91f1f112ecd6675a61fd347cd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPExportPanelAccessoryViewController.xib",
+    "sha256": "d8d09ea196bc2d8356d8ef35dfc1fd75b447da030c6019136caf615554b950bf",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPGeneralPreferencesViewController.xib",
+    "sha256": "563948c93c3dcf2fde55ba842e3321c38136e7fac70ea2a0b7bdfaab57b323e5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPHtmlPreferencesViewController.xib",
+    "sha256": "3f36c0108c13c18881e3a6042af35415d90f0792c6aa8147830a488f4e8e4fd9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": [
+      "UI-008 corrigé, test réel NIB centralisé à exécuter"
+    ]
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPMarkdownPreferencesViewController.xib",
+    "sha256": "bccab13b69803efc3ad69d387d67933fcb49561c220eecf5edb8515507f7ee94",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MPTerminalPreferencesViewController.xib",
+    "sha256": "b333323b7a066acb3bf9b8c3779329b17c42a79b696734b2d63d12eacf581801",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/Base.lproj/MainMenu.xib",
+    "sha256": "731e44fa814a6897ec509e0e2ba7ed59d6787b60b8aae6a4378749e25ec4b9f8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "ui-preferences.md : lecture intégrale des sources, contrats/actions/bindings/données déclaratives ; validation centralisée en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/Localizable.strings",
+    "sha256": "58b8f416a834bd4ca8eda27737ca196fcd9fee12c6ca0f9d4349c673e0086067",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "6aac9b0dfe2971139ec9ab7f931804bede877c4bf9f2cf131ad4209404fd4acd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "43c692936622d28961c10004379442aad09738692e22dc51fa7c6a317b3dec2c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "989c6f017fcbfe2ddf14e91ece77e9745890bd1c2e96c214d1670201fa900634",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "ef08e1b174f15f528a673be2d8a70bb56f59aa5011ec26a0673ff5a9698cb371",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "325b38fffd631c501cdc37ec0a78172d5eb9fd32665020b5c7e865c345aae548",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ar.lproj/MainMenu.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/Localizable.strings",
+    "sha256": "8c9fcd83e2427ee4815a01159fcf5e17b2fff3725394cdbc21478bb12f49659e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": [
+      "UI-014 : règle plurielle 1 à deux formes incompatible avec les trois formes linguistiques nécessaires ; contrat JJPluralForm 7/8 lu ; correction et validation native encore ouvertes."
+    ]
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPDocument.strings",
+    "sha256": "77d13ae6ad6ef0da7a130a0b5f90fdf08e401b3b13ec5cf00f804644d6591679",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "dc3422797b039a97697cd93ebf782c13382b3ae5d04597f54a1f50d58ac6abc7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "5fa6411ea7a44e026847f8985a57d5c450aa7c1ad2ca3d8176201ada17fa358f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "4a7ed1f06701ade7299c7a340a825bb8368eddbbea653492916bda824dfbe5bf",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "f2756b964805af80db33d2b7cd86a9a9f7f98c76a837b643b796eca8ab844ef3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "9eecfa07f368e788454cc426f025952683ca8466e80e561a1803f04ebcc3c48c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "46f4777460e09a9cb7a081e4b73aa40abf7f39a403d1588314441a2f4e071389",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/cs.lproj/MainMenu.strings",
+    "sha256": "74f8f5970a85eb9877c92a2a7bc7921fefe8b287783be92208f44c06a6f276b3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/Localizable.strings",
+    "sha256": "2dbb4e4b32463b21eb32e8b826c744f7835b55edb2d01fc9a9d8a1f6fbf4eb91",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPDocument.strings",
+    "sha256": "661f00f40ef8f3ad38586b8400c717a63a1a22ae6c46997382ebdd5152e26f33",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "4d8ab7b3681f86e20feb94e553f2d08bdc69d23d83948063ed5f0e74cd2c12c6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "d10cd7f4e6d151e5ed346e19dd2f07f96d06a0a41f4b439bbe4a352cdec2cb29",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "df99276854c50230952ba0b810c1c5d8d5aae5f945a4548e5b625a210b024e33",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "50960a21e6da2aff61225fe331a95562ac4aa23632e08c037da0c98447da9909",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "49ab2f6f01e16844f36fe51b64e53e84acd8aa8cbeced034a31c0211f855972a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "4f13ac0447fec5b4e62cd45bfea6bd7d7483a1400368bd89d17000ef34c188f4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da-DK.lproj/MainMenu.strings",
+    "sha256": "2ccc4edf04d61eced9f6e4e7cd0b2996155c7355ba4db6ea828eaefeac775bc0",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da.lproj/Localizable.strings",
+    "sha256": "1fbe82793907f7d931b63f1289525df36ec86c6959ec5ebb4f67c55907909dc7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/da.lproj/MainMenu.strings",
+    "sha256": "c4613839a04153defdc0c55c75e680dd7cc49f43c0d2922b8b94cd6c961b81a0",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/Localizable.strings",
+    "sha256": "0d5cbd7b1af8957c18ac52232d35c141803691d0c4fbe1488799215f9d829831",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPDocument.strings",
+    "sha256": "77d13ae6ad6ef0da7a130a0b5f90fdf08e401b3b13ec5cf00f804644d6591679",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "5e4bc020dc6cb1dc6eb220567598520f36d20bbd5dbafdcad4dbe03162f402d1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "aea0a2a42fdc96bc4fdff16f6be66ee2625b195d0ddf2336c28ce89486431d07",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "43cba8a099c47c5ed4ea93cea0ec887b131e4153eb04f2346e3d579a47c61422",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "c3c651a765c28c0913705759cf4ca05ba1d58fab93555a9d9390f75d5115cd81",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "d88b529df666234d9a240a4a2e8a981d2405a036a08ce0555b91f25016d20c43",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "c7b5147b925272afcc711d360fc412575b7c87f5570d9eb8315caa14240691dd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/de.lproj/MainMenu.strings",
+    "sha256": "97bc3e9e956b31690d24903a602c771e3f6437052584eb9631a337b608caffc4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/en.lproj/Credits.rtf",
+    "sha256": "71b4864af076c6a52e279faf3cc6f575fa6031e220fa59aca2c00f92d99e9277",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/en.lproj/InfoPlist.strings",
+    "sha256": "feb5e820d68ed31f871d2bdaf8d14935ed343a7a875ddd774d5556da8dfd951a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/en.lproj/Localizable.strings",
+    "sha256": "6057a201b81b542a13290169a4fed5243935618353a8c49ecb1187248a06c61f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/InfoPlist.strings",
+    "sha256": "fdad9cd80416a1350ff0b9c6a1a8f9a62b5fb9d48880f1c72cd1240c529fef12",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/Localizable.strings",
+    "sha256": "3b735be9b95c3bf4d9d15a6be96fbbce9bd20e7188d29a4a52bcb253f7717f0f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPDocument.strings",
+    "sha256": "53eb91af71efa51442954398188a646ba583266ab85be0ac57b88e87ba784586",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "c1a23cfc7b620aac22cd2bec7229be3ec26485ccaaf2a0659d3bac5898b2496c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "6788951d9b96319b802189117cec62fa05edd70afd04505c48ad4bf08386c51a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "99d3d9bc434db9a63d72f1b65df5f8c4cf6931a108029b06bc827e6520e5c522",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "05eb988cd145be869481da66af0c692a02bcea86eac8c851eb134371d04916bd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "b743eaf4d82e046526e5e424d7f525e1b841e2be1c67bdf8e832c1f57586d93c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "4c38cc2049eb56e4453468ab80271fa82e23d844628b7f80a6311beb5f2cff15",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/es.lproj/MainMenu.strings",
+    "sha256": "b129f49d084eb4cbe86fa539d3541c16fb5c2f69cc28a49572702b942c561deb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/Localizable.strings",
+    "sha256": "90e8c7cefa00d7f8c5c2a84294e46a16fb2ed5d8cfc0f50674005c755dcc4dbb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "cec21748449d0e6df447a06d18a49d93962d8feee30d9aa691ffdf47b89035ce",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "9de83922c266692b0bacafe120d23243533e90c296d1dd503be9506d89e0b7ee",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "02c01df21a8ea5817d3bee0add29b0705ce337889b9317429b51bcf42baedd4c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "02ee634b4dbc897ec35dd7bc1a6d309c5f8799b147b4e9beebda5be0ea53e439",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "aaee9c6a2338b2ab1fb6c719d9fbeb15ede9f76ea9579b0bebc07ee9e838005e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "0e05dff823f150d36a484546ba22151d8c9fd1aab78b39d56ac75f1475836c3a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/et.lproj/MainMenu.strings",
+    "sha256": "2fde783507f213134d4acc63f4a52d903b06b1c50fb09069430145a55c8ebbb4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fi.lproj/Localizable.strings",
+    "sha256": "cd4ff5028316509efaeeec865d745371e5e61f0369a216ad064b4453d33183ee",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fi.lproj/MainMenu.strings",
+    "sha256": "42cc431675cdf7e977311ae9b1899e37dc06d16ce2839c79f7b2ee5d63f80049",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/Localizable.strings",
+    "sha256": "1add6dda490febaef225b80bdc28cf4eda7cb050ce2f83946ac5d72f2ae33a2c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPDocument.strings",
+    "sha256": "234472c13bdb43fdd6548e173e2749e526511f5b904d9ccd2bb29184fe54d242",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "074001f987913dcb6ff05f4b05349b531ed8a854267bf71d0dc94684dd9dd573",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "3d81f3e467ff2379d2d74a17f5c0ab384b00e50753e7a9a053a3ffd40e8a3193",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "7294e6b1dc3985d2bd625f8f59feac7773c377b75bbe60c1f96e3d173038e979",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "2bb18bca6529cbc02ce228a61eb486f3fc8edfcb0c9825891bca9459a23b6de6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "b4a3d0e7abb07726dd4fc36736d597e03d9115253fc5483f235ae0408a950bbb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "e7d7c0e2846afee1fee206b1ddd827b15270dfb555375501fbbf9397405052ff",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/fr.lproj/MainMenu.strings",
+    "sha256": "b07946ea0bb6df7c4721592055abbd22a275c4e33ac45034698e98f64c78f51b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/Localizable.strings",
+    "sha256": "6a5207a8dd0f17c403c9e9bf686f88ce7aa6216645bcea8e5c18a661580249e0",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "434b042270cc0bb8a5e6847f6669f147e6520447423435cb9acc5f6be8103343",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "8e742802f83b0016dcf6bb042b4b5ae52f8f106dcee8fa74dbeb465a58f1e749",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "69dc3ebc9ea019b5fca8153f7c3f600a1d7a11364262c74db75c37c40425376d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "58e4bc22cc43cf8f4751daf78339480f072214c64091841d46de45671114bf02",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/he.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "c2ce1c4441262fd17ee3520c73de292a6d08e447bac32228b8303704b9ca7a73",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/Localizable.strings",
+    "sha256": "055a28a0f5198a96bbe70c452fae6b766edb6683abbde0c90b15d7d36a3bc5d7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "529860eabfe4a74dce6ad7f80f9ab482abec8405adb890fffc7082f61342527a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "951d58371c2ecf0b7b05d9dae62fd70361c82155489e47a2be09d91496cda296",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "4d9b6c81ebc2da3eaf9f95416d2236892c1cc075c664d84a6ac89850b619db2e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "2d4ea129ce3576602539ea1cb9ebe1922efcd29ad11edc85ac46201aba22b4d2",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/hi.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "ad51fae53e4ef113bfc1817b11894da60076eff366bc979aced1a38284838f2b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/Localizable.strings",
+    "sha256": "5366e8973854297320756475642208c22aba94073000afa3ff1b1f6cc1846ae9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "693db64942fe8d485609672dddce7b78a865e07e4ef80c4399d0a0b1beea8813",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "ceb6a0aa1d5b02251d5007aa0e73ac3aa1b68300a7c0c51fcc544bca948cb204",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "f74638f1665efe0f1d9754d8567026bdec3ca26b70b9373c06f46df01043a998",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "2cd40faf4d0de38099da4d1a1fbe8b29b17bf1e44eced5107b2e37c32eecdbb5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "437f1a4c80145a10bf075b6988637b44d9aea23c3ea97a7eb33f407e87bc71ad",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/is.lproj/MainMenu.strings",
+    "sha256": "c8268c3a12912b422d0cd77491cd3e725755ba816c9174f246a8a55de7213c53",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/Localizable.strings",
+    "sha256": "28a36e295db87c9bb5c38b76009e8c4cccdf0bc8dbf30ccf29b0fe75fb91bd15",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "6c1e968da5b9c709be3b0de7742414cccf9c4a6058fb7996a354f45237f279d7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "e30888d3a377a0ae690b55532795ba50bce02c341f81729f45501cba1a8a99a8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "6b2ffed504898be67d53f31adfff25d3f763ef7a968d21eccf7933426fec4f83",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "51350dfa188f04ce1204163d6dd9c9d2714d00d2b0f9ae9e7d49b5e55d29e075",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "6eaf2544d289b63063922726d4e2213d8c421ba32807f748cd14035a3c2c2486",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "a8a413d427c5fa000a71be05d1d6bd742847f878faf6fd2155802d613c2020d1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/it-IT.lproj/MainMenu.strings",
+    "sha256": "31b7dcf0e068cb1d365dfb442f8cd0b1524c413195a7c0d7d4daade0a4231e88",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/Localizable.strings",
+    "sha256": "35aa3f26eab3d8ad0ba7d664573507ea027b90b2df4d0703c034396ddda19bf5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPDocument.strings",
+    "sha256": "896e2e4d7fac299b296ff4ad531d9e8e0cecfa6f146122fc31fc6f83fdcb3473",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "c6579561c40acc042614256c5f70335ea5ce41fc76f550bfa3c4aa74b3bce7b3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "f9ebfb561131df67bd07239f48dc26615099de7f98735f0c912de6416914073c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "dc438ae1a2c5f713136a88d51a5a6fab61b9fc48fae2355d28ee27cd900751c5",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "d21df1eb3fd08e591822feb0e4b23aa10ed73c22e62919a866f864088caaeb1b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "230493eedbe2a62c7fbf2fde4d43023079ced29509907777ee20512c629f3759",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "8d4d2b85ce5bb89d5b711790976b81b1d3799126977cb51302a98b1f1b6a6ab8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ja.lproj/MainMenu.strings",
+    "sha256": "7a8af1910a61e5533077eefd1d80170e82905967549fc0a6604c107d2d72d8c9",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/Localizable.strings",
+    "sha256": "c50cc32c3a325cc2077f35747636afd5be9abf654c1e52fabe1e8f3edda8b935",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "40033238b028278ccd6d8bd111b3297120c02c568ce44cbf70719e42a58677e8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "181aad75e3a8109885915ab6eaceac2d3b53420ba6b49fa42e37fb7798cc1139",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "f53d0195b3b76da19371823d9edf5a8a491e5d9ea5b7151cf54794bc482be0ef",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "dee78fab447ef2c89a48a367a1177705cc1ba71f0764e88b4be042b0f21b2c26",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "a7bbb9ebcc7212a9954e18a5a5a3f419de7d56404021640f3c847c3e740b7497",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "bb080e8395f15da80d27745937e664f0cd45d7dff616989c674550f75b4e2b79",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ko-KR.lproj/MainMenu.strings",
+    "sha256": "6d5a5d0f2da2c3dc1f93ba0703756f72bda034620324967176b25f3bb924bc00",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/Localizable.strings",
+    "sha256": "b10f98e62dbb06d4312a3229e938030b29a78ff2b73818887c9e439da10bf439",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPDocument.strings",
+    "sha256": "661f00f40ef8f3ad38586b8400c717a63a1a22ae6c46997382ebdd5152e26f33",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "f9f9d5e506cabecb56e47594955a7f860aead69fc1149292a273fbc96cfb0443",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "cf22c1463bfd21b60be33a1fa63907f93816131b10b8c0c873e7ae435b5e7f78",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "9151212cec291150eddfcdf8ebbb23f27e171a37cb25fbb7b9c0a82876e3bdfd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "eb95fed65249bd1de6d59c7ddaafe2a2224d48cb696288fd620e9a666123b2a8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "818c9a671eed17f852d157671d416af6e54f2f21045d881aa381cdcae17b2a2e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "4ec7982fd0a3d3f349aa14c8b6faa06d7afe169a637b85b1770de49d9b520e4a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nb-NO.lproj/MainMenu.strings",
+    "sha256": "3b57f5500508a8a1d767e31b15551ffd34973a27c9a38d1ee39d2b922675a14d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/InfoPlist.strings",
+    "sha256": "fdad9cd80416a1350ff0b9c6a1a8f9a62b5fb9d48880f1c72cd1240c529fef12",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/Localizable.strings",
+    "sha256": "71cdfcefe8a266188e962aa9e8821e7b589d1a5f82f29424a6049dd33c20a94f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPDocument.strings",
+    "sha256": "b55fddad29cff75131d9900f63906d2aa13935aff40ce0263b5a99261855dfcd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "620bfb32c1a35ec8f4e3f354d43c2491728ab8e355d82037c650542c577f6a60",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "0852735a0254e613bd4c4b32afe5c83274e1995979c3361ebb00e2112b89a3ab",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "7f5d6a8aa9577d33541352d812a8043e38df8af661b24fc68707d4b9f21d75fb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "e5b853b2c19345cc385899acb67c1a0e5bb7b9dcb149ad46802a37e10312df62",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "d371ceb26f1069e9c6c8a325177599b1f5629f200f5bb03a0ce231ed31b4b690",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "f0a714e9ca27fbbc9d347dd83146cab5f0f95a31caace9a10139ecb9340b5ce7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/nl-NL.lproj/MainMenu.strings",
+    "sha256": "cc08d6a1639d9c9074df3811300bb6f39f9715d129d485bd5763d4d8852f985d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/Localizable.strings",
+    "sha256": "610c496c31e9dc133e061378e7d037592815322ddb1381f6e54c64a7156ea782",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPDocument.strings",
+    "sha256": "53eb91af71efa51442954398188a646ba583266ab85be0ac57b88e87ba784586",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "f3a47fdc4575403989f8e51b3053768b19c23913e9e27f686061afe831a49209",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "f39dbd56254f89db1babd9de4fb4f629e601616235d78604dbbc707125014335",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "a58ba2f5891f229fefa139fb709f3ec5c169594cb1be5a90077716aeac558ec1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "ac50e93130d7b9c5ffca29b04abb6785ff105b2a43295acb0eb798a6dae85c97",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "53ffafc65477d98dd5ed63a8a3348053bc18f92b14c8805e2b657cc5d1f56d33",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "7baaf07449b7d8268bdc21f4b234365aca9b533ce9d505fb781a2c5bfc47c9cd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/pt-BR.lproj/MainMenu.strings",
+    "sha256": "ed748fd0d299063a3b089efc45d43c47ef60f8bd397389c0c109d7b2e898ae00",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/Localizable.strings",
+    "sha256": "b38159b774f6cd1f9ec979ec8cf7c2387a29219782657d5e7aa42d6f9696b30c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": [
+      "UI-014 : règle plurielle 1 à deux formes incompatible avec les trois formes linguistiques nécessaires ; contrat JJPluralForm 7/8 lu ; correction et validation native encore ouvertes."
+    ]
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPDocument.strings",
+    "sha256": "ebb371a9af64522f213cc7d8f031cfae34fc3abbe6f484d037e967df2e3d4918",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "8da93228df9fb4d8e5a270f328d8ee2f78c525dafff135093bcd09d7c7319ece",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "9507bf17c12e08af1d380a05fd06519457e68b977624e3c66051f435e3a65314",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "2fc7cb5b81356dbbabad03c8c444db32edb9cc16a605a14c134828e4ac2e9fec",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "5410d9fe6a9eb6c95e01ac0751dd33e0b30f597ca70f5d957feb4308a6e7fd62",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "9f101611d38d4b1232fbe8891e073a17c75295c084cecb395944650092d142c3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/ru-RU.lproj/MainMenu.strings",
+    "sha256": "d63e5ac90489f18217d45672380e606aba105c7f9850eedf81797904c115111c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/Localizable.strings",
+    "sha256": "bb6a9cd351f479c9cb063a7c11edc9964b07ac2c0915b9ded74a1c846580ace3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": [
+      "UI-014 : règle plurielle 1 à deux formes incompatible avec les trois formes linguistiques nécessaires ; contrat JJPluralForm 7/8 lu ; correction et validation native encore ouvertes."
+    ]
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "226be126c6098e15660d62a9baa326816b024de5ce9e716df1d33be287eacc95",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "a83d1f38e4ef7a4f1ccfc5b4fdd9363bc302dff4b980ff7d81f4739c5d6e790e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "de39fe48810409db4e3856eeb248ee09bab635763ea143bce5de9cc148915959",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "0b382c7cba9b44c8c7fade991632c8c8df2e5a52ff448f46ec33d246c78c86c1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "6269d07eb1ee9b2af6f58f3d59c561d597200e39b20a6841c8c1649a155efa1f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "21c9b90634f64248a2f60b6397184646502cf17912d0ad6a954952fd54394d0f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sk.lproj/MainMenu.strings",
+    "sha256": "d0fbef74b1ff0112b4e1b102ee207d40df4578534635d5f5e1964b735f73f1c1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/Localizable.strings",
+    "sha256": "ac3110a647b3387bfe79dbbe7bee8a911062b8f0230d6b2c443fef45d03a351d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPDocument.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "4bcee71f9638abcd356d430427d00a5c73a0a06eef6c796c8c763ab6fe46078d",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "5868c0063dae416b19aa51c4132590bbac5656ca671b4623fd08be4b28bdcc68",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "cf8a0f88b9691a789127b561fbe1ac32ccfaba4356c11152b10b02b8d771f2d6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "3348650987b124eb1c115c496454f92aba162b3bee9bc22ebb5c5ab598eab8c4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/sv.lproj/MainMenu.strings",
+    "sha256": "c8d75d4fa5c9035eafdd7fba5fa8acb0bc1271a4ed124640597686ca46d0b0c3",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/Localizable.strings",
+    "sha256": "1c23dde183a13327e821a1f67aa712310b9c620bfc679641d967a47f18bfe247",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPDocument.strings",
+    "sha256": "815060511db961b7e4a06466e7d4f21297f9df63cc8633996a887547a4f8d4eb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "4d1629c4844cf51cda4b8a42fd4ae567f6ffbd564d16dc5e941f3019708be146",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "b9da4d2eef235a48b3bd2f898ff3cc0a314e758e70660eb2e493c35e626ae7aa",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "839a4a4f8130e44aafa75d0d345c1780deb290a490172c0dc9795edda5e6dc4c",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "7160f2e607bc12fc0cd47b8c8e673e9b7eb3192f8afd2752361549e20d27420b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "75772ca8eefa24e5275837ea4513316ce3f97bfcb6929dbff23e921228ca32bf",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/tr.lproj/MainMenu.strings",
+    "sha256": "fd018b1d2d6dee9b83b10c70a4eda5feec53a3b18634282233ee54a5813872d1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/Localizable.strings",
+    "sha256": "2140678bf1f8a56462ad2da7d922ed1e4c504ffd7d13f06ae2f2bf6af053df76",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": [
+      "UI-014 : règle plurielle 1 à deux formes incompatible avec les trois formes linguistiques nécessaires ; contrat JJPluralForm 7/8 lu ; correction et validation native encore ouvertes."
+    ]
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "d80ab16b06513437afd40db30f282a2d4586bcf9267c3578e48e4d4a62fb0928",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "3d55949247ea5c04e71120717d3fda4e55f834c59b94e2ae31537cb623d9e498",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "7b4dffc8a972e2ffaf223f2f586290c3d5f799547d576b8ca2c03d1fecb2b534",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "dd9a57ace594dc0857a0eaa3ab49cd382da8ca43d26858e08d73fe27146fab2f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/uk.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "657cdde9ca9414b55d349409968cea9522f029cf09deb696badbca4d809d65fa",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/InfoPlist.strings",
+    "sha256": "d5ba7085d8c50bad9d2a924ad3a95c65119b3c134fe033977d99a679df9e111b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/Localizable.strings",
+    "sha256": "e015dfd4e8811122b4b6218ecd3395da197934982b970ee8fdc58a4a37b58d83",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPDocument.strings",
+    "sha256": "20660125f5e96e8cce166eefd4cc156a3120d3cfa4e91f2ba59318fd64b4405e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "fbf96c9b3cc4c05c8ff45abc8abd51972915fcd9e12f8fbb77d05587200d81fd",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "df1b425f1227f17086e748dd2c8f83437f23fa79d5da79a6fadb7ec9496994c7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "ae626a97ebb1fe7641dfc4ef5c6d592c8b7c1f81815dca5b67c44e0e111a61c8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "e86765eae530ceef7a5d3be1c904a4ba13e5eece2d9b967f23d5d961dabf63a8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "92bbcb070a3e591086030c21c1da4120f2bbb92302dada2a2ff028f1f0d322cc",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "52c00c7f1ab93c4c9d5163b22b7441551d351371426928608fe0f7c5fe7e66bb",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hans.lproj/MainMenu.strings",
+    "sha256": "6377fadaaf13fac40ca0f55715e1b5c7cd0eb3ed3287e728dee64f83bc9713f2",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/Credits.rtf",
+    "sha256": "94953dfa4d1f11dc63c85f85ddb34a4a6e6dc679e60aafc0bb84ec9a85d99773",
+    "read": false,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "ui-preferences.md",
+    "open_findings": [],
+    "excluded": true,
+    "exclusion_reason": "Prose de crédits RTF, sans code applicatif ; lecture non revendiquée."
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/InfoPlist.strings",
+    "sha256": "df0f8657ad22e6383f34088ea18710f386fb49a2d8552d4621235cb29424e719",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/Localizable.strings",
+    "sha256": "a0b66aa86271e8a0af7983ea5db578952e9907ff512c402a27630da48a7068b7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPDocument.strings",
+    "sha256": "cb70afa03af6a02f2aba9f0d6a8354e668aa9eba7b840e953278d942abb3df1e",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPEditorPreferencesViewController.strings",
+    "sha256": "5ae835b35318d45600371de724c119c3dfad6796d0ad80214a5bf2b0c6e93225",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPExportPanelAccessoryViewController.strings",
+    "sha256": "324816a8e6fca0d63bd15b4a72d320e7f97409462e45a1c0f7af931238adcc61",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPGeneralPreferencesViewController.strings",
+    "sha256": "bbe35625c028fd744378ad02b1fb7d8b20dfc21b21255270119db4213980db75",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPHtmlPreferencesViewController.strings",
+    "sha256": "518a4695f59237cdd170a25331d215d0d3fe09be59253185d653612c3dbd875b",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPMarkdownPreferencesViewController.strings",
+    "sha256": "d121df58ef1030f405f6881a948c4aeb4640cf1d36143625a5d19dbc9c817bb8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MPTerminalPreferencesViewController.strings",
+    "sha256": "1663464575c720e53b89955aafffb768ee323ce6793b05702de8d43f128fc6b4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Localization/zh-Hant.lproj/MainMenu.strings",
+    "sha256": "3454158535f0a193579733f5a0ef56ea880df8124140612b77b97039b375add4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale décodée UTF-16/UTF-8, chaque entrée/commentaire examinés; IDs XIB, placeholders et contrats UI comparés. Corrections certaines et/fr/ko/nl relues intégralement. Validation runtime centralisée, non revendiquée.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcodeproj/project.pbxproj",
+    "sha256": "23968f12dda3dd9a16bb8ef09b6bc6e5af2b068992a76d46971d15128be4ebb7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "Lecture intégrale du projet 2 833 lignes puis version finale par blocs non tronqués, UUID abrégés sans retrait des valeurs ; dernier delta Transpile Styles relu entièrement. Références targets/sources/frameworks/localisations/phases analysées ; plutil valide ; compilation centralisée en attente.",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+    "sha256": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "XML intégral lu avant et après correction self: ; ancien MarkPad.xcodeproj absent. Résolution Xcode à valider par coordinateur.",
+    "open_findings": []
+  }
+]

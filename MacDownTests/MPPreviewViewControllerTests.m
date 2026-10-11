@@ -38,11 +38,12 @@
     // Skip [super ...] — that would launch the XPC web content process.
     // Fire the navigation callback on the next run-loop turn, preserving the
     // async contract the real WKWebView provides.
+    WKNavigation *navigation = (WKNavigation *)[[NSObject alloc] init];
     dispatch_async(dispatch_get_main_queue(), ^{
         if ([self.navigationDelegate respondsToSelector:@selector(webView:didFinishNavigation:)])
-            [self.navigationDelegate webView:self didFinishNavigation:nil];
+            [self.navigationDelegate webView:self didFinishNavigation:navigation];
     });
-    return nil;
+    return navigation;
 }
 
 @end
@@ -210,6 +211,33 @@
                          @"preferredContentSize.width must be > 0");
     XCTAssertGreaterThan(size.height, 0,
                          @"preferredContentSize.height must be > 0");
+}
+
+- (void)testReplacingPreviewCancelsOldHandlerAndIgnoresOldNavigation
+{
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"ql-replace-%@.md", NSUUID.UUID.UUIDString]];
+    [self addTeardownBlock:^{ [[NSFileManager defaultManager] removeItemAtPath:path error:nil]; }];
+    [@"# Preview" writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    PreviewViewController *vc = [self makeViewController];
+    [vc loadView];
+    __block NSUInteger oldCalls = 0;
+    __block NSUInteger newCalls = 0;
+    XCTestExpectation *finished = [self expectationWithDescription:@"Replacement completes"];
+    [vc preparePreviewOfFileAtURL:[NSURL fileURLWithPath:path] completionHandler:^(NSError *error) {
+        oldCalls++;
+        XCTAssertNotNil(error);
+    }];
+    [vc preparePreviewOfFileAtURL:[NSURL fileURLWithPath:path] completionHandler:^(NSError *error) {
+        newCalls++;
+        XCTAssertNil(error);
+        [finished fulfill];
+    }];
+    XCTAssertEqual(oldCalls, 1);
+    XCTAssertEqual(newCalls, 0);
+    [self waitForExpectations:@[finished] timeout:2];
+    XCTAssertEqual(oldCalls, 1);
+    XCTAssertEqual(newCalls, 1);
 }
 
 @end

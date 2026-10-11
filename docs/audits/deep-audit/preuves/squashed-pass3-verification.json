@@ -1,0 +1,493 @@
+{
+  "baseline": "17dbbb9ba39746b4c216278b764b2d95fe1ce801",
+  "code_revision": "8c694d7ba9b34c414b1c32ce582fbd177e3650a0",
+  "sources": [
+    {
+      "path": "MacDown/Code/Document/MPDocument.m",
+      "sha256": "9c8d4034063cce472c12ba667a81bdcf8c81d013a08dfea61f34763d556cc481",
+      "lines": 6562,
+      "proof": "squashed-pass3-document.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPPreviewInlineTransaction.h",
+      "sha256": "618db0c670ad51b85755258eb1cc27dfdc49f8facd64f060be05cca31434c039",
+      "lines": 559,
+      "proof": "squashed-pass3-inline.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.h",
+      "sha256": "897256ea8bb4616dec80592c49c7e02c82bc1ad42f3a43f7c34cc23f213cba6d",
+      "lines": 84,
+      "proof": "squashed-pass3-renderer.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.m",
+      "sha256": "cd6b9a332b52f2a160d9c530d59c1fae3246642fa01679953d8c827cafb418e2",
+      "lines": 953,
+      "proof": "squashed-pass3-renderer.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Resources/Extensions/preview-edit.js",
+      "sha256": "72bb762a66c365f6ea8895882fea2f560a731aa7a8eddb6308a202605bcf7cf0",
+      "lines": 292,
+      "proof": "squashed-pass3-js.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.m",
+      "sha256": "012b469069e5ba220c530ae1de0df9811585ceca7628330da984723139b56b8d",
+      "lines": 201,
+      "proof": "squashed-pass3-js.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.h",
+      "sha256": "9412de885b8ff167500177ee83787e485eed5cd4d1ea2de781f4ea3d15ef40e2",
+      "lines": 40,
+      "proof": "squashed-pass3-renderer.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.m",
+      "sha256": "d836b8efb5885b462a142166998b8541e1db51bc22f5eb75796e5817a81c5d6b",
+      "lines": 810,
+      "proof": "squashed-pass3-renderer.md",
+      "read": true,
+      "analyzed": true,
+      "validated": true
+    }
+  ],
+  "source_lines": 9501,
+  "auxiliary_files": [
+    {
+      "path": "MacDownTests/BuildTools/inline_transactions_tests.m",
+      "sha256": "0c9b795a7550a62d56fe5f89816d7691f7be4f93d0c9bdcb662f60d5945a0938",
+      "lines": 125,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/BuildTools/inline_transactions_tests.py",
+      "sha256": "49fd9a1b05cdc9cf5954dcf43754316e326eed26e384d4fa509405d51d530e39",
+      "lines": 13,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPDocumentLifecycleTests.m",
+      "sha256": "51feffcaf5834c9ad524d2abf48787e2aab453e800ad4571a60d9ab25883c828",
+      "lines": 2857,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPMarkdownRenderingTests.m",
+      "sha256": "44f669b2b84c7a39c8b606798e90b6feedd0a79a3a31de9a6e24cbf97e1460a1",
+      "lines": 1310,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownUITests/MacDownUITests.swift",
+      "sha256": "19556d94b2a70aeb7bf3a4c15fe9a7930103f95572c5c5177748aa51b736dfed",
+      "lines": 452,
+      "kind": "test"
+    },
+    {
+      "path": "docs/features/edition-apercu-verification.json",
+      "sha256": "7dfb1cd04eebb207f6155f771791eefb68d9f68646d9c972c81e09876794b518",
+      "lines": 237,
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu-verification.md",
+      "sha256": "e1922a1c25fb0662d4334b97c944433e903b2a260847d39531c00d499921b5f6",
+      "lines": 120,
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu.md",
+      "sha256": "323189499102eb83a11a4d1390223e3d471498e20e24dee3d87e070e0be0322c",
+      "lines": 47,
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "docs/features/edition-apercu.png",
+      "sha256": "f1fd020fdbd3ab832f0a197b562adb6c47b6a1b6f949d8e1cfdefe580325e3d2",
+      "lines": null,
+      "kind": "documentation_or_image"
+    },
+    {
+      "path": "MacDownTests/MPUtilityTests.m",
+      "sha256": "f105769938f2ea657a4f76613a9cfabb725e6f9f7d5819e0d960f6cb29075f70",
+      "lines": 1178,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPSelectionCountTests.m",
+      "sha256": "8b837d4a99ffefd61ccb535fa045edf975109e9c5e76ac7fafa493794c8e0293",
+      "lines": 275,
+      "kind": "test"
+    },
+    {
+      "path": "MacDownTests/MPRenderDeferralTests.m",
+      "sha256": "4b2bde9d541ac37f404cf6501a97bf8f081c0b5d3dc95d125ec039c92c4033b8",
+      "lines": 471,
+      "kind": "test"
+    }
+  ],
+  "original_squash_paths": [
+    "MacDown/Code/Document/MPDocument.m",
+    "MacDown/Code/Document/MPPreviewInlineTransaction.h",
+    "MacDown/Code/Document/MPRenderer.h",
+    "MacDown/Code/Document/MPRenderer.m",
+    "MacDown/Resources/Extensions/preview-edit.js",
+    "MacDownTests/BuildTools/inline_transactions_tests.m",
+    "MacDownTests/BuildTools/inline_transactions_tests.py",
+    "MacDownTests/MPDocumentLifecycleTests.m",
+    "MacDownTests/MPMarkdownRenderingTests.m",
+    "MacDownUITests/MacDownUITests.swift",
+    "docs/features/edition-apercu-verification.json",
+    "docs/features/edition-apercu-verification.md",
+    "docs/features/edition-apercu.md",
+    "docs/features/edition-apercu.png"
+  ],
+  "scope_reconciliation": {
+    "original_sources": 5,
+    "direct_dependencies_added": 3,
+    "active_sources": 8,
+    "omitted_original_sources": [],
+    "unexpected_source_mutations": [],
+    "physical_roots_checked": {
+      "MacDown/Code/Document": 9,
+      "MacDown/Code/Extension": 21,
+      "MacDown/Resources/Extensions": 11
+    },
+    "untracked_ignored_hidden_or_symlink_sources_in_these_roots": []
+  },
+  "corrective_commits": [
+    "4929c78",
+    "55629e7",
+    "cc358cb",
+    "8c694d7"
+  ],
+  "checks": [
+    {
+      "name": "native-intel-full",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=x86_64' ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "tests": 1476,
+      "failures": 0,
+      "skipped": 0,
+      "log": "build/SquashedPreviewAudit/Pass3/native-intel-full.log",
+      "log_sha256": "9ad0c4ce4ab4f40a0df51576d54d77d87adf99fc52a252d4eb1d6771afa44d1c",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_01-42-10-+0200.xcresult",
+      "preferences_restored_and_verified": true,
+      "result_summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "x86_64",
+              "deviceName": "My Mac",
+              "modelName": "MacBook Pro",
+              "osBuildNumber": "25G83",
+              "osVersion": "26.6.2",
+              "platform": "macOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1476,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "MacDown · Built with macOS 26.6.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1791503081.261,
+        "passedTests": 1476,
+        "result": "Passed",
+        "skippedTests": 0,
+        "startTime": 1791502930.956,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - MacDown",
+        "topInsights": [
+          {
+            "category": "Longest Test Runs",
+            "impact": "53% of duration",
+            "text": "3 longest test runs with outlier durations exceeding 5.11s (three standard deviations)"
+          }
+        ],
+        "totalTestCount": 1476
+      },
+      "lifecycle_test_sha256_at_full_run": "4a10698a13056361e5d1ce454154c19c1a34415f097bd033548fc7b45ddab669",
+      "final_test_delta": "One explicit completion assertion added after full suite; final test re-executed on Intel and ARM. Production unchanged.",
+      "process_architecture_proof": "ARCHS=x86_64 only + test runtime diagnostic architecture=x86_64 OBJC_BOOL_IS_BOOL=0"
+    },
+    {
+      "name": "ui-final-full",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDownUITests -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "tests": 13,
+      "failures": 0,
+      "skipped": 0,
+      "log": "build/SquashedPreviewAudit/Pass3/ui-final-full.log",
+      "log_sha256": "71937ae81a675c9f65301973213485f77eb4df1b3581ecbee61f44aa2e8594ed",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_01-45-37-+0200.xcresult",
+      "preferences_restored_and_verified": true,
+      "result_summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64",
+              "deviceName": "My Mac",
+              "modelName": "MacBook Pro",
+              "osBuildNumber": "25G83",
+              "osVersion": "26.6.2",
+              "platform": "macOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 13,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "MacDownUITests · Built with macOS 26.6.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1791503370.64,
+        "passedTests": 13,
+        "result": "Passed",
+        "skippedTests": 0,
+        "startTime": 1791503137.555,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - MacDownUITests",
+        "topInsights": [],
+        "totalTestCount": 13
+      }
+    },
+    {
+      "name": "html-style-intel-final-green",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=x86_64' ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -only-testing:MacDownTests/MPDocumentLifecycleTests/testHTMLExportIncludesSelectedCustomStyleRegardlessOfStringAllocation",
+      "exit_code": 0,
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "log": "build/SquashedPreviewAudit/Pass3/html-style-intel-final-green.log",
+      "log_sha256": "07985c39b47ed6e02008dc4e73e3c1be63a5f4ea5dfca96bcb0f32bb98c0937a",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_01-44-59-+0200.xcresult",
+      "preferences_restored_and_verified": true,
+      "result_summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "x86_64",
+              "deviceName": "My Mac",
+              "modelName": "MacBook Pro",
+              "osBuildNumber": "25G83",
+              "osVersion": "26.6.2",
+              "platform": "macOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "MacDown · Built with macOS 26.6.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1791503110.027,
+        "passedTests": 1,
+        "result": "Passed",
+        "skippedTests": 0,
+        "startTime": 1791503099.603,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - MacDown",
+        "topInsights": [],
+        "totalTestCount": 1
+      }
+    },
+    {
+      "name": "html-style-arm-final-green",
+      "command": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -only-testing:MacDownTests/MPDocumentLifecycleTests/testHTMLExportIncludesSelectedCustomStyleRegardlessOfStringAllocation",
+      "exit_code": 0,
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "log": "build/SquashedPreviewAudit/Pass3/html-style-arm-final-green.log",
+      "log_sha256": "c93bd449d4c60db74c3cb7826586e11d10d41f981a36404eac094a7824b9a6ad",
+      "xcresult": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_01-45-16-+0200.xcresult",
+      "preferences_restored_and_verified": true,
+      "result_summary": {
+        "devicesAndConfigurations": [
+          {
+            "device": {
+              "architecture": "arm64",
+              "deviceName": "My Mac",
+              "modelName": "MacBook Pro",
+              "osBuildNumber": "25G83",
+              "osVersion": "26.6.2",
+              "platform": "macOS"
+            },
+            "expectedFailures": 0,
+            "failedTests": 0,
+            "passedTests": 1,
+            "skippedTests": 0,
+            "testPlanConfiguration": {
+              "configurationId": "1",
+              "configurationName": "Test Scheme Action"
+            }
+          }
+        ],
+        "environmentDescription": "MacDown · Built with macOS 26.6.2",
+        "expectedFailures": 0,
+        "failedTests": 0,
+        "finishTime": 1791503125.922,
+        "passedTests": 1,
+        "result": "Passed",
+        "skippedTests": 0,
+        "startTime": 1791503116.661,
+        "statistics": [],
+        "testFailures": [],
+        "title": "Test - MacDown",
+        "topInsights": [],
+        "totalTestCount": 1
+      }
+    },
+    {
+      "name": "inline-contracts",
+      "command": "python3 MacDownTests/BuildTools/inline_transactions_tests.py",
+      "exit_code": 0,
+      "contracts": 65,
+      "log": "build/SquashedPreviewAudit/Pass3/inline.log",
+      "log_sha256": "47c55aa471153f7d20930c27eea8aa29ce14bfd6145a0e616562ea9a5c81c2a7"
+    },
+    {
+      "name": "javascript-syntax",
+      "command": "node --check MacDown/Resources/Extensions/preview-edit.js",
+      "exit_code": 0,
+      "source_sha256": "72bb762a66c365f6ea8895882fea2f560a731aa7a8eddb6308a202605bcf7cf0",
+      "executed_during_this_pass": true
+    },
+    {
+      "name": "release-universal",
+      "command": "xcodebuild build -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -configuration Release -derivedDataPath build/SquashedPreviewAudit/Release -destination 'generic/platform=macOS' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+      "exit_code": 0,
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binary_sha256": "9130ea95276162a46e4bfe16467b24432283aae3bc99b6f7b4eb7c49bf4850dd",
+      "bundle_preview_script_sha256": "72bb762a66c365f6ea8895882fea2f560a731aa7a8eddb6308a202605bcf7cf0",
+      "log": "build/SquashedPreviewAudit/Pass3/release-final-universal.log",
+      "log_sha256": "2401fe0414205ef963d722329a0211dee4e4e4b749baa40868ed01d6f967d0d7"
+    },
+    {
+      "name": "local-signature",
+      "command": "codesign --verify --deep --strict --verbose=2 'build/SquashedPreviewAudit/Release/Build/Products/Release/MacDown 3000.app'",
+      "exit_code": 0,
+      "log": "build/SquashedPreviewAudit/Pass3/release-final-signature.log",
+      "log_sha256": "c147c74a6b71a4adbc2caee9f3e70e4c446c659f4b3516167e1e0f40b3932691",
+      "distribution_notarization_claimed": false
+    }
+  ],
+  "reproductions": [
+    {
+      "name": "source-heading-red",
+      "log": "build/SquashedPreviewAudit/Pass3/source-heading-red.log",
+      "sha256": "35fd06a467fc1775120cff53f4e5785eeddef45a74c0d04609ffbfdce0ee8a99",
+      "last_test_total": "Executed 1 test, with 18 failures (0 unexpected) in 0.113 (0.120) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 65
+    },
+    {
+      "name": "document-red",
+      "log": "build/SquashedPreviewAudit/Pass3/document-red.log",
+      "sha256": "6144bf9e1d6054cce6f42ebf50c9089b62fdcf68f0730576004e6e0c844f92e4",
+      "last_test_total": "Executed 2 tests, with 9 failures (0 unexpected) in 2.143 (2.154) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 65
+    },
+    {
+      "name": "count-red",
+      "log": "build/SquashedPreviewAudit/Pass3/count-red.log",
+      "sha256": "c7cbe536183fe53154daca47466d053b4af32374160936d7ac0bec592e7464dd",
+      "last_test_total": "Executed 1 test, with 5 failures (0 unexpected) in 1.186 (1.192) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 65
+    },
+    {
+      "name": "context-print-green",
+      "log": "build/SquashedPreviewAudit/Pass3/context-print-green.log",
+      "sha256": "e3e049b6b0b27216f9ab23af7205475678bf32dcb8aca2a0fdf699e63532d2b5",
+      "last_test_total": "Executed 22 tests, with 0 failures (0 unexpected) in 2.405 (2.425) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 0
+    },
+    {
+      "name": "count-green",
+      "log": "build/SquashedPreviewAudit/Pass3/count-green.log",
+      "sha256": "da68c1635220bcd72244b57ec7977f3d6c12b836924249633ec2c3384acef788",
+      "last_test_total": "Executed 15 tests, with 0 failures (0 unexpected) in 2.130 (2.140) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 0
+    },
+    {
+      "name": "html-style-intel-forced-red",
+      "log": "build/SquashedPreviewAudit/Pass3/html-style-intel-forced-red.log",
+      "sha256": "46c801e504e147a6240cf7cd97c2771c3ead0afe65daeda611ba28469a27e3f4",
+      "last_test_total": "Executed 1 test, with 4 failures (0 unexpected) in 3.564 (3.589) seconds",
+      "preferences_restored_and_verified": true,
+      "exit_code": 65
+    }
+  ],
+  "environment": {
+    "macOS": "26.6.2",
+    "macOS_build": "25G83",
+    "Xcode": "26.2 (17C52)",
+    "host_architecture": "arm64",
+    "Intel_runtime": "Rosetta, forced x86_64 executable",
+    "UI_runtime": "arm64"
+  },
+  "confirmed_open_defects": [],
+  "determining_open_hypotheses": [],
+  "limits": [
+    "Scope is merged code and necessary dependencies, not full repository.",
+    "Intel tested under Rosetta, not physical Intel hardware.",
+    "Other macOS versions not exercised.",
+    "Legacy WebView and local-script same-context trust remain existing architecture; no claim of isolation against already executing local scripts.",
+    "Local ad-hoc signature only; no Developer ID distribution or notarization validation."
+  ],
+  "installation_performed": false,
+  "push_performed": false,
+  "verdict": "ready within verified local scope"
+}

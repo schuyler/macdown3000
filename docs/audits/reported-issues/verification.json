@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-08",
+  "baseline": "ac99569",
+  "tested_source_revision": "dd59dd8aa540823726f55b54a0b01575f18baf16",
+  "runtime": "macOS 26.6.2 (25G83), Apple Silicon, Xcode 26.2",
+  "binary_architectures": [
+    "x86_64",
+    "arm64"
+  ],
+  "executed_architecture": "arm64",
+  "checks": [
+    {
+      "log": "build/ReportedBugs/native-all.log",
+      "sha256": "4834cb26e6de2f0d04bb2b8ef426599326fcd9c95fbde467e7a6a1e60cd15665",
+      "tests": 1441,
+      "failures": 0,
+      "duration_seconds": 39.251,
+      "exit_status": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_09-34-39-+0200.xcresult",
+      "preferences_restored_and_verified": true
+    },
+    {
+      "log": "build/ReportedBugs/ui-final-all.log",
+      "sha256": "6216833650b03ff2cb9ffe235d2555ca28df3dc8f935cf53b2a76f61747dd45d",
+      "tests": 7,
+      "failures": 0,
+      "duration_seconds": 68.109,
+      "exit_status": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_09-35-58-+0200.xcresult",
+      "preferences_restored_and_verified": true
+    },
+    {
+      "log": "build/ReportedBugs/headings-green.log",
+      "sha256": "5678ebe9683e05681a9b1fd758139894fdefd325724a6d4605e0d882bd940f0f",
+      "styles": 11,
+      "headings": 66,
+      "failures": 0,
+      "exit_status": 0
+    }
+  ],
+  "fixes": {
+    "575": "2126eb5",
+    "584": "8083242",
+    "589": "df34d27",
+    "594": "f4a7ef1"
+  },
+  "recovery_tests_commit": "dd59dd8",
+  "file_sha256": {
+    ".github/workflows/test.yml": "95a995d961797648b160d44b691ef07ad2eca8823a51abff5641ebe0e706236e",
+    "MacDown/Code/Application/MPMainController.m": "348fe5b6a2c6308f90ba02017bdce0621b09b9b33090f926c7925d0a57bb2dde",
+    "MacDown/Code/Document/MPDocument.h": "bb4a26c1ff81e79a0e5a40df9d049653feaf1c3fe2c59f4a54764152e77edaf7",
+    "MacDown/Code/Document/MPDocument.m": "be90a8a22c4d488f4b5b9d11625027d6087e14a24189c46fc15ef18d08145bec",
+    "MacDown/Localization/Base.lproj/MainMenu.xib": "084b8162a19dd0da3689a63bb02462e5828655b45d56648a5e0b84470b92e956",
+    "MacDown/Resources/Styles/GitHub.css": "4bbd7a359fb7e43bc50fa007822877fb74b3ab95d738b0d9fbf3897bdb7774fc",
+    "MacDownTests/BuildTools/heading_spacing_tests.m": "435855db219f52b1db5818b983c9117de8a22d6004bc28bc6d9ef32ecb2ec9e3",
+    "MacDownTests/BuildTools/heading_spacing_tests.py": "b3abee946baf3d919424f03b6f6945549de34f413091303072e7890110ec5d6c",
+    "MacDownTests/MPDocumentIOTests.m": "2dedecee50467cc5fe442860d799895b6f490a93edb73573a2447e42b37df905",
+    "MacDownTests/MPDocumentLifecycleTests.m": "60f03775b3f42f763ac1b58f3fe36c54c987c91d7179518713f6bda0f63b021e",
+    "MacDownTests/MPMainControllerFolderTests.m": "3d4c91f0230bac7a1eadb0e220a83f2daf610bf145bbce4c7a2fca48421870d9",
+    "MacDownUITests/MacDownUITests.swift": "4c4b8a9009e76278e529d6e32f02ed8ea545aebfbad76be81cb44a60d32cafe7"
+  },
+  "red_proofs": {
+    "folder-red.log": "07cb350ac14ea1fa2c63cab269ad12dc876771f3749f6dd786685929540b4a72",
+    "headings-red.log": "22d43b670f8db0177cedf43465e2053c5ba55bb0e0c841819a3ad350a344449d",
+    "find-ui-real-red-restoration.log": "91657194003bf7ef99b1b7821721846072c7c99f33decdaa022bcd02134c690e",
+    "find-prism-draft-baseline.log": "26c99bda0198ba1fbde6d48d7ff7fa0b62bfed881b22dbc22ba955a1b1e3c95f"
+  },
+  "red_proof_scope": "Only the targeted folder handler, heading metrics, missing preview Find interface, and missing first-render Prism grammar/tokens constitute red proof; unrelated exploratory fixture failures in mixed logs are excluded.",
+  "unresolved": {
+    "586": "not reproduced with native draft autosave and normal quit/relaunch, autosave and window restoration enabled",
+    "587": "Word icon observed; LaunchServices has different handlers for two markdown UTIs plus a third com.unknown.md type associated with Notion; no default associations changed"
+  },
+  "deferred_features": [
+    573,
+    576,
+    581,
+    588,
+    590,
+    596
+  ],
+  "installed_application_updated": false,
+  "remote_ci_run": false,
+  "new_commits_pushed": false
+}

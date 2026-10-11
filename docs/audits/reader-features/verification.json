@@ -1,0 +1,181 @@
+{
+  "date": "2026-10-08",
+  "baseline": "81641306f65920483559a0ee0cad69f17b2dae52",
+  "reviewed_head": "5e0da789c07019974d6cadf1a0c02bd510c8875a",
+  "branch": "codex/reader-features",
+  "scope": "Ajouts et modifications des fonctionnalités; aucune recertification du dépôt entier",
+  "changed_files_excluding_this_report": 182,
+  "pinned_theme_asset_count": 148,
+  "environment": {
+    "macOS": "26.6.2 (25G83)",
+    "host_architecture": "arm64",
+    "Xcode": "26.2",
+    "built_architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "executed_architecture": "arm64"
+  },
+  "results": [
+    {
+      "kind": "native",
+      "status": "passed",
+      "count": 1448,
+      "log": "build/ReaderFeatures/native-complete.log",
+      "log_sha256": "fc128642fb37296ced70a82b5f2a803f725a8b073b53a34e429b8b7028017792",
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.08_10-40-44-+0200.xcresult"
+    },
+    {
+      "kind": "ui",
+      "status": "passed",
+      "count": 10,
+      "log": "build/ReaderFeatures/ui-complete.log",
+      "log_sha256": "7913c0b3860164540ab5ad40b2410a47f76db6d5f01ec6a5f1ff0fe51ef4b995",
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.08_10-37-38-+0200.xcresult"
+    },
+    {
+      "kind": "heading_styles",
+      "status": "passed",
+      "count": 48,
+      "log": "build/ReaderFeatures/heading-spacing.log",
+      "log_sha256": "b33de56ee8f748989a84494c36388f3cd9623f15050ec4aa41af291cf00501c2"
+    },
+    {
+      "kind": "callout_contracts",
+      "status": "passed",
+      "count": null,
+      "log": "build/ReaderFeatures/callouts-final.log",
+      "log_sha256": "4d8d6d6ee0cc9747b50f522e0fbf3e5d3a11a5e0fb35585f1c920e1f5f075fa3"
+    },
+    {
+      "kind": "community_theme_assets",
+      "status": "passed",
+      "count": 148,
+      "log": "build/ReaderFeatures/themes-release.log",
+      "log_sha256": "f62c24d507077ca1de11aa7214d72e3b4c67fb5faf99401e5405063d23a285ab"
+    },
+    {
+      "kind": "debug_theme_assets",
+      "status": "passed",
+      "count": 148,
+      "log": "build/ReaderFeatures/themes-bundle.log",
+      "log_sha256": "f62c24d507077ca1de11aa7214d72e3b4c67fb5faf99401e5405063d23a285ab"
+    },
+    {
+      "kind": "existing_render_suites",
+      "status": "passed",
+      "count": 4,
+      "log": "build/ReaderFeatures/render-contracts-final.log",
+      "log_sha256": "2d01d4540a6c0c325bad4b7fed79ac6f31e380356bb8b14c018c5d6095cdcd63"
+    },
+    {
+      "kind": "universal_products",
+      "status": "passed",
+      "count": 6,
+      "log": "build/ReaderFeatures/products-verification.log",
+      "log_sha256": "23eae6aa7dc2d0c9ab6f4eeb14b08095700dfcd7227e16c95580403982683fd3"
+    },
+    {
+      "kind": "release_build",
+      "status": "passed",
+      "count": null,
+      "log": "build/ReaderFeatures/release-build.log",
+      "log_sha256": "c202bb83d68c8b646d3187483d077e1247cbc2cd1e817355145de32b256c7cec"
+    }
+  ],
+  "heading_levels_checked": 288,
+  "callout_preparation_benchmark": {
+    "before": [
+      {
+        "lines": 2000,
+        "seconds": 0.040966
+      },
+      {
+        "lines": 10000,
+        "seconds": 0.689066
+      },
+      {
+        "lines": 20000,
+        "seconds": 2.743583
+      }
+    ],
+    "after": [
+      {
+        "lines": 2000,
+        "seconds": 0.012343
+      },
+      {
+        "lines": 10000,
+        "seconds": 0.015295
+      },
+      {
+        "lines": 20000,
+        "seconds": 0.020828
+      }
+    ]
+  },
+  "commits": [
+    {
+      "sha": "f02df4043a8f6afd7892865b4ebe8ad6293067a4",
+      "title": "feat(markdown): render Quarto callouts through the shared Markdown pipeline"
+    },
+    {
+      "sha": "29cd57a496fd7cb07baa2792233475fb841992e1",
+      "title": "feat(themes): bundle 37 coordinated community palettes offline"
+    },
+    {
+      "sha": "eab1b6d6d2744fe1c8133fa226155984b6d5cdd4",
+      "title": "feat(preview): optionally wrap long code lines across reader consumers"
+    },
+    {
+      "sha": "89583c156f02b30aef76f2d44b1c8244e12223fe",
+      "title": "feat(appearance): allow system light or dark application chrome"
+    },
+    {
+      "sha": "c745e0a6c174f6b8068984af4a13b224ed323300",
+      "title": "fix(callouts): expose closed details content in printed PDFs"
+    },
+    {
+      "sha": "2c0bcb03980482b469e55561fefdd59ce2f3786a",
+      "title": "feat(reader): show independent live reading position for either pane"
+    },
+    {
+      "sha": "b7c4a717d614451afdd4f29aa827ea1cdc17e7a9",
+      "title": "fix(reader): keep progress updates live during event tracking"
+    },
+    {
+      "sha": "06b33916059039e45277b66b6d58319066088d45",
+      "title": "fix(callouts): avoid rescanning every literal range for each line"
+    },
+    {
+      "sha": "615196c5a43c4a1c73e0c7ec9476c09437c14c94",
+      "title": "fix(settings): display the reading position control as a native checkbox"
+    },
+    {
+      "sha": "e7fb9aba5461d83141b3aed7bf0bdb2f3b319a61",
+      "title": "test(reader): cover settings restoration scrolling and shared renderer consumers"
+    },
+    {
+      "sha": "04927673e087500256e2f96787bd84b99bd61d87",
+      "title": "fix(reader): track unphased wheel events at pane boundaries"
+    },
+    {
+      "sha": "5e0da789c07019974d6cadf1a0c02bd510c8875a",
+      "title": "test(quicklook): preserve the preferences contract in theme fixtures"
+    }
+  ],
+  "inventory_sha256": "1cae587a6180733a54dbbf778ef8f221c72baea2c3c43671e3061325a10bbc70",
+  "limits": [
+    "Sous-ensemble Quarto seulement",
+    "Exécution Intel et anciens WebKit non vérifiés",
+    "Apparence de barre de menus globale non certifiée séparément",
+    "Palettes non certifiées WCAG",
+    "Nouvelles traductions non fournies",
+    "Signature ad hoc, aucune notarisation"
+  ],
+  "delivery": {
+    "github_push": false,
+    "applications_install": false,
+    "release_app": "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app"
+  }
+}

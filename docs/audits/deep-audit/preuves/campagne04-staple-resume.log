@@ -1,0 +1,7 @@
+PASS resume after notes failure: one ticket, retained submission, verified checksum/signature
+PASS resume after publish failure: one ticket, retained submission, verified checksum/signature
+PASS rejected before upload: checksum Download and verify DMG from release
+PASS rejected before upload: signature Download and verify DMG from release
+PASS rejected before upload: ticket Staple notarization ticket
+PASS rejected before upload: submission Verify notarization status (with polling)
+PASS final native verification remains mandatory; fixture does not claim native notarization validation

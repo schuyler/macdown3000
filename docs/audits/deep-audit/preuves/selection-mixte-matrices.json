@@ -1,0 +1,90 @@
+{
+  "new_dom_cases": {
+    "inline_subsets": {
+      "styles": [
+        "code",
+        "underline",
+        "strike",
+        "italic",
+        "bold",
+        "link"
+      ],
+      "subsets": 64,
+      "parser_modes": [
+        false,
+        true
+      ],
+      "themes": [
+        "GitHub2",
+        "Github2 (dark)"
+      ],
+      "cases": 256
+    },
+    "unicode": {
+      "line_types": [
+        "paragraph",
+        "h1",
+        "h2",
+        "quote",
+        "unordered",
+        "ordered",
+        "tasks"
+      ],
+      "containers": [
+        "none",
+        "callout-note",
+        "toggle"
+      ],
+      "line_endings": [
+        "LF",
+        "CRLF"
+      ],
+      "cases": 42
+    },
+    "mixed": {
+      "line_types": [
+        "paragraph",
+        "quote",
+        "h1"
+      ],
+      "selections": [
+        "plain and bold",
+        "styled words separated by whitespace",
+        "repeated word"
+      ],
+      "parser_modes": [
+        false,
+        true
+      ],
+      "cases": 18
+    },
+    "whitespace": {
+      "cases_per_mode": [
+        "literal space",
+        "literal double space",
+        "entity with lookalike attribute rejected",
+        "normalized tab rejected"
+      ],
+      "parser_modes": [
+        false,
+        true
+      ],
+      "cases": 8
+    }
+  },
+  "new_toggle_transitions": {
+    "inline_states": 64,
+    "actions": [
+      "bold",
+      "italic",
+      "underline",
+      "strike",
+      "code"
+    ],
+    "containers": 11,
+    "successive_toggles": 2,
+    "cases": 7040
+  },
+  "total_new_parametrized_cases": 7364,
+  "scope": "Finite declared matrices; not exhaustive over arbitrary input documents."
+}

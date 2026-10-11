@@ -54,14 +54,14 @@ jobs:
             local checksum_url="https://github.com/${{ github.repository }}/releases/download/${tag_name}/${dmg_name}.sha256"
 
             # Export variables with prefix
-            eval "${OUTPUT_VAR_PREFIX}_VERSION='$version'"
-            eval "${OUTPUT_VAR_PREFIX}_TAG_NAME='$tag_name'"
-            eval "${OUTPUT_VAR_PREFIX}_PUBLISHED_AT='$published_at'"
-            eval "${OUTPUT_VAR_PREFIX}_RELEASE_URL='$release_url'"
-            eval "${OUTPUT_VAR_PREFIX}_DMG_NAME='$dmg_name'"
-            eval "${OUTPUT_VAR_PREFIX}_DMG_SIZE_MB='$dmg_size_mb'"
-            eval "${OUTPUT_VAR_PREFIX}_DOWNLOAD_URL='$download_url'"
-            eval "${OUTPUT_VAR_PREFIX}_CHECKSUM_URL='$checksum_url'"
+            printf -v "${OUTPUT_VAR_PREFIX}_VERSION" '%s' "$version"
+            printf -v "${OUTPUT_VAR_PREFIX}_TAG_NAME" '%s' "$tag_name"
+            printf -v "${OUTPUT_VAR_PREFIX}_PUBLISHED_AT" '%s' "$published_at"
+            printf -v "${OUTPUT_VAR_PREFIX}_RELEASE_URL" '%s' "$release_url"
+            printf -v "${OUTPUT_VAR_PREFIX}_DMG_NAME" '%s' "$dmg_name"
+            printf -v "${OUTPUT_VAR_PREFIX}_DMG_SIZE_MB" '%s' "$dmg_size_mb"
+            printf -v "${OUTPUT_VAR_PREFIX}_DOWNLOAD_URL" '%s' "$download_url"
+            printf -v "${OUTPUT_VAR_PREFIX}_CHECKSUM_URL" '%s' "$checksum_url"
 
             return 0
           }
@@ -70,7 +70,8 @@ jobs:
           STABLE_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
 
           # Get latest pre-release
-          PRERELEASE_TAG=$(gh release list --exclude-drafts --limit 1 --json tagName,isPrerelease --jq '.[] | select(.isPrerelease == true) | .tagName' | head -1)
+          PRERELEASE_TAG=$(gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq '[.[][] | select(.draft == false and .prerelease == true)] | sort_by(.published_at) | reverse | .[0].tag_name // empty')
 
           # Process stable release if it exists
           HAS_STABLE=false

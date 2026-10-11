@@ -1,0 +1,224 @@
+{
+  "date": "2026-10-09",
+  "baseline": "0669bb19011016673b24962b10f45660e2c914ee",
+  "verified_code_commit": "bfad5221c7500272341dc217fb3fd2daa7b61907",
+  "scope": "Preview block conversions, localized callout titles and disclosure state; not an exhaustive project audit",
+  "platform": {
+    "OS": "macOS 26.6.2 (25G83)",
+    "test_architecture": "arm64",
+    "release_architectures": [
+      "x86_64",
+      "arm64"
+    ]
+  },
+  "source_sha256": {
+    "MacDown/Code/Document/MPDocument.m": "22442171ac944ebabc2efab719ce2df36268189d14ed49841f4d6a7a620d1f11",
+    "MacDown/Code/Document/MPRenderer.h": "340a431a7fd603006a7597f83b6ac5e79151597e84a40934b3a8c96f686ebdbf",
+    "MacDown/Code/Document/MPRenderer.m": "370444d66594a6b5a9c6b4c751e12c5a8b3114b2e95d10da590d2f054385db7c",
+    "MacDown/Localization/ar.lproj/Localizable.strings": "ac55dc60694b9be19d5d02d372d97f24d43dbbea8b0f78f4cae44d68ae73c46d",
+    "MacDown/Localization/cs.lproj/Localizable.strings": "3abbf1d39cc9065f94488e29fa1c29d8816d873115414c3c8911f81468ab8386",
+    "MacDown/Localization/da-DK.lproj/Localizable.strings": "6beaa8fd1bbaef769dcc5e8cf8280550e4cec2c201ef3a6a8edf07133c6369b0",
+    "MacDown/Localization/da.lproj/Localizable.strings": "bce0b037611b4a30836a9c964acab0a460d3a4768003e5debbcfa64085b105e1",
+    "MacDown/Localization/de.lproj/Localizable.strings": "b6870d78a464d64a60a29b0ef49efc06a24ebbd7439a3ad3ac15e59127423b30",
+    "MacDown/Localization/en.lproj/Localizable.strings": "81a9dd66fa6108874ab1d3123db0785e55b8a3c128af59bceb045d4b63596fa7",
+    "MacDown/Localization/es.lproj/Localizable.strings": "0309201b8f54e11cd2ab6ff35a0b6cf2480325ab04e797c5a548103499143481",
+    "MacDown/Localization/et.lproj/Localizable.strings": "34b88967db8ac8821051ac8dddbf725b0eee873f67ee773eb8bbea68e2990b07",
+    "MacDown/Localization/fi.lproj/Localizable.strings": "e0013f6627e4455793d9c91797bc60816525747f02c2f6fee09529faaf884087",
+    "MacDown/Localization/fr.lproj/Localizable.strings": "1d138dce5a23d28c14dbfaf69325d2779ad1592f114b788284d2fb02348d0bf9",
+    "MacDown/Localization/he.lproj/Localizable.strings": "e308e05d3102279c5bfe15106ec8dfc32cd4ac67cf3ef5483a1ead16e8646721",
+    "MacDown/Localization/hi.lproj/Localizable.strings": "e823653999ba524a88cd4e15b6ff81e6460fa382ce370bf1d61ee4c462629779",
+    "MacDown/Localization/is.lproj/Localizable.strings": "3424eedfd3670a98723f741d512ac05476aca597f6c508c04d0dfa2781bd1036",
+    "MacDown/Localization/it-IT.lproj/Localizable.strings": "1faa431b76341affbba874a5869368df00888d67c222e2789279f25c27ab12bc",
+    "MacDown/Localization/ja.lproj/Localizable.strings": "26522ec48065beb06abbb8dfdf04ac1cf75d3c81c949bc59828ff305c7fc798e",
+    "MacDown/Localization/ko-KR.lproj/Localizable.strings": "c7179c7d803ce7e64ca4ea756fea979d8444cfd12dcd1f6e8140ed9de53ba8e4",
+    "MacDown/Localization/nb-NO.lproj/Localizable.strings": "afd75c2aee838e5c4a308fa56217c88a7f58a220b9a68e3d85ff2e8c1e423253",
+    "MacDown/Localization/nl-NL.lproj/Localizable.strings": "d11150c2611e87861d6ca06754fe2531b1aebc44bf4927cf69dac8b8146f4f1e",
+    "MacDown/Localization/pt-BR.lproj/Localizable.strings": "321bc23dfb9158f72be94909414964400e0de72a281cd57393fff4ba67ac7031",
+    "MacDown/Localization/ru-RU.lproj/Localizable.strings": "6e8560bdaa2f2520deb0e441ea76e21921520c7011e879c39ad8515e6e6fe4fa",
+    "MacDown/Localization/sk.lproj/Localizable.strings": "e475d556a6a40b1f3be9518ae517cf32a8e8ba8e512a57877adf565800dc9ee4",
+    "MacDown/Localization/sv.lproj/Localizable.strings": "69f7bf3df66c76c6304dc49fd3ce8c6bbd462fb166890200b9eb3223ef359a61",
+    "MacDown/Localization/tr.lproj/Localizable.strings": "188e286c71ff5eb52c103cc145a79663340cdac47bce1d91e7defdfe97cbb169",
+    "MacDown/Localization/uk.lproj/Localizable.strings": "1142fc8101f95fcb372b1e1850685c91a661e426eaf13c5c73672d87bee6dd61",
+    "MacDown/Localization/zh-Hans.lproj/Localizable.strings": "a5266099678453811da4f61f58888c9223c9b2a50ba4891a27df094ddfebaa18",
+    "MacDown/Localization/zh-Hant.lproj/Localizable.strings": "8c74181c0e288c21330e3887c0b45d73d306f8dadc23bdcdd804ad2f831ca390",
+    "MacDown/Resources/Extensions/preview-edit.js": "d544a6ae01b1e1ec91202cd11cde66adf06422507025c24451a9489de710f8bd",
+    "MacDownCore/MPMarkdownPreprocessor.h": "36506bedfbadca85128f3055bc00caee8eed536e8035f9da2d1220ba9d2837cb",
+    "MacDownTests/MPDocumentLifecycleTests.m": "af98f65156b8d27682113dd72e06d89468ee412d47d42caaa2961bb94f1eccc9",
+    "MacDownTests/MPMarkdownRenderingTests.m": "4129029886fa1175678bd199768e200ebedc5ff722a96a67cb2ac90d2bf9ff31",
+    "MacDownTests/MPUtilityTests.m": "4306415c8ac9cbcb0732269792a384808c6f9558ea5999df9ee671ea4bb93fb7",
+    "MacDownUITests/MacDownUITests.swift": "24c3e77d491e5f386d9aafc56390845b960060f85b68477185cd2e2ab1f808fe"
+  },
+  "runs": [
+    {
+      "log": "build/PreviewBlockTransitions/callout-native-red.log",
+      "sha256": "07753c57b7836b062a52c8173d7777d140081e7e0d7b35cdf09cc1e3d882f8ff",
+      "kind": "red",
+      "tests": 6,
+      "failures": 28,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_08-30-36-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/block-native-red.log",
+      "sha256": "f591ee5689e0ec12a7509d16da8dd086dfb2a50e45de850290c74b7598dbfcf7",
+      "kind": "red",
+      "tests": 2,
+      "failures": 7,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_08-47-45-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/block-ui-red.log",
+      "sha256": "d4b74ba4c1a4757f0811b774c4a36c44663eb486afd437a643717e782fb36070",
+      "kind": "red_with_fixture_error",
+      "tests": 2,
+      "failures": 2,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_08-32-49-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/callout-ownership-red.log",
+      "sha256": "eafb31f02964e9ba8489464206b8e1b09eae1a1e440198abce4e5b9aa4988c64",
+      "kind": "red",
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_08-52-39-+0200.xcresult",
+      "isolated_session_restored": true,
+      "tests": 1,
+      "failures": 1
+    },
+    {
+      "log": "build/PreviewBlockTransitions/code-mapping-native-red.log",
+      "sha256": "63e90f2b4143afaec83bbe82916e5eefacfb0522e0600d37bee200b5ce3f1f29",
+      "kind": "red_baseline_mapping_reintroduced",
+      "tests": 1,
+      "failures": 8,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-15-42-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/empty-quote-red.log",
+      "sha256": "8cac005424ba3698521f69b338f96bfcef58f36756ba30f261097b6d6163640b",
+      "kind": "red",
+      "tests": 1,
+      "failures": 4,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-39-34-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/nontext-code-red.log",
+      "sha256": "f75b2aeda17ff3db34b0ff57ec3f10d764cc062cfc4022e0ceeb223839f400a9",
+      "kind": "red",
+      "tests": 1,
+      "failures": 4,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-50-28-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/empty-quote-green-final.log",
+      "sha256": "c565cff6b3e3a41a78cbbaf10220a1749e960e4906405e4436299d83b0ac9a17",
+      "kind": "green_targeted",
+      "tests": 1,
+      "failures": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-51-24-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/code-safeguards-green.log",
+      "sha256": "0417da5d58ce173b679bdc642ae3a1089e1625e60f7659ada39f1f66f40cbfbe",
+      "kind": "green_targeted",
+      "tests": 2,
+      "failures": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-51-59-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/native-delivery-final.log",
+      "sha256": "44c92392aec7cec2835abf57f2a5f03d7fb926451b19896461a0e20efe6c39cb",
+      "kind": "green_full_native",
+      "tests": 1491,
+      "failures": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.09_09-52-19-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/ui-full.log",
+      "sha256": "77da92183022a52999b5e917043e44a71df56db642e1e311c87c61048d3925c3",
+      "kind": "full_ui_with_two_failures",
+      "tests": 15,
+      "failures": 2,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_09-06-10-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/ui-targeted-recheck.log",
+      "sha256": "e8fd09e787d308c84836114113b359e9d4424382004145d3bbd26e6a18bdba9a",
+      "kind": "ui_recheck",
+      "tests": 2,
+      "failures": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_09-12-17-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/ui-delivery-final.log",
+      "sha256": "6b3f3a07ccaa2ca8ac49ba306f025b734652d0278ad0e6b67657e4b9980a591c",
+      "kind": "green_targeted_ui",
+      "tests": 2,
+      "failures": 0,
+      "xcresult": "build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.09_09-55-26-+0200.xcresult",
+      "isolated_session_restored": true
+    },
+    {
+      "log": "build/PreviewBlockTransitions/release-delivery-final.log",
+      "sha256": "498fe40bd7f2d86845438668f8704c7eb72b17cd463f12dafe15dd6cd7004810",
+      "kind": "build"
+    }
+  ],
+  "ui_coverage": {
+    "distinct_passing_scenarios": 15,
+    "names": [
+      "testAppLaunchesWithWindow",
+      "testCanTypeInEditor",
+      "testEditorTextViewExists",
+      "testFindFromPreviewOpensRenderedTextSearch",
+      "testNormalTextToolbarRemovesCurrentHeadingAndSupportsUndo",
+      "testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText",
+      "testPreviewDoubleClickEditingUpdatesSourceAndUndo",
+      "testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor",
+      "testPreviewPaneExists",
+      "testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor",
+      "testReaderModeAppliesToEveryNewWindowAndKeepsProgressVisible",
+      "testReaderSettingsCanBeSelectedThroughPreferences",
+      "testReadingPositionUpdatesDuringEditorAndPreviewWheelScrolling",
+      "testSavedDocumentSurvivesNormalQuitWithUnsavedEdits",
+      "testUntitledDocumentSurvivesNormalQuitAndRelaunch"
+    ],
+    "qualification": "Full UI run: 13/15 passed. Code test had an AX fixture selector error, corrected before passing recheck; reading-progress 0% timeout passed on recheck. The two block-conversion scenarios were rerun successfully on verified_code_commit. No claim of a single complete 15/15 UI run."
+  },
+  "static": {
+    "inline_contracts": 65,
+    "log": "build/PreviewBlockTransitions/inline-contracts-final.log",
+    "sha256": "47c55aa471153f7d20930c27eea8aa29ce14bfd6145a0e616562ea9a5c81c2a7",
+    "node_syntax_check": "passed",
+    "git_diff_check": "passed",
+    "plutil_localizations_valid": 26
+  },
+  "release": {
+    "app": "build/PreviewBlockTransitions/Release/Build/Products/Release/MacDown 3000.app",
+    "ad_hoc_codesign_verification": "passed",
+    "bundled_preview_script_sha256": "d544a6ae01b1e1ec91202cd11cde66adf06422507025c24451a9489de710f8bd",
+    "installed": false
+  },
+  "notes": [
+    "Earlier import compile error and incorrect DOM/newline fixture expectations are not successful business tests.",
+    "native-full.log preceded the fix that removes generated opaque attributes from snapshots; native-full-final.log passed 1489 tests before the two final additional regression tests.",
+    "Code-mapping RED temporarily restored only the baseline native mapping functions; the final source bytes were restored afterward."
+  ],
+  "commands": {
+    "native_final": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 1200 -- xcodebuild test -scheme MacDown -workspace 'MacDown 3000.xcworkspace' -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+    "UI_final": "python3 /tmp/macdown-campaign03-xctest-vault.py --execute --timeout 900 -- xcodebuild test -scheme MacDownUITests -workspace 'MacDown 3000.xcworkspace' -derivedDataPath build/AuditCampaign03 -destination 'platform=macOS,arch=arm64' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -only-testing:MacDownUITests/MacDownUITests/testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText -only-testing:MacDownUITests/MacDownUITests/testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor",
+    "release": "xcodebuild build -workspace 'MacDown 3000.xcworkspace' -scheme MacDown -configuration Release -derivedDataPath build/PreviewBlockTransitions/Release -destination 'generic/platform=macOS' 'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-",
+    "inline": "python3 MacDownTests/BuildTools/inline_transactions_tests.py",
+    "JS": "node --check MacDown/Resources/Extensions/preview-edit.js",
+    "localizations": "plutil -lint (each of the 26 MacDown/Localization/*.lproj/Localizable.strings files)",
+    "session_harness": "Private temporary harness used for this campaign; paths in commands identify the exact invocation, not a committed portable test tool."
+  }
+}

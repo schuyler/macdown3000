@@ -169,3 +169,14 @@
 "Source file does not exist" = "Bronbestand bestaat niet";
 "A file already exists at the installation path" = "Er bestaat al een bestand op het installatiepad";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Het macdown shell-hulpmiddel is geïnstalleerd in %@.\n\nOm het te gebruiken vanuit Terminal, voeg deze regel toe aan uw shell-configuratiebestand (~/.zshrc of ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Opmerking";
+"PreviewCalloutTitleTip" = "Tip";
+"PreviewCalloutTitleWarning" = "Waarschuwing";
+"PreviewCalloutTitleImportant" = "Belangrijk";
+"PreviewCalloutTitleCaution" = "Let op";
+"PreviewToggleTitle" = "Vereisten";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Kolom %lu";

@@ -164,3 +164,14 @@
 "A file already exists at the installation path" = "इंस्टॉलेशन पथ पर एक फ़ाइल पहले से मौजूद है";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown शेल उपयोगिता %@ में इंस्टॉल की गई।\n\nटर्मिनल से इसका उपयोग करने के लिए, अपनी शेल कॉन्फ़िगरेशन फ़ाइल (~/.zshrc या ~/.bash_profile) में यह पंक्ति जोड़ें:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
 
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "नोट";
+"PreviewCalloutTitleTip" = "सुझाव";
+"PreviewCalloutTitleWarning" = "चेतावनी";
+"PreviewCalloutTitleImportant" = "महत्वपूर्ण";
+"PreviewCalloutTitleCaution" = "सावधानी";
+"PreviewToggleTitle" = "पूर्वापेक्षाएँ";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "स्तंभ %lu";

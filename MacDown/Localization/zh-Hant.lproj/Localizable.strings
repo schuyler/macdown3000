@@ -166,3 +166,14 @@
 "Source file does not exist" = "來源檔案不存在";
 "A file already exists at the installation path" = "安裝路徑中已存在檔案";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown Shell 工具已安裝至 %@。\n\n若要從終端機使用它，請將此行加入您的 Shell 設定檔（~/.zshrc 或 ~/.bash_profile）：\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "說明";
+"PreviewCalloutTitleTip" = "提示";
+"PreviewCalloutTitleWarning" = "警告";
+"PreviewCalloutTitleImportant" = "重要";
+"PreviewCalloutTitleCaution" = "注意";
+"PreviewToggleTitle" = "前提條件";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "欄 %lu";

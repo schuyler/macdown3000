@@ -477,7 +477,7 @@
     XCTAssertTrue([content containsString:@"<h2 "], @"Should have h2");
     XCTAssertTrue([content containsString:@"<ul>"], @"Should have list");
     XCTAssertTrue([content containsString:@"<li>"], @"Should have list items");
-    XCTAssertTrue([content containsString:@"<pre>"] || [content containsString:@"<code>"],
+    XCTAssertTrue([content containsString:@"<pre "] || [content containsString:@"<code>"],
                   @"Should have code block");
 }
 

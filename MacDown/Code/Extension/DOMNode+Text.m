@@ -32,15 +32,7 @@ NS_INLINE MPAccumulatedTextCount MPAccumulatedTextCountZero(void)
     return MPAccumulatedTextCountMake(0, 0, 0);
 }
 
-NS_INLINE MPAccumulatedTextCount MPAccumulatedTextCountAdd(
-    MPAccumulatedTextCount lhs, MPAccumulatedTextCount rhs)
-{
-    return MPAccumulatedTextCountMake(lhs.words + rhs.words,
-                                      lhs.characters + rhs.characters,
-                                      lhs.charactersWithoutSpaces + rhs.charactersWithoutSpaces);
-}
-
-NS_INLINE MPAccumulatedTextCount MPGetStringAccumulatedTextCount(NSString *string)
+NS_INLINE MPAccumulatedTextCount MPGetStringAccumulatedTextCount(NSString *string, BOOL includeWords)
 {
     if (!string.length)
         return MPAccumulatedTextCountZero();
@@ -48,7 +40,7 @@ NS_INLINE MPAccumulatedTextCount MPGetStringAccumulatedTextCount(NSString *strin
     __block NSUInteger words = 0;
     NSStringEnumerationOptions options =
         NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired;
-    [string enumerateSubstringsInRange:NSMakeRange(0, string.length)
+    if (includeWords) [string enumerateSubstringsInRange:NSMakeRange(0, string.length)
                                options:options
                             usingBlock:^(__unused NSString *substring,
                                          __unused NSRange substringRange,
@@ -80,46 +72,103 @@ NS_INLINE MPAccumulatedTextCount MPGetStringAccumulatedTextCount(NSString *strin
                                       charactersWithoutSpaces);
 }
 
-NS_INLINE MPAccumulatedTextCount MPGetChildrenAccumulatedTextCount(DOMNode *node)
+// Inline elements do not create word boundaries. Accumulate their visible
+// text before asking Foundation to segment words; block boundaries do.
+NS_INLINE void MPFlushInlineWords(NSMutableString *text, MPAccumulatedTextCount *count)
 {
-    MPAccumulatedTextCount count = MPAccumulatedTextCountZero();
-    for (DOMNode *c = node.firstChild; c; c = c.nextSibling)
-        count = MPAccumulatedTextCountAdd(count, MPGetNodeAccumulatedTextCount(c));
-    return count;
+    if (!text.length) return;
+    count->words += MPGetStringAccumulatedTextCount(text, YES).words;
+    [text setString:@""];
 }
 
-NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *node)
+NS_INLINE BOOL MPIsTextBlockBoundary(NSString *tagName)
+{
+    static NSSet<NSString *> *blocks;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        blocks = [NSSet setWithArray:@[@"ADDRESS", @"ARTICLE", @"ASIDE", @"BLOCKQUOTE",
+            @"BR", @"CAPTION", @"DD", @"DETAILS", @"DIV", @"DL", @"DT", @"FIELDSET",
+            @"FIGCAPTION", @"FIGURE", @"FOOTER", @"FORM", @"H1", @"H2", @"H3",
+            @"H4", @"H5", @"H6", @"HEADER", @"HGROUP", @"HR", @"LI", @"MAIN",
+            @"NAV", @"OL", @"P", @"PRE", @"SECTION", @"SUMMARY", @"TABLE", @"TBODY",
+            @"TD", @"TFOOT", @"TH", @"THEAD", @"TR", @"UL"]];
+    });
+    return tagName && [blocks containsObject:tagName];
+}
+
+NS_INLINE void MPAccumulateNodeText(DOMNode *node, NSMutableString *inlineText,
+                                   MPAccumulatedTextCount *count)
 {
     switch (node.nodeType)
     {
         case 1:
         case 9:
         case 11:
+        {
+            NSString *tagName = nil;
             if ([node respondsToSelector:@selector(tagName)])
             {
-                NSString *tagName = [(id)node tagName].uppercaseString;
-                if ([tagName isEqualToString:@"SCRIPT"]
-                        || [tagName isEqualToString:@"STYLE"]
-                        || [tagName isEqualToString:@"HEAD"])
-                    return MPAccumulatedTextCountZero();
+                DOMElement *element = (DOMElement *)node;
+                NSString *controlToken = [element getAttribute:@"data-mp-preview-ui"];
+                if (controlToken.length) {
+                    DOMNodeList *metadata = [node.ownerDocument getElementsByTagName:@"meta"];
+                    for (NSUInteger i = 0; i < metadata.length; i++) {
+                        DOMElement *meta = (DOMElement *)[metadata item:(unsigned)i];
+                        if ([meta.parentElement.tagName isEqualToString:@"HEAD"] &&
+                            [[meta getAttribute:@"name"] isEqualToString:@"macdown-checkbox-token"] &&
+                            [[meta getAttribute:@"content"] isEqualToString:controlToken])
+                            return;
+                    }
+                }
+                tagName = element.tagName.uppercaseString;
+                if ([tagName isEqualToString:@"SCRIPT"] || [tagName isEqualToString:@"STYLE"] ||
+                    [tagName isEqualToString:@"HEAD"])
+                    return;
                 if ([tagName isEqualToString:@"CODE"])
                 {
-                    if ([node.parentElement.tagName isEqualToString:@"PRE"])
-                        return MPAccumulatedTextCountZero();
-                    MPAccumulatedTextCount childCount =
-                        MPGetChildrenAccumulatedTextCount(node);
-                    childCount.words = childCount.words ? 1 : 0;
-                    return childCount;
+                    if ([node.parentElement.tagName isEqualToString:@"PRE"]) return;
+                    MPFlushInlineWords(inlineText, count);
+                    // Preserve the established contract: an inline code span
+                    // with words counts as one, regardless of its text length.
+                    MPAccumulatedTextCount code = MPAccumulatedTextCountZero();
+                    NSMutableString *codeText = [NSMutableString string];
+                    for (DOMNode *child = node.firstChild; child; child = child.nextSibling)
+                        MPAccumulateNodeText(child, codeText, &code);
+                    MPFlushInlineWords(codeText, &code);
+                    count->words += code.words ? 1 : 0;
+                    count->characters += code.characters;
+                    count->charactersWithoutSpaces += code.charactersWithoutSpaces;
+                    return;
                 }
             }
-            return MPGetChildrenAccumulatedTextCount(node);
+            BOOL boundary = MPIsTextBlockBoundary(tagName);
+            if (boundary) MPFlushInlineWords(inlineText, count);
+            for (DOMNode *child = node.firstChild; child; child = child.nextSibling)
+                MPAccumulateNodeText(child, inlineText, count);
+            if (boundary) MPFlushInlineWords(inlineText, count);
+            return;
+        }
         case 3:
         case 4:
-            return MPGetStringAccumulatedTextCount(node.nodeValue);
+        {
+            MPAccumulatedTextCount text = MPGetStringAccumulatedTextCount(node.nodeValue, NO);
+            count->characters += text.characters;
+            count->charactersWithoutSpaces += text.charactersWithoutSpaces;
+            if (node.nodeValue.length) [inlineText appendString:node.nodeValue];
+            return;
+        }
         default:
-            break;
+            return;
     }
-    return MPAccumulatedTextCountZero();
+}
+
+NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *node)
+{
+    MPAccumulatedTextCount count = MPAccumulatedTextCountZero();
+    NSMutableString *inlineText = [NSMutableString string];
+    MPAccumulateNodeText(node, inlineText, &count);
+    MPFlushInlineWords(inlineText, &count);
+    return count;
 }
 
 
@@ -128,7 +177,7 @@ NS_INLINE MPAccumulatedTextCount MPGetNodeAccumulatedTextCount(DOMNode *node)
 DOMNodeTextCount MPTextCountForString(NSString *string)
 {
     MPAccumulatedTextCount accumulatedCount =
-        MPGetStringAccumulatedTextCount(string);
+        MPGetStringAccumulatedTextCount(string, YES);
     DOMNodeTextCount count;
     count.words = accumulatedCount.words;
     count.characters = accumulatedCount.characters;

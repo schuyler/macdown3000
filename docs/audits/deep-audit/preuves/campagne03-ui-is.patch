@@ -1,0 +1,22 @@
+--- a/MacDown/Localization/is.lproj/MPMarkdownPreferencesViewController.strings
++++ b/MacDown/Localization/is.lproj/MPMarkdownPreferencesViewController.strings
+@@ -8,7 +8,7 @@
+ "Gdr-Ro-ZnW.title" = "Undirstrikað";
+ 
+ /* Class = "NSButtonCell"; title = "Superscript"; ObjectID = "k2n-VN-cKT"; */
+-"k2n-VN-cKT.title" = "Neðanmálsgrein";
++"k2n-VN-cKT.title" = "Háletur";
+ 
+ /* Class = "NSButtonCell"; title = "Strikethrough"; ObjectID = "RjP-zE-c6b"; */
+ "RjP-zE-c6b.title" = "Yfirstrikað";
+--- a/MacDownTests/Localization/bundle_contracts.m
++++ b/MacDownTests/Localization/bundle_contracts.m
+@@ -44,6 +44,8 @@
+         if (!CheckBundledPreferenceLabel(app, @"zh-Hant", @"MPHtmlPreferencesViewController",
+             @"aWw-Wb-pBl", @"self.preferences.previewZoomRelativeToBaseFontSize",
+             @"依編輯器字型大小縮放預覽")) return 1;
++        if (!CheckBundledPreferenceLabel(app, @"is", @"MPMarkdownPreferencesViewController",
++            @"k2n-VN-cKT", @"self.preferences.extensionSuperscript", @"Háletur")) return 1;
+         NSDictionary *cases = @{
+             @"da": @[@"Indstillinger", @"1 ord", @"2 ord", @"5 ord"],
+             @"fi": @[@"Asetukset", @"1 sana", @"2 sanaa", @"5 sanaa"],

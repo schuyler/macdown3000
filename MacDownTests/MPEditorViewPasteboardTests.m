@@ -19,6 +19,7 @@
 #import <XCTest/XCTest.h>
 #import <CoreServices/CoreServices.h>
 #import "MPEditorView.h"
+#import "MPPreferences.h"
 
 static NSString * const kOldMarkdownPasteboardType = @"net.daringfireball.markdown";
 static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdown-interop";
@@ -26,6 +27,7 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 @interface MPEditorViewPasteboardTests : XCTestCase
 @property (strong) MPEditorView *editorView;
 @property (strong) NSPasteboard *pasteboard;
+@property BOOL savedNotionConversion;
 @end
 
 @implementation MPEditorViewPasteboardTests
@@ -33,6 +35,8 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 - (void)setUp
 {
     [super setUp];
+    self.savedNotionConversion=[MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste;
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=YES;
     self.editorView = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 500, 300)];
     self.pasteboard = [NSPasteboard pasteboardWithName:@"MPEditorViewPasteboardTestPB"];
     [self.pasteboard clearContents];
@@ -40,6 +44,7 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 
 - (void)tearDown
 {
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=self.savedNotionConversion;
     [self.pasteboard clearContents];
     self.pasteboard = nil;
     self.editorView = nil;
@@ -189,6 +194,159 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     CFStringRef ext = UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)kNewMarkdownInteropPasteboardType, kUTTagClassFilenameExtension);
     NSString *extension = (__bridge_transfer NSString *)ext;
     XCTAssertNil(extension, @"the interop type must have no registered filename extension");
+}
+
+- (NSString *)pasteExternalMarkdown:(NSString *)text
+{
+    [self.pasteboard setString:text forType:NSPasteboardTypeString];
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard type:NSPasteboardTypeString]);
+    return self.editorView.string;
+}
+
+- (void)testNotionAsidePasteRemovesFormerIndentationAndPreservesFencedMessage
+{
+    NSString *copied=@"            <aside>\n            💡\n            \n            **Consigne**\n            ```jsx\n            Bonjour,\n            \n            Message.\n            ```\n            </aside>\n";
+    NSString *expected=@"::: {.callout-tip}\n💡\n\n**Consigne**\n```jsx\nBonjour,\n\nMessage.\n```\n:::\n";
+    XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+}
+
+- (void)testNotionPastePreservesNestedListsMultipleContainersAndLineEndings
+{
+    for (NSString *ending in @[@"\n",@"\r\n"]) {
+        NSString *copied=[@"Before\n\n- Action\n    <aside>\n    ⚠️\n    - Detail\n    </aside>\n\n<aside>\nOther\n<aside>\nNested\n</aside>\n</aside>\n" stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        NSString *expected=[@"Before\n\n- Action\n    ::: {.callout-warning}\n    ⚠️\n    - Detail\n    :::\n\n::: {.callout-note}\nOther\n::: {.callout-note}\nNested\n:::\n:::\n" stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        self.editorView.string=@"";
+        XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+    }
+}
+
+- (void)testLiteralAndMalformedAsidesRemainUnchangedOnPaste
+{
+    for (NSString *source in @[@"```html\n<aside>\nExample\n</aside>\n```",@"~~~html\n<aside>\nExample\n</aside>\n~~~",@"`<aside>`",@"``\n<aside>\nExample\n</aside>\n``",@"<aside>\nUnclosed",@"</aside>\nUnmatched",@"<aside>\n<aside>\nPartial\n</aside>",@"<aside class=\"custom\">Body</aside>"]) {
+        self.editorView.string=@"";
+        XCTAssertEqualObjects([self pasteExternalMarkdown:source],source);
+    }
+}
+
+- (void)testPasteIntoExistingCodeDoesNotConvertAsides
+{
+    NSString *copied=@"<aside>\n💡\nBody\n</aside>";
+    for (NSString *prefix in @[@"```html\n",@"~~~\n",@"A `",@"A ``",@"A ``\n",@"- Action\n\n        ",@"    ",@"\t"]) {
+        self.editorView.string=prefix;
+        self.editorView.selectedRange=NSMakeRange(prefix.length,0);
+        NSString *expected=[prefix stringByAppendingString:copied];
+        XCTAssertEqualObjects([self pasteExternalMarkdown:copied],expected);
+    }
+}
+
+- (void)testPasteAtListContinuationCarriesIndentationToEveryLine
+{
+    self.editorView.string=@"- Action\n\n    ";
+    self.editorView.selectedRange=NSMakeRange(self.editorView.string.length,0);
+    XCTAssertEqualObjects([self pasteExternalMarkdown:@"<aside>\n💡\nBody\n</aside>"],@"- Action\n\n    ::: {.callout-tip}\n    💡\n    Body\n    :::");
+}
+
+- (void)testInternalMarkdownCopiesAlsoConvertAsides
+{
+    NSString *source=@"<aside>\nOriginal HTML\n</aside>";
+    [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+    XCTAssertEqualObjects([self pasteExternalMarkdown:source],@"::: {.callout-note}\nOriginal HTML\n:::");
+}
+
+- (void)testConvertedPasteReplacesOnlySelectionAndCanBeUndone
+{
+    NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,500,300) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed=NO;window.contentView=self.editorView;
+    self.editorView.allowsUndo=YES;
+    self.editorView.string=@"Before OLD after";
+    self.editorView.selectedRange=NSMakeRange(7,3);
+    XCTAssertEqualObjects([self pasteExternalMarkdown:@"<aside>\nBody\n</aside>"],@"Before \n\n::: {.callout-note}\nBody\n:::\n\n after");
+    [self.editorView.undoManager undo];
+    XCTAssertEqualObjects(self.editorView.string,@"Before OLD after");
+    window.contentView=nil;[window close];
+}
+
+- (void)testNativePasteboardReadConvertsMultipleAsidesWithRichClipboardFlavors
+{
+    NSString *source=@"# Procedure\n\n- Parent\n    - Action\n\n        <aside>\n        💡\n\n        **Consigne**\n\n        ```jsx\n        Message.\n        ```\n\n        </aside>\n\n    - Next\n\n<aside>\nNote\n</aside>";
+    self.editorView.richText=NO;
+    [self.pasteboard setString:source forType:NSPasteboardTypeString];
+    [self.pasteboard setString:@"<html><body>Rich clipboard representation</body></html>" forType:NSPasteboardTypeHTML];
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard]);
+    XCTAssertFalse([self.editorView.string containsString:@"<aside>"]);
+    XCTAssertTrue([self.editorView.string containsString:@"        ::: {.callout-tip}"]);
+    XCTAssertTrue([self.editorView.string containsString:@"        ```jsx\n        Message.\n        ```"]);
+    XCTAssertTrue([self.editorView.string hasSuffix:@"::: {.callout-note}\nNote\n:::"]);
+}
+
+- (void)testNormalPasteAndPasteMatchingStyleConvertAsidesAndSupportUndo
+{
+    NSPasteboard *board=NSPasteboard.generalPasteboard;
+    NSMutableArray *saved=[NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy=[[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data=[item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [saved addObject:copy];
+    }
+    NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,500,300) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed=NO;window.contentView=self.editorView;
+    self.editorView.richText=NO;self.editorView.allowsUndo=YES;
+    NSInteger ownedChangeCount=board.changeCount;
+    @try {
+        for (NSUInteger scenario=0;scenario<8;scenario++) {
+            [board clearContents];
+            [board setString:@"            <aside>\n            💡\n            Body\n            </aside>" forType:NSPasteboardTypeString];
+            [board setString:@"<html><body>Body</body></html>" forType:NSPasteboardTypeHTML];
+            if (scenario%4>=2) [board setData:[[board stringForType:NSPasteboardTypeString] dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+            [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=scenario<4;
+            ownedChangeCount=board.changeCount;
+            self.editorView.string=@"Before\n\nOLD\n\nAfter";
+            self.editorView.selectedRange=NSMakeRange(8,3);
+            [self.editorView.undoManager removeAllActions];
+            if (scenario%2) [self.editorView pasteAsPlainText:nil];else [self.editorView paste:nil];
+            NSString *expected=scenario<4 ? @"Before\n\n::: {.callout-tip}\n💡\nBody\n:::\n\nAfter" : @"Before\n\n            <aside>\n            💡\n            Body\n            </aside>\n\nAfter";
+            XCTAssertEqualObjects(self.editorView.string,expected);
+            [self.editorView.undoManager undo];
+            XCTAssertEqualObjects(self.editorView.string,@"Before\n\nOLD\n\nAfter");
+        }
+    } @finally {
+        if (board.changeCount==ownedChangeCount) {
+            [board clearContents];
+            if (saved.count) [board writeObjects:saved];
+        }
+        window.contentView=nil;[window close];
+    }
+}
+
+- (void)testInternalMarkdownCodeExamplesRemainLiteral
+{
+    NSString *source=@"```html\n<aside>\nExample\n</aside>\n```";
+    [self.pasteboard setString:source forType:NSPasteboardTypeString];
+    [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+    self.editorView.richText=NO;
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard]);
+    XCTAssertEqualObjects(self.editorView.string,source);
+}
+
+- (void)testDisabledConversionPreservesExternalAndInternalNativePasteboardReads
+{
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=NO;
+    NSString *source=@"<aside>\n💡\nBody\n</aside>";
+    for (NSUInteger internal=0;internal<2;internal++) {
+        for (NSUInteger typed=0;typed<2;typed++) {
+            [self.pasteboard clearContents];
+            [self.pasteboard setString:source forType:NSPasteboardTypeString];
+            if (internal) [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+            self.editorView.string=@"";
+            self.editorView.richText=NO;
+            BOOL success=typed ? [self.editorView readSelectionFromPasteboard:self.pasteboard type:NSPasteboardTypeString] : [self.editorView readSelectionFromPasteboard:self.pasteboard];
+            XCTAssertTrue(success);
+            XCTAssertEqualObjects(self.editorView.string,source);
+        }
+    }
 }
 
 @end

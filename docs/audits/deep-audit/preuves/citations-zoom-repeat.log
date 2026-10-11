@@ -1,0 +1,48 @@
+Extrait fidèle des résultats XCTest. SHA-256 du journal intégral : e8c018a7d1d7d271e6d34ab3848213d23a860a898336c15d95bde9f188d846fe
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 1 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 2 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 3 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 4 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 5 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 6 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 7 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 8 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 9 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 10 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 11 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 12 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 13 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 14 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 15 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 16 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 17 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 18 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 19 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started (Iteration 20 of 20).
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.002 seconds).
+	 Executed 520 tests, with 0 failures (0 unexpected) in 1.260 (1.349) seconds
+	 Executed 520 tests, with 0 failures (0 unexpected) in 1.260 (1.350) seconds
+	 Executed 520 tests, with 0 failures (0 unexpected) in 1.260 (1.350) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_15-03-36-+0200.xcresult
+** TEST EXECUTE SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

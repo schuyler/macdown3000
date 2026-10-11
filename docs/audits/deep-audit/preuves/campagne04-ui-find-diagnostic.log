@@ -1,0 +1,129 @@
+Private recovery vault: /Users/zydon/Library/.macdown-audit-vault.ljgq346n
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -workspace "MacDown 3000.xcworkspace" -scheme MacDownUITests -derivedDataPath build/AuditCampaign03 -destination platform=macOS,arch=arm64 CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -test-timeouts-enabled YES -maximum-test-execution-time-allowance 120 "-only-testing:MacDownUITests/MacDownUITests/testFindFromPreviewOpensRenderedTextSearch"
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = -
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-10 01:12:45.137107+0200 MacDownUITests-Runner[16419:48483912] [Default] Running tests...
+Test Suite 'Selected tests' started at 2026-10-10 01:12:45.237.
+Test Suite 'MacDownUITests.xctest' started at 2026-10-10 01:12:45.238.
+Test Suite 'MacDownUITests' started at 2026-10-10 01:12:45.238.
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' started.
+    t =     0.00s Start Test at 2026-10-10 01:12:45.238
+    t =     0.09s Set Up
+    t =     0.09s     Open app.macdown.macdown3000-debug
+    t =     0.09s         Launch app.macdown.macdown3000-debug
+    t =     0.34s             Wait for accessibility to load
+    t =     0.78s             Setting up automation session
+    t =     0.78s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.83s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     1.87s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     1.87s         Checking existence of `"editor-text-view" TextView`
+    t =     1.93s Click "editor-text-view" TextView
+    t =     1.93s     Wait for app.macdown.macdown3000-debug to idle
+    t =     1.93s     Find the "editor-text-view" TextView
+    t =     1.94s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     1.98s     Synthesize event
+    t =     2.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.32s Type 'a' key with modifiers '⌘' (0x10)
+    t =     2.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.33s     Find the "editor-text-view" TextView
+    t =     2.34s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.37s     Synthesize event
+    t =     2.43s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.44s Type '# Preview target
+
+...' into "editor-text-view" TextView
+    t =     2.44s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.44s     Find the "editor-text-view" TextView
+    t =     2.46s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.48s     Synthesize event
+    t =     3.48s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.49s Waiting 10.0s for WebView (First Match) to exist
+    t =     4.52s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =     4.53s         Checking existence of `WebView (First Match)`
+    t =     4.54s Click WebView (First Match)
+    t =     4.54s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.55s     Find the WebView (First Match)
+    t =     4.57s     Check for interrupting elements affecting "help" WebView
+    t =     4.59s     Synthesize event
+    t =     4.94s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.95s Type 'f' key with modifiers '⌘' (0x10)
+    t =     4.95s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.95s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     5.24s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     5.24s     Synthesize event
+    t =     5.33s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.34s Waiting 5.0s for "preview-find-field" SearchField to exist
+    t =     6.38s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =     6.38s         Checking existence of `"preview-find-field" SearchField`
+    t =     6.53s Type 'rendered text' into "preview-find-field" SearchField
+    t =     6.53s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.53s     Find the "preview-find-field" SearchField
+    t =     6.59s     Check for interrupting elements affecting "preview-find-field" SearchField
+    t =     6.61s     Synthesize event
+    t =     6.82s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.83s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     6.83s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.83s     Find the "preview-find-field" SearchField
+    t =     6.89s     Check for interrupting elements affecting "preview-find-field" SearchField
+    t =     6.90s     Synthesize event
+    t =     6.92s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.93s Type 'g' key with modifiers '⌘' (0x10)
+    t =     6.93s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.93s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.00s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.00s     Synthesize event
+    t =     7.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.03s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     7.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.03s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.07s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.07s     Synthesize event
+    t =     7.13s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.13s Type '⎋' key (XCUIKeyboardKeyEscape) with no modifiers
+    t =     7.13s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.13s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.18s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.18s     Synthesize event
+    t =     7.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.25s Checking `Expect predicate `hittable == 0` for object "preview-find-field" SearchField`
+    t =     8.25s     Find the "preview-find-field" SearchField
+    t =     8.35s Click "editor-text-view" TextView
+    t =     8.35s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.36s     Find the "editor-text-view" TextView
+    t =     8.37s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     8.38s     Synthesize event
+    t =     8.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.74s Find the "editor-text-view" TextView
+    t =     8.76s Type 'f' key with modifiers '⌘' (0x10)
+    t =     8.76s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.77s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     8.80s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     8.80s     Synthesize event
+    t =     8.90s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.91s Find the "preview-find-field" SearchField
+    t =    10.01s     Find the "preview-find-field" SearchField (retry 1)
+    t =    11.14s     Find the "preview-find-field" SearchField (retry 2)
+    t =    11.23s Tear Down
+    t =    11.23s     Terminate app.macdown.macdown3000-debug:16422
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' passed (12.356 seconds).
+Test Suite 'MacDownUITests' passed at 2026-10-10 01:12:57.595.
+	 Executed 1 test, with 0 failures (0 unexpected) in 12.356 (12.357) seconds
+Test Suite 'MacDownUITests.xctest' passed at 2026-10-10 01:12:57.595.
+	 Executed 1 test, with 0 failures (0 unexpected) in 12.356 (12.358) seconds
+Test Suite 'Selected tests' passed at 2026-10-10 01:12:57.596.
+	 Executed 1 test, with 0 failures (0 unexpected) in 12.356 (12.359) seconds
+2026-10-10 01:13:03.357 xcodebuild[16404:48483656] [MT] IDETestOperationsObserverDebug: 18.764 elapsed -- Testing started completed.
+2026-10-10 01:13:03.357 xcodebuild[16404:48483656] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-10 01:13:03.357 xcodebuild[16404:48483656] [MT] IDETestOperationsObserverDebug: 18.764 sec, +18.764 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_01-12-44-+0200.xcresult
+
+** TEST EXECUTE SUCCEEDED **
+
+Testing started
+RESTORED and preferences verified; vault retained privately

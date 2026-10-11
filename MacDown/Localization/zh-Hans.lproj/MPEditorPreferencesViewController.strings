@@ -61,3 +61,6 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (加号)";
 
+
+/* Optional Notion clipboard conversion; experimental and off by default. */
+"NCP-opt-cel.title" = "粘贴时转换 Notion 提示框（Beta 测试）";

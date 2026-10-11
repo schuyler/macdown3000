@@ -1,0 +1,81 @@
+Extrait fidèle des résultats XCTest. SHA-256 du journal intégral : c49ebc5f8dcc9b7e75f1de3e854a9ada19ac41ba5741619a0d3f0290b27c26d3
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.007 (0.018) seconds
+	 Executed 47 tests, with 0 failures (0 unexpected) in 1.070 (1.082) seconds
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.005 (0.007) seconds
+	 Executed 32 tests, with 0 failures (0 unexpected) in 1.057 (1.069) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.004 (0.008) seconds
+	 Executed 43 tests, with 0 failures (0 unexpected) in 7.970 (7.978) seconds
+Test Case '-[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines]' passed (72.757 seconds).
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteAllInlineStyleCombinationsRetainSelectionAndNeighbors]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteAllInlineStyleCombinationsRetainSelectionAndNeighbors]' passed (297.026 seconds).
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteMappingRejectsUnprovenTextAndExcessiveLeafCount]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteMappingRejectsUnprovenTextAndExcessiveLeafCount]' passed (4.349 seconds).
+Test Case '-[MPDocumentLifecycleTests testSourceQuotedInlineFormattingPreservesNestedHeadingAndListPrefixes]' started.
+Test Case '-[MPDocumentLifecycleTests testSourceQuotedInlineFormattingPreservesNestedHeadingAndListPrefixes]' passed (0.195 seconds).
+	 Executed 94 tests, with 0 failures (0 unexpected) in 509.880 (509.915) seconds
+	 Executed 28 tests, with 0 failures (0 unexpected) in 0.018 (0.022) seconds
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.027 (0.029) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.193 (0.195) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.012 (0.014) seconds
+	 Executed 30 tests, with 0 failures (0 unexpected) in 0.048 (0.052) seconds
+	 Executed 34 tests, with 0 failures (0 unexpected) in 0.788 (0.797) seconds
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.050 (0.054) seconds
+	 Executed 19 tests, with 0 failures (0 unexpected) in 1.468 (1.477) seconds
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.086 (0.091) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 5.836 (5.840) seconds
+	 Executed 24 tests, with 0 failures (0 unexpected) in 126.521 (126.527) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 23.731 (23.734) seconds
+	 Executed 16 tests, with 0 failures (0 unexpected) in 0.018 (0.021) seconds
+	 Executed 21 tests, with 0 failures (0 unexpected) in 0.020 (0.024) seconds
+	 Executed 37 tests, with 0 failures (0 unexpected) in 0.019 (0.027) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.421 (0.422) seconds
+	 Executed 33 tests, with 0 failures (0 unexpected) in 0.021 (0.031) seconds
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.005 (0.008) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.007 (0.011) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.995 (2.997) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+	 Executed 83 tests, with 0 failures (0 unexpected) in 20.239 (20.261) seconds
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.010 (0.012) seconds
+	 Executed 18 tests, with 0 failures (0 unexpected) in 0.012 (0.015) seconds
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.207 (0.209) seconds
+	 Executed 20 tests, with 0 failures (0 unexpected) in 0.409 (0.412) seconds
+	 Executed 31 tests, with 0 failures (0 unexpected) in 0.133 (0.143) seconds
+	 Executed 42 tests, with 0 failures (0 unexpected) in 0.197 (0.202) seconds
+	 Executed 31 tests, with 0 failures (0 unexpected) in 0.839 (0.844) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.248 (0.249) seconds
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.034 (0.035) seconds
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.006 (0.009) seconds
+	 Executed 66 tests, with 0 failures (0 unexpected) in 0.056 (0.068) seconds
+	 Executed 19 tests, with 0 failures (0 unexpected) in 0.030 (0.033) seconds
+	 Executed 66 tests, with 0 failures (0 unexpected) in 0.283 (0.292) seconds
+	 Executed 33 tests, with 0 failures (0 unexpected) in 0.545 (0.552) seconds
+	 Executed 15 tests, with 0 failures (0 unexpected) in 2.811 (2.818) seconds
+	 Executed 196 tests, with 0 failures (0 unexpected) in 0.205 (0.232) seconds
+	 Executed 14 tests, with 0 failures (0 unexpected) in 2.105 (2.108) seconds
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.035 (0.037) seconds
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.005 (0.007) seconds
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.006 (0.008) seconds
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.006) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.006 (0.007) seconds
+	 Executed 19 tests, with 0 failures (0 unexpected) in 0.019 (0.022) seconds
+	 Executed 67 tests, with 0 failures (0 unexpected) in 0.467 (0.478) seconds
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.023 (0.025) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.026 (0.027) seconds
+	 Executed 55 tests, with 0 failures (0 unexpected) in 0.195 (0.202) seconds
+	 Executed 7 tests, with 0 failures (0 unexpected) in 1.149 (1.152) seconds
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPZoomTests.m:451: error: -[MPZoomTests testZoomChangeInDocAPropagatesToDocB] : ((docB.applyCurrentZoomCount) equal to (1)) failed: ("2") is not equal to ("1") - Doc B's zoom observer must fire exactly once when Doc A changes the shared zoom
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' failed (0.106 seconds).
+	 Executed 26 tests, with 1 failure (0 unexpected) in 0.254 (0.258) seconds
+	 Executed 1553 tests, with 1 failure (0 unexpected) in 712.860 (713.212) seconds
+	 Executed 1553 tests, with 1 failure (0 unexpected) in 712.860 (713.212) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_14-47-46-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

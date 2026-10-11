@@ -49,4 +49,11 @@
 - (IBAction)zoomOut:(id)sender;
 - (IBAction)resetZoom:(id)sender;
 
+/** Route the Find menu to rendered text when the preview has focus. */
+- (IBAction)performDocumentFindAction:(id)sender;
+- (BOOL)validateDocumentFindAction:(NSMenuItem *)item;
+
+- (IBAction)resetToNormalText:(id)sender;
+- (void)insertTableWithColumns:(NSUInteger)columns rows:(NSUInteger)rows;
+
 @end

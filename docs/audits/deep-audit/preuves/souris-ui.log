@@ -1,0 +1,13 @@
+Extrait XCTest ; SHA-256 du journal intégral : 5c7f454d8f88f890c09df086dd6e55821cf8caa23db492aa0ed6a08dbefaf8cb
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' passed (43.249 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (75.473 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' started.
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' passed (14.144 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 132.867 (132.869) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 132.867 (132.870) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 132.867 (132.871) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-25-52-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

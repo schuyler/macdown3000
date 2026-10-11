@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(Standard)";
+
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tecken (inga mellanslag);%@ tecken (inga mellanslag)";
 
@@ -69,3 +72,14 @@
 "Source file does not exist" = "Källfilen finns inte";
 "A file already exists at the installation path" = "En fil finns redan på installationssökvägen";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown shell-verktyget har installerats till %@.\n\nFör att använda det från Terminal, lägg till denna rad i din shell-konfigurationsfil (~/.zshrc eller ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Obs";
+"PreviewCalloutTitleTip" = "Tips";
+"PreviewCalloutTitleWarning" = "Varning";
+"PreviewCalloutTitleImportant" = "Viktigt";
+"PreviewCalloutTitleCaution" = "Försiktighet";
+"PreviewToggleTitle" = "Förutsättningar";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Kolumn %lu";

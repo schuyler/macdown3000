@@ -1,0 +1,15 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/BlankClickEvidence/clic-vide-ui-final.log
+SHA-256 full log: d122b4ee48585219abdcf209915c98cd0730926f8961d6579affd321129f522d
+
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' started.
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' passed (58.045 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' passed (51.206 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (85.628 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 194.879 (194.881) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 194.879 (194.883) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 194.879 (194.884) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_16-08-44-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

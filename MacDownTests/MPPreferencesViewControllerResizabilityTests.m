@@ -13,6 +13,7 @@
 #import "MPMarkdownPreferencesViewController.h"
 #import "MPEditorPreferencesViewController.h"
 #import "MPHtmlPreferencesViewController.h"
+#import "MPPreferences.h"
 #import "MPTerminalPreferencesViewController.h"
 
 #pragma mark - View-tree helpers
@@ -258,6 +259,28 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
 // other's column width, which pushes adjacent controls into overlap (the
 // Compilation pane coupled "CSS:" to "Default path:"). Labels must size
 // independently.
+- (void)testRenderingControlsDoNotOverlap
+{
+    MPHtmlPreferencesViewController *controller=[MPHtmlPreferencesViewController new];
+    NSView *content=MPContentView(controller);
+    [controller viewWillAppear]; // Populate actual theme menus as in Settings.
+    [content layoutSubtreeIfNeeded];
+    NSMutableArray<NSControl *> *controls=[NSMutableArray array];
+    MPCollectViews(content,NSControl.class,controls);
+    for (NSUInteger i=0;i<controls.count;i++) {
+        NSControl *first=controls[i];
+        NSRect firstRect=[first convertRect:first.bounds toView:content];
+        for(NSUInteger j=i+1;j<controls.count;j++) {
+            NSControl *second=controls[j];
+            if([first isDescendantOf:second] || [second isDescendantOf:first]) continue;
+            NSRect secondRect=[second convertRect:second.bounds toView:content];
+            NSRect overlap=NSIntersectionRect(firstRect,secondRect);
+            XCTAssertTrue(NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1,
+                @"Rendering controls overlap: %@ %@ and %@ %@",first,NSStringFromRect(firstRect),second,NSStringFromRect(secondRect));
+        }
+    }
+}
+
 - (void)testHtmlLabelWidthsAreIndependent
 {
     MPHtmlPreferencesViewController *vc = [[MPHtmlPreferencesViewController alloc] init];
@@ -526,6 +549,68 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         XCTAssertNoThrow([vc viewDidAppear],
             @"%@ pane: viewDidAppear must not throw even without a window", name);
     }];
+}
+
+- (void)testDiagramPreferencesRemainEditableWithoutSyntaxHighlighting
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL highlighting = preferences.htmlSyntaxHighlighting;
+    BOOL graphviz = preferences.htmlGraphviz;
+    BOOL mermaid = preferences.htmlMermaid;
+    @try
+    {
+        preferences.htmlSyntaxHighlighting = NO;
+        preferences.htmlGraphviz = NO;
+        preferences.htmlMermaid = NO;
+        MPHtmlPreferencesViewController *controller =
+            [[MPHtmlPreferencesViewController alloc] init];
+        NSUInteger diagramCheckboxes = 0;
+        for (NSButton *button in MPCheckboxes(MPContentView(controller)))
+        {
+            NSString *keyPath = [button infoForBinding:NSValueBinding][NSObservedKeyPathKey];
+            if (![keyPath isEqualToString:@"self.preferences.htmlGraphviz"]
+                && ![keyPath isEqualToString:@"self.preferences.htmlMermaid"])
+                continue;
+            diagramCheckboxes++;
+            XCTAssertTrue(button.enabled);
+            [button performClick:nil];
+        }
+        XCTAssertEqual(diagramCheckboxes, 2U);
+        XCTAssertTrue(preferences.htmlGraphviz);
+        XCTAssertTrue(preferences.htmlMermaid);
+    }
+    @finally
+    {
+        preferences.htmlSyntaxHighlighting = highlighting;
+        preferences.htmlGraphviz = graphviz;
+        preferences.htmlMermaid = mermaid;
+    }
+}
+
+- (void)testEditorNotionBetaCheckboxControlsTheOptInPreference
+{
+    MPPreferences *preferences=MPPreferences.sharedInstance;
+    BOOL saved=preferences.editorConvertNotionCalloutsOnPaste;
+    @try {
+        preferences.editorConvertNotionCalloutsOnPaste=NO;
+        MPEditorPreferencesViewController *controller=[MPEditorPreferencesViewController new];
+        NSUInteger matches=0;
+        for (NSButton *button in MPCheckboxes(MPContentView(controller))) {
+            NSString *keyPath=[button infoForBinding:NSValueBinding][NSObservedKeyPathKey];
+            if (![keyPath isEqualToString:@"self.preferences.editorConvertNotionCalloutsOnPaste"]) continue;
+            matches++;
+            XCTAssertTrue(button.enabled);
+            XCTAssertEqual(button.state,NSControlStateValueOff);
+            XCTAssertTrue([button.title.lowercaseString containsString:@"beta"] || [button.title.lowercaseString containsString:@"bêta"]);
+            [button performClick:nil];
+            XCTAssertTrue(preferences.editorConvertNotionCalloutsOnPaste);
+            [button performClick:nil];
+            XCTAssertFalse(preferences.editorConvertNotionCalloutsOnPaste);
+        }
+        XCTAssertEqual(matches,1u);
+    } @finally {
+        preferences.editorConvertNotionCalloutsOnPaste=saved;
+    }
 }
 
 @end

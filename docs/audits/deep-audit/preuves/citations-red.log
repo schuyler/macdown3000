@@ -1,0 +1,19 @@
+Extrait fidèle des résultats XCTest. SHA-256 du journal intégral : 2cc7976187b136d00b88944bc793fcdbc8dd4b109cc3388684029a0335ae4256
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -workspace "MacDown 3000.xcworkspace" -scheme MacDown -derivedDataPath build/AuditCampaign03 -destination platform=macOS,arch=arm64 CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- "-only-testing:MacDownTests/MPDocumentLifecycleTests/testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines"
+Test Case '-[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2077: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : (([document.previewEditRanges indexOfObjectPassingTest:^BOOL(NSDictionary *entry, NSUInteger i, BOOL *stop) { return [entry[@"text"] containsString:text]; }] != NSNotFound) is true) failed - >ezrtgfvqds
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2077: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : (([document.previewEditRanges indexOfObjectPassingTest:^BOOL(NSDictionary *entry, NSUInteger i, BOOL *stop) { return [entry[@"text"] containsString:text]; }] != NSNotFound) is true) failed - >ezrtgfvqds
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2080: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : Asynchronous wait failed: Exceeded timeout of 3 seconds, with unfulfilled expectations: "Expect predicate `BLOCKPREDICATE(0x72e536970)` for object <WebView: 0x72ba52580>".
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2085: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : Asynchronous wait failed: Exceeded timeout of 5 seconds, with unfulfilled expectations: "Expect predicate `BLOCKPREDICATE(0x72d470480)` for object <WebView: 0x72ba52580>".
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2090: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : ((editor.string) equal to (scenario[1])) failed: (">ezrtgfvqds
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2091: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : (([web stringByEvaluatingJavaScriptFromString:@"Array.from(document.querySelectorAll('blockquote strong')).find(function(n){return n.textContent==='erfvsgfe';}).textContent"]) equal to (@"erfvsgfe")) failed: ("") is not equal to ("erfvsgfe")
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2094: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : Asynchronous wait failed: Exceeded timeout of 3 seconds, with unfulfilled expectations: "Expect predicate `BLOCKPREDICATE(0x72e534630)` for object <WebView: 0x72ba52580>".
+/Users/zydon/Sites/MacDown/MacDownTests/MPDocumentLifecycleTests.m:2098: error: -[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines] : Asynchronous wait failed: Exceeded timeout of 8 seconds, with unfulfilled expectations: "Expect predicate `BLOCKPREDICATE(0x72e534030)` for object <WebView: 0x72ba52580>".
+Test Case '-[MPDocumentLifecycleTests testPreviewMultilineQuoteSelectionMapsPlainAndStyledLines]' failed (20.268 seconds).
+	 Executed 1 test, with 8 failures (0 unexpected) in 20.268 (20.286) seconds
+	 Executed 1 test, with 8 failures (0 unexpected) in 20.268 (20.287) seconds
+	 Executed 1 test, with 8 failures (0 unexpected) in 20.268 (20.287) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_14-40-17-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

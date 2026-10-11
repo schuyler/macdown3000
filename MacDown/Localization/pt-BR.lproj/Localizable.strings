@@ -73,7 +73,7 @@
 
   Created by Tzu-ping Chung  on 14/7.
   Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "2";
 
 /* Layout toolbar button */
 "Layout" = "Layout";
@@ -169,3 +169,14 @@
 "Source file does not exist" = "O arquivo de origem não existe";
 "A file already exists at the installation path" = "Já existe um arquivo no caminho de instalação";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "O utilitário shell macdown foi instalado em %@.\n\nPara usá-lo no Terminal, adicione esta linha ao seu arquivo de configuração do shell (~/.zshrc ou ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Nota";
+"PreviewCalloutTitleTip" = "Dica";
+"PreviewCalloutTitleWarning" = "Aviso";
+"PreviewCalloutTitleImportant" = "Importante";
+"PreviewCalloutTitleCaution" = "Cuidado";
+"PreviewToggleTitle" = "Pré-requisitos";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Coluna %lu";

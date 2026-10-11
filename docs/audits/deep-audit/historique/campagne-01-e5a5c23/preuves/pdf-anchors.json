@@ -1,0 +1,29 @@
+[
+  {
+    "path": "MacDown/Code/Document/MPPDFAnchorInjector.h",
+    "sha256": "558508dae940e858e83675149f6f271dae75b3d84ffca106abf506543c09ba40",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "pdf-anchors.md : h/m entièrement lus avant et après correction ; tests entier lu, ajouts relus ; JS syntaxe et fixture simulée réussis ; Xcode centralisé en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Document/MPPDFAnchorInjector.m",
+    "sha256": "b8f20104ec80990652b864742864fd0b6e6662cf8c6986cbae67027d78a6e590",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "pdf-anchors.md : h/m entièrement lus avant et après correction ; tests entier lu, ajouts relus ; JS syntaxe et fixture simulée réussis ; Xcode centralisé en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDownTests/MPPDFAnchorInjectorTests.m",
+    "sha256": "a13d23c8a5fb208dbb0f3a0cb3f02f94e6832a005375c61910ac63da9a737d35",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "pdf-anchors.md : h/m entièrement lus avant et après correction ; tests entier lu, ajouts relus ; JS syntaxe et fixture simulée réussis ; Xcode centralisé en attente",
+    "open_findings": []
+  }
+]

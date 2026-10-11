@@ -1,0 +1,27 @@
+Test Suite 'Selected tests' started at 2026-10-10 00:03:11.139.
+Test Suite 'Resources.xctest' started at 2026-10-10 00:03:11.140.
+Test Suite 'MPHTMLResourceURLsTests' started at 2026-10-10 00:03:11.140.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:304: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : ((document) != nil) failed - Error Domain=NSXMLParserErrorDomain Code=73 "Line 1: attributes construct error
+Line 1: Couldn't find end of Start Tag img
+" UserInfo={NSLocalizedDescription=Line 1: attributes construct error
+Line 1: Couldn't find end of Start Tag img
+}
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:307: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : (([element attributeForName:attribute].stringValue) equal to (@"image.png?name=a'b&keep=c&t=1234#logo")) failed: ("(null)") is not equal to ("image.png?name=a'b&keep=c&t=1234#logo")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:308: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : (([element attributeForName:@"alt"].stringValue) equal to (@"preserved")) failed: ("(null)") is not equal to ("preserved")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:309: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : ((element.attributes.count) equal to (2u)) failed: ("0") is not equal to ("2")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:304: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : ((document) != nil) failed - Error Domain=NSXMLParserErrorDomain Code=73 "Line 1: attributes construct error
+Line 1: Couldn't find end of Start Tag link
+" UserInfo={NSLocalizedDescription=Line 1: attributes construct error
+Line 1: Couldn't find end of Start Tag link
+}
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:307: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : (([element attributeForName:attribute].stringValue) equal to (@"image.png?name=a'b&keep=c&t=1234#logo")) failed: ("(null)") is not equal to ("image.png?name=a'b&keep=c&t=1234#logo")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:308: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : (([element attributeForName:@"alt"].stringValue) equal to (@"preserved")) failed: ("(null)") is not equal to ("preserved")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:309: error: -[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries] : ((element.attributes.count) equal to (2u)) failed: ("0") is not equal to ("2")
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries]' failed (0.058 seconds).
+Test Suite 'MPHTMLResourceURLsTests' failed at 2026-10-10 00:03:11.199.
+	 Executed 1 test, with 8 failures (0 unexpected) in 0.058 (0.059) seconds
+Test Suite 'Resources.xctest' failed at 2026-10-10 00:03:11.199.
+	 Executed 1 test, with 8 failures (0 unexpected) in 0.058 (0.059) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 00:03:11.199.
+	 Executed 1 test, with 8 failures (0 unexpected) in 0.058 (0.060) seconds

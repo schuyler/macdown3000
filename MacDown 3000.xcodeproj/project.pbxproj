@@ -6,7 +6,23 @@
 	objectVersion = 54;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		AUDIT004RESOURCETARGET /* MacDownResources */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = AUDIT004RESOURCECFGLIST /* Build configuration list for PBXAggregateTarget "MacDownResources" */;
+			buildPhases = (
+				1FF16580199A6C950080D9A5 /* Fetch Prism Resources */,
+				E7FD807B2106CA8F0087F0A8 /* Transpile Styles */,
+			);
+			dependencies = ();
+			name = MacDownResources;
+			productName = MacDownResources;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
+		A17D20261009000100000003 /* MPFormattingScopeMenuTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A17D20261009000100000004 /* MPFormattingScopeMenuTests.m */; };
+		A17D20261009000100000001 /* MPFormattingScopeMatrixTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A17D20261009000100000002 /* MPFormattingScopeMatrixTests.m */; };
 		00F6EAD22CA0765C131AA4EC /* MPFileNodeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A0A5A0E543A6B3CE9E17EE7B /* MPFileNodeTests.m */; };
 		0319BD8F4A64D9E406448C13 /* MPSyntaxHighlightingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9C64395EB126274BB2E01E01 /* MPSyntaxHighlightingTests.m */; };
 		03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 35FB5AC5D9A67BFB58A9430F /* MPDocumentIOTests.m */; };
@@ -179,6 +195,8 @@
 		UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UITEST000001SWIFTFILE /* MacDownUITests.swift */; };
 		URLSECPOL0001BUILDFILE /* MPURLSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */; };
 		URLSECPOL0002BUILDFILE /* MPURLSecurityPolicyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */; };
+		AUDIT00001COREPATCHC /* hoedown_html_patch.c in Sources */ = {isa = PBXBuildFile; fileRef = 1FBBD4CA194CA36500BB3C88 /* hoedown_html_patch.c */; };
+		AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -280,6 +298,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A17D20261009000100000004 /* MPFormattingScopeMenuTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFormattingScopeMenuTests.m; sourceTree = "<group>"; };
+		A17D20261009000100000002 /* MPFormattingScopeMatrixTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFormattingScopeMatrixTests.m; sourceTree = "<group>"; };
 		0925B76B06FC62100372111F /* MPFolderSidebarViewController.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = MPFolderSidebarViewController.h; path = MacDown/Code/Sidebar/MPFolderSidebarViewController.h; sourceTree = "<group>"; };
 		0AA947C490F49EE01830E163 /* MPDocumentWorkspaceTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPDocumentWorkspaceTests.m; sourceTree = "<group>"; };
 		0D0EC0DE9FEA22F962083921 /* Pods-MacDownTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownTests/Pods-MacDownTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -585,7 +605,7 @@
 		1FCDCA311944F96E00B1F966 /* MPPreferencesTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreferencesTests.m; sourceTree = "<group>"; };
 		1FCDCA331944F96E00B1F966 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1FCE066319633D6B00DC83B4 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = Resources/Data; sourceTree = "<group>"; };
-		1FF1420119A8987500CF8A6A /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
+		1FF1420119A8987500CF8A6A /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPUtilityTests.m; sourceTree = "<group>"; };
 		1FF207621941CF22005B5654 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		1FFEB31819729F7C00B2254F /* MPAssetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPAssetTests.m; sourceTree = "<group>"; };
@@ -601,7 +621,7 @@
 		1FFEB32F19ABCD1500B2254F /* MPMarkdownRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMarkdownRenderingTests.m; sourceTree = "<group>"; };
 		1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPStringLookupTests.m; sourceTree = "<group>"; };
 		2343D5410569D8B33D4CDF0D /* Pods-MacDownCore.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownCore.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownCore/Pods-MacDownCore.debug.xcconfig"; sourceTree = "<group>"; };
-		25948CF406215AF81C0EA4DA /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		25948CF406215AF81C0EA4DA /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-macdown-cmd.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FEC7D0105F2CD0464F4B6AA /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		3028039D1FD84EAB0055B0DA /* contribute.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; name = contribute.md; path = Resources/contribute.md; sourceTree = "<group>"; };
@@ -765,6 +785,12 @@
 		URLSECPOLHDRFILEREFID /* MPURLSecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPURLSecurityPolicy.h; sourceTree = "<group>"; };
 		URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicy.m; sourceTree = "<group>"; };
 		URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicyTests.m; sourceTree = "<group>"; };
+		AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesTests.m; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000001 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = Localization/da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000002 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = Localization/fi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000003 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000004 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000005 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1136,6 +1162,7 @@
 		1FCDCA2F1944F96E00B1F966 /* MacDownTests */ = {
 			isa = PBXGroup;
 			children = (
+				AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */,
 				A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */,
 				URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */,
 				1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */,
@@ -1162,6 +1189,8 @@
 				PHASE1B00000001NOTIFTEST /* MPNotificationTests.m */,
 				AB47A87B03D655D2F2285141 /* MPUpdaterTests.m */,
 				PHASE1B00000002LIFECYCLT /* MPDocumentLifecycleTests.m */,
+				A17D20261009000100000004 /* MPFormattingScopeMenuTests.m */,
+				A17D20261009000100000002 /* MPFormattingScopeMatrixTests.m */,
 				PHASE1B00000003EDGECASET /* MPRendererEdgeCaseTests.m */,
 				PHASE1B00000004HIGHLIGHT /* HGMarkdownHighlighterTests.m */,
 				PHASE1B00000005IMGEXPORT /* MPImageExportTests.m */,
@@ -1359,18 +1388,17 @@
 				B4334ECDC0751C835C1600D7 /* [CP] Check Pods Manifest.lock */,
 				1FA6DE1D1941CC9E000409FB /* Sources */,
 				1FA6DE1E1941CC9E000409FB /* Frameworks */,
-				1FF16580199A6C950080D9A5 /* Fetch Prism Resources */,
-				E7FD807B2106CA8F0087F0A8 /* Transpile Styles */,
 				1FA6DE1F1941CC9E000409FB /* Resources */,
-				1F8A82A81952F19B00B6BF69 /* Update Build Number */,
 				905EF1B6196164E300FC3CE9 /* Copy Command Line Utility */,
 				1E02F0A95AAEBCEF65493F5F /* [CP] Copy Pods Resources */,
 				8DD02CA85834426992769538 /* Embed App Extensions */,
 				73EFC3524EF2D5CB67F18A48 /* [CP] Embed Pods Frameworks */,
+				1F8A82A81952F19B00B6BF69 /* Update Build Number */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AUDIT004RESOURCEAPPDEP /* PBXTargetDependency */,
 				905EF1B5196164DD00FC3CE9 /* PBXTargetDependency */,
 				1FE2197819534A5D00DB931F /* PBXTargetDependency */,
 				C2AC5AF54609A603DE0EEE91 /* PBXTargetDependency */,
@@ -1408,6 +1436,7 @@
 				3198B1CA77107FD17C448E9F /* Frameworks */,
 				A8CD48055430F29166E66E0E /* Resources */,
 				7A0A130FF5F3E5EA4F8952E7 /* Embed Frameworks */,
+				AUDIT015QLBUILDVERSION /* Update Build Number */,
 			);
 			buildRules = (
 			);
@@ -1452,6 +1481,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				AUDIT004RESOURCECOREDEP /* PBXTargetDependency */,
 			);
 			name = MacDownCore;
 			productName = MacDownCore;
@@ -1544,6 +1574,7 @@
 			);
 			projectRoot = "";
 			targets = (
+				AUDIT004RESOURCETARGET /* MacDownResources */,
 				1FA6DE201941CC9E000409FB /* MacDown */,
 				1FA6DE441941CC9E000409FB /* MacDownTests */,
 				UITEST000008TARGET /* MacDownUITests */,
@@ -1649,6 +1680,24 @@
 			files = (
 			);
 			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Update Build Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "bash Tools/update_build_number.sh\n";
+			showEnvVarsInLog = 0;
+		};
+		AUDIT015QLBUILDVERSION /* Update Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "Update Build Number";
 			outputPaths = (
@@ -1660,10 +1709,16 @@
 		};
 		1FF16580199A6C950080D9A5 /* Fetch Prism Resources */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Dependency/prism/components/",
+				"$(SRCROOT)/Dependency/prism/themes/",
+				"$(SRCROOT)/MacDown/Resources/CommunityPrismThemes/",
+				"$(SRCROOT)/Dependency/prism/plugins/",
+				"$(SRCROOT)/Dependency/prism/components.js",
 			);
 			name = "Fetch Prism Resources";
 			outputPaths = (
@@ -1671,7 +1726,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SOURCE=\"$PWD/Dependency/prism\"\nTARGET=\"$PWD/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
+			shellScript = "set -e\nSOURCE=\"${SRCROOT}/Dependency/prism\"\nTARGET=\"${SRCROOT}/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -R \"$SOURCE/components\" \"$TARGET\"\ncp -R \"$SOURCE/themes\" \"$TARGET\"\ncp -R \"${SRCROOT}/MacDown/Resources/CommunityPrismThemes/\" \"$TARGET/themes/\"\ncp -R \"$SOURCE/plugins\" \"$TARGET\"\ncp \"$SOURCE/components.js\" \"$TARGET\"\n";
 			showEnvVarsInLog = 0;
 		};
 		3FE464D54AEF370ED9587A37 /* [CP] Check Pods Manifest.lock */ = {
@@ -1770,6 +1825,7 @@
 		};
 		BEB0B6E41738E30D57F17F34 /* Copy Styles and Prism Resources */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -1778,17 +1834,21 @@
 			inputPaths = (
 				"$(SRCROOT)/Dependency/prism/components/",
 				"$(SRCROOT)/Dependency/prism/themes/",
+				"$(SRCROOT)/MacDown/Resources/CommunityPrismThemes/",
 				"$(SRCROOT)/Dependency/prism/plugins/",
+				"$(SRCROOT)/Dependency/prism/components.js",
+				"$(SRCROOT)/MacDown/Resources/Styles/",
 			);
 			name = "Copy Styles and Prism Resources";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Prism/",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Styles/",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nRESOURCES_DIR=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n\n# Copy Styles from committed source\nmkdir -p \"${RESOURCES_DIR}/Styles\"\ncp -R \"${SRCROOT}/MacDown/Resources/Styles/\" \"${RESOURCES_DIR}/Styles/\"\n\n# Copy Prism from vendor source (same source as MacDown's \"Fetch Prism Resources\")\nPRISM_SRC=\"${SRCROOT}/Dependency/prism\"\nmkdir -p \"${RESOURCES_DIR}/Prism\"\ncp -R \"${PRISM_SRC}/components\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/themes\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/plugins\" \"${RESOURCES_DIR}/Prism/\"\ncp \"${PRISM_SRC}/components.js\" \"${RESOURCES_DIR}/Prism/\"\n";
+			shellScript = "set -e\nRESOURCES_DIR=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n\n# Generation is complete through the MacDownResources dependency.\nrm -rf \"${RESOURCES_DIR}/Styles\" \"${RESOURCES_DIR}/Prism\"\n# Copy Styles from generated source\nmkdir -p \"${RESOURCES_DIR}/Styles\"\ncp -R \"${SRCROOT}/MacDown/Resources/Styles/\" \"${RESOURCES_DIR}/Styles/\"\n\n# Copy Prism from vendor source (same source as MacDown's \"Fetch Prism Resources\")\nPRISM_SRC=\"${SRCROOT}/Dependency/prism\"\nmkdir -p \"${RESOURCES_DIR}/Prism\"\ncp -R \"${PRISM_SRC}/components\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/themes\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${SRCROOT}/MacDown/Resources/CommunityPrismThemes/\" \"${RESOURCES_DIR}/Prism/themes/\"\ncp -R \"${PRISM_SRC}/plugins\" \"${RESOURCES_DIR}/Prism/\"\ncp \"${PRISM_SRC}/components.js\" \"${RESOURCES_DIR}/Prism/\"\n";
 		};
 		C5CE5250ABE88F046B768B9D /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1814,10 +1874,15 @@
 		};
 		E7FD807B2106CA8F0087F0A8 /* Transpile Styles */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Tools/GitHub-style-generator/index.sass",
+				"$(SRCROOT)/Tools/GitHub-style-generator/package-lock.json",
+				"$(SRCROOT)/Tools/GitHub-style-generator/Makefile",
+				"$(SRCROOT)/Tools/GitHub-style-generator/node_modules/.bin/sass",
 			);
 			name = "Transpile Styles";
 			outputPaths = (
@@ -1836,6 +1901,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				34C7CDD88457F3330405D3A5 /* MPQuickLookRenderer.m in Sources */,
+				AUDIT00001COREPATCHC /* hoedown_html_patch.c in Sources */,
 				500508BEEAB722605BD87FE5 /* MPQuickLookPreferences.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1896,6 +1962,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */,
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
@@ -1920,6 +1987,8 @@
 				PHASE1BBLD0001NOTIFTEST /* MPNotificationTests.m in Sources */,
 				3A741C120087C1EEF6862627 /* MPUpdaterTests.m in Sources */,
 				PHASE1BBLD0002LIFECYCLT /* MPDocumentLifecycleTests.m in Sources */,
+				A17D20261009000100000003 /* MPFormattingScopeMenuTests.m in Sources */,
+				A17D20261009000100000001 /* MPFormattingScopeMatrixTests.m in Sources */,
 				PHASE1BBLD0003EDGECASET /* MPRendererEdgeCaseTests.m in Sources */,
 				PHASE1BBLD0004HIGHLIGHT /* HGMarkdownHighlighterTests.m in Sources */,
 				PHASE1BBLD0005IMGEXPORT /* MPImageExportTests.m in Sources */,
@@ -2027,6 +2096,14 @@
 			isa = PBXTargetDependency;
 			target = 1FA6DE201941CC9E000409FB /* MacDown */;
 			targetProxy = UITEST000005CONTPROXY /* PBXContainerItemProxy */;
+		};
+		AUDIT004RESOURCEAPPDEP /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AUDIT004RESOURCETARGET /* MacDownResources */;
+		};
+		AUDIT004RESOURCECOREDEP /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AUDIT004RESOURCETARGET /* MacDownResources */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2232,6 +2309,11 @@
 		1F2789691973BEB100EE696A /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
+				AUDIT00003LOCALIZE000005 /* uk */,
+				AUDIT00003LOCALIZE000004 /* hi */,
+				AUDIT00003LOCALIZE000003 /* he */,
+				AUDIT00003LOCALIZE000002 /* fi */,
+				AUDIT00003LOCALIZE000001 /* da */,
 				1FA9196B1E4723A200850517 /* en */,
 				1FCBDF151E536C9F00C0F56B /* sv */,
 				1FCBDF1F1E536CAF00C0F56B /* zh-Hant */,
@@ -2757,6 +2839,8 @@
 			};
 			name = Release;
 		};
+		AUDIT004RESOURCEDEBUG /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {}; name = Debug; };
+		AUDIT004RESOURCERELEASE /* Release */ = {isa = XCBuildConfiguration; buildSettings = {}; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2820,6 +2904,12 @@
 				UITEST00000CCFGDEBUG /* Debug */,
 				UITEST00000DCFGRELEASE /* Release */,
 			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AUDIT004RESOURCECFGLIST /* Build configuration list for PBXAggregateTarget "MacDownResources" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (AUDIT004RESOURCEDEBUG /* Debug */, AUDIT004RESOURCERELEASE /* Release */,);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};

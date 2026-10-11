@@ -607,4 +607,36 @@
     }
 }
 
+- (void)testClearHighlightingRemovesOldUnderlineAndFontFamily {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)];
+    view.font = [NSFont systemFontOfSize:12];
+    view.string = @"plain text";
+    HGMarkdownHighlighter *highlighter = [[HGMarkdownHighlighter alloc] initWithTextView:view];
+    NSRange range = NSMakeRange(0, view.string.length);
+    [view.textStorage addAttribute:NSUnderlineStyleAttributeName value:@(NSUnderlineStyleSingle) range:range];
+    [view.textStorage addAttribute:NSFontAttributeName value:[NSFont userFixedPitchFontOfSize:18] range:range];
+    [highlighter clearHighlighting];
+    XCTAssertNil([view.textStorage attribute:NSUnderlineStyleAttributeName atIndex:0 effectiveRange:NULL]);
+    XCTAssertEqualObjects([view.textStorage attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL],
+                          [NSFont systemFontOfSize:12]);
+}
+
+- (void)testDeactivationCancelsPendingHighlightingResult {
+    NSScrollView *scroll = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)];
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)];
+    scroll.documentView = view;
+    view.font = [NSFont systemFontOfSize:12];
+    view.string = @"# heading";
+    HGMarkdownHighlighter *highlighter = [[HGMarkdownHighlighter alloc] initWithTextView:view];
+    [highlighter activate];
+    [highlighter deactivate];
+    [highlighter clearHighlighting];
+    XCTestExpectation *completed = [self expectationWithDescription:@"queued parse has time to deliver"];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{ [completed fulfill]; });
+    [self waitForExpectationsWithTimeout:3 handler:nil];
+    NSFont *font = [view.textStorage attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
+    XCTAssertFalse(([[NSFontManager sharedFontManager] traitsOfFont:font] & NSBoldFontMask) != 0);
+    XCTAssertNil([view.textStorage attribute:NSBackgroundColorAttributeName atIndex:0 effectiveRange:NULL]);
+}
+
 @end

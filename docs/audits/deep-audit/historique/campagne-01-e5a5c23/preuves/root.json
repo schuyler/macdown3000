@@ -1,0 +1,195 @@
+[
+  {
+    "path": ".envrc.example",
+    "sha256": "f8ec968e7ece4d8c6b5fe9d6f3c901723d8d3b9a3c12bddfff357d48f35e5548",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": ".gitmodules",
+    "sha256": "69be9ca5f02b254e49c1c755a08e6ce1d7df94bff2cf2eb820926da2f83b9be1",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Gemfile",
+    "sha256": "f878fc8d64bca3d031b243a68a057137839dd9938273a85d37585529e0963f2a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Gemfile.lock",
+    "sha256": "ab1672163bc7ad1bff0ec5a967e513eb722a1395b64ae25c38fb443bbac61143",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Podfile",
+    "sha256": "285ad31ecf44594db23c3bf86333517b404c3b22364115f39ec74ebbc9158d25",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Podfile.lock",
+    "sha256": "9a421717ced1fab36bbfb8cee8d801820b00ed8da38a75ef5a659853229779e6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "setup.sh",
+    "sha256": "440d403a4c26b8022c0d85206ca8c5fe29e597937ce683883a2c62232d694bc7",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/MacDown-Prefix.pch",
+    "sha256": "d68c3773ffcff85f41cade88fdef7f13af4533253326ca0ee36464781e554cf6",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/MacDown.entitlements",
+    "sha256": "62eb40b798dab525052c90eff791e92784243d628df4aa747c93f394c204629f",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/MacDown-Info.plist",
+    "sha256": "681500c51779dfce902c68a9a5410ffbdbd4000141f6aeb8c4cb3c814521b9f4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Document/MPDocument.h",
+    "sha256": "f70d0155da4792f9f0a49dbdb8edb98f4d49474d819e016a05ad417f747bb485",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+    "sha256": "3aa2529c5694bb9105cac0cf445a9424eaa9d3c920ca8a769bc476cec562c694",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": [
+      "workspace MarkPad référence périmée à vérifier"
+    ]
+  },
+  {
+    "path": "MacDown 3000.xcodeproj/xcshareddata/xcschemes/MacDown.xcscheme",
+    "sha256": "ee6421df444630f8e9a7ca295ac1e4646e8a7cd7c932549da43e47c389961fa2",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcodeproj/xcshareddata/xcschemes/MacDownUITests.xcscheme",
+    "sha256": "fcd447a2bfaa3ea24fc2f835fdf65353b64133cd3e76e08e36a5254dfcb7d970",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcworkspace/contents.xcworkspacedata",
+    "sha256": "1f2050230d8cd95fafd824d352834882f6411617b0a56379c03946074468bc50",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+    "sha256": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown 3000.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+    "sha256": "c483c4d3281bf2649d5b6117deb698c15dc83c826e5faf81e71979dffebce507",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture intégrale et analyse contrats configuration, build et ressources ; gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "3a2132614cc0a933e71eb094c0bcd41a96da65dc76b22269e8c7a2b0520a30e8",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture complète configuration et rebuild version, gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Dependency/version/Makefile",
+    "sha256": "a657c7f788cd96a745d8ce1d7f1034ab26b867eacb976941300af168e3bce5a4",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture complète configuration et rebuild version, gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "Dependency/version/version.xcodeproj/project.pbxproj",
+    "sha256": "9b87d0ce64c70023ace152fe735d18f3db3715fd5c971aa59ebc75883aa5cb3a",
+    "read": true,
+    "analyzed": true,
+    "validated": false,
+    "evidence": "root.md : lecture complète configuration et rebuild version, gates en attente",
+    "open_findings": []
+  },
+  {
+    "path": "MacDown/Code/Document/MPDocument.m",
+    "sha256": "32914c3e3ff4fb1b434d894ae1146742f8afebf45ba12c3d88eb71a0d4af7907",
+    "read": true,
+    "analyzed": false,
+    "validated": false,
+    "evidence": "root.md : version initiale entièrement lue 1–5255 ; modifications ultérieures et seconde passe arrêtées avant certification finale",
+    "open_findings": [
+      "relecture finale du diff et gates à terminer"
+    ]
+  }
+]

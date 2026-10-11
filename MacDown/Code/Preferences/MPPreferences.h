@@ -10,6 +10,8 @@
 
 
 extern NSString * const MPDidDetectFreshInstallationNotification;
+extern NSString * const MPDefaultEditorThemeName;
+extern NSString * const MPDefaultHtmlStyleName;
 
 
 @interface MPPreferences : PAPreferences
@@ -19,6 +21,8 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL updateIncludesPreReleases;
 @property (assign) BOOL supressesUntitledDocumentOnLaunch;
 @property (assign) BOOL createFileForLinkTarget;
+// 0: system, 1: light, 2: dark.
+@property (assign) NSInteger applicationAppearance;
 
 // Extension flags.
 @property (assign) BOOL extensionIntraEmphasis;
@@ -38,6 +42,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) NSDictionary *editorBaseFontInfo;
 @property (assign) BOOL editorAutoIncrementNumberedLists;
 @property (assign) BOOL editorConvertTabs;
+@property (assign) BOOL editorConvertNotionCalloutsOnPaste;
 @property (assign) BOOL editorInsertPrefixInBlock;
 @property (assign) BOOL editorCompleteMatchingCharacters;
 @property (assign) BOOL editorSyncScrolling;
@@ -51,6 +56,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL editorOnRight;
 @property (assign) BOOL editorStartInPreviewMode;
 @property (assign) BOOL editorShowWordCount;
+@property (assign) BOOL editorShowReadingProgress;
 @property (assign) NSInteger editorWordCountType;
 @property (assign) BOOL editorAutoSave;
 @property (assign) BOOL editorScrollsPastEnd;
@@ -66,6 +72,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) BOOL htmlDetectFrontMatter;
 @property (assign) BOOL htmlTaskList;
 @property (assign) BOOL htmlHardWrap;
+@property (assign) BOOL htmlWrapCodeBlocks;
 @property (assign) BOOL htmlMathJax;
 @property (assign) BOOL htmlMathJaxInlineDollar;
 @property (assign) BOOL htmlSyntaxHighlighting;
@@ -84,10 +91,5 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (readonly) NSString *editorUnorderedListMarker;
 
 - (instancetype)init;
-
-// Convinience methods.
-@property (nonatomic, assign) NSArray *filesToOpen;
-@property (nonatomic, assign) NSArray *foldersToOpen;
-@property (nonatomic, assign) NSString *pipedContentFileToOpen;
 
 @end

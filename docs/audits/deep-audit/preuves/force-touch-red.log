@@ -1,0 +1,28 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/force-touch-red.log
+SHA-256 full log: f95e4636d256849cfdb641e00daeb591aece72d1c7e49bd652737072dba3f6ed
+
+2026-10-10 15:42:46.354948+0200 MacDown 3000[97866:50262804] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.355685+0200 MacDown 3000[97866:50262803] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.355709+0200 MacDown 3000[97866:50262803] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.356312+0200 MacDown 3000[97866:50262810] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.356326+0200 MacDown 3000[97866:50262810] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.356930+0200 MacDown 3000[97866:50262804] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:42:46.356942+0200 MacDown 3000[97866:50262804] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - GitHub2 
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - GitHub2 > 
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - GitHub2 # 
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - Github2 (dark) 
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - Github2 (dark) > 
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:306: error: -[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse] : ((result) equal to (@"[true,true,false,false,false]")) failed: ("[false,false,false,false,false]") is not equal to ("[true,true,false,false,false]") - Github2 (dark) # 
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' failed (18.450 seconds).
+Test Suite 'MPFormattingScopeMenuTests' failed at 2026-10-10 15:43:05.448.
+	 Executed 1 test, with 6 failures (0 unexpected) in 18.450 (18.471) seconds
+Test Suite 'MacDownTests.xctest' failed at 2026-10-10 15:43:05.449.
+	 Executed 1 test, with 6 failures (0 unexpected) in 18.450 (18.472) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 15:43:05.449.
+	 Executed 1 test, with 6 failures (0 unexpected) in 18.450 (18.472) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_15-42-42-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

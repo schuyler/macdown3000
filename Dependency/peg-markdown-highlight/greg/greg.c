@@ -225,7 +225,7 @@ YY_LOCAL(int) yyText(GREG *G, int begin, int end)
     yyleng= 0;
   else
     {
-      while (G->textlen < (yyleng - 1))
+      while (G->textlen < (yyleng + 1))
         {
           G->textlen *= 2;
           G->text= YY_REALLOC(G->text, G->textlen, G->data);
@@ -276,7 +276,7 @@ YY_LOCAL(int) yyAccept(GREG *G, int tp0)
   return 1;
 }
 
-YY_LOCAL(void) yyPush(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR) { G->val += count; }
+YY_LOCAL(void) yyPush(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR) { int offset = (int)(G->val - G->vals); while (offset + count > G->valslen) { G->valslen *= 2; G->vals = (YYSTYPE *)YY_REALLOC(G->vals, sizeof(YYSTYPE) * G->valslen, G->data); } G->val = G->vals + offset + count; }
 YY_LOCAL(void) yyPop(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR)  { G->val -= count; }
 YY_LOCAL(void) yySet(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR)  { G->val[count]= G->ss; }
 
@@ -992,6 +992,10 @@ YY_PARSE(GREG *) YY_NAME(parse_new)(YY_XTYPE data)
 
 YY_PARSE(void) YY_NAME(parse_free)(GREG *G)
 {
+  YY_FREE(G->buf);
+  YY_FREE(G->text);
+  YY_FREE(G->thunks);
+  YY_FREE(G->vals);
   YY_FREE(G);
 }
 

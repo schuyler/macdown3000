@@ -8,7 +8,18 @@
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
 #import "MPPreferences.h"
+#import "MPRenderer.h"
+#import "MPEditorView.h"
 #import <sys/stat.h>
+
+@interface MPRenderer (ScriptingContractTesting)
+- (void)parseMarkdown:(NSString *)markdown;
+@end
+
+@interface MPDocument (ScriptingContractTesting)
+@property (strong) MPRenderer *renderer;
+@property (weak) MPEditorView *editor;
+@end
 
 @interface MPDocument (LinkTargetTesting)
 @property (strong) NSURL *currentBaseUrl;
@@ -24,8 +35,10 @@
 @property (strong) NSURL *testFileURL;
 @property (strong) NSString *testDirectory;
 @property (strong) NSFileManager *fileManager;
+@property (strong) NSUndoManager *scriptUndoManager;
+@property (strong) NSNumber *scriptOriginalGroupsByEvent;
+@property (strong) NSNumber *scriptOriginalAutoSave;
 @end
-
 
 @implementation MPDocumentIOTests
 
@@ -51,6 +64,15 @@
 
 - (void)tearDown
 {
+    if (self.scriptOriginalGroupsByEvent) {
+        self.scriptUndoManager.groupsByEvent = self.scriptOriginalGroupsByEvent.boolValue;
+        self.scriptOriginalGroupsByEvent = nil;
+        self.scriptUndoManager = nil;
+    }
+    if (self.scriptOriginalAutoSave) {
+        [MPPreferences sharedInstance].editorAutoSave = self.scriptOriginalAutoSave.boolValue;
+        self.scriptOriginalAutoSave = nil;
+    }
     // Clean up test files and directory
     if (self.testDirectory) {
         [self.fileManager removeItemAtPath:self.testDirectory error:nil];
@@ -64,6 +86,54 @@
 }
 
 #pragma mark - API & Data Tests
+
+- (void)testNativeUntitledAutosavePreservesContentAndHasRecoveryLocation
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL original = preferences.editorAutoSave;
+    preferences.editorAutoSave = YES;
+    [self addTeardownBlock:^{ preferences.editorAutoSave = original; }];
+    NSDocumentController *controller = NSDocumentController.sharedDocumentController;
+    NSError *error = nil;
+    MPDocument *document = (MPDocument *)[controller
+        openUntitledDocumentAndDisplay:YES error:&error];
+    XCTAssertNotNil(document, @"%@", error);
+    if (!document) return;
+    [self addTeardownBlock:^{
+        NSURL *draft = document.isDraft ? document.fileURL : nil;
+        NSURL *recovery = document.autosavedContentsFileURL;
+        [document updateChangeCount:NSChangeCleared];
+        [document close];
+        if (draft) [[NSFileManager defaultManager] removeItemAtURL:draft error:NULL];
+        if (recovery) [[NSFileManager defaultManager] removeItemAtURL:recovery error:NULL];
+    }];
+    NSUndoManager *undo = document.undoManager;
+    BOOL groups = undo.groupsByEvent;
+    undo.groupsByEvent = NO;
+    [self addTeardownBlock:^{ undo.groupsByEvent = groups; }];
+    [document.undoManager beginUndoGrouping];
+    [document.editor insertText:@"Draft recovery é 日本語\n"
+              replacementRange:NSMakeRange(0, 0)];
+    [document.editor breakUndoCoalescing];
+    [document.undoManager endUndoGrouping];
+    XCTAssertEqualObjects(document.markdown, @"Draft recovery é 日本語\n");
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:2];
+    while (!document.isDocumentEdited && deadline.timeIntervalSinceNow > 0)
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+            beforeDate:[NSDate dateWithTimeIntervalSinceNow:.01]];
+    XCTAssertTrue(document.isDocumentEdited);
+    XCTestExpectation *saved = [self expectationWithDescription:@"Native draft autosave"];
+    [document autosaveWithImplicitCancellability:NO completionHandler:^(NSError *saveError) {
+        XCTAssertNil(saveError);
+        NSURL *location = document.fileURL ?: document.autosavedContentsFileURL;
+        XCTAssertNotNil(location);
+        NSString *bytes = [NSString stringWithContentsOfURL:location
+                          encoding:NSUTF8StringEncoding error:NULL];
+        XCTAssertEqualObjects(bytes, @"Draft recovery é 日本語\n");
+        [saved fulfill];
+    }];
+    [self waitForExpectations:@[saved] timeout:10];
+}
 
 - (void)testReadFromDataValidUTF8
 {
@@ -266,15 +336,286 @@
     XCTAssertNoThrow(self.document.markdown = @"# Test",
                      @"Setting markdown should not throw");
 
-    // After setting, still returns nil because editor is not loaded
+    // Scripted/background edits must survive lazy window loading.
     markdown = self.document.markdown;
-    XCTAssertNil(markdown,
-                 @"Markdown should still be nil after setting when editor is not loaded");
+    XCTAssertEqualObjects(markdown, @"# Test");
+    XCTAssertEqualObjects([self.document dataOfType:@"net.daringfireball.markdown" error:NULL],
+        [@"# Test" dataUsingEncoding:NSUTF8StringEncoding]);
 
     // Test setting to nil
     self.document.markdown = nil;
     XCTAssertNil(self.document.markdown,
                  @"Setting markdown to nil should not crash");
+}
+
+
+#pragma mark - Native Cocoa Scripting Contract
+
+- (NSScriptClassDescription *)scriptedDocumentDescription
+{
+    NSScriptSuiteRegistry *registry = NSScriptSuiteRegistry.sharedScriptSuiteRegistry;
+    [registry loadSuitesFromBundle:NSBundle.mainBundle];
+    NSScriptClassDescription *description = [registry classDescriptionWithAppleEventCode:'docu'];
+    XCTAssertNotNil(description);
+    XCTAssertEqualObjects(description.implementationClassName, @"MPDocument");
+    XCTAssertEqualObjects([description keyWithAppleEventCode:'text'], @"markdown");
+    XCTAssertEqualObjects([description keyWithAppleEventCode:'rndd'], @"html");
+    XCTAssertTrue([description hasWritablePropertyForKey:@"markdown"]);
+    XCTAssertTrue([description hasReadablePropertyForKey:@"html"]);
+    XCTAssertFalse([description hasWritablePropertyForKey:@"html"]);
+    return description;
+}
+
+// Send to this test host only. Self Apple Events dispatch synchronously on the
+// sending thread, so keep the real Cocoa/UI consumer on the main thread.
+- (NSAppleEventDescriptor *)sendScriptEvent:(AEEventID)eventID
+                                  property:(NSString *)key
+                                     value:(NSString *)value
+                               description:(NSScriptClassDescription *)description
+{
+    NSScriptObjectSpecifier *documentSpecifier = self.document.objectSpecifier;
+    XCTAssertNotNil(documentSpecifier);
+    if (!description || !documentSpecifier) return nil;
+    NSPropertySpecifier *property = [[NSPropertySpecifier alloc]
+        initWithContainerClassDescription:description
+        containerSpecifier:documentSpecifier key:key];
+    NSAppleEventDescriptor *directObject = property.descriptor;
+    XCTAssertNotNil(directObject);
+    if (!directObject) return nil;
+    NSAppleEventDescriptor *event = [NSAppleEventDescriptor
+        appleEventWithEventClass:'core' eventID:eventID
+        targetDescriptor:NSAppleEventDescriptor.currentProcessDescriptor
+        returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    [event setParamDescriptor:directObject forKeyword:keyDirectObject];
+    if (value) [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithString:value]
+                            forKeyword:keyAEData];
+    XCTAssertTrue(NSThread.isMainThread);
+    NSError *error = nil;
+    NSAppleEventDescriptor *reply = [event
+        sendEventWithOptions:NSAppleEventSendWaitForReply | NSAppleEventSendNeverInteract
+        timeout:5 error:&error];
+    XCTAssertNil(error);
+    XCTAssertNotNil(reply);
+    NSAppleEventDescriptor *scriptError = [reply paramDescriptorForKeyword:keyErrorNumber];
+    XCTAssertEqual(scriptError.int32Value, 0, @"%@", [reply paramDescriptorForKeyword:keyErrorString].stringValue);
+    return [reply paramDescriptorForKeyword:keyDirectObject];
+}
+
+- (void)loadScriptedDocumentWithSource:(NSString *)source
+{
+    self.scriptOriginalAutoSave = @([MPPreferences sharedInstance].editorAutoSave);
+    [MPPreferences sharedInstance].editorAutoSave = NO;
+    self.scriptUndoManager = self.document.undoManager;
+    self.scriptOriginalGroupsByEvent = @(self.scriptUndoManager.groupsByEvent);
+    // Self Apple Events dispatch inline inside XCTest, without an NSApplication
+    // event boundary to close the automatic undo group. The production setter
+    // owns explicit command groups; use those here and preserve every dirty /
+    // undo assertion rather than forcing a change count or closing a group.
+    self.scriptUndoManager.groupsByEvent = NO;
+    XCTAssertTrue([source writeToURL:self.testFileURL atomically:YES
+                           encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertTrue([self.document readFromURL:self.testFileURL
+                                     ofType:@"net.daringfireball.markdown" error:NULL]);
+    self.document.fileURL = self.testFileURL;
+    self.document.fileType = @"net.daringfireball.markdown";
+    [NSDocumentController.sharedDocumentController addDocument:self.document];
+    [self.document makeWindowControllers];
+    for (NSWindowController *controller in self.document.windowControllers) {
+        XCTAssertNotNil(controller.window); // Load the production nib without showing it.
+    }
+    XCTAssertNotNil(self.document.editor);
+    XCTAssertNotNil(self.document.renderer);
+    XCTestExpectation *loaded = [self expectationForPredicate:
+        [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+            return [self.document.markdown isEqualToString:source];
+        }] evaluatedWithObject:self.document handler:nil];
+    [self waitForExpectations:@[loaded] timeout:5];
+    XCTAssertEqualObjects(self.document.markdown, source);
+    [self.document updateChangeCount:NSChangeCleared];
+}
+
+- (void)closeScriptedDocument
+{
+    // These fixtures test persistence explicitly. Clear unsaved test-only state
+    // before closing so subsequent tests cannot inherit deferred autosave work.
+    [self.document updateChangeCount:NSChangeCleared];
+    [self.document close];
+}
+
+- (void)testNativeScriptPropertiesResolveTextAndRenderedHTML
+{
+    @try {
+        NSScriptClassDescription *description = [self scriptedDocumentDescription];
+        NSString *source = @"# Native heading\n\nUnicode é 日本語 😀\n";
+        [self loadScriptedDocumentWithSource:source];
+        // Establish real rendered output before asking its read-only scripting property.
+        [self.document.renderer parseMarkdown:source];
+        XCTAssertEqualObjects([self sendScriptEvent:'getd' property:@"markdown" value:nil
+                                       description:description].stringValue, source);
+        NSString *html = [self sendScriptEvent:'getd' property:@"html" value:nil
+                                  description:description].stringValue;
+        XCTAssertEqualObjects(html, self.document.html);
+        XCTAssertTrue([html containsString:@"Native heading</h1>"]);
+        XCTAssertTrue([html containsString:@"Unicode é 日本語 😀"]);
+    } @finally {
+        [self closeScriptedDocument];
+        [NSDocumentController.sharedDocumentController removeDocument:self.document];
+    }
+}
+
+- (void)testNativeScriptTextEditNotifiesRendersAndSavesLiteralContent
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL manual = preferences.markdownManualRender;
+    BOOL wordCount = preferences.editorShowWordCount;
+    __block NSUInteger notifications = 0;
+    id observer = nil;
+    @try {
+        preferences.markdownManualRender = NO;
+        preferences.editorShowWordCount = YES;
+        NSScriptClassDescription *description = [self scriptedDocumentDescription];
+        [self loadScriptedDocumentWithSource:@"# Before\n"];
+        [self.document.renderer parseMarkdown:self.document.markdown];
+        XCTAssertTrue([self.document.html containsString:@"Before</h1>"]);
+        observer = [NSNotificationCenter.defaultCenter
+            addObserverForName:NSTextDidChangeNotification object:self.document.editor
+            queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) { notifications++; }];
+        NSString *source = @"# After\n\nLiteral ( [ ` and Unicode é 日本語 😀\n";
+        [self sendScriptEvent:'setd' property:@"markdown" value:source description:description];
+        XCTAssertEqualObjects([self sendScriptEvent:'getd' property:@"markdown" value:nil
+                                       description:description].stringValue, source);
+        // No forced parse after the mutation: native editing must publish its own change.
+        XCTestExpectation *rendered = [self expectationForPredicate:
+            [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+                return [self.document.html containsString:@"After</h1>"];
+            }] evaluatedWithObject:self.document handler:nil];
+        [self waitForExpectations:@[rendered] timeout:5];
+        XCTAssertEqual(notifications, 1U);
+        XCTAssertTrue(self.document.isDocumentEdited);
+        NSString *html = [self sendScriptEvent:'getd' property:@"html" value:nil
+                                  description:description].stringValue;
+        XCTAssertTrue([html containsString:@"After</h1>"]);
+        XCTAssertFalse([html containsString:@"Before</h1>"]);
+        XCTestExpectation *saved = [self expectationWithDescription:@"Script-edited document saved"];
+        [self.document saveToURL:self.testFileURL ofType:@"net.daringfireball.markdown"
+               forSaveOperation:NSSaveOperation completionHandler:^(NSError *error) {
+            XCTAssertNil(error);
+            [saved fulfill];
+        }];
+        [self waitForExpectations:@[saved] timeout:5];
+        XCTAssertEqualObjects([NSData dataWithContentsOfURL:self.testFileURL],
+                              [source dataUsingEncoding:NSUTF8StringEncoding]);
+        XCTAssertFalse(self.document.isDocumentEdited);
+        BOOL canUndo = self.document.undoManager.canUndo;
+        BOOL canRedo = self.document.undoManager.canRedo;
+        [self sendScriptEvent:'setd' property:@"markdown" value:source description:description];
+        XCTAssertFalse(self.document.isDocumentEdited);
+        XCTAssertEqual(notifications, 1U);
+        XCTAssertEqual(self.document.undoManager.canUndo, canUndo);
+        XCTAssertEqual(self.document.undoManager.canRedo, canRedo);
+    } @finally {
+        if (observer) [NSNotificationCenter.defaultCenter removeObserver:observer];
+        [self closeScriptedDocument];
+        [NSDocumentController.sharedDocumentController removeDocument:self.document];
+        preferences.markdownManualRender = manual;
+        preferences.editorShowWordCount = wordCount;
+    }
+}
+
+
+- (void)testNativeScriptTextNoOpAndUndoRedoPreserveLiteralContentAndCleanBaseline
+{
+    NSUndoManager *undo = nil;
+    MPPreferences *preferences = self.document.preferences;
+    BOOL matching = preferences.editorCompleteMatchingCharacters;
+    __block NSUInteger notifications = 0;
+    id observer = nil;
+    @try {
+        preferences.editorCompleteMatchingCharacters = YES;
+        NSScriptClassDescription *description = [self scriptedDocumentDescription];
+        NSString *before = @"# Before\n";
+        [self loadScriptedDocumentWithSource:before];
+        undo = self.document.undoManager;
+        [undo removeAllActions];
+        observer = [NSNotificationCenter.defaultCenter
+            addObserverForName:NSTextDidChangeNotification object:self.document.editor
+            queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) { notifications++; }];
+        [self sendScriptEvent:'setd' property:@"markdown" value:before description:description];
+        XCTAssertEqual(notifications, 0U);
+        XCTAssertFalse(self.document.isDocumentEdited);
+        XCTAssertFalse(undo.canUndo);
+
+        // A whole-source property must not turn a lone opening delimiter into
+        // a matching pair through the editor's interactive delegate.
+        NSString *literal = @"(";
+        [self sendScriptEvent:'setd' property:@"markdown" value:literal description:description];
+        XCTAssertEqualObjects(self.document.markdown, literal);
+        XCTAssertEqual(notifications, 1U);
+        XCTAssertTrue(self.document.isDocumentEdited);
+        XCTAssertTrue(undo.canUndo);
+        [undo undo];
+        XCTAssertEqualObjects(self.document.markdown, before);
+        XCTAssertEqual(notifications, 2U);
+        XCTAssertFalse(self.document.isDocumentEdited);
+        XCTAssertFalse(undo.canUndo);
+        XCTAssertTrue(undo.canRedo);
+        [undo redo];
+        XCTAssertEqualObjects(self.document.markdown, literal);
+        XCTAssertEqual(notifications, 3U);
+        XCTAssertTrue(self.document.isDocumentEdited);
+        XCTAssertTrue(undo.canUndo);
+        [undo undo];
+        XCTAssertEqualObjects(self.document.markdown, before);
+        XCTAssertFalse(self.document.isDocumentEdited);
+    } @finally {
+        if (observer) [NSNotificationCenter.defaultCenter removeObserver:observer];
+        [self closeScriptedDocument];
+        preferences.editorCompleteMatchingCharacters = matching;
+        [NSDocumentController.sharedDocumentController removeDocument:self.document];
+    }
+}
+
+- (void)testLiveMarkdownEditWithoutUndoStillTracksTheDocumentChange
+{
+    @try {
+        [self loadScriptedDocumentWithSource:@"# Before\n"];
+        self.document.hasUndoManager = NO;
+        self.document.markdown = @"# After without undo\n";
+        XCTAssertEqualObjects(self.document.markdown, @"# After without undo\n");
+        XCTAssertTrue(self.document.isDocumentEdited);
+    } @finally {
+        [self closeScriptedDocument];
+        [NSDocumentController.sharedDocumentController removeDocument:self.document];
+    }
+}
+
+
+- (void)testNativeScriptTextEditRespectsManualRender
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL manual = preferences.markdownManualRender;
+    @try {
+        preferences.markdownManualRender = YES;
+        NSScriptClassDescription *description = [self scriptedDocumentDescription];
+        [self loadScriptedDocumentWithSource:@"# Before\n"];
+        [self.document.renderer parseMarkdown:self.document.markdown];
+        [self sendScriptEvent:'setd' property:@"markdown" value:@"# After\n" description:description];
+        XCTAssertEqualObjects(self.document.markdown, @"# After\n");
+        XCTAssertTrue(self.document.isDocumentEdited);
+        // Give the ordinary delayed renderer a turn; manual mode must keep the
+        // published baseline until the user requests a render.
+        XCTestExpectation *settled = [self expectationWithDescription:@"Manual render remains unchanged"];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            XCTAssertTrue([self.document.html containsString:@"Before</h1>"]);
+            XCTAssertFalse([self.document.html containsString:@"After</h1>"]);
+            [settled fulfill];
+        });
+        [self waitForExpectations:@[settled] timeout:3];
+    } @finally {
+        [self closeScriptedDocument];
+        [NSDocumentController.sharedDocumentController removeDocument:self.document];
+        preferences.markdownManualRender = manual;
+    }
 }
 
 - (void)testAutosavesInPlaceRespectsPreference
@@ -706,5 +1047,24 @@
 // "changed by another application" dialog and the "couldn't be saved in
 // folder tmp" failure, which require manual verification against a real
 // SSHFS/SMB/NFS mount. Related to #371.
+
+- (void)testInvalidUTF8ProvidesReadError
+{
+    const unsigned char bytes[] = {0xff, 0xfe, 0xff};
+    NSError *error = nil;
+    XCTAssertFalse([self.document readFromData:[NSData dataWithBytes:bytes length:sizeof(bytes)]
+        ofType:@"net.daringfireball.markdown" error:&error]);
+    XCTAssertEqualObjects(error.domain, NSCocoaErrorDomain);
+    XCTAssertEqual(error.code, NSFileReadInapplicableStringEncodingError);
+}
+
+- (void)testReadBeforeWindowLoadingCanBeSerializedWithoutDataLoss
+{
+    NSString *source = @"# Loaded before its window\n\nÉ漢😀\n";
+    NSData *data = [source dataUsingEncoding:NSUTF8StringEncoding];
+    XCTAssertTrue([self.document readFromData:data ofType:@"net.daringfireball.markdown" error:NULL]);
+    XCTAssertEqualObjects(self.document.markdown, source);
+    XCTAssertEqualObjects([self.document dataOfType:@"net.daringfireball.markdown" error:NULL], data);
+}
 
 @end

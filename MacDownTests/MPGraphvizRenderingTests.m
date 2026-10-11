@@ -223,21 +223,32 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     NSString *html = [self.renderer currentHtml];
 
-    // Count occurrences of language-dot
-    NSUInteger count = 0;
-    NSRange searchRange = NSMakeRange(0, html.length);
-    while (searchRange.location < html.length) {
-        NSRange found = [html rangeOfString:@"language-dot"
-                                   options:0
-                                     range:searchRange];
-        if (found.location == NSNotFound) break;
-        count++;
-        searchRange.location = found.location + found.length;
-        searchRange.length = html.length - searchRange.location;
+    // Count the CODE blocks consumed by the diagram adapter, not the same
+    // language class on their PRE parents (the shared Prism styling contract).
+    NSError *error = nil;
+    NSString *documentHTML = [NSString stringWithFormat:
+        @"<!DOCTYPE html><html><head><title>Diagram fixture</title></head><body>%@</body></html>", html];
+    NSXMLDocument *document = [[NSXMLDocument alloc] initWithXMLString:documentHTML
+        options:NSXMLDocumentTidyHTML error:&error];
+    XCTAssertNotNil(document, @"Rendered HTML should form a readable DOM");
+    XCTAssertNil(error);
+    NSArray<NSXMLNode *> *blocks = [document nodesForXPath:
+        @"//code[contains(concat(' ', normalize-space(@class), ' '), ' language-dot ')]"
+        error:&error];
+    XCTAssertNil(error);
+    XCTAssertEqual(blocks.count, 2, @"Both diagram CODE blocks must survive");
+    for (NSXMLNode *block in blocks) {
+        XCTAssertEqualObjects(block.parent.name, @"pre",
+                              @"Each diagram adapter replaces its own PRE");
+        NSString *classes = [(NSXMLElement *)block.parent attributeForName:@"class"].stringValue;
+        XCTAssertTrue([[classes componentsSeparatedByCharactersInSet:
+            NSCharacterSet.whitespaceAndNewlineCharacterSet] containsObject:@"language-dot"],
+            @"PRE and CODE must share the language class");
     }
-
-    XCTAssertEqual(count, 2,
-                   @"Both dot blocks should have language-dot class");
+    if (blocks.count == 2) {
+        XCTAssertEqualObjects(blocks[0].stringValue, @"digraph G { A -> B }");
+        XCTAssertEqualObjects(blocks[1].stringValue, @"digraph H { C -> D }");
+    }
 }
 
 - (void)testGraphvizWithOtherFencedCodeBlocks

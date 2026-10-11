@@ -1,0 +1,10 @@
+Extrait fidèle des résultats XCTest. SHA-256 du journal intégral : 1bdd7c529eb91b7a5746f5bbc39bde6f3a910f0b8c6364497dd4a127ed577794
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' started.
+Test Case '-[MPZoomTests testZoomChangeInDocAPropagatesToDocB]' passed (0.003 seconds).
+	 Executed 26 tests, with 0 failures (0 unexpected) in 0.071 (0.080) seconds
+	 Executed 26 tests, with 0 failures (0 unexpected) in 0.071 (0.080) seconds
+	 Executed 26 tests, with 0 failures (0 unexpected) in 0.071 (0.081) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_15-01-15-+0200.xcresult
+** TEST EXECUTE SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

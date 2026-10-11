@@ -1,0 +1,9 @@
+Quick Look must not publish random preview bridge identities
+Traceback (most recent call last):
+  File "/Users/zydon/Sites/MacDown/MacDownTests/BuildTools/callout_tests.py", line 23, in <module>
+    subprocess.run([str(binary)], check=True, timeout=30, env=env)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 579, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-callouts-qe_tn_p_/contracts']' returned non-zero exit status 1.

@@ -1,0 +1,1190 @@
+{
+  "campaign": 2,
+  "baseline": "e5a5c237b92d172e953abf0680869ad0a5b4806f",
+  "scope": "rendering-pdf-quicklook",
+  "decisions": "Read/analyzed decisions recorded manually after complete review; SHA calculation only records identity. No prior proof reused.",
+  "counts": {
+    "files": 60,
+    "read": 60,
+    "analyzed": 60,
+    "validated": 60
+  },
+  "findings": [
+    "A2-R01",
+    "A2-R02",
+    "A2-R03",
+    "A2-R04"
+  ],
+  "required_gates": [],
+  "files": [
+    {
+      "path": "MacDown/Code/Document/MPAsset.h",
+      "sha256": "c1a03ae5c84d0a4cd5ee4c2b6aec7a4920d979cfbaff84e0954a9d0f0dee3f2e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "MIME exports, enum None/Embedded/FullLink, asset subclasses and convenience signatures matched implementation/callers.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "API matched actual asset/export consumer; MPAssetTests/MPHTMLExportTests/MPHTMLResourceURLsTests freshly passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Document/MPAsset.m",
+      "sha256": "a4e260bd0ab242b7862c030229aac8892af464e8f63333db1cbe5ef86c22e943",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "MIME defaults/init/type override/template exception, file read/trim/embed versus remote full link; CSS/script Handlebars escaping and forced MathJax config embedding. Full runtime asset/export gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Embedding/link/escaping composition exercised by fresh asset/export/resource suites; app resources built in Debug/Release.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Document/MPPDFAnchorInjector.h",
+      "sha256": "7dbaa29df89ed7405bb15a3471f5bdd75b7486a5b2558f60a826caa4430c5593",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Native links API optional documents/error, metadata unpublished and geometry disagreement contract; exact MPDocument consumer inspected.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual current JS extracted from MPDocument546d and injector902c in final strict native consumer: two native prints, immutable decoded RGBA captured before mutation, transfer1, writeToURL resolved.pdf and fresh initWithURL, persisted PDFActionGoTo destination page identity and expected point, exact RGBA equality1294016bytes, DOM/CSSOM/session restored. Twelve checks passed, exit0. One-page integration fixture; multipage geometry/atomicity covered by current native suites.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-native-pdf-strict-u06tm06z/report.json",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-pdf-final-ss0j95yq/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Document/MPPDFAnchorInjector.m",
+      "sha256": "902c57b2cb6354a651e0b981a49bfee390ae89fc1e003d0d1a71bd343c2ed5a0",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All marker grammar/overflow, geometry, first IDs/destinations, percent-decoded sources, uniqueness/consumed, deferred atomic action mutations read; PDFKit print/save/reopen gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual current JS extracted from MPDocument546d and injector902c in final strict native consumer: two native prints, immutable decoded RGBA captured before mutation, transfer1, writeToURL resolved.pdf and fresh initWithURL, persisted PDFActionGoTo destination page identity and expected point, exact RGBA equality1294016bytes, DOM/CSSOM/session restored. Twelve checks passed, exit0. One-page integration fixture; multipage geometry/atomicity covered by current native suites.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-native-pdf-strict-u06tm06z/report.json",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-pdf-final-ss0j95yq/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.h",
+      "sha256": "45e93c4fd1c078842d10fdc835fbbc71f4f247709c6c468d9d53755a6eff1d4e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Public flags/dataSource/delegate/options/export/resource timestamps/task snapshot contracts matched implementation and MPDocument users.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current Markdown/export/state/deferral suites exercise declared public flags/options/delegates.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.m",
+      "sha256": "a939696a43b801dd5f59e28a731865c24b6bdf3ec092f5c997ae65667370ecff",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "933 lines read in contiguous 1-330,331-650,651-933: all helpers/accessors/queue/generations/preferences/parse/publish/markup/export; see explicit symbol register. Full app concurrency/export gates pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Manual closure against final R04 commit 723ef22: full native suite 1436/0, Debug/Release universal builds and current app/QL consumers passed. Native UUID provider exact executable selected; root compositor inspection confirmed visible code on dark background. Full final source read and second pass previously recorded; source SHA unchanged.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "docs/audits/deep-audit/preuves/A2-R04.md",
+        "/tmp/macdown-campaign02-final-full-tests-green2.log",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.json",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.png",
+        "/tmp/macdown-campaign02-r04-mermaid-js.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Extension/hoedown_html_patch.c",
+      "sha256": "fd8a4612729ae01eee3053b4b911ff0ea7303be9922bc2929d0da772a014463e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All 616 final source lines entirely reread after A2-R04; shared PRE/CODE escaped language class, merged line-numbers, every previous marker/code/task/UTF8/slug/table/TOC branch unchanged and analyzed.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Manual closure against final R04 commit 723ef22: full native suite 1436/0, Debug/Release universal builds and current app/QL consumers passed. Native UUID provider exact executable selected; root compositor inspection confirmed visible code on dark background. Full final source read and second pass previously recorded; source SHA unchanged.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log",
+        "docs/audits/deep-audit/preuves/A2-R04.md",
+        "/tmp/macdown-campaign02-final-full-tests-green2.log",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.json",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.png",
+        "/tmp/macdown-campaign02-r04-mermaid-js.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Code/Extension/hoedown_html_patch.h",
+      "sha256": "763870f5ef85caee5a24198c1493f4f8da72690bb434e4415085eec579221d84",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Renderer bit flags 4/5/6 and extra callback lifetime/ownership, all declarations matched app and QL initializers.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Callbacks/flags compiled and consumed in both app and Core, freshly exercised by renderer/QL suites and standalone regressions.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/export.css",
+      "sha256": "401a13f7ec8583be6b64ce605a1fdbdec4bf4063485ee9dac7b1864297d07c48",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Prose/list/table/headers/blockquote/dd wrapping, screen-only overflow table cascade, resize handles/resizable classes and mermaid SVG; actual print/table layout gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Cascade fully reviewed; actual print consumer and computed-style regressions exercise code/table/heading selectors; built/exported styles exercised. Pointer interaction belongs to separate table-resize.js gate.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/mermaid.forest.css",
+      "sha256": "30f7a6778b2cd70bffeb591b4d66b22bcbee1b31c5118a53e6431f462454bf8d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All forest SVG flowchart/sequence/gantt/class/tooltip selectors and values read. Dormant bundled CSS: current MPRenderer does not load it; forest configured through API, no active consumer to test.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Dormant resource fully reviewed; no active consumer. Existing explicit dormant-resource decision retained.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/mermaid.init.js",
+      "sha256": "51e9477dfd4704fe15c1456023f35ba272229c84b8bd46764888f5bba3c59a72",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All initialization antiscript/forest, async guard/deferred re-request, session IDs, PRE ownership check, safe error text, load and observer paths examined; actual bundled Mermaid consumer gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Fresh Node adapter safety/error/replaced-DOM race tests and native renderer script-composition suites passed. Contract covers application adapter; exhaustive Mermaid provider rendering excluded.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/print.css",
+      "sha256": "da10026e3d91bc032fbbc237dfeb8bb74cf55297307c6b0263da142a1dbe553b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All print code wrapping/table :has/code/tt/page-break/body margins/white background/heading contrast rules reviewed against theme specificity; PDF pixel/geometry consumer gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Fresh R04 native code print: six actual NSPrintOperations and persisted/reopened PDFs, original callback962df74+real bundled Prism vs current+Prism identical DOM structural classes/tokens/colors, actual PDF text and raw RGBA pixels on GitHub2/GitHub2020. Current no-Prism also visibly prints. Exact-color dark background and economy white-page adjusted glyphs observed with fresh default shouldPrintBackgrounds=false. CSSOM print-important rules present; pre-print mediaStyle computed whitespace is explicitly not a wrapping oracle.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log",
+        "docs/audits/deep-audit/preuves/A2-R04.md",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-r04-native-code-print-r7ml_w1b/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/show-information.css",
+      "sha256": "b6264623da8f6833df5aaaef6d8d5d80a2b0720b36fee8e21e1e1967d7facf6e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Final PRE[data-information]/before rules entirely reread, actual Hoedown->legacy WebView computed style with/without line numbers and no-info witness red/green; A2-R01 complete local contract.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "A2-R01 actual Hoedown->WebView computed CSS with/without line numbers and no-info witness freshly passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/table-resize.js",
+      "sha256": "bdd2edb6f2e28a58ab681afa69f5f3a07c3bf5bf46ab215b90f3bed42c2d8e44",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Every header/key/hash/colgroup/width/teardown/init/drag/dblclick/mousemove/mouseup/reinit branch; ephemeral widths not persisted. Actual table DOM/print consumer gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual legacy WebView DOM executes unchanged adapter: drag measured width, minimum48, mouseup state, replacement session widths, repeated reinit no extra handles, dblclick/reset session all passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/tasklist.js",
+      "sha256": "baaec190711edd666226fb5be1b7dca7534036327543c477a02bce835d4e6d47",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Token meta and closure per init, task item first input prevents nested duplicate listener, URL explicit checkbox index/custom scheme; exact MPDocument token/snapshot/range protection inspected.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual legacy WebView DOM executes unchanged adapter: nested input click produces exactly one intercepted native navigation, explicit index/encoded token, replacement fresh index/token passed. Fresh MPDocument token/source/index protections are separately tested; no single-process UI chain claim.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Extensions/viz.init.js",
+      "sha256": "4284c2771c200f079d9c0b9d9f25f680754a090c38f3d23cfd76e9349a4ac140",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Six engine queries, PRE validation, source text, Viz render replacement/error, reentrant guard, load/observer initialization; third-party SVG provider not certified by adapter reading.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual legacy WebView executes adapter with bundled Viz.js: two sibling graphs produce two SVGs, replacement MutationObserver renders fresh graph, invalid syntax retains safe source PRE. No exhaustive vendor engine certification.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/MacDown.sdef",
+      "sha256": "5643f7986c7f96fbc9c2e90db550d84407ea21955bf0f2ac9b71eb19c56939db",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All Standard/Text/MacDown suites, commands parameters/enums/classes/Cocoa mappings reviewed. Runtime AppleScript application contract pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Entire dictionary reread at final closure; source identity unchanged. Root native NScriptSuite mapping and bundle osacompile confirm readonly html Cocoa getter and rw text->markdown; edited HTML getter behavior covered by 49 targeted native tests and final full1436/0 suite. No exportHTML command declared or required. Final MPDocument546d strict native PDF disk-reopen gate independently passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-scripting-green2.log",
+        "/tmp/macdown-campaign02-final-full-tests-green2.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-pdf-final-ss0j95yq/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/MathJax/init.js",
+      "sha256": "c1dba6dd393057ba073b8dbad36b88ff36f5a53a55a35b4a5bf27284cd17606e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "MathJax Config show/messages none, optional listener startup End callback; included as text/x-mathjax-config asset then CDN script. Real MathJax startup gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual legacy WebView executes unchanged IIFE with synthetic Hub/StartupHook/bridge contract: exact Config, End registration/invocation, no listener accepted. CDN availability/typesetter internals excluded.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/report.json"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Clearness Dark.css",
+      "sha256": "f5e84a44a4eb5e45ede9eec5ba86c3d3b58f74bc9a7cb98f29b606acf41a6988",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Dark #282a36/#fff, orange PRE/code, heading white, quote grey, image limits/responsive854px/print margin0. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Clearness.css",
+      "sha256": "fc407d712394b6dc65bd62685e4e5abf9afb960c0e25f76025a178322e47fdd3",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Light #737373 prose, #404040 headings, wrapped framed PRE, table borders/image height, responsive854px and print margin0. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/GitHub Tomorrow.css",
+      "sha256": "d274836c48020747374111fec9b3428670fb75d0eaaf298523221ff74b86f5d8",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Dark #464646/#cccccc, semantic emph/strong/link/headings colors, nested markers, dark table/PRE/code, footnote wrappers, print padding0. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/GitHub-2020.css",
+      "sha256": "8a193080ed45c1abaeec8e65724df31d26c14f62d56ecd8e821f74f628d94d2b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "3112 lines fully read; generated Primer primitives/dimensions/font tokens/light-theme conditional colors/media/normalize/forms/base/markdown body/table/code/footnotes. Generator index.sass/Makefile read; A2-R03 actual WKWebView tokens proved. Full bundle/build/print gates pending. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/GitHub.css",
+      "sha256": "50b145c3b6ae27c8c1f0d2907f83eeade0feabbf082ed9827fd423fa02086328",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Global reset, helvetica13.34px grey page, Monaco block framed/scrollable, heading borders/scales, nested list/quotes, embedded-code/print rules. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/GitHub2.css",
+      "sha256": "d526e3d22730267ba919c1af92c9ed826ccd8b681f516add89de9ce912a79938",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "White body/padding30, anchor embedded PNG, h1/h2 border, table striping, image frames/alignment, inline nowrap versus PRE, responsive/print cascade. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Github2 (dark).css",
+      "sha256": "d437fa41d15204f524a180dd75c0fbf03ca84df442e64154f97f6f73980af3e5",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "GitHub dark #0d1117/#e6edf3, dark tables/code, mark/keyboard/heading/blockquote contrast, responsive and print body padding2cm overridden app print CSS. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Gmail.css",
+      "sha256": "cf2f35839c870f75716ea92a40cb27a1431049983b7095a983689fc188fa5e35",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Web-safe Arial10pt/600px theme; email heading scale/link underline/quotes/list36px/table/code/framing/print; no external provider claim certified. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Google Docs.css",
+      "sha256": "7305f1bbf7680a5dfa6f3db8d3fdb6f98377d9a2b0c31cc4939f40dde28ea819",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Arial11pt/816px, Google green code and important Prism token override, table black borders/link underline/list36px/frames/print. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Solarized (Dark).css",
+      "sha256": "831c8a7c415905f99ef5ff53625a9a6e5a2b9de3563d71f61d0f8cf287a0570d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Global typography/reset16px, heading capitalize/borders, image limits, body40x70px, dark #002b36/#839496 palette, code #073642, print margin0. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Styles/Solarized (Light).css",
+      "sha256": "66385e7e12660597a8ddd3b57f6ccf6c94bd34125bb9f880b328b1cf8c189c71",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Same declarative layout independently read; light #fdf6e3/#657b83 palette, code #eee8d5, link/heading ochre, print margin0. Every declaration and media branch analyzed with app/QL stylesheet consumers; full native layout gates remain.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Every declaration/media branch reviewed against actual style loading/cascade. Fresh bundled resource builds and native computed-style/print consumers passed; declarative stylesheet validation does not claim screenshots of every style at every viewport.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Templates/Default.handlebars",
+      "sha256": "3911974b1f3b264ea57ba04d54b3fabad99f948af1510f0220fac5e206d180c8",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Full template html light attrs, charset/viewport/titleTag/headTags/styles/body/scripts contexts matched MPGetHTML and CSP/escaping; A2-R03 demonstrates light tokens requirement.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual template/asset/export suites, native preview composition and light-token WK consumer passed; contexts/cascade reviewed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/GitHub Dark Default+.style",
+      "sha256": "1c871c959cdd2b32178de980ad180cd0f5cd1f629f11075449be10289f07d6ab",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "e6edf3/0d1117, selection264f78, blue heading/code, blue/green/orange semantic palette; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/GitHub Dark Default.style",
+      "sha256": "7ddc20007c5b98703cc031461f7d68080d46a1c51c1f63596681f17ce84d381a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "e6edf3/0d1117, selection264f78, blue heading/code, blue/green/orange semantic palette; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Fresh Air+.style",
+      "sha256": "9c7b5281bc5736ef43daa6a415dc9d875f72eb4d386f2631294372a138d7d21c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "black/white, selectionff4f92, violet/blue headings and green code, orange-red semantic emphasis; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Fresh Air.style",
+      "sha256": "7cf14e22925608ef66e58f8e48bf1cc3640f3b1890631e4cc4ebeadd6dafed9e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "black/white, selectionff4f92, violet/blue headings and green code, orange-red semantic emphasis; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Night+.style",
+      "sha256": "29ac097ec816c3f6c315ede0b0aba97ee0175ff9f83d65e18bb05a2906b5650e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "eeeeee/282a36, caretff3319, blue/violet headings/link, magenta code, red quote; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Night.style",
+      "sha256": "5f07cfb769df3846bfe0aca3ab4305291580d0bdbb84e67574e3063587861017",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "eeeeee/282a36, caretff3319, blue/violet headings/link, magenta code, red quote; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Paper+.style",
+      "sha256": "8d2350b0042a4fa4ebe889296db1c5f0b471b3115911f98ef34dfef4efa4dd7d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "black/white, neutral555555 code/link/markup, bbbbbb quote/list, no explicit selection; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Mou Paper.style",
+      "sha256": "f91490c350a951a55c5bc0530544f8de80309adab93fdadd8735cbee0ebc7c5b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "black/white, neutral555555 code/link/markup, bbbbbb quote/list, no explicit selection; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Solarized (Dark)+.style",
+      "sha256": "2fc489c15373f77d12ae28eb42b75bf4fa80ae0295d1957cee17f37d96cf432d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "839496/002b36, selectiond33682, ochre headings, 93a1a1 code on073642; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Solarized (Dark).style",
+      "sha256": "b087429dda9c25540a339485bde5632d5f1c5e8cacc438c3b256d69b36b67fae",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "839496/002b36, selectiond33682, ochre headings, 93a1a1 code on073642; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Solarized (Light)+.style",
+      "sha256": "807de1062aad78f56eb4c1a9155aa0c1387732ae1b1881853a70a3e3c8ab0964",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "657b83/fdf6e3, selectiond33682, ochre headings,586e75 code oneee8d5; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Solarized (Light).style",
+      "sha256": "1e62c3734ef412f23a8ae4ccf8c509c55d069c644c0af94f849dd20bdcf42b50",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "657b83/fdf6e3, selectiond33682, ochre headings,586e75 code oneee8d5; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Tomorrow Blue.style",
+      "sha256": "090ad9ac160ce57ab4133050be04050d36be35596f53a726b6b21aa346abd354",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "white/002451, selection003f8e, pink headings, pale semantic link/image,7285b7 code; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Tomorrow+.style",
+      "sha256": "ed759e275d7a46f370fc00f315a49db90b5fb27ffe8f007560dbc6709e1c15c2",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "cccccc/2d2d2d, selection515151, cyan headings/reference, greycode, violetmarkup/redquote; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Tomorrow.style",
+      "sha256": "75c8dc06b2f41fa2838478b8e4a8459668067e2a554937881ec6cbb9a90a33fe",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "cccccc/2d2d2d, selection515151, cyan headings/reference, greycode, violetmarkup/redquote; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Writer+.style",
+      "sha256": "732b282bb9928f5ab0f9c4fb62ec70d9b1a4a87780be06d45d3addab68790012",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "424242/fafafa, caret00b9ff, neutral555555 markup/code, bbbbbb comment/quote, no explicit selection; H1-H6 sizes24/20/17/15/13/11 plus variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/Themes/Writer.style",
+      "sha256": "1f9c437258f2716b2ff2d1385be05629a20b8b11056f1cd55395e411b96fa3ab",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "424242/fafafa, caret00b9ff, neutral555555 markup/code, bbbbbb comment/quote, no explicit selection; H1-H6 unsized base variant. All editor/selection and pmh syntax sections independently read and matched HGMarkdownHighlighter parser consumer. Native theme/highlighter suite pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Full editor/selection/syntax declarations manually reviewed against pmh/HGMarkdownHighlighter. Fresh all-bundled-theme parser tests read each theme and require HTML/HTMLBLOCK foreground attributes; native editor/highlighter suites and resource builds passed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/syntax_highlighting.json",
+      "sha256": "048275f9e5a6106c0e86bcb80abe8ba50d4555639032c2d0920d9756861713a3",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All 17 alias entries including c++/objective-c/sh/graphviz mapping read; language_addition callback resolves canonical names before dependencies/scripts; actual Prism bundled consumer gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "All aliases manually mapped to exact callback; actual MPSyntaxHighlightingTests golden aliases/language consumer freshly passed. Prism engine internals excluded.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDown/Resources/updateHeaderLocations.js",
+      "sha256": "e15be78acc0b02c2b9945f1e01b3ed3a1ac62273869b75bfcfcf2cd7c49699d9",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Full IIFE headers/images/text-node standalone logic, paragraph dedupe, list-only wrapper, DOM order, rect+scrollY/kinds and empty-error branches; MPDocument alignment consumer gate root.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Fresh standalone DOM image/header locations cases and MPDocument consumer suites passed; ordering/standalone-image branches reviewed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/tmp/macdown-campaign02-regressions.log",
+        "/tmp/macdown-campaign02-build-contracts.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/Info.plist",
+      "sha256": "9c444ac2cdac387a058adf74e22dca9f6f89b5907a9494c4bac9a6bdd766a530",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Full framework CFBundle versions/executable/type/identifier and build substitutions read; compiled framework bundle gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current Debug/Release Core bundles built and current framework loaded by real native QL provider.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MPQuickLookPreferences.h",
+      "sha256": "26d4c0091d141199c2377b452d3f7918f57d2885a54af6629164dc21da52ef04",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All documented styling/extensions flags and excluded MathJax/Mermaid/Graphviz contracts aligned implementation.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current preferences suite plus actual denied/granted/read-only sandbox-domain probes passed; interface matched renderer consumer.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MPQuickLookPreferences.m",
+      "sha256": "e269e6e827ef42f6082cd7ea9f8943ad16c04976badb9bbaf41a6deb8de5113e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All exact-domain CFPreferences read/type fallbacks, style/theme defaults, extension key typo compatibility, flags/tasks/info and three disabled features read; sandbox domain gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current preferences tests and actual sandbox-domain denied/granted/read-only probes passed with synthetic UUID values; real user preferences untouched.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MPQuickLookRenderer.h",
+      "sha256": "8624df9faeb328e0c4ae1e3ad5ac82da4487fd9697dec3495849a90681908400",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Nil Markdown/error URL API and offline scripts/resources supported/excluded contract reviewed with renderer/controller consumers.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual renderer suite, WK tokens regression, sandbox assets and native painted QL provider exercise declared offline rendering contract.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MPQuickLookRenderer.m",
+      "sha256": "7c14e16770e5db74a81ae65dd069203f1bbdab5fbe98590467c43a4d558aa709",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "372 final lines reread after A2-R03; bundle/home/style/theme/encoding/CSP/preprocess/Hoedown/wrap/embed all branches. Real WKWebView token consumer passed; actual sandbox asset/preference lookup remains gate.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Manual closure against final R04 commit 723ef22: full native suite 1436/0, Debug/Release universal builds and current app/QL consumers passed. Native UUID provider exact executable selected; root compositor inspection confirmed visible code on dark background. Full final source read and second pass previously recorded; source SHA unchanged.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log",
+        "docs/audits/deep-audit/preuves/A2-R04.md",
+        "/tmp/macdown-campaign02-final-full-tests-green2.log",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.json",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.png",
+        "/tmp/macdown-campaign02-r04-mermaid-js.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MacDownCore.h",
+      "sha256": "903651853151ca1f62942726076875ef38127216b1d9f77d673b39ae88f7240c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Framework exports and public QL headers align facade interface; built framework export gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current Core public exports built and loaded in real native QL provider.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownQuickLook/Info.plist",
+      "sha256": "59e4ab4e6df81f0e9f689f27670ac339e0e3779107a2fe840a41a3d85deb23d7",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Full extension bundle version/deployment substitutions, principal PreviewViewController, preview extension point, Markdown UTI/five extensions and searchable false read; actual host registration gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Fresh extension builds and exact UUID-copied native provider selection confirmed principal-class/extension-point/host contract. UUID UTI substitutes production identity for isolation.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownQuickLook/MacDownQuickLook.entitlements",
+      "sha256": "2c615c485eaf437fe2b7c497741bc6fbae2dbba627db9fe590703f3fc2097f9a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Sandbox enabled, exact read-only shared preference domain, user-home Styles/Prism/themes paths, user-selected readonly, network client. No runtime sandbox proof from fixture.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Actual synthetic sandbox denial/grant/read-only preference and asset tests exercise entitlement boundaries. Native paint fixture uses sandbox without real-home exceptions and is not alone used to certify production grants.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownQuickLook/PreviewViewController.h",
+      "sha256": "638953029363de21bf9889cd0a9b493ca06a9e225efd2981d2b9724cbd243480",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "QLPreviewingController/WKNavigationDelegate protocols and Cocoa/WebKit imports matched all callbacks.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Current controller suite and real native provider with NSApplication.run painted rendered Markdown through declared protocols.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownQuickLook/PreviewViewController.m",
+      "sha256": "6fad5f1905f4566f9a6e77c6b4436fcb815669020f8490b14d60f5c02765f76d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "Every init/load/config/factory, replacement/error/completion/navigation identity/cancel/dealloc and scheme-policy branch read; actual signed host lifecycle/sandbox gates pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Manual closure against final R04 commit 723ef22: full native suite 1436/0, Debug/Release universal builds and current app/QL consumers passed. Native UUID provider exact executable selected; root compositor inspection confirmed visible code on dark background. Full final source read and second pass previously recorded; source SHA unchanged.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log",
+        "docs/audits/deep-audit/preuves/A2-R04.md",
+        "/tmp/macdown-campaign02-final-full-tests-green2.log",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.json",
+        "docs/audits/deep-audit/preuves/campagne02-quicklook-native.png",
+        "/tmp/macdown-campaign02-r04-mermaid-js.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    },
+    {
+      "path": "MacDownCore/MPMarkdownPreprocessor.h",
+      "sha256": "ed5e8e88ac2b0daf36d5907a8c676c51da858470f08858cc5370ee879adb65cf",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "state": "validé",
+      "evidence": "All 221 lines: unique slugs/literal spans/prose replacement/quote parsing/source task UUID offsets/CRLF/fence containers/definitions/cleanup; Hoedown fence consumers read; app+QL comprehensive Markdown gate pending.",
+      "proof": "docs/audits/deep-audit/preuves/campagne02-render.md",
+      "second_pass": true,
+      "validation_decision": "Shared pure pipeline freshly exercised by comprehensive app/QL Markdown suites, actual PRE/TOC consumers; all original-offset/CRLF/fence/literal branches manually reviewed.",
+      "validation_proofs": [
+        "/tmp/macdown-campaign02-full-tests.log",
+        "/tmp/macdown-campaign02-debug-universal-build.log",
+        "/tmp/macdown-campaign02-release-build.log",
+        "/private/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-native-ql-surface-0ykmj1ay/report.json",
+        "/tmp/macdown-campaign02-sandbox-assets.log",
+        "/tmp/macdown-campaign02-sandbox-preferences.log"
+      ],
+      "evidence_status": "Initial read record retained; current validation_decision supersedes initial pending-gate wording."
+    }
+  ],
+  "validation_review": "60/60 manually read, analyzed, second-pass reviewed and validated against stated consumers/gates. R04 final723ef22 full1436/0+UI4/0+native provider compositor; D02f5870f5 scripting targeted49/0+native terminology per root; current MPDocument546d strict PDF disk-reopen12checks/0. No full vendor engine internal audit or deployment claimed."
+}

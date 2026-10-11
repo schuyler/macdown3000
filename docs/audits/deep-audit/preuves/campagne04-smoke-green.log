@@ -1,0 +1,15 @@
+Private recovery vault: /Users/zydon/Library/.macdown-audit-vault.3jpeq14l
+2026-10-10 00:47:10.472 MacDown 3000[6135:48346138] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/app.macdown.macdown3000-debug.savedState
+2026-10-10 00:47:10.828 MacDown 3000[6135:48346138] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:47:10.847 MacDown 3000[6135:48346138] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:47:10.878 MacDown 3000[6135:48346138] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+2026-10-10 00:47:10.909 MacDown 3000[6135:48346138] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+Tools/smoke_launch.sh: line 31:  6135 Terminated: 15          "$binary" -MPDisableUpdater YES -ApplePersistenceIgnoreState YES
+2026-10-10 00:47:16.563 MacDown 3000[6170:48346585] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/app.macdown.macdown3000-debug.savedState
+2026-10-10 00:47:16.924 MacDown 3000[6170:48346585] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:47:16.945 MacDown 3000[6170:48346585] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:47:16.976 MacDown 3000[6170:48346585] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+2026-10-10 00:47:17.007 MacDown 3000[6170:48346585] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+Tools/smoke_launch.sh: line 31:  6170 Terminated: 15          "$binary" -MPDisableUpdater YES -ApplePersistenceIgnoreState YES
+Application launch and legacy preference migration passed.
+RESTORED and preferences verified; vault retained privately

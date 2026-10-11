@@ -58,13 +58,13 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
 
 - (IBAction)changeStylesheet:(NSPopUpButton *)sender
 {
-    NSString *title = sender.selectedItem.title;
+    NSString *name = sender.selectedItem.representedObject;
 
     // Special case: the first (empty) item. No stylesheets will be used.
-    if (!title.length)
+    if (!name.length)
         self.preferences.htmlStyleName = nil;
     else
-        self.preferences.htmlStyleName = title;
+        self.preferences.htmlStyleName = name;
 }
 
 - (IBAction)changeHighlightingTheme:(NSPopUpButton *)sender
@@ -158,10 +158,15 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
 
     [self.stylesheetSelect addItemWithTitle:@""];
     [self.stylesheetSelect addItemsWithTitles:itemTitles];
-
-    NSString *title = self.preferences.htmlStyleName;
-    if (title.length)
-        [self.stylesheetSelect selectItemWithTitle:title];
+    for (NSMenuItem *item in self.stylesheetSelect.itemArray) {
+        NSString *name = item.title;
+        item.representedObject = name;
+        if ([name isEqualToString:MPDefaultHtmlStyleName])
+            item.title = [NSString stringWithFormat:@"%@ %@", name,
+                          NSLocalizedString(@"(Default)", @"Default theme suffix")];
+        if ([name isEqualToString:self.preferences.htmlStyleName])
+            [self.stylesheetSelect selectItem:item];
+    }
 
     self.stylesheetSelect.enabled = YES;
 }

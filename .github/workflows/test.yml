@@ -26,6 +26,37 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    - name: Run native build and resource contract regressions
+      timeout-minutes: 5
+      run: |
+        set -euo pipefail
+        python3 MacDownTests/BuildTools/scripts_tests.py
+        python3 MacDownTests/BuildTools/smoke_launch_tests.py
+        python3 MacDownTests/BuildTools/stall_empty_suite_tests.py
+        python3 MacDownTests/BuildTools/version_tests.py
+        python3 MacDownTests/BuildTools/release_identity_tests.py
+        python3 MacDownTests/BuildTools/staple_resume_tests.py
+        python3 MacDownTests/BuildTools/staple_partial_upload_tests.py
+        python3 MacDownTests/BuildTools/packaging_version_tests.py
+        python3 MacDownTests/BuildTools/peg_contracts.py
+        python3 MacDownTests/BuildTools/yaml_graph_tests.py
+        python3 MacDownTests/BuildTools/command_queue_tests.py
+        python3 MacDownTests/BuildTools/code_accessory_tests.py
+        python3 MacDownTests/BuildTools/toc_hierarchy_tests.py
+        python3 MacDownTests/BuildTools/quicklook_theme_tests.py
+        python3 MacDownTests/BuildTools/quicklook_code_theme_tests.py
+        python3 MacDownTests/BuildTools/community_theme_tests.py
+        python3 MacDownTests/BuildTools/callout_tests.py
+        python3 MacDownTests/BuildTools/heading_spacing_tests.py
+        python3 MacDownTests/BuildTools/indent_selection_tests.py
+        bash MacDownTests/UI/test_editor_geometry.sh
+        bash MacDownTests/Localization/test_plural_rules.sh
+        python3 MacDownTests/BuildTools/print_colors_tests.py
+        python3 MacDownTests/Sandbox/preferences_tests.py
+        python3 MacDownTests/Sandbox/assets_tests.py
+        node MacDownTests/JavaScript/mermaid-init.test.js
+        node MacDownTests/JavaScript/header-locations.test.js
+
     # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
     # remaining steps, so the diagnostic steps below would never run, whereas a step-level
     # one leaves them to fire on failure(). Healthy runs finish in about 2-4 minutes.

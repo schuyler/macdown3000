@@ -1,0 +1,13 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/SourceSelectionEvidence/selection-source-ui-targeted.log
+SHA-256 full log: ced096349d659efe1a17e495979fc530d990bcfcf87c073728b13352865ac2dc
+
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' started.
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' passed (14.971 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' passed (23.982 seconds).
+	 Executed 2 tests, with 0 failures (0 unexpected) in 38.953 (38.954) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 38.953 (38.955) seconds
+	 Executed 2 tests, with 0 failures (0 unexpected) in 38.953 (38.956) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_16-45-15-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

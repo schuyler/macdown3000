@@ -31,8 +31,8 @@ static CGFloat    const kMPDefaultEditorHorizontalInset = 15.0;
 static CGFloat    const kMPDefaultEditorVerticalInset = 30.0;
 static CGFloat    const kMPDefaultEditorLineSpacing = 3.0;
 static BOOL       const kMPDefaultEditorSyncScrolling = YES;
-static NSString * const kMPDefaultEditorThemeName = @"Tomorrow+";
-static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
+NSString * const MPDefaultEditorThemeName = @"Tomorrow+";
+NSString * const MPDefaultHtmlStyleName = @"GitHub2";
 
 
 @implementation MPPreferences
@@ -73,144 +73,56 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     return self;
 }
 
+// Read only the legacy application's persistent domain. A timed-out worker
+// never writes preferences; startup is the sole owner of applying the result.
++ (BOOL)migrateLegacyDomain:(NSString *)domain
+                 fromDefaults:(NSUserDefaults *)source
+                   toDefaults:(NSUserDefaults *)destination
+                      timeout:(NSTimeInterval)seconds
+{
+    dispatch_semaphore_t finished = dispatch_semaphore_create(0);
+    __block NSDictionary *legacy = nil;
+    __block BOOL succeeded = NO;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        @try
+        {
+            legacy = [[source persistentDomainForName:domain] copy];
+            succeeded = YES;
+        }
+        @catch (NSException *exception)
+        {
+            NSLog(@"[MPPreferences] Legacy domain read failed: %@", exception.name);
+        }
+        @finally
+        {
+            dispatch_semaphore_signal(finished);
+        }
+    });
+    if (dispatch_semaphore_wait(finished, dispatch_time(DISPATCH_TIME_NOW,
+                       (int64_t)(seconds * NSEC_PER_SEC))) != 0 || !succeeded)
+        return NO;
+
+    for (NSString *key in legacy)
+    {
+        if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
+            continue;
+        // Settings already chosen in MacDown 3000 take precedence.
+        if (![destination objectForKey:key])
+            [destination setObject:legacy[key] forKey:key];
+    }
+    return YES;
+}
+
 - (void)migratePreferencesFromLegacyBundleIdentifierIfNeeded
 {
-    static NSString * const kMPLegacyBundleIdentifier = @"com.uranusjr.macdown";
-    static NSString * const kMPMigrationCompletedKey = @"MPDidMigrateFromLegacyBundleIdentifier";
-    static const NSTimeInterval kMPMigrationTimeout = 2.0;  // 2 seconds
-
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-    // Check if we've already migrated
-    if ([defaults boolForKey:kMPMigrationCompletedKey])
+    NSString *completedKey = @"MPDidMigrateFromLegacyBundleIdentifier";
+    NSUserDefaults *defaults = self.userDefaults;
+    if ([defaults boolForKey:completedKey])
         return;
-
-    NSLog(@"[MPPreferences] Starting preferences migration from legacy bundle identifier: %@",
-          kMPLegacyBundleIdentifier);
-
-    // Create semaphore for timeout control
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block NSDictionary *legacyPrefs = nil;
-    __block BOOL migrationSucceeded = NO;
-
-    // Run migration on background queue to prevent blocking main thread
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        @try {
-            // Use Apple's built-in initWithSuiteName: instead of custom category
-            NSUserDefaults *legacyDefaults =
-                [[NSUserDefaults alloc] initWithSuiteName:kMPLegacyBundleIdentifier];
-
-            // This call may hang on macOS Sequoia if preferences are inaccessible
-            legacyPrefs = [legacyDefaults.dictionaryRepresentation copy];
-            migrationSucceeded = YES;
-        }
-        @catch (NSException *exception) {
-            NSLog(@"[MPPreferences] Migration exception: %@ - Reason: %@",
-                  exception.name, exception.reason);
-        }
-        @finally {
-            dispatch_semaphore_signal(semaphore);
-        }
-    });
-
-    // Wait with timeout
-    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW,
-                                           (int64_t)(kMPMigrationTimeout * NSEC_PER_SEC));
-    long waitResult = dispatch_semaphore_wait(semaphore, timeout);
-
-    // Handle timeout
-    if (waitResult != 0) {
-        NSLog(@"[MPPreferences] Migration timed out after %.1f seconds - skipping migration",
-              kMPMigrationTimeout);
-        NSLog(@"[MPPreferences] This may occur on macOS Sequoia due to sandbox restrictions");
-        NSLog(@"[MPPreferences] App will use default preferences");
-        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        // Note: Not calling synchronize - NSUserDefaults auto-syncs (deprecated since macOS 10.13)
-        return;
-    }
-
-    // Handle exception during migration
-    if (!migrationSucceeded) {
-        NSLog(@"[MPPreferences] Migration failed due to exception - marking as complete to prevent retry");
-        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        // Note: Not calling synchronize - NSUserDefaults auto-syncs
-        return;
-    }
-
-    // If there are no legacy preferences, nothing to migrate
-    if (!legacyPrefs || legacyPrefs.count == 0)
-    {
-        NSLog(@"[MPPreferences] No legacy preferences found - migration not needed");
-        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        // Note: Not calling synchronize - NSUserDefaults auto-syncs
-        return;
-    }
-
-    NSLog(@"[MPPreferences] Found %lu legacy preferences to migrate",
-          (unsigned long)legacyPrefs.count);
-
-    // Phase 2: Copy preferences to new suite (with timeout protection)
-    dispatch_semaphore_t semaphore2 = dispatch_semaphore_create(0);
-    __block BOOL copySucceeded = NO;
-    __block NSUInteger migratedCount = 0;
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        @try {
-            NSUserDefaults *currentSuite =
-                [[NSUserDefaults alloc] initWithSuiteName:kMPApplicationSuiteName];
-
-            for (NSString *key in legacyPrefs)
-            {
-                // Skip system-generated keys
-                if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
-                    continue;
-
-                id value = legacyPrefs[key];
-                // Use category method for explicit CFPreferences write
-                // to ensure proper suite targeting
-                [currentSuite setObject:value
-                                 forKey:key
-                           inSuiteNamed:kMPApplicationSuiteName];
-                migratedCount++;
-            }
-
-            // Note: Not calling synchronize - NSUserDefaults auto-syncs
-            // synchronize is deprecated since macOS 10.13
-            copySucceeded = YES;
-        }
-        @catch (NSException *exception) {
-            NSLog(@"[MPPreferences] Exception during preference copying: %@ - Reason: %@",
-                  exception.name, exception.reason);
-        }
-        @finally {
-            dispatch_semaphore_signal(semaphore2);
-        }
-    });
-
-    // Wait with timeout for Phase 2
-    long waitResult2 = dispatch_semaphore_wait(semaphore2, timeout);
-
-    if (waitResult2 != 0) {
-        NSLog(@"[MPPreferences] Preference copying timed out after %.1f seconds - migration incomplete",
-              kMPMigrationTimeout);
-        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        // Note: Not calling synchronize - NSUserDefaults auto-syncs
-        return;
-    }
-
-    if (!copySucceeded) {
-        NSLog(@"[MPPreferences] Preference copying failed - marking migration as complete to prevent retry");
-        [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-        // Note: Not calling synchronize - NSUserDefaults auto-syncs
-        return;
-    }
-
-    // Mark migration as complete
-    [defaults setBool:YES forKey:kMPMigrationCompletedKey];
-    // Note: Not calling synchronize - NSUserDefaults auto-syncs (deprecated since macOS 10.13)
-
-    NSLog(@"[MPPreferences] Successfully migrated %lu preferences from legacy bundle identifier",
-          (unsigned long)migratedCount);
+    if ([[self class] migrateLegacyDomain:@"com.uranusjr.macdown"
+                            fromDefaults:defaults toDefaults:defaults timeout:2.0])
+        [defaults setBool:YES forKey:completedKey];
+    // A failed read remains retryable on the next launch.
 }
 
 #pragma mark - Accessors
@@ -220,6 +132,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic updateIncludesPreReleases;
 @dynamic supressesUntitledDocumentOnLaunch;
 @dynamic createFileForLinkTarget;
+@dynamic applicationAppearance;
 
 @dynamic extensionIntraEmphasis;
 @dynamic extensionTables;
@@ -237,6 +150,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 @dynamic editorAutoIncrementNumberedLists;
 @dynamic editorConvertTabs;
+@dynamic editorConvertNotionCalloutsOnPaste;
 @dynamic editorInsertPrefixInBlock;
 @dynamic editorCompleteMatchingCharacters;
 @dynamic editorSyncScrolling;
@@ -250,6 +164,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic editorOnRight;
 @dynamic editorStartInPreviewMode;
 @dynamic editorShowWordCount;
+@dynamic editorShowReadingProgress;
 @dynamic editorWordCountType;
 @dynamic editorAutoSave;
 @dynamic editorScrollsPastEnd;
@@ -265,6 +180,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @dynamic htmlDetectFrontMatter;
 @dynamic htmlTaskList;
 @dynamic htmlHardWrap;
+@dynamic htmlWrapCodeBlocks;
 @dynamic htmlMathJax;
 @dynamic htmlMathJaxInlineDollar;
 @dynamic htmlSyntaxHighlighting;
@@ -319,43 +235,6 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
             return @"* ";
     }
 }
-
-- (NSArray *)filesToOpen
-{
-    return [self.userDefaults objectForKey:kMPFilesToOpenKey
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setFilesToOpen:(NSArray *)filesToOpen
-{
-    [self.userDefaults setObject:filesToOpen
-                          forKey:kMPFilesToOpenKey
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (NSArray *)foldersToOpen
-{
-    return [self.userDefaults objectForKey:kMPFoldersToOpenKey
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setFoldersToOpen:(NSArray *)foldersToOpen
-{
-    [self.userDefaults setObject:foldersToOpen forKey:kMPFoldersToOpenKey
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (NSString *)pipedContentFileToOpen {
-    return [self.userDefaults objectForKey:kMPPipedContentFileToOpen
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setPipedContentFileToOpen:(NSString *)pipedContentFileToOpenPath {
-    [self.userDefaults setObject:pipedContentFileToOpenPath
-                          forKey:kMPPipedContentFileToOpen
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
 
 #pragma mark - Private
 
@@ -415,12 +294,12 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         kMPDefaultEditorFontNameKey: kMPDefaultEditorFontName,
         kMPDefaultEditorFontPointSizeKey: @(kMPDefaultEditorFontPointSize),
     };
-    self.editorStyleName = kMPDefaultEditorThemeName;
+    self.editorStyleName = MPDefaultEditorThemeName;
     self.editorHorizontalInset = kMPDefaultEditorHorizontalInset;
     self.editorVerticalInset = kMPDefaultEditorVerticalInset;
     self.editorLineSpacing = kMPDefaultEditorLineSpacing;
     self.editorSyncScrolling = kMPDefaultEditorSyncScrolling;
-    self.htmlStyleName = kMPDefaultHtmlStyleName;
+    self.htmlStyleName = MPDefaultHtmlStyleName;
     self.htmlDefaultDirectoryUrl = [NSURL fileURLWithPath:NSHomeDirectory()
                                               isDirectory:YES];
     self.documentZoomLevel = 1.0;
@@ -440,6 +319,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 - (void)loadDefaultUserDefaults
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if (![defaults objectForKey:@"editorConvertNotionCalloutsOnPaste"])
+        self.editorConvertNotionCalloutsOnPaste = NO;
     if (![defaults objectForKey:@"editorMaximumWidth"])
         self.editorMaximumWidth = 1000.0;
     if (![defaults objectForKey:@"editorAutoIncrementNumberedLists"])
@@ -584,7 +465,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     }
 
     // Update to current version
-    [defaults setInteger:kMPCurrentMigrationVersion forKey:@"MPMigrationVersion"];
+    [defaults setInteger:MAX(currentVersion, kMPCurrentMigrationVersion)
+                 forKey:@"MPMigrationVersion"];
 }
 
 @end

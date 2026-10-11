@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Whether syntax highlighting is enabled for code blocks.
  */
 - (BOOL)syntaxHighlightingEnabled;
+- (BOOL)wrapCodeBlocks;
 
 #pragma mark - Markdown Extensions
 

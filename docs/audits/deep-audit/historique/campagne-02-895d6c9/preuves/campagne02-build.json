@@ -1,0 +1,751 @@
+{
+  "campaign": 2,
+  "baseline": "e5a5c237b92d172e953abf0680869ad0a5b4806f",
+  "agent": "audit2_build",
+  "scope": "build-cli-peg (70)",
+  "decision_method": "Statuts fixés manuellement après lecture et analyse ; génération seulement hashes et sérialisation. Aucun état précédent réutilisé.",
+  "files": [
+    {
+      "path": ".envrc.example",
+      "sha256_before": "f8ec968e7ece4d8c6b5fe9d6f3c901723d8d3b9a3c12bddfff357d48f35e5548",
+      "sha256_after": "f8ec968e7ece4d8c6b5fe9d6f3c901723d8d3b9a3c12bddfff357d48f35e5548",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Exports exemples APPLE_ID/APPLE_APP_PASSWORD/APPLE_TEAM_ID pour commande release/notary polling ; valeurs fictives, aucune donnée utilisateur lue."
+    },
+    {
+      "path": ".github/actions/build-macdown/action.yml",
+      "sha256_before": "540cf0bfeb8abfbd0515bd61558ce3a2350940a98b8a8be234cae665522f079d",
+      "sha256_after": "b8c590e20b14a14a0473d0a864906a33edc16b155d36a7708bd32901c38539e4",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Inputs configuration/architecture/version/build et sortie app ; xcodebuild, archive, chemins espaces, version CLI A2-B01. Xcode non exécuté par cet agent."
+    },
+    {
+      "path": ".github/actions/setup-macdown/action.yml",
+      "sha256_before": "2c727a47459b0529027067a1f864964350c1f69f5ef0a0f3ff8edfc71c6aea64",
+      "sha256_after": "2c727a47459b0529027067a1f864964350c1f69f5ef0a0f3ff8edfc71c6aea64",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Setup Ruby/Bundler/Pods/npm/submodules ; pins et cache et dépendances installées ; services runners non exercés."
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "sha256_before": "ae94084f7047315150685e16d7958a792d39bbc0c2525ef923fc3e8370b3d1df",
+      "sha256_after": "ae94084f7047315150685e16d7958a792d39bbc0c2525ef923fc3e8370b3d1df",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Deux entrées Bundler racine/npm Tools/GitHub-style-generator, fréquence daily13h/limite10/ignorey18n ; aucun écosystème GitHubActions déclaré."
+    },
+    {
+      "path": ".github/workflows/build-release.yml",
+      "sha256_before": "327c09e26f78e50a838c25174b85fbb67ff5a7500c5742c8f5133647ca77eff9",
+      "sha256_after": "327c09e26f78e50a838c25174b85fbb67ff5a7500c5742c8f5133647ca77eff9",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Entrées branch/tag/manual, build composite, matrice et upload artefacts ; distribution distincte de release."
+    },
+    {
+      "path": ".github/workflows/markdownlint.yml",
+      "sha256_before": "1e8a20d34f808fcbf845de3dcf7fa0dc8c34c1a6b97a71cac061d1bb8a2ca343",
+      "sha256_after": "1e8a20d34f808fcbf845de3dcf7fa0dc8c34c1a6b97a71cac061d1bb8a2ca343",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Push/PR déclencheurs, scope lint et config locale."
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256_before": "a6ef9579101a06f9c382cff1a560e9a791be807b4d983539393ac40dde9ce926",
+      "sha256_after": "f44f74aa3636d750386fcee0bcecfa1fe996fa5544fc641d597ccf27228e9653",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Chaque étape version/provenance/build/codesign/notarisation/DMG/Sparkle/release et branche échec ; A2-B01 corrige tag-source-version. Publication externe non exercée."
+    },
+    {
+      "path": ".github/workflows/smoke-test.yml",
+      "sha256_before": "961d97bd49dbd36f97d97c22c735110191fbb81e95696dbfda1f109b007f2669",
+      "sha256_after": "961d97bd49dbd36f97d97c22c735110191fbb81e95696dbfda1f109b007f2669",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Matrice OS/debug-release, composite build et smoke_launch app ; crash/status/artefacts."
+    },
+    {
+      "path": ".github/workflows/staple-release.yml",
+      "sha256_before": "6a61c84cc043a73cae825d1ac3e63e84067b6a4eec6fbe916e16985eca6ab43e",
+      "sha256_after": "6a61c84cc043a73cae825d1ac3e63e84067b6a4eec6fbe916e16985eca6ab43e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Inputs release/assets, vérification notary, téléchargement/archive/staple/signature/checksum/upload ; rerun après publication partielle à vérifier avec CI."
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "sha256_before": "1db3bfbcba1fdda2794c019b14b60c3d7a503844494b47c804a2ded1cbe0af86",
+      "sha256_after": "c596922cc088cb22df8c6b534f21c48dccdc83f4f8c303050d9b1fcc4250f77f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Versionfinal109lignes entièrement relue : sixgates ajoutées root après commandqueue (codeaccessory/toc/quicklook/indent/editorgeometry/plural) ; timeout30job/5standalone/8XCTest/120host, diagnosticsfailure/logartifact ; graphbranches read-only. Logs locaux gates et1431unit/4UI pass, hostedmatrix non revendiquée. Relecture intégrale finale100lignes après ajout du runner print_colors_tests.py R04 ; pas de modification des permissions/matrice/watchdog/diagnostics/upload. Décision statique maintenue après lecture manuelle, sans certifier les nouveaux scénarios natifs MPDocument avant leurs runs root.",
+      "sha256_previous_read": "8736c65ee2b6b9ccaccfa696cf312b8f0d8072a752f2444389becd682d4fcf07"
+    },
+    {
+      "path": ".github/workflows/update-website.yml",
+      "sha256_before": "a9ddacf84f11c3945de3f15c07ec7f7d22762848dc4e8aaa1e397e4fb8705874",
+      "sha256_after": "a9ddacf84f11c3945de3f15c07ec7f7d22762848dc4e8aaa1e397e4fb8705874",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Événements release/manual, clone website, choix stable/beta, génération appcast/pages, commit/push retries ; concurrence push demeure hypothèse opératoire."
+    },
+    {
+      "path": ".gitignore",
+      "sha256_before": "3a2132614cc0a933e71eb094c0bcd41a96da65dc76b22269e8c7a2b0520a30e8",
+      "sha256_after": "3a2132614cc0a933e71eb094c0bcd41a96da65dc76b22269e8c7a2b0520a30e8",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Toutes règles caches/Pods/artefacts/tools/temp/Xcode ; ne sert pas de preuve exclusion source active."
+    },
+    {
+      "path": ".gitmodules",
+      "sha256_before": "69be9ca5f02b254e49c1c755a08e6ce1d7df94bff2cf2eb820926da2f83b9be1",
+      "sha256_after": "69be9ca5f02b254e49c1c755a08e6ce1d7df94bff2cf2eb820926da2f83b9be1",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Tous chemins/url submodules et consommation checkout recursive/setup."
+    },
+    {
+      "path": "Dependency/YAML-framework/YAMLSerialization.h",
+      "sha256_before": "68e864d1d3bbd71066a1f4e73f76ed69928004bbca198f89502159a97b8169b3",
+      "sha256_after": "68e864d1d3bbd71066a1f4e73f76ed69928004bbca198f89502159a97b8169b3",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Options mutabilité/scalaires, domaines/code erreurs, APIs stream/data/string read/write et adaptateurs dépréciés actifs."
+    },
+    {
+      "path": "Dependency/YAML-framework/YAMLSerialization.m",
+      "sha256_before": "4c5e7f821e53578a08314efcd490d7758ec19d430a28d830684747863a4929ae",
+      "sha256_after": "982dd82f7b067b525d3e82c159b576d7f66b55e16374725d13d4c2ea84e28e77",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Reader stream/init/load/delete ; graph DAG cycle/hauteur/coût A2-B02 ; mapping key copies/value equality ; fill/immutable alias memo ; writer partial output/support/type/cycle/depth/emit/error cleanup ; wrappers. Consumer frontMatter/title."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlighter.h",
+      "sha256_before": "bcaea22152ff4eafffc225792ad8078d006080aef5e457363ccca397d4acf846",
+      "sha256_after": "bcaea22152ff4eafffc225792ad8078d006080aef5e457363ccca397d4acf846",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Contrat styles/textview/extensions/font/timer et delegate ; ownership publique."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlighter.m",
+      "sha256_before": "f7d378231b6ea3d0e8b514b73ff76b3080a0ea48c1630baddd4c9871bc207498",
+      "sha256_after": "f7d378231b6ea3d0e8b514b73ff76b3080a0ea48c1630baddd4c9871bc207498",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Initialisation/theme load/error callbacks/style dictionaries ; observation/start/stop/timer ; parse background/queue generation stale/revision teardown ; ranges Unicode et apply styles/main thread."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlightingStyle.h",
+      "sha256_before": "bbcf8aa4a4c0b1fbd0a2f4d8ac7f5d5970eed549b4421816348ccda31b68489c",
+      "sha256_after": "bbcf8aa4a4c0b1fbd0a2f4d8ac7f5d5970eed549b4421816348ccda31b68489c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Attributs elementType/trait/font/colors et constructeur public."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlightingStyle.m",
+      "sha256_before": "f1fe70f79eeebbf45a76a8a8a0605a554c0c40de24b9475860418a7fb025543d",
+      "sha256_after": "f1fe70f79eeebbf45a76a8a8a0605a554c0c40de24b9475860418a7fb025543d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "ARGB→NSColor ; initrawtype/attrs/remove/traits ; parsedattributechainforeground/background/fontstyles/underline/family/absolute-relative-size ; plancher4pt, HGFontInformation copié pourhighlighter. Full HG tests verts."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/Makefile",
+      "sha256_before": "ba92d8bc7ce58440820495e8f6e5924ae74dfeea50d764f8e931c3c8ff15a7e0",
+      "sha256_after": "ba92d8bc7ce58440820495e8f6e5924ae74dfeea50d764f8e931c3c8ff15a7e0",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Dépendances head/core/foot/greg, génération parser et clean ; contrat compilé en temp avec UBSan."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/Makefile",
+      "sha256_before": "ed0ae1de93498cdddb251880b6c4426331d2d41e26dd3b8e13341747bc45ae60",
+      "sha256_after": "ed0ae1de93498cdddb251880b6c4426331d2d41e26dd3b8e13341747bc45ae60",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Bootstrap greg.c→greg, compile/tree et auto regeneration ; source générée active explicitement incluse."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/compile.c",
+      "sha256_before": "5881904b59c46754dafd020940b978d3d25e7735b68e72435d05383efb752c58",
+      "sha256_after": "5881904b59c46754dafd020940b978d3d25e7735b68e72435d05383efb752c58",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Chaque branche AST/rule/action/name/string/class/sequence/alternate/predicate/repeat/variables ; allocation format dynamique et output state. Parser généré consommé UBSan."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.c",
+      "sha256_before": "c673fb8467fc8bafeca54eb864931f0cef3e5232a0647b9e0a997190453ab157",
+      "sha256_after": "c673fb8467fc8bafeca54eb864931f0cef3e5232a0647b9e0a997190453ab157",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Runtime bootstrap complet : buffers/read/match/thunks/parse/release ; toutes actions syntaxe et grammar ; options main/files/output/error. Non exclu malgré generated."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.g",
+      "sha256_before": "41f4a5493cfe1371dc4bfd031daf3d99768b6c9baff2cd2c74dbf3d0e91672f7",
+      "sha256_after": "41f4a5493cfe1371dc4bfd031daf3d99768b6c9baff2cd2c74dbf3d0e91672f7",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Toutes règles syntaxe PEG, actions C, definitions, capture/code/errors et footer CLI ; correspond bootstrap compilé."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.h",
+      "sha256_before": "bcdd2c5dc463d8656b563c4e084172a9eb866866a9e33421f2867a4441716dff",
+      "sha256_after": "bcdd2c5dc463d8656b563c4e084172a9eb866866a9e33421f2867a4441716dff",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Types AST/kinds et prototypes création/visite/compiler/globals ; callers compile/tree/greg."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/tree.c",
+      "sha256_before": "43854b78d4ae1c28cb51c19d6accf9fac3f4a55ed337b11243d5738fee425311",
+      "sha256_after": "43854b78d4ae1c28cb51c19d6accf9fac3f4a55ed337b11243d5738fee425311",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Node constructors/free/print/traversal ; rule variable/action indices ; branch formatting and allocated string ownership."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/peg-markdown-highlight.xcodeproj/project.pbxproj",
+      "sha256_before": "298977daa58b795a512e110bed16c65468be7caa66012b8ddc8c36e9796c1a09",
+      "sha256_after": "298977daa58b795a512e110bed16c65468be7caa66012b8ddc8c36e9796c1a09",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Legacy target génération Makefile, passBuildSettingsInEnvironment, configuration paths et dépendance app ; target Xcode non exécuté."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/peg-markdown-highlight.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "sha256_before": "14212f4d2947a8a5d9d8ddba30163bada5bd98bfe8eca44fffb0b1da18b53d1c",
+      "sha256_after": "14212f4d2947a8a5d9d8ddba30163bada5bd98bfe8eca44fffb0b1da18b53d1c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Workspace single self ref XML."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_definitions.h",
+      "sha256_before": "3bb4ae80d27facdfcd21b3b68a47855ed063bcfd61dacc2a3ff7f820757867d7",
+      "sha256_after": "3bb4ae80d27facdfcd21b3b68a47855ed063bcfd61dacc2a3ff7f820757867d7",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Enum element types/options/style names et struct positions/data; index conventions parser/highlighter."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_grammar.leg",
+      "sha256_before": "7295f542e85a37baeffe837fca82cf35b782bd0fb7bccffa072d931c3b5dd50d",
+      "sha256_after": "7295f542e85a37baeffe837fca82cf35b782bd0fb7bccffa072d931c3b5dd50d",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Toutes règles Markdown bloc/span/links/lists/html/extensions et actions capture ; consommation head+foot/greg."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser.h",
+      "sha256_before": "36724d84cf356938f6c95c75369bd39e97c895f247505d03748072e6135429a3",
+      "sha256_after": "36724d84cf356938f6c95c75369bd39e97c895f247505d03748072e6135429a3",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Public get_elements/free/sort/debug/type-name et liste allocation ownership."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser_foot.c",
+      "sha256_before": "1204e603df3d421acfa8488f0aacb0db8a026c3a415bdf265b626d98101d62cd",
+      "sha256_after": "1204e603df3d421acfa8488f0aacb0db8a026c3a415bdf265b626d98101d62cd",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "API init parse extensions/references/style flags et resultat/free callback ; caller highlighter."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser_head.c",
+      "sha256_before": "a91476dcaad26de8b1c83bef38925ba30ac80404866f63ec5f107e5b6a77212a",
+      "sha256_after": "a91476dcaad26de8b1c83bef38925ba30ac80404866f63ec5f107e5b6a77212a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Pools allocation/raw span/list/position remap Unicode/reference lookup/sort/filter/debug/type-name et parser context ; UBSan contracts. Hypothèse static names concurrence réfutée chemin app actuel hors debug."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_styleparser.c",
+      "sha256_before": "ffc1ffd453acc9b2fda193dddc9d3105afe49c16f0c9c9b17b9ea755807e21dc",
+      "sha256_after": "ffc1ffd453acc9b2fda193dddc9d3105afe49c16f0c9c9b17b9ea755807e21dc",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Tokenizer BOM/comments/rules/scalar colors/fonts/sizes/attributes/default/styles/errors allocation/cleanup ; tests répétition/empty UBSan. BOM short-circuit évite lecture hors terminaison courte."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_styleparser.h",
+      "sha256_before": "abb30561fb61b29249381eded0b63b604440f45972b8593571710d2aa4956a07",
+      "sha256_after": "abb30561fb61b29249381eded0b63b604440f45972b8593571710d2aa4956a07",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Enum properties/types, graph styles et callbacks/free/default APIs consumers highlighter."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/tools/combine_parser_files.sh",
+      "sha256_before": "c64a2e5286b37481d2449712c1cb24a97e377562bb481467f99467f34d5ad872",
+      "sha256_after": "c64a2e5286b37481d2449712c1cb24a97e377562bb481467f99467f34d5ad872",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Arguments exact head/core/foot, concat order, destination parser ; Makefile commande réelle testée temp."
+    },
+    {
+      "path": "Dependency/version/Makefile",
+      "sha256_before": "a657c7f788cd96a745d8ce1d7f1034ab26b867eacb976941300af168e3bce5a4",
+      "sha256_after": "a657c7f788cd96a745d8ce1d7f1034ab26b867eacb976941300af168e3bce5a4",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "FORCE et générateur atomic/stable ; release env héritée legacy target."
+    },
+    {
+      "path": "Dependency/version/version.xcodeproj/project.pbxproj",
+      "sha256_before": "9b87d0ce64c70023ace152fe735d18f3db3715fd5c971aa59ebc75883aa5cb3a",
+      "sha256_after": "9b87d0ce64c70023ace152fe735d18f3db3715fd5c971aa59ebc75883aa5cb3a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Legacy version make target, environnement autorisé, configuration products path et app CLI dépendance."
+    },
+    {
+      "path": "Gemfile",
+      "sha256_before": "f878fc8d64bca3d031b243a68a057137839dd9938273a85d37585529e0963f2a",
+      "sha256_after": "f878fc8d64bca3d031b243a68a057137839dd9938273a85d37585529e0963f2a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Sources et gems CocoaPods version/ruby relation setup Bundler."
+    },
+    {
+      "path": "Gemfile.lock",
+      "sha256_before": "ab1672163bc7ad1bff0ec5a967e513eb722a1395b64ae25c38fb443bbac61143",
+      "sha256_after": "ab1672163bc7ad1bff0ec5a967e513eb722a1395b64ae25c38fb443bbac61143",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Toutes dépendances/specs/platform/bundled version ; pas de modification install globale."
+    },
+    {
+      "path": "MacDown 3000.xcodeproj/project.pbxproj",
+      "sha256_before": "bb83fc2aec277b6160ab5d1c08c66da113e5e006edb88ff09fd44386557f55f4",
+      "sha256_after": "bb83fc2aec277b6160ab5d1c08c66da113e5e006edb88ff09fd44386557f55f4",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "2909 lignes relues avec substitution GUID bijective ; buildfiles/references/groups/products/resource aggregator, target graph, build phases scripts/copies, Debug/Release flags/version/bundleID/search/runpaths et configlists ; ne prouve pas exécution Xcode."
+    },
+    {
+      "path": "MacDown 3000.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "sha256_before": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f",
+      "sha256_after": "7f3b00b5c3fdb45242d7b87e1e5c4e25d1fa8129a16c94295ecc4e8ea2235c5f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Workspace self ref."
+    },
+    {
+      "path": "MacDown 3000.xcodeproj/xcshareddata/xcschemes/MacDown.xcscheme",
+      "sha256_before": "ee6421df444630f8e9a7ca295ac1e4646e8a7cd7c932549da43e47c389961fa2",
+      "sha256_after": "ee6421df444630f8e9a7ca295ac1e4646e8a7cd7c932549da43e47c389961fa2",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Build/test/analyze/archive actions, target IDs et tests debug ; host baseline command root."
+    },
+    {
+      "path": "MacDown 3000.xcodeproj/xcshareddata/xcschemes/MacDownUITests.xcscheme",
+      "sha256_before": "fcd447a2bfaa3ea24fc2f835fdf65353b64133cd3e76e08e36a5254dfcb7d970",
+      "sha256_after": "fcd447a2bfaa3ea24fc2f835fdf65353b64133cd3e76e08e36a5254dfcb7d970",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Build/test UI target/action launch env et référence app ; UI non exécutée."
+    },
+    {
+      "path": "MacDown 3000.xcworkspace/contents.xcworkspacedata",
+      "sha256_before": "1f2050230d8cd95fafd824d352834882f6411617b0a56379c03946074468bc50",
+      "sha256_after": "1f2050230d8cd95fafd824d352834882f6411617b0a56379c03946074468bc50",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Main/Pods project refs et graph workspace."
+    },
+    {
+      "path": "MacDown 3000.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist",
+      "sha256_before": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542",
+      "sha256_after": "dfa0f9bb85b95ccba9c6811adadf8cb407fb5d52088e89db83ebc308ec448542",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "IDE warning check flag et type plist."
+    },
+    {
+      "path": "MacDown 3000.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings",
+      "sha256_before": "c483c4d3281bf2649d5b6117deb698c15dc83c826e5faf81e71979dffebce507",
+      "sha256_after": "c483c4d3281bf2649d5b6117deb698c15dc83c826e5faf81e71979dffebce507",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Build system et workspace shared settings consommés Xcode."
+    },
+    {
+      "path": "Podfile",
+      "sha256_before": "285ad31ecf44594db23c3bf86333517b404c3b22364115f39ec74ebbc9158d25",
+      "sha256_after": "285ad31ecf44594db23c3bf86333517b404c3b22364115f39ec74ebbc9158d25",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Targets app/CLI/Core/QuickLook/tests, dependencies inheritance, post_install ARC flags/deployment/header/vendor framework integration."
+    },
+    {
+      "path": "Podfile.lock",
+      "sha256_before": "9a421717ced1fab36bbfb8cee8d801820b00ed8da38a75ef5a659853229779e6",
+      "sha256_after": "9a421717ced1fab36bbfb8cee8d801820b00ed8da38a75ef5a659853229779e6",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Versions/checksums/source CocoaPods exacts et dépendances runtime YAML/M13/GB/Handlebars/Sparkle."
+    },
+    {
+      "path": "Tools/GitHub-style-generator/.gitignore",
+      "sha256_before": "ca1838cde9e4cfb493f3ea87a08bf973a9d6102aac688fc8828107d5586042aa",
+      "sha256_after": "ca1838cde9e4cfb493f3ea87a08bf973a9d6102aac688fc8828107d5586042aa",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "node_modules et artefacts sass cache."
+    },
+    {
+      "path": "Tools/GitHub-style-generator/Makefile",
+      "sha256_before": "25ea97722bc0900df6871d8f4d5c2b532fee2c5ed30074ea3f9cc4ca92c5b31b",
+      "sha256_after": "25ea97722bc0900df6871d8f4d5c2b532fee2c5ed30074ea3f9cc4ca92c5b31b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Sass lock/prérequisindex+Makefile+localbinary ; mkstemp raw/css, trap, sedmarkdown-body→body, mvuniquesuccess préserveancienCSSfailure ; dépendancesnpm installéesparsetupaction/setupsh, pas ceMakefile."
+    },
+    {
+      "path": "Tools/GitHub-style-generator/index.sass",
+      "sha256_before": "876e8f8a34a64b5f5c9fd394cf5bf013bd5f0e984a4a120ee4316240f32baf34",
+      "sha256_after": "876e8f8a34a64b5f5c9fd394cf5bf013bd5f0e984a4a120ee4316240f32baf34",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Quatre imports Primer primitives/light-theme/base/markdown : tokens autonomes requis par consommateurs app/Core ; défautsCSSrectifiés root, quicklook/print tests verts."
+    },
+    {
+      "path": "Tools/GitHub-style-generator/package-lock.json",
+      "sha256_before": "e4e7fe566e705b52b2b702ddc25bb3daba883a2221ca89db47a6170dbf4709d9",
+      "sha256_after": "e4e7fe566e705b52b2b702ddc25bb3daba883a2221ca89db47a6170dbf4709d9",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "514 lignes dependencies resolved integrity/engines/platform optional packages et Sass install ; pas de version flottante effective npmci."
+    },
+    {
+      "path": "Tools/GitHub-style-generator/package.json",
+      "sha256_before": "c40a49e1291c18b70b9d467927b87c8009c6f1f4b269f3e9f191797fd21144d2",
+      "sha256_after": "c40a49e1291c18b70b9d467927b87c8009c6f1f4b269f3e9f191797fd21144d2",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Dependencies semver ranges Sass^1.101.0 et @primer/css^22.3.0, lockexact consommé npmci ; metadata repository ancien nomthemegenerator sans effetbuild."
+    },
+    {
+      "path": "Tools/compat.py",
+      "sha256_before": "113a769af85a25898125b411f24ea5467b9787bfb064306beccf12400fbf0a0f",
+      "sha256_after": "113a769af85a25898125b411f24ea5467b9787bfb064306beccf12400fbf0a0f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Alias ConfigParser Python3 ; branche ImportError Python2 SafeConfigParser/read_file→readfp ; shim d’outillage sans consommateur actuel trouvé, pas utilisé par app."
+    },
+    {
+      "path": "Tools/generate_version_header.sh",
+      "sha256_before": "32e89e8f46e64e3679cb075b0b4285d42c32094311d7152f169efcc29b69e863",
+      "sha256_after": "755b872263dc52613c528b7f7c8936e51a9ee52981bed081e5c0ecaecf7709dc",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Root discovery, paired release override A2-B01 validation, git fallback, C literals escaping, atomic temp/cmp stablemtime ; C consumer réel."
+    },
+    {
+      "path": "Tools/macdown_utils.py",
+      "sha256_before": "2f02ee26ef7353c50373de5ca1e273db1b30078fb76c4452cfcb68baf444b141",
+      "sha256_after": "2f02ee26ef7353c50373de5ca1e273db1b30078fb76c4452cfcb68baf444b141",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "ROOT_DIR/XLIFF_URL/XCODEBUILD ; CommandError et execute(*args) : Popen pipescommunicate évite deadlock, UTF8decode puisexceptionreturncode/stderr ; outil sans appel runtime app."
+    },
+    {
+      "path": "Tools/repro-stall.sh",
+      "sha256_before": "a0ee310115f9a03e9bac31b73601043a5a0e9582d1d4d77c375dbcd3f09b2292",
+      "sha256_after": "a0ee310115f9a03e9bac31b73601043a5a0e9582d1d4d77c375dbcd3f09b2292",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Arguments root/log/test selection, xcode command/timeouts, empty suite detection/exit/hang captures ; tests standalone wrappers lus."
+    },
+    {
+      "path": "Tools/sign_sparkle.sh",
+      "sha256_before": "63740bc01bd59bdf430dcc9b46d87d281bd530d3921cd8595ed45f4808e260c5",
+      "sha256_after": "63740bc01bd59bdf430dcc9b46d87d281bd530d3921cd8595ed45f4808e260c5",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Arguments identity/embeddedframework ; refusePods ; canonicalVersionsCurrent ; liste5composants/countMachO ; codesign innermost→framework avec runtime/timestamp/preservemetadata ; retryborné5 backoff/permanents ; requireappreseal. DistributionDeveloperID non exécutée."
+    },
+    {
+      "path": "Tools/smoke_launch.sh",
+      "sha256_before": "d8648538634cfc55ffb0a11f16c542824ffb669e7cc1f8e1dd4e51afa296b29c",
+      "sha256_after": "d8648538634cfc55ffb0a11f16c542824ffb669e7cc1f8e1dd4e51afa296b29c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Gate GITHUB_ACTIONS obligatoireavantdefaults ; binaireInfoPlist/pidwait/status/killcleanup ; deuxlancements et migrationprefslegacy typée. Invocation destructiveprefs réservée runnersisolés, pas exécutée localement par cet agent."
+    },
+    {
+      "path": "Tools/update_build_number.sh",
+      "sha256_before": "633982df9b4deac8de1361bc590a76c6f471ba9d09686b2e3e22f9d83165374c",
+      "sha256_after": "633982df9b4deac8de1361bc590a76c6f471ba9d09686b2e3e22f9d83165374c",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Git fallback/explicit plist version+build, prerequisites/failure/atomic PlistBuddy edits ; packaging_version_tests verts."
+    },
+    {
+      "path": "Tools/utils.sh",
+      "sha256_before": "6fa173ed0679ea1d15888e72323d025023e9b04e624020925b6cf819852df921",
+      "sha256_after": "6fa173ed0679ea1d15888e72323d025023e9b04e624020925b6cf819852df921",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Git tag/describe short/bundle version source functions, prefix/prerelease/dirty fallback/string escaping consumers generate/update."
+    },
+    {
+      "path": "Tools/verify_sparkle_signature.sh",
+      "sha256_before": "dbf1db97d46bc941f89d7f50f16f6098a419f4fb0bc0428992bec5546648a03e",
+      "sha256_after": "dbf1db97d46bc941f89d7f50f16f6098a419f4fb0bc0428992bec5546648a03e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Read-only app/team et embeddedframeworklayout5components ; codesignverifystrict ; DeveloperIDAuthority/runtimeflag/teamégalité/timestamp chaquecomposant ; agrégationFAILED/exitnonzero. Vérification notarisation réelle hors périmètre."
+    },
+    {
+      "path": "macdown-cmd/MPArgumentProcessor.h",
+      "sha256_before": "bcb98b7454a3ec7abed3b8e6fdd1a538b7c79f505b22dbfe59be2d410a40e5fe",
+      "sha256_after": "bcb98b7454a3ec7abed3b8e6fdd1a538b7c79f505b22dbfe59be2d410a40e5fe",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Public flags/arguments/help/version methods consumed main."
+    },
+    {
+      "path": "macdown-cmd/MPArgumentProcessor.m",
+      "sha256_before": "cb12a2c3d28b4596fc9634cfd647d764de178eb830935838190238531fac0c92",
+      "sha256_after": "cb12a2c3d28b4596fc9634cfd647d764de178eb830935838190238531fac0c92",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Init parser/options/settings ; help/version exit ; block literal constants build version consommation A2-B01."
+    },
+    {
+      "path": "macdown-cmd/main.m",
+      "sha256_before": "9da954efa58ccd5074ef025596eb3d094798ad269ec19375ae0c0e4d2d7b38a8",
+      "sha256_after": "daa47555cc8a7665464c766625422b4eff94548980bbe9a85712762b8ff34447",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Versionfinal entière relue ; argprochelp/version, stdinloopERRORfailfast, pathsfiles/foldersNSOrderedSet, requêteuniqueNSDataenqueue avantlaunch ; TTYsansargpréservepending, emptyPIPErequestblankdoc ; appconsumer activation/reopen7XCTest vrais docs/nibs verts. Aucun nouveau producer prefs."
+    },
+    {
+      "path": "scripts/regenerate-golden-files.sh",
+      "sha256_before": "897f221ab3bb156febdb46e54523a2e6690a36b8e7bdceb5067fa6d378803887",
+      "sha256_after": "897f221ab3bb156febdb46e54523a2e6690a36b8e7bdceb5067fa6d378803887",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Arguments/snapshots/build host selection et env golden paths ; risque intended mutation tests fixtures, non exécuté."
+    },
+    {
+      "path": "setup.sh",
+      "sha256_before": "b6b594c02231ac4f58b86f2f840a591cdbf4e3c44fdea21a1c5a46c68781ec32",
+      "sha256_after": "b6b594c02231ac4f58b86f2f840a591cdbf4e3c44fdea21a1c5a46c68781ec32",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Root discovery, dependencies/submodule/setup commands/error exit et package consumers ; pas exécuté install globale."
+    },
+    {
+      "path": "macdown-cmd/MPCommandInput.h",
+      "sha256_before": "62aeaedd676d65ce603bed481be096b548f4ec5e52f2a7cc59921c92c14e1789",
+      "sha256_after": "62aeaedd676d65ce603bed481be096b548f4ec5e52f2a7cc59921c92c14e1789",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "stdin TTY/FIFO/file read loop EINTR/error, data ownership ; filepath tilde/relative/absolute normalization inline consumer main."
+    },
+    {
+      "path": ".markdownlint.json",
+      "sha256_before": "03709bc90f2e0bf621d3e3801b5807d7e4560572e052730a074a8ffa8969d665",
+      "sha256_after": "03709bc90f2e0bf621d3e3801b5807d7e4560572e052730a074a8ffa8969d665",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "decision": "Décision manuelle finale : lecture intégrale identifiée, analyse de ses fonctions/branches/entrées et consommateurs achevée ; défauts applicables corrigés et contrats vérifiés. Validation limitée à audit code/configuration et contrôles locaux pertinents, distincte de distribution signée externe.",
+      "evidence": "Toutes règles heading/html/line length et docs exclusions politiques workflow."
+    }
+  ],
+  "open_findings": [],
+  "gates_missing": [],
+  "proof": "campagne02-build.md",
+  "additional_sources": [
+    {
+      "path": "macdown-cmd/MPCommandQueue.h",
+      "sha256_before": null,
+      "sha256_after": "4fa62af434ceab3db2102acc7454e1a08a1af37ed21d0beb03bf3d2e393752cb",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Relecture finale intégrale helper inchangé ; validation types/privateowner/32MiB/FIFO/NUL, flockEINTR/append/drain/read ; stockage réel interprocess320requests, CLI entier, puis consumer app7XCTest documents/nibs/migration/reopen. B03 corrigé431c456. Crash aprèsdrain avantUI n’est pas exactly-once ; limite de handoff explicite.",
+      "decision": "Décision manuelle finale après analyse et intégration du producteur au consommateur réel ; hash sert uniquement à identifier la source relue."
+    }
+  ],
+  "validation_scope": "Audit du code/configuration et contrats locaux de71sources. Ne certifie pas une distribution signée/notarisée ni exécution distante GitHub/macOSmatrix.",
+  "distribution_not_certified": [
+    "DeveloperID/timestamp/Apple notary service et staple DMG réel",
+    "GitHub publication/artifacts et website remote push, aucune autorisation de publication",
+    "Smoke_launch CI runner avecresetprefs ; contratdéclaréanalysé, helper local non exécuté car non isolé GitHub runner",
+    "Hosted matrix macos14/macOS26/cache/setupremote non exécutée par cet agent"
+  ],
+  "optional_checks_not_passed": [
+    "PEG_SANITIZERS=address,undefined peg_contracts.py timeout120s durant générateur instrumenté ; aucune erreur mémoire émise ; UBSan requis seul a réussi sur étatfinal. Pas de timeout augmenté."
+  ],
+  "final_evidence_logs": [
+    "/tmp/macdown-campaign02-build-contracts.log",
+    "/tmp/macdown-campaign02-full-tests.log",
+    "/tmp/macdown-campaign02-command-tests.log",
+    "/tmp/macdown-campaign02-ui-tests.log",
+    "/tmp/macdown-campaign02-regressions.log",
+    "/tmp/macdown-campaign02-release-build.log"
+  ],
+  "final_counts": {
+    "initial_sources": 70,
+    "additional_sources": 1,
+    "read": 71,
+    "analyzed": 71,
+    "validated_in_audit_scope": 71,
+    "confirmed_open_findings": 0
+  }
+}

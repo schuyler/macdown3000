@@ -1,0 +1,11 @@
+# Bouton Bloc de code — 9 octobre 2026
+
+Le bouton « Bloc de code » apparaît immédiatement à droite de « Code en ligne ». Les deux boutons occupent le groupe de barre `code`, dont l'identifiant et la position sont conservés pour les configurations de barre enregistrées. L'icône de bloc est un PDF vectoriel template, adapté aux apparences claire et sombre ; les libellés sont disponibles en français et en anglais.
+
+La commande `convertToCodeBlock:` appelle l'adaptateur partagé `convertSelectionToBlock:` (anciennement `convertSelectionToList:`). Cet adaptateur passe par le même moteur de conversion que le menu du visualiseur et choisit la sélection selon le volet actif. Aucun second moteur de conversion n'est ajouté. La conversion utilise le texte rendu, retire les marqueurs de citation et de mise en forme, préserve les voisins et refuse les contenus non représentables sans perte. La préférence de syntaxe des blocs clôturés reste respectée.
+
+Validation ciblée : **70 tests natifs, aucun échec** (`build/ListToolbarUnification/code-block-targeted.log`). Ils couvrent les deux actions du groupe, l'image et son tooltip, le dispatch du bouton, la parité entre bouton et menu dans une vraie WebView, les conversions de source et le refus lorsque la syntaxe est désactivée. La matrice de 736 conversions de blocs passe également dans ce sous-ensemble. Les traductions passent `plutil -lint` et le diff passe `git diff --check`.
+
+Suite native complète : **1 509 tests, aucun échec**, `TEST SUCCEEDED` (`build/ListToolbarUnification/code-block-native-full.log`). Les tests utilisent la session isolée avec restauration vérifiée des préférences et fichiers utilisateur. Aucun nouveau test d'interface XCTest n'est revendiqué : le dernier lancement d'interface avait expiré lors de l'activation de l'automatisation macOS, avant le premier test.
+
+La livraison locale utilise une compilation Release universelle arm64/x86_64 et une signature ad hoc vérifiée. L'installation compare les fichiers du bundle, remplace l'application dans `/Applications` et restaure l'ancienne copie en cas d'échec. Sa preuve locale est `build/ListToolbarUnification/installation.json`. Aucun push n'est effectué pour cette demande.

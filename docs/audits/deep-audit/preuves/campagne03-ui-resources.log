@@ -1,0 +1,55 @@
+strings=217 assets=47 xibs=8
+[
+  [
+    "MacDown/Localization/ar.lproj/MPDocument.strings",
+    "MacDown/Localization/ar.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/ar.lproj/MPExportPanelAccessoryViewController.strings",
+    "MacDown/Localization/ar.lproj/MPExportPanelAccessoryViewController.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/ar.lproj/MainMenu.strings",
+    "MacDown/Localization/ar.lproj/MainMenu.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/et.lproj/MPDocument.strings",
+    "MacDown/Localization/et.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/is.lproj/MPDocument.strings",
+    "MacDown/Localization/is.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/is.lproj/MPExportPanelAccessoryViewController.strings",
+    "MacDown/Localization/is.lproj/MPExportPanelAccessoryViewController.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/it-IT.lproj/MPDocument.strings",
+    "MacDown/Localization/it-IT.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/ko-KR.lproj/MPDocument.strings",
+    "MacDown/Localization/ko-KR.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/sk.lproj/MPDocument.strings",
+    "MacDown/Localization/sk.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/sv.lproj/MPDocument.strings",
+    "MacDown/Localization/sv.lproj/MPDocument.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/sv.lproj/MPExportPanelAccessoryViewController.strings",
+    "MacDown/Localization/sv.lproj/MPExportPanelAccessoryViewController.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/sv.lproj/MPTerminalPreferencesViewController.strings",
+    "MacDown/Localization/sv.lproj/MPTerminalPreferencesViewController.strings: (Cannot parse a NULL or zero-length data)\n"
+  ],
+  [
+    "MacDown/Localization/tr.lproj/MPExportPanelAccessoryViewController.strings",
+    "MacDown/Localization/tr.lproj/MPExportPanelAccessoryViewController.strings: (Cannot parse a NULL or zero-length data)\n"
+  ]
+]

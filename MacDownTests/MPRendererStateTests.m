@@ -24,6 +24,7 @@
 @property (nonatomic) NSInteger syntaxHighlightingCallCount;
 @property (nonatomic) NSInteger htmlOutputCallCount;
 @property (nonatomic, copy) NSString *lastReceivedHTML;
+@property (nonatomic, copy) void (^onHTML)(NSString *html);
 @end
 
 @implementation MPTrackingRendererDelegate
@@ -63,6 +64,7 @@
     self.htmlOutputCallCount++;
     self.lastReceivedHTML = html;
     [super renderer:renderer didProduceHTMLOutput:html];
+    if (self.onHTML) self.onHTML(html);
 }
 
 @end
@@ -74,6 +76,7 @@
 @property (nonatomic) NSInteger markdownCallCount;
 @property (nonatomic) NSInteger titleCallCount;
 @property (nonatomic) NSInteger loadingCallCount;
+@property (nonatomic) BOOL loading;
 @end
 
 @implementation MPTrackingRendererDataSource
@@ -93,7 +96,7 @@
 - (BOOL)rendererLoading
 {
     self.loadingCallCount++;
-    return [super rendererLoading];
+    return self.loading;
 }
 
 @end
@@ -396,6 +399,184 @@
 
     XCTAssertTrue([html containsString:@"👋"], @"Should preserve wave emoji");
     XCTAssertTrue([html containsString:@"🎉"], @"Should preserve party emoji");
+}
+
+- (void)testImmediateRenderCompletesWhilePreviousPreviewIsLoading
+{
+    self.dataSource.loading = YES;
+    self.dataSource.markdown = @"# Latest";
+    XCTestExpectation *finished = [self expectationWithDescription:@"Immediate render"];
+    self.delegate.onHTML = ^(NSString *html) {
+        XCTAssertTrue([NSThread isMainThread]);
+        XCTAssertTrue([html containsString:@"Latest"]);
+        [finished fulfill];
+    };
+    [self.renderer parseAndRenderNow];
+    [self waitForExpectations:@[finished] timeout:2];
+}
+
+- (void)testDelayedRenderHasBoundedWaitWhenPreviewNeverFinishesLoading
+{
+    self.dataSource.loading = YES;
+    self.dataSource.markdown = @"Bounded";
+    XCTestExpectation *finished = [self expectationWithDescription:@"Bounded render"];
+    NSDate *started = [NSDate date];
+    self.delegate.onHTML = ^(NSString *html) {
+        XCTAssertTrue([html containsString:@"Bounded"]);
+        XCTAssertGreaterThanOrEqual(-started.timeIntervalSinceNow, 0.45);
+        [finished fulfill];
+    };
+    [self.renderer parseAndRenderLater];
+    [self waitForExpectations:@[finished] timeout:2];
+}
+
+- (void)testNewRequestSupersedesPendingPreview
+{
+    self.dataSource.loading = YES;
+    self.dataSource.markdown = @"Old content";
+    [self.renderer parseAndRenderLater];
+    self.dataSource.markdown = @"New content";
+    XCTestExpectation *finished = [self expectationWithDescription:@"Latest content"];
+    self.delegate.onHTML = ^(NSString *html) {
+        XCTAssertTrue([html containsString:@"New content"]);
+        XCTAssertFalse([html containsString:@"Old content"]);
+        [finished fulfill];
+    };
+    [self.renderer parseAndRenderNow];
+    [self waitForExpectations:@[finished] timeout:2];
+    XCTAssertEqual(self.delegate.htmlOutputCallCount, 1);
+}
+
+- (void)testCodeFenceInformationCannotInjectHTMLAttributes
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.renderer.rendererFlags = (1 << 6);
+    [self.renderer parseMarkdown:@"```js:\"/><img/src=x/onerror=alert(1)>\ncontent\n```"];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+    XCTAssertFalse([html containsString:@"<img/src"]);
+    XCTAssertTrue([html containsString:@"data-information=\"&quot;/&gt;&lt;img/src"]);
+}
+
+- (void)testTaskListParagraphRetainsItsClosingMarkup
+{
+    self.renderer.rendererFlags = (1 << 4);
+    [self.renderer parseMarkdown:@"- [ ] First\n\n  continuation\n\n- [x] Second"];
+    NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+    XCTAssertTrue([html containsString:@"continuation</p>"]);
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""]);
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""]);
+}
+
+- (void)testMathJaxPreferenceChangeRefreshesScriptResources
+{
+    [self.renderer parseMarkdown:@"$x^2$"];
+    [self.renderer render];
+    self.delegate.lastHTML = nil;
+    self.delegate.mathJax = YES;
+    [self.renderer renderIfPreferencesChanged];
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"MathJax.js"]);
+    self.delegate.lastHTML = nil;
+    self.delegate.mathJax = NO;
+    [self.renderer renderIfPreferencesChanged];
+    XCTAssertNotNil(self.delegate.lastHTML);
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"MathJax.js"]);
+}
+
+- (void)testFencedCodeRetainsListsReferencesAndAdjacentBracketsVerbatim
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    NSString *code = @"text\n- item\n[a] [b]\n[id]: https://example.com";
+    [self.renderer parseMarkdown:[NSString stringWithFormat:@"````text\n%@\n````", code]];
+    NSString *html = self.renderer.currentHtml;
+    XCTAssertTrue([html containsString:code]);
+    XCTAssertFalse([html containsString:@"\u200B"]);
+    XCTAssertFalse([html containsString:@"macdown-code-"]);
+}
+
+- (void)testUnclosedFencedCodeRetainsReferenceDefinition
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    [self.renderer parseMarkdown:@"```text\n[id]: https://example.com"];
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"[id]: https://example.com"]);
+    XCTAssertFalse([self.renderer.currentHtml containsString:@"macdown-code-"]);
+}
+
+- (void)testCheckboxOffsetsFollowRenderedTasksAndOriginalUTF16Source
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.renderer.rendererFlags = (1 << 4);
+    NSString *markdown = @"😀\r\n````text\r\n- [ ] code\r\n````\r\n> - [ ] quoted\r\n\r\n- [x] actual";
+    [self.renderer parseMarkdown:markdown];
+    XCTAssertEqualObjects(self.renderer.checkboxSourceMarkdown, markdown);
+    NSUInteger quoted = [markdown rangeOfString:@"[ ] quoted"].location + 1;
+    NSUInteger actual = [markdown rangeOfString:@"[x] actual"].location + 1;
+    XCTAssertEqualObjects(self.renderer.checkboxSourceOffsets, (@[@(quoted), @(actual)]));
+    XCTAssertFalse([self.renderer.currentHtml containsString:@"macdown-task-"]);
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"- [ ] code"]);
+    NSString *previousToken = self.renderer.checkboxBridgeToken;
+    [self.renderer parseMarkdown:markdown];
+    XCTAssertNotEqualObjects(self.renderer.checkboxBridgeToken, previousToken);
+}
+
+- (void)testExcessiveNestingIsBoundedAndStillProducesPreview
+{
+    NSString *quotes = [@"" stringByPaddingToLength:220 withString:@"> " startingAtIndex:0];
+    [self.renderer parseMarkdown:[quotes stringByAppendingString:@"Deep text"]];
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"Deep text"]);
+}
+
+- (void)testRepeatedHeadingsHaveUniqueIdsAndMatchingTOCLinks
+{
+    self.delegate.renderTOC = YES;
+    NSString *markdown = @"[TOC]\n\n# Repeat\n\n# Repeat\n\n# Repeat-1\n\n# Repeat\n\n# !!!\n\n# ???";
+    [self.renderer parseMarkdown:markdown];
+    for (NSString *slug in @[@"repeat", @"repeat-1", @"repeat-1-1", @"repeat-2", @"section", @"section-1"]) {
+        NSString *idAttribute = [NSString stringWithFormat:@"id=\"%@\"", slug];
+        XCTAssertEqual([self.renderer.currentHtml componentsSeparatedByString:idAttribute].count, 2U);
+        NSString *hrefAttribute = [NSString stringWithFormat:@"href=\"#%@\"", slug];
+        XCTAssertTrue([self.renderer.currentHtml containsString:hrefAttribute]);
+    }
+    [self.renderer parseMarkdown:@"# Repeat"];
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"id=\"repeat\""]);
+    XCTAssertFalse([self.renderer.currentHtml containsString:@"id=\"repeat-1\""]);
+}
+
+- (void)testFenceBoundariesPreserveCodeAndOutsideReferences
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    NSArray<NSArray<NSString *> *> *cases = @[
+        @[@"> ```\n> code\n\n[id]: https://example.com\n\n[id]", @"<a href=\"https://example.com\">id</a>"],
+        @[@"```lang`\n[id]: https://example.com\n```", @"[id]: https://example.com</code>"],
+        @[@"~~~lang~~~\n\n[id]: https://example.com\n\n[id]", @"<a href=\"https://example.com\">id</a>"],
+        @[@"   ```\ncode\n```\n[id]: https://example.com", @"code\n```\n[id]: https://example.com</code>"],
+        @[@"> > ```\n> > code\n>\n> [id]: https://example.com\n>\n> [id]", @"<p>[id]: https://example.com</p>"],
+        @[@"`inline\n[a] [b]\n`", @"<code>inline\n[a] [b]\n</code>"],
+    ];
+    for (NSArray<NSString *> *testCase in cases) {
+        [self.renderer parseMarkdown:testCase[0]];
+        XCTAssertTrue([self.renderer.currentHtml containsString:testCase[1]], @"%@", testCase[0]);
+        XCTAssertFalse([self.renderer.currentHtml containsString:@"macdown-code-"], @"%@", testCase[0]);
+    }
+}
+
+- (void)testEmbeddedNullDoesNotTruncateRenderedBodyOrTOC
+{
+    self.delegate.renderTOC = YES;
+    const char bytes[] = "[TOC]\n\n# Before\0After\n\n# Last heading\n\nLast paragraph";
+    NSString *markdown = [[NSString alloc] initWithBytes:bytes length:sizeof(bytes) - 1
+                                               encoding:NSUTF8StringEncoding];
+    [self.renderer parseMarkdown:markdown];
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"After</h1>"]);
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"href=\"#last-heading\""]);
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"Last paragraph</p>"]);
+}
+
+- (void)testTOCLabelsKeepLiteralDollarsAndBackslashes
+{
+    self.delegate.renderTOC = YES;
+    [self.renderer parseMarkdown:@"[TOC]\n\n# Cost $5 and C:\\path"];
+    XCTAssertEqual([self.renderer.currentHtml componentsSeparatedByString:@"Cost $5 and C:\\path"].count, 3U);
+    XCTAssertTrue([self.renderer.currentHtml containsString:@"href=\"#cost-5-and-cpath\""]);
 }
 
 @end

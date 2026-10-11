@@ -1,0 +1,33 @@
+{
+  "sourceRevision": "f5870f54f58404d05343f6905eed26b9c097c050",
+  "sourceHashes": {
+    "MacDown/Code/Document/MPDocument.m": "546d434a262c3d180829842e888ae4dc631808fc192f54bfebf73b838d08b69e",
+    "MacDown/Code/Extension/hoedown_html_patch.c": "fd8a4612729ae01eee3053b4b911ff0ea7303be9922bc2929d0da772a014463e",
+    "MacDownCore/MPQuickLookRenderer.m": "7c14e16770e5db74a81ae65dd069203f1bbdab5fbe98590467c43a4d558aa709",
+    "MacDownQuickLook/PreviewViewController.m": "6fad5f1905f4566f9a6e77c6b4436fcb815669020f8490b14d60f5c02765f76d"
+  },
+  "Debug": {
+    "appVersion": "3000.0.7-rc.1.post188",
+    "appBuild": "1599",
+    "extensionVersion": "3000.0.7-rc.1.post188",
+    "extensionBuild": "1599",
+    "cliVersion": "MacDown 3000: version 3000.0.7-rc.1.post188 (build 1599)",
+    "architectures": {
+      "build/AuditCampaign02/Build/Products/Debug/MacDown 3000.app/Contents/MacOS/MacDown 3000": "x86_64 arm64",
+      "build/AuditCampaign02/Build/Products/Debug/MacDown 3000.app/Contents/SharedSupport/bin/macdown": "x86_64 arm64",
+      "build/AuditCampaign02/Build/Products/Debug/MacDownQuickLook.appex/Contents/MacOS/MacDownQuickLook": "x86_64 arm64"
+    }
+  },
+  "Release": {
+    "appVersion": "3000.0.7-rc.1.post188",
+    "appBuild": "1599",
+    "extensionVersion": "3000.0.7-rc.1.post188",
+    "extensionBuild": "1599",
+    "cliVersion": "MacDown 3000: version 3000.0.7-rc.1.post188 (build 1599)",
+    "architectures": {
+      "build/AuditCampaign02/Build/Products/Release/MacDown 3000.app/Contents/MacOS/MacDown 3000": "x86_64 arm64",
+      "build/AuditCampaign02/Build/Products/Release/MacDown 3000.app/Contents/SharedSupport/bin/macdown": "x86_64 arm64",
+      "build/AuditCampaign02/Build/Products/Release/MacDownQuickLook.appex/Contents/MacOS/MacDownQuickLook": "x86_64 arm64"
+    }
+  }
+}

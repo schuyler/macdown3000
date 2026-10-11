@@ -126,7 +126,7 @@
 "fKI-yk-0lv.title" = "Toon werkbalk";
 
 /* Class = "NSMenuItem"; title = "Shift Right"; ObjectID = "g9Y-GM-gdh"; */
-"g9Y-GM-gdh.title" = "Rechter shifttoets";
+"g9Y-GM-gdh.title" = "Inspringing vergroten";
 
 /* Class = "NSMenuItem"; title = "Link"; ObjectID = "GIg-Wo-P8m"; */
 "GIg-Wo-P8m.title" = "Link";
@@ -174,7 +174,7 @@
 "jxT-CU-nIS.title" = "Opmaak";
 
 /* Class = "NSMenuItem"; title = "Shift Left"; ObjectID = "Jzs-tR-jkL"; */
-"Jzs-tR-jkL.title" = "Linker shifttoets";
+"Jzs-tR-jkL.title" = "Inspringing verkleinen";
 
 /* Class = "NSMenuItem"; title = "Contributing to MacDown"; ObjectID = "K3J-v5-s91"; */
 "K3J-v5-s91.title" = "Draag bij aan MacDown 3000";

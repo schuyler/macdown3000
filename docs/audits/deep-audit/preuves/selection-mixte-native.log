@@ -1,0 +1,253 @@
+Raw log SHA-256: 7c8222e15e0167b62fcd24f26c9e9b06609a7b25ed0e61c8424aa9e330344c8b
+Production MPDocument SHA-256: c33a128abcbf739b75a0b00d185a505ba5da085b7ae3c7a5ee43fd62fd701a10
+Test Suite 'Selected tests' started at 2026-10-10 17:08:43.498.
+Test Suite 'MacDownTests.xctest' started at 2026-10-10 17:08:43.498.
+Test Suite 'FileURLInliningTests' started at 2026-10-10 17:08:43.498.
+Test Suite 'FileURLInliningTests' passed at 2026-10-10 17:08:43.515.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.005 (0.017) seconds
+Test Suite 'HGMarkdownHighlighterTests' started at 2026-10-10 17:08:43.515.
+Test Suite 'HGMarkdownHighlighterTests' passed at 2026-10-10 17:08:44.593.
+	 Executed 47 tests, with 0 failures (0 unexpected) in 1.065 (1.078) seconds
+Test Suite 'MPAssetTests' started at 2026-10-10 17:08:44.593.
+Test Suite 'MPAssetTests' passed at 2026-10-10 17:08:44.600.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.004 (0.007) seconds
+Test Suite 'MPCheckboxToggleTests' started at 2026-10-10 17:08:44.600.
+Test Suite 'MPCheckboxToggleTests' passed at 2026-10-10 17:08:45.658.
+	 Executed 32 tests, with 0 failures (0 unexpected) in 1.051 (1.059) seconds
+Test Suite 'MPColorTests' started at 2026-10-10 17:08:45.659.
+Test Suite 'MPColorTests' passed at 2026-10-10 17:08:45.660.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'MPDocumentDisposalTests' started at 2026-10-10 17:08:45.660.
+Test Suite 'MPDocumentDisposalTests' passed at 2026-10-10 17:08:45.665.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'MPDocumentIOTests' started at 2026-10-10 17:08:45.665.
+Test Suite 'MPDocumentIOTests' passed at 2026-10-10 17:08:53.747.
+	 Executed 43 tests, with 0 failures (0 unexpected) in 8.074 (8.082) seconds
+Test Suite 'MPDocumentLifecycleTests' started at 2026-10-10 17:08:53.748.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteAllInlineStyleCombinationsRetainSelectionAndNeighbors]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteAllInlineStyleCombinationsRetainSelectionAndNeighbors]' passed (297.023 seconds).
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteMappingRejectsUnprovenTextAndExcessiveLeafCount]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteMappingRejectsUnprovenTextAndExcessiveLeafCount]' passed (4.238 seconds).
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteToCodeRemovesOnlyStructuralPrefix]' started.
+Test Case '-[MPDocumentLifecycleTests testPreviewQuoteToCodeRemovesOnlyStructuralPrefix]' passed (0.006 seconds).
+Test Suite 'MPDocumentLifecycleTests' passed at 2026-10-10 17:17:23.022.
+	 Executed 94 tests, with 0 failures (0 unexpected) in 509.242 (509.275) seconds
+Test Suite 'MPDocumentStyleUpdateTests' started at 2026-10-10 17:17:23.023.
+Test Suite 'MPDocumentStyleUpdateTests' passed at 2026-10-10 17:17:23.044.
+	 Executed 28 tests, with 0 failures (0 unexpected) in 0.018 (0.021) seconds
+Test Suite 'MPDocumentTabReuseTests' started at 2026-10-10 17:17:23.044.
+Test Suite 'MPDocumentTabReuseTests' passed at 2026-10-10 17:17:23.074.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.029 (0.030) seconds
+Test Suite 'MPDocumentWorkspaceTests' started at 2026-10-10 17:17:23.074.
+Test Suite 'MPDocumentWorkspaceTests' passed at 2026-10-10 17:17:23.256.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.180 (0.182) seconds
+Test Suite 'MPEditorViewPasteboardTests' started at 2026-10-10 17:17:23.257.
+Test Suite 'MPEditorViewPasteboardTests' passed at 2026-10-10 17:17:23.269.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.011 (0.012) seconds
+Test Suite 'MPEditorViewSubstitutionTests' started at 2026-10-10 17:17:23.269.
+Test Suite 'MPEditorViewSubstitutionTests' passed at 2026-10-10 17:17:23.316.
+	 Executed 30 tests, with 0 failures (0 unexpected) in 0.043 (0.047) seconds
+Test Suite 'MPExternalChangeReloadTests' started at 2026-10-10 17:17:23.316.
+Test Suite 'MPExternalChangeReloadTests' passed at 2026-10-10 17:17:24.153.
+	 Executed 34 tests, with 0 failures (0 unexpected) in 0.827 (0.837) seconds
+Test Suite 'MPFileNodeTests' started at 2026-10-10 17:17:24.154.
+Test Suite 'MPFileNodeTests' passed at 2026-10-10 17:17:24.199.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.042 (0.045) seconds
+Test Suite 'MPFileWatcherTests' started at 2026-10-10 17:17:24.199.
+Test Suite 'MPFileWatcherTests' passed at 2026-10-10 17:17:25.684.
+	 Executed 19 tests, with 0 failures (0 unexpected) in 1.474 (1.484) seconds
+Test Suite 'MPFolderSidebarViewControllerTests' started at 2026-10-10 17:17:25.684.
+Test Suite 'MPFolderSidebarViewControllerTests' passed at 2026-10-10 17:17:25.794.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 0.106 (0.110) seconds
+Test Suite 'MPFolderWatcherTests' started at 2026-10-10 17:17:25.794.
+Test Suite 'MPFolderWatcherTests' passed at 2026-10-10 17:17:31.635.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 5.836 (5.840) seconds
+Test Suite 'MPFormattingScopeMatrixTests' started at 2026-10-10 17:17:31.635.
+Test Case '-[MPFormattingScopeMatrixTests testAllSixInlineStyleOrdersProduceTheSameSemanticComposition]' started.
+Test Case '-[MPFormattingScopeMatrixTests testAllSixInlineStyleOrdersProduceTheSameSemanticComposition]' passed (9.553 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testChangingInnerContainerRetainsOuterContainerAndEveryUnselectedSibling]' started.
+Test Case '-[MPFormattingScopeMatrixTests testChangingInnerContainerRetainsOuterContainerAndEveryUnselectedSibling]' passed (0.019 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testContainerOnPartialSelectionEncompassesWholeSoftWrappedParagraph]' started.
+Test Case '-[MPFormattingScopeMatrixTests testContainerOnPartialSelectionEncompassesWholeSoftWrappedParagraph]' passed (0.020 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testContainerSelectionInMiddleOfThreeHundredLineParagraphEncompassesWholeParagraph]' started.
+Test Case '-[MPFormattingScopeMatrixTests testContainerSelectionInMiddleOfThreeHundredLineParagraphEncompassesWholeParagraph]' passed (0.053 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEachScopeIsOneUndoableTransactionAndRedoRestoresItsResult]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEachScopeIsOneUndoableTransactionAndRedoRestoresItsResult]' passed (0.012 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryContainerEncompassesAllSelectedContentBlocksAndNoNeighbours]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryContainerEncompassesAllSelectedContentBlocksAndNoNeighbours]' passed (0.018 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryContainerReplacementAndRemovalRetainsAllContentTypesAndInlineStyles]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryContainerReplacementAndRemovalRetainsAllContentTypesAndInlineStyles]' passed (18.424 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryContentTransitionRetainsEveryContainerAndAllInlineStyles]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryContentTransitionRetainsEveryContainerAndAllInlineStyles]' passed (19.369 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryContentTypeCanBecomeLiteralCodeInsideEveryContainerAndBackToParagraph]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryContentTypeCanBecomeLiteralCodeInsideEveryContainerAndBackToParagraph]' passed (0.445 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryFencedCodeContainerCanReturnToEveryContentTypeAndRejectsInlineChangesAtomically]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryFencedCodeContainerCanReturnToEveryContentTypeAndRejectsInlineChangesAtomically]' passed (0.204 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryInlineStyleAcrossSetextHeadingAndParagraphPreservesMetadataAndUndo]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryInlineStyleAcrossSetextHeadingAndParagraphPreservesMetadataAndUndo]' passed (0.032 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryInlineSubsetComposesWithEveryContentBlockAndContainer]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryInlineSubsetComposesWithEveryContentBlockAndContainer]' passed (65.310 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryNativeInlineOptionIsOneUndoableTransaction]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryNativeInlineOptionIsOneUndoableTransaction]' passed (0.114 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryNativeInlineSubsetPreservesHeadingContainerAndNeighbours]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryNativeInlineSubsetPreservesHeadingContainerAndNeighbours]' passed (4.994 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testEveryToggleFromEveryInlineSubsetRetainsTheOtherStylesAndContainer]' started.
+Test Case '-[MPFormattingScopeMatrixTests testEveryToggleFromEveryInlineSubsetRetainsTheOtherStylesAndContainer]' passed (42.068 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testForgedAndStaleRequestsAreAtomicInsideEveryContainer]' started.
+Test Case '-[MPFormattingScopeMatrixTests testForgedAndStaleRequestsAreAtomicInsideEveryContainer]' passed (0.065 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testMathBlockGenerationPreservesEveryContainerAndOutsideContent]' started.
+Test Case '-[MPFormattingScopeMatrixTests testMathBlockGenerationPreservesEveryContainerAndOutsideContent]' passed (0.204 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretContainerWrapsEntireSoftWrappedParagraph]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretContainerWrapsEntireSoftWrappedParagraph]' passed (0.110 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretHeadingAndQuoteConversionsRetainContainerAndConvertBackToParagraph]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretHeadingAndQuoteConversionsRetainContainerAndConvertBackToParagraph]' passed (0.127 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretInHeadingLookingCodeConvertsWholeFenceOrRefusesAtomically]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeCaretInHeadingLookingCodeConvertsWholeFenceOrRefusesAtomically]' passed (0.016 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeFencedCodeRefusesEveryInlineOptionWithoutSourceSelectionOrUndoMutation]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeFencedCodeRefusesEveryInlineOptionWithoutSourceSelectionOrUndoMutation]' passed (2.570 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeMixedBoldAndPlainSelectionAppliesBoldToAllSelectedCharacters]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeMixedBoldAndPlainSelectionAppliesBoldToAllSelectedCharacters]' passed (0.011 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testNativeSelectionsIncludingMarkdownDelimitersKeepExistingStyles]' started.
+Test Case '-[MPFormattingScopeMatrixTests testNativeSelectionsIncludingMarkdownDelimitersKeepExistingStyles]' passed (0.019 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testRemovingAdjacentContainerKeepsThreeParagraphsForLFCRLFAndEOF]' started.
+Test Case '-[MPFormattingScopeMatrixTests testRemovingAdjacentContainerKeepsThreeParagraphsForLFCRLFAndEOF]' passed (0.010 seconds).
+Test Case '-[MPFormattingScopeMatrixTests testUntitledCalloutBecomesToggleHeadingWithLocalizedDefaultTitleAndPreservedBody]' started.
+Test Case '-[MPFormattingScopeMatrixTests testUntitledCalloutBecomesToggleHeadingWithLocalizedDefaultTitleAndPreservedBody]' passed (0.006 seconds).
+Test Suite 'MPFormattingScopeMatrixTests' passed at 2026-10-10 17:20:15.415.
+	 Executed 25 tests, with 0 failures (0 unexpected) in 163.774 (163.780) seconds
+Test Suite 'MPGraphvizRenderingTests' started at 2026-10-10 17:20:15.415.
+Test Suite 'MPGraphvizRenderingTests' passed at 2026-10-10 17:20:15.429.
+	 Executed 16 tests, with 0 failures (0 unexpected) in 0.011 (0.014) seconds
+Test Suite 'MPHTMLExportTests' started at 2026-10-10 17:20:15.429.
+Test Suite 'MPHTMLExportTests' passed at 2026-10-10 17:20:15.452.
+	 Executed 21 tests, with 0 failures (0 unexpected) in 0.020 (0.023) seconds
+Test Suite 'MPHTMLResourceURLsTests' started at 2026-10-10 17:20:15.452.
+Test Suite 'MPHTMLResourceURLsTests' passed at 2026-10-10 17:20:15.476.
+	 Executed 37 tests, with 0 failures (0 unexpected) in 0.016 (0.025) seconds
+Test Suite 'MPHTMLTabularizeTests' started at 2026-10-10 17:20:15.476.
+Test Suite 'MPHTMLTabularizeTests' passed at 2026-10-10 17:20:15.480.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'MPHomebrewSubprocessControllerTests' started at 2026-10-10 17:20:15.480.
+Test Suite 'MPHomebrewSubprocessControllerTests' passed at 2026-10-10 17:20:15.809.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.328 (0.329) seconds
+Test Suite 'MPImageExportTests' started at 2026-10-10 17:20:15.810.
+Test Suite 'MPImageExportTests' passed at 2026-10-10 17:20:15.844.
+	 Executed 33 tests, with 0 failures (0 unexpected) in 0.025 (0.034) seconds
+Test Suite 'MPImageRenderingTests' started at 2026-10-10 17:20:15.845.
+Test Suite 'MPImageRenderingTests' passed at 2026-10-10 17:20:15.853.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.005 (0.007) seconds
+Test Suite 'MPInsertTableTests' started at 2026-10-10 17:20:15.853.
+Test Suite 'MPInsertTableTests' passed at 2026-10-10 17:20:15.861.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.005 (0.008) seconds
+Test Suite 'MPInsertTextReplacementRangeTests' started at 2026-10-10 17:20:15.861.
+Test Suite 'MPInsertTextReplacementRangeTests' passed at 2026-10-10 17:20:15.871.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.009 (0.010) seconds
+Test Suite 'MPMainControllerFolderTests' started at 2026-10-10 17:20:15.871.
+Test Suite 'MPMainControllerFolderTests' passed at 2026-10-10 17:20:18.717.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 2.844 (2.847) seconds
+Test Suite 'MPMainControllerMenuTests' started at 2026-10-10 17:20:18.718.
+Test Suite 'MPMainControllerMenuTests' passed at 2026-10-10 17:20:18.726.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.008 (0.009) seconds
+Test Suite 'MPMarkdownRenderingTests' started at 2026-10-10 17:20:18.726.
+Test Suite 'MPMarkdownRenderingTests' passed at 2026-10-10 17:20:38.661.
+	 Executed 83 tests, with 0 failures (0 unexpected) in 19.911 (19.934) seconds
+Test Suite 'MPMathJaxRenderingTests' started at 2026-10-10 17:20:38.661.
+Test Suite 'MPMathJaxRenderingTests' passed at 2026-10-10 17:20:38.665.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'MPMathJaxScrollTests' started at 2026-10-10 17:20:38.665.
+Test Suite 'MPMathJaxScrollTests' passed at 2026-10-10 17:20:38.676.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.009 (0.011) seconds
+Test Suite 'MPMermaidRenderingTests' started at 2026-10-10 17:20:38.676.
+Test Suite 'MPMermaidRenderingTests' passed at 2026-10-10 17:20:38.692.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 0.013 (0.015) seconds
+Test Suite 'MPNotificationTests' started at 2026-10-10 17:20:38.692.
+Test Suite 'MPNotificationTests' passed at 2026-10-10 17:20:38.827.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.133 (0.136) seconds
+Test Suite 'MPPDFAnchorInjectorTests' started at 2026-10-10 17:20:38.828.
+Test Suite 'MPPDFAnchorInjectorTests' passed at 2026-10-10 17:20:39.254.
+	 Executed 20 tests, with 0 failures (0 unexpected) in 0.422 (0.426) seconds
+Test Suite 'MPPaneToggleTests' started at 2026-10-10 17:20:39.254.
+Test Suite 'MPPaneToggleTests' passed at 2026-10-10 17:20:39.396.
+	 Executed 31 tests, with 0 failures (0 unexpected) in 0.134 (0.143) seconds
+Test Suite 'MPPreferencesTests' started at 2026-10-10 17:20:39.396.
+Test Suite 'MPPreferencesTests' passed at 2026-10-10 17:20:39.540.
+	 Executed 42 tests, with 0 failures (0 unexpected) in 0.137 (0.144) seconds
+Test Suite 'MPPreferencesViewControllerResizabilityTests' started at 2026-10-10 17:20:39.540.
+Test Suite 'MPPreferencesViewControllerResizabilityTests' passed at 2026-10-10 17:20:40.481.
+	 Executed 32 tests, with 0 failures (0 unexpected) in 0.934 (0.941) seconds
+Test Suite 'MPPreviewViewControllerTests' started at 2026-10-10 17:20:40.481.
+Test Suite 'MPPreviewViewControllerTests' passed at 2026-10-10 17:20:40.685.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.203 (0.204) seconds
+Test Suite 'MPPreviewZoomTests' started at 2026-10-10 17:20:40.685.
+Test Suite 'MPPreviewZoomTests' passed at 2026-10-10 17:20:40.714.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.027 (0.029) seconds
+Test Suite 'MPQuickLookPreferencesTests' started at 2026-10-10 17:20:40.714.
+Test Suite 'MPQuickLookPreferencesTests' passed at 2026-10-10 17:20:40.725.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.006 (0.011) seconds
+Test Suite 'MPQuickLookRendererTests' started at 2026-10-10 17:20:40.725.
+Test Suite 'MPQuickLookRendererTests' passed at 2026-10-10 17:20:40.793.
+	 Executed 66 tests, with 0 failures (0 unexpected) in 0.057 (0.068) seconds
+Test Suite 'MPRenderDeferralTests' started at 2026-10-10 17:20:40.793.
+Test Suite 'MPRenderDeferralTests' passed at 2026-10-10 17:20:40.820.
+	 Executed 19 tests, with 0 failures (0 unexpected) in 0.024 (0.026) seconds
+Test Suite 'MPRendererEdgeCaseTests' started at 2026-10-10 17:20:40.820.
+Test Suite 'MPRendererEdgeCaseTests' passed at 2026-10-10 17:20:41.093.
+	 Executed 66 tests, with 0 failures (0 unexpected) in 0.264 (0.274) seconds
+Test Suite 'MPRendererStateTests' started at 2026-10-10 17:20:41.093.
+Test Suite 'MPRendererStateTests' passed at 2026-10-10 17:20:41.639.
+	 Executed 33 tests, with 0 failures (0 unexpected) in 0.538 (0.546) seconds
+Test Suite 'MPResourceWatcherSetTests' started at 2026-10-10 17:20:41.639.
+Test Suite 'MPResourceWatcherSetTests' passed at 2026-10-10 17:20:44.435.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 2.790 (2.795) seconds
+Test Suite 'MPScrollSyncTests' started at 2026-10-10 17:20:44.435.
+Test Suite 'MPScrollSyncTests' passed at 2026-10-10 17:20:44.625.
+	 Executed 196 tests, with 0 failures (0 unexpected) in 0.154 (0.190) seconds
+Test Suite 'MPSelectionCountTests' started at 2026-10-10 17:20:44.625.
+Test Suite 'MPSelectionCountTests' passed at 2026-10-10 17:20:46.699.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 2.071 (2.074) seconds
+Test Suite 'MPSidebarSplitViewTests' started at 2026-10-10 17:20:46.699.
+Test Suite 'MPSidebarSplitViewTests' passed at 2026-10-10 17:20:46.702.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Suite 'MPSidebarSyncCoordinatorTests' started at 2026-10-10 17:20:46.702.
+Test Suite 'MPSidebarSyncCoordinatorTests' passed at 2026-10-10 17:20:46.726.
+	 Executed 11 tests, with 0 failures (0 unexpected) in 0.022 (0.024) seconds
+Test Suite 'MPSmartQuoteTests' started at 2026-10-10 17:20:46.726.
+Test Suite 'MPSmartQuoteTests' passed at 2026-10-10 17:20:46.733.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.005 (0.007) seconds
+Test Suite 'MPStringLookupTests' started at 2026-10-10 17:20:46.733.
+Test Suite 'MPStringLookupTests' passed at 2026-10-10 17:20:46.740.
+	 Executed 12 tests, with 0 failures (0 unexpected) in 0.004 (0.007) seconds
+Test Suite 'MPStyleReloadCacheBustTests' started at 2026-10-10 17:20:46.740.
+Test Suite 'MPStyleReloadCacheBustTests' passed at 2026-10-10 17:20:46.746.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.005) seconds
+Test Suite 'MPSyntaxHighlightingTests' started at 2026-10-10 17:20:46.746.
+Test Suite 'MPSyntaxHighlightingTests' passed at 2026-10-10 17:20:46.754.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.007 (0.009) seconds
+Test Suite 'MPTerminalPreferencesTests' started at 2026-10-10 17:20:46.755.
+Test Suite 'MPTerminalPreferencesTests' passed at 2026-10-10 17:20:46.780.
+	 Executed 19 tests, with 0 failures (0 unexpected) in 0.023 (0.025) seconds
+Test Suite 'MPToolbarControllerTests' started at 2026-10-10 17:20:46.780.
+Test Suite 'MPToolbarControllerTests' passed at 2026-10-10 17:20:47.366.
+	 Executed 67 tests, with 0 failures (0 unexpected) in 0.572 (0.586) seconds
+Test Suite 'MPURLSecurityPolicyTests' started at 2026-10-10 17:20:47.366.
+Test Suite 'MPURLSecurityPolicyTests' passed at 2026-10-10 17:20:47.400.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.031 (0.034) seconds
+Test Suite 'MPUpdaterTests' started at 2026-10-10 17:20:47.400.
+Test Suite 'MPUpdaterTests' passed at 2026-10-10 17:20:47.429.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.028 (0.029) seconds
+Test Suite 'MPUtilityTests' started at 2026-10-10 17:20:47.430.
+Test Suite 'MPUtilityTests' passed at 2026-10-10 17:20:47.652.
+	 Executed 55 tests, with 0 failures (0 unexpected) in 0.214 (0.222) seconds
+Test Suite 'MPWordCountUpdateTests' started at 2026-10-10 17:20:47.652.
+Test Suite 'MPWordCountUpdateTests' passed at 2026-10-10 17:20:48.790.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 1.136 (1.138) seconds
+Test Suite 'MPZoomTests' started at 2026-10-10 17:20:48.791.
+Test Suite 'MPZoomTests' passed at 2026-10-10 17:20:48.915.
+	 Executed 26 tests, with 0 failures (0 unexpected) in 0.120 (0.125) seconds
+Test Suite 'MacDownTests.xctest' passed at 2026-10-10 17:20:48.916.
+	 Executed 1549 tests, with 0 failures (0 unexpected) in 725.062 (725.418) seconds
+Test Suite 'Selected tests' passed at 2026-10-10 17:20:48.916.
+	 Executed 1549 tests, with 0 failures (0 unexpected) in 725.062 (725.418) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_17-08-38-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

@@ -16,7 +16,9 @@ $(BINDIR)/% : %
 	cp -p $< $@
 	strip $@
 
-greg.o : greg.c
+greg.o : greg.c greg.h
+tree.o : tree.c greg.h
+compile.o : compile.c greg.h
 
 grammar : .FORCE
 	./greg -o greg.c greg.g

@@ -22,23 +22,30 @@ runs:
   steps:
     - name: Build MacDown archive
       shell: bash
+      env:
+        SIGNING_ENABLED: ${{ inputs.enable-signing }}
+        MARKETING_VERSION_INPUT: ${{ inputs.marketing-version }}
+        BUILD_NUMBER_INPUT: ${{ inputs.build-number }}
+        TEAM_ID_INPUT: ${{ inputs.team-id }}
+        MACDOWN_RELEASE_VERSION: ${{ inputs.marketing-version }}
+        MACDOWN_RELEASE_BUILD: ${{ inputs.build-number }}
       run: |
         echo "🔨 Building MacDown..."
         set -o pipefail
 
         # Build version settings (only if provided)
-        VERSION_ARGS=""
-        if [ -n "${{ inputs.marketing-version }}" ]; then
-          VERSION_ARGS="MARKETING_VERSION=${{ inputs.marketing-version }}"
-          echo "📌 Setting marketing version: ${{ inputs.marketing-version }}"
+        VERSION_ARGS=()
+        if [ -n "$MARKETING_VERSION_INPUT" ]; then
+          VERSION_ARGS+=("MARKETING_VERSION=$MARKETING_VERSION_INPUT")
+          echo "📌 Setting marketing version: $MARKETING_VERSION_INPUT"
         fi
-        if [ -n "${{ inputs.build-number }}" ]; then
-          VERSION_ARGS="$VERSION_ARGS CURRENT_PROJECT_VERSION=${{ inputs.build-number }}"
-          echo "📌 Setting build number: ${{ inputs.build-number }}"
+        if [ -n "$BUILD_NUMBER_INPUT" ]; then
+          VERSION_ARGS+=("CURRENT_PROJECT_VERSION=$BUILD_NUMBER_INPUT")
+          echo "📌 Setting build number: $BUILD_NUMBER_INPUT"
         fi
 
         # Build with or without signing
-        if [ "${{ inputs.enable-signing }}" == "true" ]; then
+        if [ "$SIGNING_ENABLED" == "true" ]; then
           echo "Building with code signing..."
           xcodebuild archive \
             -workspace "MacDown 3000.xcworkspace" \
@@ -49,9 +56,9 @@ runs:
             ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_IDENTITY="Developer ID Application" \
             CODE_SIGN_STYLE="Manual" \
-            DEVELOPMENT_TEAM="${{ inputs.team-id }}" \
+            DEVELOPMENT_TEAM="$TEAM_ID_INPUT" \
             ENABLE_HARDENED_RUNTIME=YES \
-            $VERSION_ARGS \
+            "${VERSION_ARGS[@]}" \
             | tee build.log
         else
           echo "Building without code signing (verification only)..."
@@ -65,7 +72,7 @@ runs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            $VERSION_ARGS \
+            "${VERSION_ARGS[@]}" \
             | tee build.log
         fi
 

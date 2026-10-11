@@ -1,0 +1,12 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/compilation-force-drag-recheck.log
+SHA-256 full log: cb4316e1b969235bac952299fa2598a1c3fb406e648fbc82033ed568f821ad86
+
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (78.664 seconds).
+	 Executed 1 test, with 0 failures (0 unexpected) in 78.664 (78.665) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 78.664 (78.666) seconds
+	 Executed 1 test, with 0 failures (0 unexpected) in 78.664 (78.667) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-48-31-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

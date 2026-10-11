@@ -5,9 +5,17 @@
 # one file.
 # 
 
+set -eu
+
 HEADER_ROW=$(grep -nF '/// header_code_here' pmh_parser_core.c | awk 'BEGIN{FS=":"};{print $1}')
-HEADER_ROW_BEFORE=$(expr $HEADER_ROW - 1)
-HEADER_ROW_AFTER=$(expr $HEADER_ROW + 1)
+case "$HEADER_ROW" in
+    ''|*[!0-9]*)
+        echo "Expected exactly one header_code_here marker in pmh_parser_core.c" >&2
+        exit 1
+        ;;
+esac
+HEADER_ROW_BEFORE=$((HEADER_ROW - 1))
+HEADER_ROW_AFTER=$((HEADER_ROW + 1))
 
 head -n ${HEADER_ROW_BEFORE} pmh_parser_core.c
 cat pmh_parser_head.c

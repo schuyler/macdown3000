@@ -10,6 +10,7 @@
 
 #import <XCTest/XCTest.h>
 #import "MPToolbarController.h"
+#import <QuartzCore/QuartzCore.h>
 
 // Expose internal action methods to the test target; they are not part of
 // the public header but are callable via dynamic dispatch.
@@ -24,6 +25,7 @@
 // Used to verify toolbar dispatch reaches the document with the correct action.
 @interface MPToolbarDispatchRecorder : NSObject
 @property (nonatomic, strong) NSMutableArray<NSString *> *invokedSelectors;
+@property (nonatomic, strong) id lastSender;
 @end
 
 @implementation MPToolbarDispatchRecorder
@@ -47,6 +49,9 @@
 - (void)forwardInvocation:(NSInvocation *)anInvocation
 {
     [self.invokedSelectors addObject:NSStringFromSelector(anInvocation.selector)];
+    __unsafe_unretained id sender = nil;
+    [anInvocation getArgument:&sender atIndex:2];
+    self.lastSender = sender;
 }
 
 - (BOOL)respondsToSelector:(SEL)aSelector
@@ -57,8 +62,18 @@
 
 @end
 
+@interface MPTableSelectionRecorder : MPDocument
+@property NSUInteger chosenColumns;
+@property NSUInteger chosenRows;
+@end
+@implementation MPTableSelectionRecorder
+- (void)insertTableWithColumns:(NSUInteger)columns rows:(NSUInteger)rows
+{self.chosenColumns=columns;self.chosenRows=rows;}
+@end
+
 @interface MPToolbarControllerTests : XCTestCase
 @property (strong) MPToolbarController *controller;
+@property (strong) NSWindow *dispatchWindow;
 @end
 
 
@@ -72,8 +87,20 @@
 
 - (void)tearDown
 {
+    self.dispatchWindow.contentView = nil;
+    [self.dispatchWindow close];
+    self.dispatchWindow = nil;
     self.controller = nil;
     [super tearDown];
+}
+
+- (void)attachDispatchControlToWindow:(NSView *)control
+{
+    self.dispatchWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 300, 100)
+        styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    self.dispatchWindow.releasedWhenClosed = NO;
+    [self.dispatchWindow.contentView addSubview:control];
+    [self.dispatchWindow makeKeyAndOrderFront:nil];
 }
 
 
@@ -659,7 +686,8 @@
         @"indent-group",
         @"text-formatting-group",
         @"heading-group",
-        @"list-group"
+        @"list-group",
+        @"code"
     ];
 
     for (NSString *identifier in groupIdentifiers) {
@@ -676,7 +704,6 @@
 {
     NSArray *standaloneIdentifiers = @[
         @"blockquote",
-        @"code",
         @"link",
         @"image",
         @"copy-html",
@@ -777,25 +804,125 @@
 
 #pragma mark - Grouped Toolbar Item Dispatch Tests (Issue #566)
 
+- (void)testCodeGroupKeepsSavedIdentifierAndAddsAdjacentBlockButton
+{
+    NSToolbarItemGroup *group=(id)[self.controller toolbar:nil itemForItemIdentifier:@"code" willBeInsertedIntoToolbar:YES];
+    XCTAssertTrue([group isKindOfClass:NSToolbarItemGroup.class]);
+    XCTAssertEqual(group.subitems.count,3u);
+    if (group.subitems.count!=3) return;
+    XCTAssertEqualObjects(group.subitems[0].itemIdentifier,@"inline-code");
+    XCTAssertEqualObjects(group.subitems[1].itemIdentifier,@"code-block");
+    NSImage *image=[NSImage imageNamed:@"ToolbarIconCodeBlock"];
+    XCTAssertNotNil(image);
+    XCTAssertTrue(image.isTemplate);
+    NSSegmentedControl *segments=(id)group.view;
+    XCTAssertEqualObjects([segments toolTipForSegment:1],NSLocalizedString(@"Code Block",@""));
+    NSButton *button=(id)group.subitems[1].view;
+    [self attachDispatchControlToWindow:button];
+    MPToolbarDispatchRecorder *recorder=[MPToolbarDispatchRecorder new];
+    self.controller.document=(id)recorder;
+    [button performClick:nil];
+    XCTAssertEqualObjects(recorder.invokedSelectors,(@[@"convertToCodeBlock:"]));
+}
+
+- (void)testListGroupIncludesTaskListAfterExistingListButtons
+{
+    NSToolbarItemGroup *group = (NSToolbarItemGroup *)[self.controller toolbar:nil
+                                                  itemForItemIdentifier:@"list-group"
+                                              willBeInsertedIntoToolbar:YES];
+    NSSegmentedControl *control = (NSSegmentedControl *)group.view;
+    XCTAssertEqualObjects([group.subitems valueForKey:@"itemIdentifier"],
+                          (@[@"unordered-list", @"ordered-list", @"task-list"]));
+    XCTAssertEqual(control.segmentCount, 3);
+    if (group.subitems.count != 3 || control.segmentCount != 3) return;
+
+    NSToolbarItem *taskItem = group.subitems[2];
+    NSButton *button = (NSButton *)taskItem.view;
+    NSImage *taskImage = [NSImage imageNamed:@"ToolbarIconTaskList"];
+    XCTAssertEqualObjects(taskItem.label, NSLocalizedString(@"Task List", @""));
+    XCTAssertEqualObjects(taskItem.paletteLabel, taskItem.label);
+    XCTAssertEqualObjects(taskItem.toolTip, taskItem.label);
+    XCTAssertEqualObjects(button.identifier, @"task-list");
+    XCTAssertNotNil(taskImage);
+    XCTAssertEqual(button.image, taskImage);
+    XCTAssertEqual([control imageForSegment:2], taskImage);
+    XCTAssertTrue(taskImage.isTemplate);
+    XCTAssertTrue(NSEqualSizes(taskImage.size, NSMakeSize(19, 19)));
+    if (@available(macOS 10.13, *)) {
+        XCTAssertEqualObjects([control toolTipForSegment:2], taskItem.label);
+    }
+}
+
+- (void)testActualListGroupControlDispatchesAllThreeListActions
+{
+    XCTAssertNil(NSApp.modalWindow, @"An earlier test must not leave a modal panel blocking toolbar actions");
+    NSToolbarItemGroup *group = (NSToolbarItemGroup *)[self.controller toolbar:nil
+                                                  itemForItemIdentifier:@"list-group"
+                                              willBeInsertedIntoToolbar:YES];
+    NSSegmentedControl *control = (NSSegmentedControl *)group.view;
+    NSArray<NSString *> *actions = @[@"toggleUnorderedList:", @"toggleOrderedList:",
+                                    @"toggleTaskList:"];
+    XCTAssertEqual(control.segmentCount, actions.count);
+    if (control.segmentCount != actions.count || group.subitems.count != actions.count) return;
+
+    // Momentary controls expose the active segment only during a mouse event.
+    // Retain that selection in this fixture to simulate dispatch during the click.
+    control.trackingMode = NSSegmentSwitchTrackingSelectOne;
+    [self attachDispatchControlToWindow:control];
+
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+    for (NSUInteger segment = 0; segment < actions.count; segment++) {
+        [recorder.invokedSelectors removeAllObjects];
+        control.selectedSegment = segment;
+        XCTAssertTrue([control sendAction:control.action to:control.target]);
+        XCTAssertEqualObjects(recorder.invokedSelectors, (@[actions[segment]]));
+        XCTAssertEqual(recorder.lastSender, group.subitems[segment]);
+    }
+}
+
+- (void)testActualTaskListButtonDispatchesToDocument
+{
+    NSToolbarItemGroup *group = (NSToolbarItemGroup *)[self.controller toolbar:nil
+                                                  itemForItemIdentifier:@"list-group"
+                                              willBeInsertedIntoToolbar:YES];
+    XCTAssertEqual(group.subitems.count, 3);
+    if (group.subitems.count != 3) return;
+
+    NSButton *button = (NSButton *)group.subitems[2].view;
+    [self attachDispatchControlToWindow:button];
+    MPToolbarDispatchRecorder *recorder = [[MPToolbarDispatchRecorder alloc] init];
+    self.controller.document = (MPDocument *)recorder;
+    [button performClick:nil];
+
+    XCTAssertEqualObjects(recorder.invokedSelectors, (@[@"toggleTaskList:"]));
+    XCTAssertEqual(recorder.lastSender, button);
+}
+
 - (void)testGroupedDispatchAllActionMappings
 {
     // Verify every grouped/segmented toolbar item dispatches the correct
     // action. Keyed by (group identifier, segment index, segment count)
     // since that's what selectedToolbarItemGroupItem: actually receives
-    // from a segmented control's identifier and selectedSegment -- the 10
+    // from a segmented control's identifier and selectedSegment -- the
     // individual subitem identifiers (e.g. "bold") are not independently
     // reachable via toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:.
     NSArray<NSArray *> *expectedMappings = @[
         @[@"indent-group", @0, @2, @"unindent:"],
         @[@"indent-group", @1, @2, @"indent:"],
-        @[@"text-formatting-group", @0, @3, @"toggleStrong:"],
-        @[@"text-formatting-group", @1, @3, @"toggleEmphasis:"],
-        @[@"text-formatting-group", @2, @3, @"toggleUnderline:"],
+        @[@"text-formatting-group", @0, @4, @"toggleStrong:"],
+        @[@"text-formatting-group", @1, @4, @"toggleEmphasis:"],
+        @[@"text-formatting-group", @2, @4, @"toggleUnderline:"],
+        @[@"text-formatting-group", @3, @4, @"toggleStrikethrough:"],
         @[@"heading-group", @0, @3, @"convertToH1:"],
         @[@"heading-group", @1, @3, @"convertToH2:"],
         @[@"heading-group", @2, @3, @"convertToH3:"],
-        @[@"list-group", @0, @2, @"toggleUnorderedList:"],
-        @[@"list-group", @1, @2, @"toggleOrderedList:"],
+        @[@"list-group", @0, @3, @"toggleUnorderedList:"],
+        @[@"list-group", @1, @3, @"toggleOrderedList:"],
+        @[@"list-group", @2, @3, @"toggleTaskList:"],
+        @[@"code", @0, @3, @"toggleInlineCode:"],
+        @[@"code", @1, @3, @"convertToCodeBlock:"],
+        @[@"code", @2, @3, @"resetToNormalText:"],
     ];
 
     for (NSArray *mapping in expectedMappings) {
@@ -841,7 +968,7 @@
     // lookup keys on. Guards against a future refactor silently breaking
     // this again.
     NSArray *groupIdentifiers = @[@"indent-group", @"text-formatting-group",
-                                   @"heading-group", @"list-group"];
+                                   @"heading-group", @"list-group", @"code"];
 
     for (NSString *identifier in groupIdentifiers) {
         NSToolbarItem *item = [self.controller toolbar:nil
@@ -866,12 +993,51 @@
 
 #pragma mark - Standalone Toolbar Item Dispatch Tests (Issue #278)
 
+- (void)testTableButtonOpensGridAndDispatchesChosenDimensions
+{
+    MPTableSelectionRecorder *document=[MPTableSelectionRecorder new];self.controller.document=document;
+    NSToolbarItem *item=[self.controller toolbar:nil itemForItemIdentifier:@"table" willBeInsertedIntoToolbar:YES];
+    NSButton *button=(id)item.view;[self attachDispatchControlToWindow:button];
+    [button performClick:nil];
+    NSPopover *popover=[self.controller valueForKey:@"tablePopover"];
+    XCTAssertNotNil(popover);
+    NSView *grid=popover.contentViewController.view;
+    XCTAssertEqual(grid.subviews.count,65u);
+    NSButton *choice=(id)[grid viewWithTag:27]; // 3 columns, 4 rows.
+    [choice performClick:nil];
+    XCTAssertEqual(document.chosenColumns,3u);XCTAssertEqual(document.chosenRows,4u);
+    [popover close];[document close];
+}
+
+- (void)testTableGridHighlightsAndChoosesAll64Dimensions
+{
+    NSView *grid=[[NSClassFromString(@"MPTableSizePicker") alloc] initWithFrame:NSZeroRect];
+    XCTAssertNotNil(grid);
+    for (NSUInteger row=1;row<=8;row++) for (NSUInteger column=1;column<=8;column++) {
+        __block NSUInteger chosenColumns=0,chosenRows=0;
+        [grid setValue:[^(NSUInteger c,NSUInteger r){chosenColumns=c;chosenRows=r;} copy] forKey:@"chooseSize"];
+        NSButton *cell=(id)[grid viewWithTag:(row-1)*8+column];
+        XCTAssertTrue([cell isKindOfClass:NSButton.class]);
+        [cell mouseEntered:nil];
+        NSUInteger highlighted=0;
+        for (NSView *view in grid.subviews) if ([view isKindOfClass:NSButton.class]) {
+            NSColor *color=[NSColor colorWithCGColor:view.layer.backgroundColor];
+            if (color.alphaComponent<0.9) highlighted++;
+        }
+        XCTAssertEqual(highlighted,row*column);
+        [cell performClick:nil];
+        XCTAssertEqual(chosenColumns,column);XCTAssertEqual(chosenRows,row);
+    }
+    NSToolbarItem *code=[self.controller toolbar:nil itemForItemIdentifier:@"code" willBeInsertedIntoToolbar:YES];
+    XCTAssertEqualObjects([((NSToolbarItemGroup *)code).subitems valueForKey:@"itemIdentifier"],(@[@"inline-code",@"code-block",@"normal-text"]));
+}
+
 - (void)testStandaloneButtonsTargetToolbarController
 {
     // Standalone buttons must target the toolbar controller so actions
     // dispatch correctly regardless of which pane has focus.
     NSArray *standaloneIdentifiers = @[
-        @"blockquote", @"code", @"link", @"image", @"table",
+        @"blockquote", @"link", @"image", @"table",
         @"copy-html", @"comment", @"highlight", @"strikethrough"
     ];
 
@@ -892,7 +1058,7 @@
     // Standalone buttons must use the dispatch selector, not the
     // document action directly.
     NSArray *standaloneIdentifiers = @[
-        @"blockquote", @"code", @"link", @"image", @"table",
+        @"blockquote", @"link", @"image", @"table",
         @"copy-html", @"comment", @"highlight", @"strikethrough"
     ];
 
@@ -902,7 +1068,8 @@
                                  itemForItemIdentifier:identifier
                              willBeInsertedIntoToolbar:YES];
         NSButton *button = (NSButton *)item.view;
-        XCTAssertEqual(button.action, expectedAction,
+        SEL action=[identifier isEqualToString:@"table"] ? NSSelectorFromString(@"showTablePicker:") : expectedAction;
+        XCTAssertEqual(button.action, action,
                        @"Standalone button '%@' must use standaloneToolbarItemClicked: action",
                        identifier);
     }
@@ -913,7 +1080,7 @@
     // Each standalone button needs an identifier so the dispatch method
     // can look up the intended action.
     NSArray *standaloneIdentifiers = @[
-        @"blockquote", @"code", @"link", @"image", @"table",
+        @"blockquote", @"link", @"image", @"table",
         @"copy-html", @"comment", @"highlight", @"strikethrough"
     ];
 
@@ -934,7 +1101,8 @@
     // Verify every standalone identifier dispatches the correct action.
     NSDictionary *expectedMappings = @{
         @"blockquote":     @"toggleBlockquote:",
-        @"code":           @"toggleInlineCode:",
+        @"inline-code":    @"toggleInlineCode:",
+        @"code-block":     @"convertToCodeBlock:",
         @"link":           @"toggleLink:",
         @"image":          @"toggleImage:",
         @"table":          @"insertTable:",

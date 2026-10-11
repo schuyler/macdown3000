@@ -1,0 +1,10 @@
+Extrait XCTest ; SHA-256 du journal intégral : 68f4c921dd2e8a6e87d6ab4e3c0c2904fb6385472cf5237bc7573ef406498aa8
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:393: error: -[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord] : XCTAssertEqual failed: ("Held selection: [Selectionword] click count: 1") is not equal to ("Held selection: [] click count: 1")
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' failed (18.510 seconds).
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.510 (18.511) seconds
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.510 (18.511) seconds
+	 Executed 1 test, with 1 failure (0 unexpected) in 18.510 (18.513) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-23-53-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

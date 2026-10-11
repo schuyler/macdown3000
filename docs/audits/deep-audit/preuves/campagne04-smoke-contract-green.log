@@ -1,0 +1,3 @@
+PASS app.macdown.macdown3000 migration accepted
+PASS app.macdown.macdown3000-debug migration accepted
+PASS app.macdown.macdown3000-debug missing migration rejected

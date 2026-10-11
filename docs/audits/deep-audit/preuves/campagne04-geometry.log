@@ -1,0 +1,44 @@
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:47:25: warning: performSelector may cause a leak because its selector is unknown [-Warc-performSelector-leaks]
+   47 |         content = [self performSelector:selectors[i]];
+      |                         ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:47:41: note: used here
+   47 |         content = [self performSelector:selectors[i]];
+      |                                         ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:93:27: warning: 'UTTypeCreatePreferredIdentifierForTag' is deprecated: first deprecated in macOS 12.0 - Use the UTType class instead. [-Wdeprecated-declarations]
+   93 |     CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(
+      |                           ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:317:1: note: 'UTTypeCreatePreferredIdentifierForTag' has been explicitly marked deprecated here
+  317 | UTTypeCreatePreferredIdentifierForTag(
+      | ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:94:9: warning: 'kUTTagClassFilenameExtension' is deprecated: first deprecated in macOS 12.0 - Use UTTagClassFilenameExtension instead. [-Wdeprecated-declarations]
+   94 |         kUTTagClassFilenameExtension,
+      |         ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:258:26: note: 'kUTTagClassFilenameExtension' has been explicitly marked deprecated here
+  258 | extern const CFStringRef kUTTagClassFilenameExtension                API_DEPRECATED("Use UTTagClassFilenameExtension instead.", ios(3.0, 15.0), macos(10.3, 12.0), tvos(9.0, 15.0), watchos(1.0, 8.0));
+      |                          ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:104:13: warning: 'UTTypeConformsTo' is deprecated: first deprecated in macOS 12.0 - Use -[UTType conformsToType:] instead. [-Wdeprecated-declarations]
+  104 |         if (UTTypeConformsTo((__bridge CFStringRef)uti,
+      |             ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:472:1: note: 'UTTypeConformsTo' has been explicitly marked deprecated here
+  472 | UTTypeConformsTo(
+      | ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:132:27: warning: 'UTTypeCreatePreferredIdentifierForTag' is deprecated: first deprecated in macOS 12.0 - Use the UTType class instead. [-Wdeprecated-declarations]
+  132 |     CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(
+      |                           ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:317:1: note: 'UTTypeCreatePreferredIdentifierForTag' has been explicitly marked deprecated here
+  317 | UTTypeCreatePreferredIdentifierForTag(
+      | ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:133:9: warning: 'kUTTagClassFilenameExtension' is deprecated: first deprecated in macOS 12.0 - Use UTTagClassFilenameExtension instead. [-Wdeprecated-declarations]
+  133 |         kUTTagClassFilenameExtension,
+      |         ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:258:26: note: 'kUTTagClassFilenameExtension' has been explicitly marked deprecated here
+  258 | extern const CFStringRef kUTTagClassFilenameExtension                API_DEPRECATED("Use UTTagClassFilenameExtension instead.", ios(3.0, 15.0), macos(10.3, 12.0), tvos(9.0, 15.0), watchos(1.0, 8.0));
+      |                          ^
+/Users/zydon/Sites/MacDown/MacDown/Code/Utility/FileURLInlining.m:139:27: warning: 'UTTypeConformsTo' is deprecated: first deprecated in macOS 12.0 - Use -[UTType conformsToType:] instead. [-Wdeprecated-declarations]
+  139 |     BOOL isTextClipping = UTTypeConformsTo(fileUTI,
+      |                           ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Headers/UTType.h:472:1: note: 'UTTypeConformsTo' has been explicitly marked deprecated here
+  472 | UTTypeConformsTo(
+      | ^
+7 warnings generated.
+PASS attached viewport, deferred toggles, 30 repeated updates/strings, long/short content and re-enable geometry

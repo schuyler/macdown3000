@@ -17,17 +17,6 @@
     (opt->flags & HOEDOWN_HTML_BLOCKCODE_INFORMATION)
 #define USE_TASK_LIST(opt) (opt->flags & HOEDOWN_HTML_USE_TASK_LIST)
 
-// Global checkbox index counter for interactive checkbox support.
-// NOTE: This counter is NOT thread-safe. Markdown rendering must be serialized
-// on a single thread (which MacDown does via the main thread).
-// Related to GitHub issue #269.
-static int g_checkbox_index = 0;
-
-void hoedown_patch_reset_checkbox_index(void)
-{
-    g_checkbox_index = 0;
-}
-
 // hoedown_buffer_new() stores its argument as the buffer's growth "unit", and
 // hoedown_buffer_grow() asserts that unit is non-zero. Passing a size hint of 0
 // (e.g. when a heading or code-fence info string is empty) therefore produces a
@@ -38,13 +27,36 @@ static hoedown_buffer *new_growable_buffer(size_t size_hint)
     return hoedown_buffer_new(size_hint ? size_hint : 16);
 }
 
-int hoedown_patch_get_checkbox_index(void)
+// Decode only a marker generated for this parse; bounds and integer overflow
+// are checked before reading or recording an original UTF-16 source offset.
+static size_t task_marker_length(const uint8_t *bytes, size_t size,
+                                const char *prefix, size_t *source_offset)
 {
-    return g_checkbox_index;
+    if (!prefix) return 0;
+    size_t prefix_size = strlen(prefix);
+    if (size <= prefix_size || memcmp(bytes, prefix, prefix_size) != 0) return 0;
+    size_t i = prefix_size, offset = 0;
+    for (; i < size && bytes[i] >= '0' && bytes[i] <= '9'; i++) {
+        size_t digit = bytes[i] - '0';
+        if (offset > (SIZE_MAX - digit) / 10) return 0;
+        offset = offset * 10 + digit;
+    }
+    if (i == prefix_size || i >= size || bytes[i] != 'Z') return 0;
+    *source_offset = offset;
+    return i + 1;
 }
 
-// rndr_blockcode from HEAD. The "language-" prefix in class in needed to make
-// the HTML compatible with Prism.
+// Prism styles both CODE and its PRE parent, including when scripts are disabled.
+static void render_code_language_class(hoedown_buffer *ob, const hoedown_buffer *lang)
+{
+    HOEDOWN_BUFPUTSL(ob, "language-");
+    if (lang && lang->size)
+        hoedown_escape_html(ob, lang->data, lang->size, 0);
+    else
+        HOEDOWN_BUFPUTSL(ob, "none");
+}
+
+// Keep the same escaped language class on both elements for every consumer.
 void hoedown_patch_render_blockcode(
     hoedown_buffer *ob, const hoedown_buffer *text, const hoedown_buffer *lang,
     const hoedown_renderer_data *data)
@@ -74,27 +86,26 @@ void hoedown_patch_render_blockcode(
     }
 
     hoedown_buffer *mapped = NULL;
-    if (lang && extra->language_addition)
+    if (lang && extra && extra->language_addition)
     {
         mapped = extra->language_addition(lang, extra->owner);
         if (mapped)
             lang = mapped;
     }
 
-    HOEDOWN_BUFPUTSL(ob, "<div><pre");
+    HOEDOWN_BUFPUTSL(ob, "<div><pre class=\"");
+    render_code_language_class(ob, lang);
     if (state->flags & HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS)
-        HOEDOWN_BUFPUTSL(ob, " class=\"line-numbers\"");
+        HOEDOWN_BUFPUTSL(ob, " line-numbers");
+    HOEDOWN_BUFPUTSL(ob, "\"");
     if (back && back->size)
     {
         HOEDOWN_BUFPUTSL(ob, " data-information=\"");
-        hoedown_buffer_put(ob, back->data, back->size);
+        hoedown_escape_html(ob, back->data, back->size, 0);
         HOEDOWN_BUFPUTSL(ob, "\"");
     }
-    HOEDOWN_BUFPUTSL(ob, "><code class=\"language-");
-    if (lang && lang->size)
-        hoedown_escape_html(ob, lang->data, lang->size, 0);
-    else
-        HOEDOWN_BUFPUTSL(ob, "none");
+    HOEDOWN_BUFPUTSL(ob, "><code class=\"");
+    render_code_language_class(ob, lang);
     HOEDOWN_BUFPUTSL(ob, "\">");
 
 	if (text)
@@ -104,7 +115,22 @@ void hoedown_patch_render_blockcode(
         size_t size = text->size;
         if (size > 0 && text->data[size - 1] == '\n')
             size--;
-        hoedown_escape_html(ob, text->data, size, 0);
+        size_t marker_size = extra && extra->code_escape_token ? strlen(extra->code_escape_token) : 0;
+        size_t start = 0;
+        for (size_t i = 0; i < size; i++) {
+            size_t ignored_offset;
+            size_t skip = task_marker_length(text->data + i, size - i,
+                extra ? extra->task_marker_prefix : NULL, &ignored_offset);
+            if (!skip && marker_size && i + marker_size <= size &&
+                memcmp(text->data + i, extra->code_escape_token, marker_size) == 0)
+                skip = marker_size;
+            if (skip) {
+                hoedown_escape_html(ob, text->data + start, i - start, 0);
+                i += skip - 1;
+                start = i + 1;
+            }
+        }
+        hoedown_escape_html(ob, text->data + start, size - start, 0);
     }
 
 	HOEDOWN_BUFPUTSL(ob, "</code></pre></div>\n");
@@ -124,12 +150,13 @@ void hoedown_patch_render_listitem(
 	if (text)
     {
         hoedown_html_renderer_state *state = data->opaque;
+        hoedown_html_renderer_state_extra *extra = state->opaque;
         size_t offset = 0;
         if (flags & HOEDOWN_LI_BLOCK)
             offset = 3;
 
         // Do task list checkbox ([x], [X], or [ ]).
-        if (USE_TASK_LIST(state) && text->size >= 3)
+        if (USE_TASK_LIST(state) && extra && text->size >= offset + 3)
         {
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
             {
@@ -137,9 +164,15 @@ void hoedown_patch_render_listitem(
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support
                 hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
-				offset += 3;
+                    "<input type=\"checkbox\" data-checkbox-index=\"%u\"%s>",
+                    extra->checkbox_index++, extra->interactive_checkboxes ? "" : " disabled");
+                offset += 3;
+                size_t source_offset = SIZE_MAX;
+                size_t marker_length = task_marker_length(text->data + offset,
+                    text->size - offset, extra->task_marker_prefix, &source_offset);
+                if (extra->checkbox_addition)
+                    extra->checkbox_addition(source_offset, extra->owner);
+                offset += marker_length;
             }
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
                      strncmp((char *)(text->data + offset), "[X]", 3) == 0)
@@ -148,9 +181,15 @@ void hoedown_patch_render_listitem(
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support
                 hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" checked data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
-				offset += 3;
+                    "<input type=\"checkbox\" checked data-checkbox-index=\"%u\"%s>",
+                    extra->checkbox_index++, extra->interactive_checkboxes ? "" : " disabled");
+                offset += 3;
+                size_t source_offset = SIZE_MAX;
+                size_t marker_length = task_marker_length(text->data + offset,
+                    text->size - offset, extra->task_marker_prefix, &source_offset);
+                if (extra->checkbox_addition)
+                    extra->checkbox_addition(source_offset, extra->owner);
+                offset += marker_length;
             }
             else
             {
@@ -164,7 +203,7 @@ void hoedown_patch_render_listitem(
             offset = 0;
         }
 		size_t size = text->size;
-		while (size && text->data[size - offset - 1] == '\n')
+		while (size > offset && text->data[size - 1] == '\n')
 			size--;
 
 		hoedown_buffer_put(ob, text->data + offset, size - offset);
@@ -323,19 +362,33 @@ static void slugify(hoedown_buffer *out, const hoedown_buffer *content)
     }
 }
 
+static hoedown_buffer *heading_slug(const hoedown_buffer *content,
+                                   const hoedown_renderer_data *data)
+{
+    hoedown_buffer *slug = new_growable_buffer(content ? content->size : 16);
+    slugify(slug, content);
+    if (!slug->size) HOEDOWN_BUFPUTSL(slug, "section");
+    hoedown_html_renderer_state *state = data->opaque;
+    hoedown_html_renderer_state_extra *extra = state->opaque;
+    if (extra && extra->heading_slug) {
+        hoedown_buffer *unique = extra->heading_slug(slug, extra->owner);
+        if (unique) {
+            hoedown_buffer_free(slug);
+            slug = unique;
+        }
+    }
+    return slug;
+}
+
 // rndr_header replacement that always emits a text-derived id, independent
 // of the TOC nesting level. Enables [link](#section-name) navigation.
 void hoedown_patch_render_header(
     hoedown_buffer *ob, const hoedown_buffer *content, int level,
     const hoedown_renderer_data *data)
 {
-    (void)data;
     if (ob->size) hoedown_buffer_putc(ob, '\n');
 
-    hoedown_buffer *slug = new_growable_buffer(content ? content->size : 16);
-    slugify(slug, content);
-    if (slug->size == 0)
-        HOEDOWN_BUFPUTSL(slug, "section");
+    hoedown_buffer *slug = heading_slug(content, data);
 
     hoedown_buffer_printf(ob, "<h%d id=\"", level);
     hoedown_buffer_put(ob, slug->data, slug->size);
@@ -421,7 +474,12 @@ static int is_whitespace_entity(const hoedown_buffer *content, size_t amp,
             else if (is_hex && c >= 'a' && c <= 'f') digit = c - 'a' + 10;
             else if (is_hex && c >= 'A' && c <= 'F') digit = c - 'A' + 10;
             else return 0;
-            value = value * (is_hex ? 16 : 10) + (uint32_t)digit;
+            uint32_t base = is_hex ? 16 : 10;
+            // Invalid oversized references must remain visible content; wrapping
+            // to a whitespace codepoint would discard the whole header row.
+            if (value > (UINT32_MAX - (uint32_t)digit) / base)
+                return 0;
+            value = value * base + (uint32_t)digit;
         }
         return value == 0x00A0 || value == 0x2002 || value == 0x2003 ||
                value == 0x2009;
@@ -519,7 +577,10 @@ void hoedown_patch_render_toc_header(
     if (level <= state->toc_data.nesting_level) {
         /* set the level offset if this is the first header
          * we're parsing for the document */
-        if (state->toc_data.current_level == 0)
+        // A later heading may precede the initial heading in the hierarchy.
+        // Keep it at the root instead of normalizing it to zero or below,
+        // which would close the outer list and emit orphan list items.
+        if (state->toc_data.current_level == 0 || level <= state->toc_data.level_offset)
             state->toc_data.level_offset = level - 1;
 
         level -= state->toc_data.level_offset;
@@ -543,10 +604,7 @@ void hoedown_patch_render_toc_header(
             HOEDOWN_BUFPUTSL(ob,"</li>\n<li>\n");
         }
 
-        hoedown_buffer *slug = new_growable_buffer(content ? content->size : 16);
-        slugify(slug, content);
-        if (slug->size == 0)
-            HOEDOWN_BUFPUTSL(slug, "section");
+        hoedown_buffer *slug = heading_slug(content, data);
         HOEDOWN_BUFPUTSL(ob, "<a href=\"#");
         hoedown_buffer_put(ob, slug->data, slug->size);
         HOEDOWN_BUFPUTSL(ob, "\">");

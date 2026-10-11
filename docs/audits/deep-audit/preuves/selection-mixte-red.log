@@ -1,0 +1,20 @@
+Raw log SHA-256: 718af2a5510216fe9daf435e5e72260c059299bc4318dc0fd6587ed5a1d424a6
+Baseline reproduction before the mapping correction.
+Test Suite 'Selected tests' started at 2026-10-10 16:48:41.709.
+Test Suite 'MacDownTests.xctest' started at 2026-10-10 16:48:41.710.
+Test Suite 'MPFormattingScopeMenuTests' started at 2026-10-10 16:48:41.710.
+Test Case '-[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:325: error: -[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled] : (([self JS:@"JSON.stringify(macdownPreviewEditor.elements().spans.map(function(n){return n.textContent;}))"]) equal to (@"[\"test \",\"mot\",\" selection\",\"Preserved link\"]")) failed: ("["Preserved link"]") is not equal to ("["test ","mot"," selection","Preserved link"]") - intra-word emphasis=0
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:143: error: -[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled] : (([[self JS:script] boolValue]) is true) failed - Mapped selection test  through mot must exist
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:99: error: -[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled] : failed - Show panel for selection test  through mot timed out after 10 seconds; loading=0 rendering=0 mapped=1 sourceCurrent=1 previewToken=845CAB32-604F-44E2-9505-9442824C457A rendererToken=845CAB32-604F-44E2-9505-9442824C457A pending=0 DOM={"selection":"","payload":null,"panel":"none","menus":[]}
+/Users/zydon/Sites/MacDown/MacDownTests/MPFormattingScopeMenuTests.m:327: error: -[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled] : (([self JS:@"macdownPreviewEditor.selectionPayload('bold').text"]) equal to (@"test mot")) failed: ("") is not equal to ("test mot")
+Test Case '-[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled]' failed (13.332 seconds).
+Test Suite 'MPFormattingScopeMenuTests' failed at 2026-10-10 16:48:55.055.
+	 Executed 1 test, with 4 failures (0 unexpected) in 13.332 (13.346) seconds
+Test Suite 'MacDownTests.xctest' failed at 2026-10-10 16:48:55.056.
+	 Executed 1 test, with 4 failures (0 unexpected) in 13.332 (13.346) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 16:48:55.056.
+	 Executed 1 test, with 4 failures (0 unexpected) in 13.332 (13.347) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_16-48-36-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

@@ -46,7 +46,8 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 - (id)preferenceForKey:(NSString *)key
 {
     // Use CFPreferences to read from MacDown's preference domain
-    // This works in sandboxed extensions for reading (not writing)
+    // The extension entitlement explicitly grants read-only access to this
+    // exact domain; CFPreferences alone does not bypass the App Sandbox.
     CFPropertyListRef value = CFPreferencesCopyValue(
         (__bridge CFStringRef)key,
         (__bridge CFStringRef)kMPPreferenceSuiteName,
@@ -91,6 +92,11 @@ static NSString * const kMPDefaultHighlightingThemeName = @"tomorrow";
 {
     return [self stringPreferenceForKey:kMPHtmlHighlightingThemeNameKey
                            defaultValue:kMPDefaultHighlightingThemeName];
+}
+
+- (BOOL)wrapCodeBlocks
+{
+    return [self boolPreferenceForKey:@"htmlWrapCodeBlocks" defaultValue:NO];
 }
 
 - (BOOL)syntaxHighlightingEnabled

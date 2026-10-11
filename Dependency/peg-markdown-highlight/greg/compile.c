@@ -583,7 +583,7 @@ YY_LOCAL(int) yyAccept(GREG *G, int tp0)\n\
   return 1;\n\
 }\n\
 \n\
-YY_LOCAL(void) yyPush(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR) { G->val += count; }\n\
+YY_LOCAL(void) yyPush(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR) { int offset = (int)(G->val - G->vals); while (offset + count > G->valslen) { G->valslen *= 2; G->vals = (YYSTYPE *)YY_REALLOC(G->vals, sizeof(YYSTYPE) * G->valslen, G->data); } G->val = G->vals + offset + count; }\n\
 YY_LOCAL(void) yyPop(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR)  { G->val -= count; }\n\
 YY_LOCAL(void) yySet(GREG *G, char *text, int count, yythunk *thunk, YY_XTYPE YY_XVAR)  { G->val[count]= G->ss; }\n\
 \n\

@@ -1,0 +1,60 @@
+Raw log SHA-256: a8481cba5f23022cc871dfd878b6c9546a8bda8468117e3a01871d044753ce80
+Production correction: 0c7d9e2b; matrix extension: a62ffb66.
+Test Suite 'All tests' started at 2026-10-10 17:21:47.200.
+Test Suite 'MacDownUITests.xctest' started at 2026-10-10 17:21:47.200.
+Test Suite 'MacDownUITests' started at 2026-10-10 17:21:47.200.
+Test Case '-[MacDownUITests.MacDownUITests testAppLaunchesWithWindow]' started.
+Test Case '-[MacDownUITests.MacDownUITests testAppLaunchesWithWindow]' passed (3.092 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' started.
+Test Case '-[MacDownUITests.MacDownUITests testBlankPreviewClickDismissesSelectionAndPanel]' passed (58.044 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testCanTypeInEditor]' started.
+Test Case '-[MacDownUITests.MacDownUITests testCanTypeInEditor]' passed (3.682 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testEditorTextViewExists]' started.
+Test Case '-[MacDownUITests.MacDownUITests testEditorTextViewExists]' passed (2.921 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' started.
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' passed (12.827 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testListToolbarConvertsExistingBlockAndSupportsUndo]' started.
+Test Case '-[MacDownUITests.MacDownUITests testListToolbarConvertsExistingBlockAndSupportsUndo]' passed (8.733 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testNormalTextToolbarRemovesCurrentHeadingAndSupportsUndo]' started.
+Test Case '-[MacDownUITests.MacDownUITests testNormalTextToolbarRemovesCurrentHeadingAndSupportsUndo]' passed (12.359 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText]' passed (33.547 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewDoubleClickEditingUpdatesSourceAndUndo]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewDoubleClickEditingUpdatesSourceAndUndo]' passed (31.960 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' passed (49.394 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' passed (45.859 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewPaneExists]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewPaneExists]' passed (4.630 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor]' passed (22.937 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' passed (56.320 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (80.759 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' started.
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' passed (14.213 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReaderModeAppliesToEveryNewWindowAndKeepsProgressVisible]' started.
+Test Case '-[MacDownUITests.MacDownUITests testReaderModeAppliesToEveryNewWindowAndKeepsProgressVisible]' passed (16.680 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReaderSettingsCanBeSelectedThroughPreferences]' started.
+Test Case '-[MacDownUITests.MacDownUITests testReaderSettingsCanBeSelectedThroughPreferences]' passed (13.643 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReadingPositionUpdatesDuringEditorAndPreviewWheelScrolling]' started.
+Test Case '-[MacDownUITests.MacDownUITests testReadingPositionUpdatesDuringEditorAndPreviewWheelScrolling]' passed (61.055 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' started.
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' passed (18.522 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testSavedDocumentSurvivesNormalQuitWithUnsavedEdits]' started.
+Test Case '-[MacDownUITests.MacDownUITests testSavedDocumentSurvivesNormalQuitWithUnsavedEdits]' passed (23.359 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' passed (18.057 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testUntitledDocumentSurvivesNormalQuitAndRelaunch]' started.
+Test Case '-[MacDownUITests.MacDownUITests testUntitledDocumentSurvivesNormalQuitAndRelaunch]' passed (16.334 seconds).
+Test Suite 'MacDownUITests' passed at 2026-10-10 17:31:56.141.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 608.926 (608.941) seconds
+Test Suite 'MacDownUITests.xctest' passed at 2026-10-10 17:31:56.144.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 608.926 (608.944) seconds
+Test Suite 'All tests' passed at 2026-10-10 17:31:56.144.
+	 Executed 23 tests, with 0 failures (0 unexpected) in 608.926 (608.945) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_17-21-41-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

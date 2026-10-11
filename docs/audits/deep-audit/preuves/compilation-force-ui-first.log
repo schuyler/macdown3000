@@ -1,0 +1,20 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/compilation-force-ui-first.log
+SHA-256 full log: 5b8f0fb84ff4fe10d2d5370a46fa08ce5e8ee709dc1d74939685c0b67669ca6c
+
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' passed (56.684 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:482: error: -[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord] : XCTAssertTrue failed
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' failed (57.166 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' started.
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' passed (19.478 seconds).
+Test Suite 'MacDownUITests' failed at 2026-10-10 15:46:55.647.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 133.327 (133.329) seconds
+Test Suite 'MacDownUITests.xctest' failed at 2026-10-10 15:46:55.649.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 133.327 (133.330) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 15:46:55.649.
+	 Executed 3 tests, with 1 failure (0 unexpected) in 133.327 (133.331) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-44-36-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

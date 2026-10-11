@@ -321,7 +321,7 @@ or (in MathML)
 
 ### Jekyll front-matter
 
-If you like, I can display Jekyll front-matter in a nice table. Just make sure you put the front-matter at the very beginning of the file, and fence it with `---`. For example:
+If front-matter detection is enabled, I exclude Jekyll front-matter from the rendered body. Put the front-matter at the very beginning of the file, and fence it with `---`. For example:
 
 ```yaml
 ---
@@ -354,7 +354,7 @@ This is where I keep preferences related to the behavior and styling of the edit
 
 My editor provides syntax highlighting. You can edit the base font and the coloring/sizing theme. I provided some default themes (courtesy of [Mou](http://mouapp.com)’s creator, Chen Luo) if you don’t know where to start.
 
-You can also edit, or even add new themes if you want to! Just click the ***Reveal*** button, and start moving things around. Remember to use the correct file extension (`.styles`), though. I’m picky about that.
+You can also edit, or even add new themes if you want to! Just click the ***Reveal*** button, and start moving things around. Remember to use the correct file extension (`.style`), though. I’m picky about that.
 
 I offer auto-completion and other functions to ease your editing experience. If you don't like it, however, you can turn them off.
 

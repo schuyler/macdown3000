@@ -52,6 +52,21 @@
                         <rect key="frame" x="1" y="1" width="317" height="179"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <popUpButton translatesAutoresizingMaskIntoConstraints="NO" id="app-appearance">
+                                <rect key="frame" x="16" y="205" width="285" height="26"/>
+                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" borderStyle="borderAndBezel" id="app-appearance-cell">
+                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="menu"/>
+                                    <menu key="menu" id="app-appearance-menu"><items>
+                                        <menuItem title="Appearance: System" id="app-appearance-system"/>
+                                        <menuItem title="Appearance: Light" id="app-appearance-light"/>
+                                        <menuItem title="Appearance: Dark" id="app-appearance-dark"/>
+                                    </items></menu>
+                                </popUpButtonCell>
+                                <userDefinedRuntimeAttributes><userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="application-appearance"/></userDefinedRuntimeAttributes>
+                                <connections><binding destination="-2" name="selectedIndex" keyPath="self.preferences.applicationAppearance" id="app-appearance-binding"/></connections>
+                            </popUpButton>
+
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="6Nz-Ft-FbR">
                                 <rect key="frame" x="16" y="113" width="285" height="18"/>
                                 <buttonCell key="cell" type="check" title="Update preview automatically as you type" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="npz-xj-plX">
@@ -127,6 +142,12 @@
                                     </binding>
                                 </connections>
                             </button>
+                            <button translatesAutoresizingMaskIntoConstraints="NO" id="reader-progress-toggle">
+                                <rect key="frame" x="16" y="30" width="285" height="18"/>
+                                <buttonCell key="cell" type="check" title="Show reading position" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="reader-progress-cell"><behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/><font key="font" metaFont="system"/></buttonCell>
+                                <userDefinedRuntimeAttributes><userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="reading-progress-setting"/></userDefinedRuntimeAttributes>
+                                <connections><binding destination="-2" name="value" keyPath="self.preferences.editorShowReadingProgress" id="reader-progress-binding"/></connections>
+                            </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="UZT-HE-EaK">
                                 <rect key="frame" x="16" y="12" width="285" height="18"/>
                                 <buttonCell key="cell" type="check" title="Automatically create files for link targets" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="hpF-zP-3cM">
@@ -150,10 +171,18 @@
                         </subviews>
                     </view>
                     <constraints>
+                        <constraint firstItem="app-appearance" firstAttribute="top" secondItem="Nma-PL-ZvX" secondAttribute="top" constant="25" id="app-appearance-top"/>
+                        <constraint firstItem="app-appearance" firstAttribute="leading" secondItem="hqr-gd-6gi" secondAttribute="leading" id="app-appearance-left"/>
+                        <constraint firstItem="app-appearance" firstAttribute="trailing" secondItem="hqr-gd-6gi" secondAttribute="trailing" id="app-appearance-right"/>
+
+                        <constraint firstItem="reader-progress-toggle" firstAttribute="top" secondItem="WVd-hz-Dcr" secondAttribute="bottom" constant="6" id="reader-progress-top"/>
+                        <constraint firstItem="reader-progress-toggle" firstAttribute="leading" secondItem="WVd-hz-Dcr" secondAttribute="leading" id="reader-progress-left"/>
+                        <constraint firstItem="reader-progress-toggle" firstAttribute="trailing" secondItem="WVd-hz-Dcr" secondAttribute="trailing" id="reader-progress-right"/>
+                        <constraint firstItem="UZT-HE-EaK" firstAttribute="top" secondItem="reader-progress-toggle" secondAttribute="bottom" constant="6" id="reader-create-top"/>
                         <constraint firstAttribute="trailing" secondItem="WVd-hz-Dcr" secondAttribute="trailing" constant="16" id="0B8-iM-rNc"/>
                         <constraint firstItem="WVd-hz-Dcr" firstAttribute="top" secondItem="V1d-g4-bk8" secondAttribute="bottom" constant="6" id="0GW-bY-qeM"/>
                         <constraint firstAttribute="trailing" secondItem="6Nz-Ft-FbR" secondAttribute="trailing" constant="16" id="0Wk-ou-7nV"/>
-                        <constraint firstItem="hqr-gd-6gi" firstAttribute="top" secondItem="Nma-PL-ZvX" secondAttribute="top" constant="25" id="1wH-Rt-vj6"/>
+                        <constraint firstItem="hqr-gd-6gi" firstAttribute="top" secondItem="app-appearance" secondAttribute="bottom" constant="6" id="1wH-Rt-vj6"/>
                         <constraint firstAttribute="trailing" secondItem="UZT-HE-EaK" secondAttribute="trailing" constant="16" id="72H-A1-Jxe"/>
                         <constraint firstItem="WVd-hz-Dcr" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="CHN-Yp-0Ff"/>
                         <constraint firstAttribute="bottom" secondItem="UZT-HE-EaK" secondAttribute="bottom" constant="11" id="Jkz-15-VH9"/>

@@ -1,0 +1,17 @@
+Test Suite 'Selected tests' started at 2026-10-10 00:05:28.017.
+Test Suite 'Resources.xctest' started at 2026-10-10 00:05:28.018.
+Test Suite 'MPHTMLResourceURLsTests' started at 2026-10-10 00:05:28.018.
+Test Case '-[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:317: error: -[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote] : ((paths) equal to ([NSSet setWithObject:@"/Users/test/docs/John's photo.png"])) failed: ("{(
+    "/Users/test/docs/John"
+)}") is not equal to ("{(
+    "/Users/test/docs/John's photo.png"
+)}")
+/Users/zydon/Sites/MacDown/MacDownTests/MPHTMLResourceURLsTests.m:325: error: -[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote] : (([document.rootElement attributeForName:@"src"].stringValue) equal to (@"John's%20photo.png?t=1234")) failed: ("John's%20photo.png") is not equal to ("John's%20photo.png?t=1234")
+Test Case '-[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote]' failed (0.051 seconds).
+Test Suite 'MPHTMLResourceURLsTests' failed at 2026-10-10 00:05:28.069.
+	 Executed 1 test, with 2 failures (0 unexpected) in 0.051 (0.051) seconds
+Test Suite 'Resources.xctest' failed at 2026-10-10 00:05:28.069.
+	 Executed 1 test, with 2 failures (0 unexpected) in 0.051 (0.051) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 00:05:28.069.
+	 Executed 1 test, with 2 failures (0 unexpected) in 0.051 (0.052) seconds

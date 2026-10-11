@@ -1,0 +1,25 @@
+{
+  "records": 483,
+  "all_record_paths_present": true,
+  "excluded_individual": 120,
+  "pruned_roots": [
+    ".claude",
+    ".git",
+    "Dependency/prism",
+    "LICENSE",
+    "MacDown/Resources/Prism",
+    "MacDownTests",
+    "MacDownUITests",
+    "Pods",
+    "Tools/GitHub-style-generator/node_modules",
+    "assets",
+    "build",
+    "docs",
+    "notes",
+    "plans"
+  ],
+  "unknown": [],
+  "symlinks_unresolved": [],
+  "data_cache_files_outside_main_inventory": [],
+  "method": "os.walk inclut fichiers cachés/ignorés, aucune lecture privée hors racines pertinentes. État read/analysis/validation manuel, hash seulement identité."
+}

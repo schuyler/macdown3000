@@ -17,13 +17,13 @@ if [ ! -f "MacDown 3000.xcodeproj/project.pbxproj" ]; then
 fi
 
 # Step 1: Initialize git submodules
-echo "[1/4] Initializing git submodules..."
+echo "[1/5] Initializing git submodules..."
 git submodule update --init --recursive
 echo "✓ Submodules initialized"
 echo ""
 
 # Step 2: Install Ruby dependencies
-echo "[2/4] Installing Ruby dependencies with Bundler..."
+echo "[2/5] Installing Ruby dependencies with Bundler..."
 if ! command -v bundle &> /dev/null; then
     echo "Error: Bundler is not installed. Please install it with: gem install bundler"
     exit 1
@@ -33,15 +33,30 @@ echo "✓ Ruby dependencies installed"
 echo ""
 
 # Step 3: Install CocoaPods dependencies
-echo "[3/4] Installing CocoaPods dependencies..."
+echo "[3/5] Installing CocoaPods dependencies..."
 bundle exec pod install
 echo "✓ CocoaPods dependencies installed"
 echo ""
 
 # Step 4: Build peg-markdown-highlight
-echo "[4/4] Building peg-markdown-highlight..."
+echo "[4/5] Building peg-markdown-highlight..."
 make -C Dependency/peg-markdown-highlight
 echo "✓ peg-markdown-highlight built successfully"
+echo ""
+
+# Step 5: Install the pinned CSS generator dependencies. Xcode generates styles
+# in its shared resource target and fails if the Sass executable is absent.
+echo "[5/5] Installing CSS generator dependencies..."
+if ! command -v npm &> /dev/null || ! command -v node &> /dev/null; then
+    echo "Error: Node.js 20.19 or newer and npm are required" >&2
+    exit 1
+fi
+node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major < 20 || (major === 20 && minor < 19)) process.exit(1)' || {
+    echo "Error: Node.js 20.19 or newer is required by the pinned Sass version" >&2
+    exit 1
+}
+npm ci --prefix Tools/GitHub-style-generator --ignore-scripts --no-audit --no-fund
+echo "✓ CSS generator dependencies installed"
 echo ""
 
 echo "======================================"

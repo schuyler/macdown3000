@@ -1,0 +1,22 @@
+# Origine des défauts de la campagne 02
+
+Comparaison historique du 7 octobre 2026 : `962df74` est la version avant les corrections de la campagne 01 ; `e5a5c23` est sa version finale. Cette analyse d'origine ne constitue pas une validation globale des fichiers ni des gates de livraison.
+
+| Défaut confirmé | Avant campagne 01 | Effet des corrections de campagne 01 |
+| --- | --- | --- |
+| A2-R01, accessoire de code invisible | Le sélecteur exige une classe language-* sur PRE alors que le producteur la place sur CODE. | `fc6cf2f` échappe l'attribut information ; ne corrige pas le sélecteur. Défaut antérieur. |
+| A2-R02, TOC après une rubrique plus haute | L'offset initial reste figé ; une rubrique H1 après H3 produit un niveau normalisé négatif. | `7f3cd6d` corrige les destinations/slugs ; ne corrige pas cet offset. Défaut antérieur. |
+| A2-R03, couleurs Quick Look | GitHub-2020.css utilise déjà des variables couleur sans définitions : PRE sans fond attendu, cellules sans bordure. | `d7378c6` ajoute les tokens et les attributs au template principal, mais laisse le wrapper Quick Look sans attributs. Correction incomplète d'un défaut préexistant, pas une dégradation nouvelle établie. |
+| A2-D01, sélection après indentation de lignes vides | La méthode ajoute une marge aux lignes vides intérieures mais ne les compte pas dans totalShift. | La méthode d'indentation reste identique entre les deux versions ; les corrections touchent désindentation, titres et marqueurs. Défaut antérieur. |
+| A2-U01, géométrie différée après désactivation | Les opérations programmées appellent updateContentGeometry sans revérifier scrollsPastEnd. | `14dc5bc` corrige les unités glyphes/caractères, sans changer cette programmation ni ajouter de garde. Défaut antérieur. |
+| A2-U02, pluriels fr/pt-BR/is | Les trois ressources déclarent déjà la règle 1. | La première campagne corrige d'autres langues et un libellé français, mais ne change pas ces règles. Défaut antérieur. |
+| A2-B01, identité des releases manuelles | action-gh-release ne reçoit pas target_commitish ; la version CLI est tirée de Git tandis que le bundle reçoit une version explicite. | `0dc530f` protège les entrées shell ; `fc67731` fiabilise la génération du header, sans unifier les versions ni la provenance. Défaut antérieur. |
+| A2-B02, amplification YAML | Le parseur réutilise les mêmes objets pour les alias sans budget d'expansion ; MPDocument.presumedFileName consomme déjà title.description. | `84275b6` ajoute une protection contre les cycles et la profondeur ; les DAG amplifiants restent autorisés. Le contournement de la limite 256 est une protection nouvelle incomplète, pas une capacité d'amplification créée par la correction. |
+| A2-B03, demandes CLI perdues | Les collecteurs remplacent les clés de préférences ; le consommateur lit puis efface sans protocole interprocess atomique. | `7071925` corrige lecture stdin et chemins, sans changer ce stockage. Défaut antérieur. |
+
+| A2-R04, contraste code Quick Look | Le callback962df74 met la classe language-* sur CODE seul ; GitHub2/tomorrow et Prism épinglé donnent déjà texte clair sur fond clair sans JavaScript. | La première campagne conserve ce markup. Défaut antérieur ; correction actuelle dans le producteur partagé, pas de pipeline Quick Look parallèle. |
+| A2-D02, édition native AppleScript | Le setter vivant962df74 se limite à editor.string depuis58906dc ; aucune notification didChangeText, rendu ni dirty naturel. | La correction pré-nib conserve le contenu avant chargement mais ne modifie pas la publication d'un changement vivant. Défaut antérieur. |
+
+Preuves : git show sur les deux versions, diffs des commits cités et git blame des producteurs/consommateurs. Les reproductions rouge/vert propres à chaque correction sont dans leurs notes respectives. L'origine historique est distinguée de leur état de correction actuel : A2-B03 est désormais corrigé avec le consommateur migré et ses gates natives ; A2-U02 est commité et vérifié dans le bundle final. Les neuf corrections initiales ont leur commit distinct et leurs tests exécutés. Les preuves détaillées R04/D02 et les gates finales sont dans A2-R04.md, A2-D02.md et campagne02-gates.md.
+
+Conclusion limitée aux onze défauts confirmés de cette campagne : aucune régression nouvelle attribuée aux corrections de la première campagne n'est démontrée. La première campagne a manqué des scénarios et laissé des corrections incomplètes ; sa lecture et ses tests ne garantissaient donc pas l'absence de ces défauts.

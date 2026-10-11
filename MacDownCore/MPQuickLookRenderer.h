@@ -17,11 +17,11 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * Features:
  * - Basic markdown rendering (headings, paragraphs, lists, etc.)
- * - Syntax highlighting via Prism (for code blocks)
+ * - Prism language classes and theme CSS for code blocks (no JavaScript highlighting)
  * - User's configured CSS style
- * - All assets embedded (no external references)
+ * - Embedded CSS and local/data images; remote resources and scripts are blocked
  *
- * Excluded features (for performance in Quick Look):
+ * Excluded features (Quick Look does not execute JavaScript):
  * - MathJax (mathematical notation)
  * - Mermaid (diagrams)
  * - Graphviz (graphs)
@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
  * Render markdown string to complete HTML document.
  *
  * @param markdown The markdown string to render
- * @return Complete HTML document string with embedded styles and scripts
+ * @return Complete HTML document string with embedded styles
  */
 - (nullable NSString *)renderMarkdown:(nullable NSString *)markdown;
 

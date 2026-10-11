@@ -1,0 +1,16 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/SourceSelectionEvidence/selection-source-ui-first.log
+SHA-256 full log: bb4219026b0723993c81648aa29c0fe4bc9e2dcee9ac3e5ea6d7a745907fbaa1
+
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' started.
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:268: error: -[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor] : XCTAssertTrue failed - Attributes: Window (Main), 0xb38522940, {{381.0, 168.0}, {1024.0, 662.0}}, identifier: '_NS:422', title: 'MixedSelection.md', Disabled
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' failed (23.594 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' started.
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' passed (14.329 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testSourceToolbarInlineActionsRetainOnlySelectedWord]' passed (23.193 seconds).
+	 Executed 3 tests, with 1 failure (0 unexpected) in 61.116 (61.118) seconds
+	 Executed 3 tests, with 1 failure (0 unexpected) in 61.116 (61.119) seconds
+	 Executed 3 tests, with 1 failure (0 unexpected) in 61.116 (61.120) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_16-40-47-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

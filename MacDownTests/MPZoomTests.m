@@ -11,6 +11,7 @@
 #import "MPDocument.h"
 #import "MPEditorView.h"
 #import "MPPreferences.h"
+#import "HGMarkdownHighlighter.h"
 
 #pragma mark - Testing Category
 
@@ -21,8 +22,10 @@
 - (IBAction)zoomOut:(id)sender;
 - (IBAction)resetZoom:(id)sender;
 - (void)applyCurrentZoom;
+- (IBAction)selectDocumentZoom:(id)sender;
 - (void)setupEditor:(NSString *)changedKey;
 - (CGFloat)previewScale;
+@property (strong) HGMarkdownHighlighter *highlighter;
 @end
 
 #pragma mark - Cross-Window Zoom Testing Category
@@ -671,6 +674,93 @@
                                    @" must equal the pre-PR fontSize/14 ratio.");
     } @finally {
         prefs.previewZoomRelativeToBaseFontSize = savedPref;
+    }
+}
+
+// Mimic a launch with a persisted zoom, then use the normal zoom action and
+// type. Clearing is the first stage of every syntax-highlighting pass: its
+// public operation deterministically exposes a stale font baseline.
+- (void)testRestoredZoomDoesNotReturnWhenTypingAfterReset
+{
+    NSString *savedTheme=[MPPreferences sharedInstance].editorStyleName;
+    @try {
+        [MPPreferences sharedInstance].editorStyleName=nil;
+        self.document.zoomMultiplier=1.5;
+        MPEditorView *editor=[[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,600,400)];
+        self.document.editor=editor;
+        self.document.highlighter=[[HGMarkdownHighlighter alloc] initWithTextView:editor waitInterval:0];
+        [self.document setupEditor:@"editorBaseFontInfo"];
+        [self.document registerSharedPreferenceObservers];
+        CGFloat baseSize=[MPPreferences sharedInstance].editorBaseFont.pointSize;
+        self.document.editor.string=@"Plain text";
+        [self.document.highlighter clearHighlighting];
+        XCTAssertEqualWithAccuracy(self.document.editor.font.pointSize,baseSize*1.5,0.01);
+        [self.document resetZoom:nil];
+        XCTAssertEqualWithAccuracy(self.document.editor.font.pointSize,baseSize,0.01);
+        [self.document.editor insertText:@" typed" replacementRange:NSMakeRange(self.document.editor.string.length,0)];
+        [self.document.highlighter clearHighlighting];
+        NSFont *font=[self.document.editor.textStorage attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
+        XCTAssertEqualWithAccuracy(font.pointSize,baseSize,0.01,@"Highlighting after typing must retain the newly selected 100%% zoom");
+        XCTAssertEqualWithAccuracy(self.document.zoomMultiplier,1.0,0.001);
+        XCTAssertEqualWithAccuracy([MPPreferences sharedInstance].editorBaseFont.pointSize,baseSize,0.01,@"Display zoom must not overwrite the base font preference");
+    } @finally {
+        [self.document unregisterSharedPreferenceObservers];
+        [self.document close];
+        [MPPreferences sharedInstance].editorStyleName=savedTheme;
+    }
+}
+
+- (void)testZoomChangesRefreshHighlightingAndTypingFontsForEveryPresetAndTheme
+{
+    MPPreferences *prefs=[MPPreferences sharedInstance];
+    NSString *savedTheme=prefs.editorStyleName;
+    MPEditorView *editor=[[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,600,400)];
+    NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,600,400)];
+    scroll.documentView=editor;
+    self.document.editor=editor;
+    self.document.highlighter=[[HGMarkdownHighlighter alloc] initWithTextView:editor waitInterval:0];
+    [self.document registerSharedPreferenceObservers];
+    CGFloat baseSize=prefs.editorBaseFont.pointSize;
+    @try {
+        for (id theme in @[NSNull.null,@"GitHub Dark Default"]) {
+            prefs.editorStyleName=theme==NSNull.null ? nil : theme;
+            self.document.zoomMultiplier=1.5;
+            [self.document setupEditor:@"editorBaseFontInfo"];
+            for (NSNumber *level in @[@0.5,@0.75,@0.9,@1.0,@1.1,@1.25,@1.5,@2.0,@3.0,@1.0]) {
+                NSMenuItem *item=[[NSMenuItem alloc] initWithTitle:@"Zoom" action:NULL keyEquivalent:@""];
+                item.representedObject=level;
+                [self.document selectDocumentZoom:item];
+                editor.string=@"# Heading\n\nPlain **bold** text\n";
+                [editor insertText:@" typed" replacementRange:NSMakeRange(editor.string.length,0)];
+                [self.document.highlighter clearHighlighting];
+                CGFloat expected=baseSize*level.doubleValue;
+                NSFont *font=[editor.textStorage attribute:NSFontAttributeName atIndex:[editor.string rangeOfString:@"Plain"].location effectiveRange:NULL];
+                XCTAssertEqualWithAccuracy(font.pointSize,expected,0.01,@"Theme %@ at zoom %@ must keep its new font after typing",theme,level);
+                // Finish the asynchronous production parse before inspecting
+                // styled runs and the typing attributes restored by that pass.
+                [self.document.highlighter parseAndHighlightNow];
+                NSPredicate *ready=[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings){
+                    [self.document.highlighter highlightNow];
+                    NSFont *font=[editor.textStorage attribute:NSFontAttributeName atIndex:[editor.string rangeOfString:@"bold"].location effectiveRange:NULL];
+                    NSFont *typing=editor.typingAttributes[NSFontAttributeName];
+                    return fabs(font.pointSize-expected)<0.01 && fabs(typing.pointSize-expected)<0.01 &&
+                        ([NSFontManager.sharedFontManager traitsOfFont:font]&NSBoldFontMask)!=0;
+                }];
+                XCTNSPredicateExpectation *parsed=[[XCTNSPredicateExpectation alloc] initWithPredicate:ready object:nil];
+                XCTAssertEqual([XCTWaiter waitForExpectations:@[parsed] timeout:3],XCTWaiterResultCompleted);
+                NSFont *typed=editor.typingAttributes[NSFontAttributeName];
+                XCTAssertEqualWithAccuracy(typed.pointSize,expected,0.01);
+                NSFont *bold=[editor.textStorage attribute:NSFontAttributeName atIndex:[editor.string rangeOfString:@"bold"].location effectiveRange:NULL];
+                XCTAssertEqualWithAccuracy(bold.pointSize,expected,0.01);
+                XCTAssertTrue(([NSFontManager.sharedFontManager traitsOfFont:bold]&NSBoldFontMask)!=0);
+                XCTAssertEqualWithAccuracy(prefs.editorBaseFont.pointSize,baseSize,0.01);
+                XCTAssertEqualWithAccuracy(prefs.documentZoomLevel,level.doubleValue,0.001);
+            }
+        }
+    } @finally {
+        [self.document unregisterSharedPreferenceObservers];
+        [self.document close];
+        prefs.editorStyleName=savedTheme;
     }
 }
 

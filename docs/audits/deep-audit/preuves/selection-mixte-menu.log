@@ -1,0 +1,42 @@
+Raw log SHA-256: b8fa3828708698291dd968bf00771abe9fceba799fbd30daa234d81cb411cd14
+Production MPDocument SHA-256: c33a128abcbf739b75a0b00d185a505ba5da085b7ae3c7a5ee43fd62fd701a10
+Test Suite 'Selected tests' started at 2026-10-10 17:06:36.685.
+Test Suite 'MacDownTests.xctest' started at 2026-10-10 17:06:36.685.
+Test Suite 'MPFormattingScopeMenuTests' started at 2026-10-10 17:06:36.685.
+Test Case '-[MPFormattingScopeMenuTests testAllInlineSubsetsMapAcrossParserModesAndLightAndDarkThemes]' started.
+Test Case '-[MPFormattingScopeMenuTests testAllInlineSubsetsMapAcrossParserModesAndLightAndDarkThemes]' passed (63.779 seconds).
+Test Case '-[MPFormattingScopeMenuTests testBlankPreviewPressClearsSelectionAndKeepsPanelClosed]' started.
+Test Case '-[MPFormattingScopeMenuTests testBlankPreviewPressClearsSelectionAndKeepsPanelClosed]' passed (5.091 seconds).
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' started.
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' passed (0.312 seconds).
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' started.
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' passed (0.162 seconds).
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' started.
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' passed (0.050 seconds).
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' started.
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' passed (0.093 seconds).
+Test Case '-[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled]' started.
+Test Case '-[MPFormattingScopeMenuTests testMixedPreviewSelectionWorksWithIntraWordEmphasisDisabledAndEnabled]' passed (0.809 seconds).
+Test Case '-[MPFormattingScopeMenuTests testMixedUnicodeMappingAcrossLineTypesContainersAndLineEndings]' started.
+Test Case '-[MPFormattingScopeMenuTests testMixedUnicodeMappingAcrossLineTypesContainersAndLineEndings]' passed (1.850 seconds).
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' started.
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' passed (0.196 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' started.
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' passed (0.062 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' started.
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' passed (0.097 seconds).
+Test Case '-[MPFormattingScopeMenuTests testSourceInlineActionsKeepTheChosenWordWithSelectionNotifications]' started.
+Test Case '-[MPFormattingScopeMenuTests testSourceInlineActionsKeepTheChosenWordWithSelectionNotifications]' passed (1.385 seconds).
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' started.
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' passed (0.063 seconds).
+Test Case '-[MPFormattingScopeMenuTests testWhitespaceMappingRejectsAttributeLookalikesAndAcceptsLiteralSeparators]' started.
+Test Case '-[MPFormattingScopeMenuTests testWhitespaceMappingRejectsAttributeLookalikesAndAcceptsLiteralSeparators]' passed (0.195 seconds).
+Test Suite 'MPFormattingScopeMenuTests' passed at 2026-10-10 17:07:50.838.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 74.145 (74.153) seconds
+Test Suite 'MacDownTests.xctest' passed at 2026-10-10 17:07:50.838.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 74.145 (74.153) seconds
+Test Suite 'Selected tests' passed at 2026-10-10 17:07:50.838.
+	 Executed 14 tests, with 0 failures (0 unexpected) in 74.145 (74.153) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_17-06-30-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

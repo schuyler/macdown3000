@@ -1,0 +1,15 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/compilation-force-ui-verified.log
+SHA-256 full log: 9cdf58815fe982ad5dd02a38084dd241036a87b4e903e84cbc5707f82f4e5daf
+
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewSingleClickDoesNotFlashSelectionInGithubDark]' passed (52.575 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewStationaryPressDoesNotSelectWord]' passed (81.868 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' started.
+Test Case '-[MacDownUITests.MacDownUITests testRenderingPreferencesFrenchControlsHaveSeparateFrames]' passed (19.992 seconds).
+	 Executed 3 tests, with 0 failures (0 unexpected) in 154.435 (154.437) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 154.435 (154.438) seconds
+	 Executed 3 tests, with 0 failures (0 unexpected) in 154.435 (154.440) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-51-09-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

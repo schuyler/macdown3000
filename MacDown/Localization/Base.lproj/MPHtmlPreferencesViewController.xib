@@ -136,7 +136,6 @@
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
                     <connections>
-                        <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="9S7-QA-gUw"/>
                         <binding destination="-2" name="value" keyPath="self.preferences.htmlGraphviz" id="28T-6A-JOn"/>
                     </connections>
                 </button>
@@ -147,7 +146,6 @@
                         <font key="font" metaFont="smallSystem"/>
                     </buttonCell>
                     <connections>
-                        <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="EPx-Wd-dqb"/>
                         <binding destination="-2" name="value" keyPath="self.preferences.htmlMermaid" id="0Vt-zm-bOO"/>
                     </connections>
                 </button>
@@ -257,8 +255,22 @@
                         </connections>
                     </popUpButtonCell>
                 </popUpButton>
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="reader-wrap">
+                    <rect key="frame" x="106" y="100" width="356" height="18"/>
+                    <buttonCell key="cell" type="check" title="Wrap long code lines" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="reader-wrap-cell">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <userDefinedRuntimeAttributes><userDefinedRuntimeAttribute type="string" keyPath="accessibilityIdentifier" value="code-wrap-setting"/></userDefinedRuntimeAttributes>
+                    <connections><binding destination="-2" name="value" keyPath="self.preferences.htmlWrapCodeBlocks" id="reader-wrap-binding"/></connections>
+                </button>
             </subviews>
             <constraints>
+                <constraint firstItem="Zna-RM-nBO" firstAttribute="top" secondItem="Wgm-Sy-7mr" secondAttribute="bottom" constant="12" id="syntax-below-css"/>
+                <constraint firstItem="reader-wrap" firstAttribute="top" secondItem="RCL-iK-kgx" secondAttribute="bottom" constant="6" id="reader-wrap-top"/>
+                <constraint firstItem="reader-wrap" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="reader-wrap-left"/>
+                <constraint firstItem="reader-wrap" firstAttribute="trailing" secondItem="RCL-iK-kgx" secondAttribute="trailing" id="reader-wrap-right"/>
+
                 <constraint firstItem="lxX-Pm-dhn" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="0LF-WD-jr9"/>
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="trailing" secondItem="5mI-gS-xH9" secondAttribute="trailing" id="2Au-ZO-sN1"/>
                 <!-- Graphviz button vertical alignment with "Show line numbers" -->
@@ -279,7 +291,7 @@
                 <constraint firstItem="RCL-iK-kgx" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="108" id="CtD-Eh-Skz"/>
                 <constraint firstItem="0ez-nk-c3q" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" constant="20" id="397-ld-css"/>
                 <constraint firstItem="6BB-rh-ZwZ" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="Ec3-wV-wvF"/>
-                <constraint firstItem="f62-wu-Z6p" firstAttribute="top" secondItem="RCL-iK-kgx" secondAttribute="bottom" constant="18" id="Efm-pX-TpX"/>
+                <constraint firstItem="f62-wu-Z6p" firstAttribute="top" secondItem="reader-wrap" secondAttribute="bottom" constant="18" id="Efm-pX-TpX"/>
                 <constraint firstItem="bih-Hu-dSj" firstAttribute="centerY" secondItem="f62-wu-Z6p" secondAttribute="centerY" id="G5f-va-qLZ"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="leading" secondItem="Dd4-T9-cLi" secondAttribute="trailing" constant="8" id="Gsh-B6-5di"/>
                 <constraint firstItem="HzY-ws-XRq" firstAttribute="top" secondItem="u5h-MS-cR3" secondAttribute="bottom" constant="8" id="HPL-dT-fDu"/>

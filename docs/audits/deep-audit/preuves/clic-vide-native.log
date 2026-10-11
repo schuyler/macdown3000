@@ -1,0 +1,34 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/BlankClickEvidence/clic-vide-native.log
+SHA-256 full log: b774b00fdd6ece5074976b56ebc2af5e8387c9ffad9dcb9f5c17895a3aeb58b3
+
+2026-10-10 16:03:07.518945+0200 MacDown 3000[7525:50365172] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.519322+0200 MacDown 3000[7525:50365176] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.519337+0200 MacDown 3000[7525:50365176] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.519726+0200 MacDown 3000[7525:50365173] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.519738+0200 MacDown 3000[7525:50365173] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.520111+0200 MacDown 3000[7525:50365172] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 16:03:07.520118+0200 MacDown 3000[7525:50365172] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+Test Case '-[MPFormattingScopeMenuTests testBlankPreviewPressClearsSelectionAndKeepsPanelClosed]' started.
+Test Case '-[MPFormattingScopeMenuTests testBlankPreviewPressClearsSelectionAndKeepsPanelClosed]' passed (42.490 seconds).
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' started.
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' passed (18.268 seconds).
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' started.
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' passed (9.191 seconds).
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' started.
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' passed (4.085 seconds).
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' started.
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' passed (5.113 seconds).
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' started.
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' passed (4.262 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' started.
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' passed (3.077 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' started.
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' passed (4.089 seconds).
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' started.
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' passed (3.074 seconds).
+	 Executed 9 tests, with 0 failures (0 unexpected) in 93.649 (93.663) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 93.649 (93.663) seconds
+	 Executed 9 tests, with 0 failures (0 unexpected) in 93.649 (93.664) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_16-03-02-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

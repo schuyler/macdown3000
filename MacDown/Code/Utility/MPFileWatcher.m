@@ -89,7 +89,12 @@
         if (!strongSelf)
             return;
 
-        unsigned long flags = dispatch_source_get_data(source);
+        // Do not capture source here: the source retains its event handler.
+        // Reading through the owner avoids a source -> block -> source cycle.
+        dispatch_source_t activeSource = strongSelf.source;
+        if (!activeSource)
+            return;
+        unsigned long flags = dispatch_source_get_data(activeSource);
         if (flags & (DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME))
         {
             [strongSelf stopWatching];

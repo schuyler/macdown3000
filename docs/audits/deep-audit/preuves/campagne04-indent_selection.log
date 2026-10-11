@@ -1,0 +1,23 @@
+PASS indent/unindent selection: a
+
+b range={0, 4}
+PASS indent/unindent selection: a
+
+b
+ range={0, 5}
+PASS indent/unindent selection: 
+
+x range={0, 3}
+PASS indent/unindent selection: ab
+
+cd range={1, 4}
+PASS indent/unindent selection: a
+
+b range={2, 0}
+PASS indent/unindent selection:  range={0, 0}
+PASS pair deletion, delegate allows, notifications=1
+PASS spaces deletion, delegate allows, notifications=1
+PASS pair deletion, delegate refuses, notifications=0
+PASS spaces deletion, delegate refuses, notifications=0
+PASS empty list deletion, delegate allows, notifications=3
+PASS empty list deletion, delegate refuses, notifications=0

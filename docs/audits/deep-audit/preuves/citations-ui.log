@@ -1,0 +1,10 @@
+Extrait fidèle des résultats XCTest. SHA-256 du journal intégral : c9174ba4b1b07540a5e085f403e97594e34923a91a2fa32242540bbe8291b8ea
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' started.
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMultilineQuotePlainWordOpensFormattingPanel]' passed (41.734 seconds).
+	 Executed 18 tests, with 0 failures (0 unexpected) in 343.535 (343.551) seconds
+	 Executed 18 tests, with 0 failures (0 unexpected) in 343.535 (343.552) seconds
+	 Executed 18 tests, with 0 failures (0 unexpected) in 343.535 (343.553) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_15-04-13-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

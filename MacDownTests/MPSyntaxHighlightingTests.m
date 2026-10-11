@@ -214,7 +214,7 @@
     // Indented code blocks are rendered as code
     // May be wrapped in <pre><code> or <div><pre><code> depending on syntax highlighting
     XCTAssertTrue([html containsString:@"<code>"] ||
-                  [html containsString:@"<pre>"],
+                  [html containsString:@"<pre "],
                   @"Indented code should render with code elements");
     XCTAssertTrue([html containsString:@"Some indented code"],
                   @"Code content should be preserved");

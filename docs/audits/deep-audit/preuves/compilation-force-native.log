@@ -1,0 +1,98 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/compilation-force-native.log
+SHA-256 full log: b4205e4cc98d3ce3bcd30b89c91b9bb77b6b32265ed2d5b6de3619bfdc614df1
+
+2026-10-10 15:43:19.133267+0200 MacDown 3000[98330:50276486] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.133696+0200 MacDown 3000[98330:50276479] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.133711+0200 MacDown 3000[98330:50276479] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.134341+0200 MacDown 3000[98330:50276486] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.134353+0200 MacDown 3000[98330:50276486] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.134721+0200 MacDown 3000[98330:50276478] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:43:19.134729+0200 MacDown 3000[98330:50276478] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' started.
+Test Case '-[MPFormattingScopeMenuTests testForceTouchPreparationIsCancelledOnlyForMappedPreviewProse]' passed (18.272 seconds).
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' started.
+Test Case '-[MPFormattingScopeMenuTests testFreshPreviewPressClearsOnlyUnmodifiedSingleClickSelections]' passed (9.216 seconds).
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' started.
+Test Case '-[MPFormattingScopeMenuTests testHeadingAndContainerAreIndependentAndMixedBlocksKeepOnlyTheirCommonContainer]' passed (4.170 seconds).
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' started.
+Test Case '-[MPFormattingScopeMenuTests testInlineCodeAndEmphasisCanCoexistWhileFencedCodeKeepsStructuralMenus]' passed (5.123 seconds).
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' started.
+Test Case '-[MPFormattingScopeMenuTests testNativeLinkActionPreservesHeadingContainerSelectionAndRejectsCancelOrUnsafeURLAtomically]' passed (4.297 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' started.
+Test Case '-[MPFormattingScopeMenuTests testRapidQueuedBlockAndInlineFormattingPreservesContainerSelectionAndDisclosure]' passed (3.061 seconds).
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' started.
+Test Case '-[MPFormattingScopeMenuTests testRemovingContainerViaItsMenuPreservesTitleBodyHeadingAndInlineStyle]' passed (4.111 seconds).
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' started.
+Test Case '-[MPFormattingScopeMenuTests testTextDropdownHasSeparatedScopesAndInlineIconsKeepTooltips]' passed (3.077 seconds).
+	 Executed 8 tests, with 0 failures (0 unexpected) in 51.327 (51.340) seconds
+Test Case '-[MPPreferencesViewControllerResizabilityTests testCheckboxTitlesWrap]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testCheckboxTitlesWrap]' passed (0.133 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testContentIsSizedToFitItsContent]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testContentIsSizedToFitItsContent]' passed (0.092 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testDiagramPreferencesRemainEditableWithoutSyntaxHighlighting]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testDiagramPreferencesRemainEditableWithoutSyntaxHighlighting]' passed (0.029 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelRespondsToHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelRespondsToHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelRespondsToHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testEditorPanelRespondsToHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelIncludePreReleasesCheckboxIsNotForceDisabled]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelIncludePreReleasesCheckboxIsNotForceDisabled]' passed (0.019 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelRespondsToHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelRespondsToHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelRespondsToHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGeneralPanelRespondsToHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGroupingBoxesHaveNoFixedHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testGroupingBoxesHaveNoFixedHeight]' passed (0.095 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlLabelWidthsAreIndependent]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlLabelWidthsAreIndependent]' passed (0.027 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPaneIsWideEnoughForThemeControls]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPaneIsWideEnoughForThemeControls]' passed (0.027 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelRespondsToHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelRespondsToHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelRespondsToHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testHtmlPanelRespondsToHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelRespondsToHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelRespondsToHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelRespondsToHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testMarkdownPanelRespondsToHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testPanesHaveNoAmbiguousLayout]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testPanesHaveNoAmbiguousLayout]' passed (0.092 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap]' passed (0.048 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testResolvedWidthIsWithinSaneBounds]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testResolvedWidthIsWithinSaneBounds]' passed (0.090 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelRespondsToHasResizableHeight]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelRespondsToHasResizableHeight]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelRespondsToHasResizableWidth]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testTerminalPanelRespondsToHasResizableWidth]' passed (0.000 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testViewDidAppearDoesNotCrashWithoutAWindow]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testViewDidAppearDoesNotCrashWithoutAWindow]' passed (0.090 seconds).
+Test Case '-[MPPreferencesViewControllerResizabilityTests testWrappingCheckboxHeightsAccommodateMultiLineText]' started.
+Test Case '-[MPPreferencesViewControllerResizabilityTests testWrappingCheckboxHeightsAccommodateMultiLineText]' passed (0.113 seconds).
+	 Executed 32 tests, with 0 failures (0 unexpected) in 0.863 (0.870) seconds
+	 Executed 40 tests, with 0 failures (0 unexpected) in 52.191 (52.211) seconds
+	 Executed 40 tests, with 0 failures (0 unexpected) in 52.191 (52.212) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_15-43-15-+0200.xcresult
+** TEST SUCCEEDED **
+RESTORED and preferences verified; vault retained privately

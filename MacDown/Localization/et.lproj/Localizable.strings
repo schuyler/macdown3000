@@ -139,3 +139,14 @@
 "Source file does not exist" = "Lähtefaili ei eksisteeri";
 "A file already exists at the installation path" = "Paigaldamise teel on juba fail";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown shell-tööriist on paigaldatud asukohta %@.\n\nTerminalist kasutamiseks lisa see rida oma shelli konfiguratsioonifaili (~/.zshrc või ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Märkus";
+"PreviewCalloutTitleTip" = "Nõuanne";
+"PreviewCalloutTitleWarning" = "Hoiatus";
+"PreviewCalloutTitleImportant" = "Oluline";
+"PreviewCalloutTitleCaution" = "Ettevaatust";
+"PreviewToggleTitle" = "Eeltingimused";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Veerg %lu";

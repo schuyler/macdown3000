@@ -1,0 +1,735 @@
+{
+  "reviewer": "editor-utilities",
+  "records": [
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.h",
+      "sha256": "748eb6ded390d9261d7454819f8e2486b65735ff7f2239495208cb05952daed3",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Parcours DOM texte, siblings et éléments HTML ; consommation export/scroll. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.m",
+      "sha256": "4005d622d14d38cb16681f4f1467e36fa8c797e4f09605ff4b4cfc944e04d3bf",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Parcours DOM texte, siblings et éléments HTML ; consommation export/scroll. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSColor+HTML.h",
+      "sha256": "ed1b5feb51f01bc5032c6fa08935c339177deb99372dee59016fb54ffdacd0fd",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Format hex RGB/RGBA et tous noms CSS, transparence et composants NSColor. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSColor+HTML.m",
+      "sha256": "c97b507bf33beff26a3359afc9573718b962921a382962a7a37f1fb55f3a85b0",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Format hex RGB/RGBA et tous noms CSS, transparence et composants NSColor. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSDocumentController+Document.h",
+      "sha256": "502d752bb8dce5f414505b127f550561b4a23ed967a40e6f00f64fb7ef08ee54",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Créer/ouvrir documents, types, URL et erreurs écriture ; EU-06. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSDocumentController+Document.m",
+      "sha256": "4af8a68681d5c0bc6cee62c87b2094dd885a484fe88a461e091682bbf4a73b61",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Créer/ouvrir documents, types, URL et erreurs écriture ; EU-06. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSJSONSerialization+File.h",
+      "sha256": "93948eae83465ff1bc9f555a3f6b53786bbbc70353c912b1e11b08f9b038cb20",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lecture fichier JSON et délégation options/erreurs Foundation. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSJSONSerialization+File.m",
+      "sha256": "2408f3ab942a71458a94ae9a3fb00b37e767370098b9ee6e534e252b7127f990",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lecture fichier JSON et délégation options/erreurs Foundation. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSObject+HTMLTabularize.h",
+      "sha256": "1849ce0e2b22de85f74a5c8cbd682e0e4bbbd85d196c628b7a883f1d99629b35",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Récursion arrays/dictionaries/scalars, échappement HTML clés/valeurs, null. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSObject+HTMLTabularize.m",
+      "sha256": "1d87c68ca646f78448ce013ebc6e2d72c293d51f56ea54ed25ed9ceb69dad555",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Récursion arrays/dictionaries/scalars, échappement HTML clés/valeurs, null. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSPasteboard+Types.h",
+      "sha256": "6d27da2a53fa5b36e3a7e6eb36a738eb5eff5c6f9a28244800677a8032fc895f",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "URLForType, extraction chemin document et null/empty ; EU-07. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSPasteboard+Types.m",
+      "sha256": "d61025bbf8f588ed3acd1f8232e806780b909979613ec00923fdc7039b8ca549",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "URLForType, extraction chemin document et null/empty ; EU-07. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSString+Lookup.h",
+      "sha256": "8fcb13267c19cec61709a41699a6032796032cb88037e77798c87681b1243cfc",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Recherche ligne/indentation, regex et front matter delimiters ; EU-08. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSString+Lookup.m",
+      "sha256": "9e18ee26f0cf0615d71c0af8a520d004d9206fd8f0747ec8d2f0f2c03e430986",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Recherche ligne/indentation, regex et front matter delimiters ; EU-08. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.h",
+      "sha256": "ea69f917e5a7d89d50483589c1497b89c8fbb05624b2f4836c9fc1879f13cea7",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Paires, IME, tabs, suppression, markup, blocs, indent/unindent, listes/citations, headers, ressource cachée ; EU-04/EU-05. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.m",
+      "sha256": "b229161c7c6946cbcb81721f9f322a390356e355a96aebfbcbd0e1494b1a2327",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Paires, IME, tabs, suppression, markup, blocs, indent/unindent, listes/citations, headers, ressource cachée ; EU-04/EU-05. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSUserDefaults+Suite.h",
+      "sha256": "cac0f676b540a481d3357f96cfc96b6c16e562faba238ac3283759c05e213439",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lecture suite via CFPreferences, transfert ownership CF ; EU-09. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/NSUserDefaults+Suite.m",
+      "sha256": "e0b928949e2ae900488fab2a08d8a130c1a27ce4807dfdcc90b76830381ad3da",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lecture suite via CFPreferences, transfert ownership CF ; EU-09. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Extension/WebView+WebViewPrivateHeaders.h",
+      "sha256": "f537f69c38a0c155793d630b9179d3e30afe8abf62a5a43f2600001a4f39d3c8",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Déclarations API WebView printing export utilisées Document, disponibilité runtime héritée. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/FileURLInlining.h",
+      "sha256": "c1696072c1ee2a1e874cc7108a205d6d3ca6d8f133bd8f320950328e65173c5e",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "URL file, UTI image→data URI, clipping binary plist typed et fallback path ; EU-10. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/FileURLInlining.m",
+      "sha256": "8b6cab69f85dfe5ee2ff7f0f489f59b665074c0e3d779ec0a9fd0fb1e31058d0",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "URL file, UTI image→data URI, clipping binary plist typed et fallback path ; EU-10. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPAutosaving.h",
+      "sha256": "798fb7bd3f3aff840c17c7dc3d24fdfccd6243771bf9c6bba5b65c584b61fd1b",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Déclarations protocole délégué autosave ; callbacks Document. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPFileWatcher.h",
+      "sha256": "07689eb11b455131ae428801b3f25de58e40e29fa80a48106a4c6b2b14d4ddbb",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Volume local/existence parent, O_EVTONLY fd/source lifecycle, écritures/rename, cancellation ; EU-02. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPFileWatcher.m",
+      "sha256": "ee5059ab5cd7393f17ba6108fdd3216d40825773680ffbf1fea607903335a236",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Volume local/existence parent, O_EVTONLY fd/source lifecycle, écritures/rename, cancellation ; EU-02. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPGlobals.h",
+      "sha256": "8ed8632ca58cba155534bf6e12ba0fd249d0e045052a5b6c9776df17cb97cbcf",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Constantes noms notifications et localisations définies MainController. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHTMLResourceURLs.h",
+      "sha256": "59696bfe884e0f4cc240addadc2d5035f1cbd6648d2a3e5b1f3e86ea5982c68a",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Attributs src/href exacts, bases URL percent encoding/query/fragment, watchset et cache-busting ; EU-11. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHTMLResourceURLs.m",
+      "sha256": "ead2d9ccec8adf98838ebdaa1b57066235ab8a7f3d895d87ec1f53e9916f0d42",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Attributs src/href exacts, bases URL percent encoding/query/fragment, watchset et cache-busting ; EU-11. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHomebrewSubprocessController.h",
+      "sha256": "eb1e9070b3fee53612cdf38b84009ce46fafb2f707c1d521fb96fc3fe0a46684",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "NSTask tool/prefix, arguments, pipe, wait, précondition Homebrew --prefix sortie courte. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHomebrewSubprocessController.m",
+      "sha256": "0e74507854083711cfb37fc21b0a90b9474f66dc632bf3fd0ae80a4d30152c03",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "NSTask tool/prefix, arguments, pipe, wait, précondition Homebrew --prefix sortie courte. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPMathJaxListener.h",
+      "sha256": "91ae4785b093e068a3869bdc010e763bc681d454199c073f981524e069f8dbe2",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Protocole delegate, bridge callbacks typeset document-loaded et handlers JS. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPMathJaxListener.m",
+      "sha256": "818553ca0a3ab4d71fedf66d10c1d64352d28d292c897bf1b72bd430a38e544b",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Protocole delegate, bridge callbacks typeset document-loaded et handlers JS. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPResourceWatcherSet.h",
+      "sha256": "db6f55e8e1ba83db6dff5a15340ef2fe56af8935b2132ce28b01f50b5095c9bb",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Diff demandé/courant, retries save atomique et stopAll ; EU-02. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPResourceWatcherSet.m",
+      "sha256": "d4663a4990d8df2c7fcefa774424c41ca4dfbfa4f7ff51090a82cd6ee051a9e2",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Diff demandé/courant, retries save atomique et stopAll ; EU-02. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPURLSecurityPolicy.h",
+      "sha256": "cff58c6ee4f06422acb1bdfc22024d35a839197b29cf2c354a54fa9b821b0fa6",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Protocole URLs, périmètre local, parents/leaf symlinks, exceptions user-click ; EU-01. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPURLSecurityPolicy.m",
+      "sha256": "ae6111380d3de983ba9dd224cf42c3ccf8defdcd9a7084f24474d9c182c0e9c1",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Protocole URLs, périmètre local, parents/leaf symlinks, exceptions user-click ; EU-01. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPUtilities.h",
+      "sha256": "583fb5ceb4959b3d9b28bd6f3c0c3f4d7fc443f598060527f4b0d7f2997295b9",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Chemins bundle/user, themes/extensions, JSON JS UTF8/null, URI données, unique tempfile, metadata et maps ; EU-03/EU-05. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/Utility/MPUtilities.m",
+      "sha256": "3e05f9cc43cfd6b546381a0a80e80530e51ba39a351a730adbba5c24000be541",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Chemins bundle/user, themes/extensions, JSON JS UTF8/null, URI données, unique tempfile, metadata et maps ; EU-03/EU-05. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/View/MPDocumentSplitView.h",
+      "sha256": "625ea83042c76169f7aa43d90980eebac4f41b80ca5d10a1d393ee86e7c4742e",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Diviseur dessin, orientation, couleurs ; géométrie/document consumers. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/View/MPDocumentSplitView.m",
+      "sha256": "a7c8b03e33c91ff90b99c32da24fed25e6013c6adacd2dac40ceaab42e318c05",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Diviseur dessin, orientation, couleurs ; géométrie/document consumers. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/View/MPEditorView.h",
+      "sha256": "515c6983974c0ba35ff0291b45c9595cde6f9f6807f9a5ef186b322ccb7491b5",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Drags, clipboard interop, linkification, layout character/glyph, prefs substitution ; EU-12. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "MacDown/Code/View/MPEditorView.m",
+      "sha256": "494d6f39eeff530482928d829651df78ae97860aa74840f20dcdee6470121e08",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Drags, clipboard interop, linkification, layout character/glyph, prefs substitution ; EU-12. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/YAML-framework/YAMLSerialization.h",
+      "sha256": "68e864d1d3bbd71066a1f4e73f76ed69928004bbca198f89502159a97b8169b3",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Options, scalaires UTF8, aliases graph cycle/depth, ownership MRC/libyaml, streams close/errors, emit document/partial writes ; EU-13. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/YAML-framework/YAMLSerialization.m",
+      "sha256": "8477db1fbae7bead8ae3b95546941e6d7b2f9703330b4ee5817364b12bc4542e",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Options, scalaires UTF8, aliases graph cycle/depth, ownership MRC/libyaml, streams close/errors, emit document/partial writes ; EU-13. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlighter.h",
+      "sha256": "bcaea22152ff4eafffc225792ad8078d006080aef5e457363ccca397d4acf846",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lifecycle vue active, génération publication parse worker→main, cache, offsets Unicode, visible glyph range, styles/defaults/reset ; EU-14. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlighter.m",
+      "sha256": "f7d378231b6ea3d0e8b514b73ff76b3080a0ea48c1630baddd4c9871bc207498",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Lifecycle vue active, génération publication parse worker→main, cache, offsets Unicode, visible glyph range, styles/defaults/reset ; EU-14. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlightingStyle.h",
+      "sha256": "bbcf8aa4a4c0b1fbd0a2f4d8ac7f5d5970eed549b4421816348ccda31b68489c",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous attributes/color/font types style conversion, ownership C→Cocoa ; parser stylesheet consumer. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/HGMarkdownHighlightingStyle.m",
+      "sha256": "f1fe70f79eeebbf45a76a8a8a0605a554c0c40de24b9475860418a7fb025543d",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous attributes/color/font types style conversion, ownership C→Cocoa ; parser stylesheet consumer. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/Makefile",
+      "sha256": "ba92d8bc7ce58440820495e8f6e5924ae74dfeea50d764f8e931c3c8ff15a7e0",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Dépendances build générateur→grammar→combine, incremental header dependencies/install/clean ; EU-17. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/Makefile",
+      "sha256": "ed0ae1de93498cdddb251880b6c4426331d2d41e26dd3b8e13341747bc45ae60",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Dépendances build générateur→grammar→combine, incremental header dependencies/install/clean ; EU-17. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/compile.c",
+      "sha256": "5881904b59c46754dafd020940b978d3d25e7735b68e72435d05383efb752c58",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous Node_compile branches, variables/offsets, generated runtime buffers/stack/free, consumesInput recursion et output ; EU-16. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.c",
+      "sha256": "c673fb8467fc8bafeca54eb864931f0cef3e5232a0647b9e0a997190453ab157",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Bootstrap générateur effectivement compilé, 37 règles et runtime input/thunks/stack/text/new/free/CLI ; EU-16. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.g",
+      "sha256": "41f4a5493cfe1371dc4bfd031daf3d99768b6c9baff2cd2c74dbf3d0e91672f7",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Grammaire generator complète, actions AST, commandes CLI/includes et trailer. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.h",
+      "sha256": "bcdd2c5dc463d8656b563c4e084172a9eb866866a9e33421f2867a4441716dff",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous types AST et déclarations generator, flags et version. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/tree.c",
+      "sha256": "1d63188fba5f68abcc38a16cb07684c7fd6f454385f44413594bef6376e7484a",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous constructors AST, links/rules/action name/predicate, stack dynamique et Node printing ; EU-16. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/peg-markdown-highlight.xcodeproj/project.pbxproj",
+      "sha256": "298977daa58b795a512e110bed16c65468be7caa66012b8ddc8c36e9796c1a09",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Build phase sources/headers, compiler flags ARC/MRC, framework references, release configs. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/peg-markdown-highlight.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+      "sha256": "14212f4d2947a8a5d9d8ddba30163bada5bd98bfe8eca44fffb0b1da18b53d1c",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Workspace déclarations et référence self du projet. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_definitions.h",
+      "sha256": "3bb4ae80d27facdfcd21b3b68a47855ed063bcfd61dacc2a3ff7f820757867d7",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Enums lang/extensions/elements et linked lists allocation ownership consumers parser/highlighter. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_grammar.leg",
+      "sha256": "7295f542e85a37baeffe837fca82cf35b782bd0fb7bccffa072d931c3b5dd50d",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Toutes règles langage PEG, references nesting, fenced blocks, inline HTML/emphasis/list, extensions et actions. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser.h",
+      "sha256": "36724d84cf356938f6c95c75369bd39e97c895f247505d03748072e6135429a3",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Contrat pmh_markdown_to_elements, offsets codepoints, lang lookup/sort/free. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser_foot.c",
+      "sha256": "1204e603df3d421acfa8488f0aacb0db8a026c3a415bdf265b626d98101d62cd",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Entrée parse Markdown, preprocess sort output/free et debug type names. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser_head.c",
+      "sha256": "a91476dcaad26de8b1c83bef38925ba30ac80404866f63ec5f107e5b6a77212a",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous helpers UTF8, RAW spans recursive parse, offsets/preprocessing, malloc hooks et ownership. Limite instrumentée ASAN non établie. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_styleparser.c",
+      "sha256": "ffc1ffd453acc9b2fda193dddc9d3105afe49c16f0c9c9b17b9ea755807e21dc",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Entrée et tokenizer line/style rules, noms attributes/colors/fonts, empty trim, duplicates merge et frees ; EU-15. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_styleparser.h",
+      "sha256": "abb30561fb61b29249381eded0b63b604440f45972b8593571710d2aa4956a07",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Entrée et tokenizer line/style rules, noms attributes/colors/fonts, empty trim, duplicates merge et frees ; EU-15. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/tools/combine_parser_files.sh",
+      "sha256": "c64a2e5286b37481d2449712c1cb24a97e377562bb481467f99467f34d5ad872",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Entrée générée marker unique, shell fail-fast, header/footer concat et sortie atomique par Makefile ; EU-17. Lecture complète consignée dans session, version finale relue après modifications. Tests Cocoa centralisés root à relier avant validation.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/actions/build-macdown/action.yml",
+      "sha256": "540cf0bfeb8abfbd0515bd61558ce3a2350940a98b8a8be234cae665522f079d",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Build optional signing, arrays version settings, archive extract/plist inspection ; EU-18. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/actions/setup-macdown/action.yml",
+      "sha256": "2c727a47459b0529027067a1f864964350c1f69f5ef0a0f3ff8edfc71c6aea64",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Node22/npmci pinned stylesheet dependencies, Ruby3.3/bundle CocoaPods, PEG make ; EU-21. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/build-release.yml",
+      "sha256": "327c09e26f78e50a838c25174b85fbb67ff5a7500c5742c8f5133647ca77eff9",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Build unsigned Release universal architectures, artifact archive/retention and failure logs ; build action consumer. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/markdownlint.yml",
+      "sha256": "1e8a20d34f808fcbf845de3dcf7fa0dc8c34c1a6b97a71cac061d1bb8a2ca343",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Trigger paths et files documentation lint choisis, exclusions fixtures explicites ; pas runtime app. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "sha256": "a6ef9579101a06f9c382cff1a560e9a791be807b4d983539393ac40dde9ce926",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tous steps setup/version/tag/changelog/tests/smoke/signature/entitlements/DMG/notarization/draft/cleanup ; EU-18/EU-19/EU-21. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/smoke-test.yml",
+      "sha256": "961d97bd49dbd36f97d97c22c735110191fbb81e95696dbfda1f109b007f2669",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Build Debug, common launch migration helper et UI scheme/result timeouts ; EU-19. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/staple-release.yml",
+      "sha256": "6a61c84cc043a73cae825d1ac3e63e84067b6a4eec6fbe916e16985eca6ab43e",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Tag input validation, checkout/notary polling statuses/download checksum/signature/staple/mounted entitlements/assets/notes/publish ; EU-18. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "sha256": "ff340a907ef3dc27cd7e4f80ec299f7f7a2424c6dd3a45361c188db75bdf953e",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Matrix OS, Xcode timeouts, blocked-test diagnostics, artifact failure path ; gate contract. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": ".github/workflows/update-website.yml",
+      "sha256": "a9ddacf84f11c3945de3f15c07ec7f7d22762848dc4e8aaa1e397e4fb8705874",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "Release metadata source, all JSON stable/prerelease branches, printf-v values, latest pre-release pages, commit push retries ; EU-20. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    },
+    {
+      "path": "Tools/smoke_launch.sh",
+      "sha256": "d8648538634cfc55ffb0a11f16c542824ffb669e7cc1f8e1dd4e51afa296b29c",
+      "read": true,
+      "analyzed": true,
+      "validated": false,
+      "evidence": "CI-only preference reset guard, executable PID launch observation, cleanup bounded stop+wait, migration flag+values assertions ; EU-19. Lecture complète finale ; détails et limites editor-utilities.md.",
+      "open_findings": []
+    }
+  ],
+  "excluded": [
+    {
+      "path": "MacDown/Code/Extension/hoedown_html_patch.c",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "MacDown/Code/Extension/hoedown_html_patch.h",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/compile.o",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/greg.o",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/greg/tree.o",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser.c",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    },
+    {
+      "path": "Dependency/peg-markdown-highlight/pmh_parser_core.c",
+      "reason": "Autre propriétaire root pour hoedown ; pmh sorties générées depuis head/grammar/foot/greg ; executable/object build local exclu."
+    }
+  ],
+  "dependency_reads": [
+    {
+      "path": "Pods/LibYAML/include/yaml.h",
+      "read": "sections contrats ownership emitter_dump document et handlers, pas fichier intégral"
+    },
+    {
+      "path": "Pods/M13OrderedDictionary/M13OrderedDictionary.m",
+      "read": "copyWithZone/mutableCopyWithZone et fonctions mapping nécessaires, pas fichier intégral"
+    },
+    {
+      "path": "MacDown/Code/Document/MPDocument.m",
+      "read": "appels autocomplete/URL security/resources et delegate, pas fichier intégral à cette date"
+    },
+    {
+      "path": "MacDown/Code/Document/MPRenderer.m",
+      "read": "frontMatter/components JS excerpts, pas fichier intégral"
+    },
+    {
+      "path": "MacDown/Code/Application/MPMainController.m",
+      "read": "traitement maps/temp/openPending extraits, autre reviewer"
+    },
+    {
+      "path": "MacDown/Resources/Data/data.map",
+      "read": "plist archive décodée, clés/classes et PNG identifié sans exécution, exclusion données"
+    },
+    {
+      "path": "MacDown/Resources/Data/treats.map",
+      "read": "plist archive décodée, toutes entrées markdown/CSS et .DS_Store, non-exécution Python fence"
+    }
+  ]
+}

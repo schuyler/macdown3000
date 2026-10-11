@@ -1,0 +1,148 @@
+{
+  "profile": "local ad-hoc only; no Developer ID/notarization/distribution assertion",
+  "signatures": [
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/Frameworks/MacDownCore.framework",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/Frameworks/MacDownCore.framework"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/SharedSupport/bin/macdown",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/SharedSupport/bin/macdown"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--preserve-metadata=entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/Frameworks/Sparkle.framework"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--entitlements",
+        "MacDownQuickLook/MacDownQuickLook.entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex"
+      ],
+      "exit": 0
+    },
+    {
+      "path": "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app",
+      "command": [
+        "codesign",
+        "--force",
+        "--sign",
+        "-",
+        "--entitlements",
+        "MacDown/MacDown.entitlements",
+        "/Users/zydon/Sites/MacDown/build/AuditCampaign03/Build/Products/Release/MacDown 3000.app"
+      ],
+      "exit": 0
+    }
+  ],
+  "deep_verify_exit": 0,
+  "architectures": {
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app/Contents/MacOS/MacDown 3000": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/MacOS/MacDownQuickLook": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/MacOS/MacDown 3000": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/MacOS/MacDownQuickLook": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app/Contents/SharedSupport/bin/macdown": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/Frameworks/MacDownCore.framework/Versions/A/MacDownCore": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/SharedSupport/bin/macdown": "x86_64 arm64",
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex/Contents/Frameworks/MacDownCore.framework/Versions/A/MacDownCore": "x86_64 arm64"
+  },
+  "versions": {
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app": {
+      "CFBundleIdentifier": "app.macdown.macdown3000-debug",
+      "CFBundleVersion": "1608",
+      "CFBundleShortVersionString": "3000.0.7-rc.1.post197"
+    },
+    "build/AuditCampaign03/Build/Products/Debug/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex": {
+      "CFBundleIdentifier": "app.macdown.macdown3000-debug.QuickLook",
+      "CFBundleVersion": "1608",
+      "CFBundleShortVersionString": "3000.0.7-rc.1.post197"
+    },
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app": {
+      "CFBundleIdentifier": "app.macdown.macdown3000",
+      "CFBundleVersion": "1608",
+      "CFBundleShortVersionString": "3000.0.7-rc.1.post197"
+    },
+    "build/AuditCampaign03/Build/Products/Release/MacDown 3000.app/Contents/PlugIns/MacDownQuickLook.appex": {
+      "CFBundleIdentifier": "app.macdown.macdown3000.QuickLook",
+      "CFBundleVersion": "1608",
+      "CFBundleShortVersionString": "3000.0.7-rc.1.post197"
+    }
+  }
+}

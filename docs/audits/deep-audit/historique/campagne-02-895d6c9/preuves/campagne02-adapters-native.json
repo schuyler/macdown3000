@@ -1,0 +1,126 @@
+{
+  "table": {
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "checks": [
+        {
+          "name": "one handle per column",
+          "ok": true
+        },
+        {
+          "name": "actual DOM drag width",
+          "ok": true
+        },
+        {
+          "name": "minimum 48",
+          "ok": true
+        },
+        {
+          "name": "session widths survive body replacement",
+          "ok": true
+        },
+        {
+          "name": "reinit does not duplicate handles",
+          "ok": true
+        },
+        {
+          "name": "double click resets width",
+          "ok": true
+        },
+        {
+          "name": "reset clears session width",
+          "ok": true
+        },
+        {
+          "name": "mouseup clears resize state",
+          "ok": true
+        }
+      ]
+    },
+    "script": "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/table.js"
+  },
+  "tasklist": {
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "checks": [
+        {
+          "name": "nested inputs enabled",
+          "ok": true
+        },
+        {
+          "name": "nested click produces exactly one navigation",
+          "ok": true
+        },
+        {
+          "name": "explicit index and encoded token preserved",
+          "ok": true
+        },
+        {
+          "name": "replacement gets fresh token and index",
+          "ok": true
+        }
+      ],
+      "urls": [
+        "x-macdown-checkbox://toggle/7?token=a%20b%26c",
+        "x-macdown-checkbox://toggle/9?token=replacement-token"
+      ]
+    },
+    "script": "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/tasklist.js"
+  },
+  "viz": {
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "checks": [
+        {
+          "name": "actual bundled Viz creates two sibling SVGs",
+          "ok": true
+        },
+        {
+          "name": "source PREs replaced",
+          "ok": true
+        },
+        {
+          "name": "MutationObserver renders replacement body",
+          "ok": true
+        },
+        {
+          "name": "provider error retains safe source PRE",
+          "ok": true
+        }
+      ]
+    },
+    "script": "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/viz.js"
+  },
+  "mathjax": {
+    "exit": 0,
+    "result": {
+      "ok": true,
+      "checks": [
+        {
+          "name": "startup key End",
+          "ok": true
+        },
+        {
+          "name": "exact config values",
+          "ok": true
+        },
+        {
+          "name": "End hook registered",
+          "ok": true
+        },
+        {
+          "name": "bridge invokes exact callback",
+          "ok": true
+        },
+        {
+          "name": "standalone export no listener accepted",
+          "ok": true
+        }
+      ]
+    },
+    "script": "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-adapters-hy_3ummn/mathjax.js"
+  }
+}

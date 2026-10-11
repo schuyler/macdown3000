@@ -88,7 +88,7 @@
 "Ordered List" = "有序列表";
 
 /* No comment provided by engineer. */
-"Ordered/Unordered List" = "有序/无须列表";
+"Ordered/Unordered List" = "有序/无序列表";
 
 /* Preferences window title. */
 "Preferences" = "偏好设置";
@@ -169,3 +169,14 @@
 "Source file does not exist" = "源文件不存在";
 "A file already exists at the installation path" = "安装路径已存在文件";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown Shell 工具已安装到 %@。\n\n要从终端使用它，请将以下行添加到您的 shell 配置文件（~/.zshrc 或 ~/.bash_profile）：\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "说明";
+"PreviewCalloutTitleTip" = "提示";
+"PreviewCalloutTitleWarning" = "警告";
+"PreviewCalloutTitleImportant" = "重要";
+"PreviewCalloutTitleCaution" = "注意";
+"PreviewToggleTitle" = "前提条件";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "列 %lu";

@@ -10,13 +10,39 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import <objc/runtime.h>
+
+// Substitute only panel presentation: real export cancellation must run without
+// leaving an application-modal save panel that blocks later AppKit actions.
+@interface MPDeferralCancelledSavePanel : NSObject
+@property (copy) NSArray *allowedFileTypes;
+@property (copy) NSString *nameFieldStringValue;
+@property (strong) NSView *accessoryView;
+@property NSUInteger presentations;
+@end
+@implementation MPDeferralCancelledSavePanel
+- (void)beginSheetModalForWindow:(NSWindow *)window completionHandler:(void (^)(NSInteger))completion
+{
+    self.presentations++;
+    completion(NSModalResponseCancel);
+}
+@end
+static MPDeferralCancelledSavePanel *MPDeferralCurrentPanel;
+static id MPDeferralSavePanelFactory(id receiver, SEL selector)
+{
+    return MPDeferralCurrentPanel;
+}
 
 #pragma mark - Test Category to Expose Private Methods
 
 @interface MPDocument (RenderDeferralTesting)
 @property (nonatomic, strong) NSMutableArray *renderCompletionHandlers;
 @property (nonatomic, readonly) BOOL needsHtml;
-- (void)performAfterRender:(void (^)(void))handler;
+- (BOOL)performAfterRender:(void (^)(void))handler;
+- (void)finishPreviewRender;
+@property BOOL awaitingRequestedRender;
+@property BOOL alreadyRenderingInWeb;
+@property BOOL renderToWebPending;
 // IBActions used in tests
 - (IBAction)togglePreviewPane:(id)sender;
 - (IBAction)copyHtml:(id)sender;
@@ -123,43 +149,44 @@
  * Test that handler executes immediately when preview is visible.
  * Issue #16: Core behavior - no deferral when needsHtml is YES.
  */
-- (void)testPerformAfterRenderExecutesImmediatelyWhenPreviewVisible
+- (void)testVisiblePreviewStillWaitsForFreshRender
 {
     [self.document makeWindowControllers];
 
     // In headless CI, preview may not be visible
     if (!self.document.needsHtml) {
-        NSLog(@"Skipping testPerformAfterRenderExecutesImmediatelyWhenPreviewVisible - needsHtml is NO (headless mode)");
+        NSLog(@"Skipping testVisiblePreviewStillWaitsForFreshRender - needsHtml is NO (headless mode)");
         return;
     }
 
     [self.document performAfterRender:[self testHandlerBlock]];
 
-    XCTAssertTrue(self.handlerWasInvoked,
-                  @"Handler should execute immediately when needsHtml is YES");
-    XCTAssertEqual(self.handlerInvocationCount, 1,
-                   @"Handler should be invoked exactly once");
+    XCTAssertFalse(self.handlerWasInvoked);
+    XCTAssertEqual(self.document.renderCompletionHandlers.count, 1);
+    self.document.awaitingRequestedRender = NO;
+    [self.document finishPreviewRender];
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+    [self.document finishPreviewRender];
+    XCTAssertEqual(self.handlerInvocationCount, 1);
 }
 
 /**
  * Test that handler is NOT queued when executed immediately.
  * Issue #16: When preview visible, handlers bypass the queue.
  */
-- (void)testNoQueueingWhenPreviewVisible
+- (void)testVisiblePreviewQueuesOperation
 {
     [self.document makeWindowControllers];
 
     if (!self.document.needsHtml) {
-        NSLog(@"Skipping testNoQueueingWhenPreviewVisible - needsHtml is NO (headless mode)");
+        NSLog(@"Skipping testVisiblePreviewQueuesOperation - needsHtml is NO (headless mode)");
         return;
     }
 
     [self.document performAfterRender:[self testHandlerBlock]];
 
-    // Queue should remain empty after immediate execution
-    NSArray *handlers = self.document.renderCompletionHandlers;
-    XCTAssertTrue(handlers == nil || handlers.count == 0,
-                  @"Handler queue should be empty after immediate execution");
+    XCTAssertEqual(self.document.renderCompletionHandlers.count, 1);
+    XCTAssertFalse(self.handlerWasInvoked);
 }
 
 
@@ -424,10 +451,20 @@
     XCTAssertFalse(self.document.needsHtml,
                    @"needsHtml should be NO without window controller");
 
-    // exportHtml: opens a save panel, so just verify it doesn't crash
-    // Full testing requires mocking NSSavePanel
-    XCTAssertNoThrow([self.document exportHtml:nil],
-                     @"exportHtml: should not crash");
+    MPDeferralCancelledSavePanel *panel = [MPDeferralCancelledSavePanel new];
+    MPDeferralCurrentPanel = panel;
+    Method factory = class_getClassMethod(NSSavePanel.class, @selector(savePanel));
+    IMP original = method_setImplementation(factory, (IMP)MPDeferralSavePanelFactory);
+    @try {
+        [self.document exportHtml:nil];
+        XCTAssertEqual(panel.presentations, 1u);
+        XCTAssertEqualObjects(panel.allowedFileTypes, (@[@"html"]));
+        XCTAssertEqual(self.document.renderCompletionHandlers.count, 0u,
+                       @"Cancelling export must not queue a render or write");
+    } @finally {
+        method_setImplementation(factory, original);
+        MPDeferralCurrentPanel = nil;
+    }
 }
 
 /**
@@ -439,9 +476,40 @@
     XCTAssertFalse(self.document.needsHtml,
                    @"needsHtml should be NO without window controller");
 
-    // exportPdf: opens a save panel, so just verify it doesn't crash
-    XCTAssertNoThrow([self.document exportPdf:nil],
-                     @"exportPdf: should not crash");
+    MPDeferralCancelledSavePanel *panel = [MPDeferralCancelledSavePanel new];
+    MPDeferralCurrentPanel = panel;
+    Method factory = class_getClassMethod(NSSavePanel.class, @selector(savePanel));
+    IMP original = method_setImplementation(factory, (IMP)MPDeferralSavePanelFactory);
+    @try {
+        [self.document exportPdf:nil];
+        XCTAssertEqualObjects(panel.allowedFileTypes, (@[@"pdf"]));
+        XCTAssertEqual(panel.presentations, 1u);
+        [self.document exportPdf:nil];
+        XCTAssertEqual(panel.presentations, 2u, @"Cancellation must release the PDF export slot");
+        XCTAssertEqual(self.document.renderCompletionHandlers.count, 0u);
+    } @finally {
+        method_setImplementation(factory, original);
+        MPDeferralCurrentPanel = nil;
+    }
+}
+
+- (void)testOldRenderCompletionCannotReleasePendingExport
+{
+    [self.document performAfterRender:[self testHandlerBlock]];
+    [self.document finishPreviewRender];
+    XCTAssertFalse(self.handlerWasInvoked);
+    self.document.awaitingRequestedRender = NO;
+    [self.document finishPreviewRender];
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+}
+
+- (void)testCloseCancelsPendingOperations
+{
+    [self.document performAfterRender:[self testHandlerBlock]];
+    [self.document close];
+    [self.document finishPreviewRender];
+    XCTAssertFalse(self.handlerWasInvoked);
+    XCTAssertEqual(self.document.renderCompletionHandlers.count, 0);
 }
 
 @end

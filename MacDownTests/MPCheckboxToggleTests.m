@@ -8,6 +8,17 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import "MPRenderer.h"
+#import "MPRendererTestHelpers.h"
+#import "MPEditorView.h"
+#import "hoedown/document.h"
+#import "hoedown_html_patch.h"
+
+@interface MPDocument (CheckboxAuditTesting)
+@property (strong) MPRenderer *renderer;
+@property (weak) MPEditorView *editor;
+- (void)handleCheckboxToggle:(NSURL *)url;
+@end
 
 @interface MPCheckboxToggleTests : XCTestCase
 @end
@@ -112,16 +123,17 @@
  * Test toggling in deeply nested lists.
  * Depth-first order: Level3(0), Level2(1), Level1(2)
  */
-- (void)testToggleDeeplyNestedCheckbox
+- (void)testToggleTwoSpaceNestedCheckboxMatchesRenderedList
 {
     NSString *markdown = @"- [ ] Level 1\n  - [ ] Level 2\n    - [ ] Level 3";
-    NSString *expected = @"- [ ] Level 1\n  - [ ] Level 2\n    - [x] Level 3";
+    NSString *expected = @"- [ ] Level 1\n  - [x] Level 2\n    - [ ] Level 3";
 
-    // Level 3 is depth-first index 0 (deepest nested items come first)
+    // Hoedown renders the four-space Level 3 line as code in this two-space list.
+    // Index zero must target the first checkbox actually present in the preview.
     NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
 
     XCTAssertEqualObjects(result, expected,
-                          @"Deeply nested checkbox should be toggled correctly");
+                          @"Source mutation follows rendered tasks and preserves indented code");
 }
 
 /**
@@ -454,6 +466,83 @@
     NSInteger index = [[path substringFromIndex:1] integerValue];
 
     XCTAssertEqual(index, 0, @"Should extract index 0 from URL path");
+}
+
+- (void)testPreviewToggleIsUndoableAndMarksDocumentEdited
+{
+    MPDocument *document = [MPDocument new];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 400, 300)
+        styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    NSWindowController *controller = [[NSWindowController alloc] initWithWindow:window];
+    [document addWindowController:controller];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:window.contentView.bounds];
+    editor.allowsUndo = YES;
+    window.contentView = editor;
+    document.editor = editor;
+    editor.delegate = (id<NSTextViewDelegate>)document;
+    XCTAssertEqual(editor.undoManager, document.undoManager);
+    editor.string = @"# Heading\n\n> - [ ] Quoted task\n";
+    [document updateChangeCount:NSChangeCleared];
+    [document.undoManager removeAllActions];
+    document.undoManager.groupsByEvent = NO;
+    NSString *original = [editor.string copy];
+    MPMockRendererDataSource *source = [MPMockRendererDataSource new];
+    source.markdown = original;
+
+    MPRenderer *renderer = [MPRenderer new];
+    renderer.dataSource = source;
+    MPMockRendererDelegate *delegate = [MPMockRendererDelegate new];
+    delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    delegate.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    renderer.delegate = delegate;
+    renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    [renderer parseMarkdown:source.markdown];
+    document.renderer = renderer;
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
+        @"x-macdown-checkbox://toggle/0?token=%@", renderer.checkboxBridgeToken]];
+    [document.undoManager beginUndoGrouping];
+    [document handleCheckboxToggle:url];
+    [document.undoManager endUndoGrouping];
+    XCTAssertEqualObjects(editor.string, @"# Heading\n\n> - [x] Quoted task\n");
+    // NSDocument processes undo notifications on the next run-loop turn.
+    XCTNSPredicateExpectation *dirty = [[XCTNSPredicateExpectation alloc]
+        initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+            return [object isDocumentEdited];
+        }] object:document];
+    [self waitForExpectations:@[dirty] timeout:2.0];
+    XCTAssertTrue(document.isDocumentEdited);
+    XCTAssertTrue(document.undoManager.canUndo);
+    [document.undoManager undo];
+    XCTAssertEqualObjects(editor.string, original);
+    [document close];
+}
+
+- (void)testMalformedOrStalePreviewToggleLeavesSourceIntact
+{
+    MPDocument *document = [MPDocument new];
+    MPEditorView *editor = [MPEditorView new];
+    document.editor = editor;
+    editor.string = @"- [ ] Original";
+    MPMockRendererDataSource *source = [MPMockRendererDataSource new];
+    source.markdown = editor.string;
+    MPRenderer *renderer = [MPRenderer new]; renderer.dataSource = source;
+    MPMockRendererDelegate *delegate = [MPMockRendererDelegate new];
+    delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    delegate.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    renderer.delegate = delegate;
+    renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    [renderer parseMarkdown:source.markdown]; document.renderer = renderer;
+    for (NSString *index in @[@"abc", @"-1", @"0/extra", @"184467440737095516160"])
+    {
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
+            @"x-macdown-checkbox://toggle/%@?token=%@", index, renderer.checkboxBridgeToken]];
+        [document handleCheckboxToggle:url];
+        XCTAssertEqualObjects(editor.string, source.markdown);
+    }
+    editor.string = @"- [ ] Edited while rendering";
+    [document handleCheckboxToggle:[NSURL URLWithString:[NSString stringWithFormat:
+        @"x-macdown-checkbox://toggle/0?token=%@", renderer.checkboxBridgeToken]]];
+    XCTAssertEqualObjects(editor.string, @"- [ ] Edited while rendering");
 }
 
 @end

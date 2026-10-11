@@ -1,0 +1,44 @@
+# Transitions de blocs dans le visualiseur — 9 octobre 2026
+
+Périmètre : demande utilisateur concernant citations, blocs de code, titres de callouts et état des menus dépliants. Référence initiale : `0669bb1`. Les corrections passent par le même validateur de sélection et la même transaction native que les autres commandes du visualiseur. Aucune balise HTML n'est écrite dans le Markdown.
+
+## Contrats et preuves
+
+| Point | Défaut confirmé / contrat | Correction | Scénarios de validation |
+| --- | --- | --- | --- |
+| BLOCK-01 | Citation → code conservait `>`. | Retirer les marqueurs structurels prouvés par le renderer et placer le texte rendu dans une clôture adaptée. Les échappements nécessaires aux paragraphes ne deviennent pas des caractères littéraux du code. | Citation simple et imbriquée sur plusieurs paragraphes (y compris les lignes vides `>`), titre dans citation, marqueur `>` littéral dans un titre, texte en gras, voisin inchangé. RED natif et UI ; RED supplémentaire : quatre assertions pour les séparateurs de citation. |
+| BLOCK-02 | Le code était exclu de la sélection du visualiseur. | Prouver le conteneur CODE par un rendu complet de la source puis mapper ses feuilles de texte, y compris les jetons Prism, vers les positions UTF-16 originales. Griser les actions inline ; conserver le menu de blocs ; convertir une clôture en texte Markdown échappé par une seule transaction annulable. | Vraie WebView/Prism, LF/CRLF, emoji, lignes vides, marqueurs littéraux, HTML littéral, indentation, refus de demi-surrogates, refus de styles même avec un identifiant de paragraphe et des runs de code, conversion et annulation via l'interface. La réintroduction isolée du mapping initial dans une vraie WebView confirme le RED métier : huit assertions. Le premier test UI avait un sélecteur AX incorrect (label seul, le texte était exposé via value) ; cette exécution ne prouve pas le défaut métier. |
+| BLOCK-03 | Un callout créé n'avait pas de titre par défaut localisé. | Insérer un titre de niveau 2 pour les cinq types ; les menus dépliants reçoivent le titre de prérequis (niveau demandé pour les variantes de titres dépliants). Ressources pour les 26 langues existantes et repli anglais explicite. | Ressources françaises/anglaises, cinq types, menu dépliant, source finale et rendu réels. RED localisation. |
+| BLOCK-04 | Changer le type du titre/contenu conservait l'enveloppe callout. | Retirer les deux lignes de l'enveloppe la plus interne contenant toute la sélection ; conserver le reste du contenu, puis appliquer la conversion sur les lignes sélectionnées. Source et sélection sont remappées avant une seule mutation native. | Titre → texte, corps → H1, conteneurs imbriqués et voisin inchangé. RED natif. |
+| BLOCK-05 | Une édition réinitialisait les menus dépliants. | Capturer les états des seuls conteneurs produits par le renderer, les remapper sur la source et les rétablir avant le traitement des scripts et du scroll, lors d'une mise à jour du corps ou d'un chargement complet. « Recharger » explicite réinitialise à la valeur du Markdown. | Gras/italique du titre et du contenu, voisins identiques, imbrication, chargement complet Prism, insertion avant le bloc, suppression d'enveloppe extérieure, CRLF/front matter/emoji, ouverture/fermeture initiale et rechargement explicite. RED natif : six assertions. |
+| BLOCK-06 | Des paires callout littérales dans du HTML auteur étaient publiées comme convertibles. | Publier seulement les paires dont le jeton opaque figure sur un conteneur effectivement produit par le renderer. Les snapshots ne modifient pas les métadonnées de la page courante. | Paire littérale dans un div et callout réel voisin ; absence d'autorisation pour le div. RED distinct : une assertion. |
+
+| BLOCK-07 | Extraire le texte rendu pour le code pouvait supprimer une image. | Refuser atomiquement les contenus non textuels et les lignes non vides sans texte sélectionné prouvé, sauf séparateurs de citation prouvés vides. | Image inline et image entre deux paragraphes : refus et source strictement inchangée. RED distinct : quatre assertions ; GREEN. |
+
+## Règles de conservation
+
+- La conversion vers le code retire la mise en forme inline ; une image ou un contrôle non textuel entraîne un refus sans modification. Les cases à cocher des listes de tâches sont retirées avec leur syntaxe de liste.
+- La conversion d'un code en texte neutralise les marqueurs Markdown, HTML littéral et délimiteurs `:::`. Quatre espaces initiaux et les tabulations d'indentation sont représentés par des espaces insécables Unicode pour éviter de recréer un code indenté ; une tabulation devient quatre espaces insécables. Le contenu demeure du texte Markdown, sans HTML source.
+- Les sélections mêlant code et prose, ou plusieurs blocs de code, sont refusées atomiquement. Les clôtures dans les listes/citations et les clôtures indentées restent hors du mapping linéaire prouvé. Les limites existantes de 2 000 feuilles et 128 sondes du renderer sont partagées entre prose et code ; un mapping non prouvé reste en lecture seule.
+- Les snapshots destinés à vérifier le rendu omettent uniquement leurs propres attributs de transport opaques ; les attributs du HTML auteur sont conservés, et les métadonnées de la page courante ne sont pas modifiées.
+- La conservation d'état d'un menu dépliant repose sur son ouverture originale et sa provenance. Un changement de son ouverture Markdown réapplique sa valeur native. Les déplacements ou répétitions ambigus ne transfèrent pas un état d'un bloc à un autre.
+- Les tests natifs et UI sont exécutés dans le coffre de préférences/session isolé déjà utilisé par le projet. Chaque session doit confirmer la restauration des préférences.
+
+## Exécutions
+
+Les résultats définitifs et empreintes des sources/logs sont consignés dans [preview-block-transitions-verification.json](preview-block-transitions-verification.json). Les journaux locaux sont dans `build/PreviewBlockTransitions/`. Les compilations manquées (import de header), l'hypothèse incorrecte de LF final de Hoedown et la normalisation des espaces par le parseur HTML des tests sont conservées dans ces journaux ; elles ne constituent pas des validations métier réussies.
+
+## Validation de livraison
+
+- Suite native complète sur le code final : **1 491 tests, zéro échec** (150 secondes, macOS 26.6.2, arm64).
+- **65 contrats de transactions inline**, syntaxe JavaScript, `git diff --check` et lint des **26** fichiers de traduction : réussis.
+- Release universelle **arm64 + x86_64**, signature ad hoc vérifiée ; le script du bundle a la même empreinte que le source. Artefact local : `build/PreviewBlockTransitions/Release/Build/Products/Release/MacDown 3000.app`.
+- Interface : le passage complet a validé 13 des 15 scénarios. Le sélecteur AX du test code a été corrigé (texte exposé par `value`), puis ce test a réussi ; le test existant de progression a dépassé son délai de 5 secondes sur le 0 %, puis a réussi sur réexécution. Il n'est donc pas affirmé qu'un passage complet unique a fait 15/15. Les deux transitions de blocs sont réexécutées sur le commit final, avec leurs résultats consignés dans la preuve JSON.
+
+Les modifications de code sont réparties en sept commits distincts, suivis du commit de ce rapport : conversion citation/code, suppression d'enveloppe callout, titres localisés, sélection du code et retour au texte, conservation d'état, séparateurs vides de citation, et refus de conversion non textuelle destructive. La compilation reste un artefact de test ; cette demande n'inclut pas la réinstallation dans `/Applications` ni une publication GitHub.
+
+## Vérification complémentaire — callout imbriqué sans titre extérieur
+
+Signalement : le bloc dépliant interne se referme après une mise en gras de « interne », dans un callout note extérieur contenant `test ***encore*** pour lui`, avec titre interne `# **nouveau**`. Le binaire installé datait du 8 octobre 23:49 et ne contenait pas `preparePreviewCalloutStatesForRenderer:` ; le binaire Release du 9 octobre contient cette correction.
+
+`testNestedCalloutBodyFormattingKeepsManuallyOpenedDisclosure` reproduit la source exacte dans une vraie WebView, ouvre le bloc interne, sélectionne le seul mot « interne », puis clique deux fois sur le bouton Gras réel via le pont natif. Il vérifie la source exacte après ajout/retrait du gras, le titre conservé, l'état ouvert et la sélection conservée. **Un test, zéro échec**, 3,198 secondes ; journal `build/NestedCalloutFollowup/exact-example-final.log`, xcresult `Test-MacDown-2026.10.09_10-40-57-+0200.xcresult`. Préférences/session restaurées et vérifiées. Le premier essai avait omis le policy delegate de la WebView du test : il a déclenché une alerte macOS pour le protocole interne et n'est pas une preuve d'échec métier. Le montage a été corrigé sans modification du code de l'application.

@@ -1,0 +1,2330 @@
+{
+  "campaign": 3,
+  "owner": "root-document",
+  "records": [
+    {
+      "path": "MacDown/Code/Application/MPMainController.h",
+      "sha256": "243032702a66bec45b0288295e5aec56d23bc58ba6d00d26f30e2302d7665596",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Démarrage, migration commandes vers queue unique, Sparkle, workspace, exemples et URL : appelants CLI/queue relus lot build, tests commandes+native passés; pas de legacy supprimé.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "@interface MPMainController : NSObject <NSApplicationDelegate, NSMenuItemValidation>"
+        },
+        {
+          "line": 24,
+          "declaration": "- (IBAction)checkForUpdates:(id)sender;"
+        },
+        {
+          "line": 28,
+          "declaration": "- (IBAction)openFolder:(id)sender;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Application/MPMainController.m",
+      "sha256": "888cb2af2d7d9deec0a3a0678c6734d51a78889b2e495b4a4e6c47389c5d4514",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Démarrage, migration commandes vers queue unique, Sparkle, workspace, exemples et URL : appelants CLI/queue relus lot build, tests commandes+native passés; pas de legacy supprimé.",
+      "symbols_inventory": [
+        {
+          "line": 47,
+          "declaration": "static NSURL *MPCopyBundledFile(NSString *resource, NSString *extension, NSError **error)"
+        },
+        {
+          "line": 128,
+          "declaration": "@interface MPMainController () <SPUUpdaterDelegate>"
+        },
+        {
+          "line": 140,
+          "declaration": "+ (NSURL *)copyBundledFile:(NSString *)resource extension:(NSString *)extension error:(NSError **)error"
+        },
+        {
+          "line": 147,
+          "declaration": "- (void)applicationDidFinishLaunching:(NSNotification *)notification"
+        },
+        {
+          "line": 163,
+          "declaration": "- (void)openUrlSchemeAppleEvent:(NSAppleEventDescriptor *)event"
+        },
+        {
+          "line": 209,
+          "declaration": "- (NSString *)valueForKey:(NSString *)key fromQueryItems:(NSArray *)queryItems"
+        },
+        {
+          "line": 216,
+          "declaration": "- (MPPreferences *)preferences"
+        },
+        {
+          "line": 221,
+          "declaration": "- (NSWindowController *)preferencesWindowController"
+        },
+        {
+          "line": 242,
+          "declaration": "- (IBAction)showPreferencesWindow:(id)sender"
+        },
+        {
+          "line": 247,
+          "declaration": "- (IBAction)showHelp:(id)sender"
+        },
+        {
+          "line": 252,
+          "declaration": "- (IBAction)showContributing:(id)sender"
+        },
+        {
+          "line": 257,
+          "declaration": "- (IBAction)openGitHub:(id)sender"
+        },
+        {
+          "line": 263,
+          "declaration": "- (IBAction)checkForUpdates:(id)sender"
+        },
+        {
+          "line": 268,
+          "declaration": "- (BOOL)validateMenuItem:(NSMenuItem *)menuItem"
+        },
+        {
+          "line": 280,
+          "declaration": "- (instancetype)init"
+        },
+        {
+          "line": 299,
+          "declaration": "- (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender"
+        },
+        {
+          "line": 314,
+          "declaration": "- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app"
+        },
+        {
+          "line": 319,
+          "declaration": "- (void)applicationDidBecomeActive:(NSNotification *)notification"
+        },
+        {
+          "line": 326,
+          "declaration": "- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)visible"
+        },
+        {
+          "line": 335,
+          "declaration": "- (NSSet<NSString *> *)allowedChannelsForUpdater:(SPUUpdater *)updater"
+        },
+        {
+          "line": 347,
+          "declaration": "- (void)copyFiles"
+        },
+        {
+          "line": 387,
+          "declaration": "- (NSURL *)commandQueueDirectory"
+        },
+        {
+          "line": 392,
+          "declaration": "- (NSString *)commandPreferencesSuiteName"
+        },
+        {
+          "line": 397,
+          "declaration": "- (BOOL)migrateLegacyCommandRequests:(NSError **)error"
+        },
+        {
+          "line": 427,
+          "declaration": "- (void)openPendingCommandRequests"
+        },
+        {
+          "line": 472,
+          "declaration": "- (IBAction)openFolder:(id)sender"
+        },
+        {
+          "line": 482,
+          "declaration": "- (void)openWorkspaceAtURL:(NSURL *)url"
+        },
+        {
+          "line": 499,
+          "declaration": "- (void)showFirstLaunchTips"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Document/MPDocument.h",
+      "sha256": "f70d0155da4792f9f0a49dbdb8edb98f4d49474d819e016a05ad417f747bb485",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "5392 lignes : initialisation/KVO, nouvelles données/lecture/écriture/save, undo/édition, rendu fastDOM vs rechargement avec base/head/styles/langues, callbacks génération MathJax, scroll/liens/tasklists/export HTML et deux impressions PDF/ancres/restauration, watchers/fermeture. Consommateurs renderer/core/UI frais croisés ; native1437 et PDFconsumer12/5WebKit gates verts. UI finale et QL système en attente.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "@interface MPDocument : NSDocument"
+        },
+        {
+          "line": 40,
+          "declaration": "+ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown;"
+        },
+        {
+          "line": 47,
+          "declaration": "- (IBAction)selectDocumentZoom:(id)sender;"
+        },
+        {
+          "line": 48,
+          "declaration": "- (IBAction)zoomIn:(id)sender;"
+        },
+        {
+          "line": 49,
+          "declaration": "- (IBAction)zoomOut:(id)sender;"
+        },
+        {
+          "line": 50,
+          "declaration": "- (IBAction)resetZoom:(id)sender;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Document/MPDocument.m",
+      "sha256": "546d434a262c3d180829842e888ae4dc631808fc192f54bfebf73b838d08b69e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "5392 lignes : initialisation/KVO, nouvelles données/lecture/écriture/save, undo/édition, rendu fastDOM vs rechargement avec base/head/styles/langues, callbacks génération MathJax, scroll/liens/tasklists/export HTML et deux impressions PDF/ancres/restauration, watchers/fermeture. Consommateurs renderer/core/UI frais croisés ; native1437 et PDFconsumer12/5WebKit gates verts. UI finale et QL système en attente.",
+      "symbols_inventory": [
+        {
+          "line": 54,
+          "declaration": "static NSString * const kMPPDFSnapshotJS = @\"(function(){var sheets=[];for(var i=0;i<document.styleSheets.length;i++){var sheet=document.styleSheets[i];try{sheets.push(Array.prototype.map.call(sheet.cssRules,function(r){return r.cssText}).join('\\\\n'));}catch(e){sheets.push(null);}}return JSON.stringify([document.documentElement.outerHTML,sheets]);})()\";"
+        },
+        {
+          "line": 56,
+          "declaration": "static NSString * const kMPPreparePDFAnchorsJS = @\"(function(args) {\\n\""
+        },
+        {
+          "line": 292,
+          "declaration": "- (NSString *)absoluteBaseURLString"
+        },
+        {
+          "line": 306,
+          "declaration": "- (NSScrollView *)enclosingScrollView"
+        },
+        {
+          "line": 315,
+          "declaration": "- (int)extensionFlags"
+        },
+        {
+          "line": 345,
+          "declaration": "- (int)rendererFlags"
+        },
+        {
+          "line": 361,
+          "declaration": "@interface MPDocument ()"
+        },
+        {
+          "line": 530,
+          "declaration": "- (void)scaleWebview;"
+        },
+        {
+          "line": 531,
+          "declaration": "- (void)syncScrollers;"
+        },
+        {
+          "line": 532,
+          "declaration": "- (void)syncScrollersToCursor;"
+        },
+        {
+          "line": 533,
+          "declaration": "- (void)syncScrollersReverse;"
+        },
+        {
+          "line": 534,
+          "declaration": "- (void)updateHeaderLocations;"
+        },
+        {
+          "line": 535,
+          "declaration": "- (void)validateHeaderLocationAlignment;"
+        },
+        {
+          "line": 537,
+          "declaration": "+ (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown"
+        },
+        {
+          "line": 542,
+          "declaration": "+ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY"
+        },
+        {
+          "line": 550,
+          "declaration": "+ (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs"
+        },
+        {
+          "line": 556,
+          "declaration": "- (void)invokeRenderCompletionHandlers;"
+        },
+        {
+          "line": 557,
+          "declaration": "- (void)finishPreviewRender;"
+        },
+        {
+          "line": 558,
+          "declaration": "+ (NSInvocation *)printCompletionForDelegate:(id)delegate selector:(SEL)selector context:(void *)context;"
+        },
+        {
+          "line": 559,
+          "declaration": "- (void)willStartPreviewLiveScroll:(NSNotification *)notification;"
+        },
+        {
+          "line": 560,
+          "declaration": "- (void)didEndPreviewLiveScroll:(NSNotification *)notification;"
+        },
+        {
+          "line": 562,
+          "declaration": "- (void)refreshHeaderCacheAfterResize;"
+        },
+        {
+          "line": 563,
+          "declaration": "- (void)windowDidEndLiveResize:(NSNotification *)notification;"
+        },
+        {
+          "line": 564,
+          "declaration": "- (void)windowDidChangeFullScreen:(NSNotification *)notification;"
+        },
+        {
+          "line": 565,
+          "declaration": "- (void)applyEditorStartInPreviewModePreference;"
+        },
+        {
+          "line": 567,
+          "declaration": "- (void)handleSyncScrollingEnabled;"
+        },
+        {
+          "line": 568,
+          "declaration": "- (void)handleSyncScrollingDisabled;"
+        },
+        {
+          "line": 570,
+          "declaration": "- (void)applyPreviewZoom;"
+        },
+        {
+          "line": 571,
+          "declaration": "- (void)stepDocumentZoomDirection:(NSInteger)direction;"
+        },
+        {
+          "line": 575,
+          "declaration": "- (void)registerSharedPreferenceObservers;"
+        },
+        {
+          "line": 576,
+          "declaration": "- (void)unregisterSharedPreferenceObservers;"
+        },
+        {
+          "line": 578,
+          "declaration": "- (NSUInteger)mathJaxRenderGeneration;"
+        },
+        {
+          "line": 580,
+          "declaration": "- (BOOL)preparePDFAnchorSession;"
+        },
+        {
+          "line": 581,
+          "declaration": "- (void)restorePDFAnchorSession;"
+        },
+        {
+          "line": 582,
+          "declaration": "- (void)postProcessExportedPDFAtURL:(NSURL *)url;"
+        },
+        {
+          "line": 588,
+          "declaration": "@interface MPDocument ()"
+        },
+        {
+          "line": 594,
+          "declaration": "static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()"
+        },
+        {
+          "line": 658,
+          "declaration": "static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outLength,"
+        },
+        {
+          "line": 700,
+          "declaration": "- (MPPreferences *)preferences"
+        },
+        {
+          "line": 705,
+          "declaration": "- (NSString *)markdown"
+        },
+        {
+          "line": 710,
+          "declaration": "- (void)setMarkdown:(NSString *)markdown"
+        },
+        {
+          "line": 741,
+          "declaration": "- (NSString *)html"
+        },
+        {
+          "line": 746,
+          "declaration": "- (BOOL)toolbarVisible"
+        },
+        {
+          "line": 751,
+          "declaration": "- (BOOL)previewVisible"
+        },
+        {
+          "line": 756,
+          "declaration": "- (BOOL)editorVisible"
+        },
+        {
+          "line": 761,
+          "declaration": "- (BOOL)needsHtml"
+        },
+        {
+          "line": 770,
+          "declaration": "- (NSString *)wordCountTitleForKey:(NSString *)key number:(NSUInteger)value"
+        },
+        {
+          "line": 778,
+          "declaration": "- (void)applyWordsTitle:(NSUInteger)value selected:(BOOL)selected"
+        },
+        {
+          "line": 785,
+          "declaration": "- (void)applyCharactersTitle:(NSUInteger)value selected:(BOOL)selected"
+        },
+        {
+          "line": 793,
+          "declaration": "- (void)applyCharactersNoSpacesTitle:(NSUInteger)value selected:(BOOL)selected"
+        },
+        {
+          "line": 804,
+          "declaration": "- (void)setTotalWords:(NSUInteger)value"
+        },
+        {
+          "line": 811,
+          "declaration": "- (void)setTotalCharacters:(NSUInteger)value"
+        },
+        {
+          "line": 818,
+          "declaration": "- (void)setTotalCharactersNoSpaces:(NSUInteger)value"
+        },
+        {
+          "line": 825,
+          "declaration": "- (void)setAutosaveName:(NSString *)autosaveName"
+        },
+        {
+          "line": 833,
+          "declaration": "- (NSUInteger)mathJaxRenderGeneration"
+        },
+        {
+          "line": 840,
+          "declaration": "- (instancetype)init"
+        },
+        {
+          "line": 867,
+          "declaration": "- (NSString *)windowNibName"
+        },
+        {
+          "line": 872,
+          "declaration": "- (void)windowControllerDidLoadNib:(NSWindowController *)controller"
+        },
+        {
+          "line": 1013,
+          "declaration": "- (void)registerSharedPreferenceObservers"
+        },
+        {
+          "line": 1024,
+          "declaration": "- (void)unregisterSharedPreferenceObservers"
+        },
+        {
+          "line": 1033,
+          "declaration": "+ (NSRange)selectionRange:(NSRange)range clampedToLength:(NSUInteger)length"
+        },
+        {
+          "line": 1051,
+          "declaration": "- (void)setWorkspaceRootURL:(NSURL *)workspaceRootURL"
+        },
+        {
+          "line": 1057,
+          "declaration": "- (void)installFolderSidebarForController:(NSWindowController *)controller"
+        },
+        {
+          "line": 1123,
+          "declaration": "- (void)outerSplitDidResize:(NSNotification *)note"
+        },
+        {
+          "line": 1139,
+          "declaration": "- (BOOL)isSidebarVisible"
+        },
+        {
+          "line": 1147,
+          "declaration": "- (void)showSidebarPane"
+        },
+        {
+          "line": 1176,
+          "declaration": "- (void)hideSidebarPane"
+        },
+        {
+          "line": 1186,
+          "declaration": "- (IBAction)toggleFolderSidebar:(id)sender"
+        },
+        {
+          "line": 1203,
+          "declaration": "- (void)sidebarSyncDidChange:(NSNotification *)note"
+        },
+        {
+          "line": 1228,
+          "declaration": "+ (MPDocument *)openDocumentForFileURL:(NSURL *)url"
+        },
+        {
+          "line": 1238,
+          "declaration": "+ (NSError *)sidebarOpenErrorForError:(NSError *)error URL:(NSURL *)url"
+        },
+        {
+          "line": 1261,
+          "declaration": "- (void)presentSidebarOpenError:(NSError *)error forURL:(NSURL *)url"
+        },
+        {
+          "line": 1268,
+          "declaration": "- (void)folderSidebar:(MPFolderSidebarViewController *)sidebar"
+        },
+        {
+          "line": 1322,
+          "declaration": "- (void)reloadFromLoadedString"
+        },
+        {
+          "line": 1393,
+          "declaration": "- (void)close"
+        },
+        {
+          "line": 1451,
+          "declaration": "+ (BOOL)autosavesInPlace"
+        },
+        {
+          "line": 1456,
+          "declaration": "+ (NSArray *)writableTypes"
+        },
+        {
+          "line": 1461,
+          "declaration": "- (BOOL)isDocumentEdited"
+        },
+        {
+          "line": 1471,
+          "declaration": "- (BOOL)writeToURL:(NSURL *)url ofType:(NSString *)typeName"
+        },
+        {
+          "line": 1534,
+          "declaration": "- (BOOL)writeSafelyToURL:(NSURL *)url ofType:(NSString *)typeName"
+        },
+        {
+          "line": 1575,
+          "declaration": "- (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url"
+        },
+        {
+          "line": 1580,
+          "declaration": "- (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError"
+        },
+        {
+          "line": 1586,
+          "declaration": "- (BOOL)readFromData:(NSData *)data ofType:(NSString *)typeName"
+        },
+        {
+          "line": 1606,
+          "declaration": "- (BOOL)prepareSavePanel:(NSSavePanel *)savePanel"
+        },
+        {
+          "line": 1655,
+          "declaration": "- (NSPrintInfo *)printInfo"
+        },
+        {
+          "line": 1666,
+          "declaration": "- (NSPrintOperation *)printOperationWithSettings:(NSDictionary *)printSettings"
+        },
+        {
+          "line": 1685,
+          "declaration": "- (void)printDocumentWithSettings:(NSDictionary *)printSettings"
+        },
+        {
+          "line": 1709,
+          "declaration": "- (BOOL)validateUserInterfaceItem:(id<NSValidatedUserInterfaceItem>)item"
+        },
+        {
+          "line": 1803,
+          "declaration": "- (void)splitViewDidResizeSubviews:(NSNotification *)notification"
+        },
+        {
+          "line": 1833,
+          "declaration": "- (BOOL)splitView:(NSSplitView *)splitView canCollapseSubview:(NSView *)subview"
+        },
+        {
+          "line": 1841,
+          "declaration": "- (NSUndoManager *)undoManagerForTextView:(NSTextView *)textView"
+        },
+        {
+          "line": 1846,
+          "declaration": "- (BOOL)textView:(NSTextView *)textView doCommandBySelector:(SEL)commandSelector"
+        },
+        {
+          "line": 1861,
+          "declaration": "- (BOOL)textView:(NSTextView *)textView shouldChangeTextInRange:(NSRange)range"
+        },
+        {
+          "line": 1892,
+          "declaration": "- (BOOL)textViewShouldInsertTab:(NSTextView *)textView"
+        },
+        {
+          "line": 1907,
+          "declaration": "- (BOOL)textViewShouldInsertBacktab:(NSTextView *)textView"
+        },
+        {
+          "line": 1913,
+          "declaration": "- (BOOL)textViewShouldInsertNewline:(NSTextView *)textView"
+        },
+        {
+          "line": 1929,
+          "declaration": "- (BOOL)textViewShouldDeleteBackward:(NSTextView *)textView"
+        },
+        {
+          "line": 1947,
+          "declaration": "- (BOOL)textViewShouldMoveToLeftEndOfLine:(NSTextView *)textView"
+        },
+        {
+          "line": 1979,
+          "declaration": "- (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier willSendRequest:(NSURLRequest *)request redirectResponse:(NSURLResponse *)redirectResponse fromDataSource:(WebDataSource *)dataSource"
+        },
+        {
+          "line": 1996,
+          "declaration": "- (void)webView:(WebView *)sender didCommitLoadForFrame:(WebFrame *)frame"
+        },
+        {
+          "line": 2019,
+          "declaration": "- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame"
+        },
+        {
+          "line": 2027,
+          "declaration": "- (void)finishPreviewRender"
+        },
+        {
+          "line": 2042,
+          "declaration": "- (void)webView:(WebView *)sender didFailLoadWithError:(NSError *)error"
+        },
+        {
+          "line": 2063,
+          "declaration": "- (void)webView:(WebView *)webView"
+        },
+        {
+          "line": 2134,
+          "declaration": "- (BOOL)webView:(WebView *)webView doCommandBySelector:(SEL)selector"
+        },
+        {
+          "line": 2153,
+          "declaration": "- (NSUInteger)webView:(WebView *)webView"
+        },
+        {
+          "line": 2159,
+          "declaration": "- (NSArray *)webView:(WebView *)sender"
+        },
+        {
+          "line": 2183,
+          "declaration": "- (void)reloadPreview:(id)sender"
+        },
+        {
+          "line": 2192,
+          "declaration": "- (BOOL)rendererLoading {"
+        },
+        {
+          "line": 2196,
+          "declaration": "- (NSString *)rendererMarkdown:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2201,
+          "declaration": "- (NSString *)rendererHTMLTitle:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2210,
+          "declaration": "- (int)rendererExtensions:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2215,
+          "declaration": "- (BOOL)rendererHasSmartyPants:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2220,
+          "declaration": "- (BOOL)rendererRendersTOC:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2225,
+          "declaration": "- (NSString *)rendererStyleName:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2230,
+          "declaration": "- (BOOL)rendererDetectsFrontMatter:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2235,
+          "declaration": "- (BOOL)rendererHasSyntaxHighlighting:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2240,
+          "declaration": "- (BOOL)rendererHasMermaid:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2245,
+          "declaration": "- (BOOL)rendererHasGraphviz:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2250,
+          "declaration": "- (MPCodeBlockAccessoryType)rendererCodeBlockAccesory:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2255,
+          "declaration": "- (BOOL)rendererHasMathJax:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2260,
+          "declaration": "- (NSString *)rendererHighlightingThemeName:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2265,
+          "declaration": "- (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html"
+        },
+        {
+          "line": 2335,
+          "declaration": "static NSString *pattern = @\"<body[^>]*>(.*)</body>\";"
+        },
+        {
+          "line": 2464,
+          "declaration": "- (NSURL *)rendererBaseURL:(MPRenderer *)renderer"
+        },
+        {
+          "line": 2496,
+          "declaration": "- (NSURL *)previewSafeBaseURL:(NSURL *)baseURL"
+        },
+        {
+          "line": 2515,
+          "declaration": "- (void)resourceWatcherSet:(MPResourceWatcherSet *)set"
+        },
+        {
+          "line": 2540,
+          "declaration": "- (void)makeWindowControllers"
+        },
+        {
+          "line": 2547,
+          "declaration": "- (void)editorTextDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2564,
+          "declaration": "- (void)editorSelectionDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2608,
+          "declaration": "- (void)refreshDocumentWordCountTitles"
+        },
+        {
+          "line": 2617,
+          "declaration": "- (void)userDefaultsDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2656,
+          "declaration": "- (void)handleSyncScrollingEnabled"
+        },
+        {
+          "line": 2678,
+          "declaration": "- (void)handleSyncScrollingDisabled"
+        },
+        {
+          "line": 2690,
+          "declaration": "- (void)editorFrameDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2702,
+          "declaration": "- (void)willStartLiveScroll:(NSNotification *)notification"
+        },
+        {
+          "line": 2707,
+          "declaration": "-(void)didEndLiveScroll:(NSNotification *)notification"
+        },
+        {
+          "line": 2715,
+          "declaration": "- (void)willStartPreviewLiveScroll:(NSNotification *)notification"
+        },
+        {
+          "line": 2723,
+          "declaration": "- (void)didEndPreviewLiveScroll:(NSNotification *)notification"
+        },
+        {
+          "line": 2741,
+          "declaration": "- (void)refreshHeaderCacheAfterResize"
+        },
+        {
+          "line": 2750,
+          "declaration": "- (void)windowDidEndLiveResize:(NSNotification *)notification"
+        },
+        {
+          "line": 2758,
+          "declaration": "- (void)windowDidChangeFullScreen:(NSNotification *)notification"
+        },
+        {
+          "line": 2766,
+          "declaration": "- (void)editorBoundsDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2780,
+          "declaration": "- (void)didRequestEditorReload:(NSNotification *)notification"
+        },
+        {
+          "line": 2787,
+          "declaration": "- (void)didRequestPreviewReload:(NSNotification *)notification"
+        },
+        {
+          "line": 2794,
+          "declaration": "- (void)previewBoundsDidChange:(NSNotification *)notification"
+        },
+        {
+          "line": 2812,
+          "declaration": "- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object"
+        },
+        {
+          "line": 2841,
+          "declaration": "- (IBAction)copyHtml:(id)sender"
+        },
+        {
+          "line": 2859,
+          "declaration": "- (IBAction)exportHtml:(id)sender"
+        },
+        {
+          "line": 2894,
+          "declaration": "- (IBAction)exportPdf:(id)sender"
+        },
+        {
+          "line": 2941,
+          "declaration": "- (BOOL)preparePDFAnchorSession"
+        },
+        {
+          "line": 2968,
+          "declaration": "- (void)restorePDFAnchorSession"
+        },
+        {
+          "line": 2986,
+          "declaration": "- (BOOL)PDFExportSnapshotIsCurrent"
+        },
+        {
+          "line": 2995,
+          "declaration": "- (void)publishPDFDocument:(PDFDocument *)document atURL:(NSURL *)url"
+        },
+        {
+          "line": 3003,
+          "declaration": "- (void)postProcessExportedPDFAtURL:(NSURL *)url"
+        },
+        {
+          "line": 3050,
+          "declaration": "- (IBAction)convertToH1:(id)sender"
+        },
+        {
+          "line": 3055,
+          "declaration": "- (IBAction)convertToH2:(id)sender"
+        },
+        {
+          "line": 3060,
+          "declaration": "- (IBAction)convertToH3:(id)sender"
+        },
+        {
+          "line": 3065,
+          "declaration": "- (IBAction)convertToH4:(id)sender"
+        },
+        {
+          "line": 3070,
+          "declaration": "- (IBAction)convertToH5:(id)sender"
+        },
+        {
+          "line": 3075,
+          "declaration": "- (IBAction)convertToH6:(id)sender"
+        },
+        {
+          "line": 3080,
+          "declaration": "- (IBAction)convertToParagraph:(id)sender"
+        },
+        {
+          "line": 3085,
+          "declaration": "- (IBAction)toggleStrong:(id)sender"
+        },
+        {
+          "line": 3090,
+          "declaration": "- (IBAction)toggleEmphasis:(id)sender"
+        },
+        {
+          "line": 3095,
+          "declaration": "- (IBAction)toggleInlineCode:(id)sender"
+        },
+        {
+          "line": 3100,
+          "declaration": "- (IBAction)toggleStrikethrough:(id)sender"
+        },
+        {
+          "line": 3105,
+          "declaration": "- (IBAction)toggleUnderline:(id)sender"
+        },
+        {
+          "line": 3114,
+          "declaration": "- (IBAction)toggleHighlight:(id)sender"
+        },
+        {
+          "line": 3119,
+          "declaration": "- (IBAction)toggleComment:(id)sender"
+        },
+        {
+          "line": 3124,
+          "declaration": "- (IBAction)toggleLink:(id)sender"
+        },
+        {
+          "line": 3144,
+          "declaration": "- (IBAction)toggleImage:(id)sender"
+        },
+        {
+          "line": 3185,
+          "declaration": "+ (NSString *)tableInsertionForContent:(NSString *)content"
+        },
+        {
+          "line": 3253,
+          "declaration": "- (IBAction)insertTable:(id)sender"
+        },
+        {
+          "line": 3282,
+          "declaration": "- (IBAction)toggleOrderedList:(id)sender"
+        },
+        {
+          "line": 3287,
+          "declaration": "- (IBAction)toggleUnorderedList:(id)sender"
+        },
+        {
+          "line": 3293,
+          "declaration": "- (IBAction)toggleBlockquote:(id)sender"
+        },
+        {
+          "line": 3298,
+          "declaration": "- (IBAction)indent:(id)sender"
+        },
+        {
+          "line": 3306,
+          "declaration": "- (IBAction)unindent:(id)sender"
+        },
+        {
+          "line": 3311,
+          "declaration": "- (IBAction)insertNewParagraph:(id)sender"
+        },
+        {
+          "line": 3334,
+          "declaration": "- (IBAction)setEditorOneQuarter:(id)sender"
+        },
+        {
+          "line": 3339,
+          "declaration": "- (IBAction)setEditorThreeQuarters:(id)sender"
+        },
+        {
+          "line": 3344,
+          "declaration": "- (IBAction)setEqualSplit:(id)sender"
+        },
+        {
+          "line": 3349,
+          "declaration": "- (IBAction)toggleToolbar:(id)sender"
+        },
+        {
+          "line": 3354,
+          "declaration": "- (IBAction)togglePreviewPane:(id)sender"
+        },
+        {
+          "line": 3359,
+          "declaration": "- (IBAction)toggleEditorPane:(id)sender"
+        },
+        {
+          "line": 3364,
+          "declaration": "- (IBAction)toggleAutoSave:(id)sender"
+        },
+        {
+          "line": 3370,
+          "declaration": "- (IBAction)toggleInvisibleCharacters:(id)sender"
+        },
+        {
+          "line": 3376,
+          "declaration": "- (IBAction)render:(id)sender"
+        },
+        {
+          "line": 3391,
+          "declaration": "- (void)invalidateStyleCaches"
+        },
+        {
+          "line": 3431,
+          "declaration": "- (void)performAfterRender:(void (^)(void))handler"
+        },
+        {
+          "line": 3454,
+          "declaration": "- (void)invokeRenderCompletionHandlers"
+        },
+        {
+          "line": 3468,
+          "declaration": "- (void)toggleSplitterCollapsingEditorPane:(BOOL)forEditorPane"
+        },
+        {
+          "line": 3506,
+          "declaration": "- (void)applyEditorStartInPreviewModePreference"
+        },
+        {
+          "line": 3527,
+          "declaration": "- (void)setupEditor:(NSString *)changedKey"
+        },
+        {
+          "line": 3662,
+          "declaration": "- (void)adjustEditorInsets"
+        },
+        {
+          "line": 3678,
+          "declaration": "- (void)redrawDivider"
+        },
+        {
+          "line": 3704,
+          "declaration": "- (CGFloat)previewScale"
+        },
+        {
+          "line": 3718,
+          "declaration": "- (CGFloat)zoomMultiplier"
+        },
+        {
+          "line": 3724,
+          "declaration": "- (void)setZoomMultiplier:(CGFloat)zoomMultiplier"
+        },
+        {
+          "line": 3730,
+          "declaration": "- (void)scaleWebview"
+        },
+        {
+          "line": 3739,
+          "declaration": "- (NSFont *)zoomedEditorFont"
+        },
+        {
+          "line": 3748,
+          "declaration": "- (void)applyEditorFontAndParagraphStyle"
+        },
+        {
+          "line": 3779,
+          "declaration": "- (IBAction)zoomIn:(id)sender"
+        },
+        {
+          "line": 3784,
+          "declaration": "- (IBAction)zoomOut:(id)sender"
+        },
+        {
+          "line": 3789,
+          "declaration": "- (IBAction)resetZoom:(id)sender"
+        },
+        {
+          "line": 3794,
+          "declaration": "- (void)applyCurrentZoom"
+        },
+        {
+          "line": 3839,
+          "declaration": "-(void) updateHeaderLocations"
+        },
+        {
+          "line": 3935,
+          "declaration": "+ (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown"
+        },
+        {
+          "line": 3946,
+          "declaration": "static NSRegularExpression *dashRegex = nil;   // setext underline '---' (level 2)"
+        },
+        {
+          "line": 3947,
+          "declaration": "static NSRegularExpression *eqRegex = nil;     // setext underline '===' (level 1)"
+        },
+        {
+          "line": 3949,
+          "declaration": "static NSRegularExpression *imgRegex = nil;    // ![alt](url)"
+        },
+        {
+          "line": 3951,
+          "declaration": "static NSRegularExpression *hrRegex = nil;     // thematic break (-, *, _)"
+        },
+        {
+          "line": 4173,
+          "declaration": "+ (void)alignEditorYs:(NSArray<NSNumber *> *)editorYs"
+        },
+        {
+          "line": 4281,
+          "declaration": "- (void)validateHeaderLocationAlignment"
+        },
+        {
+          "line": 4317,
+          "declaration": "- (void)syncScrollers"
+        },
+        {
+          "line": 4425,
+          "declaration": "- (void)syncScrollersToCursor"
+        },
+        {
+          "line": 4494,
+          "declaration": "+ (CGFloat)previewYForCursorY:(CGFloat)cursorDocumentY"
+        },
+        {
+          "line": 4580,
+          "declaration": "- (void)syncScrollersReverse"
+        },
+        {
+          "line": 4670,
+          "declaration": "- (void)setSplitViewDividerLocation:(CGFloat)ratio"
+        },
+        {
+          "line": 4696,
+          "declaration": "- (NSString *)presumedFileName"
+        },
+        {
+          "line": 4729,
+          "declaration": "- (void)updateWordCount"
+        },
+        {
+          "line": 4749,
+          "declaration": "- (void)scheduleWordCountUpdate"
+        },
+        {
+          "line": 4774,
+          "declaration": "- (BOOL)isCurrentBaseUrl:(NSURL *)another"
+        },
+        {
+          "line": 4801,
+          "declaration": "- (BOOL)canAutomaticallyCreateLinkedFileAtURL:(NSURL *)url"
+        },
+        {
+          "line": 4812,
+          "declaration": "- (void)openOrCreateFileForUrl:(NSURL *)url"
+        },
+        {
+          "line": 4919,
+          "declaration": "+ (NSInvocation *)printCompletionForDelegate:(id)delegate selector:(SEL)selector context:(void *)context"
+        },
+        {
+          "line": 4936,
+          "declaration": "- (void)document:(NSDocument *)doc didPrint:(BOOL)ok context:(void *)context"
+        },
+        {
+          "line": 4991,
+          "declaration": "- (NSDictionary<NSString *, NSString *> *)queryItemsByNameForURL:(NSURL *)url"
+        },
+        {
+          "line": 5008,
+          "declaration": "- (void)handleCheckboxToggle:(NSURL *)url"
+        },
+        {
+          "line": 5058,
+          "declaration": "+ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown"
+        },
+        {
+          "line": 5075,
+          "declaration": "- (void)startFileWatching"
+        },
+        {
+          "line": 5120,
+          "declaration": "- (void)stopFileWatching"
+        },
+        {
+          "line": 5132,
+          "declaration": "- (void)handleExternalFileChange"
+        },
+        {
+          "line": 5171,
+          "declaration": "- (void)processExternalFileChange"
+        },
+        {
+          "line": 5215,
+          "declaration": "- (BOOL)shouldPromptBeforeReloadingExternalChanges"
+        },
+        {
+          "line": 5220,
+          "declaration": "- (void)promptForReloadWithExternalChanges"
+        },
+        {
+          "line": 5250,
+          "declaration": "- (void)presentExternalChangeAlertWithCompletion:(void (^)(BOOL shouldReload))completion"
+        },
+        {
+          "line": 5279,
+          "declaration": "- (void)reloadFromDisk"
+        },
+        {
+          "line": 5310,
+          "declaration": "- (void)applyPreviewZoom"
+        },
+        {
+          "line": 5325,
+          "declaration": "- (void)stepDocumentZoomDirection:(NSInteger)direction"
+        },
+        {
+          "line": 5373,
+          "declaration": "- (IBAction)selectDocumentZoom:(id)sender"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.h",
+      "sha256": "748eb6ded390d9261d7454819f8e2486b65735ff7f2239495208cb05952daed3",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Parcours récursif texte/newlines et text node : consommateurs scroll/document/highlighting; native scrolling/renderer.",
+      "symbols_inventory": [
+        {
+          "line": 29,
+          "declaration": "@interface DOMNode (Text)"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/DOMNode+Text.m",
+      "sha256": "4005d622d14d38cb16681f4f1467e36fa8c797e4f09605ff4b4cfc944e04d3bf",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Parcours récursif texte/newlines et text node : consommateurs scroll/document/highlighting; native scrolling/renderer.",
+      "symbols_inventory": [
+        {
+          "line": 142,
+          "declaration": "- (DOMNodeTextCount)textCount"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSColor+HTML.h",
+      "sha256": "ed1b5feb51f01bc5032c6fa08935c339177deb99372dee59016fb54ffdacd0fd",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Composantes RGB et format HTML utilisés renderer/UI/export; natif couleurs/export et printPDF.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSColor (HTML)"
+        },
+        {
+          "line": 13,
+          "declaration": "+ (NSColor *)colorWithHTMLName:(NSString *)name;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSColor+HTML.m",
+      "sha256": "c97b507bf33beff26a3359afc9573718b962921a382962a7a37f1fb55f3a85b0",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Composantes RGB et format HTML utilisés renderer/UI/export; natif couleurs/export et printPDF.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "+ (NSColor *)colorWithHexString:(NSString *)string"
+        },
+        {
+          "line": 38,
+          "declaration": "+ (NSColor *)colorWithHTMLName:(NSString *)name"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSDocumentController+Document.h",
+      "sha256": "502d752bb8dce5f414505b127f550561b4a23ed967a40e6f00f64fb7ef08ee54",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Ouverture document/error propagation utilisée menus/commandqueue; suite open-document native.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSDocumentController (Document)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (__kindof NSDocument *)createNewEmptyDocumentForURL:(NSURL *)url"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSDocumentController+Document.m",
+      "sha256": "4af8a68681d5c0bc6cee62c87b2094dd885a484fe88a461e091682bbf4a73b61",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Ouverture document/error propagation utilisée menus/commandqueue; suite open-document native.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "- (__kindof NSDocument *)createNewEmptyDocumentForURL:(NSURL *)url"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSJSONSerialization+File.h",
+      "sha256": "93948eae83465ff1bc9f555a3f6b53786bbbc70353c912b1e11b08f9b038cb20",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Lecture bytes erreur puis JSON/options propagées; suite utilitaires native et manifest consumers.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSJSONSerialization (File)"
+        },
+        {
+          "line": 13,
+          "declaration": "+ (id)JSONObjectWithFileAtURL:(NSURL *)url options:(NSJSONReadingOptions)opt"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSJSONSerialization+File.m",
+      "sha256": "2408f3ab942a71458a94ae9a3fb00b37e767370098b9ee6e534e252b7127f990",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Lecture bytes erreur puis JSON/options propagées; suite utilitaires native et manifest consumers.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "+ (id)JSONObjectWithFileAtURL:(NSURL *)url options:(NSJSONReadingOptions)opt"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSObject+HTMLTabularize.h",
+      "sha256": "1849ce0e2b22de85f74a5c8cbd682e0e4bbbd85d196c628b7a883f1d99629b35",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Échappement HTML et tabularisation types collections/valeurs fallback, consumer Cocoa paste/export; native tableaux.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSObject (HTMLTabularize)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (NSString *)HTMLTable;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSObject+HTMLTabularize.m",
+      "sha256": "1d87c68ca646f78448ce013ebc6e2d72c293d51f56ea54ed25ed9ceb69dad555",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Échappement HTML et tabularisation types collections/valeurs fallback, consumer Cocoa paste/export; native tableaux.",
+      "symbols_inventory": [
+        {
+          "line": 16,
+          "declaration": "- (NSString *)HTMLTable"
+        },
+        {
+          "line": 26,
+          "declaration": "+ (NSArray *)validKeysForHandlebars"
+        },
+        {
+          "line": 36,
+          "declaration": "- (NSString *)HTMLTable"
+        },
+        {
+          "line": 46,
+          "declaration": "- (NSString *)HTMLTable"
+        },
+        {
+          "line": 69,
+          "declaration": "- (NSString *)HTMLTable"
+        },
+        {
+          "line": 98,
+          "declaration": "- (NSString *)HTMLTable"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSPasteboard+Types.h",
+      "sha256": "6d27da2a53fa5b36e3a7e6eb36a738eb5eff5c6f9a28244800677a8032fc895f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "UTI fallbacks/compatibilité image/table/URL : consommateurs editor/public paste; native pasteboards.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSPasteboard (Types)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (NSURL *)URLForType:(NSString *)dataType;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSPasteboard+Types.m",
+      "sha256": "d61025bbf8f588ed3acd1f8232e806780b909979613ec00923fdc7039b8ca549",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "UTI fallbacks/compatibilité image/table/URL : consommateurs editor/public paste; native pasteboards.",
+      "symbols_inventory": [
+        {
+          "line": 14,
+          "declaration": "- (NSURL *)URLForType:(NSString *)dataType"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSString+Lookup.h",
+      "sha256": "8fcb13267c19cec61709a41699a6032796032cb88037e77798c87681b1243cfc",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Bornes UTF16/newlines/whitespace et ranges consumers autocomplete/MPDocument/renderer; native lookup +12AppKit.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSString (Lookup)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (NSInteger)locationOfFirstNewlineBefore:(NSUInteger)location;"
+        },
+        {
+          "line": 14,
+          "declaration": "- (NSUInteger)locationOfFirstNewlineAfter:(NSUInteger)location;"
+        },
+        {
+          "line": 15,
+          "declaration": "- (NSUInteger)locationOfFirstNonWhitespaceCharacterInLineBefore:(NSUInteger)loc;"
+        },
+        {
+          "line": 17,
+          "declaration": "- (NSArray *)matchesForPattern:(NSString *)pattern;"
+        },
+        {
+          "line": 19,
+          "declaration": "- (id)frontMatter:(NSUInteger *)contentOffset;"
+        },
+        {
+          "line": 20,
+          "declaration": "- (NSString *)titleString;"
+        },
+        {
+          "line": 22,
+          "declaration": "- (BOOL)hasExtension:(NSString *)extension;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSString+Lookup.m",
+      "sha256": "9e18ee26f0cf0615d71c0af8a520d004d9206fd8f0747ec8d2f0f2c03e430986",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Bornes UTF16/newlines/whitespace et ranges consumers autocomplete/MPDocument/renderer; native lookup +12AppKit.",
+      "symbols_inventory": [
+        {
+          "line": 16,
+          "declaration": "- (NSInteger)locationOfFirstNewlineBefore:(NSUInteger)location"
+        },
+        {
+          "line": 26,
+          "declaration": "- (NSUInteger)locationOfFirstNewlineAfter:(NSUInteger)location"
+        },
+        {
+          "line": 37,
+          "declaration": "- (NSUInteger)locationOfFirstNonWhitespaceCharacterInLineBefore:(NSUInteger)loc"
+        },
+        {
+          "line": 48,
+          "declaration": "- (NSArray *)matchesForPattern:(NSString *)p"
+        },
+        {
+          "line": 55,
+          "declaration": "- (id)frontMatter:(NSUInteger *)contentOffset"
+        },
+        {
+          "line": 97,
+          "declaration": "- (NSString *)titleString"
+        },
+        {
+          "line": 122,
+          "declaration": "- (BOOL)hasExtension:(NSString *)extension"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.h",
+      "sha256": "ea69f917e5a7d89d50483589c1497b89c8fbb05624b2f4836c9fc1879f13cea7",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Chaque branche pairs/quotes/IME/delete, toggle/indent/unindent, listes/citations/link selection lue; D03-02 3suppressions raw migrées insertText. 6régressions rouges baseline et 12checks réels AppKit verts; notification/delegate veto/undo vérifiés, fullnative1437.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSTextView (Autocomplete)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (BOOL)substringInRange:(NSRange)range isSurroundedByPrefix:(NSString *)prefix"
+        },
+        {
+          "line": 15,
+          "declaration": "- (void)insertSpacesForTab;"
+        },
+        {
+          "line": 16,
+          "declaration": "- (BOOL)completeMatchingCharactersForTextInRange:(NSRange)range"
+        },
+        {
+          "line": 19,
+          "declaration": "- (BOOL)completeMatchingCharacterForText:(NSString *)string"
+        },
+        {
+          "line": 21,
+          "declaration": "- (void)wrapTextInRange:(NSRange)range withPrefix:(unichar)prefix"
+        },
+        {
+          "line": 23,
+          "declaration": "- (BOOL)wrapMatchingCharactersOfCharacter:(unichar)character"
+        },
+        {
+          "line": 26,
+          "declaration": "- (BOOL)deleteMatchingCharactersAround:(NSUInteger)location;"
+        },
+        {
+          "line": 27,
+          "declaration": "- (BOOL)unindentForSpacesBefore:(NSUInteger)location;"
+        },
+        {
+          "line": 28,
+          "declaration": "- (BOOL)toggleForMarkupPrefix:(NSString *)prefix suffix:(NSString *)suffix;"
+        },
+        {
+          "line": 30,
+          "declaration": "- (void)toggleBlockWithPattern:(NSString *)pattern prefix:(NSString *)prefix;"
+        },
+        {
+          "line": 31,
+          "declaration": "- (void)indentSelectedLinesWithPadding:(NSString *)padding;"
+        },
+        {
+          "line": 32,
+          "declaration": "- (void)unindentSelectedLines;"
+        },
+        {
+          "line": 33,
+          "declaration": "- (BOOL)insertMappedContent;"
+        },
+        {
+          "line": 34,
+          "declaration": "- (BOOL)completeNextListItem:(BOOL)autoIncrement;"
+        },
+        {
+          "line": 35,
+          "declaration": "- (BOOL)completeNextBlockquoteLine;"
+        },
+        {
+          "line": 36,
+          "declaration": "- (BOOL)completeNextIndentedLine;"
+        },
+        {
+          "line": 37,
+          "declaration": "- (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSTextView+Autocomplete.m",
+      "sha256": "13094b4f9efd5d5690ebad5aa1b52695d6884bcde423c2e268275a4e7e8979d6",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Chaque branche pairs/quotes/IME/delete, toggle/indent/unindent, listes/citations/link selection lue; D03-02 3suppressions raw migrées insertText. 6régressions rouges baseline et 12checks réels AppKit verts; notification/delegate veto/undo vérifiés, fullnative1437.",
+      "symbols_inventory": [
+        {
+          "line": 54,
+          "declaration": "static NSString * const kMPBlockquoteLinePattern = @\"^((?:\\\\> ?)+).*$\";"
+        },
+        {
+          "line": 59,
+          "declaration": "- (BOOL)substringInRange:(NSRange)range isSurroundedByPrefix:(NSString *)prefix"
+        },
+        {
+          "line": 86,
+          "declaration": "- (void)insertSpacesForTab"
+        },
+        {
+          "line": 104,
+          "declaration": "- (BOOL)completeMatchingCharactersForTextInRange:(NSRange)range"
+        },
+        {
+          "line": 130,
+          "declaration": "- (BOOL)completeMatchingCharacterForText:(NSString *)string"
+        },
+        {
+          "line": 206,
+          "declaration": "- (void)wrapTextInRange:(NSRange)range withPrefix:(unichar)prefix"
+        },
+        {
+          "line": 219,
+          "declaration": "- (BOOL)wrapMatchingCharactersOfCharacter:(unichar)character"
+        },
+        {
+          "line": 247,
+          "declaration": "- (BOOL)deleteMatchingCharactersAround:(NSUInteger)location"
+        },
+        {
+          "line": 268,
+          "declaration": "- (BOOL)unindentForSpacesBefore:(NSUInteger)location"
+        },
+        {
+          "line": 298,
+          "declaration": "- (BOOL)toggleForMarkupPrefix:(NSString *)prefix suffix:(NSString *)suffix"
+        },
+        {
+          "line": 328,
+          "declaration": "- (void)toggleBlockWithPattern:(NSString *)pattern prefix:(NSString *)prefix"
+        },
+        {
+          "line": 373,
+          "declaration": "- (void)indentSelectedLinesWithPadding:(NSString *)padding"
+        },
+        {
+          "line": 405,
+          "declaration": "- (void)unindentSelectedLines"
+        },
+        {
+          "line": 468,
+          "declaration": "- (BOOL)insertMappedContent"
+        },
+        {
+          "line": 492,
+          "declaration": "- (BOOL)completeNextListItem:(BOOL)autoIncrement"
+        },
+        {
+          "line": 590,
+          "declaration": "- (BOOL)completeNextBlockquoteLine"
+        },
+        {
+          "line": 631,
+          "declaration": "- (BOOL)completeNextIndentedLine"
+        },
+        {
+          "line": 651,
+          "declaration": "- (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSUserDefaults+Suite.h",
+      "sha256": "cac0f676b540a481d3357f96cfc96b6c16e562faba238ac3283759c05e213439",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Suite defaults et conteneur support ; consommation MPPreferences/CLI migrée, XCTest protégé par coffre/restauration; natif preferences/CLI.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface NSUserDefaults (Suite)"
+        },
+        {
+          "line": 13,
+          "declaration": "- (instancetype)initWithSuiteNamed:(NSString *)suiteName;"
+        },
+        {
+          "line": 14,
+          "declaration": "- (id)objectForKey:(NSString *)key inSuiteNamed:(NSString *)suiteName;"
+        },
+        {
+          "line": 15,
+          "declaration": "- (void)setObject:(id)value forKey:(NSString *)key"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/NSUserDefaults+Suite.m",
+      "sha256": "e0b928949e2ae900488fab2a08d8a130c1a27ce4807dfdcc90b76830381ad3da",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Suite defaults et conteneur support ; consommation MPPreferences/CLI migrée, XCTest protégé par coffre/restauration; natif preferences/CLI.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "- (instancetype)initWithSuiteNamed:(NSString *)suiteName"
+        },
+        {
+          "line": 22,
+          "declaration": "- (id)objectForKey:(NSString *)key inSuiteNamed:(NSString *)suiteName"
+        },
+        {
+          "line": 31,
+          "declaration": "- (void)setObject:(id)value forKey:(NSString *)key"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Extension/WebView+WebViewPrivateHeaders.h",
+      "sha256": "f537f69c38a0c155793d630b9179d3e30afe8abf62a5a43f2600001a4f39d3c8",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Déclarations privé-compatibilité WebView défilement/print, usages MPDocument/main-thread; vrais WebKitPDF et scrolltests.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface WebView (WebViewPrivateHeaders)"
+        },
+        {
+          "line": 18,
+          "declaration": "- (void)setPageSizeMultiplier:(float)multiplier;"
+        },
+        {
+          "line": 24,
+          "declaration": "- (float)pageSizeMultiplier;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/MacDown-Prefix.pch",
+      "sha256": "d68c3773ffcff85f41cade88fdef7f13af4533253326ca0ee36464781e554cf6",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "En-tête imports/précompilation Cocoa/WebKit/helpers lié manifests et compiler Debug réel; aucune branche exécutable.",
+      "symbols_inventory": [],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/FileURLInlining.h",
+      "sha256": "c1696072c1ee2a1e874cc7108a205d6d3ca6d8f133bd8f320950328e65173c5e",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Remplacement regex/taille/percentescape/ranges reverse; editor drag/copier ressource, fichier URI native tests.",
+      "symbols_inventory": [
+        {
+          "line": 9,
+          "declaration": "@interface FileURLInlining : NSObject"
+        },
+        {
+          "line": 10,
+          "declaration": "+(NSArray<NSString*>*)inlineFromIterable:(id<NSFastEnumeration>)iterable;"
+        },
+        {
+          "line": 11,
+          "declaration": "-(instancetype) initWithURL: (NSURL *) url;"
+        },
+        {
+          "line": 12,
+          "declaration": "-(NSString *) inlineContent;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/FileURLInlining.m",
+      "sha256": "8b6cab69f85dfe5ee2ff7f0f489f59b665074c0e3d779ec0a9fd0fb1e31058d0",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Remplacement regex/taille/percentescape/ranges reverse; editor drag/copier ressource, fichier URI native tests.",
+      "symbols_inventory": [
+        {
+          "line": 18,
+          "declaration": "+(NSArray<NSString*>*)inlineFromIterable:(id<NSFastEnumeration>)iterable {"
+        },
+        {
+          "line": 30,
+          "declaration": "-(instancetype)initWithURL:(NSURL *) url {"
+        },
+        {
+          "line": 38,
+          "declaration": "-(id)init {"
+        },
+        {
+          "line": 43,
+          "declaration": "-(NSString *)inlineContent {"
+        },
+        {
+          "line": 55,
+          "declaration": "-(NSString *)imageContent"
+        },
+        {
+          "line": 82,
+          "declaration": "+ (NSString *)mimeTypeForFilePath:(NSString *)filePath"
+        },
+        {
+          "line": 115,
+          "declaration": "-(NSString *)clippingContent"
+        },
+        {
+          "line": 129,
+          "declaration": "+ (BOOL)isTextClippingAtPath:(NSString *)filePath"
+        },
+        {
+          "line": 154,
+          "declaration": "+ (NSString *)textContentFromClipping:(NSURL *)url"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPAutosaving.h",
+      "sha256": "798fb7bd3f3aff840c17c7dc3d24fdfccd6243771bf9c6bba5b65c584b61fd1b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Protocole flags autosave/preference et consommateurs Cocoa panels/document ; natif autosave/settings.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@protocol MPAutosaving <NSObject>"
+        },
+        {
+          "line": 13,
+          "declaration": "- (NSString *)autosaveName;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPFileWatcher.h",
+      "sha256": "07689eb11b455131ae428801b3f25de58e40e29fa80a48106a4c6b2b14d4ddbb",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Sources dispatch FD ownership, start/stop événement block, invalidation et main-thread consumer; suite watcher native.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface MPFileWatcher : NSObject"
+        },
+        {
+          "line": 24,
+          "declaration": "+ (BOOL)canWatchPath:(NSString *)path;"
+        },
+        {
+          "line": 29,
+          "declaration": "+ (BOOL)pathIsOnLocalVolume:(NSString *)path;"
+        },
+        {
+          "line": 34,
+          "declaration": "- (instancetype)initWithPath:(NSString *)path"
+        },
+        {
+          "line": 39,
+          "declaration": "- (void)stopWatching;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPFileWatcher.m",
+      "sha256": "ee5059ab5cd7393f17ba6108fdd3216d40825773680ffbf1fea607903335a236",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Sources dispatch FD ownership, start/stop événement block, invalidation et main-thread consumer; suite watcher native.",
+      "symbols_inventory": [
+        {
+          "line": 12,
+          "declaration": "@interface MPFileWatcher ()"
+        },
+        {
+          "line": 19,
+          "declaration": "+ (BOOL)canWatchPath:(NSString *)path"
+        },
+        {
+          "line": 24,
+          "declaration": "+ (BOOL)pathIsOnLocalVolume:(NSString *)path"
+        },
+        {
+          "line": 55,
+          "declaration": "- (instancetype)initWithPath:(NSString *)path"
+        },
+        {
+          "line": 122,
+          "declaration": "- (void)dealloc"
+        },
+        {
+          "line": 127,
+          "declaration": "- (BOOL)isWatching"
+        },
+        {
+          "line": 132,
+          "declaration": "- (void)stopWatching"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPGlobals.h",
+      "sha256": "8ed8632ca58cba155534bf6e12ba0fd249d0e045052a5b6c9776df17cb97cbcf",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Constantes notification/domain/resource paths et consommateurs app/Core/CLI cohérents, pas de pipeline alternative incohérent.",
+      "symbols_inventory": [],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHTMLResourceURLs.h",
+      "sha256": "59696bfe884e0f4cc240addadc2d5035f1cbd6648d2a3e5b1f3e86ea5982c68a",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Classement URLs base relative/http/data et CSS/resource scripts ; renderer/WebKit native +security tests.",
+      "symbols_inventory": [],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHTMLResourceURLs.m",
+      "sha256": "ead2d9ccec8adf98838ebdaa1b57066235ab8a7f3d895d87ec1f53e9916f0d42",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Classement URLs base relative/http/data et CSS/resource scripts ; renderer/WebKit native +security tests.",
+      "symbols_inventory": [
+        {
+          "line": 19,
+          "declaration": "static NSString *MPDecodeHTMLURL(NSString *url)"
+        },
+        {
+          "line": 27,
+          "declaration": "static NSString *MPResolveLocalPath(NSString *url, NSURL *baseURL)"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHomebrewSubprocessController.h",
+      "sha256": "eb1e9070b3fee53612cdf38b84009ce46fafb2f707c1d521fb96fc3fe0a46684",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "D03-01 stdout drain async avant wait; données1MiB, completion main, release controller et absencebrew réels : 4XCTest verts, fixture avant timeout prouvée.",
+      "symbols_inventory": [
+        {
+          "line": 12,
+          "declaration": "@interface MPHomebrewSubprocessController : NSObject"
+        },
+        {
+          "line": 14,
+          "declaration": "- (instancetype)initWithArguments:(NSArray *)args;"
+        },
+        {
+          "line": 15,
+          "declaration": "- (void)runWithCompletionHandler:(void(^)(NSString *))handler;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPHomebrewSubprocessController.m",
+      "sha256": "1e7631f30e27c3a6a1698e3a2b4b944b495d671ef0524ad2e714c3c875bbb6fb",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "D03-01 stdout drain async avant wait; données1MiB, completion main, release controller et absencebrew réels : 4XCTest verts, fixture avant timeout prouvée.",
+      "symbols_inventory": [
+        {
+          "line": 12,
+          "declaration": "@interface MPHomebrewSubprocessController ()"
+        },
+        {
+          "line": 21,
+          "declaration": "- (instancetype)initWithArguments:(NSArray *)args"
+        },
+        {
+          "line": 37,
+          "declaration": "- (instancetype)init"
+        },
+        {
+          "line": 50,
+          "declaration": "- (NSString *)resolvedBrewPath"
+        },
+        {
+          "line": 63,
+          "declaration": "- (void)runWithCompletionHandler:(void(^)(NSString *))handler"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPMathJaxListener.h",
+      "sha256": "91ae4785b093e068a3869bdc010e763bc681d454199c073f981524e069f8dbe2",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Générations waiters/timeout/invalidations callbacks et exposés WebScript; MPDocument consumers load/export/close, native listener tests.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface MPMathJaxListener : NSObject"
+        },
+        {
+          "line": 13,
+          "declaration": "- (void)addCallback:(void (^)(void))block forKey:(NSString *)key;"
+        },
+        {
+          "line": 14,
+          "declaration": "- (void)invokeCallbackForKey:(NSString *)key;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPMathJaxListener.m",
+      "sha256": "818553ca0a3ab4d71fedf66d10c1d64352d28d292c897bf1b72bd430a38e544b",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Générations waiters/timeout/invalidations callbacks et exposés WebScript; MPDocument consumers load/export/close, native listener tests.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface MPMathJaxListener ()"
+        },
+        {
+          "line": 17,
+          "declaration": "- (NSMutableDictionary *)callbacks"
+        },
+        {
+          "line": 24,
+          "declaration": "- (void)addCallback:(void (^)(void))block forKey:(NSString *)key"
+        },
+        {
+          "line": 29,
+          "declaration": "- (void)invokeCallbackForKey:(NSString *)key"
+        },
+        {
+          "line": 42,
+          "declaration": "+ (BOOL)isSelectorExcludedFromWebScript:(SEL)selector"
+        },
+        {
+          "line": 49,
+          "declaration": "+ (BOOL)isKeyExcludedFromWebScript:(const char *)name"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPResourceWatcherSet.h",
+      "sha256": "db6f55e8e1ba83db6dff5a15340ef2fe56af8935b2132ce28b01f50b5095c9bb",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Normalisation/filtrage/sets/observers dispatch mutations main, consumer renderer stylesheet changes, native watches.",
+      "symbols_inventory": [
+        {
+          "line": 13,
+          "declaration": "@protocol MPResourceWatcherSetDelegate <NSObject>"
+        },
+        {
+          "line": 14,
+          "declaration": "- (void)resourceWatcherSet:(MPResourceWatcherSet *)set"
+        },
+        {
+          "line": 18,
+          "declaration": "@interface MPResourceWatcherSet : NSObject"
+        },
+        {
+          "line": 27,
+          "declaration": "- (void)updateWatchedPaths:(NSSet<NSString *> *)paths;"
+        },
+        {
+          "line": 30,
+          "declaration": "- (void)stopAll;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPResourceWatcherSet.m",
+      "sha256": "d4663a4990d8df2c7fcefa774424c41ca4dfbfa4f7ff51090a82cd6ee051a9e2",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Normalisation/filtrage/sets/observers dispatch mutations main, consumer renderer stylesheet changes, native watches.",
+      "symbols_inventory": [
+        {
+          "line": 12,
+          "declaration": "@interface MPResourceWatcherSet ()"
+        },
+        {
+          "line": 20,
+          "declaration": "- (instancetype)init"
+        },
+        {
+          "line": 30,
+          "declaration": "- (void)dealloc"
+        },
+        {
+          "line": 35,
+          "declaration": "- (NSSet<NSString *> *)watchedPaths"
+        },
+        {
+          "line": 40,
+          "declaration": "- (void)updateWatchedPaths:(NSSet<NSString *> *)paths"
+        },
+        {
+          "line": 64,
+          "declaration": "- (void)addWatcherForPath:(NSString *)path"
+        },
+        {
+          "line": 118,
+          "declaration": "- (void)stopAll"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPURLSecurityPolicy.h",
+      "sha256": "cff58c6ee4f06422acb1bdfc22024d35a839197b29cf2c354a54fa9b821b0fa6",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "URL schemes/network/local path canonicalisation sandbox scopes/symlinks, consommateurs clics/doc/CLI/resources, natif security tests.",
+      "symbols_inventory": [
+        {
+          "line": 11,
+          "declaration": "@interface MPURLSecurityPolicy : NSObject"
+        },
+        {
+          "line": 15,
+          "declaration": "+ (BOOL)isExecutableOrAppBundleAtURL:(NSURL *)url;"
+        },
+        {
+          "line": 19,
+          "declaration": "+ (BOOL)url:(NSURL *)targetURL isWithinScopeOfBaseURL:(NSURL *)baseURL;"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPURLSecurityPolicy.m",
+      "sha256": "ae6111380d3de983ba9dd224cf42c3ccf8defdcd9a7084f24474d9c182c0e9c1",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "URL schemes/network/local path canonicalisation sandbox scopes/symlinks, consommateurs clics/doc/CLI/resources, natif security tests.",
+      "symbols_inventory": [
+        {
+          "line": 16,
+          "declaration": "+ (BOOL)isExecutableOrAppBundleAtURL:(NSURL *)url"
+        },
+        {
+          "line": 53,
+          "declaration": "+ (BOOL)url:(NSURL *)targetURL isWithinScopeOfBaseURL:(NSURL *)baseURL"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPUtilities.h",
+      "sha256": "583fb5ceb4959b3d9b28bd6f3c0c3f4d7fc443f598060527f4b0d7f2997295b9",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "574 lignes chaque utility : resources/lookups/pruning, style YAML/font et détection flags/plists/path, échappement de liens, assets directories. Consommateurs app/renderer/editor relus, native utilities/asset tests, assets sandbox gate restant.",
+      "symbols_inventory": [
+        {
+          "line": 59,
+          "declaration": "static void (^MPDocumentOpenCompletionEmpty)("
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/Utility/MPUtilities.m",
+      "sha256": "3e05f9cc43cfd6b546381a0a80e80530e51ba39a351a730adbba5c24000be541",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "574 lignes chaque utility : resources/lookups/pruning, style YAML/font et détection flags/plists/path, échappement de liens, assets directories. Consommateurs app/renderer/editor relus, native utilities/asset tests, assets sandbox gate restant.",
+      "symbols_inventory": [
+        {
+          "line": 20,
+          "declaration": "static NSString *MPDataRootDirectory()"
+        },
+        {
+          "line": 264,
+          "declaration": "static NSString *MPPrismThemeFileName(NSString *name)"
+        },
+        {
+          "line": 272,
+          "declaration": "static NSString *MPPrismThemeDisplayName(NSString *fileName)"
+        },
+        {
+          "line": 289,
+          "declaration": "static NSURL *MPPrismThemeURLInRoot(NSString *root, NSString *fileName)"
+        },
+        {
+          "line": 339,
+          "declaration": "static NSArray *MPListThemeFilesInDirectory(NSString *dirPath)"
+        },
+        {
+          "line": 390,
+          "declaration": "static NSArray *MPListStylesheetFilesInDirectory(NSString *dirPath)"
+        }
+      ],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Code/main.m",
+      "sha256": "d806c4913d7bf07d971688a6c57e1521b84e3e91ad2d8884f9ac0b8bb2bcc81f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Entrée NSApplicationMain unique, bootstrap/délégués cohérents avec nib/maincontroller et Debug natif.",
+      "symbols_inventory": [],
+      "read_coverage": "1–EOF intégral, lecture contiguë campagne03 ; symboles indexés après lecture, pas une preuve automatisée de validation.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/MacDown-Info.plist",
+      "sha256": "681500c51779dfce902c68a9a5410ffbdbd4000141f6aeb8c4cb3c814521b9f4",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Plist complet : types documents/URL/services/versions/UTI/icônes et identifiers liés Xcode/CLI/QL; Debug réel construit, Release restant.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/MacDown.entitlements",
+      "sha256": "62eb40b798dab525052c90eff791e92784243d628df4aa747c93f394c204629f",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Entitlements file-access relus, signature/QuickLook schemes cohérents, contrôle Release restant.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Resources/Data/data.map",
+      "sha256": "025a921e2605e475deb76107296b8bb76db2b572e74b6b45ee1cf8bea72c3e85",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Archive intégralement décodée et PNG/métadonnées/chunks examinés ; entrée active insertMappedContent, image visualisée sans payload exécutable.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    },
+    {
+      "path": "MacDown/Resources/Data/treats.map",
+      "sha256": "dba33b7668fcc5a41df81adc340a73e963590600593fa18fcd923ac7cf372d24",
+      "read": true,
+      "analyzed": true,
+      "validated": true,
+      "evidence": "Archive graphe16objets/3payloadsMarkdown/DSStore décodés complets : déclenchement username/jour/once et texte non exécutable ; comportement caché accessible conservé.",
+      "open_findings": [],
+      "validation_evidence": "Décision manuelle de clôture root ; lecture/analyse individuelles, seconde passe et contrôles consommateurs acceptés. Voir campagne03-cloture.md et logs applicables ; aucune certification déduite du SHA seul."
+    }
+  ],
+  "status": "validé techniquement dans le périmètre local décrit, limites documentées"
+}

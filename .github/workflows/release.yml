@@ -27,37 +27,6 @@ jobs:
           submodules: recursive
           fetch-depth: 0  # Need full history to check branch
 
-      - name: Verify tag is on main or release branch
-        if: github.ref_type == 'tag'
-        run: |
-          echo "🔍 Verifying that tag ${{ github.ref_name }} is on an allowed branch..."
-
-          # Get the commit hash of the tag
-          TAG_COMMIT=$(git rev-parse ${{ github.ref_name }})
-
-          # Check if this commit is reachable from main or a release/* branch.
-          # Under the release branch model, RC and final release tags are created
-          # on release/* branches, not main. See plans/rc-process.md.
-          FOUND=false
-          if git merge-base --is-ancestor "$TAG_COMMIT" origin/main 2>/dev/null; then
-            echo "✅ Tag is on main branch (or ancestor of main)"
-            FOUND=true
-          else
-            for branch in $(git branch -r --list 'origin/release/*'); do
-              if git merge-base --is-ancestor "$TAG_COMMIT" "$branch" 2>/dev/null; then
-                echo "✅ Tag is on ${branch} (release branch)"
-                FOUND=true
-                break
-              fi
-            done
-          fi
-
-          if [ "$FOUND" = false ]; then
-            echo "::error::Tag ${{ github.ref_name }} is NOT on main or any release/* branch!"
-            echo "::error::Release tags must be created from main or a release/* branch."
-            exit 1
-          fi
-
       - name: Validate required secrets
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -101,6 +70,7 @@ jobs:
       - name: Extract version from tag or input
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROVIDED_VERSION: ${{ github.event.inputs.version }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/* ]]; then
             # Triggered by tag push
@@ -109,7 +79,6 @@ jobs:
             echo "📌 Using tag version: $VERSION"
           else
             # Triggered by workflow_dispatch
-            PROVIDED_VERSION="${{ github.event.inputs.version }}"
             if [[ -n "$PROVIDED_VERSION" ]]; then
               VERSION="$PROVIDED_VERSION"
               echo "📌 Using provided version: $VERSION"
@@ -125,7 +94,34 @@ jobs:
               echo "📌 Auto-detected version: $VERSION"
             fi
           fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          RELEASE_TAG="v$VERSION"
+          RELEASE_COMMIT=$(git rev-parse --verify 'HEAD^{commit}')
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            TAG_COMMIT=$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")
+            if [[ "$TAG_COMMIT" != "$RELEASE_COMMIT" ]]; then
+              echo "::error::Release tag $RELEASE_TAG points to $TAG_COMMIT, but the selected source is $RELEASE_COMMIT. Run this workflow from the release tag." >&2
+              exit 1
+            fi
+          fi
+          # The manual entry point must enforce the same source policy as tags.
+          ALLOWED_SOURCE=false
+          while IFS= read -r branch; do
+            if git merge-base --is-ancestor "$RELEASE_COMMIT" "$branch"; then
+              ALLOWED_SOURCE=true
+              break
+            fi
+          done < <(git for-each-ref --format='%(refname)' refs/remotes/origin/main 'refs/remotes/origin/release/*')
+          if [[ "$ALLOWED_SOURCE" != true ]]; then
+            echo "::error::Release source is not on main or a release/* branch." >&2
+            exit 1
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "RELEASE_COMMIT=$RELEASE_COMMIT" >> "$GITHUB_ENV"
           echo "📦 Building version: $VERSION"
 
       - name: Verify changelog entry exists
@@ -222,82 +218,8 @@ jobs:
       - name: Smoke test app launch
         timeout-minutes: 2
         run: |
-          APP_PATH=$(find DerivedData -name "MacDown 3000.app" -type d | head -n 1)
-
-          if [ -z "$APP_PATH" ]; then
-            echo "ERROR: Could not find built MacDown 3000.app"
-            exit 1
-          fi
-
-          # Fresh install scenario
-          defaults delete com.uranusjr.macdown 2>/dev/null || true
-          defaults delete app.macdown.macdown3000 2>/dev/null || true
-
-          open -W -n "$APP_PATH" &
-          APP_PID=$!
-          TIMEOUT=5
-          ELAPSED=0
-          TIMED_OUT=false
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-            if ! kill -0 $APP_PID 2>/dev/null; then break; fi
-            sleep 1
-            ELAPSED=$((ELAPSED + 1))
-          done
-          if kill -0 $APP_PID 2>/dev/null; then
-            kill $APP_PID 2>/dev/null
-            TIMED_OUT=true
-          fi
-          EXIT_CODE=0
-          wait $APP_PID 2>/dev/null || EXIT_CODE=$?
-          if [ "$TIMED_OUT" = "true" ]; then
-            echo "App launched successfully (killed after timeout)"
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "App launched and exited cleanly"
-          else
-            echo "ERROR: App exited unexpectedly with code $EXIT_CODE - possible crash or hang"
-            exit 1
-          fi
-
-          # Migration scenario
-          defaults delete app.macdown.macdown3000 2>/dev/null || true
-          defaults write com.uranusjr.macdown testMigrationKey "testMigrationValue"
-          defaults write com.uranusjr.macdown editorBaseFontName "Monaco"
-
-          open -W -n -F "$APP_PATH" &
-          APP_PID=$!
-          ELAPSED=0
-          TIMED_OUT=false
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-            if ! kill -0 $APP_PID 2>/dev/null; then break; fi
-            sleep 1
-            ELAPSED=$((ELAPSED + 1))
-          done
-          if kill -0 $APP_PID 2>/dev/null; then
-            kill $APP_PID 2>/dev/null
-            TIMED_OUT=true
-          fi
-          EXIT_CODE=0
-          wait $APP_PID 2>/dev/null || EXIT_CODE=$?
-          if [ "$TIMED_OUT" = "true" ]; then
-            echo "App launched successfully with migration (killed after timeout)"
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "App launched with migration and exited cleanly"
-          else
-            echo "ERROR: App exited unexpectedly during migration with code $EXIT_CODE"
-            exit 1
-          fi
-
-          MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
-          if [ "$MIGRATION_COMPLETE" = "1" ]; then
-            echo "Migration completed successfully"
-          else
-            echo "WARNING: Migration completed flag not set"
-          fi
-
-          defaults delete com.uranusjr.macdown 2>/dev/null || true
-          defaults delete app.macdown.macdown3000 2>/dev/null || true
-
-          echo "Smoke test passed"
+          APP_PATH="DerivedData/Build/Products/Debug/MacDown 3000.app"
+          bash Tools/smoke_launch.sh "$APP_PATH"
 
       # Keep in sync with the ui-test job in smoke-test.yml
       - name: Run UI tests
@@ -891,7 +813,8 @@ jobs:
         with:
           draft: true
           prerelease: ${{ env.PRERELEASE }}
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', env.VERSION) }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ env.RELEASE_COMMIT }}
           name: MacDown ${{ env.VERSION }}
           files: |
             build/MacDown-${{ env.VERSION }}.dmg

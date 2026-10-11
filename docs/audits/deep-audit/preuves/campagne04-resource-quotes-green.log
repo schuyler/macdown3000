@@ -1,0 +1,83 @@
+Test Suite 'All tests' started at 2026-10-10 00:06:09.855.
+Test Suite 'Resources.xctest' started at 2026-10-10 00:06:09.856.
+Test Suite 'MPHTMLResourceURLsTests' started at 2026-10-10 00:06:09.856.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustAppendTimestamp]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustAppendTimestamp]' passed (0.002 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustEmptyTimestampsReturnsOriginal]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustEmptyTimestampsReturnsOriginal]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesOtherQueryItemsAndSVGFragment]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustingPreservesOtherQueryItemsAndSVGFragment]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustNilTimestampsReturnsOriginal]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustNilTimestampsReturnsOriginal]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustOnlyStampsTrackedStylesheet]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustOnlyStampsTrackedStylesheet]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustPreservesUnchangedUrls]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustPreservesUnchangedUrls]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustReplacesExistingStylesheetTimestamp]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustReplacesExistingStylesheetTimestamp]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustReplacesExistingTimestamp]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustReplacesExistingTimestamp]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustStampsAbsoluteFileURLStylesheetLink]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustStampsAbsoluteFileURLStylesheetLink]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustStampsRelativeStylesheetLink]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustStampsRelativeStylesheetLink]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testCacheBustWorksWithSubdirectoryPaths]' started.
+Test Case '-[MPHTMLResourceURLsTests testCacheBustWorksWithSubdirectoryPaths]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testDeduplicatesSameResource]' started.
+Test Case '-[MPHTMLResourceURLsTests testDeduplicatesSameResource]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testDirectoryBaseURL]' started.
+Test Case '-[MPHTMLResourceURLsTests testDirectoryBaseURL]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testDotDotRelativePath]' started.
+Test Case '-[MPHTMLResourceURLsTests testDotDotRelativePath]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testEmptyResourceAttributesDoNotWatchOrRewriteTheBaseDirectory]' started.
+Test Case '-[MPHTMLResourceURLsTests testEmptyResourceAttributesDoNotWatchOrRewriteTheBaseDirectory]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testEncodedResourcesResolveWithoutDoubleEncodingOrFragment]' started.
+Test Case '-[MPHTMLResourceURLsTests testEncodedResourcesResolveWithoutDoubleEncodingOrFragment]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsAbsoluteFilePath]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsAbsoluteFilePath]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsAudioSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsAudioSrc]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsIframeSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsIframeSrc]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsImgSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsImgSrc]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsImgSrcSubdirectory]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsImgSrcSubdirectory]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsLinkHref]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsLinkHref]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsSourceSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsSourceSrc]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testExtractsVideoSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testExtractsVideoSrc]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testFileProtocolUrl]' started.
+Test Case '-[MPHTMLResourceURLsTests testFileProtocolUrl]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testMultipleResources]' started.
+Test Case '-[MPHTMLResourceURLsTests testMultipleResources]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testNilBaseURLReturnsEmptySet]' started.
+Test Case '-[MPHTMLResourceURLsTests testNilBaseURLReturnsEmptySet]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testNilHtmlReturnsEmptySet]' started.
+Test Case '-[MPHTMLResourceURLsTests testNilHtmlReturnsEmptySet]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testOnlyLocalSchemesAndRealResourceAttributesAreWatched]' started.
+Test Case '-[MPHTMLResourceURLsTests testOnlyLocalSchemesAndRealResourceAttributesAreWatched]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote]' started.
+Test Case '-[MPHTMLResourceURLsTests testResourceURLMayContainTheOtherAttributeQuote]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSingleQuotedAttributes]' started.
+Test Case '-[MPHTMLResourceURLsTests testSingleQuotedAttributes]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSkipsAnchorHref]' started.
+Test Case '-[MPHTMLResourceURLsTests testSkipsAnchorHref]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSkipsDataUrls]' started.
+Test Case '-[MPHTMLResourceURLsTests testSkipsDataUrls]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSkipsHttpUrls]' started.
+Test Case '-[MPHTMLResourceURLsTests testSkipsHttpUrls]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSkipsHttpUrls2]' started.
+Test Case '-[MPHTMLResourceURLsTests testSkipsHttpUrls2]' passed (0.000 seconds).
+Test Case '-[MPHTMLResourceURLsTests testSkipsScriptSrc]' started.
+Test Case '-[MPHTMLResourceURLsTests testSkipsScriptSrc]' passed (0.000 seconds).
+Test Suite 'MPHTMLResourceURLsTests' passed at 2026-10-10 00:06:09.864.
+	 Executed 37 tests, with 0 failures (0 unexpected) in 0.006 (0.008) seconds
+Test Suite 'Resources.xctest' passed at 2026-10-10 00:06:09.864.
+	 Executed 37 tests, with 0 failures (0 unexpected) in 0.006 (0.008) seconds
+Test Suite 'All tests' passed at 2026-10-10 00:06:09.864.
+	 Executed 37 tests, with 0 failures (0 unexpected) in 0.006 (0.009) seconds

@@ -1,0 +1,28 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/RenderingForceEvidence/compilation-red.log
+SHA-256 full log: 21211ae09db554b0ee99b23955c345e650d34180ac12873f3fa52ca27c83584b
+
+2026-10-10 15:40:51.947487+0200 MacDown 3000[96380:50244087] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.947932+0200 MacDown 3000[96380:50244081] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.947947+0200 MacDown 3000[96380:50244081] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.948301+0200 MacDown 3000[96380:50244082] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.948316+0200 MacDown 3000[96380:50244082] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.948663+0200 MacDown 3000[96380:50244087] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-10 15:40:51.948672+0200 MacDown 3000[96380:50244087] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+Test Case '-[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap]' started.
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSPopUpButton: 0x89e953300> {{62, 325}, {343, 24}} and <NSButton: 0x89f4eaa80> {{108, 338}, {439, 16}}
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSPopUpButton: 0x89e953300> {{62, 325}, {343, 24}} and <NSPopUpButton: 0x89e952d00> {{205, 310}, {226, 20}}
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSPopUpButton: 0x89e953300> {{62, 325}, {343, 24}} and <NSTextField: 0x8a1fc2a00> {{106, 313}, {93, 14}}
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSSegmentedControl: 0x89e937980> {{413, 325}, {134, 24}} and <NSButton: 0x89f4eaa80> {{108, 338}, {439, 16}}
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSSegmentedControl: 0x89e937980> {{413, 325}, {134, 24}} and <NSPopUpButton: 0x89e952d00> {{205, 310}, {226, 20}}
+/Users/zydon/Sites/MacDown/MacDownTests/MPPreferencesViewControllerResizabilityTests.m:279: error: -[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap] : ((NSIsEmptyRect(overlap)||NSWidth(overlap)<1||NSHeight(overlap)<1) is true) failed - Rendering controls overlap: <NSSegmentedControl: 0x89e937980> {{413, 325}, {134, 24}} and <NSSegmentedControl: 0x89f5a2f80> {{439, 310}, {108, 20}}
+Test Case '-[MPPreferencesViewControllerResizabilityTests testRenderingControlsDoNotOverlap]' failed (0.328 seconds).
+Test Suite 'MPPreferencesViewControllerResizabilityTests' failed at 2026-10-10 15:40:52.889.
+	 Executed 1 test, with 6 failures (0 unexpected) in 0.328 (0.334) seconds
+Test Suite 'MacDownTests.xctest' failed at 2026-10-10 15:40:52.889.
+	 Executed 1 test, with 6 failures (0 unexpected) in 0.328 (0.334) seconds
+Test Suite 'Selected tests' failed at 2026-10-10 15:40:52.889.
+	 Executed 1 test, with 6 failures (0 unexpected) in 0.328 (0.335) seconds
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDown-2026.10.10_15-40-47-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

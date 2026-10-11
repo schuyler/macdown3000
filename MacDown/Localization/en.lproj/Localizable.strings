@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(Default)";
+
 /*
   Localizable.strings
   MacDown
@@ -7,6 +10,14 @@
 */
 
 "JJ_PLURAL_FORM_RULE" = "1";
+
+/* Task list toolbar button */
+"Task List" = "Task List";
+"Code" = "Code";
+"Code Block" = "Code Block";
+"Link address (https://…)" = "Link address (https://…)";
+"Apply" = "Apply";
+"Cancel" = "Cancel";
 
 "WORDS_PLURAL_STRING" = "%@ word;%@ words";
 
@@ -43,3 +54,14 @@
 "This file has been changed by another application. Do you want to discard your changes?" = "This file has been changed by another application. Do you want to discard your changes?";
 "Discard" = "Discard";
 "Keep" = "Keep";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Note";
+"PreviewCalloutTitleTip" = "Tip";
+"PreviewCalloutTitleWarning" = "Warning";
+"PreviewCalloutTitleImportant" = "Important";
+"PreviewCalloutTitleCaution" = "Caution";
+"PreviewToggleTitle" = "Prerequisites";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Column %lu";

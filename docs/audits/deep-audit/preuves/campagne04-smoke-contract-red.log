@@ -1,0 +1,10 @@
+PASS app.macdown.macdown3000 migration accepted
+Traceback (most recent call last):
+  File "/Users/zydon/Sites/MacDown/MacDownTests/BuildTools/smoke_launch_tests.py", line 68, in <module>
+    assert observed == [[domain, 'MPDidMigrateFromLegacyBundleIdentifier', '1'],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        [domain, 'testMigrationKey', 'testMigrationValue'],
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        [domain, 'editorBaseFontName', 'Monaco']], observed
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [['app.macdown.macdown3000', 'MPDidMigrateFromLegacyBundleIdentifier', None], ['app.macdown.macdown3000', 'testMigrationKey', None], ['app.macdown.macdown3000', 'editorBaseFontName', None]]

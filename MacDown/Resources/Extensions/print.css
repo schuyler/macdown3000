@@ -76,13 +76,19 @@
      * `* { -webkit-print-color-adjust: exact; }`, which forces WebKit to
      * preserve that background in printed output and exported PDFs.
      * Force a white page and dark body text so every theme prints
-     * legibly on paper. pre/code/table/blockquote/heading/link rules are
+     * legibly on paper. pre/code/table/blockquote/link rules are
      * intentionally left alone - they either set their own color or have
      * their own background designed for readability. */
     html, body {
         background: #ffffff !important;
     }
     body {
+        color: #000000 !important;
+    }
+
+    /* Dark themes set heading colors explicitly; those do not inherit the
+     * body override and otherwise disappear against the white paper. */
+    h1, h2, h3, h4, h5, h6 {
         color: #000000 !important;
     }
 }

@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/zydon/Sites/MacDown/MacDownTests/BuildTools/command_queue_tests.py", line 143, in <module>
+    status = stream.wait(timeout=5)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 1276, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/subprocess.py", line 2060, in _wait
+    raise TimeoutExpired(self.args, timeout)
+subprocess.TimeoutExpired: Command '['/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-command-queue-6lyb3ezw/cli', '/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-command-queue-6lyb3ezw/cli-queue']' timed out after 5 seconds
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/zydon/Sites/MacDown/MacDownTests/BuildTools/command_queue_tests.py", line 145, in <module>
+    raise AssertionError('Oversized stdin must be rejected without waiting for EOF') from error
+AssertionError: Oversized stdin must be rejected without waiting for EOF

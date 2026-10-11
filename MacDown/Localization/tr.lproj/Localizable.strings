@@ -94,3 +94,14 @@
 "Source file does not exist" = "Kaynak dosya mevcut değil";
 "A file already exists at the installation path" = "Yükleme yolunda zaten bir dosya var";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown kabuk aracı %@ konumuna yüklendi.\n\nTerminal'den kullanmak için bu satırı kabuk yapılandırma dosyanıza (~/.zshrc veya ~/.bash_profile) ekleyin:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Not";
+"PreviewCalloutTitleTip" = "İpucu";
+"PreviewCalloutTitleWarning" = "Uyarı";
+"PreviewCalloutTitleImportant" = "Önemli";
+"PreviewCalloutTitleCaution" = "Dikkat";
+"PreviewToggleTitle" = "Ön koşullar";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Sütun %lu";

@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(기본값)";
+
 /* Preference pane title. */
 "Editor" = "편집기";
 
@@ -118,3 +121,14 @@
 "Source file does not exist" = "소스 파일이 존재하지 않습니다";
 "A file already exists at the installation path" = "설치 경로에 파일이 이미 존재합니다";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "macdown 셸 유틸리티가 %@에 설치되었습니다.\n\n터미널에서 사용하려면 셸 설정 파일(~/.zshrc 또는 ~/.bash_profile)에 다음 줄을 추가하세요:\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "참고";
+"PreviewCalloutTitleTip" = "팁";
+"PreviewCalloutTitleWarning" = "경고";
+"PreviewCalloutTitleImportant" = "중요";
+"PreviewCalloutTitleCaution" = "주의";
+"PreviewToggleTitle" = "사전 요구 사항";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "열 %lu";

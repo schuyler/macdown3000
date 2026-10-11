@@ -1,0 +1,38 @@
+{
+  "changed": 1,
+  "scope": "one-page synthetic current JS + native WebView two prints + actual injector + disk reopen",
+  "pixelBytes": 1294016,
+  "ok": true,
+  "checks": {
+    "DOMAndCSSOMRestored": 1,
+    "savedToDisk": true,
+    "reopenedURL": 1,
+    "originalBeforeMutation": 1,
+    "loaded": true,
+    "persistedDestinationPageAndPoint": 1,
+    "decodedRGBAEqual": 1,
+    "DOMRestored": 1,
+    "transfer": 1,
+    "sessionRemoved": true,
+    "preparedModel": 1,
+    "metadataHeading": 1
+  },
+  "expectedPoint": [
+    42.400000000000006,
+    729.5125
+  ],
+  "exit": 0,
+  "sourceHashes": {
+    "MacDown/Code/Document/MPDocument.m": "546d434a262c3d180829842e888ae4dc631808fc192f54bfebf73b838d08b69e",
+    "MacDown/Code/Document/MPPDFAnchorInjector.m": "902c57b2cb6354a651e0b981a49bfee390ae89fc1e003d0d1a71bd343c2ed5a0",
+    "MacDown/Code/Document/MPPDFAnchorInjector.h": "7dbaa29df89ed7405bb15a3471f5bdd75b7486a5b2558f60a826caa4430c5593"
+  },
+  "declarationHashes": {
+    "kMPPDFSnapshotJS": "a5a4b9f06ab85eb7f3fadff2ec0ab04622c437e769fe12ff4458a50e2aa45ba5",
+    "kMPPreparePDFAnchorsJS": "24988f90c340f280ee53d1a9ad618d314b57b8bb599a744d6eb741c7d2f6096c"
+  },
+  "consumerSHA256": "9203c2457b51d9e2cb64335f5ec7f59ac775bc603ceeee8e68648f1d07df8905",
+  "consumerReport": "/var/folders/sl/qh_kc_kn1r732kw2tsj7z5xh0000gn/T/macdown-campaign02-pdf-final-ss0j95yq/report.json",
+  "consumerExecutionConfirmed": true,
+  "proof": "two real NSPrint operations; immutable decodedRGBA before mutation compared to resolved.pdf reopened from disk; native PDFActionGoTo destination page/point; DOM/CSSOM restored"
+}

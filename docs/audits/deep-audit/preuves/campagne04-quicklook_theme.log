@@ -1,0 +1,4 @@
+PASS Quick Look theme tokens consumer: {
+    background = "rgb(246, 248, 250)";
+    border = solid;
+}

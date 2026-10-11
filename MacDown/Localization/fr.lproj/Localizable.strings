@@ -64,6 +64,11 @@
 
 /* Inline code toolbar button */
 "Inline Code" = "Code en ligne";
+"Code" = "Code";
+"Code Block" = "Bloc de code";
+"Link address (https://…)" = "Adresse du lien (https://…)";
+"Apply" = "Appliquer";
+"Cancel" = "Annuler";
 
 /* Install shell utility button */
 "Install" = "Installer";
@@ -73,7 +78,7 @@
 
   Created by Tzu-ping Chung  on 14/7.
   Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "2";
 
 /* Layout toolbar button */
 "Layout" = "Disposition";
@@ -86,6 +91,9 @@
 
 /* Ordered list toolbar button */
 "Ordered List" = "Liste ordonnée";
+
+/* Task list toolbar button */
+"Task List" = "Liste de tâches";
 
 /* No comment provided by engineer. */
 "Ordered/Unordered List" = "Liste ordonnée/non-ordonnée";
@@ -124,7 +132,7 @@
 "Strikethrough" = "Barré";
 
 /* Strong toolbar button */
-"Strong" = "Fort";
+"Strong" = "Gras";
 
 /* Preference pane title. */
 "Terminal" = "Terminal";
@@ -169,3 +177,19 @@
 "Source file does not exist" = "Le fichier source n'existe pas";
 "A file already exists at the installation path" = "Un fichier existe déjà au chemin d'installation";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "L'utilitaire terminal macdown a été installé dans %@.\n\nPour l'utiliser depuis le Terminal, ajoutez cette ligne à votre fichier de configuration shell (~/.zshrc ou ~/.bash_profile) :\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
+
+/* Convert heading to normal text toolbar button */
+"Normal Text" = "Texte normal";
+
+/* Default Markdown titles for preview callouts and collapsible blocks. */
+"PreviewCalloutTitleNote" = "Note";
+"PreviewCalloutTitleTip" = "Conseil";
+"PreviewCalloutTitleWarning" = "Avertissement";
+"PreviewCalloutTitleImportant" = "Important";
+"PreviewCalloutTitleCaution" = "Attention";
+"PreviewToggleTitle" = "Pré-requis";
+
+"Table" = "Tableau";
+
+/* Default Markdown table heading; %lu is the column number. */
+"Column %lu" = "Colonne %lu";

@@ -1,0 +1,5 @@
+PASS Core cannot embed forbidden user CSS; sandbox boundaries preserved
+PASS Core embeds USER; sandbox boundaries preserved
+PASS Core embeds BUNDLE; sandbox boundaries preserved
+Protected fixture container remains: /Users/zydon/Library/Containers/org.macdown.audit.assetreader.a4acca7f7b4d4e95b8fa5d2d56db2b26.denied
+Protected fixture container remains: /Users/zydon/Library/Containers/org.macdown.audit.assetreader.a4acca7f7b4d4e95b8fa5d2d56db2b26.granted

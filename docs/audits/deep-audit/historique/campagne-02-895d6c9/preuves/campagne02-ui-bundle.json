@@ -1,0 +1,30 @@
+{
+  "inspected_at_utc": "2026-10-07T20:57:40.971455+00:00",
+  "revision": "431c456",
+  "bundle": "build/AuditCampaign02/Build/Products/Debug/MacDown 3000.app",
+  "commands": [
+    "assetutil --info \"build/AuditCampaign02/Build/Products/Debug/MacDown 3000.app/Contents/Resources/Assets.car\"",
+    "plutil -convert json -o - <source strings> ; plutil -convert json -o - <bundle locale/table.strings> ; compare dictionnaires sur les 204 nonvides",
+    "/usr/bin/clang -fobjc-arc -framework Foundation /tmp/macdown-a2-ui-bundle.m -o /tmp/macdown-a2-ui-bundle (timeout60s)",
+    "/tmp/macdown-a2-ui-bundle \"build/AuditCampaign02/Build/Products/Debug/MacDown 3000.app\" (timeout30s)"
+  ],
+  "assetutil_report": "docs/audits/deep-audit/preuves/campagne02-ui-assets.json",
+  "assetutil_report_sha256": "bf6544f143d1a7575a2c18da065caf3b99e2d83937296344f16b1daeeeaa66f9",
+  "foundation_harness_source": "/tmp/macdown-a2-ui-bundle.m",
+  "foundation_harness_source_sha256": "49b183d65cab8b4548e16a7a3b14d76457d25b7a739e6ec52059933bac39b6ed",
+  "bundle_lookup_stdout": "bundle locale tables=217 keys=5184 empty fallback tables=13 failures=0",
+  "bundle_lookup_exit_code": 0,
+  "strings": {
+    "present": 217,
+    "semantic_equal_nonempty": 204,
+    "empty": 13,
+    "missing": 0,
+    "mismatch": 0
+  },
+  "nibs_base_present": 8,
+  "named_assets_expected": 43,
+  "named_assets_missing": [],
+  "final_source_sha_count": 304,
+  "final_source_sha_mismatch": [],
+  "limits": "Lookup NSBundle localisations explicites, pas un lancement visuel par langue ; nibs chargés via les tests natifs recensés, pas seulement leur présence ; qualité linguistique et matériel Touch Bar non exhaustifs."
+}

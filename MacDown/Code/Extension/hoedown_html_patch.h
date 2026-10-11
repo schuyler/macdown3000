@@ -13,12 +13,6 @@ static unsigned int HOEDOWN_HTML_USE_TASK_LIST = (1 << 4);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_LINE_NUMBERS = (1 << 5);
 static unsigned int HOEDOWN_HTML_BLOCKCODE_INFORMATION = (1 << 6);
 
-// Reset the checkbox index counter. Call this before rendering a document.
-void hoedown_patch_reset_checkbox_index(void);
-
-// Get the current checkbox index (for testing/debugging).
-int hoedown_patch_get_checkbox_index(void);
-
 typedef struct hoedown_buffer hoedown_buffer;
 
 typedef struct hoedown_html_renderer_state_extra {
@@ -27,6 +21,12 @@ typedef struct hoedown_html_renderer_state_extra {
     hoedown_buffer *(*language_addition)(const hoedown_buffer *language,
                                          void *owner);
     void *owner;
+    unsigned int checkbox_index;
+    const char *code_escape_token;
+    int interactive_checkboxes;
+    const char *task_marker_prefix;
+    void (*checkbox_addition)(size_t source_offset, void *owner);
+    hoedown_buffer *(*heading_slug)(const hoedown_buffer *slug, void *owner);
 
 } hoedown_html_renderer_state_extra;
 

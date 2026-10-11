@@ -34,15 +34,15 @@ int actionCount= 0;
 int ruleCount= 0;
 int lastToken= -1;
 
-static inline Node *_newNode(int type, int size)
+static inline Node *_newNode(int type)
 {
-  Node *node= calloc(1, size);
+  Node *node= calloc(1, sizeof(Node));
   node->type= type;
   ((struct Any *) node)->errblock= NULL;
   return node;
 }
 
-#define newNode(T)	_newNode(T, sizeof(struct T))
+#define newNode(T)	_newNode(T)
 
 Node *makeRule(char *name)
 {
@@ -139,10 +139,10 @@ Node *makeClass(char *text)
 Node *makeAction(char *text)
 {
   Node *node= newNode(Action);
-  char name[1024];
   assert(thisRule);
-  sprintf(name, "_%d_%s", ++actionCount, thisRule->rule.name);
-  node->action.name= strdup(name);
+  size_t nameSize = strlen(thisRule->rule.name) + 32;
+  node->action.name = malloc(nameSize);
+  snprintf(node->action.name, nameSize, "_%d_%s", ++actionCount, thisRule->rule.name);
   node->action.text= strdup(text);
   node->action.list= actions;
   node->action.rule= thisRule;
@@ -249,46 +249,56 @@ Node *makePlus(Node *e)
 }
 
 
-static Node  *stack[1024];
-static Node **stackPointer= stack;
+static Node **stack = NULL;
+static size_t stackCount = 0;
+static size_t stackCapacity = 0;
 
 
 #ifdef DEBUG
 static void dumpStack(void)
 {
-  Node **p;
-  for (p= stack + 1;  p <= stackPointer;  ++p)
-    {
-      fprintf(stderr, "### %ld\t", p - stack);
-      Node_print(*p);
-      fprintf(stderr, "\n");
-    }
+  for (size_t i = 0; i < stackCount; ++i) {
+    fprintf(stderr, "### %zu\t", i + 1);
+    Node_print(stack[i]);
+    fprintf(stderr, "\n");
+  }
 }
 #endif
 
 Node *push(Node *node)
 {
   assert(node);
-  assert(stackPointer < stack + 1023);
+  if (stackCount == stackCapacity) {
+    size_t newCapacity = stackCapacity ? stackCapacity * 2 : 128;
+    Node **newStack = realloc(stack, newCapacity * sizeof(*stack));
+    if (!newStack) {
+      fprintf(stderr, "Cannot allocate grammar node stack\n");
+      exit(1);
+    }
+    stack = newStack;
+    stackCapacity = newCapacity;
+  }
 #ifdef DEBUG
-  dumpStack();  fprintf(stderr, " PUSH ");  Node_print(node);  fprintf(stderr, "\n");
+  dumpStack(); fprintf(stderr, " PUSH "); Node_print(node); fprintf(stderr, "\n");
 #endif
-  return *++stackPointer= node;
+  stack[stackCount++] = node;
+  return node;
 }
 
 Node *top(void)
 {
-  assert(stackPointer > stack);
-  return *stackPointer;
+  if (!stackCount) {
+    fprintf(stderr, "Invalid empty grammar node stack\n");
+    exit(1);
+  }
+  return stack[stackCount - 1];
 }
 
 Node *pop(void)
 {
-  assert(stackPointer > stack);
-#ifdef DEBUG
-  dumpStack();  fprintf(stderr, " POP\n");
-#endif
-  return *stackPointer--;
+  Node *node = top();
+  stackCount--;
+  return node;
 }
 
 

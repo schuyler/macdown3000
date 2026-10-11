@@ -25,8 +25,8 @@ jobs:
       - name: Detect or use provided release tag
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROVIDED_TAG: ${{ github.event.inputs.release_tag }}
         run: |
-          PROVIDED_TAG="${{ github.event.inputs.release_tag }}"
 
           if [[ -n "$PROVIDED_TAG" ]]; then
             # Use provided tag
@@ -59,11 +59,14 @@ jobs:
 
       - name: Checkout tag commit
         run: |
+          # Keep workflow recovery tooling when resuming an older release tag.
+          cp Tools/release_asset_checksums.py "$RUNNER_TEMP/macdown-release-asset-checksums.py"
           # Under the release branch model, RC and release tags live on
           # release/* branches, not main. Check out the tagged commit so
           # CHANGELOG.md has the right content for release notes extraction.
           echo "📌 Checking out ${{ env.TAG }}..."
           git checkout "${{ env.TAG }}"
+          echo "RELEASE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Get release info
         env:
@@ -72,7 +75,7 @@ jobs:
           echo "📋 Fetching release information for $TAG..."
 
           # Get release ID and body
-          gh release view "$TAG" --json id,body > release-info.json
+          gh release view "$TAG" --json id,body,isDraft,tagName > release-info.json
 
           RELEASE_ID=$(jq -r '.id' release-info.json)
           RELEASE_BODY=$(jq -r '.body' release-info.json)
@@ -189,9 +192,15 @@ jobs:
 
           # Verify checksum
           echo "🔍 Verifying DMG integrity..."
-          cd build
-          shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"
-          cd ..
+          if ! (cd build && shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256"); then
+            # Uploading two assets is not atomic. Repair only from hashes saved
+            # in this same draft/tag/source before either asset was replaced.
+            python3 "$RUNNER_TEMP/macdown-release-asset-checksums.py" repair "$TAG" "$RELEASE_COMMIT" \
+              release-info.json "build/MacDown-${VERSION}.dmg" "build/MacDown-${VERSION}.dmg.sha256"
+            (cd build && shasum -a 256 -c "MacDown-${VERSION}.dmg.sha256")
+          fi
+          ORIGINAL_SHA256=$(shasum -a 256 "build/MacDown-${VERSION}.dmg" | awk '{print $1}')
+          echo "ORIGINAL_SHA256=$ORIGINAL_SHA256" >> "$GITHUB_ENV"
 
           # Verify DMG signature
           echo "🔍 Verifying DMG signature..."
@@ -204,11 +213,15 @@ jobs:
             exit 1
           fi
 
-          # Check if DMG is already stapled
+          # Published assets must already carry a valid ticket: never alter them.
+          if [[ $(jq -r '.isDraft' release-info.json) == "false" ]]; then
+            xcrun stapler validate "build/MacDown-${VERSION}.dmg"
+          fi
+
+          # A retry after uploading assets may download the already-stapled DMG.
+          # Keep it and repeat every signature, ticket and publication gate.
           if xcrun stapler validate "build/MacDown-${VERSION}.dmg" 2>/dev/null; then
-            echo "::error::DMG is already stapled. This workflow may have already run."
-            echo "To re-staple, delete the release assets and re-upload from build-release workflow."
-            exit 1
+            echo "✅ DMG is already stapled; resuming verification and publication"
           fi
 
           echo "✅ DMG verified and ready for stapling"
@@ -217,8 +230,10 @@ jobs:
         run: |
           echo "📎 Stapling notarization ticket to DMG..."
 
-          # Staple the ticket
-          xcrun stapler staple "build/MacDown-${VERSION}.dmg"
+          # Reuse a valid ticket after a partial publication, otherwise staple it.
+          if ! xcrun stapler validate "build/MacDown-${VERSION}.dmg" 2>/dev/null; then
+            xcrun stapler staple "build/MacDown-${VERSION}.dmg"
+          fi
 
           # Validate stapling
           echo "🔍 Validating stapled ticket..."
@@ -335,14 +350,40 @@ jobs:
           echo "🎉 DMG is ready for distribution"
           echo ""
 
+      - name: Persist asset recovery hashes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # A failed metadata write stops before any remote asset is replaced.
+          gh release view "$TAG" --json id,body,isDraft,tagName > asset-release-info.json
+          STAPLED_SHA256=$(shasum -a 256 "build/MacDown-${VERSION}.dmg" | awk '{print $1}')
+          if [[ $(jq -r '.isDraft' asset-release-info.json) == "false" ]]; then
+            # The published pair passed all gates. Preserve its bytes and notes.
+            if [[ "$ORIGINAL_SHA256" != "$STAPLED_SHA256" ]]; then
+              echo "::error::Refusing to replace changed published assets"
+              exit 1
+            fi
+            echo "KEEP_PUBLISHED_ASSETS=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "KEEP_PUBLISHED_ASSETS=false" >> "$GITHUB_ENV"
+          python3 "$RUNNER_TEMP/macdown-release-asset-checksums.py" record "$TAG" "$RELEASE_COMMIT" \
+            asset-release-info.json "$ORIGINAL_SHA256" "$STAPLED_SHA256" asset-release-notes.md
+          gh release edit "$TAG" --notes-file asset-release-notes.md
+
       - name: Update release with stapled DMG
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [[ "$KEEP_PUBLISHED_ASSETS" == "true" ]]; then
+            echo "Published assets are verified; preserving the existing pair"
+            exit 0
+          fi
           echo "📤 Updating release with stapled DMG..."
 
           # Upload stapled DMG and new checksum with retry logic
-          # --clobber replaces existing assets atomically (no race condition)
+          # Each asset is replaced separately; persisted hashes support a retry
+          # even if only one replacement succeeds.
           for attempt in {1..5}; do
             if gh release upload "$TAG" \
               "build/MacDown-${VERSION}.dmg" \
@@ -359,13 +400,17 @@ jobs:
             sleep $wait_time
           done
 
-          echo "✅ Release updated with stapled DMG (assets replaced atomically)"
+          echo "✅ Release updated with stapled DMG and checksum"
 
       - name: Update release notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
+          if [[ "$KEEP_PUBLISHED_ASSETS" == "true" ]]; then
+            echo "Published assets are verified; preserving existing release notes"
+            exit 0
+          fi
           echo "📝 Updating release notes..."
 
           # Verify changelog entry exists
@@ -407,6 +452,8 @@ jobs:
           ## Verification
 
           ✅ This build is **fully notarized and stapled** by Apple.
+
+          Submission ID: \`${NOTARIZATION_ID}\`
 
           **SHA256 Checksum:**
           \`\`\`

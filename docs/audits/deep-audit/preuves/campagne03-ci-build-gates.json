@@ -1,0 +1,110 @@
+{
+  "campaign": 3,
+  "owner": "audit3_build",
+  "scope": "Gates CI hors Xcode/WebKit/UI/AppKit/QL; réconciliation physique sans Git/index ni contenu credentials",
+  "fresh_complete_reads": [
+    {
+      "path": ".github/workflows/test.yml",
+      "read_sha256": "2d9385aa0492b52e573efa5cfee6af40bedd71f974b92f843cf74f6dfbdc2bdf",
+      "coverage": "1–102"
+    },
+    {
+      "path": "Tools/repro-stall.sh",
+      "read_sha256": "a0ee310115f9a03e9bac31b73601043a5a0e9582d1d4d77c375dbcd3f09b2292",
+      "coverage": "1–87"
+    },
+    {
+      "path": "MacDownTests/BuildTools/stall_empty_suite_tests.py",
+      "read_sha256": "5abb764c88daac9bd56cec8c4c072b18362779ee51b67b7e804a3522080e8e24",
+      "coverage": "1–24"
+    },
+    {
+      "path": "MacDownTests/Sandbox/preferences_tests.py",
+      "read_sha256": "e3ed72fd1e9995a61689242cae7a9599636f41d000801e9dd6ca718e4370380b",
+      "coverage": "1–81"
+    },
+    {
+      "path": "MacDownTests/Sandbox/preferences_contracts.m",
+      "read_sha256": "10a9a61f61ae6dd07e20895e7b4e436658e4107c8597f99efad45790c4a33e44",
+      "coverage": "1–25"
+    },
+    {
+      "path": "MacDownTests/Sandbox/assets_tests.py",
+      "read_sha256": "0ef555c7b7bc300ffb9f3af6dcea5469f8c687c397519989ec3d17f0f55d0c2b",
+      "coverage": "1–115"
+    },
+    {
+      "path": "MacDownTests/Sandbox/assets_contracts.m",
+      "read_sha256": "96e206c0faa932f9736899303bf314004113283c947f58f55ff10a7ba90e68f6",
+      "coverage": "1–66"
+    },
+    {
+      "path": ".gitignore",
+      "read_sha256": "3a2132614cc0a933e71eb094c0bcd41a96da65dc76b22269e8c7a2b0520a30e8",
+      "coverage": "1–203"
+    },
+    {
+      "path": ".gitmodules",
+      "read_sha256": "69be9ca5f02b254e49c1c755a08e6ce1d7df94bff2cf2eb820926da2f83b9be1",
+      "coverage": "1–3"
+    },
+    {
+      "path": ".envrc.example",
+      "read_sha256": "f8ec968e7ece4d8c6b5fe9d6f3c901723d8d3b9a3c12bddfff357d48f35e5548",
+      "coverage": "1–15"
+    },
+    {
+      "path": ".markdownlint.json",
+      "read_sha256": "03709bc90f2e0bf621d3e3801b5807d7e4560572e052730a074a8ffa8969d665",
+      "coverage": "1–20"
+    },
+    {
+      "path": "MacDownTests/Localization/test_plural_rules.sh",
+      "read_sha256": "6e81261548b625b1c3353ebc0b59b4e649f93682baaf47dbade5639378d8bea9",
+      "coverage": "1–23"
+    },
+    {
+      "path": "MacDownTests/BuildTools/indent_selection_tests.py",
+      "read_sha256": "8835dca481c56011339d74d02034b46a1877f6c35753693b3324e2bf5cfc12a4",
+      "coverage": "1–39"
+    }
+  ],
+  "executions": [
+    {
+      "command": "python3 MacDownTests/BuildTools/stall_empty_suite_tests.py",
+      "status": "PASS",
+      "contract": "Stub taskpolicy en temp simule suite 0 test; production repro-stall classe NORUN et retour nonzero; aucun vrai xcodebuild lancé."
+    },
+    {
+      "command": "python3 MacDownTests/Sandbox/preferences_tests.py",
+      "status": "PASS",
+      "contract": "CFPreferences réel, binaires Foundation signés adhoc/sandbox; UUID synthétique uniquement, interdit domaine réel par helper; denied/read-only granted et refus write puis valeur inchangée. Suite supprimée et lecture absence confirmée."
+    }
+  ],
+  "cleanup_limitations": [
+    "macOS protège métadonnées deux containers UUID, permissions non modifiées",
+    "/Users/zydon/Library/Containers/org.macdown.audit.reader.8c8b3faee02b4e8f9e8220a2ded27ad1.denied",
+    "/Users/zydon/Library/Containers/org.macdown.audit.reader.8c8b3faee02b4e8f9e8220a2ded27ad1.granted"
+  ],
+  "previous_fresh_green_not_repeated": [
+    "scripts_tests",
+    "version_tests",
+    "release_identity_tests",
+    "packaging_version_tests",
+    "peg_contracts",
+    "yaml_graph_tests",
+    "command_queue_tests",
+    "staple_resume_tests",
+    "staple_partial_upload_tests",
+    "JS mermaid-init",
+    "JS header-locations"
+  ],
+  "unchanged_evidence": "Toutes versions sources lues build72/render60 comparées SHA actual : aucun changement, contrôle identité ne constitue pas validation. Fixtures branch B03 rejouées aussi par root.",
+  "reserved_root": [
+    "Sandbox/assets_tests.py crée noms UUID via open x dans Application Support app réelle et les supprime ; aucun existant modifié. Root exécute après restauration UI.",
+    "indent_selection_tests.py (AppKit)",
+    "WebKit/render/QL/PDF/UI/Xcode"
+  ],
+  "foundation_plural_pending": "Résultat root/agentUI : plural rules126 et pluralcounts360 fresh PASS, wordcounter3120 PASS; preuve campagne03-ui. Pas de répétition.",
+  "physical_reconciliation": "campagne03-physical-build-reconcile.json : 482 baseline, unique source additionnelle Tools/release_asset_checksums.py entièrement déjà lue/analysée; racines exclues/caches/xcuserdata explicitement énumérées, hidden inclus, aucun symlink inconnu; internes racines exclues non certifiés."
+}

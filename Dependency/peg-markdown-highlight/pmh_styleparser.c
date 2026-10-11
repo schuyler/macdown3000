@@ -123,18 +123,16 @@ static char *trim_str(char *str)
 
 static char *trim_str_dup(char *str)
 {
-    size_t start = 0;
-    while (isspace(*(str + start)))
+    char *start = str;
+    while (isspace((unsigned char)*start))
         start++;
-    size_t end = strlen(str) - 1;
-    while (start < end && isspace(*(str + end)))
+    char *end = start + strlen(start);
+    while (end > start && isspace((unsigned char)*(end - 1)))
         end--;
-    
-    size_t len = end - start + 1;
-    char *ret = (char *)malloc(sizeof(char)*len + 1);
-    *ret = '\0';
-    strncat(ret, (str + start), len);
-    
+    size_t len = (size_t)(end - start);
+    char *ret = malloc(len + 1);
+    memcpy(ret, start, len);
+    ret[len] = '\0';
     return ret;
 }
 
@@ -488,14 +486,34 @@ static void interpret_and_add_style(style_parser_data *p_data,
         }
     }
     pmh_style_attribute *attrs = interpret_attributes(p_data, type, raw_attributes);
+    if (!attrs)
+        return;
+    pmh_style_attribute **slot = NULL;
     if (isEditorType)
-        p_data->styles->editor_styles = attrs;
+        slot = &p_data->styles->editor_styles;
     else if (isCurrentLineType)
-        p_data->styles->editor_current_line_styles = attrs;
+        slot = &p_data->styles->editor_current_line_styles;
     else if (isSelectionType)
-        p_data->styles->editor_selection_styles = attrs;
-    else
-        p_data->styles->element_styles[(p_data->styles_pos)++] = attrs;
+        slot = &p_data->styles->editor_selection_styles;
+    else {
+        for (int i = 0; i < p_data->styles_pos; i++)
+            if (p_data->styles->element_styles[i]->lang_element_type == type) {
+                slot = &p_data->styles->element_styles[i];
+                break;
+            }
+        if (!slot)
+            slot = &p_data->styles->element_styles[p_data->styles_pos++];
+    }
+    // At most one slot per language type; repeated rules extend its attributes.
+    // Preserve attribute order so later rules retain their override semantics.
+    if (*slot) {
+        pmh_style_attribute *tail = *slot;
+        while (tail->next)
+            tail = tail->next;
+        tail->next = attrs;
+    } else {
+        *slot = attrs;
+    }
 }
 
 

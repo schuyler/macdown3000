@@ -29,6 +29,9 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 @property (weak) MPEditorView *editor;
 @property (nonatomic) NSUInteger scrollOwner;  // Issue #342: MPScrollOwner enum
 - (void)updateHeaderLocations;
++ (CGFloat)scrollOffset:(CGFloat)offset sourceHeight:(CGFloat)sourceHeight sourceVisible:(CGFloat)sourceVisible
+          targetHeight:(CGFloat)targetHeight targetVisible:(CGFloat)targetVisible
+             sourceYs:(NSArray<NSNumber *> *)sourceYs targetYs:(NSArray<NSNumber *> *)targetYs;
 // Issue #436: pure helpers for reference-point classification and sequence alignment
 + (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
                                           outLineNumbers:(NSArray<NSNumber *> **)outLineNumbers;
@@ -1805,9 +1808,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 
     [doc syncScrollers];
 
-    // With no scroll view, syncScrollers writes 0.0 — the point is it overwrites the stale value
-    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, 0.0, 0.01,
-                               @"syncScrollers should overwrite stale lastPreviewScrollTop with computed value");
+    // A missing/hidden viewport has no usable geometry. Preserve its last position.
+    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, 999.0, 0.01);
 }
 
 #pragma mark - Issue #342: Group F — Handler Method Existence
@@ -2056,6 +2058,8 @@ static const NSUInteger MPScrollOwnerNeither = 2;
     doc.editor = editor;
     editor.string = @"- [ ] Task";
     [renderer setValue:@"expected-token" forKey:@"checkboxBridgeToken"];
+    [renderer setValue:editor.string forKey:@"checkboxSourceMarkdown"];
+    [renderer setValue:@[@3] forKey:@"checkboxSourceOffsets"];
 
     NSURL *url = [NSURL URLWithString:
                   @"x-macdown-checkbox://toggle/0?token=expected-token"];
@@ -2978,6 +2982,64 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"previewY must never be negative");
     XCTAssertLessThanOrEqual(previewY, 1000 - 800,
         @"previewY must never scroll past the bottom of the preview's content");
+}
+
+- (void)testLargeAlignedDocumentAvoidsQuadraticMatrix
+{
+    NSMutableArray *ys = [NSMutableArray array];
+    NSMutableArray *kinds = [NSMutableArray array];
+    for (NSUInteger i = 0; i < 20000; i++) { [ys addObject:@(i)]; [kinds addObject:@7]; }
+    NSArray *editor = nil, *preview = nil;
+    [MPDocument alignEditorYs:ys editorTypes:kinds previewYs:ys previewTypes:kinds
+        alignedEditorYs:&editor alignedPreviewYs:&preview];
+    XCTAssertEqualObjects(editor, ys);
+    XCTAssertEqualObjects(preview, ys);
+}
+
+- (void)testLargeDivergentDocumentKeepsCompatibleMonotonicAnchors
+{
+    NSMutableArray *ys = [NSMutableArray array], *editorKinds = [NSMutableArray array], *previewKinds = [NSMutableArray array];
+    for (NSUInteger i = 0; i < 5000; i++)
+    {
+        [ys addObject:@(i)]; [editorKinds addObject:@(i % 2 ? 7 : 8)];
+        [previewKinds addObject:@(i % 3 ? 7 : 8)];
+    }
+    NSArray *editor = nil, *preview = nil;
+    [MPDocument alignEditorYs:ys editorTypes:editorKinds previewYs:ys previewTypes:previewKinds
+        alignedEditorYs:&editor alignedPreviewYs:&preview];
+    XCTAssertGreaterThan(editor.count, 0);
+    XCTAssertEqual(editor.count, preview.count);
+    for (NSUInteger i = 0; i < editor.count; i++)
+    {
+        XCTAssertEqualObjects(editorKinds[[editor[i] unsignedIntegerValue]], previewKinds[[preview[i] unsignedIntegerValue]]);
+        if (i) { XCTAssertGreaterThan([editor[i] unsignedIntegerValue], [editor[i-1] unsignedIntegerValue]);
+            XCTAssertGreaterThan([preview[i] unsignedIntegerValue], [preview[i-1] unsignedIntegerValue]); }
+    }
+}
+
+- (void)testSourceAnchorsRemainReversibleWithUnequalViewports
+{
+    NSArray *editor=@[@100,@400,@900,@1800,@2700];
+    NSArray *preview=@[@150,@900,@1700,@3000,@4600];
+    for (NSUInteger offset=0;offset<=2600;offset+=13) {
+        CGFloat forward=[MPDocument scrollOffset:offset sourceHeight:3000 sourceVisible:400
+            targetHeight:5000 targetVisible:600 sourceYs:editor targetYs:preview];
+        CGFloat reverse=[MPDocument scrollOffset:forward sourceHeight:5000 sourceVisible:600
+            targetHeight:3000 targetVisible:400 sourceYs:preview targetYs:editor];
+        XCTAssertEqualWithAccuracy(reverse,offset,0.001);
+    }
+}
+
+- (void)testSourceScrollMappingClampsEdgesAndHandlesDocumentsWithoutAnchors
+{
+    XCTAssertEqual([MPDocument scrollOffset:-10 sourceHeight:1000 sourceVisible:200
+        targetHeight:2000 targetVisible:400 sourceYs:@[] targetYs:@[]],0);
+    XCTAssertEqual([MPDocument scrollOffset:900 sourceHeight:1000 sourceVisible:200
+        targetHeight:2000 targetVisible:400 sourceYs:@[] targetYs:@[]],1600);
+    XCTAssertEqual([MPDocument scrollOffset:400 sourceHeight:1000 sourceVisible:200
+        targetHeight:2000 targetVisible:400 sourceYs:@[] targetYs:@[]],800);
+    XCTAssertEqual([MPDocument scrollOffset:0 sourceHeight:100 sourceVisible:200
+        targetHeight:2000 targetVisible:400 sourceYs:@[] targetYs:@[]],0);
 }
 
 @end

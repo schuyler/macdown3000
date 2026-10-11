@@ -1,0 +1,7 @@
+PASS regeneration-failure restores source definitions and reports status
+PASS verification-failure restores source definitions and reports status
+PASS success restores source definitions and reports status
+PASS CSS failure preserves artifact; success replaces it atomically
+PASS stall runner status 0 summary True
+PASS stall runner status 65 summary True
+PASS stall runner status 65 summary False

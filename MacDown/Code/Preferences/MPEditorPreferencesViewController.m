@@ -75,10 +75,15 @@ NSString * const MPDidRequestEditorSetupNotificationKeyName =
 
     [self.themeSelect addItemWithTitle:@""];
     [self.themeSelect addItemsWithTitles:itemTitles];
-
-    NSString *title = [self.preferences.editorStyleName copy];
-    if (title.length)
-        [self.themeSelect selectItemWithTitle:title];
+    for (NSMenuItem *item in self.themeSelect.itemArray) {
+        NSString *name = item.title;
+        item.representedObject = name;
+        if ([name isEqualToString:MPDefaultEditorThemeName])
+            item.title = [NSString stringWithFormat:@"%@ %@", name,
+                          NSLocalizedString(@"(Default)", @"Default theme suffix")];
+        if ([name isEqualToString:self.preferences.editorStyleName])
+            [self.themeSelect selectItem:item];
+    }
 
     [self.themeSelect setEnabled:YES];
 }
@@ -120,13 +125,13 @@ NSString * const MPDidRequestEditorSetupNotificationKeyName =
 
 - (IBAction)changeTheme:(NSPopUpButton *)sender
 {
-    NSString *title = sender.selectedItem.title;
+    NSString *name = sender.selectedItem.representedObject;
 
     // Special case: the first (empty) item. No stylesheets will be used.
-    if (!title.length)
+    if (!name.length)
         self.preferences.editorStyleName = nil;
     else
-        self.preferences.editorStyleName = title;
+        self.preferences.editorStyleName = name;
 }
 
 - (IBAction)invokeStylesheetFunction:(NSSegmentedControl *)sender

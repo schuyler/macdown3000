@@ -273,4 +273,64 @@
                   @"Untracked stylesheets must remain unchanged");
 }
 
+- (void)testEncodedResourcesResolveWithoutDoubleEncodingOrFragment {
+    NSSet *paths = MPLocalFilePathsInHTML(@"<img src = 'my%20photo.png#frame'>", self.baseURL);
+    XCTAssertEqualObjects(paths, [NSSet setWithObject:@"/Users/test/docs/my photo.png"]);
+}
+
+- (void)testOnlyLocalSchemesAndRealResourceAttributesAreWatched {
+    NSString *html = @"<img src='HTTPS://host/image.png'><img src='//host/image.png'><img data-src='lazy.png'>";
+    XCTAssertEqual(MPLocalFilePathsInHTML(html, self.baseURL).count, 0u);
+}
+
+- (void)testCacheBustingPreservesOtherQueryItemsAndSVGFragment {
+    NSString *html = @"<img src='icons.svg?variant=dark&amp;t=old#logo'>";
+    NSString *result = MPApplyCacheBusting(html, @{@"/Users/test/docs/icons.svg": @1234}, self.baseURL);
+    XCTAssertTrue([result containsString:@"variant=dark&amp;t=1234#logo"]);
+}
+
+- (void)testCacheBustingPreservesEncodedQuotesAndAttributeBoundaries {
+    for (NSString *quote in @[@"'", @"\""]) {
+        for (NSString *tag in @[@"img", @"link"]) {
+            NSString *attribute = [tag isEqualToString:@"img"] ? @"src" : @"href";
+            NSString *html = [NSString stringWithFormat:
+                @"<%@ %@=%@image.png?name=a&#39;b&amp;keep=c&amp;t=old#logo%@ alt='preserved'/>",
+                tag, attribute, quote, quote];
+            NSString *result = MPApplyCacheBusting(html,
+                @{@"/Users/test/docs/image.png": @1234}, self.baseURL);
+            NSError *error = nil;
+            NSXMLDocument *document = [[NSXMLDocument alloc] initWithXMLString:result
+                options:NSXMLNodeLoadExternalEntitiesNever error:&error];
+            XCTAssertNotNil(document, @"%@", error);
+            NSXMLElement *element = document.rootElement;
+            XCTAssertEqualObjects([element attributeForName:attribute].stringValue,
+                @"image.png?name=a'b&keep=c&t=1234#logo");
+            XCTAssertEqualObjects([element attributeForName:@"alt"].stringValue, @"preserved");
+            XCTAssertEqual(element.attributes.count, 2u);
+        }
+    }
+}
+
+- (void)testResourceURLMayContainTheOtherAttributeQuote {
+    NSString *html = @"<img src=\"John's%20photo.png\" alt='preserved'/>";
+    NSSet *paths = MPLocalFilePathsInHTML(html, self.baseURL);
+    XCTAssertEqualObjects(paths, [NSSet setWithObject:@"/Users/test/docs/John's photo.png"]);
+    NSString *result = MPApplyCacheBusting(html,
+        @{@"/Users/test/docs/John's photo.png": @1234}, self.baseURL);
+    NSError *error = nil;
+    NSXMLDocument *document = [[NSXMLDocument alloc] initWithXMLString:result
+        options:NSXMLNodeLoadExternalEntitiesNever error:&error];
+    XCTAssertNotNil(document, @"%@", error);
+    XCTAssertEqualObjects([document.rootElement attributeForName:@"src"].stringValue,
+        @"John's%20photo.png?t=1234");
+    XCTAssertEqualObjects([document.rootElement attributeForName:@"alt"].stringValue, @"preserved");
+}
+
+- (void)testEmptyResourceAttributesDoNotWatchOrRewriteTheBaseDirectory {
+    NSString *html = @"<img src=''><link href=\"\"/>";
+    XCTAssertEqual(MPLocalFilePathsInHTML(html, self.baseURL).count, 0u);
+    XCTAssertEqualObjects(MPApplyCacheBusting(html,
+        @{@"/Users/test/docs": @1234}, self.baseURL), html);
+}
+
 @end

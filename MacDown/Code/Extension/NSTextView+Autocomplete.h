@@ -26,6 +26,7 @@
 - (BOOL)deleteMatchingCharactersAround:(NSUInteger)location;
 - (BOOL)unindentForSpacesBefore:(NSUInteger)location;
 - (BOOL)toggleForMarkupPrefix:(NSString *)prefix suffix:(NSString *)suffix;
+// Pattern must match only the complete leading marker to remove.
 - (void)toggleBlockWithPattern:(NSString *)pattern prefix:(NSString *)prefix;
 - (void)indentSelectedLinesWithPadding:(NSString *)padding;
 - (void)unindentSelectedLines;
@@ -33,6 +34,7 @@
 - (BOOL)completeNextListItem:(BOOL)autoIncrement;
 - (BOOL)completeNextBlockquoteLine;
 - (BOOL)completeNextIndentedLine;
-- (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level;
+- (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level
+                            renderMarkdown:(NSString *(^)(NSString *markdown))renderMarkdown;
 
 @end

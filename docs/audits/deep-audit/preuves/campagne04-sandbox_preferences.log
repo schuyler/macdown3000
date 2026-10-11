@@ -1,0 +1,5 @@
+PASS sandbox denied: read=(null)
+PASS sandbox granted: read=synthetic-audit-value
+PASS read-only grant does not permit shared preference mutation
+Cleanup limited by macOS protected test container metadata: /Users/zydon/Library/Containers/org.macdown.audit.reader.bc91ad2ddda64c70b841dafd69d5345c.denied
+Cleanup limited by macOS protected test container metadata: /Users/zydon/Library/Containers/org.macdown.audit.reader.bc91ad2ddda64c70b841dafd69d5345c.granted

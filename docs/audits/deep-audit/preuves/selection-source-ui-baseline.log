@@ -1,0 +1,12 @@
+Faithful diagnostic extract; full log: build/AuditCampaign03/SourceSelectionEvidence/selection-source-ui-baseline.log
+SHA-256 full log: 12c81def943ee703d61142937d0843d9691f974b6f61130db41591d3fcb8d09b
+
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' started.
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:268: error: -[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor] : XCTAssertTrue failed - Attributes: Window (Main), 0x78613fd40, {{381.0, 168.0}, {1024.0, 662.0}}, identifier: '_NS:422', title: 'MixedSelection.md', Disabled
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' failed (23.189 seconds).
+	 Executed 1 test, with 1 failure (0 unexpected) in 23.189 (23.190) seconds
+	 Executed 1 test, with 1 failure (0 unexpected) in 23.189 (23.191) seconds
+	 Executed 1 test, with 1 failure (0 unexpected) in 23.189 (23.191) seconds
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_16-43-56-+0200.xcresult
+** TEST FAILED **
+RESTORED and preferences verified; vault retained privately

@@ -1,5 +1,60 @@
 # Changelog
 
+## [Unreleased]
+
+Changes proposed in #597; these are not a published release.
+
+### Added
+
+- Source-preserving preview editing: select rendered text to format it, or explicitly replace supported text, while keeping Markdown as the document source.
+- Independent formatting scopes for inline styles, line types and callout/disclosure containers. A heading inside a callout can retain its own inline formatting.
+- Normal text, task list and fenced code toolbar actions alongside the existing heading, list and inline code controls.
+- Optional long-code-line wrapping in the preview, styled HTML export and Quick Look, without changing the code text.
+- System, Light and Dark application appearance settings, independent of the document theme.
+- An optional live reading-position percentage alongside the word count, following the pane being scrolled.
+- Five Quarto-style callout types, localized default titles, nesting and collapsible blocks through the shared Markdown renderer.
+- 37 bundled community palettes with coordinated editor, preview and Prism variants, credits and offline resources.
+- Find in rendered preview content and folder opening through the existing workspace browser.
+
+### Changed
+
+- Use the same source-validated conversion engine for toolbar actions and preview formatting, preserving undo and neighboring content.
+- Combine line and container choices in one text dropdown with a separator between groups. Bold, italic, underline, strikethrough, inline code, clear formatting, link and edit-text actions use icons with hover labels.
+- Open the formatting panel after mouse release, show only common selection styles in blue, and retain compatible selections across successive commands.
+- Make editor and preview text selections mutually exclusive so toolbar actions target the active pane.
+- Write sequential numbers for ordered lists in the Markdown source.
+
+### Fixed
+
+- Preserve Markdown delimiter boundaries in preview mapping probes so mixed selections remain editable with intra-word emphasis disabled.
+- Retain the exact source-editor inline selection after formatting instead of selecting the entire replaced line.
+- Clear preview selection on a single click in blank page space so the formatting panel stays dismissed.
+- Suppress native Force Touch word-lookup preparation on mapped preview prose while preserving ordinary selection and link/control gestures.
+- Keep the Rendering CSS selector and syntax-highlighting controls on separate rows in localized settings layouts.
+- Start a fresh character selection on a single preview press instead of retaining an earlier word selection for dragging; preserve native double-click and modifier gestures.
+- Restore preview text selection and the formatting panel on multiline quotations, including mixed styles and repeated text, while preserving Markdown provenance.
+- Preserve nested quote, heading and list prefixes when adding or removing inline styles inside quotations.
+- Allow inline formatting across empty quoted separator lines without removing paragraph boundaries or neighboring content.
+- Replace duplicate task-list bullets with checkboxes and align task text with ordinary list text. Position checkbox markers using the list font, including enlarged text and dark themes.
+- Preserve callout containers when changing their content's line type; explicit removal keeps titles, content and neighboring block boundaries intact.
+- Preserve the live expanded/collapsed state of generated disclosures during ordinary preview refreshes; explicit Reload restores source defaults.
+- Convert supported fenced code back to ordinary text and remove quote prefixes when converting quotations to code. Reject incompatible inline formatting in literal code blocks.
+- Preserve Setext heading metadata during cross-block formatting, entire long paragraphs during container changes, and localized titles when creating previously untitled disclosures.
+- Apply toolbar links to the active pane's selection, preserving formatting and selection on cancellation or rejected URLs.
+- Load required Prism language components on the first code preview and improve multiline heading spacing.
+- Prevent stale render/file callbacks and unsafe editor mutations from overwriting current document state; preserve selection, change notifications and undo.
+- Correct HTML/PDF export completion, resource refreshes, Quick Look preferences and packaged versions, localization and word counting across inline styles.
+
+### Security
+
+- Harden clipboard and URL validation, document-relative file creation and resource resolution against invalid inputs and symlink escapes.
+- Bound parser and YAML graph processing, reject stale or forged preview editing requests, and validate rewritten Markdown with the renderer before applying it.
+- Serialize command-line requests through a private queue and strengthen release artifact identity, signing and recovery checks.
+
+### Infrastructure
+
+- Add regression coverage for formatting compositions and transitions, real-WebView menus, list geometry, export and Quick Look. Detailed execution results and limits are recorded in the audit and feature reports; historical checks are not claimed as rerun for every subsequent change.
+
 ## [3000.0.7] - 2026-07-13
 
 ### Added

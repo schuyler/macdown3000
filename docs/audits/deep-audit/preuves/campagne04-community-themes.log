@@ -1,0 +1,84 @@
+/Applications/Xcode.app/Contents/Developer/usr/bin/make -C greg
+clang -g -Wall -Wno-unused-variable -O3 -DNDEBUG    -c -o greg.o greg.c
+clang -g -Wall -Wno-unused-variable -O3 -DNDEBUG    -c -o tree.o tree.c
+clang -g -Wall -Wno-unused-variable -O3 -DNDEBUG    -c -o compile.o compile.c
+clang -g -Wall -Wno-unused-variable -O3 -DNDEBUG  -o greg-new greg.o tree.o compile.o
+mv greg-new greg
+greg/greg -o pmh_parser_core.c pmh_grammar.leg
+rule 'References' defined but not used
+./tools/combine_parser_files.sh > pmh_parser.c.tmp && mv pmh_parser.c.tmp pmh_parser.c
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Atelier Sulphurpool Light+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Atelier Sulphurpool Light.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Atom Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Atom Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/CB+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/CB.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coldark Cold+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coldark Cold.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coldark Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coldark Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coy without shadows+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Coy without shadows.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Darcula+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Darcula.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Dracula+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Dracula.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Earth+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Earth.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Forest+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Forest.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Light+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Light.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Sea+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Sea.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Space+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Duotone Space.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/GHColors+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/GHColors.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Gruvbox Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Gruvbox Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Gruvbox Light+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Gruvbox Light.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Holi Theme+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Holi Theme.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Hopscotch+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Hopscotch.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Laserwave+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Laserwave.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Lucario+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Lucario.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Light+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Light.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Oceanic+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Material Oceanic.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Night Owl+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Night Owl.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Nord+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Nord.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/One Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/One Dark.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/One Light+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/One Light.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Pojoaque+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Pojoaque.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Shades of Purple+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Shades of Purple.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Solarized Dark Atom+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Solarized Dark Atom.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Synthwave 84+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Synthwave 84.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/VS Code Dark Plus+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/VS Code Dark Plus.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/VS+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/VS.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Xonokai+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Xonokai.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Z-Touch+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/Z-Touch.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/a11y Dark+.style
+PASS /Users/zydon/Sites/MacDown/MacDown/Resources/Themes/a11y Dark.style
+PASS 37 palettes / 148 pinned assets / 74 real PEG style parses / both resource build paths / offline CSS

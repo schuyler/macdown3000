@@ -17,7 +17,7 @@
 "a6o-qD-AIp.title" = "主題：";
 
 /* Class = "NSButtonCell"; title = "Scale preview based on editor font size"; ObjectID = "aWw-Wb-pBl"; */
-"aWw-Wb-pBl.title" = "依視窗大小自動縮放內容";
+"aWw-Wb-pBl.title" = "依編輯器字型大小縮放預覽";
 
 /* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
 "BuQ-02-oQB.title" = "程式碼區塊語法高亮";

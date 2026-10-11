@@ -1,0 +1,3 @@
+Instrumented generator and Markdown parser generated
+PASS Markdown parse/sort/address/free and repeated stylesheet/empty values
+PASS undefined generator identifiers, 1100 AST depth and generated 200-variable parser consumed

@@ -1,7 +1,7 @@
-pre[class*='language-'] {
+pre[data-information] {
     position: relative;
 }
-pre[class*='language-'][data-information]::before {
+pre[data-information]::before {
     content: attr(data-information);
     color: black;
     background-color: #CFCFCF;

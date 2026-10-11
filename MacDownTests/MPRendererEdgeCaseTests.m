@@ -1085,4 +1085,19 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                   @"Should render list after paragraph without colon");
 }
 
+- (void)testOversizedNumericEntitiesDoNotDiscardTableHeader
+{
+    // These overflow uint32_t to NBSP/ENSP. HTML renders invalid references
+    // visibly; they must not make the table header count as empty.
+    for (NSString *entity in @[@"&#4294967456;", @"&#x100002002;"]) {
+        NSString *markdown = [NSString stringWithFormat:@"| %@ |\n|---|\n| body |", entity];
+        self.delegate.extensions = HOEDOWN_EXT_TABLES;
+        [self.renderer parseMarkdown:markdown];
+        NSString *html = [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+        XCTAssertTrue([html containsString:@"<thead>"], @"%@", html);
+        XCTAssertTrue([html containsString:entity], @"%@", html);
+        XCTAssertTrue([html containsString:@"<td>body</td>"], @"%@", html);
+    }
+}
+
 @end

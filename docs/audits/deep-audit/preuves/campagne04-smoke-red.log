@@ -1,0 +1,15 @@
+Private recovery vault: /Users/zydon/Library/.macdown-audit-vault.ghmweyxx
+2026-10-10 00:45:56.710 MacDown 3000[5687:48343221] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:45:56.721 MacDown 3000[5687:48343221] [ScrollSync] Realigned reference points: editor 134->0, preview 0->0
+2026-10-10 00:45:56.792 MacDown 3000[5687:48343221] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+2026-10-10 00:45:56.847 MacDown 3000[5687:48343221] [ScrollSync] Realigned reference points: editor 134->120, preview 141->120
+Tools/smoke_launch.sh: line 26:  5687 Terminated: 15          "$binary"
+Tools/smoke_launch.sh: line 26:  5733 Terminated: 15          "$binary"
+2026-10-10 00:46:07.334 defaults[5762:48344017] 
+The domain/default pair of (app.macdown.macdown3000, MPDidMigrateFromLegacyBundleIdentifier) does not exist
+2026-10-10 00:46:07.345 defaults[5763:48344020] 
+The domain/default pair of (app.macdown.macdown3000, testMigrationKey) does not exist
+2026-10-10 00:46:07.353 defaults[5764:48344023] 
+The domain/default pair of (app.macdown.macdown3000, editorBaseFontName) does not exist
+Application launch and legacy preference migration passed.
+RESTORED and preferences verified; vault retained privately

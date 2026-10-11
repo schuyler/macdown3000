@@ -1,0 +1,203 @@
+PASS oversized paragraph refused before rendering
+PASS long whitespace run preserves text and full selection formatting
+PASS neighboring legacy color remains unchanged
+PASS <span style="color:#175cd3">outside selected</span> / selected / clear => refused
+PASS <span style="color:#175cd3">selected</span> outside / selected / clear => selected outside
+PASS legacy palette neighbor <span style="color:#b42318">
+PASS legacy palette neighbor <span style="color:#b54708">
+PASS legacy palette neighbor <span style="color:#067647">
+PASS legacy palette neighbor <span style="color:#175cd3">
+PASS legacy palette neighbor <span style="color:#6938ef">
+PASS legacy palette neighbor <span style="background-color:#fef08a;color:#111">
+PASS legacy palette neighbor <span style="background-color:#bbf7d0;color:#111">
+PASS legacy palette neighbor <span style="background-color:#bfdbfe;color:#111">
+PASS legacy palette neighbor <span style="background-color:#fbcfe8;color:#111">
+PASS <span style="color:#175cd3">selected</span> outside / selected / bold => refused
+PASS <span style="color:#175cd3">selected</span> <span style="color:#067647">neighbor</span> / selected / clear => selected <span style="color:#067647">neighbor</span>
+PASS <span style="color:#175cd3">outside <span style="color:#067647">nested</span></span> selected / selected / bold => refused
+PASS [<span style="color:#175cd3">colored</span> selected](https://example.com) / selected / bold => refused
+PASS nested legacy colors in untouched link remain unchanged
+PASS test **mot** selection / test **mot / bold => **test mot** selection
+PASS test **mot** selection / st **mo / bold => te**st mot** selection
+PASS test **mot** selection / ot** selection / bold => test **mot selection**
+PASS test **mot** selection / mot / bold => test mot selection
+PASS test **mot** selection / o / bold => test **m**o**t** selection
+PASS test **mot** selection / test **mot / italic => *test __mot__* selection
+PASS test **mot** selection / test **mot / underline => _test **mot**_ selection
+PASS test **mot** selection / test **mot / strike => ~~test **mot**~~ selection
+PASS test **mot** selection / test **mot / clear => test mot selection
+PASS **a** **b** / a** **b / bold => **a b**
+PASS ***_test_*** avec test / test / italic => **_test_** avec test
+PASS <u>word</u> suffix / word / clear => word suffix
+PASS ## test **mot** selection
+
+other **bold** / test **mot / bold => ## **test mot** selection
+
+other **bold**
+PASS test **mot** [link](https://example.com) `code` / test **mot / bold => **test mot** [link](https://example.com) `code`
+PASS [link](https://example.com) test **mot** / test **mot / bold => [link](https://example.com) **test mot**
+PASS test **mot** selection / mot** sel / bold => test **mot sel**ection
+PASS 😀 **mot** test / 😀 **mot / bold => **😀 mot** test
+PASS café **mot** test / fé **mot / underline => ca_fé **mot**_ test
+PASS test **mot** selection / test **mot / code => `test` **`mot`** selection
+PASS test `mot` selection / mot / code => test mot selection
+PASS test `mot` selection / o / code => test `m`o`t` selection
+PASS test `mot` selection / test `mot / bold => **test `mot`** selection
+PASS first
+
+second / first
+
+second / bold => **first**
+
+**second**
+PASS first
+second / first
+second / bold => **first
+second**
+PASS **first**
+
+second / first**
+
+second / bold => **first**
+
+**second**
+PASS **first**
+
+**second** / first**
+
+**second / bold => first
+
+second
+PASS # first
+
+## second / first
+
+## second / bold => # **first**
+
+## **second**
+PASS - first
+- second / first
+- second / bold => - **first**
+- **second**
+PASS test **mot**
+
+plain **bold** tail / test **mot**
+
+plain **bold / italic => *test __mot__*
+
+*plain __bold__* tail
+PASS [link](https://example.com) / link / bold => **[link](https://example.com)**
+PASS [link](https://example.com) / in / bold => [l**in**k](https://example.com)
+PASS test [**mot**](https://example.com) selection / test [**mot / underline => _test **[mot](https://example.com)**_ selection
+PASS test [**mot**](https://example.com) selection / test [**mot / bold => **test [mot](https://example.com)** selection
+PASS test [**mot**](https://example.com) selection / ot**](https://example.com) selection / bold => test **[mot](https://example.com) selection**
+PASS test **mot** selection / test **mot / link => [test **mot**](<https://new.example/a(b)>) selection
+PASS [link](https://old.example) / in / link => [l](https://old.example)[in](<https://new.example/a(b)>)[k](https://old.example)
+PASS test [**mot**](https://old.example) selection / test [**mot / link => [test **mot**](<https://new.example/a(b)>) selection
+PASS [link](https://old.example "title") / in / bold => [l**in**k](https://old.example "title")
+PASS Editable phrase é 日本語. / Editable / bold => **Editable** phrase é 日本語.
+PASS **first
+second** / first
+second / bold => first
+second
+PASS **first
+second** / irst
+secon / italic => **f*irst
+secon*d**
+PASS plain **bold
+continued** tail / plain **bold
+continued / underline => _plain **bold
+continued**_ tail
+PASS **first**
+second / first**
+second / bold => **first
+second**
+PASS first
+**second** / first
+**second / bold => **first
+second**
+PASS plain **bold
+continued** tail / plain **bold
+continued / clear => plain bold
+continued tail
+PASS `test` **`mot`** selection / test` **`mot / code => test **mot** selection
+PASS first
+====
+
+second
+ / first
+====
+
+second / bold => **first**
+====
+
+**second**
+
+PASS first
+====
+
+second
+ / first
+====
+
+second / italic => *first*
+====
+
+*second*
+
+PASS first
+====
+
+second
+ / first
+====
+
+second / underline => _first_
+====
+
+_second_
+
+PASS first
+====
+
+second
+ / first
+====
+
+second / strike => ~~first~~
+====
+
+~~second~~
+
+PASS first
+====
+
+second
+ / first
+====
+
+second / code => `first`
+====
+
+`second`
+
+PASS first
+====
+
+second
+ / first
+====
+
+second / link => [first](<https://new.example/a(b)>)
+====
+
+[second](<https://new.example/a(b)>)
+
+PASS # first
+---
+
+second
+ / first
+---
+
+second / bold => refused

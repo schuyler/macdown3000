@@ -1,0 +1,1504 @@
+Private recovery vault: /Users/zydon/Library/.macdown-audit-vault.s1ri3obi
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test-without-building -workspace "MacDown 3000.xcworkspace" -scheme MacDownUITests -derivedDataPath build/AuditCampaign03 -destination platform=macOS,arch=arm64 CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- -test-timeouts-enabled YES -maximum-test-execution-time-allowance 120 "-only-testing:MacDownUITests"
+
+Build settings from command line:
+    CODE_SIGN_IDENTITY = -
+    CODE_SIGNING_ALLOWED = YES
+
+2026-10-10 01:07:09.535275+0200 MacDownUITests-Runner[14499:48457152] [Default] Running tests...
+Test Suite 'All tests' started at 2026-10-10 01:07:22.419.
+Test Suite 'MacDownUITests.xctest' started at 2026-10-10 01:07:22.419.
+Test Suite 'MacDownUITests' started at 2026-10-10 01:07:22.419.
+Test Case '-[MacDownUITests.MacDownUITests testAppLaunchesWithWindow]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:22.420
+    t =     0.09s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.10s         Launch app.macdown.macdown3000-debug
+    t =     0.41s             Wait for accessibility to load
+    t =     1.44s             Setting up automation session
+    t =     1.45s             Wait for app.macdown.macdown3000-debug to idle
+    t =     1.45s Waiting 5.0s for Window (First Match) to exist
+    t =     2.47s     Checking `Expect predicate `existsNoRetry == 1` for object Window (First Match)`
+    t =     2.47s         Checking existence of `Window (First Match)`
+    t =     2.48s Tear Down
+    t =     2.48s     Terminate app.macdown.macdown3000-debug:14551
+Test Case '-[MacDownUITests.MacDownUITests testAppLaunchesWithWindow]' passed (3.605 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testCanTypeInEditor]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:26.026
+    t =     0.10s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.10s         Launch app.macdown.macdown3000-debug
+    t =     0.33s             Wait for accessibility to load
+    t =     0.69s             Setting up automation session
+    t =     0.70s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.70s Waiting 5.0s for "editor-text-view" TextView to exist
+    t =     1.74s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     1.74s         Checking existence of `"editor-text-view" TextView`
+    t =     1.75s Click "editor-text-view" TextView
+    t =     1.75s     Wait for app.macdown.macdown3000-debug to idle
+    t =     1.76s     Find the "editor-text-view" TextView
+    t =     1.76s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     1.78s     Synthesize event
+    t =     2.13s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.13s Type '# Hello World' into "editor-text-view" TextView
+    t =     2.13s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.13s     Find the "editor-text-view" TextView
+    t =     2.15s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.17s     Synthesize event
+    t =     2.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.47s Find the "editor-text-view" TextView
+    t =     2.48s Tear Down
+    t =     2.48s     Terminate app.macdown.macdown3000-debug:14570
+Test Case '-[MacDownUITests.MacDownUITests testCanTypeInEditor]' passed (3.596 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testEditorTextViewExists]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:29.623
+    t =     0.12s Set Up
+    t =     0.12s     Open app.macdown.macdown3000-debug
+    t =     0.12s         Launch app.macdown.macdown3000-debug
+    t =     0.35s             Wait for accessibility to load
+    t =     0.53s             Setting up automation session
+    t =     0.53s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.64s Waiting 5.0s for "editor-text-view" TextView to exist
+    t =     1.66s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     1.66s         Checking existence of `"editor-text-view" TextView`
+    t =     1.67s Tear Down
+    t =     1.67s     Terminate app.macdown.macdown3000-debug:14677
+Test Case '-[MacDownUITests.MacDownUITests testEditorTextViewExists]' passed (2.792 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:32.416
+    t =     0.10s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.10s         Launch app.macdown.macdown3000-debug
+    t =     0.32s             Wait for accessibility to load
+    t =     0.67s             Setting up automation session
+    t =     0.68s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.69s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     1.69s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     1.69s         Checking existence of `"editor-text-view" TextView`
+    t =     1.74s Click "editor-text-view" TextView
+    t =     1.74s     Wait for app.macdown.macdown3000-debug to idle
+    t =     1.74s     Find the "editor-text-view" TextView
+    t =     1.75s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     1.76s     Synthesize event
+    t =     2.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.10s Type 'a' key with modifiers '⌘' (0x10)
+    t =     2.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.10s     Find the "editor-text-view" TextView
+    t =     2.13s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.15s     Synthesize event
+    t =     2.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.22s Type '# Preview target
+
+...' into "editor-text-view" TextView
+    t =     2.22s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.22s     Find the "editor-text-view" TextView
+    t =     2.27s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.32s     Synthesize event
+    t =     3.22s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.22s Waiting 10.0s for WebView (First Match) to exist
+    t =     4.26s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =     4.26s         Checking existence of `WebView (First Match)`
+    t =     4.28s Click WebView (First Match)
+    t =     4.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.28s     Find the WebView (First Match)
+    t =     4.31s     Check for interrupting elements affecting WebView
+    t =     4.32s     Synthesize event
+    t =     9.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.73s Type 'f' key with modifiers '⌘' (0x10)
+    t =     9.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.73s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.83s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.84s     Open app.macdown.macdown3000-debug
+    t =     9.84s         Activate app.macdown.macdown3000-debug
+    t =     9.89s             Wait for app.macdown.macdown3000-debug to idle
+    t =     9.90s     Synthesize event
+    t =    10.00s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.01s Waiting 5.0s for "preview-find-field" SearchField to exist
+    t =    11.04s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =    11.04s         Checking existence of `"preview-find-field" SearchField`
+    t =    11.21s         Capturing element debug description
+    t =    12.06s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =    12.06s         Checking existence of `"preview-find-field" SearchField`
+    t =    12.10s         Capturing element debug description
+    t =    13.04s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =    13.04s         Checking existence of `"preview-find-field" SearchField`
+    t =    13.13s         Capturing element debug description
+    t =    14.06s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =    14.06s         Checking existence of `"preview-find-field" SearchField`
+    t =    14.10s         Capturing element debug description
+    t =    15.01s     Checking `Expect predicate `existsNoRetry == 1` for object "preview-find-field" SearchField`
+    t =    15.01s         Checking existence of `"preview-find-field" SearchField`
+    t =    15.10s         Capturing element debug description
+    t =    15.10s     Checking existence of `"preview-find-field" SearchField`
+    t =    15.14s Collecting debug information to assist test failure triage
+    t =    15.14s     Requesting snapshot of accessibility hierarchy for app with pid 14713
+/Users/zydon/Sites/MacDown/MacDownUITests/MacDownUITests.swift:136: error: -[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch] : XCTAssertTrue failed
+    t =    15.25s Tear Down
+    t =    15.25s     Terminate app.macdown.macdown3000-debug:14713
+Test Case '-[MacDownUITests.MacDownUITests testFindFromPreviewOpensRenderedTextSearch]' failed (16.303 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testListToolbarConvertsExistingBlockAndSupportsUndo]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:48.720
+    t =     0.12s Set Up
+    t =     0.13s     Open app.macdown.macdown3000-debug
+    t =     0.13s         Launch app.macdown.macdown3000-debug
+    t =     0.35s             Wait for accessibility to load
+    t =     0.68s             Setting up automation session
+    t =     0.69s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.69s Terminate app.macdown.macdown3000-debug:14794
+    t =     1.76s Open app.macdown.macdown3000-debug
+    t =     1.76s     Launch app.macdown.macdown3000-debug
+    t =     2.00s         Wait for accessibility to load
+    t =     2.34s         Setting up automation session
+    t =     2.35s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.36s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     3.37s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     3.37s         Checking existence of `"editor-text-view" TextView`
+    t =     3.38s Click "editor-text-view" TextView
+    t =     3.38s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.39s     Find the "editor-text-view" TextView
+    t =     3.39s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     3.42s     Synthesize event
+    t =     3.75s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.75s Type '# Selected
+
+Neighb...' into "editor-text-view" TextView
+    t =     3.76s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.76s     Find the "editor-text-view" TextView
+    t =     3.77s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     3.79s     Synthesize event
+    t =     4.38s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.38s Type '↑' key (XCUIKeyboardKeyUpArrow) with modifiers '⌘' (0x10)
+    t =     4.38s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.38s     Find the "editor-text-view" TextView
+    t =     4.39s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     4.41s     Synthesize event
+    t =     4.45s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.46s Waiting 5.0s for "list-group" Group to exist
+    t =     5.49s     Checking `Expect predicate `existsNoRetry == 1` for object "list-group" Group`
+    t =     5.49s         Checking existence of `"list-group" Group`
+    t =     5.78s Get number of matches for: Descendants matching type Button
+    t =     5.81s Checking existence of `Button (Element at index 0)`
+    t =     5.85s Click Button (Element at index 0)
+    t =     5.86s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.86s     Find the Button (Element at index 0)
+    t =     5.90s     Check for interrupting elements affecting Button
+    t =     5.92s     Synthesize event
+    t =     6.26s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.26s Find the "editor-text-view" TextView
+    t =     6.27s Checking existence of `Button (Element at index 1)`
+    t =     6.41s Click Button (Element at index 1)
+    t =     6.41s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.42s     Find the Button (Element at index 1)
+    t =     6.46s     Check for interrupting elements affecting Button
+    t =     6.48s     Synthesize event
+    t =     6.83s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.83s Find the "editor-text-view" TextView
+    t =     6.84s Checking existence of `Button (Element at index 2)`
+    t =     6.95s Click Button (Element at index 2)
+    t =     6.95s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.96s     Find the Button (Element at index 2)
+    t =     7.00s     Check for interrupting elements affecting Button
+    t =     7.03s     Synthesize event
+    t =     7.37s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.37s Find the "editor-text-view" TextView
+    t =     7.39s Type 'z' key with modifiers '⌘' (0x10)
+    t =     7.39s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.39s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.42s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.42s     Synthesize event
+    t =     7.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.48s Find the "editor-text-view" TextView
+    t =     7.49s Type 'z' key with modifiers '⌘⇧' (0x12)
+    t =     7.49s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.49s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.68s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.68s     Synthesize event
+    t =     7.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.74s Find the "editor-text-view" TextView
+    t =     7.75s Tear Down
+    t =     7.75s     Terminate app.macdown.macdown3000-debug:14799
+Test Case '-[MacDownUITests.MacDownUITests testListToolbarConvertsExistingBlockAndSupportsUndo]' passed (8.929 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testNormalTextToolbarRemovesCurrentHeadingAndSupportsUndo]' started.
+    t =     0.00s Start Test at 2026-10-10 01:07:57.650
+    t =     0.11s Set Up
+    t =     0.11s     Open app.macdown.macdown3000-debug
+    t =     0.11s         Launch app.macdown.macdown3000-debug
+    t =     0.34s             Wait for accessibility to load
+    t =     0.69s             Setting up automation session
+    t =     0.69s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.70s Terminate app.macdown.macdown3000-debug:14838
+    t =     1.78s Open app.macdown.macdown3000-debug
+    t =     1.78s     Launch app.macdown.macdown3000-debug
+    t =     2.00s         Wait for accessibility to load
+    t =     2.38s         Setting up automation session
+    t =     2.38s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.39s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     3.41s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     3.41s         Checking existence of `"editor-text-view" TextView`
+    t =     3.43s Waiting 5.0s for "Texte normal" Button to exist
+    t =     4.48s     Checking `Expect predicate `existsNoRetry == 1` for object "Texte normal" Button`
+    t =     4.48s         Checking existence of `"Texte normal" Button`
+    t =     4.66s Click "editor-text-view" TextView
+    t =     4.66s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.66s     Find the "editor-text-view" TextView
+    t =     4.67s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     4.69s     Synthesize event
+    t =     5.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.04s Type 'a' key with modifiers '⌘' (0x10)
+    t =     5.04s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.04s     Find the "editor-text-view" TextView
+    t =     5.05s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     5.07s     Synthesize event
+    t =     5.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.11s Type 'Avant
+# Titre é 日本...' into "editor-text-view" TextView
+    t =     5.11s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.11s     Find the "editor-text-view" TextView
+    t =     5.12s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     5.14s     Synthesize event
+    t =     6.06s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.07s Type '↑' key (XCUIKeyboardKeyUpArrow) with no modifiers
+    t =     6.07s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.08s     Find the "editor-text-view" TextView
+    t =     6.09s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     6.11s     Synthesize event
+    t =     6.14s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.15s Click "Texte normal" Button
+    t =     6.15s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.15s     Find the "Texte normal" Button
+    t =     6.35s     Check for interrupting elements affecting "Texte normal" Button
+    t =     6.37s     Synthesize event
+    t =     6.71s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.72s Find the "editor-text-view" TextView
+    t =     6.73s Type 'z' key with modifiers '⌘' (0x10)
+    t =     6.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.74s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     6.77s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     6.77s     Synthesize event
+    t =     6.80s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.81s Find the "editor-text-view" TextView
+    t =     6.82s Type 'z' key with modifiers '⌘⇧' (0x12)
+    t =     6.82s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.82s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     6.91s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     6.91s     Synthesize event
+    t =     6.97s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.97s Find the "editor-text-view" TextView
+    t =     6.98s Click "editor-text-view" TextView
+    t =     6.98s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.99s     Find the "editor-text-view" TextView
+    t =     7.00s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     7.11s     Synthesize event
+    t =     7.46s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.47s Type 'a' key with modifiers '⌘' (0x10)
+    t =     7.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.47s     Find the "editor-text-view" TextView
+    t =     7.48s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     7.49s     Synthesize event
+    t =     7.54s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.54s Type 'Avant
+## Titre é 日...' into "editor-text-view" TextView
+    t =     7.54s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.54s     Find the "editor-text-view" TextView
+    t =     7.56s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     7.59s     Synthesize event
+    t =     8.44s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.44s Type '↑' key (XCUIKeyboardKeyUpArrow) with no modifiers
+    t =     8.44s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.45s     Find the "editor-text-view" TextView
+    t =     8.46s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     8.49s     Synthesize event
+    t =     8.49s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.50s Click "Texte normal" Button
+    t =     8.50s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.50s     Find the "Texte normal" Button
+    t =     8.59s     Check for interrupting elements affecting "Texte normal" Button
+    t =     8.60s     Synthesize event
+    t =     8.94s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.94s Find the "editor-text-view" TextView
+    t =     8.95s Type 'z' key with modifiers '⌘' (0x10)
+    t =     8.95s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.95s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     8.98s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     8.98s     Synthesize event
+    t =     9.02s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.02s Find the "editor-text-view" TextView
+    t =     9.03s Type 'z' key with modifiers '⌘⇧' (0x12)
+    t =     9.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.03s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.11s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.11s     Synthesize event
+    t =     9.16s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.17s Find the "editor-text-view" TextView
+    t =     9.17s Click "editor-text-view" TextView
+    t =     9.17s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.18s     Find the "editor-text-view" TextView
+    t =     9.18s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     9.20s     Synthesize event
+    t =     9.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.56s Type 'a' key with modifiers '⌘' (0x10)
+    t =     9.56s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.56s     Find the "editor-text-view" TextView
+    t =     9.56s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     9.59s     Synthesize event
+    t =     9.63s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.64s Type 'Avant
+### Titre é ...' into "editor-text-view" TextView
+    t =     9.64s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.64s     Find the "editor-text-view" TextView
+    t =     9.65s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     9.68s     Synthesize event
+    t =    10.53s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.53s Type '↑' key (XCUIKeyboardKeyUpArrow) with no modifiers
+    t =    10.53s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.54s     Find the "editor-text-view" TextView
+    t =    10.55s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    10.58s     Synthesize event
+    t =    10.60s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.60s Click "Texte normal" Button
+    t =    10.60s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.60s     Find the "Texte normal" Button
+    t =    10.69s     Check for interrupting elements affecting "Texte normal" Button
+    t =    10.70s     Synthesize event
+    t =    11.06s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.06s Find the "editor-text-view" TextView
+    t =    11.07s Type 'z' key with modifiers '⌘' (0x10)
+    t =    11.07s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.07s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    11.10s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    11.10s     Synthesize event
+    t =    11.14s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.14s Find the "editor-text-view" TextView
+    t =    11.15s Type 'z' key with modifiers '⌘⇧' (0x12)
+    t =    11.15s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.15s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    11.22s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    11.22s     Synthesize event
+    t =    11.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.28s Find the "editor-text-view" TextView
+    t =    11.29s Checking existence of `Window (First Match)`
+    t =    11.30s Find the Window (First Match)
+    t =    11.37s Added attachment named 'Texte normal beside heading buttons'
+    t =    11.37s Tear Down
+    t =    11.37s     Terminate app.macdown.macdown3000-debug:14843
+Test Case '-[MacDownUITests.MacDownUITests testNormalTextToolbarRemovesCurrentHeadingAndSupportsUndo]' passed (12.431 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText]' started.
+    t =     0.00s Start Test at 2026-10-10 01:08:10.081
+    t =     0.11s Set Up
+    t =     0.11s     Open app.macdown.macdown3000-debug
+    t =     0.11s         Launch app.macdown.macdown3000-debug
+    t =     0.33s             Wait for accessibility to load
+    t =     0.71s             Setting up automation session
+    t =     0.71s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.73s Terminate app.macdown.macdown3000-debug:14906
+    t =     1.82s Open app.macdown.macdown3000-debug
+    t =     1.82s     Launch app.macdown.macdown3000-debug
+    t =     2.04s         Wait for accessibility to load
+    t =     2.35s         Setting up automation session
+    t =     2.36s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.37s Type 'o' key with modifiers '⌘' (0x10)
+    t =     2.37s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.37s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.55s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.55s     Synthesize event
+    t =     8.30s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.30s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     8.30s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.30s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     8.51s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     8.51s     Synthesize event
+    t =     8.62s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.91s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =     8.91s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.93s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.09s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.09s     Synthesize event
+    t =    11.81s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.82s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    11.82s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.82s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.01s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.01s     Synthesize event
+    t =    12.44s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.45s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    12.45s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.45s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.52s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.52s     Synthesize event
+    t =    12.76s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.89s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =    13.92s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    13.92s         Checking existence of `"editor-text-view" TextView`
+    t =    13.93s Waiting 10.0s for StaticText (First Match) to exist
+    t =    14.95s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    14.95s         Checking existence of `StaticText (First Match)`
+    t =    14.96s Double click StaticText (First Match)
+    t =    14.96s     Wait for app.macdown.macdown3000-debug to idle
+    t =    14.96s     Find the StaticText (First Match)
+    t =    14.97s     Check for interrupting elements affecting "Codeword" StaticText
+    t =    14.99s     Synthesize event
+    t =    15.60s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.61s Waiting 5.0s for Any (First Match) to exist
+    t =    16.62s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    16.62s         Checking existence of `Any (First Match)`
+    t =    16.63s Find the Any (First Match)
+    t =    16.64s Waiting 5.0s for Any (First Match) to exist
+    t =    17.67s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    17.67s         Checking existence of `Any (First Match)`
+    t =    17.68s Find the Any (First Match)
+    t =    17.69s Waiting 5.0s for Any (First Match) to exist
+    t =    18.71s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    18.71s         Checking existence of `Any (First Match)`
+    t =    18.73s Find the Any (First Match)
+    t =    18.74s Waiting 5.0s for Any (First Match) to exist
+    t =    19.77s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    19.77s         Checking existence of `Any (First Match)`
+    t =    19.78s Find the Any (First Match)
+    t =    19.79s Waiting 5.0s for Any (First Match) to exist
+    t =    20.82s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    20.82s         Checking existence of `Any (First Match)`
+    t =    20.83s Find the Any (First Match)
+    t =    20.84s Waiting 5.0s for Any (First Match) to exist
+    t =    21.86s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    21.86s         Checking existence of `Any (First Match)`
+    t =    21.87s Find the Any (First Match)
+    t =    21.88s Waiting 5.0s for Any (First Match) to exist
+    t =    22.91s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    22.91s         Checking existence of `Any (First Match)`
+    t =    22.92s Find the Any (First Match)
+    t =    22.92s Waiting 5.0s for Any (First Match) to exist
+    t =    23.95s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    23.95s         Checking existence of `Any (First Match)`
+    t =    23.96s Find the Any (First Match)
+    t =    23.97s Find the "editor-text-view" TextView
+    t =    23.97s Waiting 5.0s for "Type de ligne et encadré" PopUpButton to exist
+    t =    24.98s     Checking `Expect predicate `existsNoRetry == 1` for object "Type de ligne et encadré" PopUpButton`
+    t =    24.98s         Checking existence of `"Type de ligne et encadré" PopUpButton`
+    t =    25.22s Find the "Type de ligne et encadré" PopUpButton
+    t =    25.27s Click "Type de ligne et encadré" PopUpButton
+    t =    25.27s     Wait for app.macdown.macdown3000-debug to idle
+    t =    25.28s     Find the "Type de ligne et encadré" PopUpButton
+    t =    25.33s     Check for interrupting elements affecting "Type de ligne et encadré" PopUpButton
+    t =    25.35s     Synthesize event
+    t =    25.70s     Wait for app.macdown.macdown3000-debug to idle
+    t =    25.70s Waiting 5.0s for Any (First Match) to exist
+    t =    26.72s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    26.72s         Checking existence of `Any (First Match)`
+    t =    26.73s Find the Any (First Match)
+    t =    26.75s Find the "Texte normal" MenuItem
+    t =    26.78s Click "Texte normal" MenuItem[0.50, 0.50]
+    t =    26.78s     Wait for app.macdown.macdown3000-debug to idle
+    t =    26.78s     Find the "Texte normal" MenuItem
+    t =    26.80s     Check for interrupting elements affecting "Texte normal" MenuItem
+    t =    26.80s     Synthesize event
+    t =    26.81s         Find the "Texte normal" MenuItem
+    t =    26.82s         Find the "Texte normal" MenuItem
+    t =    27.16s     Wait for app.macdown.macdown3000-debug to idle
+    t =    28.20s Checking `Expect predicate `NOT value CONTAINS "```"` for object "editor-text-view" TextView`
+    t =    28.20s     Find the "editor-text-view" TextView
+    t =    28.22s Find the "editor-text-view" TextView
+    t =    28.23s Waiting 5.0s for Any (First Match) to exist
+    t =    29.24s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    29.24s         Checking existence of `Any (First Match)`
+    t =    30.27s Checking `Expect predicate `enabled == 1` for object Any (First Match)`
+    t =    30.27s     Find the Any (First Match)
+    t =    30.29s Find the "Gras" CheckBox
+    t =    30.30s Type 'z' key with modifiers '⌘' (0x10)
+    t =    30.30s     Wait for app.macdown.macdown3000-debug to idle
+    t =    30.30s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    30.38s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    30.38s     Synthesize event
+    t =    30.41s     Wait for app.macdown.macdown3000-debug to idle
+    t =    30.42s Find the "editor-text-view" TextView
+    t =    30.42s Tear Down
+    t =    30.42s     Terminate app.macdown.macdown3000-debug:14911
+Test Case '-[MacDownUITests.MacDownUITests testPreviewCodeSelectionDisablesInlineStylesAndConvertsBackToText]' passed (31.569 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewDoubleClickEditingUpdatesSourceAndUndo]' started.
+    t =     0.00s Start Test at 2026-10-10 01:08:41.651
+    t =     0.12s Set Up
+    t =     0.12s     Open app.macdown.macdown3000-debug
+    t =     0.13s         Launch app.macdown.macdown3000-debug
+    t =     0.34s             Wait for accessibility to load
+    t =     0.72s             Setting up automation session
+    t =     0.73s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.73s Terminate app.macdown.macdown3000-debug:15039
+    t =     1.81s Open app.macdown.macdown3000-debug
+    t =     1.81s     Launch app.macdown.macdown3000-debug
+    t =     2.06s         Wait for accessibility to load
+    t =     2.40s         Setting up automation session
+    t =     2.41s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.41s Type 'o' key with modifiers '⌘' (0x10)
+    t =     2.41s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.42s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.61s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.61s     Synthesize event
+    t =     8.46s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.47s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     8.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.47s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     8.68s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     8.68s     Synthesize event
+    t =     8.80s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.09s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =     9.09s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.09s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.24s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.24s     Synthesize event
+    t =    11.91s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.91s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    11.91s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.92s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.09s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.09s     Synthesize event
+    t =    12.54s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.55s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    12.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.55s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.62s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.62s     Synthesize event
+    t =    12.85s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.97s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =    13.99s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    13.99s         Checking existence of `"editor-text-view" TextView`
+    t =    14.01s Waiting 10.0s for StaticText (First Match) to exist
+    t =    15.02s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    15.02s         Checking existence of `StaticText (First Match)`
+    t =    15.03s Double click StaticText (First Match)
+    t =    15.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.03s     Find the StaticText (First Match)
+    t =    15.05s     Check for interrupting elements affecting "Editable phrase" StaticText
+    t =    15.06s     Synthesize event
+    t =    15.68s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.69s Waiting 5.0s for "Modifier le texte" Button to exist
+    t =    16.71s     Checking `Expect predicate `existsNoRetry == 1` for object "Modifier le texte" Button`
+    t =    16.71s         Checking existence of `"Modifier le texte" Button`
+    t =    16.96s Click "Modifier le texte" Button
+    t =    16.96s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.96s     Find the "Modifier le texte" Button
+    t =    17.01s     Check for interrupting elements affecting "Modifier le texte" Button
+    t =    17.04s     Synthesize event
+    t =    17.45s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.46s Type 'Changed phrase' into Target Application 'app.macdown.macdown3000-debug'
+    t =    17.46s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.46s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    17.50s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    17.50s     Synthesize event
+    t =    17.86s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.86s Type 's' key with modifiers '⌘' (0x10)
+    t =    17.86s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.87s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    17.96s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    17.96s     Synthesize event
+    t =    18.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =    19.05s Checking `Expect predicate `value == "# Preview heading
+
+Changed phrase
+
+[Preserved link](https://example.com)
+"` for object "editor-text-view" TextView`
+    t =    19.05s     Find the "editor-text-view" TextView
+    t =    19.06s Type 'z' key with modifiers '⌘' (0x10)
+    t =    19.06s     Wait for app.macdown.macdown3000-debug to idle
+    t =    19.07s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    19.15s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    19.15s     Synthesize event
+    t =    19.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =    19.22s Find the "editor-text-view" TextView
+    t =    19.23s Checking existence of `"PreviewEditing.md" Window`
+    t =    19.32s Find the "PreviewEditing.md" Window
+    t =    19.42s Added attachment named 'Source-backed editable preview'
+    t =    19.42s Waiting 10.0s for StaticText (First Match) to exist
+    t =    20.44s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    20.44s         Checking existence of `StaticText (First Match)`
+    t =    20.45s Press StaticText (First Match)[0.05, 0.50] for 0.1 seconds, then drag to StaticText (First Match)[0.95, 0.50] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    20.45s     Wait for app.macdown.macdown3000-debug to idle
+    t =    20.46s     Find the StaticText (First Match)
+    t =    20.47s     Check for interrupting elements affecting "Editable phrase" StaticText
+    t =    20.49s     Synthesize event
+    t =    20.49s         Find the "Editable phrase" StaticText
+    t =    20.50s         Find the "Editable phrase" StaticText
+    t =    20.51s         Find the "Editable phrase" StaticText
+    t =    20.52s         Find the "Editable phrase" StaticText
+    t =    21.08s     Wait for app.macdown.macdown3000-debug to idle
+    t =    21.08s Waiting 5.0s for Any (First Match) to exist
+    t =    22.11s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    22.11s         Checking existence of `Any (First Match)`
+    t =    22.11s Checking existence of `"PreviewEditing.md" Window`
+    t =    22.22s Find the "PreviewEditing.md" Window
+    t =    22.32s Added attachment named 'Preview selection formatting panel'
+    t =    22.32s Click Button (Element at index 0)
+    t =    22.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =    22.32s     Find the Button (Element at index 0)
+    t =    22.37s     Check for interrupting elements affecting Button
+    t =    22.39s     Synthesize event
+    t =    22.74s     Wait for app.macdown.macdown3000-debug to idle
+    t =    23.78s Checking `Expect predicate `value CONTAINS "**"` for object "editor-text-view" TextView`
+    t =    23.78s     Find the "editor-text-view" TextView
+    t =    23.79s Find the "editor-text-view" TextView
+    t =    23.79s Find the "editor-text-view" TextView
+    t =    23.80s Waiting 10.0s for StaticText (First Match) to exist
+    t =    24.82s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    24.82s         Checking existence of `StaticText (First Match)`
+    t =    24.83s Get all elements bound by index for: Descendants matching type StaticText
+    t =    24.93s Find the StaticText (Element at index 0)
+    t =    24.98s Find the "Preview heading" StaticText
+    t =    25.02s Find the "Preview heading" StaticText
+    t =    25.07s Find the StaticText (Element at index 1)
+    t =    25.12s Find the "Preview heading" StaticText
+    t =    25.16s Find the "Preview heading" StaticText
+    t =    25.22s Find the StaticText (Element at index 2)
+    t =    25.26s Find the "Editable phras" StaticText
+    t =    25.31s Find the "Editable phras" StaticText
+    t =    25.36s Find the StaticText (Element at index 3)
+    t =    25.41s Find the "e" StaticText
+    t =    25.47s Find the "e" StaticText
+    t =    25.51s Find the StaticText (Element at index 4)
+    t =    25.56s Find the "Preserved link" StaticText
+    t =    25.60s Find the "Preserved link" StaticText
+    t =    25.66s Waiting 5.0s for Any (First Match) to exist
+    t =    26.68s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    26.68s         Checking existence of `Any (First Match)`
+    t =    26.70s Click Button (Element at index 2)
+    t =    26.70s     Wait for app.macdown.macdown3000-debug to idle
+    t =    26.70s     Find the Button (Element at index 2)
+    t =    26.82s     Check for interrupting elements affecting Button
+    t =    26.84s     Synthesize event
+    t =    27.29s     Wait for app.macdown.macdown3000-debug to idle
+    t =    28.32s Checking `Expect predicate `value CONTAINS "_"` for object "editor-text-view" TextView`
+    t =    28.32s     Find the "editor-text-view" TextView
+    t =    28.33s Find the "editor-text-view" TextView
+    t =    28.34s Find the "editor-text-view" TextView
+    t =    28.35s Get all elements bound by index for: Descendants matching type StaticText
+    t =    28.45s Find the StaticText (Element at index 0)
+    t =    28.49s Find the "Preview heading" StaticText
+    t =    28.55s Find the "Preview heading" StaticText
+    t =    28.59s Find the StaticText (Element at index 1)
+    t =    28.64s Find the "Preview heading" StaticText
+    t =    28.79s Find the "Preview heading" StaticText
+    t =    28.94s Find the StaticText (Element at index 2)
+    t =    28.99s Find the "Editable phras" StaticText
+    t =    29.04s Find the "Editable phras" StaticText
+    t =    29.09s Find the StaticText (Element at index 3)
+    t =    29.14s Find the "e" StaticText
+    t =    29.19s Find the "e" StaticText
+    t =    29.24s Find the StaticText (Element at index 4)
+    t =    29.29s Find the "Preserved link" StaticText
+    t =    29.34s Find the "Preserved link" StaticText
+    t =    29.39s Click Button (Element at index 1)
+    t =    29.39s     Wait for app.macdown.macdown3000-debug to idle
+    t =    29.39s     Find the Button (Element at index 1)
+    t =    29.48s     Check for interrupting elements affecting Button
+    t =    29.49s     Synthesize event
+    t =    29.82s     Wait for app.macdown.macdown3000-debug to idle
+    t =    30.84s Checking `Expect predicate `value CONTAINS "*_Editable phras_*"` for object "editor-text-view" TextView`
+    t =    30.84s     Find the "editor-text-view" TextView
+    t =    30.84s Get all elements bound by index for: Descendants matching type StaticText
+    t =    30.95s Find the StaticText (Element at index 0)
+    t =    31.00s Find the "Preview heading" StaticText
+    t =    31.05s Find the "Preview heading" StaticText
+    t =    31.09s Find the StaticText (Element at index 1)
+    t =    31.14s Find the "Preview heading" StaticText
+    t =    31.19s Find the "Preview heading" StaticText
+    t =    31.24s Find the StaticText (Element at index 2)
+    t =    31.29s Find the "Editable phras" StaticText
+    t =    31.34s Find the "Editable phras" StaticText
+    t =    31.39s Find the StaticText (Element at index 3)
+    t =    31.54s Find the "e" StaticText
+    t =    31.59s Find the "e" StaticText
+    t =    31.64s Find the StaticText (Element at index 4)
+    t =    31.70s Find the "Preserved link" StaticText
+    t =    31.74s Find the "Preserved link" StaticText
+    t =    31.79s Tear Down
+    t =    31.79s     Terminate app.macdown.macdown3000-debug:15051
+Test Case '-[MacDownUITests.MacDownUITests testPreviewDoubleClickEditingUpdatesSourceAndUndo]' passed (33.034 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' started.
+    t =     0.00s Start Test at 2026-10-10 01:09:14.686
+    t =     0.10s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.11s         Launch app.macdown.macdown3000-debug
+    t =     0.34s             Wait for accessibility to load
+    t =     0.68s             Setting up automation session
+    t =     0.69s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.70s Terminate app.macdown.macdown3000-debug:15290
+    t =     1.76s Open app.macdown.macdown3000-debug
+    t =     1.76s     Launch app.macdown.macdown3000-debug
+    t =     1.99s         Wait for accessibility to load
+    t =     2.43s         Setting up automation session
+    t =     2.44s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.44s Type 'o' key with modifiers '⌘' (0x10)
+    t =     2.44s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.44s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.62s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.62s     Synthesize event
+    t =     8.37s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.38s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     8.38s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.38s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     8.60s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     8.60s     Synthesize event
+    t =     8.76s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.05s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =     9.05s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.06s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.23s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.23s     Synthesize event
+    t =    12.12s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.12s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    12.12s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.13s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.32s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.32s     Synthesize event
+    t =    12.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.73s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    12.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.74s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    12.81s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    12.81s     Synthesize event
+    t =    13.02s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.15s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =    14.18s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    14.18s         Checking existence of `"editor-text-view" TextView`
+    t =    14.19s Waiting 10.0s for StaticText (First Match) to exist
+    t =    15.20s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    15.20s         Checking existence of `StaticText (First Match)`
+    t =    15.21s Waiting 10.0s for StaticText (First Match) to exist
+    t =    16.24s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    16.24s         Checking existence of `StaticText (First Match)`
+    t =    16.25s Press StaticText (First Match)[0.00, 0.50] for 0.1 seconds, then drag to StaticText (First Match)[1.00, 0.50] with velocity of 500.00 pixels per second, and then hold for 0.0 seconds 
+    t =    16.25s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.26s     Find the StaticText (First Match)
+    t =    16.27s     Check for interrupting elements affecting "test " StaticText
+    t =    16.30s     Synthesize event
+    t =    16.30s         Find the "test " StaticText
+    t =    16.42s         Find the "test " StaticText
+    t =    16.43s         Find the StaticText (First Match)
+    t =    16.44s         Find the "mot" StaticText
+    t =    16.94s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.94s Waiting 5.0s for Any (First Match) to exist
+    t =    18.03s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    18.04s         Checking existence of `Any (First Match)`
+    t =    18.05s Click Any (First Match)
+    t =    18.05s     Wait for app.macdown.macdown3000-debug to idle
+    t =    18.05s     Find the Any (First Match)
+    t =    18.07s     Check for interrupting elements affecting "Gras" CheckBox
+    t =    18.09s     Synthesize event
+    t =    18.43s     Wait for app.macdown.macdown3000-debug to idle
+    t =    19.47s Checking `Expect predicate `value == "**test mot** selection
+
+[Preserved link](https://example.com)
+"` for object "editor-text-view" TextView`
+    t =    19.47s     Find the "editor-text-view" TextView
+    t =    19.49s Waiting 5.0s for Any (First Match) to exist
+    t =    20.51s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    20.52s         Checking existence of `Any (First Match)`
+    t =    20.53s Click Any (First Match)
+    t =    20.53s     Wait for app.macdown.macdown3000-debug to idle
+    t =    20.53s     Find the Any (First Match)
+    t =    20.65s     Check for interrupting elements affecting "Italique" CheckBox
+    t =    20.68s     Synthesize event
+    t =    21.02s     Wait for app.macdown.macdown3000-debug to idle
+    t =    22.06s Checking `Expect predicate `value == "***test mot*** selection
+
+[Preserved link](https://example.com)
+"` for object "editor-text-view" TextView`
+    t =    22.06s     Find the "editor-text-view" TextView
+    t =    22.08s Find the "editor-text-view" TextView
+    t =    22.08s Get all elements bound by index for: Descendants matching type StaticText
+    t =    22.40s Find the StaticText (Element at index 0)
+    t =    22.45s Find the "test mot" StaticText
+    t =    22.50s Find the StaticText (Element at index 1)
+    t =    22.54s Find the " selection" StaticText
+    t =    22.59s Find the StaticText (Element at index 2)
+    t =    22.64s Find the "Preserved link" StaticText
+    t =    22.69s Checking existence of `"MixedSelection.md" Window`
+    t =    22.74s Find the "MixedSelection.md" Window
+    t =    22.83s Added attachment named 'Mixed selection with common bold and italic styles'
+    t =    22.84s Type 's' key with modifiers '⌘' (0x10)
+    t =    22.84s     Wait for app.macdown.macdown3000-debug to idle
+    t =    22.84s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    22.86s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    22.86s     Synthesize event
+    t =    22.89s     Wait for app.macdown.macdown3000-debug to idle
+    t =    22.89s Type 'z' key with modifiers '⌘' (0x10)
+    t =    22.89s     Wait for app.macdown.macdown3000-debug to idle
+    t =    22.89s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    22.97s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    22.98s     Synthesize event
+    t =    23.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =    23.03s Find the "editor-text-view" TextView
+    t =    23.04s Type 'z' key with modifiers '⌘' (0x10)
+    t =    23.04s     Wait for app.macdown.macdown3000-debug to idle
+    t =    23.04s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    23.22s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    23.22s     Synthesize event
+    t =    23.24s     Wait for app.macdown.macdown3000-debug to idle
+    t =    23.25s Find the "editor-text-view" TextView
+    t =    23.26s Tear Down
+    t =    23.26s     Terminate app.macdown.macdown3000-debug:15306
+Test Case '-[MacDownUITests.MacDownUITests testPreviewMixedSelectionFormattingPreservesSelectionAndNeighbor]' passed (24.337 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewPaneExists]' started.
+    t =     0.00s Start Test at 2026-10-10 01:09:39.024
+    t =     0.11s Set Up
+    t =     0.11s     Open app.macdown.macdown3000-debug
+    t =     0.11s         Launch app.macdown.macdown3000-debug
+    t =     0.33s             Wait for accessibility to load
+    t =     0.68s             Setting up automation session
+    t =     0.69s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.69s Waiting 5.0s for "editor-text-view" TextView to exist
+    t =     1.71s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     1.71s         Checking existence of `"editor-text-view" TextView`
+    t =     1.73s Click "editor-text-view" TextView
+    t =     1.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     1.73s     Find the "editor-text-view" TextView
+    t =     1.74s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     1.76s     Synthesize event
+    t =     2.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.10s Type '# Hello World' into "editor-text-view" TextView
+    t =     2.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.10s     Find the "editor-text-view" TextView
+    t =     2.11s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     2.13s     Synthesize event
+    t =     2.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.48s Waiting 5.0s for WebView (First Match) to exist
+    t =     3.49s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =     3.49s         Checking existence of `WebView (First Match)`
+    t =     3.51s Tear Down
+    t =     3.51s     Terminate app.macdown.macdown3000-debug:15401
+Test Case '-[MacDownUITests.MacDownUITests testPreviewPaneExists]' passed (4.649 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor]' started.
+    t =     0.00s Start Test at 2026-10-10 01:09:43.673
+    t =     0.12s Set Up
+    t =     0.12s     Open app.macdown.macdown3000-debug
+    t =     0.12s         Launch app.macdown.macdown3000-debug
+    t =     0.35s             Wait for accessibility to load
+    t =     0.69s             Setting up automation session
+    t =     0.69s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.70s Terminate app.macdown.macdown3000-debug:15434
+    t =     1.75s Open app.macdown.macdown3000-debug
+    t =     1.75s     Launch app.macdown.macdown3000-debug
+    t =     1.98s         Wait for accessibility to load
+    t =     2.30s         Setting up automation session
+    t =     2.31s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.31s Type 'o' key with modifiers '⌘' (0x10)
+    t =     2.31s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.32s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.48s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.48s     Synthesize event
+    t =     3.26s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.28s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     3.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.28s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     3.78s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     3.78s     Synthesize event
+    t =     3.93s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.22s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =     4.22s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.23s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     4.51s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     4.51s     Synthesize event
+    t =     7.17s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.17s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     7.17s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.18s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.36s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.36s     Synthesize event
+    t =     7.78s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.78s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     7.78s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.79s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.96s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.96s     Synthesize event
+    t =     8.16s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.32s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     9.36s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     9.36s         Checking existence of `"editor-text-view" TextView`
+    t =     9.37s Waiting 10.0s for StaticText (First Match) to exist
+    t =    10.38s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =    10.39s         Checking existence of `StaticText (First Match)`
+    t =    10.40s Double click StaticText (First Match)
+    t =    10.40s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.40s     Find the StaticText (First Match)
+    t =    10.41s     Check for interrupting elements affecting "Quotedword" StaticText
+    t =    10.44s     Synthesize event
+    t =    11.05s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.05s Waiting 5.0s for "Type de ligne et encadré" PopUpButton to exist
+    t =    12.08s     Checking `Expect predicate `existsNoRetry == 1` for object "Type de ligne et encadré" PopUpButton`
+    t =    12.08s         Checking existence of `"Type de ligne et encadré" PopUpButton`
+    t =    12.31s Find the "Type de ligne et encadré" PopUpButton
+    t =    12.35s Click "Type de ligne et encadré" PopUpButton
+    t =    12.35s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.35s     Find the "Type de ligne et encadré" PopUpButton
+    t =    12.40s     Check for interrupting elements affecting "Type de ligne et encadré" PopUpButton
+    t =    12.42s     Synthesize event
+    t =    12.74s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.75s Waiting 5.0s for Any (First Match) to exist
+    t =    13.77s     Checking `Expect predicate `existsNoRetry == 1` for object Any (First Match)`
+    t =    13.77s         Checking existence of `Any (First Match)`
+    t =    13.79s Find the Any (First Match)
+    t =    13.81s Find the "Code — bloc" MenuItem
+    t =    13.83s Click "Code — bloc" MenuItem[0.50, 0.50]
+    t =    13.83s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.83s     Find the "Code — bloc" MenuItem
+    t =    13.84s     Check for interrupting elements affecting "Code — bloc" MenuItem
+    t =    13.84s     Synthesize event
+    t =    13.85s         Find the "Code — bloc" MenuItem
+    t =    13.85s         Find the "Code — bloc" MenuItem
+    t =    14.19s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.26s Checking `Expect predicate `value CONTAINS "```"` for object "editor-text-view" TextView`
+    t =    15.26s     Find the "editor-text-view" TextView
+    t =    15.28s Find the "editor-text-view" TextView
+    t =    15.28s Type 'z' key with modifiers '⌘' (0x10)
+    t =    15.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.29s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    15.38s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    15.38s     Synthesize event
+    t =    15.43s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.43s Find the "editor-text-view" TextView
+    t =    15.44s Tear Down
+    t =    15.44s     Terminate app.macdown.macdown3000-debug:15438
+Test Case '-[MacDownUITests.MacDownUITests testPreviewQuoteToCodeRemovesQuotePrefixAndKeepsNeighbor]' passed (16.618 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' started.
+    t =     0.00s Start Test at 2026-10-10 01:10:00.293
+    t =     0.13s Set Up
+    t =     0.13s     Open app.macdown.macdown3000-debug
+    t =     0.13s         Launch app.macdown.macdown3000-debug
+    t =     0.35s             Wait for accessibility to load
+    t =     0.71s             Setting up automation session
+    t =     0.72s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.72s Terminate app.macdown.macdown3000-debug:15496
+    t =     1.77s Open app.macdown.macdown3000-debug
+    t =     1.77s     Launch app.macdown.macdown3000-debug
+    t =     1.99s         Wait for accessibility to load
+    t =     2.30s         Setting up automation session
+    t =     2.31s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.31s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     3.34s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     3.34s         Checking existence of `"editor-text-view" TextView`
+    t =     3.35s Click "editor-text-view" TextView
+    t =     3.35s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.36s     Find the "editor-text-view" TextView
+    t =     3.36s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     3.38s     Synthesize event
+    t =     3.70s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.71s Type 'Sourceword.
+
+Previ...' into "editor-text-view" TextView
+    t =     3.71s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.71s     Find the "editor-text-view" TextView
+    t =     3.72s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     3.74s     Synthesize event
+    t =     4.59s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.59s Type '↑' key (XCUIKeyboardKeyUpArrow) with modifiers '⌘' (0x10)
+    t =     4.59s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.59s     Find the "editor-text-view" TextView
+    t =     4.60s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     4.61s     Synthesize event
+    t =     4.66s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.66s Type '→' key (XCUIKeyboardKeyRightArrow) with modifiers '⌥⇧' (0x0a)
+    t =     4.66s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.66s     Find the "editor-text-view" TextView
+    t =     4.67s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     4.68s     Synthesize event
+    t =     4.73s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.74s Waiting 10.0s for StaticText (First Match) to exist
+    t =     5.76s     Checking `Expect predicate `existsNoRetry == 1` for object StaticText (First Match)`
+    t =     5.76s         Checking existence of `StaticText (First Match)`
+    t =     5.79s Double click StaticText (First Match)
+    t =     5.79s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.79s     Find the StaticText (First Match)
+    t =     5.81s     Check for interrupting elements affecting "Previewword." StaticText
+    t =     5.83s     Synthesize event
+    t =     6.46s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.46s Waiting 5.0s for "text-formatting-group" Group to exist
+    t =     7.47s     Checking `Expect predicate `existsNoRetry == 1` for object "text-formatting-group" Group`
+    t =     7.47s         Checking existence of `"text-formatting-group" Group`
+    t =     7.50s Click Button (Element at index 0)
+    t =     7.50s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.51s     Find the Button (Element at index 0)
+    t =     7.53s     Check for interrupting elements affecting Button
+    t =     7.54s     Synthesize event
+    t =     7.88s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.92s Checking `Expect predicate `value == "Sourceword.
+
+**Previewword**.
+"` for object "editor-text-view" TextView`
+    t =     8.92s     Find the "editor-text-view" TextView
+    t =     8.93s Click "editor-text-view" TextView
+    t =     8.93s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.93s     Find the "editor-text-view" TextView
+    t =     8.94s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     8.96s     Synthesize event
+    t =     9.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.32s Type '↑' key (XCUIKeyboardKeyUpArrow) with modifiers '⌘' (0x10)
+    t =     9.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.32s     Find the "editor-text-view" TextView
+    t =     9.33s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     9.35s     Synthesize event
+    t =     9.39s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.39s Type '→' key (XCUIKeyboardKeyRightArrow) with modifiers '⌥⇧' (0x0a)
+    t =     9.39s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.39s     Find the "editor-text-view" TextView
+    t =     9.40s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     9.42s     Synthesize event
+    t =     9.47s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.47s Find the Any (First Match)
+    t =    10.50s     Find the Any (First Match) (retry 1)
+    t =    11.52s     Find the Any (First Match) (retry 2)
+    t =    11.54s Click Button at {{689.0, 147.0}, {36.0, 36.0}}
+    t =    11.54s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.54s     Find the Button at {{689.0, 147.0}, {36.0, 36.0}}
+    t =    11.67s     Check for interrupting elements affecting Button
+    t =    11.69s     Synthesize event
+    t =    12.04s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.05s Checking `Expect predicate `value == "**Sourceword**.
+
+**Previewword**.
+"` for object "editor-text-view" TextView`
+    t =    13.05s     Find the "editor-text-view" TextView
+    t =    13.06s Type 'z' key with modifiers '⌘' (0x10)
+    t =    13.06s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.07s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    13.31s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    13.31s     Synthesize event
+    t =    13.36s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.36s Find the "editor-text-view" TextView
+    t =    13.37s Tear Down
+    t =    13.37s     Terminate app.macdown.macdown3000-debug:15502
+Test Case '-[MacDownUITests.MacDownUITests testQuickFormattingFollowsExclusiveSelectionAcrossPanes]' passed (14.622 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReaderModeAppliesToEveryNewWindowAndKeepsProgressVisible]' started.
+    t =     0.00s Start Test at 2026-10-10 01:10:14.916
+    t =     0.10s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.10s         Launch app.macdown.macdown3000-debug
+    t =     0.33s             Wait for accessibility to load
+    t =     0.63s             Setting up automation session
+    t =     0.63s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.65s Terminate app.macdown.macdown3000-debug:15581
+    t =     1.69s Open app.macdown.macdown3000-debug
+    t =     1.69s     Launch app.macdown.macdown3000-debug
+    t =     1.92s         Wait for accessibility to load
+    t =     2.27s         Setting up automation session
+    t =     2.27s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.28s Type 'n' key with modifiers '⌘' (0x10)
+    t =     2.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.28s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.45s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.45s     Synthesize event
+    t =     2.64s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.64s Waiting 10.0s for WebView (First Match) to exist
+    t =     3.64s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =     3.64s         Checking existence of `WebView (First Match)`
+    t =     3.65s Find the "editor-text-view" TextView
+    t =     4.67s     Find the "editor-text-view" TextView (retry 1)
+    t =     5.70s     Find the "editor-text-view" TextView (retry 2)
+    t =     5.71s Waiting 5.0s for "reading-progress" StaticText to exist
+    t =     6.74s     Checking `Expect predicate `existsNoRetry == 1` for object "reading-progress" StaticText`
+    t =     6.74s         Checking existence of `"reading-progress" StaticText`
+    t =     6.76s Find the "reading-progress" StaticText
+    t =     6.78s Type 'n' key with modifiers '⌘' (0x10)
+    t =     6.78s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.78s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     6.87s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     6.87s     Synthesize event
+    t =     7.03s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.04s Waiting 10.0s for WebView (First Match) to exist
+    t =     8.07s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =     8.07s         Checking existence of `WebView (First Match)`
+    t =     8.07s Find the "editor-text-view" TextView
+    t =     9.09s     Find the "editor-text-view" TextView (retry 1)
+    t =    10.11s     Find the "editor-text-view" TextView (retry 2)
+    t =    10.13s Waiting 5.0s for "reading-progress" StaticText to exist
+    t =    11.17s     Checking `Expect predicate `existsNoRetry == 1` for object "reading-progress" StaticText`
+    t =    11.17s         Checking existence of `"reading-progress" StaticText`
+    t =    11.19s Find the "reading-progress" StaticText
+    t =    11.20s Type 'n' key with modifiers '⌘' (0x10)
+    t =    11.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.21s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    11.31s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    11.31s     Synthesize event
+    t =    11.45s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.45s Waiting 10.0s for WebView (First Match) to exist
+    t =    12.48s     Checking `Expect predicate `existsNoRetry == 1` for object WebView (First Match)`
+    t =    12.48s         Checking existence of `WebView (First Match)`
+    t =    12.49s Find the "editor-text-view" TextView
+    t =    13.50s     Find the "editor-text-view" TextView (retry 1)
+    t =    14.52s     Find the "editor-text-view" TextView (retry 2)
+    t =    14.55s Waiting 5.0s for "reading-progress" StaticText to exist
+    t =    15.58s     Checking `Expect predicate `existsNoRetry == 1` for object "reading-progress" StaticText`
+    t =    15.58s         Checking existence of `"reading-progress" StaticText`
+    t =    15.61s Find the "reading-progress" StaticText
+    t =    15.63s Tear Down
+    t =    15.63s     Terminate app.macdown.macdown3000-debug:15589
+Test Case '-[MacDownUITests.MacDownUITests testReaderModeAppliesToEveryNewWindowAndKeepsProgressVisible]' passed (16.826 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReaderSettingsCanBeSelectedThroughPreferences]' started.
+    t =     0.00s Start Test at 2026-10-10 01:10:31.743
+    t =     0.10s Set Up
+    t =     0.10s     Open app.macdown.macdown3000-debug
+    t =     0.10s         Launch app.macdown.macdown3000-debug
+    t =     0.32s             Wait for accessibility to load
+    t =     0.62s             Setting up automation session
+    t =     0.63s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.64s Type ',' key with modifiers '⌘' (0x10)
+    t =     0.64s     Wait for app.macdown.macdown3000-debug to idle
+    t =     0.64s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     0.81s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     0.81s     Synthesize event
+    t =     0.98s     Wait for app.macdown.macdown3000-debug to idle
+    t =     0.99s Waiting 5.0s for "General" Button to exist
+    t =     2.01s     Checking `Expect predicate `existsNoRetry == 1` for object "General" Button`
+    t =     2.01s         Checking existence of `"General" Button`
+    t =     2.07s Click "General" Button
+    t =     2.07s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.07s     Find the "General" Button
+    t =     2.11s     Check for interrupting elements affecting "General" Button
+    t =     2.12s     Synthesize event
+    t =     2.46s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.46s Waiting 5.0s for "application-appearance" PopUpButton to exist
+    t =     3.49s     Checking `Expect predicate `existsNoRetry == 1` for object "application-appearance" PopUpButton`
+    t =     3.49s         Checking existence of `"application-appearance" PopUpButton`
+    t =     3.55s Click "application-appearance" PopUpButton
+    t =     3.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.55s     Find the "application-appearance" PopUpButton
+    t =     3.60s     Check for interrupting elements affecting "application-appearance" PopUpButton
+    t =     3.61s     Synthesize event
+    t =     3.95s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.97s Click "Appearance: Dark" MenuItem
+    t =     3.97s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.97s     Find the "Appearance: Dark" MenuItem
+    t =     4.02s     Check for interrupting elements affecting "_popUpItemAction:" MenuItem
+    t =     4.02s     Synthesize event
+    t =     4.02s         Checking existence of `"_popUpItemAction:" MenuItem`
+    t =     4.05s         Hover menu item 'Appearance: Dark'
+    t =     4.05s             Wait for app.macdown.macdown3000-debug to idle
+    t =     4.06s             Find the "_popUpItemAction:" MenuItem
+    t =     4.09s             Check for interrupting elements affecting "_popUpItemAction:" MenuItem
+    t =     4.09s             Synthesize event
+    t =     4.31s             Wait for app.macdown.macdown3000-debug to idle
+    t =     4.31s         Find the "_popUpItemAction:" MenuItem
+    t =     5.06s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.06s Find the "application-appearance" PopUpButton
+    t =     5.12s Checking existence of `Window (First Match)`
+    t =     5.12s Find the Window (First Match)
+    t =     5.15s Added attachment named 'Reader settings with forced dark appearance'
+    t =     5.15s Checking existence of `"reading-progress-setting" CheckBox`
+    t =     5.20s Find the "reading-progress-setting" CheckBox
+    t =     5.24s Click "reading-progress-setting" CheckBox
+    t =     5.24s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.24s     Find the "reading-progress-setting" CheckBox
+    t =     5.28s     Check for interrupting elements affecting "reading-progress-setting" CheckBox
+    t =     5.30s     Synthesize event
+    t =     5.63s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.64s Find the "reading-progress-setting" CheckBox
+    t =     5.69s Waiting 5.0s for "reading-progress" StaticText to exist
+    t =     6.69s     Checking `Expect predicate `existsNoRetry == 1` for object "reading-progress" StaticText`
+    t =     6.70s         Checking existence of `"reading-progress" StaticText`
+    t =     6.70s Checking existence of `"Rendering" Button`
+    t =     6.76s Click "Rendering" Button
+    t =     6.76s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.76s     Find the "Rendering" Button
+    t =     6.80s     Check for interrupting elements affecting "Rendering" Button
+    t =     6.82s     Synthesize event
+    t =     7.49s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.50s Waiting 5.0s for "code-wrap-setting" CheckBox to exist
+    t =     8.51s     Checking `Expect predicate `existsNoRetry == 1` for object "code-wrap-setting" CheckBox`
+    t =     8.51s         Checking existence of `"code-wrap-setting" CheckBox`
+    t =     8.57s Find the "code-wrap-setting" CheckBox
+    t =     8.61s Click "code-wrap-setting" CheckBox[0.02, 0.50]
+    t =     8.61s     Wait for app.macdown.macdown3000-debug to idle
+    t =     8.61s     Find the "code-wrap-setting" CheckBox
+    t =     8.65s     Check for interrupting elements affecting "code-wrap-setting" CheckBox
+    t =     8.67s     Synthesize event
+    t =     8.67s         Find the "code-wrap-setting" CheckBox
+    t =     8.72s         Find the "code-wrap-setting" CheckBox
+    t =     9.10s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.11s Find the "code-wrap-setting" CheckBox
+    t =     9.16s Find the "code-wrap-setting" CheckBox
+    t =     9.21s Terminate app.macdown.macdown3000-debug:15643
+    t =    10.29s Open app.macdown.macdown3000-debug
+    t =    10.29s     Launch app.macdown.macdown3000-debug
+    t =    10.52s         Wait for accessibility to load
+    t =    10.79s         Setting up automation session
+    t =    10.80s         Wait for app.macdown.macdown3000-debug to idle
+    t =    10.81s Type ',' key with modifiers '⌘' (0x10)
+    t =    10.81s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.82s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    11.01s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    11.01s     Synthesize event
+    t =    11.23s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.24s Click "General" Button
+    t =    11.24s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.24s     Find the "General" Button
+    t =    11.30s     Check for interrupting elements affecting "General" Button
+    t =    11.32s     Synthesize event
+    t =    11.90s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.90s Find the "application-appearance" PopUpButton
+    t =    11.94s Find the "reading-progress-setting" CheckBox
+    t =    11.99s Click "Rendering" Button
+    t =    11.99s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.99s     Find the "Rendering" Button
+    t =    12.03s     Check for interrupting elements affecting "Rendering" Button
+    t =    12.04s     Synthesize event
+    t =    12.59s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.59s Find the "code-wrap-setting" CheckBox
+    t =    12.65s Tear Down
+    t =    12.65s     Terminate app.macdown.macdown3000-debug:15698
+Test Case '-[MacDownUITests.MacDownUITests testReaderSettingsCanBeSelectedThroughPreferences]' passed (13.817 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testReadingPositionUpdatesDuringEditorAndPreviewWheelScrolling]' started.
+    t =     0.00s Start Test at 2026-10-10 01:10:45.561
+    t =     0.12s Set Up
+    t =     0.12s     Open app.macdown.macdown3000-debug
+    t =     0.12s         Launch app.macdown.macdown3000-debug
+    t =     0.34s             Wait for accessibility to load
+    t =     0.64s             Setting up automation session
+    t =     0.65s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.66s Terminate app.macdown.macdown3000-debug:15714
+    t =     1.72s Open app.macdown.macdown3000-debug
+    t =     1.72s     Launch app.macdown.macdown3000-debug
+    t =     1.95s         Wait for accessibility to load
+    t =     2.25s         Setting up automation session
+    t =     2.26s         Wait for app.macdown.macdown3000-debug to idle
+    t =     2.26s Type 'o' key with modifiers '⌘' (0x10)
+    t =     2.26s     Wait for app.macdown.macdown3000-debug to idle
+    t =     2.27s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     2.43s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     2.43s     Synthesize event
+    t =     3.18s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.20s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     3.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.21s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     3.41s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     3.41s     Synthesize event
+    t =     3.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.55s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =     3.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.55s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     3.99s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     3.99s     Synthesize event
+    t =     6.68s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.68s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     6.68s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.69s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     6.88s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     6.88s     Synthesize event
+    t =     7.29s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.29s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =     7.29s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.30s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.37s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.37s     Synthesize event
+    t =     7.56s     Wait for app.macdown.macdown3000-debug to idle
+    t =     7.69s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     8.76s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     8.76s         Checking existence of `"editor-text-view" TextView`
+    t =     8.78s Waiting 5.0s for "reading-progress" StaticText to exist
+    t =     9.81s     Checking `Expect predicate `existsNoRetry == 1` for object "reading-progress" StaticText`
+    t =     9.81s         Checking existence of `"reading-progress" StaticText`
+    t =    10.21s Scroll "editor-text-view" TextView by dx: 0.00, dy: -100000.00
+    t =    10.22s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.22s     Find the "editor-text-view" TextView
+    t =    10.23s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    10.36s     Synthesize event
+    t =    30.59s     Wait for app.macdown.macdown3000-debug to idle
+    t =    31.61s Checking `Expect predicate `value == "100%"` for object "reading-progress" StaticText`
+    t =    31.62s     Find the "reading-progress" StaticText
+    t =    31.75s Scroll WebView (First Match) by dx: 0.00, dy: 1000.00
+    t =    31.75s     Wait for app.macdown.macdown3000-debug to idle
+    t =    31.75s     Find the WebView (First Match)
+    t =    31.76s     Check for interrupting elements affecting "ReadingProgress" WebView
+    t =    31.77s     Synthesize event
+    t =    32.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =    33.24s Checking `Expect predicate `value == "0%"` for object "reading-progress" StaticText`
+    t =    33.24s     Find the "reading-progress" StaticText
+    t =    33.38s Scroll "ReadingProgress" WebView by dx: 0.00, dy: -100000.00
+    t =    33.38s     Wait for app.macdown.macdown3000-debug to idle
+    t =    33.39s     Find the "ReadingProgress" WebView
+    t =    33.40s     Check for interrupting elements affecting "ReadingProgress" WebView
+    t =    33.41s     Synthesize event
+    t =    53.64s     Wait for app.macdown.macdown3000-debug to idle
+    t =    54.67s Checking `Expect predicate `value == "100%"` for object "reading-progress" StaticText`
+    t =    54.67s     Find the "reading-progress" StaticText
+    t =    54.81s Tear Down
+    t =    54.81s     Terminate app.macdown.macdown3000-debug:15724
+Test Case '-[MacDownUITests.MacDownUITests testReadingPositionUpdatesDuringEditorAndPreviewWheelScrolling]' passed (56.115 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testSavedDocumentSurvivesNormalQuitWithUnsavedEdits]' started.
+    t =     0.00s Start Test at 2026-10-10 01:11:41.677
+    t =     0.11s Set Up
+    t =     0.11s     Open app.macdown.macdown3000-debug
+    t =     0.11s         Launch app.macdown.macdown3000-debug
+    t =     0.33s             Wait for accessibility to load
+    t =     0.62s             Setting up automation session
+    t =     0.63s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.64s Terminate app.macdown.macdown3000-debug:16078
+    t =     1.69s Open app.macdown.macdown3000-debug
+    t =     1.69s     Launch app.macdown.macdown3000-debug
+    t =     1.92s         Wait for accessibility to load
+    t =     3.35s         Setting up automation session
+    t =     3.36s         Wait for app.macdown.macdown3000-debug to idle
+    t =     3.37s Type 'o' key with modifiers '⌘' (0x10)
+    t =     3.37s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.37s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     3.60s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     3.60s     Synthesize event
+    t =     9.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.55s Type 'g' key with modifiers '⌘⇧' (0x12)
+    t =     9.55s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.56s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     9.83s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     9.83s     Synthesize event
+    t =     9.99s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.28s Type '/Users/zydon/Libra...' into Target Application 'app.macdown.macdown3000-debug'
+    t =    10.28s     Wait for app.macdown.macdown3000-debug to idle
+    t =    10.29s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    10.54s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    10.54s     Synthesize event
+    t =    13.33s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.34s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    13.34s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.34s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    13.61s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    13.61s     Synthesize event
+    t =    14.05s     Wait for app.macdown.macdown3000-debug to idle
+    t =    14.05s Type '↩' key (XCUIKeyboardKeyReturn) with no modifiers
+    t =    14.05s     Wait for app.macdown.macdown3000-debug to idle
+    t =    14.06s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    14.20s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    14.20s     Synthesize event
+    t =    14.39s     Wait for app.macdown.macdown3000-debug to idle
+    t =    14.58s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =    15.62s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    15.63s         Checking existence of `"editor-text-view" TextView`
+    t =    15.66s Click "editor-text-view" TextView
+    t =    15.66s     Wait for app.macdown.macdown3000-debug to idle
+    t =    15.67s     Find the "editor-text-view" TextView
+    t =    15.70s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    15.74s     Synthesize event
+    t =    16.08s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.09s Type 'a' key with modifiers '⌘' (0x10)
+    t =    16.09s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.09s     Find the "editor-text-view" TextView
+    t =    16.12s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    16.15s     Synthesize event
+    t =    16.20s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.20s Type 'Existing recovery ...' into "editor-text-view" TextView
+    t =    16.20s     Wait for app.macdown.macdown3000-debug to idle
+    t =    16.21s     Find the "editor-text-view" TextView
+    t =    16.24s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    16.27s     Synthesize event
+    t =    17.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.33s Type 'q' key with modifiers '⌘' (0x10)
+    t =    17.33s     Wait for app.macdown.macdown3000-debug to idle
+    t =    17.33s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    17.57s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    17.57s     Synthesize event
+    t =    18.13s     Wait for app.macdown.macdown3000-debug to idle
+    t =    18.13s Wait for app.macdown.macdown3000-debug to become Not Running
+    t =    18.13s Open app.macdown.macdown3000-debug
+    t =    18.13s     Launch app.macdown.macdown3000-debug
+    t =    18.37s         Wait for accessibility to load
+    t =    19.95s         Setting up automation session
+    t =    19.95s         Wait for app.macdown.macdown3000-debug to idle
+    t =    19.96s Waiting 15.0s for "editor-text-view" TextView to exist
+    t =    20.97s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    20.97s         Checking existence of `"editor-text-view" TextView`
+    t =    21.02s Tear Down
+    t =    21.02s     Terminate app.macdown.macdown3000-debug:16161
+    t =    22.20s Checking for crash reports corresponding to unexpected termination of app.macdown.macdown3000-debug
+Test Case '-[MacDownUITests.MacDownUITests testSavedDocumentSurvivesNormalQuitWithUnsavedEdits]' passed (23.237 seconds).
+Test Case '-[MacDownUITests.MacDownUITests testUntitledDocumentSurvivesNormalQuitAndRelaunch]' started.
+    t =     0.00s Start Test at 2026-10-10 01:12:04.915
+    t =     0.12s Set Up
+    t =     0.12s     Open app.macdown.macdown3000-debug
+    t =     0.12s         Launch app.macdown.macdown3000-debug
+    t =     0.35s             Wait for accessibility to load
+    t =     0.65s             Setting up automation session
+    t =     0.66s             Wait for app.macdown.macdown3000-debug to idle
+    t =     0.66s Terminate app.macdown.macdown3000-debug:16188
+    t =     1.73s Open app.macdown.macdown3000-debug
+    t =     1.73s     Launch app.macdown.macdown3000-debug
+    t =     1.97s         Wait for accessibility to load
+    t =     3.49s         Setting up automation session
+    t =     3.49s         Wait for app.macdown.macdown3000-debug to idle
+    t =     3.50s Type 'n' key with modifiers '⌘' (0x10)
+    t =     3.50s     Wait for app.macdown.macdown3000-debug to idle
+    t =     3.50s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     3.77s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     3.77s     Synthesize event
+    t =     4.21s     Wait for app.macdown.macdown3000-debug to idle
+    t =     4.24s Waiting 10.0s for "editor-text-view" TextView to exist
+    t =     5.27s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =     5.27s         Checking existence of `"editor-text-view" TextView`
+    t =     5.29s Find the "editor-text-view" TextView
+    t =     5.31s Click "editor-text-view" TextView
+    t =     5.31s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.31s     Find the "editor-text-view" TextView
+    t =     5.33s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     5.37s     Synthesize event
+    t =     5.77s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.77s Type 'Draft recovery 6E3...' into "editor-text-view" TextView
+    t =     5.77s     Wait for app.macdown.macdown3000-debug to idle
+    t =     5.77s     Find the "editor-text-view" TextView
+    t =     5.79s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =     5.84s     Synthesize event
+    t =     6.93s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.94s Find the "editor-text-view" TextView
+    t =     6.95s Type 'q' key with modifiers '⌘' (0x10)
+    t =     6.95s     Wait for app.macdown.macdown3000-debug to idle
+    t =     6.95s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =     7.19s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =     7.19s     Synthesize event
+    t =     8.04s     Wait for app.macdown.macdown3000-debug to idle
+    t =     9.29s Unable to monitor event loop
+    t =     9.29s Wait for app.macdown.macdown3000-debug to become Not Running
+    t =     9.32s Open app.macdown.macdown3000-debug
+    t =     9.32s     Launch app.macdown.macdown3000-debug
+    t =     9.55s         Setting up automation session
+    t =     9.56s         Wait for app.macdown.macdown3000-debug to idle
+    t =    10.72s Waiting 15.0s for "editor-text-view" TextView to exist
+    t =    11.80s     Checking `Expect predicate `existsNoRetry == 1` for object "editor-text-view" TextView`
+    t =    11.80s         Checking existence of `"editor-text-view" TextView`
+    t =    11.85s Click "editor-text-view" TextView
+    t =    11.85s     Wait for app.macdown.macdown3000-debug to idle
+    t =    11.86s     Find the "editor-text-view" TextView
+    t =    11.88s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    11.94s     Synthesize event
+    t =    12.31s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.32s Type 'a' key with modifiers '⌘' (0x10)
+    t =    12.32s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.32s     Find the "editor-text-view" TextView
+    t =    12.35s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    12.40s     Synthesize event
+    t =    12.51s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.52s Type '⌫' key (XCUIKeyboardKeyDelete) with no modifiers
+    t =    12.52s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.52s     Find the "editor-text-view" TextView
+    t =    12.56s     Check for interrupting elements affecting "editor-text-view" TextView
+    t =    12.61s     Synthesize event
+    t =    12.69s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.69s Type 'w' key with modifiers '⌘' (0x10)
+    t =    12.69s     Wait for app.macdown.macdown3000-debug to idle
+    t =    12.70s     Find the Target Application 'app.macdown.macdown3000-debug'
+    t =    13.07s     Check for interrupting elements affecting "MacDown 3000" Application
+    t =    13.07s     Synthesize event
+    t =    13.70s     Wait for app.macdown.macdown3000-debug to idle
+    t =    13.70s Tear Down
+    t =    13.70s     Terminate app.macdown.macdown3000-debug:16253
+    t =    14.80s Checking for crash reports corresponding to unexpected termination of app.macdown.macdown3000-debug
+Test Case '-[MacDownUITests.MacDownUITests testUntitledDocumentSurvivesNormalQuitAndRelaunch]' passed (15.837 seconds).
+Test Suite 'MacDownUITests' failed at 2026-10-10 01:12:20.752.
+	 Executed 17 tests, with 1 failure (0 unexpected) in 298.319 (298.332) seconds
+Test Suite 'MacDownUITests.xctest' failed at 2026-10-10 01:12:20.752.
+	 Executed 17 tests, with 1 failure (0 unexpected) in 298.319 (298.333) seconds
+Test Suite 'All tests' failed at 2026-10-10 01:12:20.753.
+	 Executed 17 tests, with 1 failure (0 unexpected) in 298.319 (298.334) seconds
+2026-10-10 01:12:27.392 xcodebuild[14479:48456897] [MT] IDETestOperationsObserverDebug: 318.402 elapsed -- Testing started completed.
+2026-10-10 01:12:27.392 xcodebuild[14479:48456897] [MT] IDETestOperationsObserverDebug: 0.000 sec, +0.000 sec -- start
+2026-10-10 01:12:27.392 xcodebuild[14479:48456897] [MT] IDETestOperationsObserverDebug: 318.402 sec, +318.402 sec -- end
+
+Test session results, code coverage, and logs:
+	/Users/zydon/Sites/MacDown/build/AuditCampaign03/Logs/Test/Test-MacDownUITests-2026.10.10_01-07-08-+0200.xcresult
+
+** TEST EXECUTE FAILED **
+
+Testing started
+RESTORED and preferences verified; vault retained privately
