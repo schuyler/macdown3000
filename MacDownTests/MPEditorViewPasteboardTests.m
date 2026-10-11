@@ -241,11 +241,11 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     XCTAssertEqualObjects([self pasteExternalMarkdown:@"<aside>\n💡\nBody\n</aside>"],@"- Action\n\n    ::: {.callout-tip}\n    💡\n    Body\n    :::");
 }
 
-- (void)testInternalMarkdownCopiesKeepLiteralAsides
+- (void)testInternalMarkdownCopiesAlsoConvertAsides
 {
     NSString *source=@"<aside>\nOriginal HTML\n</aside>";
     [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
-    XCTAssertEqualObjects([self pasteExternalMarkdown:source],source);
+    XCTAssertEqualObjects([self pasteExternalMarkdown:source],@"::: {.callout-note}\nOriginal HTML\n:::");
 }
 
 - (void)testConvertedPasteReplacesOnlySelectionAndCanBeUndone
@@ -291,15 +291,16 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     self.editorView.richText=NO;self.editorView.allowsUndo=YES;
     NSInteger ownedChangeCount=board.changeCount;
     @try {
-        for (NSUInteger action=0;action<2;action++) {
+        for (NSUInteger scenario=0;scenario<4;scenario++) {
             [board clearContents];
             [board setString:@"            <aside>\n            💡\n            Body\n            </aside>" forType:NSPasteboardTypeString];
             [board setString:@"<html><body>Body</body></html>" forType:NSPasteboardTypeHTML];
+            if (scenario>=2) [board setData:[[board stringForType:NSPasteboardTypeString] dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
             ownedChangeCount=board.changeCount;
             self.editorView.string=@"Before\n\nOLD\n\nAfter";
             self.editorView.selectedRange=NSMakeRange(8,3);
             [self.editorView.undoManager removeAllActions];
-            if (action) [self.editorView pasteAsPlainText:nil];else [self.editorView paste:nil];
+            if (scenario%2) [self.editorView pasteAsPlainText:nil];else [self.editorView paste:nil];
             XCTAssertEqualObjects(self.editorView.string,@"Before\n\n::: {.callout-tip}\n💡\nBody\n:::\n\nAfter");
             [self.editorView.undoManager undo];
             XCTAssertEqualObjects(self.editorView.string,@"Before\n\nOLD\n\nAfter");
@@ -311,6 +312,16 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
         }
         window.contentView=nil;[window close];
     }
+}
+
+- (void)testInternalMarkdownCodeExamplesRemainLiteral
+{
+    NSString *source=@"```html\n<aside>\nExample\n</aside>\n```";
+    [self.pasteboard setString:source forType:NSPasteboardTypeString];
+    [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+    self.editorView.richText=NO;
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard]);
+    XCTAssertEqualObjects(self.editorView.string,source);
 }
 
 @end

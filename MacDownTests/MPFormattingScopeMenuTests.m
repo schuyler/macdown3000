@@ -525,6 +525,7 @@
 {
     NSPasteboard *pasteboard=[NSPasteboard pasteboardWithUniqueName];
     [pasteboard setString:@"- Parent\n    - Action\n\n        <aside>\n        💡\n\n        **Consigne**\n\n        ```jsx\n        Bonjour,\n        ```\n\n        </aside>\n\n    - Next\n" forType:NSPasteboardTypeString];
+    [pasteboard setData:[[pasteboard stringForType:NSPasteboardTypeString] dataUsingEncoding:NSUTF8StringEncoding] forType:@"app.macdown.markdown-interop"];
     XCTAssertTrue([self.editor readSelectionFromPasteboard:pasteboard]);
     NSString *converted=self.editor.string;
     [pasteboard releaseGlobally];

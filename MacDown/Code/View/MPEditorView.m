@@ -323,31 +323,29 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 // Share one insertion operation between all native paste entry points.
 - (BOOL)insertConvertedAsideFromPasteboard:(NSPasteboard *)pasteboard
 {
-    if (![pasteboard.types containsObject:kMPMarkdownInteropPasteboardType]) {
-        NSString *original=[pasteboard stringForType:NSPasteboardTypeString];
-        if (!original || [original rangeOfString:@"<aside>" options:NSCaseInsensitiveSearch].location==NSNotFound ||
-            MPPasteIsInsideCode(self.string,self.selectedRange.location)) return NO;
-        NSString *converted=MPConvertPastedAsides(original);
-        if (converted && ![converted isEqualToString:original]) {
-            NSRange selection=self.selectedRange;
-            NSUInteger start;
-            [self.string getLineStart:&start end:NULL contentsEnd:NULL forRange:NSMakeRange(selection.location,0)];
-            NSString *before=[self.string substringWithRange:NSMakeRange(start,selection.location-start)];
-            if ([before stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
-                converted=[@"\n\n" stringByAppendingString:converted];
-            else if (before.length) {
-                // The first line already follows the insertion point's margin;
-                // carry that margin to every subsequent pasted physical line.
-                converted=[converted stringByReplacingOccurrencesOfString:@"\n" withString:[@"\n" stringByAppendingString:before]];
-            }
-            NSUInteger selectionEnd=NSMaxRange(selection),contentsEnd;
-            [self.string getLineStart:NULL end:NULL contentsEnd:&contentsEnd forRange:NSMakeRange(selectionEnd,0)];
-            NSString *after=[self.string substringWithRange:NSMakeRange(selectionEnd,contentsEnd-selectionEnd)];
-            if ([after stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
-                converted=[converted stringByAppendingString:@"\n\n"];
-            [self insertText:converted replacementRange:selection];
-            return YES;
+    NSString *original=[pasteboard stringForType:NSPasteboardTypeString];
+    if (!original || [original rangeOfString:@"<aside>" options:NSCaseInsensitiveSearch].location==NSNotFound ||
+        MPPasteIsInsideCode(self.string,self.selectedRange.location)) return NO;
+    NSString *converted=MPConvertPastedAsides(original);
+    if (converted && ![converted isEqualToString:original]) {
+        NSRange selection=self.selectedRange;
+        NSUInteger start;
+        [self.string getLineStart:&start end:NULL contentsEnd:NULL forRange:NSMakeRange(selection.location,0)];
+        NSString *before=[self.string substringWithRange:NSMakeRange(start,selection.location-start)];
+        if ([before stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
+            converted=[@"\n\n" stringByAppendingString:converted];
+        else if (before.length) {
+            // The first line already follows the insertion point's margin;
+            // carry that margin to every subsequent pasted physical line.
+            converted=[converted stringByReplacingOccurrencesOfString:@"\n" withString:[@"\n" stringByAppendingString:before]];
         }
+        NSUInteger selectionEnd=NSMaxRange(selection),contentsEnd;
+        [self.string getLineStart:NULL end:NULL contentsEnd:&contentsEnd forRange:NSMakeRange(selectionEnd,0)];
+        NSString *after=[self.string substringWithRange:NSMakeRange(selectionEnd,contentsEnd-selectionEnd)];
+        if ([after stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
+            converted=[converted stringByAppendingString:@"\n\n"];
+        [self insertText:converted replacementRange:selection];
+        return YES;
     }
     return NO;
 }
