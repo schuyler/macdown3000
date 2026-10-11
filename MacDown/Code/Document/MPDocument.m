@@ -586,6 +586,8 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (strong) MPPreviewFindPanel *previewFindPanel;
 @property (strong) NSSearchField *previewFindField;
 @property (copy) NSArray<NSDictionary *> *previewEditRanges;
+@property (copy) NSArray<NSDictionary *> *previewScrollCodeLines;
+@property BOOL sourceScrollLocations;
 @property (copy) NSString *previewEditSource;
 @property (copy) NSString *previewEditToken;
 @property BOOL previewFormattingProbe;
@@ -719,7 +721,10 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 - (void)syncScrollers;
 - (void)syncScrollersToCursor;
 - (void)syncScrollersReverse;
+- (void)syncSourceScrollersReverse:(BOOL)reverse;
 - (void)updateHeaderLocations;
+- (BOOL)updateSourceScrollLocations;
+- (NSArray<NSDictionary *> *)scrollCodeLinesForSource:(NSString *)source context:(JSContext *)context;
 - (void)validateHeaderLocationAlignment;
 // Issue #436: Pure helpers — no view/DOM dependencies, so they are unit-testable headless.
 + (NSArray<NSNumber *> *)editorReferenceKindsForMarkdown:(NSString *)markdown
@@ -4633,6 +4638,121 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     [self setupEditor:@"editorBaseFontInfo"];
 }
 
+// A single batched parser probe ties every visible fenced-code line, including
+// nested lists/quotes, to its physical source occurrence. Editing permissions
+// remain independent: this mapping is used only for scroll geometry.
+- (NSArray<NSDictionary *> *)scrollCodeLinesForSource:(NSString *)source context:(JSContext *)context
+{
+    NSRegularExpression *fence=[NSRegularExpression regularExpressionWithPattern:@"^[ \\t]*(?:>[ \\t]*)*(?:[-+*][ \\t]+|[0-9]+[.)][ \\t]+)?(`{3,}|~{3,})(.*)$" options:0 error:NULL];
+    NSString *prefix=[@"MPSCROLL" stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSMutableString *marked=[source mutableCopy];
+    NSMutableArray<NSNumber *> *positions=[NSMutableArray array];
+    NSUInteger width=0; unichar character=0;
+    for (NSUInteger offset=0;offset<source.length;) {
+        NSUInteger start,end,contentsEnd;
+        [source getLineStart:&start end:&end contentsEnd:&contentsEnd forRange:NSMakeRange(offset,0)];
+        NSString *line=[source substringWithRange:NSMakeRange(start,contentsEnd-start)];
+        NSTextCheckingResult *match=[fence firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
+        offset=end;
+        if (match) {
+            NSString *marker=[line substringWithRange:[match rangeAtIndex:1]];
+            NSString *trailing=[line substringWithRange:[match rangeAtIndex:2]];
+            if (!width) {width=marker.length;character=[marker characterAtIndex:0];continue;}
+            if ([marker characterAtIndex:0]==character && marker.length>=width &&
+                ![trailing stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length) {width=0;continue;}
+        }
+        if (width && [line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet].length)
+            [positions addObject:@(contentsEnd)];
+    }
+    if (!positions.count) return @[];
+    for (NSNumber *position in positions.reverseObjectEnumerator)
+        [marked insertString:[NSString stringWithFormat:@"%@%@END",prefix,position] atIndex:position.unsignedIntegerValue];
+    context[@"__mpScrollProbeHTML"]=[self.renderer HTMLForMarkdownSnapshot:marked];
+    context[@"__mpScrollProbePrefix"]=prefix;
+    NSArray *lines=[[context evaluateScript:@"(function(){var d=new DOMParser().parseFromString(__mpScrollProbeHTML,'text/html'),codes=Array.from(d.querySelectorAll('pre>code')),live=Array.from(document.querySelectorAll('pre>code')),result=[],pattern=new RegExp(__mpScrollProbePrefix+'([0-9]+)END','g');if(codes.length!==live.length)return [];for(var i=0;i<codes.length;i++){var text=codes[i].textContent,plain='',cursor=0,m,entries=[];pattern.lastIndex=0;while(m=pattern.exec(text)){plain+=text.substring(cursor,m.index);var start=plain.lastIndexOf('\\n')+1;entries.push({code:i,end:Number(m[1]),start:start,text:plain.substring(start)});cursor=pattern.lastIndex;}plain+=text.substring(cursor);if(plain!==live[i].textContent)return [];result=result.concat(entries);}return result;})()"] toArray];
+    [context evaluateScript:@"delete __mpScrollProbeHTML;delete __mpScrollProbePrefix;"];
+    NSMutableArray *result=[NSMutableArray array];
+    for (NSDictionary *line in lines) {
+        NSString *text=line[@"text"];
+        NSUInteger end=[line[@"end"] unsignedIntegerValue];
+        if (!text.length || end>source.length || text.length>end ||
+            ![[source substringWithRange:NSMakeRange(end-text.length,text.length)] isEqualToString:text]) continue;
+        [result addObject:@{@"code":line[@"code"],@"start":line[@"start"],@"location":@(end-text.length),@"length":@(text.length)}];
+    }
+    return result;
+}
+
+- (BOOL)updateSourceScrollLocations
+{
+    if (![self.previewEditSource isEqualToString:self.editor.string] ||
+        ![self.previewEditToken isEqualToString:self.renderer.checkboxBridgeToken]) return NO;
+    NSLayoutManager *layout=self.editor.layoutManager;
+    NSTextContainer *container=self.editor.textContainer;
+    [layout ensureLayoutForTextContainer:container];
+    NSMutableArray *runs=[NSMutableArray array];
+    for (NSUInteger i=0;i<self.previewEditRanges.count;i++) {
+        NSDictionary *entry=self.previewEditRanges[i];
+        if (entry[@"codeBlockRange"]) continue;
+        NSMutableDictionary *run=[@{@"id":@(i),@"location":entry[@"location"],@"length":entry[@"length"]} mutableCopy];
+        if (entry[@"sourceBoundaries"]) run[@"sourceBoundaries"]=entry[@"sourceBoundaries"];
+        [runs addObject:run];
+    }
+    [runs addObjectsFromArray:self.previewScrollCodeLines ?: @[]];
+    [runs sortUsingComparator:^NSComparisonResult(NSDictionary *a,NSDictionary *b){return [a[@"location"] compare:b[@"location"]];}];
+    NSMutableArray *probes=[NSMutableArray array];
+    for (NSDictionary *run in runs) {
+        NSRange range=NSMakeRange([run[@"location"] unsignedIntegerValue],[run[@"length"] unsignedIntegerValue]);
+        if (!range.length || NSMaxRange(range)>self.editor.string.length) continue;
+        NSRange glyphs=[layout glyphRangeForCharacterRange:range actualCharacterRange:NULL];
+        [layout enumerateLineFragmentsForGlyphRange:glyphs usingBlock:^(NSRect rect,NSRect used,NSTextContainer *textContainer,NSRange lineGlyphs,BOOL *stop){
+            NSRange chars=[layout characterRangeForGlyphRange:NSIntersectionRange(glyphs,lineGlyphs) actualGlyphRange:NULL];
+            NSUInteger location=MAX(range.location,chars.location);
+            if (location>=NSMaxRange(range)) return;
+            NSMutableDictionary *probe=[run mutableCopy];
+            NSUInteger offset=location-range.location+[run[@"start"] unsignedIntegerValue];
+            NSArray<NSNumber *> *boundaries=run[@"sourceBoundaries"];
+            if (boundaries) {
+                if (boundaries.count<2) return;
+                // Decoded entities and escaped punctuation occupy fewer DOM
+                // characters than source characters. Use the proven boundary map.
+                NSUInteger low=0,high=boundaries.count;
+                while (low<high) {
+                    NSUInteger middle=low+(high-low)/2;
+                    if (boundaries[middle].unsignedIntegerValue<location) low=middle+1;else high=middle;
+                }
+                if (low>=boundaries.count-1) return;
+                offset=low;
+            }
+            [probe removeObjectForKey:@"sourceBoundaries"];
+            probe[@"offset"]=@(offset);
+            probe[@"editorY"]=@(NSMidY(rect)+self.editor.textContainerOrigin.y);
+            [probes addObject:probe];
+        }];
+    }
+    JSContext *context=self.preview.mainFrame.javaScriptContext;
+    JSValue *bridge=context[@"window"][@"macdownPreviewEditor"];
+    if (!bridge.isObject) return NO;
+    JSValue *positions=[bridge invokeMethod:@"scrollPositions" withArguments:@[probes]];
+    NSArray *ys=positions.isArray ? positions.toArray : nil;
+    if (ys.count!=probes.count) return NO;
+    NSMutableArray *editorYs=[NSMutableArray array],*previewYs=[NSMutableArray array];
+    CGFloat lastEditor=-CGFLOAT_MAX,lastPreview=-CGFLOAT_MAX;
+    CGFloat scale=self.preview.pageSizeMultiplier;
+    for (NSUInteger i=0;i<ys.count;i++) {
+        if (![ys[i] isKindOfClass:NSNumber.class]) continue;
+        CGFloat e=[probes[i][@"editorY"] doubleValue],p=[ys[i] doubleValue]*scale;
+        if (!isfinite(e) || !isfinite(p) || e<lastEditor || p<lastPreview) continue;
+        // Keep one bijective anchor for a visual row. Multiple inline leaves
+        // and unequal wrapping must not produce zero-width interpolation spans.
+        if (e-lastEditor<0.5 || p-lastPreview<0.5) continue;
+        [editorYs addObject:@(e)];[previewYs addObject:@(p)];lastEditor=e;lastPreview=p;
+    }
+    if (editorYs.count<2) return NO;
+    _editorHeaderLocations=editorYs;_webViewHeaderLocations=previewYs;
+    self.sourceScrollLocations=YES;
+    return YES;
+}
+
 /**
  * Updates cached positions of reference points (headers, standalone images) in both
  * editor and preview for scroll synchronization.
@@ -4674,6 +4794,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  */
 -(void) updateHeaderLocations
 {
+    if ([self updateSourceScrollLocations]) return;
+    self.sourceScrollLocations = NO;
     // Load JavaScript from resource file for better maintainability
     static NSString *script = nil;
     static dispatch_once_t onceToken;
@@ -5136,6 +5258,41 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     _webViewHeaderLocations = alignedPreview;
 }
 
+// Both directions interpolate the same strictly monotonic pairs, including
+// viewport endpoints. This makes changing scroll ownership reversible rather
+// than applying two different tapering corrections to the same content.
++ (CGFloat)scrollOffset:(CGFloat)offset sourceHeight:(CGFloat)sourceHeight sourceVisible:(CGFloat)sourceVisible
+          targetHeight:(CGFloat)targetHeight targetVisible:(CGFloat)targetVisible
+             sourceYs:(NSArray<NSNumber *> *)sourceYs targetYs:(NSArray<NSNumber *> *)targetYs
+{
+    CGFloat sourceMax=MAX(0,sourceHeight-sourceVisible),targetMax=MAX(0,targetHeight-targetVisible);
+    if (sourceMax<=0 || offset<=0) return 0;
+    if (offset>=sourceMax) return targetMax;
+    CGFloat lowSource=0,lowTarget=0;
+    NSUInteger count=MIN(sourceYs.count,targetYs.count);
+    for (NSUInteger i=0;i<count;i++) {
+        CGFloat s=[sourceYs[i] doubleValue]-sourceVisible/2,t=[targetYs[i] doubleValue]-targetVisible/2;
+        if (s<=lowSource || t<=lowTarget || s>=sourceMax || t>=targetMax) continue;
+        if (s>=offset) return lowTarget+(t-lowTarget)*(offset-lowSource)/(s-lowSource);
+        lowSource=s;lowTarget=t;
+    }
+    return lowTarget+(targetMax-lowTarget)*(offset-lowSource)/(sourceMax-lowSource);
+}
+
+- (void)syncSourceScrollersReverse:(BOOL)reverse
+{
+    NSScrollView *source=reverse ? self.preview.enclosingScrollView : self.editor.enclosingScrollView;
+    NSScrollView *target=reverse ? self.editor.enclosingScrollView : self.preview.enclosingScrollView;
+    if (!source || !target || NSHeight(source.contentView.bounds)<=0 || NSHeight(target.contentView.bounds)<=0) return;
+    CGFloat y=[MPDocument scrollOffset:NSMinY(source.contentView.bounds)
+        sourceHeight:NSHeight(source.documentView.bounds) sourceVisible:NSHeight(source.contentView.bounds)
+        targetHeight:NSHeight(target.documentView.bounds) targetVisible:NSHeight(target.contentView.bounds)
+        sourceYs:reverse ? _webViewHeaderLocations : _editorHeaderLocations
+        targetYs:reverse ? _editorHeaderLocations : _webViewHeaderLocations];
+    NSRect bounds=target.contentView.bounds;bounds.origin.y=y;target.contentView.bounds=bounds;
+    if (!reverse) self.lastPreviewScrollTop=y;
+}
+
 /**
  * Synchronizes preview pane scroll position with editor pane position.
  *
@@ -5152,6 +5309,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  */
 - (void)syncScrollers
 {
+    if (self.sourceScrollLocations) {
+        [self syncSourceScrollersReverse:NO];return;
+    }
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
     CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
     CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
@@ -5415,6 +5575,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
  */
 - (void)syncScrollersReverse
 {
+    if (self.sourceScrollLocations) {
+        [self syncSourceScrollersReverse:YES];return;
+    }
     CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
     CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
@@ -6158,6 +6321,7 @@ to link outside that scope.", \
     self.previewEditRanges = mapping;
     self.previewEditSource = source;
     self.previewEditToken = token;
+    self.previewScrollCodeLines = [self scrollCodeLinesForSource:source context:context];
     NSMutableDictionary *configuration = [@{@"nodes":nodes, @"token":token, @"math":@(self.preferences.htmlMathJax), @"strike":@(self.preferences.extensionStrikethough), @"tasks":@(self.preferences.htmlTaskList), @"fenced":@(self.preferences.extensionFencedCode)} mutableCopy];
     NSMutableDictionary *calloutTitles=[NSMutableDictionary dictionary];
     for (NSString *type in @[@"note",@"tip",@"warning",@"important",@"caution"])

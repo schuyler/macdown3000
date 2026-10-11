@@ -619,7 +619,29 @@
   function normalizedSelectionText(text) {
     return text.replace(/\r\n?/g,'\n').replace(/\n+/g,'\n');
   }
-  window.macdownPreviewEditor={elements:function(){return {panel:panel,style:panelStyle,spans:mappedSpans.slice()};},clearSelection:clearSelection,prepareForRender:function(){cancelHoverPreview();saved=currentSelection() || saved;rendering=true;clearTimeout(timer);},draft:draft,finish:finish,selectionPayload:selectionPayload,setPreviewScale:setPreviewScale,showError:function(){
+  function scrollPositions(probes) {
+    if(hoverPreview) return [];
+    var codes=Array.from(document.querySelectorAll('pre>code')).map(function(code){
+      var nodes=[],walker=document.createTreeWalker(code,NodeFilter.SHOW_TEXT,null,false),node,start=0;
+      while(node=walker.nextNode()) {nodes.push({node:node,start:start});start+=node.nodeValue.length;}
+      return nodes;
+    });
+    return probes.map(function(probe){
+      var node,offset=probe.offset;
+      if(probe.code!==undefined) {
+        var leaves=codes[probe.code] || [],leaf=leaves.find(function(leaf){return offset>=leaf.start && offset<leaf.start+leaf.node.nodeValue.length;});
+        if(!leaf) return null;
+        node=leaf.node;offset-=leaf.start;
+      } else {
+        var span=mappedSpan(probe.id);node=span && span.firstChild;
+      }
+      if(!node || !node.isConnected || node.nodeType!==3 || offset<0 || offset>=node.nodeValue.length) return null;
+      var range=document.createRange();range.setStart(node,offset);range.setEnd(node,offset+1);
+      var rect=range.getBoundingClientRect();
+      return rect.height>0 ? window.scrollY+rect.top+rect.height/2 : null;
+    });
+  }
+  window.macdownPreviewEditor={scrollPositions:scrollPositions,elements:function(){return {panel:panel,style:panelStyle,spans:mappedSpans.slice()};},clearSelection:clearSelection,prepareForRender:function(){cancelHoverPreview();saved=currentSelection() || saved;rendering=true;clearTimeout(timer);},draft:draft,finish:finish,selectionPayload:selectionPayload,setPreviewScale:setPreviewScale,showError:function(){
     showEditError('Modification refusée : la source a changé. Copiez votre texte, puis appuyez sur Échap pour annuler.');
   },showFormattingError:function(){
     showEditError('Mise en forme refusée : cette sélection ne peut pas être représentée correctement en Markdown. Sélectionnez un passage plus court.');

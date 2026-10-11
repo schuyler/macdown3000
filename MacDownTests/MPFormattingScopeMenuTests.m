@@ -27,6 +27,12 @@
 - (BOOL)applyPreviewEditPayload:(NSDictionary *)payload;
 - (BOOL)formatSourceInlineAction:(NSString *)action value:(NSString *)value;
 - (void)editorSelectionDidChange:(NSNotification *)notification;
+- (void)updateHeaderLocations;
+- (void)syncScrollers;
+- (void)syncScrollersReverse;
+@property (nonatomic) NSUInteger scrollOwner;
+@property (nonatomic) BOOL sourceScrollLocations;
+@property (copy) NSArray<NSDictionary *> *previewScrollCodeLines;
 @end
 
 // Exercise rendered selections, the JavaScript controls and native formatting
@@ -513,6 +519,56 @@
             XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Body");
         }
     }
+}
+
+- (void)testNestedProcedureScrollsTheSamePassageInBothDirections
+{
+    NSMutableString *fixture=[NSMutableString string];
+    for (NSUInteger section=0;section<10;section++) {
+        [fixture appendFormat:@"# Section %lu\n\nUne introduction avec **plusieurs styles** et du texte qui revient à la ligne.\n\n- Action principale\n    - [ ] Vérification imbriquée\n\n        ```\n",(unsigned long)section];
+        for (NSUInteger line=0;line<14;line++)
+            [fixture appendFormat:@"        Section %lu étape %lu : un commentaire long pour vérifier la synchronisation des lignes de code dans les listes imbriquées.\n",(unsigned long)section,(unsigned long)line];
+        [fixture appendString:@"        ```\n\n    - Suite de la procédure\n\n        <aside>\n        Une remarque dans un bloc HTML.\n        </aside>\n\n"];
+    }
+    NSString *source=fixture;
+    NSScrollView *scroll=[[NSScrollView alloc] initWithFrame:NSMakeRect(0,0,500,380)];
+    [self.editor removeFromSuperview];
+    self.editor.frame=NSMakeRect(0,0,500,380);
+    self.editor.verticallyResizable=YES;self.editor.horizontallyResizable=NO;
+    self.editor.minSize=NSMakeSize(0,380);self.editor.maxSize=NSMakeSize(CGFLOAT_MAX,CGFLOAT_MAX);
+    self.editor.textContainer.containerSize=NSMakeSize(500,CGFLOAT_MAX);
+    self.editor.textContainer.widthTracksTextView=YES;
+    self.editor.font=[NSFont systemFontOfSize:14];
+    scroll.documentView=self.editor;[self.window.contentView addSubview:scroll];
+    [self loadSource:source];
+    XCTAssertGreaterThan(self.document.previewScrollCodeLines.count,100u);
+    for (NSNumber *zoom in @[@1,@1.5]) {
+        self.web.pageSizeMultiplier=zoom.doubleValue;
+        [self.document updateHeaderLocations];
+        XCTAssertTrue(self.document.sourceScrollLocations);
+        NSArray *targets=@[@"Section 2 étape 4",@"Section 5 étape 8",@"Section 8 étape 2"];
+        for (NSString *text in targets) {
+            NSRange range=[source rangeOfString:text];
+            XCTAssertNotEqual(range.location,NSNotFound);
+            NSUInteger glyph=[self.editor.layoutManager glyphIndexForCharacterAtIndex:range.location];
+            NSRect row=[self.editor.layoutManager lineFragmentRectForGlyphAtIndex:glyph effectiveRange:NULL];
+            CGFloat editorY=NSMidY(row)+self.editor.textContainerOrigin.y;
+            self.web.mainFrame.javaScriptContext[@"__scrollTarget"]=text;
+            NSString *probe=@"(function(){var code=Array.from(document.querySelectorAll('pre>code')).find(function(n){return n.textContent.includes(__scrollTarget);}),offset=code.textContent.indexOf(__scrollTarget),w=document.createTreeWalker(code,NodeFilter.SHOW_TEXT,null,false),n;while(n=w.nextNode()){if(offset<n.nodeValue.length){var r=document.createRange();r.setStart(n,offset);r.setEnd(n,offset+1);var b=r.getBoundingClientRect();return window.scrollY+b.top+b.height/2;}offset-=n.nodeValue.length;}return -1;})()";
+            CGFloat previewY=[[self JS:probe] doubleValue]*zoom.doubleValue;
+            XCTAssertGreaterThan(previewY,0);
+            self.document.scrollOwner=0;
+            NSRect bounds=scroll.contentView.bounds;bounds.origin.y=editorY-NSHeight(bounds)/2;scroll.contentView.bounds=bounds;
+            [self.document syncScrollers];
+            XCTAssertEqualWithAccuracy(NSMinY(self.web.enclosingScrollView.contentView.bounds),previewY-NSHeight(self.web.enclosingScrollView.contentView.bounds)/2,25,@"Editor → preview, %@ at zoom %@",text,zoom);
+            self.document.scrollOwner=1;
+            bounds=self.web.enclosingScrollView.contentView.bounds;bounds.origin.y=previewY-NSHeight(bounds)/2;self.web.enclosingScrollView.contentView.bounds=bounds;
+            [self.document syncScrollersReverse];
+            XCTAssertEqualWithAccuracy(NSMinY(scroll.contentView.bounds),editorY-NSHeight(scroll.contentView.bounds)/2,25,@"Preview → editor, %@ at zoom %@",text,zoom);
+        }
+    }
+    self.document.scrollOwner=2;
+    XCTAssertEqualObjects(self.editor.string,source);
 }
 
 - (void)testClickCommitsHoveredChoiceAndOtherChoicesNeverAccumulate
