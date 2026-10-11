@@ -74,13 +74,13 @@ NSString * const MPDidRequestEditorSetupNotificationKeyName =
     itemTitles = [itemTitles sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
 
     [self.themeSelect addItemWithTitle:@""];
-    for (NSString *name in itemTitles) {
-        NSString *title = [name isEqualToString:MPDefaultEditorThemeName]
-            ? [NSString stringWithFormat:@"%@ %@", name, NSLocalizedString(@"(Default)", @"Default theme suffix")]
-            : name;
-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:NULL keyEquivalent:@""];
+    [self.themeSelect addItemsWithTitles:itemTitles];
+    for (NSMenuItem *item in self.themeSelect.itemArray) {
+        NSString *name = item.title;
         item.representedObject = name;
-        [self.themeSelect.menu addItem:item];
+        if ([name isEqualToString:MPDefaultEditorThemeName])
+            item.title = [NSString stringWithFormat:@"%@ %@", name,
+                          NSLocalizedString(@"(Default)", @"Default theme suffix")];
         if ([name isEqualToString:self.preferences.editorStyleName])
             [self.themeSelect selectItem:item];
     }

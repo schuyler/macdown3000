@@ -157,13 +157,13 @@ NS_INLINE NSString *MPPrismDefaultThemeName()
     itemTitles = [itemTitles sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
 
     [self.stylesheetSelect addItemWithTitle:@""];
-    for (NSString *name in itemTitles) {
-        NSString *title = [name isEqualToString:MPDefaultHtmlStyleName]
-            ? [NSString stringWithFormat:@"%@ %@", name, NSLocalizedString(@"(Default)", @"Default theme suffix")]
-            : name;
-        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:title action:NULL keyEquivalent:@""];
+    [self.stylesheetSelect addItemsWithTitles:itemTitles];
+    for (NSMenuItem *item in self.stylesheetSelect.itemArray) {
+        NSString *name = item.title;
         item.representedObject = name;
-        [self.stylesheetSelect.menu addItem:item];
+        if ([name isEqualToString:MPDefaultHtmlStyleName])
+            item.title = [NSString stringWithFormat:@"%@ %@", name,
+                          NSLocalizedString(@"(Default)", @"Default theme suffix")];
         if ([name isEqualToString:self.preferences.htmlStyleName])
             [self.stylesheetSelect selectItem:item];
     }
