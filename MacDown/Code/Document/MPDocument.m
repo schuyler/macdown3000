@@ -588,6 +588,8 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (copy) NSArray<NSDictionary *> *previewEditRanges;
 @property (copy) NSString *previewEditSource;
 @property (copy) NSString *previewEditToken;
+@property BOOL previewFormattingProbe;
+@property (copy) NSString *previewFormattingProbeSource;
 @property (copy) NSDictionary *previewSelectionToRestore;
 @property (strong) NSMutableArray<NSDictionary *> *previewQueuedFormatting;
 @property (copy) NSArray<NSDictionary *> *currentPreviewCallouts;
@@ -6162,6 +6164,7 @@ to link outside that scope.", \
         calloutTitles[type]=MPPreviewDefaultCalloutTitle(type,NO);
     configuration[@"calloutTitles"]=calloutTitles;
     configuration[@"previewScale"]=@([self previewScale]);
+    configuration[@"originalHTML"]=[self.renderer currentHtml] ?: @"";
     if (restore) {
         NSMutableArray *runs = [NSMutableArray array];
         NSMutableString *visible = [NSMutableString string];
@@ -6192,6 +6195,10 @@ to link outside that scope.", \
     }
     self.previewSelectionToRestore = nil;
     context[@"window"][@"__macdownPreviewEditConfig"] = configuration;
+    __weak MPDocument *weakDocument = self;
+    context[@"window"][@"__macdownPreviewEditConfig"][@"formattingHTML"] = ^id(NSDictionary *payload) {
+        return [weakDocument previewFormattingHTMLForPayload:payload] ?: NSNull.null;
+    };
     NSURL *scriptURL = [NSBundle.mainBundle URLForResource:@"preview-edit" withExtension:@"js" subdirectory:@"Extensions"];
     NSString *script = scriptURL ? [NSString stringWithContentsOfURL:scriptURL encoding:NSUTF8StringEncoding error:NULL] : nil;
     if (script.length) [context evaluateScript:script];
@@ -6230,6 +6237,12 @@ to link outside that scope.", \
 
 - (BOOL)replacePreviewRange:(NSRange)range withString:(NSString *)replacement preservingSelection:(NSRange)selection restoringRange:(NSRange)restoring
 {
+    if (self.previewFormattingProbe) {
+        NSString *source = self.editor.string;
+        if (range.location > source.length || range.length > source.length-range.location) return NO;
+        self.previewFormattingProbeSource = [source stringByReplacingCharactersInRange:range withString:replacement];
+        return YES;
+    }
     if (![self.editor shouldChangeTextInRange:range replacementString:replacement]) return NO;
     NSString *source = self.editor.string;
     NSString *text = selection.location != NSNotFound ? [source substringWithRange:selection] : nil;
@@ -7112,6 +7125,23 @@ to link outside that scope.", \
         return [self replacePreviewRange:envelope withString:[result substringWithRange:NSMakeRange(start,envelope.length+delta)] preservingSelection:selection restoringRange:restored];
     }
     return NO;
+}
+
+- (NSString *)previewFormattingHTMLForPayload:(NSDictionary *)payload
+{
+    // Reuse the committed transaction's validation and conversion. Capture its
+    // proposed source before any text-storage, undo, selection or render changes.
+    if (self.previewFormattingProbe || ![payload isKindOfClass:NSDictionary.class] ||
+        ![@[@"block", @"math"] containsObject:payload[@"action"]]) return nil;
+    self.previewFormattingProbe = YES;
+    self.previewFormattingProbeSource = self.editor.string;
+    @try {
+        if (![self applyPreviewEditPayload:payload]) return nil;
+        return [self.renderer HTMLForMarkdownSnapshot:self.previewFormattingProbeSource];
+    } @finally {
+        self.previewFormattingProbe = NO;
+        self.previewFormattingProbeSource = nil;
+    }
 }
 
 - (BOOL)applyPreviewEditPayload:(NSDictionary *)payload

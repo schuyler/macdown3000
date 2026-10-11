@@ -347,6 +347,113 @@
     XCTAssertEqualObjects([self JS:@"document.querySelector('[data-mp-format-menu]').getAttribute('aria-expanded')"],@"false");
 }
 
+- (void)testHoverPreviewsEveryEnabledFormattingChoiceWithoutChangingMarkdown
+{
+    NSString *source=@"# **Heading**\n\nBody\n";
+    [self loadSource:source];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    BOOL dirty=self.document.isDocumentEdited;
+    BOOL canUndo=self.editor.undoManager.canUndo;
+    NSString *token=self.document.previewEditToken;
+    NSArray *choices=@[@[@"paragraph",@"p"],@[@"h1",@"h1"],@[@"h2",@"h2"],@[@"h3",@"h3"],
+        @[@"h4",@"h4"],@[@"h5",@"h5"],@[@"h6",@"h6"],@[@"unordered",@"ul"],@[@"ordered",@"ol"],
+        @[@"tasks",@"input[type=checkbox]"],@[@"quote",@"blockquote"],@[@"code-block",@"pre code"],
+        @[@"callout-note",@".mp-callout-note"],@[@"callout-tip",@".mp-callout-tip"],@[@"callout-warning",@".mp-callout-warning"],
+        @[@"callout-important",@".mp-callout-important"],@[@"callout-caution",@".mp-callout-caution"],
+        @[@"toggle",@"details"],@[@"toggle-h1",@"details summary h1"],@[@"toggle-h2",@"details summary h2"],
+        @[@"toggle-h3",@"details summary h3"],@[@"toggle-h4",@"details summary h4"],@[@"no-container",@"h1"]];
+    [self JS:@"window.__originalNodes=Array.from(document.body.childNodes);document.querySelector('[data-mp-format-menu]').click()"];
+    for (NSUInteger cycle=0;cycle<2;cycle++) for (NSArray *choice in choices) {
+        NSString *hover=[NSString stringWithFormat:@"document.querySelector('[data-mp-option=\"%@\"]').dispatchEvent(new MouseEvent('mouseenter'))",choice[0]];
+        [self JS:hover];
+        NSString *probe=[NSString stringWithFormat:@"!!document.querySelector('%@')",choice[1]];
+        XCTAssertTrue([[self JS:probe] boolValue],@"Preview %@",choice[0]);
+        if ([choice[0] hasPrefix:@"callout-"])
+            XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('.mp-callout')).borderLeftWidth"],@"4px",@"Preview includes the callout stylesheet");
+        XCTAssertEqualObjects(self.editor.string,source);
+        XCTAssertEqualObjects(self.document.previewEditToken,token);
+        XCTAssertEqual(self.document.isDocumentEdited,dirty);
+        XCTAssertEqual(self.editor.undoManager.canUndo,canUndo);
+        [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-option=\"%@\"]').dispatchEvent(new MouseEvent('mouseleave'))",choice[0]]];
+        XCTAssertTrue([[self JS:@"window.__originalNodes.every(function(n,i){return document.body.childNodes[i]===n;}) && document.body.childNodes.length===window.__originalNodes.length"] boolValue]);
+        XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
+    }
+    [self JS:@"document.querySelector('[data-mp-option=math-block]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    XCTAssertFalse([[self JS:@"!!document.querySelector('pre')"] boolValue]);
+    XCTAssertEqualObjects(self.editor.string,source);
+}
+
+- (void)testHoverCancellationRestoresCalloutDOMStateAndSelection
+{
+    NSString *source=@"::: {.callout-note}\n## Title\nHeading\n:::\n\nBody\n";
+    [self loadSource:source];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    [self JS:@"window.__originalNodes=Array.from(document.body.childNodes);window.__selectedSpan=macdownPreviewEditor.elements().spans.find(function(n){return n.textContent==='Heading';});window.__selectedSpan.__retainedState='original';window.__neighbor=macdownPreviewEditor.elements().spans.find(function(n){return n.textContent==='Body';});"];
+    NSArray *cancellations=@[@"document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))",
+        @"window.dispatchEvent(new Event('blur'))",
+        @"document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:document.body}))"];
+    for (NSString *cancel in cancellations) {
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=h2]').dispatchEvent(new MouseEvent('mouseenter'))"];
+        XCTAssertTrue([[self JS:@"Array.from(document.querySelectorAll('.mp-callout-note h2')).some(function(n){return n.textContent==='Heading';})"] boolValue]);
+        XCTAssertTrue([[self JS:@"window.__neighbor.isConnected"] boolValue],@"Unchanged neighbors remain live during the preview");
+        [self JS:cancel];
+        [self waitUntil:^BOOL{return [[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue];} description:@"Cancel hover menu"];
+        XCTAssertTrue([[self JS:@"window.__originalNodes.every(function(n,i){return document.body.childNodes[i]===n;})"] boolValue]);
+        XCTAssertEqualObjects([self JS:@"window.__selectedSpan.__retainedState"],@"original");
+        XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
+        XCTAssertEqualObjects(self.editor.string,source);
+        XCTAssertFalse([[self JS:@"Array.from(document.querySelectorAll('.mp-callout-note h2')).some(function(n){return n.textContent==='Heading';})"] boolValue]);
+    }
+}
+
+- (void)testHoverAcrossBlocksPreservesUnicodeAndUnchangedExpandedDetails
+{
+    NSString *source=@"Alpha 😀\n\nBêta 漢字\n\n<details><summary>Keep</summary><p>Neighbor</p></details>\n";
+    [self loadSource:source];
+    [self selectFromText:@"Alpha 😀" throughText:@"Bêta 漢字"];
+    NSString *selected=[self JS:@"getSelection().toString()"];
+    [self JS:@"window.__neighborDetails=document.querySelector('details');window.__neighborDetails.open=true;document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=quote]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    XCTAssertTrue([[self JS:@"document.querySelector('blockquote').textContent.includes('Alpha 😀') && document.querySelector('blockquote').textContent.includes('Bêta 漢字')"] boolValue]);
+    XCTAssertTrue([[self JS:@"window.__neighborDetails.isConnected && window.__neighborDetails.open"] boolValue]);
+    [self JS:@"document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
+    XCTAssertEqualObjects([self JS:@"getSelection().toString()"],selected);
+    XCTAssertEqualObjects(self.editor.string,source);
+    XCTAssertTrue([[self JS:@"document.querySelector('details')===window.__neighborDetails && window.__neighborDetails.open"] boolValue]);
+}
+
+- (void)testClickCommitsHoveredChoiceAndOtherChoicesNeverAccumulate
+{
+    [self loadSource:@"Heading\n\nBody\n"];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=callout-warning]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[data-mp-option=quote]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[data-mp-option=h2]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    XCTAssertTrue([[self JS:@"!!document.querySelector('h2') && !document.querySelector('blockquote,.mp-callout-warning')"] boolValue]);
+    XCTAssertEqualObjects(self.editor.string,@"Heading\n\nBody\n");
+    [self JS:@"document.querySelector('[data-mp-option=h2]').click()"];
+    [self waitForFormatting];
+    XCTAssertEqualObjects(self.editor.string,@"## Heading\n\nBody\n");
+    XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
+    XCTAssertTrue([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue]);
+    XCTAssertFalse([[self JS:@"!!document.querySelector('blockquote,.mp-callout-warning')"] boolValue]);
+}
+
+- (void)testHoverRejectsStaleSourceAndRestoresBeforeOutsideSelection
+{
+    [self loadSource:@"Heading\n\nBody\n"];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click()"];
+    self.editor.string=@"Changed\n\nBody\n";
+    [self JS:@"document.querySelector('[data-mp-option=h2]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    XCTAssertFalse([[self JS:@"!!document.querySelector('h2')"] boolValue]);
+    XCTAssertEqualObjects(self.editor.string,@"Changed\n\nBody\n");
+    [self loadSource:@"Heading\n\nBody\n"];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=quote]').dispatchEvent(new MouseEvent('mouseenter'));document.body.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,detail:1}));window.dispatchEvent(new MouseEvent('mouseup'))"];
+    XCTAssertFalse([[self JS:@"!!document.querySelector('blockquote')"] boolValue]);
+    [self selectFromText:@"Body" throughText:@"Body"];
+    XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Body");
+    XCTAssertEqualObjects(self.editor.string,@"Heading\n\nBody\n");
+}
+
 - (void)testHoverMenuKeepsCompactGeometrySelectionAndExistingOptions
 {
     [self loadSource:@"# **Heading**\n\nBody\n"];

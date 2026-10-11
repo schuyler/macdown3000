@@ -11,6 +11,7 @@
   var panel = null, panelStyle = null, errorMessage = null, active = null, saved = null, timer = null, errorSelection = null;
   var mappedSpans = [], panelClass = 'macdown-preview-ui-' + config.token.replace(/[^a-zA-Z0-9_-]/g,''), runClass = panelClass + '-run';
   var handlers = [], rendering = false, selectingWithMouse = false, menuTimer = null, uiZoom = 1;
+  var hoverPreview = null;
   var calloutTypes = ['note','tip','warning','important','caution'];
   function listen(target, name, fn) {
     target.addEventListener(name, fn, false);
@@ -26,6 +27,72 @@
     var menu=panel.querySelector('[role=menu]'), opener=panel.querySelector('[data-mp-format-menu]');
     if(menu) menu.hidden=true;
     if(opener) opener.setAttribute('aria-expanded','false');
+    cancelHoverPreview();
+  }
+  function cancelHoverPreview() {
+    if(!hoverPreview) return;
+    var previous=hoverPreview; hoverPreview=null;
+    previous.nodes.forEach(function(node){node.remove();});
+    previous.originals.forEach(function(entry){entry.marker.replaceWith(entry.node);});
+    restoreSelection(previous.selection);
+    window.scrollTo(previous.scrollX,previous.scrollY);
+  }
+  function previewFormatting(action,value) {
+    cancelHoverPreview();
+    var payload=selectionPayload(action,value);
+    if(!payload || rendering || typeof config.formattingHTML!=='function') return;
+    var html=config.formattingHTML(payload);
+    if(typeof html!=='string') return;
+    function parseFragment(fragment) {
+      // An explicit body keeps parser-generated callout styles in the fragment
+      // rather than letting DOMParser relocate leading styles into its head.
+      return new DOMParser().parseFromString('<!doctype html><html><head></head><body>'+fragment+'</body></html>','text/html');
+    }
+    var snapshot=parseFragment(html);
+    // Snapshot rendering never executes document scripts a second time.
+    snapshot.querySelectorAll('script').forEach(function(script){script.remove();});
+    var originals=Array.from(document.body.childNodes).filter(function(node){
+      return node!==panel && node!==panelStyle && !(node.nodeType===1 && node.tagName==='SCRIPT');
+    });
+    if(!originals.length) return;
+    var proposed=Array.from(snapshot.body.childNodes);
+    // Keep unchanged rendered siblings (diagrams, images, expanded details,
+    // highlighted code) alive. Fall back to the full fragment if runtime HTML
+    // has changed the top-level structure beyond the parser's correspondence.
+    function meaningful(nodes) {
+      return nodes.filter(function(node){return node.nodeType===1 || (node.nodeType===3 && /\S/.test(node.nodeValue));});
+    }
+    var baseline=parseFragment(config.originalHTML || '');
+    baseline.querySelectorAll('[data-macdown-callout-token]').forEach(function(node){node.removeAttribute('data-macdown-callout-token');});
+    baseline.querySelectorAll('script').forEach(function(node){node.remove();});
+    var before=meaningful(Array.from(baseline.body.childNodes)), after=meaningful(proposed), live=meaningful(originals);
+    if(before.length===live.length && before.every(function(node,i){return node.nodeType===live[i].nodeType && node.nodeName===live[i].nodeName;})) {
+      function same(a,b){return a.nodeType===b.nodeType && (a.nodeType===1 ? a.outerHTML===b.outerHTML : a.nodeValue===b.nodeValue);}
+      var first=0, lastBefore=before.length, lastAfter=after.length;
+      while(first<lastBefore && first<lastAfter && same(before[first],after[first])) first++;
+      while(lastBefore>first && lastAfter>first && same(before[lastBefore-1],after[lastAfter-1])) {lastBefore--;lastAfter--;}
+      if(first===lastBefore && first===lastAfter) return;
+      // Formatting always replaces a source envelope. If the parser emitted
+      // only an insertion, use the full fragment to retain a stable anchor.
+      if(lastBefore>first) {originals=live.slice(first,lastBefore);proposed=after.slice(first,lastAfter);}
+    }
+    hoverPreview={selection:currentSelection() || saved,scrollX:window.scrollX,scrollY:window.scrollY,nodes:[],originals:[]};
+    originals.forEach(function(node){
+      var marker=document.createComment(''); node.replaceWith(marker);
+      hoverPreview.originals.push({node:node,marker:marker});
+    });
+    proposed.forEach(function(node){
+      var imported=document.importNode(node,true);
+      document.body.insertBefore(imported,hoverPreview.originals[0].marker);
+      hoverPreview.nodes.push(imported);
+    });
+    window.scrollTo(hoverPreview.scrollX,hoverPreview.scrollY);
+    if(config.math && window.MathJax && window.MathJax.Hub) {
+      var preview=hoverPreview, hub=window.MathJax.Hub;
+      hub.Queue(function(){
+        if(hoverPreview===preview) return hub.Typeset(preview.nodes.filter(function(node){return node.nodeType===1;}));
+      });
+    }
   }
   function hide() { closeMenu(); if (panel) panel.style.display = 'none'; }
   function clearSelection() {
@@ -112,7 +179,7 @@
       runs:matches.map(function(run){return {id:run.id,start:run.start,end:run.end};}),text:text};
   }
   function selectionPayload(action, value) {
-    var selected=currentSelection() || ((rendering || panel.contains(document.activeElement)) ? saved : null);
+    var selected=(hoverPreview && hoverPreview.selection) || currentSelection() || ((rendering || panel.contains(document.activeElement)) ? saved : null);
     if(!selected) return null;
     var payload={action:action,id:selected.id,start:selected.start,end:selected.end,token:config.token};
     payload.runs=selected.runs; payload.text=selected.text;
@@ -120,6 +187,7 @@
     return payload;
   }
   function command(action, value) {
+    cancelHoverPreview();
     var payload=selectionPayload(action,value);
     if(!payload) return;
     send(payload);
@@ -205,12 +273,20 @@
         choice.setAttribute('data-mp-option',item[1]); choice.setAttribute('role','menuitemradio');
         choice.setAttribute('aria-checked','false');
         choice.disabled=(item[1]==='math-block' && !config.math) || (item[1]==='tasks' && !config.tasks) || (item[1]==='code-block' && !config.fenced);
+        listen(choice,'mouseenter',function(){if(!choice.disabled) previewFormatting('block',item[1]);});
+        listen(choice,'mouseleave',cancelHoverPreview);
+        listen(choice,'focus',function(){if(!choice.disabled) previewFormatting('block',item[1]);});
+        listen(choice,'blur',cancelHoverPreview);
       });
     }
     group('block','Type de ligne',blockOptions);
     if(config.math) {
       var equation=button('Équation en ligne',function(){closeMenu();command('math');},'math','math',menu.querySelector('[data-mp-scope=block]'));
       var equationLabel=document.createElement('span');equationLabel.textContent='Équation en ligne';equation.appendChild(equationLabel);
+      listen(equation,'mouseenter',function(){previewFormatting('math');});
+      listen(equation,'mouseleave',cancelHoverPreview);
+      listen(equation,'focus',function(){previewFormatting('math');});
+      listen(equation,'blur',cancelHoverPreview);
     }
     var separator=document.createElement('div'); separator.setAttribute('role','separator'); menu.appendChild(separator);
     group('container','Encadré et menu dépliant',containerOptions);
@@ -401,7 +477,7 @@
     if(current) opener.setAttribute('data-mp-active',''); else opener.removeAttribute('data-mp-active');
   }
   function updatePanel() {
-    if(active || rendering || selectingWithMouse) return;
+    if(active || rendering || selectingWithMouse || hoverPreview) return;
     var selected=currentSelection();
     if(errorMessage && JSON.stringify(selected)!==errorSelection) {
       errorMessage.remove(); errorMessage=null; errorSelection=null;
@@ -468,6 +544,11 @@
   listen(document,'selectionchange',function(){
     clearTimeout(timer); timer=setTimeout(updatePanel,120);
   });
+  listen(document,'keydown',function(event){
+    if(event.key==='Escape' && !panel.querySelector('[role=menu]').hidden) {
+      closeMenu(); event.preventDefault();
+    }
+  });
   // Force Touch prepares a native word lookup before mousedown. Suppress
   // that transient highlight on editable preview prose, without cancelling
   // the ordinary click/drag events or link previews and explicit text edits.
@@ -477,6 +558,7 @@
   });
   listen(document,'mousedown',function(event){
     if(event.button!==0 || panel.contains(event.target)) return;
+    cancelHoverPreview();
     // WebKit retains an existing word selection on press to start a text
     // drag. A fresh single press on the preview page, including its blank
     // background, must start a new selection. Leave multi-click and modifiers native.
@@ -493,6 +575,7 @@
   }
   listen(window,'mouseup',finishMouseSelection);
   listen(window,'blur',function(){
+    closeMenu();
     if(!selectingWithMouse) return;
     selectingWithMouse=false; clearTimeout(timer); saved=null; hide();
   });
@@ -529,11 +612,12 @@
   function normalizedSelectionText(text) {
     return text.replace(/\r\n?/g,'\n').replace(/\n+/g,'\n');
   }
-  window.macdownPreviewEditor={elements:function(){return {panel:panel,style:panelStyle,spans:mappedSpans.slice()};},clearSelection:clearSelection,prepareForRender:function(){saved=currentSelection() || saved;rendering=true;clearTimeout(timer);},draft:draft,finish:finish,selectionPayload:selectionPayload,setPreviewScale:setPreviewScale,showError:function(){
+  window.macdownPreviewEditor={elements:function(){return {panel:panel,style:panelStyle,spans:mappedSpans.slice()};},clearSelection:clearSelection,prepareForRender:function(){cancelHoverPreview();saved=currentSelection() || saved;rendering=true;clearTimeout(timer);},draft:draft,finish:finish,selectionPayload:selectionPayload,setPreviewScale:setPreviewScale,showError:function(){
     showEditError('Modification refusée : la source a changé. Copiez votre texte, puis appuyez sur Échap pour annuler.');
   },showFormattingError:function(){
     showEditError('Mise en forme refusée : cette sélection ne peut pas être représentée correctement en Markdown. Sélectionnez un passage plus court.');
   },destroy:function(preservePanel){
+    cancelHoverPreview();
     clearTimeout(timer); clearTimeout(menuTimer); active=null;
     handlers.forEach(function(h){h[0].removeEventListener(h[1],h[2],false);});
     if(!preservePanel && panel && panel.parentNode) panel.parentNode.removeChild(panel);
