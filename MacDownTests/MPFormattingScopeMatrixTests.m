@@ -156,7 +156,7 @@
 {
     [super setUp];
     MPPreferences *p=[MPPreferences sharedInstance];
-    NSArray *keys=@[@"extensionIntraEmphasis",@"extensionUnderline",@"extensionStrikethough",@"extensionFencedCode",@"extensionSmartyPants",@"htmlTaskList",@"htmlMathJax",@"htmlHardWrap"];
+    NSArray *keys=@[@"extensionIntraEmphasis",@"extensionUnderline",@"extensionStrikethough",@"extensionFencedCode",@"extensionSmartyPants",@"htmlTaskList",@"htmlMathJax",@"htmlHardWrap",@"extensionTables",@"extensionFootnotes",@"extensionAutolink",@"extensionSuperscript",@"extensionHighlight"];
     NSMutableDictionary *old=[NSMutableDictionary dictionary];
     for (NSString *key in keys) { old[key]=[p valueForKey:key]; [p setValue:@YES forKey:key]; }
     p.extensionSmartyPants=NO; p.htmlHardWrap=NO;
@@ -720,6 +720,117 @@
     XCTAssertTrue([visible containsString:@"Same paragraph continuation."]);
     XCTAssertFalse([visible containsString:@"Before neighbour."]);
     XCTAssertFalse([visible containsString:@"After neighbour."]);
+}
+
+- (void)testNestedRenderingMatrixForAllSupportedBlockFamilies
+{
+    NSMutableArray<NSArray<NSString *> *> *blocks=[NSMutableArray arrayWithArray:@[
+        @[@"Needle paragraph.\nContinuation.\n",@"./p[contains(.,'Needle')]"],
+        @[@"Title Needle\n============\n",@"./h1"],
+        @[@"Title Needle\n------------\n",@"./h2"],
+        @[@"> Needle\n> continuation\n",@"./blockquote/p"],
+        @[@"> > > Needle\n",@"./blockquote/blockquote/blockquote/p"],
+        @[@"- Needle\n    1. Child\n        - [x] Grandchild\n",@"./ul/li/ol/li/ul/li/input"],
+        @[@"1. Needle\n    - Child\n        1. Grandchild\n",@"./ol/li/ul/li/ol/li"],
+        @[@"- [ ] Needle\n    - [x] Child\n",@"./ul/li/ul/li/input"],
+        @[@"> - Needle\n>     - Child\n",@"./blockquote/ul/li/ul/li"],
+        @[@"- Needle\n\n    > Quote\n    > > Nested\n",@"./ul/li/blockquote/blockquote"],
+        @[@"```jsx\nNeedle\n::: {.callout-tip}\n<aside>\n```\n",@".//pre/code[contains(.,'<aside>')]",@"Needle\n::: {.callout-tip}\n<aside>"],
+        @[@"~~~~text\nNeedle\n```\n~~~~\n",@".//pre/code",@"Needle\n```"],
+        @[@"    Needle indented code\n    second line\n",@".//pre/code",@"Needle indented code\nsecond line"],
+        @[@"| Needle | Column |\n| --- | --- |\n| Cell | Value |\n",@"./table/tbody/tr/td"],
+        @[@"Needle **bold** *italic* _underlined_ ~~strike~~ `inline` [link](https://example.org)\n",@"./p[strong and em and u and del and code and a]",@"Needle bold italic underlined strike inline link"],
+        @[@"Needle ![image](image.png)\n",@"./p/img[@alt='image']"],
+        @[@"Needle\n\n---\n\nAfter rule\n",@"./hr"],
+        @[@"Needle  \nHard break\n",@"./p/br"],
+        @[@"::: {.callout-tip}\n## Nested title\n\nNeedle\n:::\n",@"./aside/div[contains(@class,'mp-callout-body')]/p"],
+        @[@"::: {.callout-note collapse=\"false\"}\n### Nested title\n\nNeedle\n:::\n",@"./details[@open]/div/p"],
+        @[@"Needle\n\n- Child\n\n    ```text\n    message\n    ```\n",@"./ul/li//pre/code"],
+        @[@"Needle[^note]\n",@"./p/sup/a"],
+        @[@"Needle https://example.org\n",@"./p/a[@href='https://example.org']"],
+        @[@"Needle ==highlight== x^2\n",@"./p[mark and sup]"],
+        @[@"Needle **Été 👩🏽‍💻 é** \\*literal\\*\n",@"./p/strong",@"Été 👩🏽‍💻 é"],
+        @[@"> ## Needle\n>\n> | Column | Value |\n> | --- | --- |\n> | Cell | Other |\n",@"./blockquote[ h2 and table ]"],
+        @[@"Needle [reference][target]\n\n[target]: https://example.org/target\n",@"./p/a[@href='https://example.org/target']"],
+        @[@"```mermaid\ngraph TD\nNeedle --> Child\n```\n",@".//pre/code[contains(@class,'language-mermaid')]"],
+        @[@"```dot\ndigraph { Needle -> Child }\n```\n",@".//pre/code[contains(@class,'language-dot')]"],
+        @[@"::: {.callout-warning}\n## Nested title\n\n- Child\n\n    ::: {.callout-tip}\n    ### Deep title\n\n    Needle\n    :::\n\n:::\n",@"./aside/div[contains(@class,'mp-callout-body')]/ul/li/aside/div[contains(@class,'mp-callout-body')]/p"]
+    ]];
+    for (NSUInteger level=1;level<=6;level++) [blocks addObject:@[[NSString stringWithFormat:@"%@ Needle\n",[@"######" substringToIndex:level]],[NSString stringWithFormat:@"./h%lu",(unsigned long)level]]];
+    MPScopeFixture *oracle=[[MPScopeFixture alloc] initWithSource:@"Oracle"];
+    MPRenderer *renderer=oracle.renderer;
+    for (NSString *newline in @[@"\n",@"\r\n"]) for (NSString *marker in @[@"-",@"1.",@"- [ ]",@"- [x]"])
+    for (NSString *indentUnit in @[@"    ",@"\t"]) for (NSUInteger depth=1;depth<=4;depth++) for (NSString *container in self.containers) {
+        if ([container isEqualToString:@"none"]) continue;
+        for (NSArray<NSString *> *block in blocks) @autoreleasepool {
+            NSString *context=[NSString stringWithFormat:@"%@ / indent=%@ / depth=%lu / %@ / %@ / %@",marker,indentUnit,(unsigned long)depth,container,block[1],newline.length==2?@"CRLF":@"LF"];
+            NSMutableString *source=[NSMutableString string];
+            for (NSUInteger i=0;i<depth;i++) [source appendFormat:@"%@%@ Owner %lu\n",[@"" stringByPaddingToLength:i*indentUnit.length withString:indentUnit startingAtIndex:0],marker,(unsigned long)i];
+            NSString *margin=[@"" stringByPaddingToLength:depth*indentUnit.length withString:indentUnit startingAtIndex:0];
+            NSString *type=[container hasPrefix:@"callout-"] ? [container substringFromIndex:8] : @"note";
+            NSString *collapse=[container hasPrefix:@"toggle"] ? @" collapse=\"true\"" : @"";
+            [source appendFormat:@"\n%@::: {.callout-%@%@}\n%@## Outer title\n\n",margin,type,collapse,margin];
+            for (NSString *line in [block[0] componentsSeparatedByString:@"\n"]) [source appendFormat:@"%@%@\n",margin,line];
+            [source appendFormat:@"%@:::\n\n%@ After inside owner.\n\n%@%@ Neighbor\n",margin,margin,[@"" stringByPaddingToLength:(depth-1)*indentUnit.length withString:indentUnit startingAtIndex:0],marker];
+            if ([block[0] containsString:@"[^note]"]) [source appendString:@"\n[^note]: Footnote text\n"];
+            NSString *HTML=[renderer HTMLForMarkdownSnapshot:[source stringByReplacingOccurrencesOfString:@"\n" withString:newline]];
+            NSRegularExpression *voidTags=[NSRegularExpression regularExpressionWithPattern:@"<(input|img|br|hr)([^>]*?)(?<!/)>" options:0 error:NULL];
+            NSString *XML=[voidTags stringByReplacingMatchesInString:HTML options:0 range:NSMakeRange(0,HTML.length) withTemplate:@"<$1$2 />"];
+            // HTML boolean attributes are valid browser markup; normalize
+            // their syntax only for the strict XML structure assertions.
+            NSRegularExpression *checked=[NSRegularExpression regularExpressionWithPattern:@"(<input\\b[^>]*?)\\schecked(?=\\s|/?>)" options:0 error:NULL];
+            XML=[checked stringByReplacingMatchesInString:XML options:0 range:NSMakeRange(0,XML.length) withTemplate:@"$1 checked=\"checked\""];
+            NSRegularExpression *open=[NSRegularExpression regularExpressionWithPattern:@"(<details\\b[^>]*?)\\sopen(?=\\s|>)" options:0 error:NULL];
+            XML=[open stringByReplacingMatchesInString:XML options:0 range:NSMakeRange(0,XML.length) withTemplate:@"$1 open=\"open\""];
+            XML=[XML stringByReplacingOccurrencesOfString:@"&nbsp;" withString:@"&#160;"];
+            NSError *parseError=nil;
+            NSXMLDocument *DOM=[[NSXMLDocument alloc] initWithXMLString:[NSString stringWithFormat:@"<root>%@</root>",XML] options:NSXMLNodeLoadExternalEntitiesNever|NSXMLNodePromoteSignificantWhitespace error:&parseError];
+            if (!DOM) { XCTFail(@"%@ produces well formed container HTML: %@; %@",context,parseError,HTML); return; }
+            NSArray *outer=[DOM nodesForXPath:@"//*[self::aside or self::details][div[contains(@class,'mp-callout-title')]/h2='Outer title' or summary/h2='Outer title']" error:NULL];
+            XCTAssertEqual(outer.count,1u,@"%@",context);
+            NSXMLNode *wrapper=outer.firstObject;
+            XCTAssertEqual([wrapper nodesForXPath:@"ancestor::li" error:NULL].count,depth,@"%@ preserves its list ownership",context);
+            NSXMLNode *body=[[wrapper nodesForXPath:@"./div[contains(@class,'mp-callout-body')]" error:NULL] firstObject];
+            NSArray *contentNodes=[body nodesForXPath:block[1] error:NULL];
+            XCTAssertGreaterThan(contentNodes.count,0u,@"%@ preserves block structure",context);
+            if (block.count>2) XCTAssertEqualObjects([contentNodes.firstObject stringValue],block[2],@"%@ preserves exact content bytes",context);
+            XCTAssertTrue([body.stringValue containsString:@"Needle"],@"%@ preserves selected content",context);
+            XCTAssertFalse([body.stringValue containsString:@"After inside owner."],@"%@ excludes subsequent prose",context);
+            XCTAssertFalse([wrapper.stringValue containsString:@"Neighbor"],@"%@ excludes sibling items",context);
+            XCTAssertFalse([DOM.rootElement.stringValue containsString:@"macdowncallout"],@"%@ consumes transport markers",context);
+            if ([DOM nodesForXPath:@"//li[normalize-space(.)='Neighbor']" error:NULL].count!=1) { XCTFail(@"%@ preserves sibling: %@",context,HTML); return; }
+        }
+    }
+}
+
+- (void)testNativeNestedContainerPreservesMarginForEveryTypeAndLineEnding
+{
+    for (NSString *margin in @[@"        ",@"\t\t"]) for (NSString *newline in @[@"\n",@"\r\n"]) for (NSString *type in self.containers) {
+        if ([type isEqualToString:@"none"]) continue;
+        NSString *source=[[NSString stringWithFormat:@"- Parent\n    - Action\n\n%@Needle paragraph.\n\n    - Next\n",margin] stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+        MPScopeFixture *f=[[MPScopeFixture alloc] initWithSource:source];
+        f.editor.selectedRange=NSMakeRange([source rangeOfString:@"Needle"].location+2,0);
+        [f.document convertSelectionToBlock:type];
+        NSXMLDocument *DOM=[self DOM:f context:@"native nested container"];
+        XCTAssertEqual([DOM nodesForXPath:@"/root/ul/li/ul/li/aside | /root/ul/li/ul/li/details" error:NULL].count,1u,@"%@",type);
+        XCTAssertTrue([f.editor.string containsString:[[margin stringByAppendingString:@"::: {.callout-"] stringByAppendingString:[type hasPrefix:@"callout-"] ? [type substringFromIndex:8] : @"note"]]);
+        XCTAssertEqualObjects([[[DOM nodesForXPath:@"/root/ul/li/ul/li" error:NULL] lastObject] stringValue],@"Next");
+        [f.document.undoManager undo];
+        XCTAssertEqualObjects(f.editor.string,source);
+    }
+}
+
+- (void)testNestedSetextAndUntitledContainersKeepOneIndentedTitle
+{
+    for (NSString *margin in @[@"        ",@"\t\t"]) for (NSString *title in @[@"        Custom title\n        ------------\n",@"",@"        ## Custom title\n"]) {
+        MPScopeFixture *f=[[MPScopeFixture alloc] initWithSource:[NSString stringWithFormat:@"- Parent\n    - Action\n\n%@::: {.callout-note}\n%@\n        Needle paragraph.\n        :::\n\n    - Next\n",margin,title]];
+        XCTAssertTrue([f apply:@"block" value:@"toggle-h4" text:@"Needle"]);
+        NSXMLDocument *DOM=[self DOM:f context:@"nested title transformation"];
+        XCTAssertEqual([DOM nodesForXPath:@"//li/details/summary/h4" error:NULL].count,1u);
+        XCTAssertFalse([f.editor.string containsString:@"\n#### "]);
+        XCTAssertEqual([DOM nodesForXPath:@"//details//h2" error:NULL].count,0u);
+        if (title.length) XCTAssertEqualObjects([[[DOM nodesForXPath:@"//details/summary/h4" error:NULL] firstObject] stringValue],@"Custom title");
+    }
 }
 
 - (void)testUntitledCalloutBecomesToggleHeadingWithLocalizedDefaultTitleAndPreservedBody

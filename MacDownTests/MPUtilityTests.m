@@ -1177,6 +1177,25 @@
 }
 
 
+- (void)testCalloutIndentationUsesTabStopsAndEquivalentClosingMargins
+{
+    XCTAssertEqual(MPMarkdownPrefixColumns(@"\t"),4u);
+    XCTAssertEqual(MPMarkdownPrefixColumns(@" \t"),4u);
+    XCTAssertEqual(MPMarkdownPrefixColumns(@"\t \t"),8u);
+    for (NSString *ending in @[@"\n",@"\r\n"]) for (NSString *openingMargin in @[@"    ",@"\t",@" \t"]) {
+        NSString *source=[[NSString stringWithFormat:@"- Owner\n\n%@::: {.callout-note}\n    ## Title\n\n    Body\n\t:::\n\n- Next\n",openingMargin] stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        NSArray *entries=MPPrepareCallouts(source)[@"callouts"];
+        XCTAssertEqual(entries.count,1u);
+        if (entries.count!=1) continue;
+        XCTAssertEqualObjects([source substringWithRange:[entries.firstObject[@"sourceOpenRange"] rangeValue]],[[openingMargin stringByAppendingString:@"::: {.callout-note}"] stringByAppendingString:ending]);
+        XCTAssertEqualObjects([source substringWithRange:[entries.firstObject[@"sourceCloseRange"] rangeValue]],[@"\t:::" stringByAppendingString:ending]);
+    }
+    for (NSString *margin in @[@"    ",@"\t",@" \t"]) {
+        NSString *code=[NSString stringWithFormat:@"%@::: {.callout-note}\n%@literal\n%@:::\n",margin,margin,margin];
+        XCTAssertEqual([MPPrepareCallouts(code)[@"callouts"] count],0u,@"Standalone indentation remains literal code");
+    }
+}
+
 - (void)testCalloutSourceMetadataPreservesExactUTF16DelimiterRanges {
     for (NSString *ending in @[@"\n", @"\r\n"]) {
         NSString *source = [NSString stringWithFormat:@"Before 😀%@::: {.callout-caution}%@## Attention%@Test%@:::%@After%@",

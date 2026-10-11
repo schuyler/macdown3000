@@ -537,6 +537,71 @@
     XCTAssertEqualObjects([self JS:@"Array.from(document.querySelectorAll('li')).pop().textContent.trim()"],@"Next");
 }
 
+- (void)testNestedParagraphCalloutKeepsListOwnershipDuringHoverCommitAndUnwrap
+{
+    NSString *source=@"- Parent\n    - Action\n\n        Needle paragraph.\n\n        - Child\n            - Grandchild\n\n        ```jsx\n        message\n        ```\n\n    - Next\n";
+    [self loadSource:source];
+    [self selectFromText:@"Needle" throughText:@"paragraph."];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=callout-warning]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    XCTAssertTrue([[self JS:@"!!document.querySelector('body > ul > li > ul > li > .mp-callout-warning')"] boolValue]);
+    XCTAssertEqualObjects(self.editor.string,source);
+    [self JS:@"document.querySelector('[data-mp-option=callout-warning]').click()"];
+    [self waitForFormatting];
+    XCTAssertTrue([self.editor.string containsString:@"        ::: {.callout-warning}\n        ## "]);
+    XCTAssertTrue([[self JS:@"!!document.querySelector('body > ul > li > ul > li > .mp-callout-warning')"] boolValue]);
+    XCTAssertEqualObjects([self JS:@"document.querySelector('.mp-callout-body').textContent.trim()"],@"Needle paragraph.");
+    XCTAssertTrue([[self JS:@"!!document.querySelector('body > ul > li > ul > li > ul > li > ul > li')"] boolValue]);
+    XCTAssertEqualObjects([self JS:@"document.querySelector('pre code').textContent"],@"message");
+    XCTAssertEqualObjects([self JS:@"Array.from(document.querySelectorAll('li')).pop().textContent.trim()"],@"Next");
+    [self selectFromText:@"Needle" throughText:@"paragraph."];
+    [self chooseContainer:@"toggle-h4"];
+    [self waitForFormatting];
+    XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('li > details > summary > h4').length)"],@"1");
+    XCTAssertFalse([self.editor.string containsString:@"\n#### "]);
+    XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('details summary h2, details summary h4').length)"],@"1");
+    [self selectFromText:@"Needle" throughText:@"paragraph."];
+    [self chooseContainer:@"no-container"];
+    [self waitForFormatting];
+    XCTAssertFalse([[self JS:@"!!document.querySelector('.mp-callout')"] boolValue]);
+    XCTAssertTrue([[self JS:@"Array.from(document.querySelectorAll('body > ul > li > ul > li > p')).some(function(p){return p.textContent==='Needle paragraph.';})"] boolValue]);
+}
+
+- (void)testPastedProcedurePreservesDeepListsCodeAndCalloutBoundaries
+{
+    for (NSString *newline in @[@"\n",@"\r\n"]) {
+        NSString *source=@"- Actions\n    - [ ] Task\n        - Condition\n            <aside>\n            💡\n\n            **Instruction**\n\n            - Request\n                ```jsx\n                message\n                ```\n            - Response\n                - Branch\n                    - Action\n\n            </aside>\n        - Other condition\n            <aside>\n            Warning\n\n            Paragraph\n            </aside>\n    - [ ] Next\n";
+        source=[source stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+        self.editor.string=@"";
+        NSPasteboard *pasteboard=[NSPasteboard pasteboardWithUniqueName];
+        [pasteboard setString:source forType:NSPasteboardTypeString];
+        XCTAssertTrue([self.editor readSelectionFromPasteboard:pasteboard]);
+        [pasteboard releaseGlobally];
+        [self loadSource:self.editor.string];
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('body > ul > li > ul > li > ul > li > .mp-callout').length)"],@"2");
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('.mp-callout-body > ul > li > ul > li > ul > li').length)"],@"1");
+        XCTAssertEqualObjects([self JS:@"document.querySelector('.mp-callout-body > ul > li > div > pre code').textContent"],@"message");
+        XCTAssertTrue([[self JS:@"Array.from(document.querySelectorAll('body > ul > li > ul > li')).pop().textContent.includes('Next')"] boolValue]);
+        XCTAssertFalse([[self JS:@"document.body.textContent.includes('macdowncallout')"] boolValue]);
+    }
+}
+
+- (void)testConvertingNestedListSelectionPreservesItsChildrenAndNeighbors
+{
+    for (NSString *newline in @[@"\n",@"\r\n"]) {
+        NSString *source=@"1. Parent\n    - [ ] Task\n\n        - Request\n            - Branch\n                - Action\n\n        ```jsx\n        sibling code\n        ```\n\n    - Next\n";
+        source=[source stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+        [self loadSource:source];
+        [self selectFromText:@"Request" throughText:@"Action"];
+        [self chooseContainer:@"callout-tip"];
+        [self waitForFormatting];
+        XCTAssertTrue([[self JS:@"!!document.querySelector('body > ol > li > ul > li > aside > .mp-callout-body > ul > li > ul > li > ul > li')"] boolValue]);
+        XCTAssertEqualObjects([self JS:@"document.querySelector('.mp-callout-body').textContent.replace(/\\s+/g,' ').trim()"],@"Request Branch Action");
+        XCTAssertEqualObjects([self JS:@"document.querySelector('body > ol > li > ul > li > div > pre code').textContent"],@"sibling code");
+        XCTAssertTrue([self.editor.string containsString:[@"        ::: {.callout-tip}" stringByAppendingString:newline]]);
+        XCTAssertEqualObjects([self JS:@"Array.from(document.querySelectorAll('body > ol > li > ul > li')).pop().textContent.trim()"],@"Next");
+    }
+}
+
 - (void)testNestedProcedureScrollsTheSamePassageInBothDirections
 {
     NSMutableString *fixture=[NSMutableString string];

@@ -6057,7 +6057,7 @@ to link outside that scope.", \
     NSString *proseTraversal =
         @"function proseNodes(d,owned){var originals=[],plans=[],cuts=0,w=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT,null,false),n;"
          "function eligible(n){var p=n.parentElement;return p&&!owned.some(function(e){return e.contains(n);})&&!p.closest('script,style,pre,nav,textarea,button,select,svg,math,.MathJax,.MathJax_Display');}"
-         "while((n=w.nextNode())){if(!eligible(n))continue;if(originals.length>=4000)return [];originals.push(n);if(!n.parentElement.closest('blockquote')){plans.push([]);continue;}var positions=[],re=/[\\r\\n]+/g,m;while((m=re.exec(n.nodeValue))){[m.index,m.index+m[0].length].forEach(function(i){if(i>0&&i<n.length)positions.push(i);});if(cuts+positions.length>4000)return [];}cuts+=positions.length;plans.push(positions);}"
+         "while((n=w.nextNode())){if(!eligible(n))continue;if(originals.length>=4000)return [];originals.push(n);if(!n.parentElement.closest('blockquote,li')){plans.push([]);continue;}var positions=[],re=/[\\r\\n]+/g,m;while((m=re.exec(n.nodeValue))){[m.index,m.index+m[0].length].forEach(function(i){if(i>0&&i<n.length)positions.push(i);});if(cuts+positions.length>4000)return [];}cuts+=positions.length;plans.push(positions);}"
          "originals.forEach(function(n,i){plans[i].reverse().forEach(function(position){n.splitText(position);});});"
          "var a=[];w=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT,null,false);while((n=w.nextNode())){var p=n.parentElement;if(!eligible(n)||(!n.nodeValue.trim()&&(!p.closest('p,h1,h2,h3,h4,h5,h6,li,summary')||/[\\r\\n]/.test(n.nodeValue))))continue;if(a.length>=2000)return [];a.push(n);}return a;}";
     NSString *scan = [NSString stringWithFormat:@"(function(){%@var ui=window.macdownPreviewEditor&&typeof window.macdownPreviewEditor.elements==='function'&&window.macdownPreviewEditor.elements(),owned=ui?[ui.panel,ui.style].concat(ui.spans).filter(function(e){return e&&e.isConnected;}):[],a=proseNodes(document,owned);window.__macdownPreviewEditNodes=a;return JSON.stringify(a.map(function(n){return n.nodeValue;}));})()",proseTraversal];
@@ -6539,6 +6539,48 @@ to link outside that scope.", \
     return verified;
 }
 
+// Strip only the container's physical margin for standalone title parsing.
+// Source edits still address the original bytes, including tabs and CRLF.
+static NSString *MPContainerMargin(NSString *line)
+{
+    NSUInteger length=0;
+    while (length<line.length && ([line characterAtIndex:length]==' ' || [line characterAtIndex:length]=='\t')) length++;
+    return [line substringToIndex:length];
+}
+
+static NSString *MPContainerCommonMargin(NSString *body)
+{
+    NSString *margin=nil;
+    for (NSString *line in [body componentsSeparatedByString:@"\n"]) {
+        if (![line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) continue;
+        NSString *prefix=MPContainerMargin(line);
+        if (!margin || MPMarkdownPrefixColumns(prefix)<MPMarkdownPrefixColumns(margin)) margin=prefix;
+        if (!margin.length) break;
+    }
+    return margin ?: @"";
+}
+
+static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
+{
+    NSUInteger width=MPMarkdownPrefixColumns(margin);
+    if (!width) return body;
+    NSMutableArray *lines=[NSMutableArray array];
+    for (NSString *line in [body componentsSeparatedByString:@"\n"]) {
+        NSUInteger index=0,columns=0;
+        while (index<line.length && columns<width) {
+            unichar character=[line characterAtIndex:index];
+            if (character!=' ' && character!='\t') break;
+            columns += character=='\t' ? 4-columns%4 : 1;
+            index++;
+        }
+        if (columns>=width) {
+            NSString *remainder=[@"" stringByPaddingToLength:columns-width withString:@" " startingAtIndex:0];
+            [lines addObject:[remainder stringByAppendingString:[line substringFromIndex:index]]];
+        } else [lines addObject:line];
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
 // One block conversion engine serves verified preview selections and native
 // source selections. Adapters supply ranges and parser-owned callout metadata.
 // Container scope is independent of content-block scope. A parser-owned
@@ -6546,10 +6588,12 @@ to link outside that scope.", \
 - (NSArray<NSDictionary *> *)previewHeadingEditsInRange:(NSRange)content level:(NSUInteger)level source:(NSString *)source renderer:(MPRenderer *)renderer
 {
     NSString *body=[source substringWithRange:content];
-    NSXMLDocument *bodyDOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:body]);
+    NSRange openingLine=content.location ? [source lineRangeForRange:NSMakeRange(content.location-1,0)] : NSMakeRange(0,0);
+    NSString *margin=MPContainerMargin([source substringWithRange:openingLine]);
+    NSXMLDocument *bodyDOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:MPContainerBodyWithoutMargin(body,margin)]);
     NSXMLNode *firstRoot=[[bodyDOM nodesForXPath:@"//body/*" error:NULL] firstObject];
     if (![@[@"h1",@"h2",@"h3",@"h4",@"h5",@"h6"] containsObject:firstRoot.name.lowercaseString]) return @[];
-    NSRegularExpression *ATX=[NSRegularExpression regularExpressionWithPattern:@"\\A(?:[ \t]*\r?\n)* {0,3}(#{1,6})(?!#)" options:0 error:NULL];
+    NSRegularExpression *ATX=[NSRegularExpression regularExpressionWithPattern:@"\\A(?:[ \t]*\r?\n)*[ \t]*(#{1,6})(?!#)" options:0 error:NULL];
     NSTextCheckingResult *match=[ATX firstMatchInString:body options:0 range:NSMakeRange(0,body.length)];
     NSString *marks=[@"######" substringToIndex:level];
     if (match) {
@@ -6570,11 +6614,11 @@ to link outside that scope.", \
     NSRange next=[source lineRangeForRange:NSMakeRange(NSMaxRange(first),0)];
     if (NSMaxRange(next)>NSMaxRange(content)) return @[];
     NSRange pair=NSMakeRange(start,NSMaxRange(next)-start);
-    NSXMLDocument *DOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:[source substringWithRange:pair]]);
+    NSXMLDocument *DOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:MPContainerBodyWithoutMargin([source substringWithRange:pair],margin)]);
     NSArray *roots=[DOM nodesForXPath:@"//body/*" error:NULL];
     NSXMLNode *root=roots.firstObject;
     if (roots.count!=1 || ![@[@"h1",@"h2"] containsObject:root.name.lowercaseString]) return @[];
-    return @[@{@"range":[NSValue valueWithRange:NSMakeRange(start,0)],@"replacement":[marks stringByAppendingString:@" "]},
+    return @[@{@"range":[NSValue valueWithRange:NSMakeRange(start+MPContainerMargin([source substringWithRange:first]).length,0)],@"replacement":[marks stringByAppendingString:@" "]},
         @{@"range":[NSValue valueWithRange:next],@"replacement":@""}];
 }
 
@@ -6725,7 +6769,7 @@ to link outside that scope.", \
                 else {
                     NSString *heading=[[@"######" substringToIndex:level] stringByAppendingString:@" "];
                     NSString *newline=ending.length ? ending : @"\n";
-                    NSString *title=[NSString stringWithFormat:@"%@%@%@",heading,MPPreviewDefaultCalloutTitle(type,YES),newline];
+                    NSString *title=[NSString stringWithFormat:@"%@%@%@%@",[old substringToIndex:colon],heading,MPPreviewDefaultCalloutTitle(type,YES),newline];
                     [edits addObject:@{@"range":[NSValue valueWithRange:NSMakeRange(content.location,0)],@"replacement":title}];
                 }
             }
@@ -6748,9 +6792,10 @@ to link outside that scope.", \
     // selected body remains a content heading, even when the new disclosure
     // requests another title level; the two scopes must never overwrite it.
     NSUInteger level=[value hasPrefix:@"toggle-h"] ? [[value substringFromIndex:8] integerValue] : 2;
-    NSString *title=[NSString stringWithFormat:@"%@ %@%@",[@"######" substringToIndex:level],MPPreviewDefaultCalloutTitle(type,toggle),newline];
-    NSString *opening=[NSString stringWithFormat:@"%@::: {.callout-%@%@}%@%@",newline,type,toggle ? @" collapse=\"true\"" : @"",newline,title];
-    NSString *closing=[NSString stringWithFormat:@"%@:::%@",[body hasSuffix:newline] ? @"" : newline,newline];
+    NSString *margin=MPContainerCommonMargin(body);
+    NSString *title=[NSString stringWithFormat:@"%@%@ %@%@",margin,[@"######" substringToIndex:level],MPPreviewDefaultCalloutTitle(type,toggle),newline];
+    NSString *opening=[NSString stringWithFormat:@"%@%@::: {.callout-%@%@}%@%@",newline,margin,type,toggle ? @" collapse=\"true\"" : @"",newline,title];
+    NSString *closing=[NSString stringWithFormat:@"%@%@:::%@",[body hasSuffix:newline] ? @"" : newline,margin,newline];
     NSRange relativeSelection=NSMakeRange(selection.location-region.location,selection.length);
     NSRange relative=NSMakeRange(opening.length+relativeSelection.location,relativeSelection.length);
     NSString *replacement=[NSString stringWithFormat:@"%@%@%@",opening,body,closing];

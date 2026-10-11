@@ -130,6 +130,16 @@ NS_INLINE NSString *MPPreviewDefaultCalloutTitle(NSString *type, BOOL collapsibl
 // must not apply ranges from a transformed/preprocessed input to original text.
 // An indented callout is a container only when a preceding list item owns
 // that indentation. Standalone indented examples retain code semantics.
+// Markdown tabs advance to four-column stops. Physical source ranges and
+// prefixes retain their original bytes; only nesting comparisons use columns.
+NS_INLINE NSUInteger MPMarkdownPrefixColumns(NSString *prefix)
+{
+    NSUInteger columns=0;
+    for (NSUInteger i=0;i<prefix.length;i++)
+        columns += [prefix characterAtIndex:i]=='\t' ? 4-columns%4 : 1;
+    return columns;
+}
+
 NS_INLINE BOOL MPCalloutHasListOwner(NSArray<NSString *> *lines, NSUInteger index, NSUInteger indentation)
 {
     NSRegularExpression *item=[NSRegularExpression regularExpressionWithPattern:@"^([ \\t]*)(?:[-+*]|[0-9]+[.)])([ \\t]+)" options:0 error:NULL];
@@ -137,9 +147,11 @@ NS_INLINE BOOL MPCalloutHasListOwner(NSArray<NSString *> *lines, NSUInteger inde
         NSString *line=lines[--index];
         if (![line stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) continue;
         NSUInteger width=0;while(width<line.length && ([line characterAtIndex:width]==' ' || [line characterAtIndex:width]=='\t')) width++;
-        if (width>=indentation) continue;
+        if (MPMarkdownPrefixColumns([line substringToIndex:width])>=indentation) continue;
         NSTextCheckingResult *match=[item firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
-        return match && NSMaxRange(match.range)<=indentation && indentation-NSMaxRange(match.range)<4;
+        if (!match) return NO;
+        NSUInteger contentColumn=MPMarkdownPrefixColumns([line substringToIndex:NSMaxRange(match.range)]);
+        return contentColumn<=indentation && indentation-contentColumn<4;
     }
     return NO;
 }
@@ -191,13 +203,14 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
         NSUInteger indentation=0;
         while (indentation<line.length && ([line characterAtIndex:indentation]==' ' || [line characterAtIndex:indentation]=='\t')) indentation++;
         NSString *indent=[line substringToIndex:indentation];
+        NSUInteger columns=MPMarkdownPrefixColumns(indent);
         NSTextCheckingResult *match = [opening firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
-        BOOL listContainer=match && indentation>=4 && MPCalloutHasListOwner(lines,i,indentation);
-        BOOL containerClose=stack.count && ([stack.lastObject[@"indent"] isEqualToString:indent] ||
-            (indentation<4 && [stack.lastObject[@"indent"] length]<4)) &&
+        BOOL listContainer=match && columns>=4 && MPCalloutHasListOwner(lines,i,columns);
+        BOOL containerClose=stack.count && (MPMarkdownPrefixColumns(stack.lastObject[@"indent"])==columns ||
+            (columns<4 && MPMarkdownPrefixColumns(stack.lastObject[@"indent"])<4)) &&
             [closing firstMatchInString:line options:0 range:NSMakeRange(0,line.length)];
-        if (literal && !(indentation>=4 && (listContainer || containerClose))) continue;
-        if (match && (indentation<4 || listContainer)) {
+        if (literal && !(columns>=4 && (listContainer || containerClose))) continue;
+        if (match && (columns<4 || listContainer)) {
             NSString *attributes = [line substringWithRange:[match rangeAtIndex:2]];
             NSTextCheckingResult *valid = [supported firstMatchInString:attributes options:0 range:NSMakeRange(0,attributes.length)];
             NSMutableDictionary *entry = [@{@"start":@(i), @"indent":indent,
@@ -218,7 +231,7 @@ NS_INLINE NSDictionary *MPPrepareCallouts(NSString *text)
             NSUInteger contentStart = NSMaxRange([entry[@"sourceOpenRange"] rangeValue]);
             entry[@"sourceContentRange"] = [NSValue valueWithRange:NSMakeRange(contentStart,lineStart-contentStart)];
             entry[@"sourceOpen"] = lines[[entry[@"start"] unsignedIntegerValue]];
-            output[[entry[@"start"] unsignedIntegerValue]] = [NSString stringWithFormat:@"\n%@%@OPEN\n",indent,token];
+            output[[entry[@"start"] unsignedIntegerValue]] = [NSString stringWithFormat:@"\n%@%@OPEN\n",entry[@"indent"],token];
             output[i] = [NSString stringWithFormat:@"\n%@%@CLOSE\n",indent,token];
             [pairs addObject:entry];
         }

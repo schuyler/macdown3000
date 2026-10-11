@@ -171,8 +171,10 @@
         // A soft break inside prose joins two independently proven source
         // lines. Fenced code and unproven visible characters remain excluded.
         if(separatorBlock) {
-          if(separatorBlock.tagName==='PRE' || beforeBlock!==separatorBlock ||
-            afterBlock!==separatorBlock) return null;
+          var listBoundary=separatorBlock.tagName==='LI' &&
+            separatorBlock.contains(beforeBlock) && separatorBlock.contains(afterBlock);
+          if(separatorBlock.tagName==='PRE' || (!listBoundary &&
+            (beforeBlock!==separatorBlock || afterBlock!==separatorBlock))) return null;
         } else if(beforeBlock===afterBlock) return null;
       }
     }
