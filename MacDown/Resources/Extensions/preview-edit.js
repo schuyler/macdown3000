@@ -274,9 +274,7 @@
         choice.setAttribute('aria-checked','false');
         choice.disabled=(item[1]==='math-block' && !config.math) || (item[1]==='tasks' && !config.tasks) || (item[1]==='code-block' && !config.fenced);
         listen(choice,'mouseenter',function(){if(!choice.disabled) previewFormatting('block',item[1]);});
-        listen(choice,'mouseleave',cancelHoverPreview);
         listen(choice,'focus',function(){if(!choice.disabled) previewFormatting('block',item[1]);});
-        listen(choice,'blur',cancelHoverPreview);
       });
     }
     group('block','Type de ligne',blockOptions);
@@ -284,9 +282,7 @@
       var equation=button('Équation en ligne',function(){closeMenu();command('math');},'math','math',menu.querySelector('[data-mp-scope=block]'));
       var equationLabel=document.createElement('span');equationLabel.textContent='Équation en ligne';equation.appendChild(equationLabel);
       listen(equation,'mouseenter',function(){previewFormatting('math');});
-      listen(equation,'mouseleave',cancelHoverPreview);
       listen(equation,'focus',function(){previewFormatting('math');});
-      listen(equation,'blur',cancelHoverPreview);
     }
     var separator=document.createElement('div'); separator.setAttribute('role','separator'); menu.appendChild(separator);
     group('container','Encadré et menu dépliant',containerOptions);
@@ -303,6 +299,9 @@
     listen(menu,'mouseenter',function(){clearTimeout(menuTimer);});
     listen(opener,'mouseleave',leaveMenu);
     listen(menu,'mouseleave',leaveMenu);
+    listen(menu,'focusout',function(event){
+      if(!event.relatedTarget || !panel.contains(event.relatedTarget)) closeMenu();
+    });
     listen(menu,'keydown',function(event){
       var choices=Array.from(menu.querySelectorAll('button:not(:disabled)')), index=choices.indexOf(document.activeElement), target;
       if(event.key==='Escape') {closeMenu();opener.focus();event.preventDefault();return;}

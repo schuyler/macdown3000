@@ -374,12 +374,35 @@
         XCTAssertEqualObjects(self.document.previewEditToken,token);
         XCTAssertEqual(self.document.isDocumentEdited,dirty);
         XCTAssertEqual(self.editor.undoManager.canUndo,canUndo);
-        [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-option=\"%@\"]').dispatchEvent(new MouseEvent('mouseleave'))",choice[0]]];
+        [self JS:@"document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
         XCTAssertTrue([[self JS:@"window.__originalNodes.every(function(n,i){return document.body.childNodes[i]===n;}) && document.body.childNodes.length===window.__originalNodes.length"] boolValue]);
         XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click()"];
     }
     [self JS:@"document.querySelector('[data-mp-option=math-block]').dispatchEvent(new MouseEvent('mouseenter'))"];
     XCTAssertFalse([[self JS:@"!!document.querySelector('pre')"] boolValue]);
+    XCTAssertEqualObjects(self.editor.string,source);
+}
+
+- (void)testHoverPreviewSurvivesGapsAndSeparatorsUntilLeavingMenu
+{
+    NSString *source=@"Heading\n\nBody\n";
+    [self loadSource:source];
+    [self selectFromText:@"Heading" throughText:@"Heading"];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=h2]').dispatchEvent(new MouseEvent('mouseenter'));window.__hoverHeading=document.querySelector('h2');"];
+    NSArray *gaps=@[@"[role=group]",@"[role=separator]",@"[role=menu]",@"[data-mp-option=math-block]"];
+    for (NSString *gap in gaps) {
+        NSString *script=[NSString stringWithFormat:@"(function(){var gap=document.querySelector('%@'),choice=document.querySelector('[data-mp-option=h2]');choice.dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:gap}));gap.dispatchEvent(new MouseEvent('mouseenter',{relatedTarget:choice}));})()",gap];
+        [self JS:script];
+        XCTAssertTrue([[self JS:@"document.querySelector('h2')===window.__hoverHeading && window.__hoverHeading.isConnected"] boolValue],@"Keep the same preview over %@",gap);
+        XCTAssertEqualObjects(self.editor.string,source);
+    }
+    [self JS:@"document.querySelector('[data-mp-option=quote]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[data-mp-option=quote]').dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:document.querySelector('[role=separator]')}))"];
+    XCTAssertTrue([[self JS:@"!!document.querySelector('blockquote') && !document.querySelector('h2')"] boolValue]);
+    [self JS:@"document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseleave',{relatedTarget:document.body}))"];
+    [self waitUntil:^BOOL{return [[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue];} description:@"Leaving the menu cancels the last preview"];
+    XCTAssertFalse([[self JS:@"!!document.querySelector('blockquote,h2')"] boolValue]);
+    XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
     XCTAssertEqualObjects(self.editor.string,source);
 }
 
