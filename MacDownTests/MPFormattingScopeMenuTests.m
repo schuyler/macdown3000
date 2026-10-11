@@ -38,7 +38,7 @@
 // Exercise rendered selections, the JavaScript controls and native formatting
 // transactions together. The matrix tests cover the full conversion product;
 // these tests prove that the menus expose those independent scopes correctly.
-@interface MPFormattingScopeMenuTests : XCTestCase
+@interface MPFormattingScopeMenuTests : XCTestCase <NSTextViewDelegate>
 @property (strong) MPDocument *document;
 @property (strong) MPEditorView *editor;
 @property (strong) WebView *web;
@@ -48,6 +48,8 @@
 @property (copy) NSString *savedStyleName;
 @property (strong) NSURL *fixtureDirectory;
 @property (copy) NSString *settledPreviewToken;
+@property BOOL useExplicitParentScope;
+@property (strong) NSUndoManager *formattingUndoManager;
 @end
 
 @implementation MPFormattingScopeMenuTests
@@ -55,6 +57,7 @@
 - (void)setUp
 {
     [super setUp];
+    self.useExplicitParentScope=YES;
     self.fixtureDirectory=[NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:NSUUID.UUID.UUIDString] isDirectory:YES];
     XCTAssertTrue([NSFileManager.defaultManager createDirectoryAtURL:self.fixtureDirectory withIntermediateDirectories:YES attributes:nil error:NULL]);
     self.document=[MPDocument new];
@@ -89,6 +92,9 @@
 
 - (void)tearDown
 {
+    [self.formattingUndoManager removeAllActions];
+    self.formattingUndoManager=nil;
+    self.editor.delegate=nil;
     self.web.frameLoadDelegate=nil; self.web.policyDelegate=nil; self.web.editingDelegate=nil;
     self.window.contentView=nil; [self.window close];
     [self.document close];
@@ -143,6 +149,18 @@
     self.settledPreviewToken=self.document.previewEditToken;
 }
 
+// A standalone editor undo manager avoids involving NSDocument disk lifecycle
+// in this WebView fixture, whose document has no window controller.
+- (NSUndoManager *)undoManagerForTextView:(NSTextView *)textView
+{
+    return self.formattingUndoManager;
+}
+
+- (void)selectParentScopeIfRequested
+{
+    if (self.useExplicitParentScope) [self JS:@"(function(){var b=document.querySelector('[data-mp-container-parent]');if(b && !b.hidden && b.getAttribute('aria-checked')==='false') b.click();})()"];
+}
+
 - (void)waitForFormatting
 {
     [self waitUntil:^BOOL{
@@ -153,6 +171,7 @@
             ![[self.document valueForKey:@"previewQueuedFormatting"] count];
     } description:@"Finish formatting and restore selection"];
     self.settledPreviewToken=self.document.previewEditToken;
+    [self selectParentScopeIfRequested];
 }
 
 - (void)selectFromText:(NSString *)first throughText:(NSString *)last
@@ -163,6 +182,7 @@
         @"(function(){var text=%@,nodes=macdownPreviewEditor.elements().spans,a=nodes.find(function(n){return n.textContent===text[0];})||nodes.find(function(n){return n.textContent.includes(text[0]);}),b=nodes.find(function(n){return n.textContent===text[1];})||nodes.find(function(n){return n.textContent.includes(text[1]);});if(!a||!b)return false;a.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0}));var r=document.createRange();r.setStart(a.firstChild,a.textContent.indexOf(text[0]));r.setEnd(b.firstChild,b.textContent.indexOf(text[1])+text[1].length);getSelection().removeAllRanges();getSelection().addRange(r);window.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0}));return true;})()",arguments];
     XCTAssertTrue([[self JS:script] boolValue],@"Mapped selection %@ through %@ must exist",first,last);
     [self waitUntil:^BOOL{return [[self JS:@"getComputedStyle(document.getElementById('macdown-preview-format')).display"] isEqualToString:@"block"];} description:[NSString stringWithFormat:@"Show panel for selection %@ through %@",first,last]];
+    [self selectParentScopeIfRequested];
 }
 
 - (void)assertMenuScope:(NSString *)scope value:(NSString *)value active:(BOOL)active
@@ -780,7 +800,7 @@
     XCTAssertEqualObjects([self JS:@"document.querySelector('[data-mp-style=bold]').getAttribute('aria-pressed')"],@"false");
     [self selectFromText:@"Heading" throughText:@"Neighbor."];
     [self assertMenuScope:@"block" value:@"" active:NO];
-    [self assertMenuScope:@"container" value:@"" active:NO];
+    [self assertMenuScope:@"container" value:@"no-container" active:YES];
     XCTAssertEqualObjects(self.editor.string,@"::: {.callout-note}\n## Title\n# **Heading**\n\nBody\n:::\n\nNeighbor.\n");
 }
 
@@ -1239,5 +1259,98 @@
     XCTAssertEqualObjects([self JS:@"String(document.querySelector('details').open)"],@"true");
     XCTAssertTrue([[self JS:@"getSelection().toString().includes('Alpha') && getSelection().toString().includes('Epsilon')"] boolValue]);
 }
+
+- (void)testBodySelectionCreatesChildDisclosureWithoutRetypingAncestors
+{
+    self.useExplicitParentScope=NO;
+    self.formattingUndoManager=[NSUndoManager new];
+    self.editor.delegate=self;
+    self.editor.allowsUndo=YES;
+    NSString *source=@"::: {.callout-note collapse=\"true\"}\n# Outer title\n\n::: {.callout-tip collapse=\"true\"}\n### Inner title\n\n- [ ] Existing task\n    ```\n    literal code\n    ```\n\n:::\n\nSecond submenu\n:::\n";
+    [self loadSource:source];
+    [self JS:@"document.querySelectorAll('details').forEach(function(n){n.open=true;})"];
+    [self selectFromText:@"Second submenu" throughText:@"Second submenu"];
+    [self assertMenuScope:@"container" value:@"no-container" active:YES];
+    [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=toggle-h2]').dispatchEvent(new MouseEvent('mouseenter'))"];
+    [self waitUntil:^BOOL{return [[self JS:@"Boolean(document.querySelector('summary h2'))"] boolValue];} description:@"Preview selected child disclosure"];
+    XCTAssertEqualObjects(self.editor.string,source);
+    XCTAssertEqualObjects([self JS:@"document.querySelector('summary h1').textContent"],@"Outer title");
+    XCTAssertEqualObjects([self JS:@"document.querySelector('summary h3').textContent"],@"Inner title");
+    XCTAssertEqualObjects([self JS:@"document.querySelector('summary h2').textContent"],@"Second submenu");
+    [self JS:@"document.querySelector('[data-mp-option=toggle-h2]').click()"];
+    [self waitForFormatting];
+    NSString *expected=[source stringByReplacingOccurrencesOfString:@"Second submenu\n" withString:@"::: {.callout-note collapse=\"true\"}\n## Second submenu\n:::\n"];
+    XCTAssertEqualObjects(self.editor.string,expected);
+    XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('details').length)"],@"3");
+    [self.formattingUndoManager undo];
+    XCTAssertEqualObjects(self.editor.string,source);
+}
+
+- (void)testBodySelectionsAcceptNestedCalloutAndTaskFormatting
+{
+    self.useExplicitParentScope=NO;
+    self.formattingUndoManager=[NSUndoManager new];
+    self.editor.delegate=self;
+    self.editor.allowsUndo=YES;
+    for (NSString *value in @[@"callout-tip",@"tasks"]) {
+        NSString *source=@"::: {.callout-note collapse=\"true\"}\n# Outer title\n\n- Parent\n\n    Selected paragraph\n\n    Sibling paragraph\n\n:::\n";
+        [self loadSource:source];
+        [self JS:@"document.querySelector('details').open=true"];
+        [self selectFromText:@"Selected paragraph" throughText:@"Selected paragraph"];
+        if ([value isEqualToString:@"tasks"]) [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-scope=block] [data-mp-option=tasks]').click()"];
+        else [self chooseContainer:value];
+        [self waitForFormatting];
+        XCTAssertTrue([self.editor.string hasPrefix:@"::: {.callout-note collapse=\"true\"}\n# Outer title\n"]);
+        XCTAssertTrue([self.editor.string containsString:@"    Sibling paragraph\n"]);
+        if ([value isEqualToString:@"tasks"]) {
+            XCTAssertTrue([self.editor.string containsString:@"    - [ ] Selected paragraph\n"]);
+            XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('li li input[type=checkbox]').length)"],@"1");
+        } else XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('li .mp-callout-tip').length)"],@"1");
+        [self.formattingUndoManager undo];
+        XCTAssertEqualObjects(self.editor.string,source);
+    }
+}
+
+- (void)testTitleSelectionRetypesOnlyItsOwnNestedEnvelope
+{
+    self.useExplicitParentScope=NO;
+    self.formattingUndoManager=[NSUndoManager new];
+    self.editor.delegate=self;
+    self.editor.allowsUndo=YES;
+    NSString *source=@"::: {.callout-note collapse=\"true\"}\n# Outer title\n\n::: {.callout-tip collapse=\"true\"}\n### Inner title\n\nBody\n:::\n:::\n";
+    [self loadSource:source];
+    [self JS:@"document.querySelectorAll('details').forEach(function(n){n.open=true;})"];
+    [self selectFromText:@"Inner title" throughText:@"Inner title"];
+    [self chooseContainer:@"toggle-h2"];
+    [self waitForFormatting];
+    XCTAssertEqualObjects(self.editor.string,[[source stringByReplacingOccurrencesOfString:@"callout-tip" withString:@"callout-note"] stringByReplacingOccurrencesOfString:@"### Inner title" withString:@"## Inner title"]);
+}
+
+- (void)testDefaultChildScopeAcrossContainerTypesAndIndentation
+{
+    self.useExplicitParentScope=NO;
+    for (NSString *newline in @[@"\n",@"\r\n"]) for (NSString *margin in @[@"    ",@"\t"]) {
+        for (NSString *value in @[@"callout-note",@"callout-tip",@"callout-warning",@"callout-important",@"callout-caution",@"toggle-h1",@"toggle-h2",@"toggle-h3",@"toggle-h4"]) {
+            NSString *source=[NSString stringWithFormat:@"::: {.callout-note collapse=\"true\"}\n# Outer title\n\n- Parent\n\n%@Selected paragraph\n\n%@Sibling paragraph\n\n:::\n",margin,margin];
+            source=[source stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+            [self loadSource:source];
+            [self JS:@"document.querySelector('details').open=true"];
+            [self selectFromText:@"Selected paragraph" throughText:@"Selected paragraph"];
+            [self chooseContainer:value];
+            [self waitForFormatting];
+            NSString *prefix=[NSString stringWithFormat:@"::: {.callout-note collapse=\"true\"}%@# Outer title%@%@- Parent%@%@",newline,newline,newline,newline,newline];
+            XCTAssertTrue([self.editor.string hasPrefix:prefix],@"%@ / %@",value,margin);
+            XCTAssertTrue(([self.editor.string containsString:[NSString stringWithFormat:@"%@Sibling paragraph%@",margin,newline]]));
+            XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('li .mp-callout,li details').length)"],@"1");
+            XCTAssertEqualObjects([self JS:@"document.querySelector('summary h1').textContent"],@"Outer title");
+            if ([value hasPrefix:@"toggle-h"]) {
+                NSString *selector=[NSString stringWithFormat:@"document.querySelector('li summary %@').textContent",[value substringFromIndex:7]];
+                XCTAssertEqualObjects([self JS:selector],@"Selected paragraph");
+            }
+            XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Selected paragraph");
+        }
+    }
+}
+
 
 @end

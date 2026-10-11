@@ -4079,7 +4079,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         offset=end;
     }
     if (!runs.count) [runs addObject:[NSValue valueWithRange:selection]];
-    NSMutableDictionary *verified=[@{@"range":[NSValue valueWithRange:selection],@"runs":runs,@"text":[source substringWithRange:selection]} mutableCopy];
+    NSMutableDictionary *verified=[@{@"range":[NSValue valueWithRange:selection],@"runs":runs,@"text":[source substringWithRange:selection],@"containerIntent":@"selection"} mutableCopy];
     // Parse a separate snapshot; source edits must not invalidate the identities
     // and mappings still published in the visible preview.
     MPRenderer *snapshot=[MPRenderer new];
@@ -6517,6 +6517,10 @@ to link outside that scope.", \
         if (NSIntersectionRange(mapped,total).length && ![seen containsObject:@(i)]) return nil;
     }
     NSMutableDictionary *verified=[@{@"range":[NSValue valueWithRange:total],@"text":visible,@"runs":ranges} mutableCopy];
+    if (payload[@"containerIntent"]) {
+        if (![@[@"selection",@"container"] containsObject:payload[@"containerIntent"]]) return nil;
+        verified[@"containerIntent"]=payload[@"containerIntent"];
+    }
     if (codeBlockRange) {
         verified[@"codeBlockRange"]=codeBlockRange;verified[@"codeContentRange"]=codeContentRange;
     } else if(self.preferences.htmlTaskList) {
@@ -6730,6 +6734,15 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
         if (selection.location>=content.location && NSMaxRange(selection)<=NSMaxRange(content) &&
             (!container || content.length<[container[@"sourceContentRange"] rangeValue].length)) container=candidate;
     }
+    // Body selections create a child container. Only a title selection or
+    // the explicit parent control is allowed to retype the enclosing envelope.
+    BOOL selectionScope=![verified[@"containerIntent"] isEqualToString:@"container"];
+    if (container && selectionScope) {
+        NSArray *titleEdits=[self previewHeadingEditsInRange:[container[@"sourceContentRange"] rangeValue] level:1 source:source renderer:renderer];
+        NSRange title=titleEdits.count ? [source lineRangeForRange:[titleEdits.firstObject[@"range"] rangeValue]] : NSMakeRange(NSNotFound,0);
+        BOOL ownsTitle=title.location!=NSNotFound && selection.location>=title.location && NSMaxRange(selection)<=NSMaxRange(title);
+        if (!ownsTitle) container=nil;
+    }
     NSMutableArray *edits=[NSMutableArray array];
     if (container) {
         NSRange opening=[container[@"sourceOpenRange"] rangeValue],closing=[container[@"sourceCloseRange"] rangeValue];
@@ -6783,21 +6796,36 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
         NSRange envelope=NSMakeRange(opening.location,NSMaxRange(closing)-opening.location);
         // A mixed selection straddling an existing envelope is ambiguous:
         // refuse atomically instead of adding another container category.
-        if (NSIntersectionRange(region,envelope).length) return NO;
+        if (NSIntersectionRange(region,envelope).length &&
+            !(selectionScope && region.location>=NSMaxRange(opening) && NSMaxRange(region)<=closing.location)) return NO;
     }
     NSString *body=[source substringWithRange:region];
     if ([body containsString:@":::"]) return NO;
     NSString *newline=[body containsString:@"\r\n"] ? @"\r\n" : @"\n";
-    // The envelope owns its generated title. An authored heading in the
-    // selected body remains a content heading, even when the new disclosure
-    // requests another title level; the two scopes must never overwrite it.
+    // A single selected paragraph becomes the new disclosure title. Larger
+    // selections retain their content under a generated container title.
     NSUInteger level=[value hasPrefix:@"toggle-h"] ? [[value substringFromIndex:8] integerValue] : 2;
     NSString *margin=MPContainerCommonMargin(body);
     NSString *title=[NSString stringWithFormat:@"%@%@ %@%@",margin,[@"######" substringToIndex:level],MPPreviewDefaultCalloutTitle(type,toggle),newline];
-    NSString *opening=[NSString stringWithFormat:@"%@%@::: {.callout-%@%@}%@%@",newline,margin,type,toggle ? @" collapse=\"true\"" : @"",newline,title];
+    if (selectionScope && toggle) {
+        NSString *literal=[body hasSuffix:newline] ? [body substringToIndex:body.length-newline.length] : body;
+        NSString *plain=MPContainerBodyWithoutMargin(literal,margin);
+        NSXMLDocument *DOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:plain]);
+        NSArray<NSXMLNode *> *roots=[DOM nodesForXPath:@"//body/*" error:NULL];
+        if (![plain containsString:@"\n"] && ![plain containsString:@"\r"] && roots.count==1 && [roots.firstObject.name.lowercaseString isEqualToString:@"p"]) {
+            title=@"";
+            body=[NSString stringWithFormat:@"%@%@ %@%@",margin,[@"######" substringToIndex:level],plain,newline];
+        }
+    }
+    NSString *separator=newline;
+    if (selectionScope && region.location) {
+        NSRange previous=[source lineRangeForRange:NSMakeRange(region.location-1,0)];
+        if (![[source substringWithRange:previous] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet].length) separator=@"";
+    }
+    NSString *opening=[NSString stringWithFormat:@"%@%@::: {.callout-%@%@}%@%@",separator,margin,type,toggle ? @" collapse=\"true\"" : @"",newline,title];
     NSString *closing=[NSString stringWithFormat:@"%@%@:::%@",[body hasSuffix:newline] ? @"" : newline,margin,newline];
     NSRange relativeSelection=NSMakeRange(selection.location-region.location,selection.length);
-    NSRange relative=NSMakeRange(opening.length+relativeSelection.location,relativeSelection.length);
+    NSRange relative=NSMakeRange(opening.length+relativeSelection.location+(selectionScope && toggle && !title.length ? level+1 : 0),relativeSelection.length);
     NSString *replacement=[NSString stringWithFormat:@"%@%@%@",opening,body,closing];
     return [self replacePreviewRange:region withString:replacement preservingSelection:[verified[@"range"] rangeValue] restoringRange:relative];
 }
@@ -7046,8 +7074,11 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
                 NSString *linePrefix = [value isEqualToString:@"ordered"]
                     ? [NSString stringWithFormat:@"%lu. ",(unsigned long)++orderedItemNumber] : prefix;
                 addedPrefix=linePrefix.length;
-                NSString *plain = text;
-                NSString *originalHTML = [renderer HTMLForMarkdownSnapshot:text];
+                NSString *margin=MPContainerMargin(text);
+                removedPrefix=margin.length;
+                addedPrefix+=margin.length;
+                NSString *plain = [text substringFromIndex:margin.length];
+                NSString *originalHTML = [renderer HTMLForMarkdownSnapshot:plain];
                 NSXMLDocument *originalDOM = MPPIParseHTML(originalHTML);
                 normalizeTaskSpacing(originalDOM);
                 NSArray *roots = [originalDOM nodesForXPath:@"//body/*" error:NULL];
@@ -7126,7 +7157,7 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
                     plain=[plain stringByReplacingCharactersInRange:NSMakeRange(punctuation.location,0) withString:@"\\"];
                 }
                 if (!proved) return NO;
-                outputText = [linePrefix stringByAppendingString:plain];
+                outputText = [margin stringByAppendingString:[linePrefix stringByAppendingString:plain]];
                 [processed appendString:outputText];
                 // Look past consumed Setext metadata: the first remaining
                 // neighbor must not turn the requested paragraph into a heading.

@@ -115,6 +115,8 @@
     self.document.previewEditToken=self.renderer.checkboxBridgeToken;
     self.document.previewEditRanges=@[entry];
     NSMutableDictionary *payload=[@{@"token":self.document.previewEditToken,@"id":@0,@"start":@0,@"end":@(text.length),@"text":text,@"action":action} mutableCopy];
+    // These matrices explicitly exercise retyping the enclosing container.
+    payload[@"containerIntent"]=@"container";
     if (value) payload[@"value"]=value;
     return [self.document applyPreviewEditPayload:payload];
 }
@@ -143,6 +145,7 @@
     NSMutableDictionary *payload=[runs.firstObject mutableCopy];
     payload[@"runs"]=runs; payload[@"text"]=visible; payload[@"action"]=@"block";
     payload[@"value"]=value; payload[@"token"]=self.document.previewEditToken;
+    payload[@"containerIntent"]=@"container";
     return [self.document applyPreviewEditPayload:payload];
 }
 - (void)dealloc { self.editor.delegate=nil; [self.document close]; }

@@ -11,7 +11,7 @@
   var panel = null, panelStyle = null, errorMessage = null, active = null, saved = null, timer = null, errorSelection = null;
   var mappedSpans = [], panelClass = 'macdown-preview-ui-' + config.token.replace(/[^a-zA-Z0-9_-]/g,''), runClass = panelClass + '-run';
   var handlers = [], rendering = false, selectingWithMouse = false, menuTimer = null, uiZoom = 1;
-  var hoverPreview = null;
+  var hoverPreview = null, editParentContainer = false;
   var calloutTypes = ['note','tip','warning','important','caution'];
   function listen(target, name, fn) {
     target.addEventListener(name, fn, false);
@@ -186,6 +186,10 @@
     if(!selected) return null;
     var payload={action:action,id:selected.id,start:selected.start,end:selected.end,token:config.token};
     payload.runs=selected.runs; payload.text=selected.text;
+    var selectedSpans=(selected.runs || [selected]).map(function(run){return mappedSpan(run.id);});
+    var title=selectedSpans[0] && selectedSpans[0].closest('.mp-callout-title,summary');
+    var ownsTitle=title && selectedSpans.every(function(span){return title.contains(span);});
+    payload.containerIntent=editParentContainer || ownsTitle ? 'container' : 'selection';
     if(value !== undefined && value !== null) payload.value=value;
     return payload;
   }
@@ -281,6 +285,13 @@
       });
     }
     group('block','Type de ligne',blockOptions);
+    var parentControl=button('Modifier l’encadré parent',function(){
+      cancelHoverPreview(); editParentContainer=!editParentContainer; updateStyles(saved);
+    },null,false,menu);
+    parentControl.setAttribute('data-mp-container-parent','');
+    parentControl.setAttribute('role','menuitemcheckbox');
+    parentControl.setAttribute('aria-checked','false');
+    parentControl.textContent='Modifier l’encadré parent';
     if(config.math) {
       var equation=button('Équation en ligne',function(){closeMenu();command('math');},'math','math',menu.querySelector('[data-mp-scope=block]'));
       var equationLabel=document.createElement('span');equationLabel.textContent='Équation en ligne';equation.appendChild(equationLabel);
@@ -376,6 +387,7 @@
     document.body.appendChild(panelStyle); document.body.appendChild(panel);
     // Opacity on the panel itself would also fade its nested dropdown. Fade
     // only the compact surface and its controls, keeping the menu opaque.
+    panelStyle.textContent+=selector+' [data-mp-container-parent][hidden]{display:none!important}';
     panelStyle.textContent+=selector+'[data-mp-menu-hover]{background:rgba(41,41,41,.08)!important;border-color:rgba(102,102,102,.08)!important;box-shadow:none!important} '+selector+'[data-mp-menu-hover] > :not([role="menu"]){opacity:.08}';
   }
   function begin(span) {
@@ -426,6 +438,11 @@
         return alignment===requested;
       })));
     });
+    var parentControl=panel.querySelector('[data-mp-container-parent]');
+    var parent=spans[0] && spans[0].closest('.mp-callout,details');
+    parentControl.hidden=!parent || !spans.every(function(span){return span && span.closest('.mp-callout,details')===parent;});
+    parentControl.setAttribute('aria-checked',String(editParentContainer));
+    parentControl.style.color=editParentContainer ? '#2784DE' : '';
     var containsCodeBlock=spans.some(function(span){return !!(span && span.closest('pre'));});
     panel.querySelectorAll('button[data-mp-inline]').forEach(function(control){control.disabled=containsCodeBlock;});
     var selectors={bold:'strong,b',italic:'em,i',underline:'u',strike:'del,s,strike',code:'code',link:'a[href]',math:'.MathJax,.MathJax_Display'};
@@ -458,7 +475,7 @@
     function containerType(span) {
       if(!span) return '';
       var container=span.closest('.mp-callout,details');
-      if(!container) return 'no-container';
+      if(!container || (!editParentContainer && !span.closest('.mp-callout-title,summary'))) return 'no-container';
       if(container.tagName==='DETAILS') {
         var summary=Array.from(container.children).find(function(child){return child.tagName==='SUMMARY';});
         var heading=summary && summary.querySelector('h1,h2,h3,h4');
@@ -492,7 +509,7 @@
       errorMessage.remove(); errorMessage=null; errorSelection=null;
     }
     if(!selected){if(!panel.contains(document.activeElement)){saved=null;hide();}return;}
-    if(panel.style.display==='none' || JSON.stringify(saved)!==JSON.stringify(selected)) closeMenu();
+    if(panel.style.display==='none' || JSON.stringify(saved)!==JSON.stringify(selected)) {closeMenu();editParentContainer=false;}
     saved=selected; updateStyles(selected);
     panel.style.display='block'; positionPanel();
   }
