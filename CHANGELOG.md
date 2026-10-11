@@ -1,7 +1,7 @@
 # Changelog
 
 <!-- rc-temp -->
-## [3000.0.8-rc.1] - 2026-08-14
+## [3000.0.8-rc.2] - 2026-10-11
 
 This release candidate adds folder workspaces, unified document zoom, and ephemeral draggable table-column resizing, and fixes a batch of preview-rendering, toolbar-dispatch, and export regressions.
 
@@ -14,7 +14,7 @@ This release candidate adds folder workspaces, unified document zoom, and epheme
 ### Changed
 
 - Reduce "keep/discard" dialogs on external file changes: coalesce rapid write notifications, guard against re-entrant prompts, and reload silently when there are no unsaved edits, preserving caret and scroll position across reloads (#543, PR #550) -- thanks @Maarten-TL for the report!
-- Add paragraph and list-item scroll-sync reference points alongside headers/images, and follow the cursor (not just viewport scroll) when Sync Panes is on, reducing drift in header-sparse sections (#562, PR #563) -- thanks @macnotes for the contribution!
+- Add paragraph and list-item scroll-sync reference points alongside headers/images, and follow the cursor on click and arrow-key moves (not just viewport scroll, and not while typing) when Sync Panes is on, reducing drift in header-sparse sections (#562, PR #563, PR #600) -- thanks @macnotes for the contribution!
 
 ### Fixed
 
