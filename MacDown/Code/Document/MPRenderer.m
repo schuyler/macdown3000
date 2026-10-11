@@ -824,9 +824,15 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
              @"checkboxToken": NSUUID.UUID.UUIDString};
 }
 
-- (NSString *)HTMLForMarkdownSnapshot:(NSString *)markdown
+- (NSDictionary *)previewSnapshotForMarkdown:(NSString *)markdown
 {
     NSDictionary *result = [self parseResultForMarkdown:markdown options:[self parseOptions]];
+    return @{@"html":result[@"html"] ?: @"", @"calloutEntries":result[@"calloutEntries"] ?: @[]};
+}
+
+- (NSString *)HTMLForMarkdownSnapshot:(NSString *)markdown
+{
+    NSDictionary *result = [self previewSnapshotForMarkdown:markdown];
     NSString *html = result[@"html"];
     // Snapshot HTML is the semantic oracle for source transactions. Its own
     // per-parse transport identities vary on every parse and must not enter

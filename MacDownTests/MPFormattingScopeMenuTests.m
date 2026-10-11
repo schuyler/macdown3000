@@ -410,6 +410,43 @@
     XCTAssertEqualObjects(self.editor.string,source);
 }
 
+- (void)testHoverFormattingPreservesIndependentNestedDisclosureStates
+{
+    self.useExplicitParentScope=NO;
+    self.formattingUndoManager=[NSUndoManager new];
+    self.editor.delegate=self;
+    self.editor.allowsUndo=YES;
+    NSArray *choices=@[@"paragraph",@"h1",@"h2",@"h3",@"h4",@"h5",@"h6",@"unordered",@"ordered",@"tasks",@"quote",@"code-block",@"callout-note",@"callout-tip",@"callout-warning",@"callout-important",@"callout-caution",@"toggle",@"toggle-h1",@"toggle-h2",@"toggle-h3",@"toggle-h4",@"no-container"];
+    for (NSString *ending in @[@"\n",@"\r\n"])
+    for (NSString *states in @[@"[true,false,true,true,false,true,false]",@"[true,false,false,true,true,false,true]"]) {
+        NSString *source=@"::: {.callout-note collapse=\"true\"}\n# Same title\n\nState A\n\n::: {.callout-note collapse=\"false\"}\n## Same title\n\nState B\n\n::: {.callout-note collapse=\"false\"}\n### Same title\n\nState F\n:::\n\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Same title\n\nState C\n\n::: {.callout-note collapse=\"false\"}\n### Same title\n\nState D\n:::\n\n- [ ]  Complete form\n    - Child field\n\nComplete the work note:\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Same title\n\nState G\n:::\n\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Same title\n\nState E\n:::\n";
+        source=[source stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        [self loadSource:source];
+        [self JS:@"window.__disclosureStates=function(){return JSON.stringify(['A','B','F','C','D','G','E'].map(function(key){var node=Array.from(document.querySelectorAll('details')).find(function(d){var body=d.querySelector('.mp-callout-body');return body && Array.from(body.children).some(function(p){return p.tagName==='P' && p.textContent==='State '+key;});});return node ? node.open : null;}));};window.__disclosureNodes=Array.from(document.querySelectorAll('details'));"];
+        [self JS:[NSString stringWithFormat:@"document.querySelectorAll('details').forEach(function(d,i){d.open=%@[i];});",states]];
+        [self selectFromText:@"Complete the work note:" throughText:@"Complete the work note:"];
+        NSString *token=self.document.previewEditToken;
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click()"];
+        for (NSUInteger cycle=0;cycle<2;cycle++) for (NSString *choice in choices) {
+            [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-option=\"%@\"]').dispatchEvent(new MouseEvent('mouseenter'))",choice]];
+            XCTAssertEqualObjects([self JS:@"window.__disclosureStates()"],states,@"%@",choice);
+            XCTAssertFalse([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue],@"%@",choice);
+            XCTAssertEqualObjects(self.editor.string,source);
+            XCTAssertEqualObjects(self.document.previewEditToken,token);
+            XCTAssertTrue([[self JS:@"Array.from(document.querySelectorAll('details')).find(function(n){return n.textContent.includes('State E');})===window.__disclosureNodes[6]"] boolValue],@"Unchanged sibling stays alive: %@",choice);
+        }
+        [self JS:@"document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
+        XCTAssertEqualObjects([self JS:@"window.__disclosureStates()"],states);
+        XCTAssertTrue([[self JS:@"window.__disclosureNodes.every(function(n,i){return document.querySelectorAll('details')[i]===n;})"] boolValue]);
+        XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Complete the work note:");
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=tasks]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[data-mp-option=tasks]').click()"];
+        [self waitForFormatting];
+        XCTAssertEqualObjects([self JS:@"window.__disclosureStates()"],states);
+        XCTAssertEqualObjects(self.editor.string,[source stringByReplacingOccurrencesOfString:@"Complete the work note:" withString:@"- [ ] Complete the work note:"]);
+        [self.formattingUndoManager undo]; XCTAssertEqualObjects(self.editor.string,source);
+    }
+}
+
 - (void)testHoverPreviewSurvivesGapsAndSeparatorsUntilLeavingMenu
 {
     NSString *source=@"Heading\n\nBody\n";

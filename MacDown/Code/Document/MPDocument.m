@@ -7387,7 +7387,31 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
     self.previewFormattingProbeSource = self.editor.string;
     @try {
         if (![self applyPreviewEditPayload:payload]) return nil;
-        return [self.renderer HTMLForMarkdownSnapshot:self.previewFormattingProbeSource];
+        NSString *before=self.editor.string ?: @"", *after=self.previewFormattingProbeSource ?: @"";
+        NSDictionary *snapshot=[self.renderer previewSnapshotForMarkdown:after];
+        NSUInteger prefix=0,suffix=0,common=MIN(before.length,after.length);
+        while (prefix<common && [before characterAtIndex:prefix]==[after characterAtIndex:prefix]) prefix++;
+        while (suffix<common-prefix && [before characterAtIndex:before.length-suffix-1]==[after characterAtIndex:after.length-suffix-1]) suffix++;
+        NSMutableDictionary *openings=[NSMutableDictionary dictionary],*origins=[NSMutableDictionary dictionary];
+        for (NSDictionary *entry in snapshot[@"calloutEntries"]) openings[entry[@"sourceOpenRange"]]=entry;
+        // Reuse committed-render provenance matching. Indices and titles are
+        // not identities: a preview can insert a disclosure before another,
+        // and distinct nested disclosures can have identical titles.
+        for (NSDictionary *entry in self.renderer.calloutSourceEntries) {
+            NSRange mapped=MPPreviewRemapCalloutOpening(entry,before,after,prefix,suffix);
+            if (mapped.location==NSNotFound || mapped.location>after.length || mapped.length>after.length-mapped.location) continue;
+            NSDictionary *target=openings[[NSValue valueWithRange:mapped]];
+            if (target && [[before substringWithRange:[entry[@"sourceOpenRange"] rangeValue]] isEqualToString:[after substringWithRange:mapped]])
+                origins[target[@"token"]]=entry[@"token"];
+        }
+        NSString *HTML=snapshot[@"html"];
+        for (NSDictionary *entry in snapshot[@"calloutEntries"]) {
+            NSString *attribute=[NSString stringWithFormat:@" data-macdown-callout-token=\"%@\"",entry[@"token"]];
+            NSString *origin=origins[entry[@"token"]];
+            NSString *replacement=origin ? [NSString stringWithFormat:@" data-macdown-callout-token=\"%@\"",origin] : @"";
+            HTML=[HTML stringByReplacingOccurrencesOfString:attribute withString:replacement];
+        }
+        return HTML;
     } @finally {
         self.previewFormattingProbe = NO;
         self.previewFormattingProbeSource = nil;

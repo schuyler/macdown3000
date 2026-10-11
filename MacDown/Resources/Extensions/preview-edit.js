@@ -52,6 +52,18 @@
     var snapshot=parseFragment(html);
     // Snapshot rendering never executes document scripts a second time.
     snapshot.querySelectorAll('script').forEach(function(script){script.remove();});
+    var disclosureStates=Object.create(null), disclosures=[];
+    document.querySelectorAll('details[data-macdown-callout-token]').forEach(function(node){
+      disclosureStates[node.getAttribute('data-macdown-callout-token')]=node.open;
+    });
+    snapshot.querySelectorAll('[data-macdown-callout-token]').forEach(function(node){
+      var token=node.getAttribute('data-macdown-callout-token');
+      if(node.tagName==='DETAILS' && Object.prototype.hasOwnProperty.call(disclosureStates,token))
+        disclosures.push({node:node,open:disclosureStates[token]});
+      // Compare semantic HTML before applying runtime disclosure states. This
+      // keeps unchanged siblings alive and never publishes preview identities.
+      node.removeAttribute('data-macdown-callout-token');
+    });
     var originals=Array.from(document.body.childNodes).filter(function(node){
       return node!==panel && node!==panelStyle && !(node.nodeType===1 && node.tagName==='SCRIPT');
     });
@@ -77,6 +89,7 @@
       // only an insertion, use the full fragment to retain a stable anchor.
       if(lastBefore>first) {originals=live.slice(first,lastBefore);proposed=after.slice(first,lastAfter);}
     }
+    disclosures.forEach(function(entry){entry.node.open=entry.open;});
     hoverPreview={selection:currentSelection() || saved,scrollX:window.scrollX,scrollY:window.scrollY,nodes:[],originals:[]};
     originals.forEach(function(node){
       var marker=document.createComment(''); node.replaceWith(marker);
