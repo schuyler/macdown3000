@@ -273,7 +273,7 @@ NS_INLINE NSString *MPFinishCallouts(NSString *html, NSArray<NSDictionary *> *ca
     // Callout and disclosure headings keep the stylesheet's heading sizes;
     // reset only the spacing and borders within their title surfaces.
     return [
-        @"<style>.mp-callout{border:1px solid #8886;border-left:4px solid #4385be;border-radius:4px;margin:1em 0}"
+        @"<style>.mp-callout{border:1px solid #8886;border-left:4px solid #4385be;border-radius:12px;margin:1em 0}"
         @".mp-callout-tip{border-left-color:#23865a}"
         @".mp-callout-warning,.mp-callout-caution{border-left-color:#ba7818}"
         @".mp-callout-important{border-left-color:#bc3945}"
