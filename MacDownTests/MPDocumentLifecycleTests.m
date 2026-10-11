@@ -1963,6 +1963,49 @@ static id MPControlledExportPanelFactory(id receiver, SEL selector)
     } @finally { [document close]; document.preferences.extensionFencedCode=fenced; }
 }
 
+- (void)testSourceCodeBlockButtonIsIdempotentForHeadingAfterCalloutCitation
+{
+    for (NSString *newline in @[@"\n",@"\r\n"]) {
+        for (NSNumber *includeEnding in @[@NO,@YES]) {
+            MPDocument *document=[MPDocument new];
+            MPEditorView *editor=[[MPEditorView alloc] initWithFrame:NSMakeRect(0,0,500,300)];
+            MPRenderer *renderer=[MPRenderer new];
+            document.editor=editor; document.renderer=renderer;
+            renderer.delegate=(id<MPRendererDelegate>)document; renderer.dataSource=(id<MPRendererDataSource>)document;
+            editor.delegate=(id<NSTextViewDelegate>)document;
+            NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,600,400) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+            window.releasedWhenClosed=NO;
+            [window.contentView addSubview:editor];
+            XCTAssertTrue([window makeFirstResponder:editor]);
+            [NSNotificationCenter.defaultCenter addObserver:document selector:NSSelectorFromString(@"editorSelectionDidChange:") name:NSTextViewDidChangeSelectionNotification object:editor];
+            BOOL fenced=document.preferences.extensionFencedCode;
+            @try {
+                document.preferences.extensionFencedCode=YES;
+                editor.string=[@"::: {.callout-important}\n## Titre TEST du callout\n> citation dans callout\n## titre dans callout\n\nencore test\n:::" stringByReplacingOccurrencesOfString:@"\n" withString:newline];
+                NSString *needle=includeEnding.boolValue ? [@"## titre dans callout" stringByAppendingString:newline] : @"## titre dans callout";
+                editor.selectedRange=[editor.string rangeOfString:needle];
+                [NSApp sendAction:NSSelectorFromString(@"convertToCodeBlock:") to:document from:nil];
+                NSString *converted=[editor.string copy];
+                NSRange selected=editor.selectedRange;
+                XCTAssertTrue([converted containsString:@"```\ntitre dans callout"], @"%@", converted);
+                XCTAssertFalse([[converted substringWithRange:selected] containsString:@"```"], @"The editor must select code content, excluding its fences");
+                XCTAssertTrue([converted hasPrefix:[@"::: {.callout-important}\n## Titre TEST du callout\n> citation dans callout\n" stringByReplacingOccurrencesOfString:@"\n" withString:newline]]);
+                XCTAssertTrue([converted hasSuffix:[@"\nencore test\n:::" stringByReplacingOccurrencesOfString:@"\n" withString:newline]]);
+                for (NSUInteger click=0; click<10; click++) {
+                    [NSApp sendAction:NSSelectorFromString(@"convertToCodeBlock:") to:document from:nil];
+                    XCTAssertEqualObjects(editor.string,converted,@"Repeated click %lu; includeEnding %@; newline %@; selection %@",(unsigned long)click,includeEnding,[newline debugDescription],NSStringFromRange(editor.selectedRange));
+                    XCTAssertTrue(NSEqualRanges(editor.selectedRange,selected));
+                    if (![editor.string isEqual:converted]) break;
+                }
+            } @finally {
+                document.preferences.extensionFencedCode=fenced;
+                [NSNotificationCenter.defaultCenter removeObserver:document name:NSTextViewDidChangeSelectionNotification object:editor];
+                window.contentView=nil; [window close]; [document close];
+            }
+        }
+    }
+}
+
 - (void)testOrderedListConversionWritesSequentialNumbersAndPreservesSelection
 {
     MPDocument *document=[MPDocument new];

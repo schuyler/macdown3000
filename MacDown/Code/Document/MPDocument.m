@@ -6258,7 +6258,12 @@ to link outside that scope.", \
         [self.preview.mainFrame.javaScriptContext evaluateScript:@"window.macdownPreviewEditor && window.macdownPreviewEditor.prepareForRender()"];
     }
     [self.editor didChangeText];
-    self.editor.selectedRange = NSMakeRange(range.location, replacement.length);
+    // Source selection notifications can cancel the pending DOM restoration.
+    // Apply the proven native range directly so the next toolbar action keeps
+    // formatting the content rather than selecting its generated delimiters.
+    self.editor.selectedRange = target.location != NSNotFound
+        ? NSMakeRange(range.location+target.location,target.length)
+        : NSMakeRange(range.location,replacement.length);
     [self.renderer parseAndRenderNow];
     return YES;
 }
