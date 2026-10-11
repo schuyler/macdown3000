@@ -319,15 +319,15 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     return success;
 }
 
-// Keep conversion in AppKit's pasteboard ingestion path so normal paste and
-// paste-and-match-style share undo, selection replacement and change delegates.
-- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pasteboard type:(NSPasteboardType)type
+// AppKit's generic ingestion path can bypass the type-specific override.
+// Share one insertion operation between all native paste entry points.
+- (BOOL)insertConvertedAsideFromPasteboard:(NSPasteboard *)pasteboard
 {
-    if ([type isEqualToString:NSPasteboardTypeString] &&
-        ![pasteboard.types containsObject:kMPMarkdownInteropPasteboardType] &&
-        !MPPasteIsInsideCode(self.string,self.selectedRange.location)) {
-        NSString *original=[pasteboard stringForType:type];
-        NSString *converted=original ? MPConvertPastedAsides(original) : nil;
+    if (![pasteboard.types containsObject:kMPMarkdownInteropPasteboardType]) {
+        NSString *original=[pasteboard stringForType:NSPasteboardTypeString];
+        if (!original || [original rangeOfString:@"<aside>" options:NSCaseInsensitiveSearch].location==NSNotFound ||
+            MPPasteIsInsideCode(self.string,self.selectedRange.location)) return NO;
+        NSString *converted=MPConvertPastedAsides(original);
         if (converted && ![converted isEqualToString:original]) {
             NSRange selection=self.selectedRange;
             NSUInteger start;
@@ -349,7 +349,25 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
             return YES;
         }
     }
+    return NO;
+}
+
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pasteboard
+{
+    if ([self insertConvertedAsideFromPasteboard:pasteboard]) return YES;
+    return [super readSelectionFromPasteboard:pasteboard];
+}
+
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pasteboard type:(NSPasteboardType)type
+{
+    if ([type isEqualToString:NSPasteboardTypeString] && [self insertConvertedAsideFromPasteboard:pasteboard]) return YES;
     return [super readSelectionFromPasteboard:pasteboard type:type];
+}
+
+- (void)pasteAsPlainText:(id)sender
+{
+    if ([self insertConvertedAsideFromPasteboard:NSPasteboard.generalPasteboard]) return;
+    [super pasteAsPlainText:sender];
 }
 
 /** Overridden to linkify selected text when pasting a URL.
@@ -359,6 +377,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
  */
 - (void)paste:(id)sender
 {
+    if ([self insertConvertedAsideFromPasteboard:NSPasteboard.generalPasteboard]) return;
     NSRange selectedRange = self.selectedRange;
 
     // Only linkify if text is selected

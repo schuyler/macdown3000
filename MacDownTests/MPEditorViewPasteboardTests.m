@@ -261,4 +261,56 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     window.contentView=nil;[window close];
 }
 
+- (void)testNativePasteboardReadConvertsMultipleAsidesWithRichClipboardFlavors
+{
+    NSString *source=@"# Procedure\n\n- Parent\n    - Action\n\n        <aside>\n        💡\n\n        **Consigne**\n\n        ```jsx\n        Message.\n        ```\n\n        </aside>\n\n    - Next\n\n<aside>\nNote\n</aside>";
+    self.editorView.richText=NO;
+    [self.pasteboard setString:source forType:NSPasteboardTypeString];
+    [self.pasteboard setString:@"<html><body>Rich clipboard representation</body></html>" forType:NSPasteboardTypeHTML];
+    XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard]);
+    XCTAssertFalse([self.editorView.string containsString:@"<aside>"]);
+    XCTAssertTrue([self.editorView.string containsString:@"        ::: {.callout-tip}"]);
+    XCTAssertTrue([self.editorView.string containsString:@"        ```jsx\n        Message.\n        ```"]);
+    XCTAssertTrue([self.editorView.string hasSuffix:@"::: {.callout-note}\nNote\n:::"]);
+}
+
+- (void)testNormalPasteAndPasteMatchingStyleConvertAsidesAndSupportUndo
+{
+    NSPasteboard *board=NSPasteboard.generalPasteboard;
+    NSMutableArray *saved=[NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy=[[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data=[item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [saved addObject:copy];
+    }
+    NSWindow *window=[[NSWindow alloc] initWithContentRect:NSMakeRect(0,0,500,300) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed=NO;window.contentView=self.editorView;
+    self.editorView.richText=NO;self.editorView.allowsUndo=YES;
+    NSInteger ownedChangeCount=board.changeCount;
+    @try {
+        for (NSUInteger action=0;action<2;action++) {
+            [board clearContents];
+            [board setString:@"            <aside>\n            💡\n            Body\n            </aside>" forType:NSPasteboardTypeString];
+            [board setString:@"<html><body>Body</body></html>" forType:NSPasteboardTypeHTML];
+            ownedChangeCount=board.changeCount;
+            self.editorView.string=@"Before\n\nOLD\n\nAfter";
+            self.editorView.selectedRange=NSMakeRange(8,3);
+            [self.editorView.undoManager removeAllActions];
+            if (action) [self.editorView pasteAsPlainText:nil];else [self.editorView paste:nil];
+            XCTAssertEqualObjects(self.editorView.string,@"Before\n\n::: {.callout-tip}\n💡\nBody\n:::\n\nAfter");
+            [self.editorView.undoManager undo];
+            XCTAssertEqualObjects(self.editorView.string,@"Before\n\nOLD\n\nAfter");
+        }
+    } @finally {
+        if (board.changeCount==ownedChangeCount) {
+            [board clearContents];
+            if (saved.count) [board writeObjects:saved];
+        }
+        window.contentView=nil;[window close];
+    }
+}
+
 @end
