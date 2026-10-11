@@ -15,6 +15,7 @@
 #import "MPEditorView.h"
 #import <WebKit/WebKit.h>
 #import <JavaScriptCore/JavaScriptCore.h>
+#import "MPBlockquoteTestCases.h"
 
 @interface MPDocument (UnderlineTesting)
 @property (nonatomic, weak) MPEditorView *editor;
@@ -1419,6 +1420,67 @@
                             rendererFlags:0];
     XCTAssertNotNil(html,
                   @"Empty heading with TOC enabled must render without crashing.");
+}
+
+- (void)testBlockquoteStructureMatrixInsideAndOutsideCallouts
+{
+    for (NSDictionary *testCase in MPBlockquoteTestCases()) {
+        for (NSUInteger wrapper = 0; wrapper < 3; wrapper++) {
+            for (NSNumber *CRLF in @[@NO, @YES]) {
+                NSString *context = [NSString stringWithFormat:@"%@ / wrapper=%lu / CRLF=%@", testCase[@"name"], (unsigned long)wrapper, CRLF];
+                NSString *source = MPBlockquoteSource(testCase[@"source"], wrapper, CRLF.boolValue);
+                NSString *html = [self renderMarkdown:source withExtensions:HOEDOWN_EXT_SPACE_HEADERS | HOEDOWN_EXT_FENCED_CODE rendererFlags:0];
+                NSError *error = nil;
+                NSXMLDocument *DOM = MPBlockquoteDOM(html, &error);
+                XCTAssertNotNil(DOM, @"%@ / %@", context, error);
+                for (NSString *xpath in testCase[@"counts"]) {
+                    NSArray *nodes = MPBlockquoteNodes(DOM, xpath, &error);
+                    XCTAssertNotNil(nodes, @"%@ / %@ / %@", context, xpath, error);
+                    XCTAssertEqual(nodes.count, [testCase[@"counts"][xpath] unsignedIntegerValue], @"%@ / %@ / %@", context, xpath, html);
+                }
+                if (wrapper) {
+                    NSString *container = wrapper == 1 ? @"//aside" : @"//details";
+                    XCTAssertEqual(MPBlockquoteNodes(DOM, [container stringByAppendingString:@"//blockquote"], NULL).count,
+                                   MPBlockquoteNodes(DOM, @"//blockquote", NULL).count,
+                                   @"%@ / citation escaped its callout", context);
+                }
+            }
+        }
+    }
+}
+
+- (void)testUnquotedHeadingsEndBlockquotesInsideAndOutsideCallouts
+{
+    for (NSUInteger level = 1; level <= 6; level++) {
+        NSString *hashes = [@"######" substringToIndex:level];
+        for (NSNumber *insideCallout in @[@NO, @YES]) {
+            NSString *source = [NSString stringWithFormat:@"> citation\n%@ Outside\n\nAfter\n", hashes];
+            if (insideCallout.boolValue)
+                source = [NSString stringWithFormat:@"::: {.callout-important}\n## Title\n%@:::\n", source];
+            NSString *html = [self renderMarkdown:source withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+            NSRange quoteEnd = [html rangeOfString:@"</blockquote>"];
+            NSRange heading = [html rangeOfString:[NSString stringWithFormat:@">Outside</h%lu>", (unsigned long)level]];
+            XCTAssertNotEqual(quoteEnd.location, NSNotFound, @"%@", html);
+            XCTAssertNotEqual(heading.location, NSNotFound, @"%@", html);
+            XCTAssertLessThan(NSMaxRange(quoteEnd), heading.location, @"%@", html);
+            if (insideCallout.boolValue)
+                XCTAssertLessThan(NSMaxRange(heading), [html rangeOfString:@"</aside>"].location, @"%@", html);
+        }
+    }
+}
+
+- (void)testExplicitQuotedHeadingsAndLazyTextRemainInsideBlockquote
+{
+    NSString *html = [self renderMarkdown:@"> citation\ncontinued\n> # Quoted\n"
+                          withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+    XCTAssertTrue([html containsString:@"<p>citation\ncontinued</p>"], @"%@", html);
+    NSRange heading = [html rangeOfString:@">Quoted</h1>"];
+    XCTAssertNotEqual(heading.location, NSNotFound, @"%@", html);
+    XCTAssertLessThan(NSMaxRange(heading), [html rangeOfString:@"</blockquote>"].location, @"%@", html);
+
+    NSString *literal = [self renderMarkdown:@"> citation\n#hashtag\n"
+                             withExtensions:HOEDOWN_EXT_SPACE_HEADERS rendererFlags:0];
+    XCTAssertTrue([literal containsString:@"<p>citation\n#hashtag</p>"], @"%@", literal);
 }
 
 - (void)testQuartoCalloutsUseApplicationMarkdownRendererAndKeepTitleAnchors
