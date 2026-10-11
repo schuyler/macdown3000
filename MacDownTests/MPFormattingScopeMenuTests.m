@@ -546,6 +546,41 @@
     }
 }
 
+- (void)testDisclosureArrowsAreCenteredAndAnimateInBothDirections
+{
+    NSMutableString *source=[NSMutableString string];
+    for (NSUInteger level=1;level<=6;level++)
+        [source appendFormat:@"::: {.callout-note collapse=\"true\"}\n%@ A long disclosure title that wraps in a narrow preview\n\nBody\n:::\n\n",[@"######" substringToIndex:level]];
+    for (id theme in @[@"GitHub2",NSNull.null]) {
+        NSString *previousToken=self.document.previewEditToken;
+        self.document.preferences.htmlStyleName=theme==NSNull.null ? nil : theme;
+        [self loadSource:source];
+        [self waitUntil:^BOOL{return !self.web.isLoading && !self.document.alreadyRenderingInWeb && ![self.document.previewEditToken isEqualToString:previousToken];} description:@"Load disclosure stylesheet"];
+        self.settledPreviewToken=self.document.previewEditToken;
+        for (NSNumber *width in @[@300,@800]) {
+            [self.web setFrameSize:NSMakeSize(width.doubleValue,900)];
+            NSString *probe=@"JSON.stringify(Array.from(document.querySelectorAll('details > summary')).map(function(s){var h=s.querySelector('h1,h2,h3,h4,h5,h6'),a=getComputedStyle(s,'::before'),m=new DOMMatrix(a.transform),r=s.getBoundingClientRect(),t=h.getBoundingClientRect(),height=parseFloat(a.height)+parseFloat(a.borderTopWidth)+parseFloat(a.borderBottomWidth);return {arrow:r.top+parseFloat(a.top)+m.m42+height/2,title:t.top+t.height/2,angle:Math.atan2(m.m12,m.m11)*180/Math.PI,visible:a.content==='\"\"',text:s.textContent};}))";
+            NSArray *metrics=[NSJSONSerialization JSONObjectWithData:[[self JS:probe] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+            XCTAssertEqual(metrics.count,6u);
+            for (NSDictionary *m in metrics) {
+                XCTAssertTrue([m[@"visible"] boolValue]);
+                XCTAssertEqualWithAccuracy([m[@"arrow"] doubleValue],[m[@"title"] doubleValue],0.75,@"%@ %@ %@",theme,width,m);
+                XCTAssertEqualWithAccuracy([m[@"angle"] doubleValue],0,0.1);
+            }
+        }
+        for (NSNumber *open in @[@YES,@NO]) {
+            [self JS:@"window.__arrowSamples=[];window.__arrowDone=false;var s=document.querySelector('summary'),start=performance.now();s.click();function frame(now){var m=new DOMMatrix(getComputedStyle(s,'::before').transform);window.__arrowSamples.push(Math.atan2(m.m12,m.m11)*180/Math.PI);if(now-start<300)requestAnimationFrame(frame);else window.__arrowDone=true;}requestAnimationFrame(frame);"];
+            [self waitUntil:^BOOL{return [[self JS:@"window.__arrowDone"] boolValue];} description:@"Disclosure arrow rotation completes"];
+            XCTAssertEqual([[self JS:@"document.querySelector('details').open"] boolValue],open.boolValue);
+            XCTAssertEqualWithAccuracy([[self JS:@"window.__arrowSamples[window.__arrowSamples.length-1]"] doubleValue],open.boolValue?90:0,0.1);
+            if (![[self JS:@"matchMedia('(prefers-reduced-motion:reduce)').matches"] boolValue])
+                XCTAssertTrue([[self JS:@"window.__arrowSamples.some(function(a){return a>1 && a<89;})"] boolValue],@"Rotation has intermediate frames");
+            else XCTAssertEqualObjects([self JS:@"getComputedStyle(document.querySelector('summary'),'::before').transitionDuration"],@"0s");
+            XCTAssertEqualObjects(self.editor.string,source);
+        }
+    }
+}
+
 - (void)testEveryCalloutTypeKeepsItsTitleHeadingSizeInPreviewAndAfterCommit
 {
     NSMutableString *references=[NSMutableString string];

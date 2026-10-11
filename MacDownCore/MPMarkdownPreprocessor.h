@@ -272,7 +272,28 @@ NS_INLINE NSString *MPFinishCallouts(NSString *html, NSArray<NSDictionary *> *ca
     if (!rendered) return html;
     // Callout and disclosure headings keep the stylesheet's heading sizes;
     // reset only the spacing and borders within their title surfaces.
-    return [@"<style>.mp-callout{border:1px solid #8886;border-left:4px solid #4385be;border-radius:4px;margin:1em 0}.mp-callout-tip{border-left-color:#23865a}.mp-callout-warning,.mp-callout-caution{border-left-color:#ba7818}.mp-callout-important{border-left-color:#bc3945}.mp-callout-title,.mp-callout>summary{font-weight:bold;padding:.5em .8em}.mp-callout>summary{cursor:pointer}.mp-callout-title>h1,.mp-callout-title>h2,.mp-callout-title>h3,.mp-callout-title>h4,.mp-callout-title>h5,.mp-callout-title>h6,.mp-callout>summary>h1,.mp-callout>summary>h2,.mp-callout>summary>h3,.mp-callout>summary>h4,.mp-callout>summary>h5,.mp-callout>summary>h6{display:inline;line-height:inherit;margin:0;border:0}.mp-callout-body{padding:0 .8em .5em}.mp-callout-body>:last-child{margin-bottom:0}@media print{details.mp-callout::details-content{content-visibility:visible!important}details.mp-callout:not([open])>.mp-callout-body{display:block!important}}</style>\n" stringByAppendingString:html];
+    return [
+        @"<style>.mp-callout{border:1px solid #8886;border-left:4px solid #4385be;border-radius:4px;margin:1em 0}"
+        @".mp-callout-tip{border-left-color:#23865a}"
+        @".mp-callout-warning,.mp-callout-caution{border-left-color:#ba7818}"
+        @".mp-callout-important{border-left-color:#bc3945}"
+        @".mp-callout-title,.mp-callout>summary{font-weight:bold;padding:.5em .8em}"
+        @".mp-callout>summary{cursor:pointer;position:relative;display:block;list-style:none;padding-left:2em}"
+        @".mp-callout>summary::-webkit-details-marker{display:none}"
+        @".mp-callout>summary::marker{content:\"\"}"
+        @".mp-callout>summary::before{content:\"\";position:absolute;left:.8em;top:50%;width:.8em;height:.8em;background:currentColor;clip-path:polygon(25% 10%,75% 50%,25% 90%);transform:translateY(-50%) rotate(0deg);transform-origin:center;transition:transform .18s ease;pointer-events:none}"
+        @".mp-callout[open]>summary::before{transform:translateY(-50%) rotate(90deg)}"
+        @".mp-callout-title>h1,.mp-callout-title>h2,.mp-callout-title>h3,.mp-callout-title>h4,.mp-callout-title>h5,.mp-callout-title>h6,.mp-callout>summary>h1,.mp-callout>summary>h2,.mp-callout>summary>h3,.mp-callout>summary>h4,.mp-callout>summary>h5,.mp-callout>summary>h6{display:inline;line-height:inherit;margin:0;border:0}"
+        @".mp-callout>summary>h1,.mp-callout>summary>h2,.mp-callout>summary>h3,.mp-callout>summary>h4,.mp-callout>summary>h5,.mp-callout>summary>h6{display:block;line-height:1.25}"
+        @".mp-callout-body{padding:0 .8em .5em}"
+        @".mp-callout-body>:last-child{margin-bottom:0}"
+        @"@media(prefers-reduced-motion:reduce){.mp-callout>summary::before{transition:none}}"
+        @"@media print{.mp-callout>summary::before{transform:translateY(-50%) rotate(90deg);transition:none}"
+        @"details.mp-callout::details-content{content-visibility:visible!important}"
+        @"details.mp-callout:not([open])>.mp-callout-body{display:block!important}"
+        @"}"
+        @"</style>\n"
+        stringByAppendingString:html];
 }
 
 // Hoedown extracts reference definitions before parsing fenced code. Protect
