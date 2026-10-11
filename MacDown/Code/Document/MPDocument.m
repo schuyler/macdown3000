@@ -2353,10 +2353,20 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // preview's scroll position to follow it, on top of the usual viewport-based
     // sync. Runs independently of the word-count display preference below, since
     // it is unrelated to that gate.
-    if (self.preferences.editorSyncScrolling && _scrollOwner == MPScrollOwnerNeither)
-    {
-        [self syncScrollersToCursor];
-    }
+    //
+    // Deferred to the end of the turn: when typing, NSTextView posts this
+    // notification before -editorTextDidChange:, which claims Editor ownership.
+    // Checking ownership here would still see Neither and scroll the preview on
+    // every keystroke.
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        MPDocument *strongSelf = weakSelf;
+        if (strongSelf.preferences.editorSyncScrolling
+            && strongSelf->_scrollOwner == MPScrollOwnerNeither)
+        {
+            [strongSelf syncScrollersToCursor];
+        }
+    });
 
     if (!self.preferences.editorShowWordCount)
         return;
