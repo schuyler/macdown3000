@@ -444,6 +444,45 @@
     XCTAssertTrue([[self JS:@"document.querySelector('details')===window.__neighborDetails && window.__neighborDetails.open"] boolValue]);
 }
 
+- (void)testDisclosureTitleLevelsUseThemeHeadingSizesInPreviewAndAfterCommit
+{
+    NSString *source=@"# Reference1\n\n## Reference2\n\n### Reference3\n\n#### Reference4\n\nHeading\n\nBody\n";
+    void (^loadFixture)(void)=^{
+        NSString *previousToken=self.document.previewEditToken;
+        [self loadSource:source];
+        // The Markdown stays identical while switching stylesheets. Wait for
+        // the new render identity rather than accepting its previous mapping.
+        [self waitUntil:^BOOL{
+            return !self.web.isLoading && !self.document.alreadyRenderingInWeb &&
+                ![self.document.previewEditToken isEqualToString:previousToken];
+        } description:@"Load fixture with the requested stylesheet"];
+        self.settledPreviewToken=self.document.previewEditToken;
+        [self selectFromText:@"Heading" throughText:@"Heading"];
+    };
+    for (id theme in @[@"GitHub2",NSNull.null]) {
+        self.document.preferences.htmlStyleName=theme==NSNull.null ? nil : theme;
+        loadFixture();
+        CGFloat previousSize=CGFLOAT_MAX;
+        for (NSUInteger level=1;level<=4;level++) {
+            [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-option=toggle-h%lu]').dispatchEvent(new MouseEvent('mouseenter'))",(unsigned long)level]];
+            NSString *probe=[NSString stringWithFormat:@"(function(){var title=document.querySelector('details > summary > h%lu'),reference=Array.from(document.body.children).find(function(n){return n.tagName==='H%lu';});return JSON.stringify({title:parseFloat(getComputedStyle(title).fontSize),reference:parseFloat(getComputedStyle(reference).fontSize)});})()",(unsigned long)level,(unsigned long)level];
+            NSDictionary *sizes=[NSJSONSerialization JSONObjectWithData:[[self JS:probe] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+            XCTAssertNotNil(sizes);
+            CGFloat size=[sizes[@"title"] doubleValue];
+            XCTAssertEqualWithAccuracy(size,[sizes[@"reference"] doubleValue],0.01,@"Disclosure H%lu follows theme %@",(unsigned long)level,theme);
+            XCTAssertLessThan(size,previousSize);
+            previousSize=size;
+            XCTAssertEqualObjects(self.editor.string,source);
+            [self JS:[NSString stringWithFormat:@"document.querySelector('[data-mp-option=toggle-h%lu]').click()",(unsigned long)level]];
+            [self waitForFormatting];
+            NSDictionary *committed=[NSJSONSerialization JSONObjectWithData:[[self JS:probe] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+            XCTAssertEqualWithAccuracy([committed[@"title"] doubleValue],size,0.01,@"Committed title matches the hover preview");
+            // Each level starts from the same passage, with no accumulated envelope.
+            loadFixture();
+        }
+    }
+}
+
 - (void)testClickCommitsHoveredChoiceAndOtherChoicesNeverAccumulate
 {
     [self loadSource:@"Heading\n\nBody\n"];
