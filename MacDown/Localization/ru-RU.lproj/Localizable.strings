@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(По умолчанию)";
+
 /* Highlight toolbar button */
 "Highlight" = "Выделить";
 

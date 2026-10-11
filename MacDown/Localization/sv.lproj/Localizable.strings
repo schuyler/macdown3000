@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(Standard)";
+
 /* (No Comment) */
 "CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ tecken (inga mellanslag);%@ tecken (inga mellanslag)";
 

@@ -31,8 +31,8 @@ static CGFloat    const kMPDefaultEditorHorizontalInset = 15.0;
 static CGFloat    const kMPDefaultEditorVerticalInset = 30.0;
 static CGFloat    const kMPDefaultEditorLineSpacing = 3.0;
 static BOOL       const kMPDefaultEditorSyncScrolling = YES;
-static NSString * const kMPDefaultEditorThemeName = @"Tomorrow+";
-static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
+NSString * const MPDefaultEditorThemeName = @"Tomorrow+";
+NSString * const MPDefaultHtmlStyleName = @"GitHub2";
 
 
 @implementation MPPreferences
@@ -293,12 +293,12 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         kMPDefaultEditorFontNameKey: kMPDefaultEditorFontName,
         kMPDefaultEditorFontPointSizeKey: @(kMPDefaultEditorFontPointSize),
     };
-    self.editorStyleName = kMPDefaultEditorThemeName;
+    self.editorStyleName = MPDefaultEditorThemeName;
     self.editorHorizontalInset = kMPDefaultEditorHorizontalInset;
     self.editorVerticalInset = kMPDefaultEditorVerticalInset;
     self.editorLineSpacing = kMPDefaultEditorLineSpacing;
     self.editorSyncScrolling = kMPDefaultEditorSyncScrolling;
-    self.htmlStyleName = kMPDefaultHtmlStyleName;
+    self.htmlStyleName = MPDefaultHtmlStyleName;
     self.htmlDefaultDirectoryUrl = [NSURL fileURLWithPath:NSHomeDirectory()
                                               isDirectory:YES];
     self.documentZoomLevel = 1.0;

@@ -10,6 +10,8 @@
 
 
 extern NSString * const MPDidDetectFreshInstallationNotification;
+extern NSString * const MPDefaultEditorThemeName;
+extern NSString * const MPDefaultHtmlStyleName;
 
 
 @interface MPPreferences : PAPreferences

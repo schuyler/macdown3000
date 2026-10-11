@@ -1,3 +1,6 @@
+/* Default theme suffix */
+"(Default)" = "(기본값)";
+
 /* Preference pane title. */
 "Editor" = "편집기";
 
