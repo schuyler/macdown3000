@@ -1353,4 +1353,47 @@
 }
 
 
+- (void)testScrollableMenuKeepsPositionWhileMovingBetweenHoverPreviews
+{
+    MPPreferences *preferences=self.document.preferences;
+    CGFloat oldZoom=preferences.documentZoomLevel;
+    BOOL oldRelative=preferences.previewZoomRelativeToBaseFontSize;
+    @try {
+        preferences.previewZoomRelativeToBaseFontSize=NO;
+        for (NSNumber *zoom in @[@1,@1.5,@3]) for (NSNumber *width in @[@300,@750]) for (NSNumber *bottom in @[@NO,@YES]) {
+            NSString *leading=bottom.boolValue ? @"Before one\n\nBefore two\n\nBefore three\n\nBefore four\n\nBefore five\n\nBefore six\n\n" : @"";
+            NSString *source=[leading stringByAppendingString:@"Heading\n\nNeighbor.\n"];
+            [self.web setFrameSize:NSMakeSize(width.doubleValue,450)];
+            preferences.documentZoomLevel=zoom.doubleValue;
+            [self loadSource:source];
+            [self.document scaleWebview];
+            [self selectFromText:@"Heading" throughText:@"Heading"];
+            [self JS:@"document.querySelector('[data-mp-format-menu]').dispatchEvent(new MouseEvent('mouseenter'));document.querySelector('[role=menu]').dispatchEvent(new MouseEvent('mouseenter'))"];
+            if (width.intValue==300 && zoom.doubleValue==1) {
+                NSString *placement=bottom.boolValue ? @"(function(){var p=document.querySelector('#macdown-preview-format').getBoundingClientRect(),m=document.querySelector('[role=menu]').getBoundingClientRect();return m.bottom<=p.top+1;})()" : @"(function(){var p=document.querySelector('#macdown-preview-format').getBoundingClientRect(),m=document.querySelector('[role=menu]').getBoundingClientRect();return m.top>=p.bottom-1;})()";
+                XCTAssertTrue([[self JS:placement] boolValue],@"Menu placement above=%@ at zoom %@",bottom,zoom);
+            }
+            XCTAssertTrue([[self JS:@"(function(){var m=document.querySelector('[role=menu]').getBoundingClientRect();return m.left>=0 && m.right<=innerWidth && m.top>=0 && m.bottom<=innerHeight;})()"] boolValue]);
+            for (NSNumber *fraction in @[@0.5,@1]) {
+                [self.web.mainFrame.javaScriptContext setObject:fraction forKeyedSubscript:@"__menuFraction"];
+                NSString *position=[self JS:@"(function(){var m=document.querySelector('[role=menu]');m.scrollTop=(m.scrollHeight-m.clientHeight)*__menuFraction;return String(m.scrollTop);})()"];
+                XCTAssertGreaterThan(position.doubleValue,0,@"Scrollable menu at width %@, zoom %@",width,zoom);
+                for (NSString *value in @[@"toggle-h4",@"callout-tip",@"callout-warning",@"toggle-h2"]) {
+                    NSString *hover=[NSString stringWithFormat:@"document.querySelector('[data-mp-option=%@]').dispatchEvent(new MouseEvent('mouseenter'))",value];
+                    [self JS:hover];
+                    XCTAssertEqualWithAccuracy([[self JS:@"String(document.querySelector('[role=menu]').scrollTop)"] doubleValue],position.doubleValue,1,@"%@ at width %@, zoom %@",value,width,zoom);
+                    XCTAssertEqualObjects(self.editor.string,source);
+                    XCTAssertFalse([[self JS:@"document.querySelector('[role=menu]').hidden"] boolValue]);
+                }
+            }
+            [self JS:@"document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
+            XCTAssertEqualObjects([self JS:@"getSelection().toString()"],@"Heading");
+            XCTAssertEqualObjects(self.editor.string,source);
+        }
+    } @finally {
+        preferences.documentZoomLevel=oldZoom;
+        preferences.previewZoomRelativeToBaseFontSize=oldRelative;
+    }
+}
+
 @end

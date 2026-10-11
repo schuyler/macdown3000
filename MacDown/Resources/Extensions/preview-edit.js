@@ -546,10 +546,11 @@
     if(menu.hidden) return;
     // Keep the compact toolbar unchanged. Prefer a touching right-hand menu,
     // then the left side; narrow viewports use a separate surface below it.
+    var menuScrollTop=menu.scrollTop;
     menu.style.width=menuWidth+'px';
     menu.style.maxWidth=Math.max(0,viewportWidth-24)+'px';
-    menu.style.maxHeight=(viewportHeight-16)+'px';
     var bounds=uiRect(panel.getBoundingClientRect()), width=menu.offsetWidth, left, top=bounds.top;
+    var maxHeight=viewportHeight-16, placeAbove=false;
     if(bounds.right+width<=viewportWidth-12) left=bounds.right;
     else if(bounds.left-width>=12) left=bounds.left-width;
     else {
@@ -560,12 +561,17 @@
       } else {
         left=Math.max(12,Math.min(bounds.left,viewportWidth-width-12));
         var below=viewportHeight-bounds.bottom-8, above=bounds.top-8;
-        if(below>=above) {top=bounds.bottom;menu.style.maxHeight=Math.max(0,below)+'px';}
-        else {menu.style.maxHeight=Math.max(0,above)+'px';top=bounds.top-menu.offsetHeight;}
+        if(below>=above) {top=bounds.bottom;maxHeight=Math.max(0,below);}
+        else {maxHeight=Math.max(0,above);placeAbove=true;}
       }
     }
+    // Apply only the final height. Temporarily expanding an overflow menu
+    // clamps its scroll offset before hover restores the original selection.
+    menu.style.maxHeight=maxHeight+'px';
+    if(placeAbove) top=bounds.top-menu.offsetHeight;
     menu.style.left=(left-bounds.left-panel.clientLeft)+'px';
     menu.style.top=(Math.max(8,Math.min(top,viewportHeight-menu.offsetHeight-8))-bounds.top-panel.clientTop)+'px';
+    menu.scrollTop=menuScrollTop;
   }
   listen(document,'selectionchange',function(){
     clearTimeout(timer); timer=setTimeout(updatePanel,120);
