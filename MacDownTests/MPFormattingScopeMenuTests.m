@@ -1311,6 +1311,42 @@
     }
 }
 
+- (void)testTrailingParagraphAfterNestedTaskListCanBecomeTask
+{
+    self.useExplicitParentScope=NO;
+    self.formattingUndoManager=[NSUndoManager new];
+    self.editor.delegate=self;
+    self.editor.allowsUndo=YES;
+    for (NSString *ending in @[@"\n",@"\r\n"])
+    for (NSString *closingGap in @[@"",@"\n"])
+    for (NSString *selection in @[@"Complete the work note:",@"work note"]) {
+        NSString *source=@"::: {.callout-note collapse=\"true\"}\n# Outer title\n\n::: {.callout-note collapse=\"true\"}\n## Checks\n\n- [ ]  Check identifier\n\n    ```\n    Message\n    ```\n\n    - [x]  Check model\n\n:::\n\n::: {.callout-note collapse=\"true\"}\n## Actions\n\n- [ ]  Complete form:\n    - Setting\n    - Model\n    - Identifier\n\nComplete the work note:\n:::\n\n:::\n";
+        source=[source stringByReplacingOccurrencesOfString:@"Complete the work note:\n:::" withString:[NSString stringWithFormat:@"Complete the work note:\n%@:::",closingGap]];
+        source=[source stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+        [self loadSource:source];
+        [self JS:@"document.querySelectorAll('details').forEach(function(n){n.open=true;})"];
+        [self selectFromText:selection throughText:selection];
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-scope=block] [data-mp-option=tasks]').dispatchEvent(new MouseEvent('mouseenter'))"];
+        XCTAssertEqualObjects(self.editor.string,source);
+        XCTAssertTrue([[self JS:@"Array.from(document.querySelectorAll('li')).some(function(n){return n.textContent.includes('Complete the work note:') && n.querySelector('input[type=checkbox]');})"] boolValue]);
+        [self JS:@"document.querySelector('[role=menu]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))"];
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('input[type=checkbox]').length)"],@"3");
+        XCTAssertEqualObjects(self.editor.string,source);
+        [self selectFromText:selection throughText:selection];
+        [self JS:@"document.querySelector('[data-mp-format-menu]').click();document.querySelector('[data-mp-scope=block] [data-mp-option=tasks]').click()"];
+        [self waitForFormatting];
+        XCTAssertEqualObjects(self.editor.string,[source stringByReplacingOccurrencesOfString:@"Complete the work note:" withString:@"- [ ] Complete the work note:"]);
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('input[type=checkbox]').length)"],@"4");
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('input[type=checkbox]:checked').length)"],@"1");
+        XCTAssertEqualObjects([self JS:@"getSelection().toString()"],selection);
+        XCTAssertEqualObjects([self JS:@"String(document.querySelectorAll('details').length)"],@"3");
+        XCTAssertEqualObjects([self JS:@"document.querySelector('pre code').textContent"],@"Message");
+        NSString *result=self.editor.string;
+        [self.formattingUndoManager undo]; XCTAssertEqualObjects(self.editor.string,source);
+        [self.formattingUndoManager redo]; XCTAssertEqualObjects(self.editor.string,result);
+    }
+}
+
 - (void)testTitleSelectionRetypesOnlyItsOwnNestedEnvelope
 {
     self.useExplicitParentScope=NO;

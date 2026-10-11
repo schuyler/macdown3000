@@ -267,6 +267,94 @@
     }
 }
 
+- (void)testParagraphConversionsAroundListsAcrossNestedContainers
+{
+    NSArray *targets=[[self blocks] arrayByAddingObject:@"code-block"];
+    for (NSString *container in @[@"none",@"callout",@"nested-toggle"])
+    for (NSNumber *beforeList in @[@NO,@YES])
+    for (NSString *marker in @[@"-",@"1.",@"- [ ]",@"- [x]"])
+    for (NSString *spacing in @[@" ",@"  ",@"\t"])
+    for (NSString *ending in @[@"\n",@"\r\n"])
+    for (NSString *target in targets)
+    for (NSNumber *preview in @[@NO,@YES]) {
+        @autoreleasepool {
+            NSString *list=[NSString stringWithFormat:@"%@%@Existing **item** [link](https://example.org/item)\n    - Child one\n    - Child two\n",marker,spacing];
+            NSString *label=@"Complete the work note:";
+            NSString *body=beforeList.boolValue ? [NSString stringWithFormat:@"%@\n\n%@",label,list]
+                : [NSString stringWithFormat:@"%@\n%@\n",list,label];
+            NSString *opening=@"",*closing=@"";
+            if ([container isEqualToString:@"callout"]) {
+                opening=@"::: {.callout-tip}\n## Section\n\n";
+                closing=@":::\n";
+            } else if ([container isEqualToString:@"nested-toggle"]) {
+                opening=@"::: {.callout-note collapse=\"true\"}\n# Outer\n\n::: {.callout-note collapse=\"true\"}\n## Inner\n\n";
+                closing=@":::\n\n:::\n";
+            }
+            NSString *source=[NSString stringWithFormat:@"Before neighbour.\n\n%@%@%@\nAfter neighbour.\n",opening,body,closing];
+            source=[source stringByReplacingOccurrencesOfString:@"\n" withString:ending];
+            MPScopeFixture *f=[[MPScopeFixture alloc] initWithSource:source];
+            NSString *context=[NSString stringWithFormat:@"%@ before=%@ marker=%@ spacing=%@ target=%@ preview=%@ ending=%@",container,beforeList,marker,[spacing debugDescription],target,preview,[ending debugDescription]];
+            NSXMLDocument *before=[self DOM:f context:context];
+            if (preview.boolValue) XCTAssertTrue([f apply:@"block" value:target text:label],@"%@",context);
+            else { f.editor.selectedRange=[source rangeOfString:label]; [f.document convertSelectionToBlock:target]; }
+            NSXMLDocument *after=[self DOM:f context:context];
+            if (![target isEqualToString:@"paragraph"]) XCTAssertNotEqualObjects(f.editor.string,source,@"%@",context);
+            // Only the selected physical paragraph may change. These byte
+            // checks include every list marker, separator and envelope.
+            NSRange selected=[source rangeOfString:label];
+            XCTAssertTrue([f.editor.string hasPrefix:[source substringToIndex:selected.location]],@"%@",context);
+            XCTAssertTrue([f.editor.string hasSuffix:[source substringFromIndex:NSMaxRange(selected)]],@"%@",context);
+            XCTAssertEqual([after nodesForXPath:@"//strong[text()='item']" error:NULL].count,1u,@"%@",context);
+            XCTAssertEqual([after nodesForXPath:@"//a[@href='https://example.org/item']" error:NULL].count,1u,@"%@",context);
+            XCTAssertEqual([after nodesForXPath:@"//li[contains(.,'Child one')]" error:NULL].count,[before nodesForXPath:@"//li[contains(.,'Child one')]" error:NULL].count,@"%@",context);
+            XCTAssertEqual([after nodesForXPath:@"//input[@checked]" error:NULL].count,[before nodesForXPath:@"//input[@checked]" error:NULL].count,@"%@",context);
+            NSString *path=[target isEqualToString:@"code-block"] ? @"//pre/code[contains(.,'Complete the work note:')]"
+                : [target hasPrefix:@"h"] ? [NSString stringWithFormat:@"//%@[text()='Complete the work note:']",target]
+                : [target isEqualToString:@"quote"] ? @"//blockquote/p[text()='Complete the work note:']"
+                : [target isEqualToString:@"paragraph"] ? @"//p[text()='Complete the work note:']"
+                : [target isEqualToString:@"tasks"] ? @"//li[contains(.,'Complete the work note:')][.//input[@type='checkbox']]"
+                : [target isEqualToString:@"ordered"] ? @"//ol/li[contains(.,'Complete the work note:')]"
+                : @"//ul/li[contains(.,'Complete the work note:')]";
+            XCTAssertEqual([after nodesForXPath:path error:NULL].count,1u,@"%@",context);
+            NSString *result=f.editor.string;
+            if (![target isEqualToString:@"paragraph"]) {
+                [f.document.undoManager undo]; XCTAssertEqualObjects(f.editor.string,source,@"%@",context);
+                [f.document.undoManager redo]; XCTAssertEqualObjects(f.editor.string,result,@"%@",context);
+            }
+        }
+    }
+}
+
+- (void)testListMergingPreservesWhitespaceAfterInlineElementsAndInsideCode
+{
+    NSArray *labels=@[@"**Bold** following words",@"*Italic* following words",@"_Underline_ following words",@"~~Deleted~~ following words",@"[link](https://example.org/label) following words",@"`  code  ` following words"];
+    for (NSString *label in labels) for (NSString *marker in @[@"-",@"1.",@"- [x]"])
+    for (NSString *spacing in @[@" ",@"  ",@"\t"]) for (NSNumber *beforeList in @[@NO,@YES])
+    for (NSString *target in @[@"unordered",@"ordered",@"tasks"]) {
+        @autoreleasepool {
+            NSString *list=[NSString stringWithFormat:@"%@%@%@\n    - Child\n",marker,spacing,label];
+            NSString *body=beforeList.boolValue ? [NSString stringWithFormat:@"Selected paragraph\n\n%@",list]
+                : [NSString stringWithFormat:@"%@\nSelected paragraph\n",list];
+            NSString *source=[NSString stringWithFormat:@"::: {.callout-note collapse=\"true\"}\n## Section\n\n%@:::\n",body];
+            MPScopeFixture *f=[[MPScopeFixture alloc] initWithSource:source];
+            NSString *context=[NSString stringWithFormat:@"%@ / %@ / %@ / before=%@ / %@",label,marker,[spacing debugDescription],beforeList,target];
+            NSXMLDocument *before=[self DOM:f context:context];
+            XCTAssertTrue([f apply:@"block" value:target text:@"Selected paragraph"],@"%@",context);
+            NSString *prefix=[target isEqualToString:@"ordered"] ? @"1. " : [target isEqualToString:@"tasks"] ? @"- [ ] " : @"- ";
+            XCTAssertEqualObjects(f.editor.string,[source stringByReplacingOccurrencesOfString:@"Selected paragraph" withString:[prefix stringByAppendingString:@"Selected paragraph"]],@"%@",context);
+            NSXMLDocument *after=[self DOM:f context:context];
+            for (NSString *tag in @[@"strong",@"em",@"u",@"del",@"a",@"code"]) {
+                NSString *path=[@"//" stringByAppendingString:tag];
+                NSArray *old=[before nodesForXPath:path error:NULL],*new=[after nodesForXPath:path error:NULL];
+                XCTAssertEqual(old.count,new.count,@"%@ %@",context,tag);
+                for (NSUInteger i=0;i<MIN(old.count,new.count);i++)
+                    XCTAssertEqualObjects([old[i] XMLString],[new[i] XMLString],@"%@ %@",context,tag);
+            }
+            [f.document.undoManager undo]; XCTAssertEqualObjects(f.editor.string,source,@"%@",context);
+        }
+    }
+}
+
 - (NSArray *)blocks { return @[@"paragraph",@"h1",@"h2",@"h3",@"h4",@"h5",@"h6",@"unordered",@"ordered",@"tasks",@"quote"]; }
 - (NSArray *)containers { return @[@"none",@"callout-note",@"callout-tip",@"callout-warning",@"callout-important",@"callout-caution",@"toggle",@"toggle-h1",@"toggle-h2",@"toggle-h3",@"toggle-h4"]; }
 - (NSArray *)styles { return @[@"bold",@"italic",@"underline",@"strike",@"link",@"code"]; }
@@ -286,6 +374,8 @@
     NSString *HTML=[f.renderer HTMLForMarkdownSnapshot:f.editor.string];
     NSRegularExpression *inputs=[NSRegularExpression regularExpressionWithPattern:@"<input([^>]*)>" options:0 error:NULL];
     NSString *XML=[inputs stringByReplacingMatchesInString:HTML options:0 range:NSMakeRange(0,HTML.length) withTemplate:@"<input$1 />"];
+    NSRegularExpression *checked=[NSRegularExpression regularExpressionWithPattern:@"(<input\\b[^>]*?\\s)checked(?=\\s|/>)" options:0 error:NULL];
+    XML=[checked stringByReplacingMatchesInString:XML options:0 range:NSMakeRange(0,XML.length) withTemplate:@"$1checked=\"checked\""];
     NSError *error=nil;
     NSXMLDocument *DOM=[[NSXMLDocument alloc] initWithXMLString:[NSString stringWithFormat:@"<root>%@</root>",XML] options:NSXMLNodeLoadExternalEntitiesNever error:&error];
     XCTAssertNotNil(DOM,@"%@ — %@; %@",context,error,HTML);

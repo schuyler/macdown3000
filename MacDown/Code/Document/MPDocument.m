@@ -7040,16 +7040,26 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
     NSString *prefix = [value isEqualToString:@"code-block"] ? @"" : prefixes[value];
     NSRange restoredSelection = blockStart!=NSNotFound && blockEnd!=NSNotFound && blockEnd>=blockStart
         ? NSMakeRange(blockStart,blockEnd-blockStart) : NSMakeRange(NSNotFound,0);
-    void (^normalizeTaskSpacing)(NSXMLDocument *) = ^(NSXMLDocument *DOM) {
-        // The renderer leaves the Markdown separator after its generated
-        // checkbox. It is syntax spacing, not a character of the label.
-        for (NSXMLNode *input in [DOM nodesForXPath:@"//li[@class='task-list-item']/input[@type='checkbox']" error:NULL]) {
-            NSXMLNode *sibling=input.nextSibling;
-            if (sibling.kind!=NSXMLTextKind) continue;
-            NSString *text=sibling.stringValue;
+    void (^normalizeListLabelSpacing)(NSXMLDocument *) = ^(NSXMLDocument *DOM) {
+        // A new separated item can turn a tight list into a loose list.
+        // Hoedown then wraps labels in P and consumes syntax spacing it
+        // previously left after a list marker or generated checkbox. Compare
+        // those two layouts without treating that spacing as authored text.
+        for (NSXMLNode *item in [DOM nodesForXPath:@"//li" error:NULL]) {
+            NSXMLNode *label=item.children.firstObject;
+            while (label.kind==NSXMLTextKind && ![label.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.newlineCharacterSet].length)
+                label=label.nextSibling;
+            if ([label.name.lowercaseString isEqualToString:@"p"]) label=label.children.firstObject;
+            if ([label.name.lowercaseString isEqualToString:@"input"] &&
+                [[(NSXMLElement *)item attributeForName:@"class"].stringValue isEqualToString:@"task-list-item"] &&
+                [[(NSXMLElement *)label attributeForName:@"type"].stringValue isEqualToString:@"checkbox"])
+                label=label.nextSibling;
+            // Do not trim text after an inline element, or whitespace in CODE.
+            if (label.kind!=NSXMLTextKind) continue;
+            NSString *text=label.stringValue;
             NSUInteger offset=0;
             while (offset<text.length && ([text characterAtIndex:offset]==' ' || [text characterAtIndex:offset]=='\t')) offset++;
-            if (offset) sibling.stringValue=[text substringFromIndex:offset];
+            if (offset) label.stringValue=[text substringFromIndex:offset];
         }
     };
     if (prefix != nil) {
@@ -7080,7 +7090,7 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
                 NSString *plain = [text substringFromIndex:margin.length];
                 NSString *originalHTML = [renderer HTMLForMarkdownSnapshot:plain];
                 NSXMLDocument *originalDOM = MPPIParseHTML(originalHTML);
-                normalizeTaskSpacing(originalDOM);
+                normalizeListLabelSpacing(originalDOM);
                 NSArray *roots = [originalDOM nodesForXPath:@"//body/*" error:NULL];
                 if (roots.count!=1) return NO;
                 NSXMLNode *content = roots.firstObject;
@@ -7141,7 +7151,7 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
                 for (NSUInteger attempt=0;!proved && attempt<2;attempt++) {
                     NSString *candidate=[linePrefix stringByAppendingString:plain];
                     NSXMLDocument *DOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:candidate]);
-                    normalizeTaskSpacing(DOM);
+                    normalizeListLabelSpacing(DOM);
                     NSArray<NSXMLNode *> *elements=[DOM nodesForXPath:@"//body/*" error:NULL];
                     NSXMLNode *body=[[DOM nodesForXPath:@"//body" error:NULL] firstObject];
                     NSString *actualText=[body.stringValue stringByTrimmingCharactersInSet:NSCharacterSet.newlineCharacterSet];
@@ -7258,7 +7268,7 @@ static NSString *MPContainerBodyWithoutMargin(NSString *body, NSString *margin)
     if (!codeBlock && [@[@"unordered",@"ordered",@"tasks"] containsObject:value]) {
         NSArray *(^inlineFingerprint)(NSString *)=^NSArray *(NSString *markdown) {
             NSXMLDocument *DOM=MPPIParseHTML([renderer HTMLForMarkdownSnapshot:markdown]);
-            normalizeTaskSpacing(DOM);
+            normalizeListLabelSpacing(DOM);
             NSXMLNode *body=[[DOM nodesForXPath:@"//body" error:NULL] firstObject];
             if(!body) return nil;
             NSMutableArray *tokens=[NSMutableArray array],*characters=[NSMutableArray array];
