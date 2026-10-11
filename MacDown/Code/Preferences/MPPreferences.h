@@ -42,6 +42,7 @@ extern NSString * const MPDefaultHtmlStyleName;
 @property (assign) NSDictionary *editorBaseFontInfo;
 @property (assign) BOOL editorAutoIncrementNumberedLists;
 @property (assign) BOOL editorConvertTabs;
+@property (assign) BOOL editorConvertNotionCalloutsOnPaste;
 @property (assign) BOOL editorInsertPrefixInBlock;
 @property (assign) BOOL editorCompleteMatchingCharacters;
 @property (assign) BOOL editorSyncScrolling;

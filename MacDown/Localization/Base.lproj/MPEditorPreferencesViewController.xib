@@ -310,6 +310,16 @@
                                     <binding destination="-2" name="enabled" keyPath="self.preferences.editorInsertPrefixInBlock" id="U69-jO-NZV"/>
                                 </connections>
                             </button>
+                            <button translatesAutoresizingMaskIntoConstraints="NO" id="NCP-opt-btn">
+                                <rect key="frame" x="16" y="0" width="415" height="18"/>
+                                <buttonCell key="cell" type="check" title="Convert Notion callouts on paste (beta test)" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" inset="2" id="NCP-opt-cel">
+                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                </buttonCell>
+                                <connections>
+                                    <binding destination="-2" name="value" keyPath="self.preferences.editorConvertNotionCalloutsOnPaste" id="NCP-opt-bnd"/>
+                                </connections>
+                            </button>
                             <button translatesAutoresizingMaskIntoConstraints="NO" id="CXK-QF-WSK">
                                 <rect key="frame" x="16" y="97" width="415" height="18"/>
                                 <buttonCell key="cell" type="check" title="Automatically insert line prefix for the current block" lineBreakMode="wordWrap" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="zGb-kg-2CJ">
@@ -322,6 +332,9 @@
                             </button>
                         </subviews>
                         <constraints>
+                            <constraint firstItem="NCP-opt-btn" firstAttribute="top" secondItem="hSa-rl-wPT" secondAttribute="bottom" constant="6" id="NCP-top-con"/>
+                            <constraint firstItem="NCP-opt-btn" firstAttribute="leading" secondItem="hSa-rl-wPT" secondAttribute="leading" id="NCP-lea-con"/>
+                            <constraint firstItem="NCP-opt-btn" firstAttribute="trailing" secondItem="hSa-rl-wPT" secondAttribute="trailing" id="NCP-tra-con"/>
                             <constraint firstItem="tes-GA-Mpn" firstAttribute="leading" secondItem="hSa-rl-wPT" secondAttribute="leading" id="83Z-LK-pIl"/>
                             <constraint firstItem="CXK-QF-WSK" firstAttribute="trailing" secondItem="NV7-zh-ydN" secondAttribute="trailing" id="AQ1-uk-f4c"/>
                             <constraint firstItem="tes-GA-Mpn" firstAttribute="trailing" secondItem="hSa-rl-wPT" secondAttribute="trailing" id="Jex-pw-2gL"/>
@@ -346,7 +359,7 @@
                         <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="leading" secondItem="6JP-Pc-JFd" secondAttribute="leading" constant="19" id="LJK-mi-lpf"/>
                         <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="top" secondItem="6JP-Pc-JFd" secondAttribute="top" constant="25" id="b9w-5h-zxO"/>
                         <constraint firstItem="Hdc-ZZ-0Bg" firstAttribute="centerX" secondItem="6JP-Pc-JFd" secondAttribute="centerX" id="huD-PM-wSU"/>
-                        <constraint firstAttribute="bottom" secondItem="hSa-rl-wPT" secondAttribute="bottom" constant="11" id="397-bm-hSa"/>
+                        <constraint firstAttribute="bottom" secondItem="NCP-opt-btn" secondAttribute="bottom" constant="11" id="397-bm-hSa"/>
                     </constraints>
                 </box>
             </subviews>

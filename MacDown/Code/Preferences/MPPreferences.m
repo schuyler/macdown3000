@@ -150,6 +150,7 @@ NSString * const MPDefaultHtmlStyleName = @"GitHub2";
 
 @dynamic editorAutoIncrementNumberedLists;
 @dynamic editorConvertTabs;
+@dynamic editorConvertNotionCalloutsOnPaste;
 @dynamic editorInsertPrefixInBlock;
 @dynamic editorCompleteMatchingCharacters;
 @dynamic editorSyncScrolling;
@@ -318,6 +319,8 @@ NSString * const MPDefaultHtmlStyleName = @"GitHub2";
 - (void)loadDefaultUserDefaults
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if (![defaults objectForKey:@"editorConvertNotionCalloutsOnPaste"])
+        self.editorConvertNotionCalloutsOnPaste = NO;
     if (![defaults objectForKey:@"editorMaximumWidth"])
         self.editorMaximumWidth = 1000.0;
     if (![defaults objectForKey:@"editorAutoIncrementNumberedLists"])

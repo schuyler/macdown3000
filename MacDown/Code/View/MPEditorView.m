@@ -7,6 +7,7 @@
 //
 
 #import "MPEditorView.h"
+#import "MPPreferences.h"
 #import "NSPasteboard+Types.h"
 #import "FileURLInlining.h"
 #import <CoreServices/CoreServices.h>
@@ -323,6 +324,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 // Share one insertion operation between all native paste entry points.
 - (BOOL)insertConvertedAsideFromPasteboard:(NSPasteboard *)pasteboard
 {
+    if (![MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste) return NO;
     NSString *original=[pasteboard stringForType:NSPasteboardTypeString];
     if (!original || [original rangeOfString:@"<aside>" options:NSCaseInsensitiveSearch].location==NSNotFound ||
         MPPasteIsInsideCode(self.string,self.selectedRange.location)) return NO;

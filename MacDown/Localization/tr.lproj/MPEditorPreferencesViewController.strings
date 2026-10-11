@@ -46,3 +46,6 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (Artı işareti)";
 
+
+/* Optional Notion clipboard conversion; experimental and off by default. */
+"NCP-opt-cel.title" = "Yapıştırırken Notion kutularını dönüştür (beta testi)";

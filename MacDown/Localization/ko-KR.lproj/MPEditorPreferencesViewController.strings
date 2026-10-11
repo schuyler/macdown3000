@@ -61,3 +61,6 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+(더하기 기호)";
 
+
+/* Optional Notion clipboard conversion; experimental and off by default. */
+"NCP-opt-cel.title" = "붙여넣을 때 Notion 콜아웃 변환 (베타 테스트)";

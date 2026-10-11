@@ -75,7 +75,7 @@
     self.savedStyleName=self.document.preferences.htmlStyleName;
     // Keep resource loading local and independent of another suite's theme.
     self.document.preferences.htmlStyleName=@"GitHub2";
-    NSDictionary *settings=@{@"htmlMathJax":@NO,@"extensionSmartyPants":@NO,@"htmlSyntaxHighlighting":@NO,
+    NSDictionary *settings=@{@"editorConvertNotionCalloutsOnPaste":@YES,@"htmlMathJax":@NO,@"extensionSmartyPants":@NO,@"htmlSyntaxHighlighting":@NO,
         @"htmlMermaid":@NO,@"htmlGraphviz":@NO,@"extensionTables":@YES,@"htmlTaskList":@YES,@"extensionFencedCode":@YES,
         @"extensionIntraEmphasis":@YES,@"extensionUnderline":@YES,@"extensionStrikethough":@YES};
     NSMutableDictionary *saved=[NSMutableDictionary dictionary];

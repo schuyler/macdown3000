@@ -61,3 +61,6 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (Znak plus)";
 
+
+/* Optional Notion clipboard conversion; experimental and off by default. */
+"NCP-opt-cel.title" = "Konvertovať rámčeky Notion pri vložení (beta test)";

@@ -19,6 +19,7 @@
 #import <XCTest/XCTest.h>
 #import <CoreServices/CoreServices.h>
 #import "MPEditorView.h"
+#import "MPPreferences.h"
 
 static NSString * const kOldMarkdownPasteboardType = @"net.daringfireball.markdown";
 static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdown-interop";
@@ -26,6 +27,7 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 @interface MPEditorViewPasteboardTests : XCTestCase
 @property (strong) MPEditorView *editorView;
 @property (strong) NSPasteboard *pasteboard;
+@property BOOL savedNotionConversion;
 @end
 
 @implementation MPEditorViewPasteboardTests
@@ -33,6 +35,8 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 - (void)setUp
 {
     [super setUp];
+    self.savedNotionConversion=[MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste;
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=YES;
     self.editorView = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 500, 300)];
     self.pasteboard = [NSPasteboard pasteboardWithName:@"MPEditorViewPasteboardTestPB"];
     [self.pasteboard clearContents];
@@ -40,6 +44,7 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
 
 - (void)tearDown
 {
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=self.savedNotionConversion;
     [self.pasteboard clearContents];
     self.pasteboard = nil;
     self.editorView = nil;
@@ -291,17 +296,19 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     self.editorView.richText=NO;self.editorView.allowsUndo=YES;
     NSInteger ownedChangeCount=board.changeCount;
     @try {
-        for (NSUInteger scenario=0;scenario<4;scenario++) {
+        for (NSUInteger scenario=0;scenario<8;scenario++) {
             [board clearContents];
             [board setString:@"            <aside>\n            💡\n            Body\n            </aside>" forType:NSPasteboardTypeString];
             [board setString:@"<html><body>Body</body></html>" forType:NSPasteboardTypeHTML];
-            if (scenario>=2) [board setData:[[board stringForType:NSPasteboardTypeString] dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+            if (scenario%4>=2) [board setData:[[board stringForType:NSPasteboardTypeString] dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+            [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=scenario<4;
             ownedChangeCount=board.changeCount;
             self.editorView.string=@"Before\n\nOLD\n\nAfter";
             self.editorView.selectedRange=NSMakeRange(8,3);
             [self.editorView.undoManager removeAllActions];
             if (scenario%2) [self.editorView pasteAsPlainText:nil];else [self.editorView paste:nil];
-            XCTAssertEqualObjects(self.editorView.string,@"Before\n\n::: {.callout-tip}\n💡\nBody\n:::\n\nAfter");
+            NSString *expected=scenario<4 ? @"Before\n\n::: {.callout-tip}\n💡\nBody\n:::\n\nAfter" : @"Before\n\n            <aside>\n            💡\n            Body\n            </aside>\n\nAfter";
+            XCTAssertEqualObjects(self.editorView.string,expected);
             [self.editorView.undoManager undo];
             XCTAssertEqualObjects(self.editorView.string,@"Before\n\nOLD\n\nAfter");
         }
@@ -322,6 +329,24 @@ static NSString * const kNewMarkdownInteropPasteboardType = @"app.macdown.markdo
     self.editorView.richText=NO;
     XCTAssertTrue([self.editorView readSelectionFromPasteboard:self.pasteboard]);
     XCTAssertEqualObjects(self.editorView.string,source);
+}
+
+- (void)testDisabledConversionPreservesExternalAndInternalNativePasteboardReads
+{
+    [MPPreferences sharedInstance].editorConvertNotionCalloutsOnPaste=NO;
+    NSString *source=@"<aside>\n💡\nBody\n</aside>";
+    for (NSUInteger internal=0;internal<2;internal++) {
+        for (NSUInteger typed=0;typed<2;typed++) {
+            [self.pasteboard clearContents];
+            [self.pasteboard setString:source forType:NSPasteboardTypeString];
+            if (internal) [self.pasteboard setData:[source dataUsingEncoding:NSUTF8StringEncoding] forType:kNewMarkdownInteropPasteboardType];
+            self.editorView.string=@"";
+            self.editorView.richText=NO;
+            BOOL success=typed ? [self.editorView readSelectionFromPasteboard:self.pasteboard type:NSPasteboardTypeString] : [self.editorView readSelectionFromPasteboard:self.pasteboard];
+            XCTAssertTrue(success);
+            XCTAssertEqualObjects(self.editorView.string,source);
+        }
+    }
 }
 
 @end

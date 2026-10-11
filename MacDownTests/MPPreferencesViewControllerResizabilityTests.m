@@ -587,4 +587,30 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }
 }
 
+- (void)testEditorNotionBetaCheckboxControlsTheOptInPreference
+{
+    MPPreferences *preferences=MPPreferences.sharedInstance;
+    BOOL saved=preferences.editorConvertNotionCalloutsOnPaste;
+    @try {
+        preferences.editorConvertNotionCalloutsOnPaste=NO;
+        MPEditorPreferencesViewController *controller=[MPEditorPreferencesViewController new];
+        NSUInteger matches=0;
+        for (NSButton *button in MPCheckboxes(MPContentView(controller))) {
+            NSString *keyPath=[button infoForBinding:NSValueBinding][NSObservedKeyPathKey];
+            if (![keyPath isEqualToString:@"self.preferences.editorConvertNotionCalloutsOnPaste"]) continue;
+            matches++;
+            XCTAssertTrue(button.enabled);
+            XCTAssertEqual(button.state,NSControlStateValueOff);
+            XCTAssertTrue([button.title.lowercaseString containsString:@"beta"] || [button.title.lowercaseString containsString:@"bêta"]);
+            [button performClick:nil];
+            XCTAssertTrue(preferences.editorConvertNotionCalloutsOnPaste);
+            [button performClick:nil];
+            XCTAssertFalse(preferences.editorConvertNotionCalloutsOnPaste);
+        }
+        XCTAssertEqual(matches,1u);
+    } @finally {
+        preferences.editorConvertNotionCalloutsOnPaste=saved;
+    }
+}
+
 @end

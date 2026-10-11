@@ -10,6 +10,7 @@
 #import "MPPreferences.h"
 
 @interface MPPreferences (MigrationTesting)
+- (void)loadDefaultUserDefaults;
 + (BOOL)migrateLegacyDomain:(NSString *)domain fromDefaults:(NSUserDefaults *)source
                 toDefaults:(NSUserDefaults *)destination timeout:(NSTimeInterval)seconds;
 @end
@@ -1255,6 +1256,26 @@
     {
         dispatch_semaphore_signal(source.releaseRead);
         [destination removePersistentDomainForName:suite];
+    }
+}
+
+- (void)testNotionConversionDefaultsToDisabledAndPreservesExplicitOptIn
+{
+    NSUserDefaults *defaults=NSUserDefaults.standardUserDefaults;
+    id saved=[defaults objectForKey:@"editorConvertNotionCalloutsOnPaste"];
+    @try {
+        [defaults removeObjectForKey:@"editorConvertNotionCalloutsOnPaste"];
+        [self.preferences loadDefaultUserDefaults];
+        XCTAssertFalse(self.preferences.editorConvertNotionCalloutsOnPaste);
+        self.preferences.editorConvertNotionCalloutsOnPaste=YES;
+        [self.preferences loadDefaultUserDefaults];
+        XCTAssertTrue(self.preferences.editorConvertNotionCalloutsOnPaste);
+        self.preferences.editorConvertNotionCalloutsOnPaste=NO;
+        [self.preferences loadDefaultUserDefaults];
+        XCTAssertFalse(self.preferences.editorConvertNotionCalloutsOnPaste);
+    } @finally {
+        if (saved) [defaults setObject:saved forKey:@"editorConvertNotionCalloutsOnPaste"];
+        else [defaults removeObjectForKey:@"editorConvertNotionCalloutsOnPaste"];
     }
 }
 
