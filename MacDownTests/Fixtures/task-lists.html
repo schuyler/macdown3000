@@ -67,13 +67,33 @@
 </li>
 </ol>
 
+<h2 id="indeterminate-tasks">Indeterminate Tasks</h2>
+
+<ul>
+<li class="task-list-item"><input type="checkbox" data-checkbox-state="indeterminate" data-checkbox-index="18"> Partly done
+</li>
+<li class="task-list-item"><input type="checkbox" data-checkbox-index="20"> Open task
+
+<ul>
+<li class="task-list-item"><input type="checkbox" data-checkbox-state="indeterminate" data-checkbox-index="19"> Partly done subtask
+</li>
+</ul>
+</li>
+<li class="task-list-item"><input type="checkbox" checked data-checkbox-index="21"> Done task
+</li>
+</ul>
+
 <h2 id="edge-cases">Edge Cases</h2>
 
 <ul>
 <li>[] Invalid (no space)</li>
-<li class="task-list-item"><p><input type="checkbox" data-checkbox-index="18"> Valid unchecked
+<li class="task-list-item"><p><input type="checkbox" data-checkbox-index="22"> Valid unchecked
 -[ ] Invalid (no space after dash)</p>
 </li>
 <li><p>[x ] Invalid (space before X)</p></li>
 <li><p>[ x] Invalid (space after bracket)</p></li>
+<li class="task-list-item"><p><input type="checkbox" data-checkbox-state="indeterminate" data-checkbox-index="23"> Valid indeterminate</p>
+</li>
+<li><p>[- ] Invalid (space after dash)</p></li>
+<li><p>[--] Invalid (two dashes)</p></li>
 </ul>

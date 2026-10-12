@@ -117,6 +117,13 @@ void hoedown_patch_render_blockcode(
 // Supports task list syntax if HOEDOWN_HTML_USE_TASK_LIST is on.
 // Implementation based on hoextdown, with interactive checkbox support.
 // Related to GitHub issue #269.
+//
+// Marker states: "[ ]" unchecked, "[x]"/"[X]" checked, "[-]" indeterminate
+// (the partially-done state used by GitHub and GitLab task lists; see
+// https://github.com/orgs/community/discussions/19199). The indeterminate
+// state is a DOM property rather than an attribute, so the input is tagged
+// with data-checkbox-state="indeterminate" for tasklist.js to apply, and no
+// `checked` attribute is emitted.
 void hoedown_patch_render_listitem(
     hoedown_buffer *ob, const hoedown_buffer *text, hoedown_list_flags flags,
     const hoedown_renderer_data *data)
@@ -128,28 +135,29 @@ void hoedown_patch_render_listitem(
         if (flags & HOEDOWN_LI_BLOCK)
             offset = 3;
 
-        // Do task list checkbox ([x], [X], or [ ]).
-        if (USE_TASK_LIST(state) && text->size >= 3)
+        // Do task list checkbox ([x], [X], [-], or [ ]). The marker is three
+        // bytes at `offset`, so the bound has to cover the offset too: a
+        // block-level item with fewer than three bytes of content would
+        // otherwise be read past its end.
+        if (USE_TASK_LIST(state) && text->size >= offset + 3)
         {
+            const char *stateAttributes = NULL;
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
-            {
-                HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
-                hoedown_buffer_put(ob, text->data, offset);
-                // Include data-checkbox-index for interactive checkbox support
-                hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
-				offset += 3;
-            }
+                stateAttributes = "";
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
                      strncmp((char *)(text->data + offset), "[X]", 3) == 0)
+                stateAttributes = " checked";
+            else if (strncmp((char *)(text->data + offset), "[-]", 3) == 0)
+                stateAttributes = " data-checkbox-state=\"indeterminate\"";
+
+            if (stateAttributes)
             {
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support
                 hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" checked data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
+                    "<input type=\"checkbox\"%s data-checkbox-index=\"%d\">",
+                    stateAttributes, g_checkbox_index++);
 				offset += 3;
             }
             else
