@@ -261,4 +261,77 @@
     XCTAssertTrue([html length] > 0, @"HTML should not be empty");
 }
 
+
+#pragma mark - Font Selection Tests
+
+/**
+ * The HTML-CSS output jax prefers fonts installed on the machine over
+ * MathJax's own, and macOS ships STIX faces that WebKit resolves by name.
+ * Declining them keeps the preview on MathJax's TeX faces; otherwise it
+ * typesets digits and operators in STIXGeneral-Regular, a Times-metric face
+ * indistinguishable from body text.
+ *
+ * Both settings are matched by value, and matched inside the 'HTML-CSS'
+ * block. Prose naming either setting appears in the same embedded script and
+ * must not satisfy the assertion, and a setting hoisted out of the block
+ * reaches no output jax at all: MathJax merges configuration per jax id, so
+ * availableFonts at the top level of MathJax.Hub.Config is silently ignored
+ * and the STIX regression returns.
+ */
+- (void)testPreviewDeclinesLocallyInstalledMathFonts
+{
+    self.dataSource.markdown = @"Inline \\( x = 2y + 15 \\)";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    NSString *html = self.delegate.lastHTML;
+    XCTAssertNotNil(html, @"Preview render should produce HTML");
+
+    // [^}] spans newlines, so this stays within the 'HTML-CSS' object.
+    NSString *inBlock = @"['\"]?HTML-CSS['\"]?\\s*:\\s*\\{[^}]*";
+    NSUInteger (^matchCount)(NSString *) = ^(NSString *setting) {
+        NSRegularExpression *re =
+            [NSRegularExpression regularExpressionWithPattern:
+                [inBlock stringByAppendingString:setting]
+                                                      options:0 error:NULL];
+        return [re numberOfMatchesInString:html options:0
+                                     range:NSMakeRange(0, html.length)];
+    };
+
+    XCTAssertEqual(matchCount(@"['\"]?availableFonts['\"]?\\s*:\\s*\\[\\s*\\]"),
+                   (NSUInteger)1,
+                   @"HTML-CSS config should set availableFonts to an empty "
+                   @"list, so locally installed STIX faces do not win over "
+                   @"MathJax's TeX faces");
+    XCTAssertEqual(matchCount(@"['\"]?preferredFont['\"]?\\s*:\\s*null"),
+                   (NSUInteger)1,
+                   @"HTML-CSS config should null preferredFont: MathJax tests "
+                   @"the preferred font even when it is absent from "
+                   @"availableFonts, so an empty list alone still takes the "
+                   @"local path on a machine with the TeX fonts installed");
+}
+
+/**
+ * MathJax serves its TeX faces from the same CDN that serves its scripts.
+ * With font-src blocking that origin the output jax stalls for its web-font
+ * timeout and then falls back to bitmap image fonts.
+ *
+ * The origin is spelled out rather than derived from kMPMathJaxCDN, which is
+ * file-static and unreachable from here. Since the policy derives both
+ * directives from that constant, pointing it at another host fails this
+ * assertion rather than silently passing while the policy moves.
+ */
+- (void)testPreviewCSPAllowsMathJaxFontsFromCDN
+{
+    self.dataSource.markdown = @"Inline \\( x = 2y + 15 \\)";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    NSString *html = self.delegate.lastHTML;
+    XCTAssertNotNil(html, @"Preview render should produce HTML");
+    XCTAssertTrue(
+        [html containsString:@"font-src data: file: https://cdnjs.cloudflare.com;"],
+        @"CSP font-src should allow the CDN serving MathJax's TeX faces");
+}
+
 @end

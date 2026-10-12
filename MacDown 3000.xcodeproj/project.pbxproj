@@ -155,6 +155,7 @@
 		ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */; };
 		ISSUE318STYLERELBUILDFILE /* MPDocumentStyleUpdateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */; };
 		ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */; };
+		MJLOCALFONTSBUILDFILE /* MPMathJaxLocalFontsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = MJLOCALFONTSFILEREF /* MPMathJaxLocalFontsTests.m */; };
 		ISSUE331MRMDRNDRBUILDFILE /* MPMermaidRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */; };
 		ISSUE332GVIZRNDRBUILDFILE /* MPGraphvizRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */; };
 		ISSUE341IMGRENDERBUILDFILE /* MPImageRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */; };
@@ -732,6 +733,7 @@
 		ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPToolbarControllerTests.m; sourceTree = "<group>"; };
 		ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPDocumentStyleUpdateTests.m; sourceTree = "<group>"; };
 		ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMathJaxScrollTests.m; sourceTree = "<group>"; };
+		MJLOCALFONTSFILEREF /* MPMathJaxLocalFontsTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMathJaxLocalFontsTests.m; sourceTree = "<group>"; };
 		ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPMermaidRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE332GVIZRNDRFILEREF /* MPGraphvizRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPGraphvizRenderingTests.m; sourceTree = "<group>"; };
 		ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPImageRenderingTests.m; sourceTree = "<group>"; };
@@ -1175,6 +1177,7 @@
 				8552820CEE8D00E83AEE3897 /* MPHTMLResourceURLsTests.m */,
 				ISSUE341IMGRENDERFILEREF /* MPImageRenderingTests.m */,
 				ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */,
+				MJLOCALFONTSFILEREF /* MPMathJaxLocalFontsTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
 				66A67CD2B90882C7F91B6251 /* MPEditorViewPasteboardTests.m */,
@@ -1929,6 +1932,7 @@
 				ISSUE278TABLEBUILDFILE /* MPInsertTableTests.m in Sources */,
 				ISSUE543EXTCHGBUILDFILE /* MPExternalChangeReloadTests.m in Sources */,
 				ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */,
+				MJLOCALFONTSBUILDFILE /* MPMathJaxLocalFontsTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
 				C185BB0F201C78DF6D946E1F /* MPEditorViewPasteboardTests.m in Sources */,
 				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
