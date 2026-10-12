@@ -1,10 +1,11 @@
 # MacDown Release Checklist
 
-**Quick reference:** Four manual steps are required to release MacDown:
+**Quick reference:** Five manual steps are required to release MacDown:
 1. Update the changelog
 2. Tag and push the version
 3. Staple the DMG (after notarization)
-4. Triage the milestone's open issues (after publish)
+4. Publish the appcast (after the release is published)
+5. Triage the milestone's open issues (after publish)
 
 (There's also a one-time auto-update readiness prerequisite before the first update-enabled release — see below.)
 
@@ -16,8 +17,8 @@ See `plans/release-process.md` for detailed instructions.
 
 Sparkle 2 auto-updates are wired up in the app but **inert** until the
 release-blockers below are cleared, by the maintainer, before the first real
-release that should offer auto-updates. None of these are per-release steps
-— once each is resolved, it never needs to be redone for later releases.
+release that should offer auto-updates. Each is resolved once and never
+redone — the per-release work they unlock is Step 4.
 
 - [x] **The EdDSA signing keypair exists**, generated with the `generate_keys`
   tool Sparkle 2.9.5 vendors at `Pods/Sparkle/bin/generate_keys` (present
@@ -74,33 +75,45 @@ release that should offer auto-updates. None of these are per-release steps
   runtime, team identifier, and a secure timestamp at three gates. No
   per-release action is required.
 
-- [ ] **Appcast generation and hosting (issue #554).** The remaining blocker.
-  Until a signed `appcast.xml` is served at `SUFeedURL`, auto-update stays
-  inert no matter what else in this section is checked.
+- [x] **Appcast generation and hosting (issue #554).** `Tools/update_appcast.py`
+  renders one signed `<item>` per release and splices it into
+  `docs/sparkle/macdown3000/stable/appcast.xml`. The tool is the one-time part;
+  running it is a per-release step — see Step 4.
 
-**The private key is never committed.** It belongs in 1Password and in the
-GitHub secret that appcast automation will read (issue #554). It has no place
-in this repository, and the export written by `generate_keys -x` is as
-sensitive as the key itself — delete it once it is stored.
+  `SUFeedURL` returns 404 until the first item is published. That is harmless,
+  since no shipped build polls the feed yet, and it is not to be "fixed" with a
+  hand-written placeholder, which would be served live.
 
-**Signing without the Keychain.** Both signing tools accept the key on
-standard input, so no machine needs Keychain access at publish time:
+**The private key is never committed.** It belongs in 1Password, which is where
+Step 4 reads it from at publish time. It has no place in this repository, and
+the export written by `generate_keys -x` is as sensitive as the key itself —
+delete it once it is stored. Publishing is manual, so nothing in CI needs the
+key; don't put it in a GitHub secret until something reads it from there.
 
-```bash
-op read "op://Personal/MacDown Sparkle EdDSA/password" \
-  | ./Pods/Sparkle/bin/generate_appcast --ed-key-file - ./release-dmgs/
-```
+**Signing without the Keychain.** The key is read from standard input, so no
+machine needs Keychain access at publish time. Step 4 pipes it in with the
+1Password CLI (`brew install --cask 1password-cli`); without it, copy the key
+from 1Password and substitute `pbpaste |` for `op read …|`.
 
-That needs the 1Password CLI (`brew install --cask 1password-cli`). Without
-it, copy the key from 1Password and substitute `pbpaste |` for `op read …|`.
+**Use `Tools/update_appcast.py`, never `generate_appcast`.** Sparkle's
+`generate_appcast` regenerates the whole feed from a directory of DMGs: it
+reserializes the file, destroying the CDATA release notes, comments and
+processing instructions in items already published, and drops any item whose
+DMG is not in that directory. `update_appcast.py` renders one item and splices
+it in as text, so published items are never rewritten.
 
-`sign_update` takes the same `--ed-key-file -`. Do not use `-s <key>`: it is
-deprecated in Sparkle 2.9.5 and unsupported for newly generated keys.
+For the same reason, never point `sign_update` at the appcast. Handed an XML
+file it embeds the signature *inside* it, rewriting the file in place, then
+exits 0 printing nothing. `update_appcast.py` refuses a `--dmg` that resolves
+to the appcast, but a hand-run `sign_update` has no such guard.
 
-**On the appcast:** no automation in this repo produces or publishes one, and
-nothing is served at `SUFeedURL` today. GitHub Pages serves macdown.app from
-`docs/` on `main`, so publishing the feed is a commit to
-`docs/sparkle/macdown3000/stable/appcast.xml` — see issue #554.
+`sign_update` takes `--ed-key-file -`. Do not use `-s <key>`: it is deprecated
+in Sparkle 2.9.5 and unsupported for newly generated keys.
+
+**On the appcast:** GitHub Pages serves macdown.app from `docs/` on `main`, so
+publishing the feed is a commit to `docs/sparkle/macdown3000/stable/appcast.xml`
+— not SSH, not separate hosting. Jekyll copies a file starting `<?xml …?>`
+byte-for-byte, so the appcast must never be given YAML front matter.
 
 ---
 
@@ -163,7 +176,63 @@ Once you receive the notarization approval email:
 
 ---
 
-## Step 4: Triage the Milestone's Open Issues
+## Step 4: Publish the Appcast
+
+Installed copies only learn about a release when an `<item>` for it appears in
+`docs/sparkle/macdown3000/stable/appcast.xml`. Run this from a clean `main`
+with `bundle exec pod install` done, after the release is published.
+
+`--release` derives every per-release input — the DMG, both versions, the
+channel, the changelog section — from the version string and the state of the
+repo; the operator supplies only the version and the signing key.
+
+**The first published item should be a pre-release**, so any residual mistake
+reaches only opted-in users.
+
+**Prerequisite: wait for `staple-release.yml` to succeed** —
+https://github.com/schuyler/macdown3000/actions. `--release` downloads the
+released DMG and runs `xcrun stapler validate` on it; running before that
+workflow finishes makes the check fail, and `--release` doesn't accept `--dmg`
+as a workaround.
+
+- [ ] **Dry-run and read the output.** It signs for real and runs the stapling
+  check for real — the only thing it skips is writing the file — so a bad key,
+  a missing `sign_update`, or an unstapled DMG surfaces here rather than after
+  a real publish.
+  ```bash
+  op read "op://Personal/MacDown Sparkle EdDSA/password" \
+    | python3 Tools/update_appcast.py --release 3000.1.0 --dry-run
+  ```
+
+- [ ] **Run the same command without `--dry-run`.**
+
+- [ ] **Commit and push.** The appcast is untracked on the first-ever publish,
+  so add it by path — `git commit -am` would silently skip it.
+  ```bash
+  git add docs/sparkle/macdown3000/stable/appcast.xml
+  git commit -m "Publish 3000.1.0 appcast" && git push
+  ```
+  GitHub Pages serves the feed at `SUFeedURL`.
+
+- [ ] **Confirm the feed is live** once Pages has rebuilt:
+  ```bash
+  curl -sSf https://macdown.app/sparkle/macdown3000/stable/appcast.xml \
+    | xmllint --noout -
+  ```
+
+A version already in the feed is a hard error with no override — it means
+either a re-run of a publish that already succeeded, or a `CFBundleVersion`
+collision between release branches (#564). To recover from a genuinely bad
+item, delete that `<item>` block by hand and re-run.
+
+Explicit mode (`--dmg`, `--url`, `--description-file`, `--channel`, and the
+rest) is the recovery path for incidents the derivation can't handle — see
+`python3 Tools/update_appcast.py --help` or
+`plans/sparkle-appcast-automation.md` §3.2.
+
+---
+
+## Step 5: Triage the Milestone's Open Issues
 
 - [ ] **Review open issues in the release's milestone** and close any fully addressed by this release, with a comment citing the fixing PR
   - Don't wait for the original submitter to confirm the fix — the changelog/PR content is sufficient evidence
@@ -182,7 +251,7 @@ The workflow handles everything else:
 - ✅ Submits for Apple notarization
 - ✅ Creates the GitHub release as a draft
 
-Your job is just updating the changelog, tagging, stapling, and triaging the milestone afterward.
+Your job is just updating the changelog, tagging, stapling, publishing the appcast, and triaging the milestone afterward.
 
 ---
 
@@ -199,5 +268,5 @@ Your job is just updating the changelog, tagging, stapling, and triaging the mil
 
 ---
 
-**Last updated:** 2026-08-03
+**Last updated:** 2026-08-04
 **Philosophy:** Only actual manual steps are in this checklist. Everything else is automated.
