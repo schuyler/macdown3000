@@ -10,6 +10,8 @@
 #import "MPFileWatcher.h"
 
 @interface MPResourceWatcherSet ()
+@property (copy) NSSet<NSString *> *requestedPaths;
+@property (strong) NSMutableDictionary<NSString *, NSUUID *> *watcherTokens;
 @property (strong) NSMutableDictionary<NSString *, MPFileWatcher *> *watchers;
 @end
 
@@ -18,8 +20,10 @@
 - (instancetype)init
 {
     self = [super init];
-    if (self)
+    if (self) {
         self.watchers = [NSMutableDictionary dictionary];
+        self.watcherTokens = [NSMutableDictionary dictionary];
+    }
     return self;
 }
 
@@ -35,6 +39,7 @@
 
 - (void)updateWatchedPaths:(NSSet<NSString *> *)paths
 {
+    self.requestedPaths = [paths copy];
     NSSet *currentPaths = [NSSet setWithArray:self.watchers.allKeys];
 
     // Remove watchers for paths no longer referenced
@@ -44,6 +49,7 @@
     {
         [self.watchers[path] stopWatching];
         [self.watchers removeObjectForKey:path];
+        [self.watcherTokens removeObjectForKey:path];
     }
 
     // Add watchers for new paths
@@ -60,22 +66,28 @@
     // Skip paths that cannot receive vnode watchers (nil/empty or on a remote
     // volume) before constructing a watcher, mirroring the guard in
     // -[MPDocument startFileWatching]. Related to #478.
-    if (![MPFileWatcher canWatchPath:path])
+    if (![self.requestedPaths containsObject:path] || self.watchers[path]
+            || ![MPFileWatcher canWatchPath:path])
         return;
 
     __weak MPResourceWatcherSet *weakSelf = self;
     NSString *watchedPath = [path copy];
 
+    NSUUID *token = NSUUID.UUID;
+    self.watcherTokens[path] = token;
+    __block __weak MPFileWatcher *weakWatcher = nil;
     MPFileWatcher *watcher = [[MPFileWatcher alloc] initWithPath:path
         handler:^(NSString *p) {
             MPResourceWatcherSet *strongSelf = weakSelf;
-            if (strongSelf)
+            if (strongSelf && strongSelf.watchers[watchedPath] == weakWatcher
+                    && [strongSelf.watcherTokens[watchedPath] isEqual:token])
                 [strongSelf.delegate resourceWatcherSet:strongSelf
                                   didDetectChangeAtPath:p];
         }
         cancelHandler:^(NSString *p) {
             MPResourceWatcherSet *cancelSelf = weakSelf;
-            if (!cancelSelf)
+            if (!cancelSelf || cancelSelf.watchers[watchedPath] != weakWatcher
+                    || ![cancelSelf.watcherTokens[watchedPath] isEqual:token])
                 return;
             [cancelSelf.watchers removeObjectForKey:watchedPath];
             // File was deleted or renamed (e.g. atomic save by external editor).
@@ -85,13 +97,14 @@
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{
                 MPResourceWatcherSet *strongSelf = weakSelf;
-                if (!strongSelf)
+                if (!strongSelf || ![strongSelf.watcherTokens[watchedPath] isEqual:token])
                     return;
                 if (![[NSFileManager defaultManager] fileExistsAtPath:watchedPath])
                     return;
                 [strongSelf addWatcherForPath:watchedPath];
             });
         }];
+    weakWatcher = watcher;
 
     // Only store if watcher successfully started
     if (watcher.isWatching)
@@ -104,9 +117,11 @@
 
 - (void)stopAll
 {
+    self.requestedPaths = [NSSet set];
     for (MPFileWatcher *watcher in self.watchers.allValues)
         [watcher stopWatching];
     [self.watchers removeAllObjects];
+    [self.watcherTokens removeAllObjects];
 }
 
 @end

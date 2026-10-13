@@ -179,6 +179,29 @@ NSString *MPReadFileOfPath(NSString *path)
     return s;
 }
 
+NSString *MPWriteDataToUniqueTemporaryFile(NSData *data, NSString *fileName, NSError **error)
+{
+    if (!data || !fileName.length || ![fileName isEqualToString:fileName.lastPathComponent]
+            || [fileName isEqualToString:@"."] || [fileName isEqualToString:@".."]) {
+        if (error)
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                                        code:NSFileWriteInvalidFileNameError userInfo:nil];
+        return nil;
+    }
+    NSString *directory = [NSTemporaryDirectory() stringByAppendingPathComponent:
+        [@"MacDown-" stringByAppendingString:NSUUID.UUID.UUIDString]];
+    NSFileManager *manager = NSFileManager.defaultManager;
+    if (![manager createDirectoryAtPath:directory withIntermediateDirectories:NO
+                             attributes:@{NSFilePosixPermissions: @0700} error:error])
+        return nil;
+    NSString *path = [directory stringByAppendingPathComponent:fileName];
+    if (![data writeToFile:path options:NSDataWritingWithoutOverwriting error:error]) {
+        [manager removeItemAtPath:directory error:NULL];
+        return nil;
+    }
+    return path;
+}
+
 NSDictionary *MPGetDataMap(NSString *name)
 {
     NSBundle *bundle = [NSBundle mainBundle];

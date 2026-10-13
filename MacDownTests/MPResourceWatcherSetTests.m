@@ -246,4 +246,40 @@
                   @"Delegate should be called immediately when a new watcher is installed");
 }
 
+- (void)testPendingAtomicRecoveryDoesNotRestartAfterStopAll {
+    NSString *path = [self createTestFileWithName:@"stop-recovery.png"];
+    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
+    [self atomicallySaveContent:@"replacement" toPath:path];
+    XCTestExpectation *finished = [self expectationWithDescription:@"recovery delay expired"];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self.watcherSet stopAll];
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{ [finished fulfill]; });
+    [self waitForExpectationsWithTimeout:2 handler:nil];
+    XCTAssertEqual(self.watcherSet.watchedPaths.count, 0u);
+    XCTAssertEqual(self.changedPaths.count, 1u);
+}
+
+- (void)testAtomicRecoveryCannotReplaceWatcherAfterStopAndReadd {
+    NSString *path = [self createTestFileWithName:@"generation.png"];
+    NSSet *paths = [NSSet setWithObject:path];
+    [self.watcherSet updateWatchedPaths:paths];
+    [self atomicallySaveContent:@"new inode" toPath:path];
+    XCTestExpectation *finished = [self expectationWithDescription:@"old recovery expires"];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.15 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        [self.watcherSet stopAll];
+        [self.watcherSet updateWatchedPaths:paths];
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.8 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        XCTAssertEqualObjects(self.watcherSet.watchedPaths, paths);
+        XCTAssertEqual(self.changedPaths.count, 2u);
+        [finished fulfill];
+    });
+    [self waitForExpectations:@[finished] timeout:2.0];
+}
+
 @end

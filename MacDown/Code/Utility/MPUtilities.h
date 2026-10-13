@@ -34,6 +34,9 @@ NSString *MPThemePathForName(NSString *name);
 NSURL *MPHighlightingThemeURLForName(NSString *name);
 NSString *MPReadFileOfPath(NSString *path);
 
+// Write data inside a private, unique temporary directory; never overwrite a target.
+NSString *MPWriteDataToUniqueTemporaryFile(NSData *data, NSString *fileName, NSError **error);
+
 // Testable variants that accept explicit paths instead of using
 // NSBundle mainBundle / MPDataDirectory
 NSURL *MPHighlightingThemeURLForNameInPaths(

@@ -8,6 +8,7 @@
 
 #import "MPDocument.h"
 #import <WebKit/WebKit.h>
+#import <CommonCrypto/CommonDigest.h>
 #import <JJPluralForm/JJPluralForm.h>
 #import <hoedown/html.h>
 #import "hoedown_html_patch.h"
@@ -41,6 +42,24 @@
 // Issue #504: PDF export post-processing (clickable internal anchor links).
 #import <PDFKit/PDFKit.h>
 #import "MPPDFAnchorInjector.h"
+
+// Compare original bytes, before CRLF normalization, without retaining a second
+// copy of the document. Chunking avoids truncating NSData.length to CC_LONG.
+static NSData *MPDocumentContentFingerprint(NSData *data)
+{
+    CC_SHA256_CTX context;
+    CC_SHA256_Init(&context);
+    const unsigned char *bytes = data.bytes;
+    NSUInteger offset = 0;
+    while (offset < data.length) {
+        CC_LONG count = (CC_LONG)MIN(data.length - offset, (NSUInteger)(1024 * 1024));
+        CC_SHA256_Update(&context, bytes + offset, count);
+        offset += count;
+    }
+    unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256_Final(digest, &context);
+    return [NSData dataWithBytes:digest length:sizeof(digest)];
+}
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
 
@@ -362,6 +381,9 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // always cleared once the callback fires.
 @property (strong) NSURL *pdfExportURL;
 @property BOOL isPreviewReady;
+@property BOOL documentClosed;
+@property NSUInteger fileWatchGeneration;
+@property NSUInteger saveGeneration;
 @property (strong) NSURL *currentBaseUrl;
 @property (copy) NSString *currentPreviewResourceHTML;
 @property CGFloat lastPreviewScrollTop;
@@ -393,6 +415,9 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 // Issue #290: File watching for auto-reload
 @property (strong) MPFileWatcher *fileWatcher;
 @property (nonatomic) BOOL isSelfSaving;
+@property (copy) NSData *diskContentFingerprint;
+@property (copy) NSData *pendingDiskFingerprint;
+@property BOOL collectingDiskFingerprint;
 
 // Issue #543: State for collapsing bursts of external-change notifications.
 // externalChangeCoalescePending is set while a debounced decision is in flight;
@@ -608,12 +633,38 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (NSString *)markdown
 {
-    return self.editor.string;
+    return self.editor ? self.editor.string : self.loadedString;
 }
 
 - (void)setMarkdown:(NSString *)markdown
 {
-    self.editor.string = markdown;
+    MPEditorView *editor = self.editor;
+    if (!editor) {
+        // Initial/background content remains available until the nib loads.
+        self.loadedString = markdown;
+        return;
+    }
+    NSString *content = markdown ?: @"";
+    NSString *previous = [editor.string copy];
+    if ([previous isEqualToString:content]) return;
+
+    NSUndoManager *undo = self.undoManager;
+    BOOL registersUndo = undo.isUndoRegistrationEnabled;
+    BOOL startsGroup = registersUndo && !undo.isUndoing && !undo.isRedoing;
+    if (startsGroup) [undo beginUndoGrouping];
+    @try {
+        if (registersUndo) [[undo prepareWithInvocationTarget:self] setMarkdown:previous];
+        // A scripting property is literal content, so bypass the interactive
+        // shouldChangeText delegate's matching-character autocompletion.
+        editor.string = content;
+        self.loadedString = nil;
+        [editor didChangeText];
+        // NSDocument tracks registered groups and undo/redo itself. Incrementing
+        // here as well would leave the document dirty after undo to its baseline.
+        if (!registersUndo) [self updateChangeCount:NSChangeDone];
+    } @finally {
+        if (startsGroup) [undo endUndoGrouping];
+    }
 }
 
 - (NSString *)html
@@ -857,6 +908,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // can have the correct dimention for size-limiting and stuff. See
     // https://github.com/uranusjr/macdown/issues/236
     [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        if (self.documentClosed) return;
         [self setupEditor:nil];
         [self redrawDivider];
         [self reloadFromLoadedString];
@@ -1269,6 +1321,14 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (void)close
 {
+    self.documentClosed = YES;
+    [self stopFileWatching];
+    [self.renderCompletionHandlers removeAllObjects];
+    self.pdfExportURL = nil;
+    self.renderer.delegate = nil;
+    self.renderer.dataSource = nil;
+    self.preview.editingDelegate = nil;
+    self.preview.resourceLoadDelegate = nil;
     if (self.needsToUnregister)
     {
         // Close can be called multiple times, but this can only be done once.
@@ -1329,7 +1389,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Prevent save dialog on an unnamed, empty document. The file will still
     // show as modified (because it is), but no save dialog will be presented
     // when the user closes it.
-    if (!self.presentedItemURL && !self.editor.string.length)
+    if (!self.presentedItemURL && !self.markdown.length)
         return NO;
     return [super isDocumentEdited];
 }
@@ -1339,6 +1399,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     // Issue #290: Mark that we're saving to avoid triggering reload
     self.isSelfSaving = YES;
+    NSUInteger saveGeneration = ++self.saveGeneration;
 
     // Issue #290: Capture previous URL before super updates it (for Save As detection)
     NSURL *previousURL = self.fileURL;
@@ -1356,13 +1417,23 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         }
     }
 
-    BOOL result = [super writeToURL:url ofType:typeName error:outError];
+    self.pendingDiskFingerprint = nil;
+    self.collectingDiskFingerprint = YES;
+    BOOL result;
+    @try {
+        result = [super writeToURL:url ofType:typeName error:outError];
+    } @finally {
+        self.collectingDiskFingerprint = NO;
+    }
+    if (result && [url isEqual:self.fileURL])
+        self.diskContentFingerprint = self.pendingDiskFingerprint;
 
     // Issue #290: Clear save flag after a short delay to ensure
     // the file watcher doesn't trigger (events may be coalesced)
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
-        self.isSelfSaving = NO;
+        if (self.saveGeneration == saveGeneration)
+            self.isSelfSaving = NO;
     });
 
     // If URL changed (Save As), restart watching the new file
@@ -1421,14 +1492,22 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Checked against `url` (the destination), not self.fileURL, so a Save As
     // across volumes is classified by where the file is going, not where it
     // came from.
+    NSData *previousFingerprint = self.diskContentFingerprint;
+    BOOL result;
     if ([self shouldBypassSafeSaveForURL:url])
     {
-        return [self writeToURL:url ofType:typeName
+        result = [self writeToURL:url ofType:typeName
                 forSaveOperation:saveOperation
              originalContentsURL:self.fileURL error:outError];
     }
-    return [super writeSafelyToURL:url ofType:typeName
-                   forSaveOperation:saveOperation error:outError];
+    else
+        result = [super writeSafelyToURL:url ofType:typeName
+                       forSaveOperation:saveOperation error:outError];
+    // A recovery autosave is not a write to the original file. Publish the
+    // exact serialized snapshot only after the complete safe save succeeds.
+    self.diskContentFingerprint = result && saveOperation != NSAutosaveElsewhereOperation
+        ? self.pendingDiskFingerprint : previousFingerprint;
+    return result;
 }
 
 // Issue #371: Split out for test exposure. Checks `url` (the save
@@ -1443,7 +1522,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
 {
-    return [self.editor.string dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *content = self.editor ? self.editor.string : (self.loadedString ?: @"");
+    NSData *data = [content dataUsingEncoding:NSUTF8StringEncoding];
+    if (data && self.collectingDiskFingerprint)
+        self.pendingDiskFingerprint = MPDocumentContentFingerprint(data);
+    return data;
 }
 
 - (BOOL)readFromData:(NSData *)data ofType:(NSString *)typeName
@@ -1452,7 +1535,13 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     NSString *content = [[NSString alloc] initWithData:data
                                               encoding:NSUTF8StringEncoding];
     if (!content)
+    {
+        if (outError) *outError = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadInapplicableStringEncodingError
+            userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"The document is not valid UTF-8 text.", @"Invalid Markdown encoding")}];
         return NO;
+    }
+
+    self.diskContentFingerprint = MPDocumentContentFingerprint(data);
 
     // Normalize Windows CRLF to LF (Issue #382)
     content = [content stringByReplacingOccurrencesOfString:@"\r\n" withString:@"\n"];
@@ -2123,6 +2212,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (void)renderer:(MPRenderer *)renderer didProduceHTMLOutput:(NSString *)html
 {
+    if (self.documentClosed) return;
     // Issue #358: Only gate on alreadyRenderingInWeb when the preview has
     // completed its first load (isPreviewReady == YES).  Before the first
     // successful load, WebView frame-load delegate callbacks may not fire,
@@ -4999,12 +5089,13 @@ to link outside that scope.", \
     // watcher for an old session. Related to #478.
     [self stopFileWatching];
 
-    if (!self.fileURL || !self.fileURL.isFileURL)
+    if (self.documentClosed || !self.fileURL || !self.fileURL.isFileURL)
         return;
 
     if (![MPFileWatcher canWatchPath:self.fileURL.path])
         return;
 
+    NSUInteger generation = self.fileWatchGeneration;
     __weak MPDocument *weakSelf = self;
     self.fileWatcher = [[MPFileWatcher alloc]
         initWithPath:self.fileURL.path
@@ -5019,7 +5110,7 @@ to link outside that scope.", \
                      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
                      dispatch_get_main_queue(), ^{
                      MPDocument *s = weakSelf;
-                     if (!s) return;                                       // document closed
+                     if (!s || s.documentClosed || s.fileWatchGeneration != generation) return;
                      if (![s.fileURL.path isEqualToString:path]) return;  // Save As changed URL
                      if (s.fileWatcher.isWatching) return;                // already restarted
                      if (![[NSFileManager defaultManager] fileExistsAtPath:path]) return;
@@ -5038,6 +5129,8 @@ to link outside that scope.", \
 
 - (void)stopFileWatching
 {
+    self.fileWatchGeneration++;
+    self.externalChangeCoalescePending = NO;
     [self.fileWatcher stopWatching];
     self.fileWatcher = nil;
     [self.resourceWatcherSet stopAll];
@@ -5049,7 +5142,7 @@ to link outside that scope.", \
 - (void)handleExternalFileChange
 {
     // Ignore if this was our own save
-    if (self.isSelfSaving)
+    if (self.documentClosed || self.isSelfSaving)
         return;
 
     // Issue #543: While the keep/discard sheet is up, drop further
@@ -5071,13 +5164,14 @@ to link outside that scope.", \
         return;
     self.externalChangeCoalescePending = YES;
 
+    NSUInteger generation = self.fileWatchGeneration;
     __weak MPDocument *weakSelf = self;
     dispatch_after(
         dispatch_time(DISPATCH_TIME_NOW,
                       (int64_t)(self.externalChangeCoalesceInterval * NSEC_PER_SEC)),
         dispatch_get_main_queue(), ^{
             MPDocument *strongSelf = weakSelf;
-            if (!strongSelf)
+            if (!strongSelf || strongSelf.documentClosed || strongSelf.fileWatchGeneration != generation)
                 return;
             strongSelf.externalChangeCoalescePending = NO;
             [strongSelf processExternalFileChange];
@@ -5088,10 +5182,10 @@ to link outside that scope.", \
 {
     // Re-checked here as well as on the way in: the coalescing window can
     // straddle the start of one of our own saves.
-    if (self.isSelfSaving)
+    if (self.documentClosed || self.isSelfSaving)
         return;
 
-    if (!self.fileURL || !self.fileURL.isFileURL)
+    if (self.documentClosed || !self.fileURL || !self.fileURL.isFileURL)
         return;
 
     // Verify the file actually changed by checking modification date
@@ -5105,11 +5199,16 @@ to link outside that scope.", \
 
     NSDate *diskModDate = attrs[NSFileModificationDate];
 
-    // If dates match (or disk is older), no real change
+    // Backup restores can preserve or decrease the timestamp. With the same
+    // date, compare against the bytes actually read/saved, not the dirty editor.
     if (currentModDate && diskModDate &&
-        [diskModDate compare:currentModDate] != NSOrderedDescending)
+        [diskModDate compare:currentModDate] == NSOrderedSame)
     {
-        return;
+        if (!self.diskContentFingerprint) return;
+        NSData *diskData = [NSData dataWithContentsOfURL:self.fileURL
+                                              options:0 error:&error];
+        if (!diskData || [MPDocumentContentFingerprint(diskData)
+                         isEqual:self.diskContentFingerprint]) return;
     }
 
     // File has been modified externally.
@@ -5141,13 +5240,14 @@ to link outside that scope.", \
         return;
     self.externalChangePromptVisible = YES;
 
+    NSURL *promptURL = self.fileURL;
     __weak MPDocument *weakSelf = self;
     void (^completion)(BOOL) = ^(BOOL shouldReload) {
         MPDocument *strongSelf = weakSelf;
         if (!strongSelf)
             return;
         strongSelf.externalChangePromptVisible = NO;
-        if (shouldReload)
+        if (shouldReload && !strongSelf.documentClosed && [strongSelf.fileURL isEqual:promptURL])
             [strongSelf reloadFromDisk];
     };
 
@@ -5193,6 +5293,9 @@ to link outside that scope.", \
 
 - (void)reloadFromDisk
 {
+    if (self.documentClosed) return;
+    NSDictionary *attrs = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:self.fileURL.path error:nil];
     NSError *error = nil;
     NSData *data = [NSData dataWithContentsOfURL:self.fileURL options:0 error:&error];
     if (error || !data)
@@ -5203,8 +5306,6 @@ to link outside that scope.", \
         return;
 
     // Update fileModificationDate to reflect the reloaded content
-    NSDictionary *attrs = [[NSFileManager defaultManager]
-        attributesOfItemAtPath:self.fileURL.path error:nil];
     if (attrs[NSFileModificationDate])
         self.fileModificationDate = attrs[NSFileModificationDate];
 
