@@ -179,6 +179,7 @@
 		UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UITEST000001SWIFTFILE /* MacDownUITests.swift */; };
 		URLSECPOL0001BUILDFILE /* MPURLSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */; };
 		URLSECPOL0002BUILDFILE /* MPURLSecurityPolicyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */; };
+		AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -765,6 +766,7 @@
 		URLSECPOLHDRFILEREFID /* MPURLSecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPURLSecurityPolicy.h; sourceTree = "<group>"; };
 		URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicy.m; sourceTree = "<group>"; };
 		URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicyTests.m; sourceTree = "<group>"; };
+		AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1136,6 +1138,7 @@
 		1FCDCA2F1944F96E00B1F966 /* MacDownTests */ = {
 			isa = PBXGroup;
 			children = (
+				AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */,
 				A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */,
 				URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */,
 				1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */,
@@ -1896,6 +1899,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */,
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
