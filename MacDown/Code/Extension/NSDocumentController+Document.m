@@ -13,9 +13,16 @@
 - (__kindof NSDocument *)createNewEmptyDocumentForURL:(NSURL *)url
         display:(BOOL)display error:(NSError * __autoreleasing *)error
 {
-    [[NSFileManager defaultManager] createFileAtPath:[url path]
-                                            contents:[NSData data]
-                                          attributes:nil];
+    if (!url.isFileURL) {
+        if (error)
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                                        code:NSFileWriteUnsupportedSchemeError
+                                    userInfo:nil];
+        return nil;
+    }
+    if (![[NSData data] writeToURL:url options:NSDataWritingWithoutOverwriting
+                            error:error])
+        return nil;
 
     NSDocument *doc = [self openUntitledDocumentAndDisplay:display
                                                      error:error];

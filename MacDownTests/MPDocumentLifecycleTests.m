@@ -33,6 +33,7 @@
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
 @property (weak) WebView *preview;
+- (void)processExternalFileChange;
 @end
 
 @interface MPRenderer (LifecycleTesting)
@@ -1032,4 +1033,33 @@
     XCTAssertEqualObjects(doc.workspaceRootURL, root);
 }
 
+- (void)testAnEarlierSaveTimerCannotReloadWhileTheLatestSaveIsProtected
+{
+    MPDocument *document = [MPDocument new];
+    document.fileURL = self.testFileURL;
+    document.fileType = @"net.daringfireball.markdown";
+    document.markdown = @"first save";
+    XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
+    XCTestExpectation *protected = [self expectationWithDescription:@"Latest save remains protected after first timer"];
+    XCTestExpectation *resumed = [self expectationWithDescription:@"External reload resumes after latest timer"];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        document.markdown = @"latest save";
+        XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
+        document.fileModificationDate = [NSDate distantPast];
+        XCTAssertTrue([@"external change" writeToURL:self.testFileURL atomically:YES
+            encoding:NSUTF8StringEncoding error:NULL]);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [document processExternalFileChange];
+            XCTAssertEqualObjects(document.markdown, @"latest save");
+            [protected fulfill];
+        });
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [document processExternalFileChange];
+            XCTAssertEqualObjects(document.markdown, @"external change");
+            [resumed fulfill];
+        });
+    });
+    [self waitForExpectations:@[protected, resumed] timeout:5.0];
+    [document close];
+}
 @end

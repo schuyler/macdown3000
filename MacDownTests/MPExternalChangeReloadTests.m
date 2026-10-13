@@ -334,6 +334,7 @@
 - (void)testDiscardReloadsFromDisk
 {
     MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
+    doc.fileURL = [self writeTempFileWithContents:@"on disk\n"];
     doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
         completion(YES);
     };
@@ -344,6 +345,36 @@
                    @"Choosing Discard must reload the file from disk");
     XCTAssertFalse(doc.externalChangePromptVisible,
                    @"The guard must be cleared once the dialog is answered");
+}
+
+- (void)testDiscardAfterSaveAsDoesNotReloadTheNewFile
+{
+    MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
+    doc.fileURL = [self writeTempFileWithContents:@"original file\n"];
+    __block void (^pendingCompletion)(BOOL);
+    doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+        pendingCompletion = [completion copy];
+    };
+    [doc promptForReloadWithExternalChanges];
+    doc.fileURL = [self writeTempFileWithContents:@"new file\n"];
+    pendingCompletion(YES);
+    XCTAssertEqual(doc.reloadCount, 0u);
+    XCTAssertFalse(doc.externalChangePromptVisible);
+}
+
+- (void)testDiscardAfterCloseDoesNotReload
+{
+    MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
+    doc.fileURL = [self writeTempFileWithContents:@"on disk\n"];
+    __block void (^pendingCompletion)(BOOL);
+    doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+        pendingCompletion = [completion copy];
+    };
+    [doc promptForReloadWithExternalChanges];
+    [doc close];
+    pendingCompletion(YES);
+    XCTAssertEqual(doc.reloadCount, 0u);
+    XCTAssertFalse(doc.externalChangePromptVisible);
 }
 
 - (void)testKeepLeavesTheEditorAlone
@@ -467,7 +498,7 @@
                    @"With no backing file there is nothing to prompt about");
 }
 
-// A spurious notification whose on-disk date is no newer than what we last read
+// A spurious notification whose on-disk date matches what we last read
 // is not a real change and must not reload.
 - (void)testProcessDoesNotReloadWhenModificationDateIsUnchanged
 {
@@ -486,6 +517,126 @@
                    @"A notification with no newer content on disk must not "
                     "trigger a reload");
     XCTAssertEqual(doc.promptCount, 0u);
+}
+
+// Restoring a backup or copying with preserved timestamps can replace the
+// contents with an older file. Real disk reads and the editor must still be
+// reconciled; unsaved local edits require the same keep/discard decision.
+- (void)testPreservedTimestampReplacementReloadsOrProtectsUnsavedWork
+{
+    for (NSNumber *offset in @[@(-3600), @0]) {
+    for (NSNumber *choice in @[@(-1), @0, @1]) {
+        NSURL *url = [self writeTempFileWithContents:@"original\n"];
+        // Integer seconds survive the filesystem NSDate round trip exactly.
+        XCTAssertTrue([[NSFileManager defaultManager] setAttributes:
+            @{NSFileModificationDate:[NSDate dateWithTimeIntervalSince1970:1700000000]}
+            ofItemAtPath:url.path error:NULL]);
+        MPDocument *doc = [MPDocument new];
+        [self wireEditorInto:doc];
+        doc.fileURL = url;
+        doc.fileType = @"net.daringfireball.markdown";
+        XCTAssertTrue([doc readFromURL:url ofType:doc.fileType error:NULL]);
+        NSDate *originalDate = [[NSFileManager defaultManager]
+            attributesOfItemAtPath:url.path error:NULL][NSFileModificationDate];
+        doc.fileModificationDate = originalDate;
+        BOOL edited = choice.integerValue >= 0;
+        if (edited) {
+            self.editor.string = @"unsaved local work\n";
+            [doc updateChangeCount:NSChangeDone];
+        }
+        XCTAssertEqual(doc.isDocumentEdited, edited);
+        XCTAssertTrue([@"restored backup\n" writeToURL:url atomically:YES
+            encoding:NSUTF8StringEncoding error:NULL]);
+        NSDate *olderDate = [originalDate dateByAddingTimeInterval:offset.doubleValue];
+        XCTAssertTrue([[NSFileManager defaultManager] setAttributes:
+            @{NSFileModificationDate:olderDate} ofItemAtPath:url.path error:NULL]);
+        NSDate *diskDate = [[NSFileManager defaultManager]
+            attributesOfItemAtPath:url.path error:NULL][NSFileModificationDate];
+        XCTAssertEqual([diskDate compare:originalDate], offset.boolValue ? NSOrderedAscending : NSOrderedSame);
+        __block NSUInteger prompts = 0;
+        doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+            prompts++;
+            completion(choice.boolValue);
+        };
+        @try {
+            [doc processExternalFileChange];
+            XCTAssertEqual(prompts, edited ? 1u : 0u);
+            BOOL keep = edited && !choice.boolValue;
+            XCTAssertEqualObjects(self.editor.string,
+                keep ? @"unsaved local work\n" : @"restored backup\n");
+            XCTAssertEqual(doc.isDocumentEdited, keep);
+            XCTAssertEqualObjects([NSString stringWithContentsOfURL:url
+                encoding:NSUTF8StringEncoding error:NULL], @"restored backup\n");
+            if (!keep) XCTAssertEqualObjects(doc.fileModificationDate, diskDate);
+        } @finally {
+            [doc updateChangeCount:NSChangeCleared];
+            [doc close];
+        }
+    }
+    }
+}
+
+// Normalized editor text and unsaved changes are not the disk baseline.
+- (void)testUnchangedCRLFFileDoesNotReloadDirtyNormalizedEditor
+{
+    NSURL *url = [self writeTempFileWithContents:@"original\r\n"];
+    MPProcessSpyDocument *doc = [MPProcessSpyDocument new];
+    doc.fileURL = url;
+    doc.fileType = @"net.daringfireball.markdown";
+    XCTAssertTrue([doc readFromURL:url ofType:doc.fileType error:NULL]);
+    doc.fileModificationDate = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:url.path error:NULL][NSFileModificationDate];
+    doc.stubbedDocumentEdited = YES;
+    [doc processExternalFileChange];
+    XCTAssertEqual(doc.reloadCount, 0u);
+    XCTAssertEqual(doc.promptCount, 0u);
+    [doc close];
+}
+
+- (void)testDiskBaselineTracksSuccessfulSavesButNotRecoveryOrFailedSaves
+{
+    for (NSNumber *operation in @[@0, @1, @2, @3]) {
+        NSURL *url = [self writeTempFileWithContents:@"original\n"];
+        MPDocument *doc = [MPDocument new];
+        [self wireEditorInto:doc];
+        doc.fileURL = url;
+        doc.fileType = @"net.daringfireball.markdown";
+        XCTAssertTrue([doc readFromURL:url ofType:doc.fileType error:NULL]);
+        self.editor.string = @"saved snapshot\n";
+        NSURL *recovery = [self writeTempFileWithContents:@"recovery\n"];
+        BOOL saved;
+        if (operation.integerValue == 0)
+            saved = [doc writeToURL:url ofType:doc.fileType error:NULL];
+        else if (operation.integerValue == 1)
+            saved = [doc writeSafelyToURL:url ofType:doc.fileType
+                forSaveOperation:NSSaveOperation error:NULL];
+        else if (operation.integerValue == 2)
+            saved = [doc writeSafelyToURL:recovery ofType:doc.fileType
+                forSaveOperation:NSAutosaveElsewhereOperation error:NULL];
+        else
+            saved = [doc writeToURL:[recovery URLByAppendingPathComponent:@"missing.md"]
+                ofType:doc.fileType error:NULL];
+        XCTAssertEqual(saved, operation.integerValue != 3);
+        XCTAssertEqualObjects([NSString stringWithContentsOfURL:url
+            encoding:NSUTF8StringEncoding error:NULL], operation.integerValue < 2
+                ? @"saved snapshot\n" : @"original\n");
+        doc.fileModificationDate = [[NSFileManager defaultManager]
+            attributesOfItemAtPath:url.path error:NULL][NSFileModificationDate];
+        doc.isSelfSaving = NO;
+        self.editor.string = @"new unsaved edit\n";
+        [doc updateChangeCount:NSChangeDone];
+        __block NSUInteger prompts = 0;
+        doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+            prompts++;
+            completion(NO);
+        };
+        [doc processExternalFileChange];
+        XCTAssertEqual(prompts, 0u);
+        XCTAssertEqualObjects(self.editor.string, @"new unsaved edit\n");
+        XCTAssertTrue(doc.isDocumentEdited);
+        [doc updateChangeCount:NSChangeCleared];
+        [doc close];
+    }
 }
 
 // A genuinely newer file with nothing unsaved locally reloads silently.

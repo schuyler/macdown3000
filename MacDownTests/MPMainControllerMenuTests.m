@@ -7,6 +7,10 @@
 #import "MPMainController.h"
 #import "MPDocument.h"
 
+@interface MPMainController (BundledFileTesting)
++ (NSURL *)copyBundledFile:(NSString *)resource extension:(NSString *)extension error:(NSError **)error;
+@end
+
 // Declared for @selector() only: these are the responder-chain actions the nib
 // wires its items to, and neither is exposed in a header.
 @interface MPDocument (MenuActionTesting)
@@ -104,6 +108,39 @@
     }
     XCTAssertEqual(openFolder, 1);
     XCTAssertEqual(sidebar, 1);
+}
+
+- (void)testBundledHelpCopiesRemainIndependentAndResolveRelativeImages
+{
+    NSError *error = nil;
+    NSURL *first = [MPMainController copyBundledFile:@"help" extension:@"md" error:&error];
+    XCTAssertNotNil(first);
+    XCTAssertNil(error);
+    NSURL *second = [MPMainController copyBundledFile:@"help" extension:@"md" error:&error];
+    XCTAssertNotNil(second);
+    @try
+    {
+        XCTAssertNotEqualObjects(first.URLByDeletingLastPathComponent, second.URLByDeletingLastPathComponent);
+        NSURL *source = [[NSBundle mainBundle] URLForResource:@"help" withExtension:@"md"];
+        NSData *expected = [NSData dataWithContentsOfURL:source];
+        XCTAssertEqualObjects([NSData dataWithContentsOfURL:first], expected);
+        XCTAssertEqualObjects([NSData dataWithContentsOfURL:second], expected);
+        NSURL *imagesSource = [[NSBundle mainBundle] URLForResource:@"Images" withExtension:nil];
+        NSArray<NSURL *> *images = [[NSFileManager defaultManager] contentsOfDirectoryAtURL:imagesSource
+                                       includingPropertiesForKeys:nil options:0 error:&error];
+        XCTAssertGreaterThan(images.count, 0u);
+        for (NSURL *image in images)
+        {
+            NSURL *resolved = [[first.URLByDeletingLastPathComponent URLByAppendingPathComponent:@"Images"]
+                               URLByAppendingPathComponent:image.lastPathComponent];
+            XCTAssertEqualObjects([NSData dataWithContentsOfURL:resolved], [NSData dataWithContentsOfURL:image]);
+        }
+    }
+    @finally
+    {
+        if (first) [[NSFileManager defaultManager] removeItemAtURL:first.URLByDeletingLastPathComponent error:nil];
+        if (second) [[NSFileManager defaultManager] removeItemAtURL:second.URLByDeletingLastPathComponent error:nil];
+    }
 }
 
 @end

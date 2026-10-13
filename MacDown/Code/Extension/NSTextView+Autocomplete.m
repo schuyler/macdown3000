@@ -504,10 +504,9 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
     NSData *mapped = map[content];
     if (!mapped)
         return NO;
-    NSArray *components = @[NSTemporaryDirectory(),
-                             [NSString stringWithFormat:@"%lu", content.hash]];
-    NSString *path = [NSString pathWithComponents:components];
-    [mapped writeToFile:path atomically:NO];
+    NSString *path = MPWriteDataToUniqueTemporaryFile(mapped, @"image.png", NULL);
+    if (!path)
+        return NO;
     NSString *text = [NSString stringWithFormat:@"![%@](%@)", content, path];
     [self insertText:text replacementRange:NSMakeRange(0, contentLength)];
     self.selectedRange = NSMakeRange(2, contentLength);
