@@ -13,6 +13,7 @@
 #import "MPMarkdownPreferencesViewController.h"
 #import "MPEditorPreferencesViewController.h"
 #import "MPHtmlPreferencesViewController.h"
+#import "MPPreferences.h"
 #import "MPTerminalPreferencesViewController.h"
 
 #pragma mark - View-tree helpers
@@ -526,6 +527,42 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         XCTAssertNoThrow([vc viewDidAppear],
             @"%@ pane: viewDidAppear must not throw even without a window", name);
     }];
+}
+
+- (void)testDiagramPreferencesRemainEditableWithoutSyntaxHighlighting
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL highlighting = preferences.htmlSyntaxHighlighting;
+    BOOL graphviz = preferences.htmlGraphviz;
+    BOOL mermaid = preferences.htmlMermaid;
+    @try
+    {
+        preferences.htmlSyntaxHighlighting = NO;
+        preferences.htmlGraphviz = NO;
+        preferences.htmlMermaid = NO;
+        MPHtmlPreferencesViewController *controller =
+            [[MPHtmlPreferencesViewController alloc] init];
+        NSUInteger diagramCheckboxes = 0;
+        for (NSButton *button in MPCheckboxes(MPContentView(controller)))
+        {
+            NSString *keyPath = [button infoForBinding:NSValueBinding][NSObservedKeyPathKey];
+            if (![keyPath isEqualToString:@"self.preferences.htmlGraphviz"]
+                && ![keyPath isEqualToString:@"self.preferences.htmlMermaid"])
+                continue;
+            diagramCheckboxes++;
+            XCTAssertTrue(button.enabled);
+            [button performClick:nil];
+        }
+        XCTAssertEqual(diagramCheckboxes, 2U);
+        XCTAssertTrue(preferences.htmlGraphviz);
+        XCTAssertTrue(preferences.htmlMermaid);
+    }
+    @finally
+    {
+        preferences.htmlSyntaxHighlighting = highlighting;
+        preferences.htmlGraphviz = graphviz;
+        preferences.htmlMermaid = mermaid;
+    }
 }
 
 @end
