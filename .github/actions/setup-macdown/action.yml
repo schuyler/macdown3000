@@ -3,6 +3,15 @@ description: 'Sets up Ruby, CocoaPods, and builds dependencies for MacDown'
 runs:
   using: "composite"
   steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install pinned stylesheet dependencies
+      run: npm ci --prefix Tools/GitHub-style-generator --ignore-scripts --no-audit --no-fund
+      shell: bash
+
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
