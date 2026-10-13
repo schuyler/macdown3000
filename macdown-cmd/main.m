@@ -6,83 +6,11 @@
 //  Copyright (c) 2014 Tzu-ping Chung . All rights reserved.
 //
 
-#import <sys/time.h>
+#import "MPCommandInput.h"
 #import <AppKit/AppKit.h>
-#import <GBCli/GBCli.h>
-#import "NSUserDefaults+Suite.h"
+#import "MPCommandQueue.h"
 #import "MPGlobals.h"
 #import "MPArgumentProcessor.h"
-
-
-const NSUInteger kMPPathEncoding = NSUTF8StringEncoding;
-
-
-NSRunningApplication *MPRunningMacDownInstance()
-{
-    NSArray *runningInstances = [NSRunningApplication
-        runningApplicationsWithBundleIdentifier:kMPApplicationSuiteName];
-    return runningInstances.firstObject;
-}
-
-void MPCollectPipedContentURLForMacDown(NSURL *url) {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteNamed:kMPApplicationSuiteName];
-    
-    [defaults setObject:url.path forKey:kMPPipedContentFileToOpen inSuiteNamed:kMPApplicationSuiteName];
-    [defaults synchronize];
-}
-
-void MPCollectForMacDown(NSOrderedSet<NSURL *> *urls)
-{
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteNamed:kMPApplicationSuiteName];
-    NSMutableArray<NSString *> *urlStrings =
-        [[NSMutableArray alloc] initWithCapacity:urls.count];
-    for (NSURL *url in urls)
-        [urlStrings addObject:url.path];
-    [defaults setObject:urlStrings forKey:kMPFilesToOpenKey
-           inSuiteNamed:kMPApplicationSuiteName];
-    [defaults synchronize];
-}
-
-void MPCollectFoldersForMacDown(NSOrderedSet<NSURL *> *urls)
-{
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteNamed:kMPApplicationSuiteName];
-    NSMutableArray<NSString *> *paths =
-        [[NSMutableArray alloc] initWithCapacity:urls.count];
-    for (NSURL *url in urls)
-        [paths addObject:url.path];
-    [defaults setObject:paths forKey:kMPFoldersToOpenKey
-           inSuiteNamed:kMPApplicationSuiteName];
-    [defaults synchronize];
-}
-
-/**
- * Data piped to macdown through stdin.
- * 
- * @return Piped data if any, otherwise nil.
- */
-NSData* MPPipedData() {
-    NSFileHandle *stdInFileHandle = [NSFileHandle fileHandleWithStandardInput];
-    // Check if stdin file handle have anything to read
-    // Modified solution from http://stackoverflow.com/questions/7505777/how-do-i-check-for-nsfilehandle-has-data-available
-    int fd = [stdInFileHandle fileDescriptor];
-    fd_set fdset;
-    struct timeval tmout = { 0, 0 };
-    FD_ZERO(&fdset);
-    FD_SET(fd, &fdset);
-    if (select(fd + 1, &fdset, NULL, NULL, &tmout) <= 0) { // Doesn't hold any data
-        return nil;
-    }
-    else if (FD_ISSET(fd, &fdset)) { // Holds data
-        NSData *stdInData = [NSData dataWithData:[stdInFileHandle readDataToEndOfFile]];
-        return stdInData;
-    }
-    else {
-        return nil;
-    }
-}
 
 
 int main(int argc, const char * argv[])
@@ -95,49 +23,50 @@ int main(int argc, const char * argv[])
             [argproc printHelp:YES];
         else if (argproc.printsVersion)
             [argproc printVersion:YES];
-        
-        NSData *dataFromPipe = MPPipedData();
-        
-        if (dataFromPipe) {
-            // Store piped content in a temporary file which will be read by MacDown on launch
-            NSString *fileName = [NSString stringWithFormat:@"%@_%@", [[NSProcessInfo processInfo] globallyUniqueString], @"pipedText.txt"];
-            NSURL *fileURL = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingPathComponent:fileName]];
-            
-            NSError *writeError;
-            [dataFromPipe writeToFile:fileURL.path options:0 error:&writeError];
-            
-            if (writeError == nil) {
-                MPCollectPipedContentURLForMacDown(fileURL);
-            }
+
+        NSError *inputError = nil;
+        NSData *dataFromPipe = MPReadCommandInput(STDIN_FILENO, &inputError);
+        if (inputError) {
+            fprintf(stderr, "Could not read standard input: %s\n", inputError.localizedDescription.UTF8String);
+            return EXIT_FAILURE;
         }
 
-        // Treat all arguments as file names to open. Convert them to absolute
-        // paths and store them (as an array) in MacDown's user defaults to
-        // be opened later.
+        // Collect one invocation as one request. Concurrent invocations append
+        // under the same filesystem lock used by the application consumer.
         NSString *pwd = [NSFileManager defaultManager].currentDirectoryPath;
-        NSURL *pwdUrl = [NSURL fileURLWithPath:pwd isDirectory:YES];
         NSFileManager *fm = [NSFileManager defaultManager];
         NSMutableOrderedSet<NSURL *> *fileURLs = [NSMutableOrderedSet orderedSet];
         NSMutableOrderedSet<NSURL *> *folderURLs = [NSMutableOrderedSet orderedSet];
         for (NSString *arg in argproc.arguments)
         {
-            NSString *escaped =
-                [arg stringByAddingPercentEscapesUsingEncoding:kMPPathEncoding];
-            NSURL *url = [NSURL URLWithString:escaped relativeToURL:pwdUrl];
+            NSURL *url = MPCommandFileURL(arg, pwd);
             BOOL isDir = NO;
             if ([fm fileExistsAtPath:url.path isDirectory:&isDir] && isDir)
                 [folderURLs addObject:url];
             else
                 [fileURLs addObject:url];
         }
-        // Both run unconditionally: each overwrites its key, so an empty set
-        // clears whatever a previous invocation left behind. Skipping the empty
-        // one would leave that list to be opened on the next launch.
-        MPCollectForMacDown(fileURLs);
-        MPCollectFoldersForMacDown(folderURLs);
+        if (fileURLs.count || folderURLs.count || dataFromPipe) {
+            NSMutableArray<NSString *> *files = [NSMutableArray array];
+            NSMutableArray<NSString *> *folders = [NSMutableArray array];
+            for (NSURL *url in fileURLs) [files addObject:url.path];
+            for (NSURL *url in folderURLs) [folders addObject:url.path];
+            NSMutableDictionary *request = [@{@"files": files, @"folders": folders} mutableCopy];
+            if (dataFromPipe) request[@"pipedContent"] = dataFromPipe;
+            NSError *queueError = nil;
+            if (!MPCommandQueueEnqueue(MPCommandQueueDirectoryForSuite(kMPApplicationSuiteName),
+                                       request, &queueError)) {
+                fprintf(stderr, "Could not queue command input: %s\n", queueError.localizedDescription.UTF8String);
+                return EXIT_FAILURE;
+            }
+        }
 
         // Launch MacDown.
-        [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:kMPApplicationBundleIdentifier options:NSWorkspaceLaunchDefault additionalEventParamDescriptor:nil launchIdentifier:nil];
+        BOOL launched = [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:kMPApplicationBundleIdentifier options:NSWorkspaceLaunchDefault additionalEventParamDescriptor:nil launchIdentifier:nil];
+        if (!launched) {
+            fprintf(stderr, "Could not launch %s\n", kMPApplicationBundleIdentifier.UTF8String);
+            return EXIT_FAILURE;
+        }
     }
     return EXIT_SUCCESS;
 }
