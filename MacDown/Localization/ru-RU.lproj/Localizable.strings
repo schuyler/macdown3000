@@ -26,23 +26,23 @@
 "Keep" = "Сохранить";
 
 /* (No Comment) */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "7";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ слово;%@ слов";
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слова;%@ слов";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символов";
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символа;%@ символов";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробелов);%@ символов (без пробелов)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробелов);%@ символа (без пробелов);%@ символов (без пробелов)";
 
 /* Selection counts (Issue #452) */
-"WORDS_SELECTED_PLURAL_STRING" = "%@ выделенное слово;%@ выделенных слов";
+"WORDS_SELECTED_PLURAL_STRING" = "%@ выделенное слово;%@ выделенных слова;%@ выделенных слов";
 
-"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ выделенный символ;%@ выделенных символов";
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ выделенный символ;%@ выделенных символа;%@ выделенных символов";
 
-"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ выделенный символ (без пробелов);%@ выделенных символов (без пробелов)";
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ выделенный символ (без пробелов);%@ выделенных символа (без пробелов);%@ выделенных символов (без пробелов)";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Ошибка установки";
