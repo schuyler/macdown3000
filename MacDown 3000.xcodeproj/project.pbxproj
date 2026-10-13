@@ -1671,7 +1671,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SOURCE=\"$PWD/Dependency/prism\"\nTARGET=\"$PWD/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
+			shellScript = "SOURCE=\"$PWD/Dependency/prism\"\nTARGET=\"$PWD/MacDown/Resources/Prism\"\nrm -rf \"$TARGET\"\nmkdir -p \"$TARGET\"\ncp -r \"$SOURCE/components\" \"$TARGET\"\ncp -r \"$SOURCE/themes\" \"$TARGET\"\ncp -R \"$PWD/MacDown/Resources/CommunityPrismThemes/.\" \"$TARGET/themes/\"\ncp -r \"$SOURCE/plugins\" \"$TARGET\"\ncp -r \"$SOURCE/components.js\" \"$TARGET\"\n";
 			showEnvVarsInLog = 0;
 		};
 		3FE464D54AEF370ED9587A37 /* [CP] Check Pods Manifest.lock */ = {
@@ -1788,7 +1788,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nRESOURCES_DIR=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n\n# Copy Styles from committed source\nmkdir -p \"${RESOURCES_DIR}/Styles\"\ncp -R \"${SRCROOT}/MacDown/Resources/Styles/\" \"${RESOURCES_DIR}/Styles/\"\n\n# Copy Prism from vendor source (same source as MacDown's \"Fetch Prism Resources\")\nPRISM_SRC=\"${SRCROOT}/Dependency/prism\"\nmkdir -p \"${RESOURCES_DIR}/Prism\"\ncp -R \"${PRISM_SRC}/components\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/themes\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/plugins\" \"${RESOURCES_DIR}/Prism/\"\ncp \"${PRISM_SRC}/components.js\" \"${RESOURCES_DIR}/Prism/\"\n";
+			shellScript = "set -e\nRESOURCES_DIR=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\n\n# Copy Styles from committed source\nmkdir -p \"${RESOURCES_DIR}/Styles\"\ncp -R \"${SRCROOT}/MacDown/Resources/Styles/\" \"${RESOURCES_DIR}/Styles/\"\n\n# Copy Prism from vendor source (same source as MacDown's \"Fetch Prism Resources\")\nPRISM_SRC=\"${SRCROOT}/Dependency/prism\"\nmkdir -p \"${RESOURCES_DIR}/Prism\"\ncp -R \"${PRISM_SRC}/components\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${PRISM_SRC}/themes\" \"${RESOURCES_DIR}/Prism/\"\ncp -R \"${SRCROOT}/MacDown/Resources/CommunityPrismThemes/.\" \"${RESOURCES_DIR}/Prism/themes/\"\ncp -R \"${PRISM_SRC}/plugins\" \"${RESOURCES_DIR}/Prism/\"\ncp \"${PRISM_SRC}/components.js\" \"${RESOURCES_DIR}/Prism/\"\n";
 		};
 		C5CE5250ABE88F046B768B9D /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
