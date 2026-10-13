@@ -8,17 +8,17 @@
 "Blockquote" = "Цитата";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символів (без пробілів)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символи (без пробілів);%@ символів (без пробілів)";
 
 /* Selection counts (Issue #452) */
-"WORDS_SELECTED_PLURAL_STRING" = "%@ виділене слово;%@ виділених слів";
+"WORDS_SELECTED_PLURAL_STRING" = "%@ виділене слово;%@ виділені слова;%@ виділених слів";
 
-"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ виділений символ;%@ виділених символів";
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ виділений символ;%@ виділені символи;%@ виділених символів";
 
-"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ виділений символ (без пробілів);%@ виділених символів (без пробілів)";
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ виділений символ (без пробілів);%@ виділені символи (без пробілів);%@ виділених символів (без пробілів)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символів";
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символи;%@ символів";
 
 /* Comment toolbar button */
 "Comment" = "Коментар";
@@ -73,7 +73,7 @@
 
   Created by Tzu-ping Chung  on 14/7.
   Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "7";
 
 /* Layout toolbar button */
 "Layout" = "Макет";
@@ -145,7 +145,7 @@
 "Untitled" = "Без назви";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ слово;%@ слів";
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слова;%@ слів";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Помилка встановлення";
