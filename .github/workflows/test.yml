@@ -26,6 +26,9 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    - name: Verify YAML graph expansion limits
+      run: python3 MacDownTests/BuildTools/yaml_graph_tests.py
+
     # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
     # remaining steps, so the diagnostic steps below would never run, whereas a step-level
     # one leaves them to fire on failure(). Healthy runs finish in about 2-4 minutes.
