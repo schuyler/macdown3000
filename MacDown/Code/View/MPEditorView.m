@@ -242,8 +242,13 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
     // Wrap selected text as markdown link
     NSString *selectedText = [self.string substringWithRange:selectedRange];
+    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
+    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"[" withString:@"\\["];
+    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"]" withString:@"\\]"];
+    NSString *destination = [pastedURL.absoluteString stringByReplacingOccurrencesOfString:@"(" withString:@"%28"];
+    destination = [destination stringByReplacingOccurrencesOfString:@")" withString:@"%29"];
     NSString *markdownLink = [NSString stringWithFormat:@"[%@](%@)",
-                              selectedText, pastedURL.absoluteString];
+                              selectedText, destination];
 
     [self insertText:markdownLink replacementRange:selectedRange];
 }
@@ -253,6 +258,11 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
 - (void)updateContentGeometry
 {
+    // A deferred update may outlive the preference that scheduled it. Keep the
+    // disabled mode's contentRect fallback intact when that update runs later.
+    if (!self.scrollsPastEnd)
+        return;
+
     static NSCharacterSet *visibleCharacterSet = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -274,7 +284,9 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
         NSUInteger firstJunkLocation = lastRange.location + lastRange.length;
         NSRange junkRange = NSMakeRange(firstJunkLocation,
                                         contentLength - firstJunkLocation);
-        junkRect = [manager boundingRectForGlyphRange:junkRange
+        NSRange junkGlyphRange = [manager glyphRangeForCharacterRange:junkRange
+                                                   actualCharacterRange:NULL];
+        junkRect = [manager boundingRectForGlyphRange:junkGlyphRange
                                       inTextContainer:container];
     }
     self.trailingHeight = junkRect.size.height;
@@ -284,7 +296,12 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
     r.size.height += 2 * inset.height;
     self.contentRect = r;
 
-    [self setFrameSize:self.frame.size];    // Force size update.
+    // Rebuild the natural height from content and viewport. self.frame already
+    // includes the past-end padding added by setFrameSize:, so using it again
+    // would accumulate that padding on every content update.
+    NSSize size = self.frame.size;
+    size.height = MAX(r.size.height, self.enclosingScrollView.contentSize.height);
+    [self setFrameSize:size];
 }
 
 #pragma mark - Text Substitution Overrides (Issue #263)

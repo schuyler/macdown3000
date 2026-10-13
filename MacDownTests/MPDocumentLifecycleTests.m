@@ -15,6 +15,7 @@
 #import "MPRenderer.h"
 #import "MPEditorView.h"
 #import "HGMarkdownHighlighter.h"
+#import "pmh_parser.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 #import <WebKit/WebKit.h>
 #import <sys/stat.h>
@@ -29,6 +30,9 @@
 @property (weak) MPEditorView *editor;
 @property (copy) NSString *loadedString;
 - (void)reloadFromLoadedString;
+- (void)setupEditor:(NSString *)changedKey;
+- (IBAction)toggleUnderline:(id)sender;
+- (BOOL)textViewShouldMoveToLeftEndOfLine:(NSTextView *)textView;
 @property (nonatomic) BOOL isPreviewReady;
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
@@ -37,6 +41,14 @@
 
 @interface MPRenderer (LifecycleTesting)
 - (void)parseMarkdown:(NSString *)markdown;
+@end
+
+@interface MPRenderer (DocumentActionTesting)
+- (void)parseMarkdown:(NSString *)markdown;
+@end
+
+@interface HGMarkdownHighlighter (DocumentFootnoteTesting)
+- (pmh_element **)parseText:(NSString *)markdown;
 @end
 
 // Spy renderer: records whether parseAndRenderNow was called without
@@ -1031,5 +1043,105 @@
     doc.workspaceRootURL = root;
     XCTAssertEqualObjects(doc.workspaceRootURL, root);
 }
+
+- (void)testEditorFootnoteParsingFollowsPreferenceAndPreservesMath
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL originalNotes = preferences.extensionFootnotes;
+    BOOL originalMath = preferences.htmlMathJax;
+    BOOL originalDollar = preferences.htmlMathJaxInlineDollar;
+    HGMarkdownHighlighter *highlighter = [[HGMarkdownHighlighter alloc] init];
+    self.document.highlighter = highlighter;
+    @try {
+        for (NSNumber *notes in @[@NO, @YES]) {
+            for (NSNumber *math in @[@NO, @YES]) {
+                for (NSNumber *dollar in @[@NO, @YES]) {
+                    preferences.extensionFootnotes = notes.boolValue;
+                    preferences.htmlMathJax = math.boolValue;
+                    preferences.htmlMathJaxInlineDollar = dollar.boolValue;
+                    [self.document setupEditor:@"extensionFootnotes"];
+                    pmh_element **elements = [highlighter parseText:@"Text[^*note*].\n"];
+                    XCTAssertNotEqual(elements, NULL);
+                    if (elements) {
+                        // A footnote reference is opaque when enabled. With notes disabled,
+                        // its asterisks remain ordinary Markdown emphasis.
+                        XCTAssertEqual(elements[pmh_EMPH] != NULL, !notes.boolValue);
+                        pmh_free_elements(elements);
+                    }
+                    XCTAssertEqual((highlighter.extensions & pmh_EXT_MATH) != 0,
+                                   math.boolValue && dollar.boolValue);
+                }
+            }
+        }
+    } @finally {
+        [highlighter deactivate];
+        preferences.extensionFootnotes = originalNotes;
+        preferences.htmlMathJax = originalMath;
+        preferences.htmlMathJaxInlineDollar = originalDollar;
+    }
+}
+
+
+- (void)testUnderlineActionKeepsUnderlineMeaningWithExtensionEnabledOrDisabled
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL original = preferences.extensionUnderline;
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    self.document.editor = editor;
+    MPRenderer *renderer = [MPRenderer new];
+    renderer.dataSource = (id<MPRendererDataSource>)self.document;
+    renderer.delegate = (id<MPRendererDelegate>)self.document;
+    @try {
+        for (NSNumber *enabled in @[@NO, @YES]) {
+            preferences.extensionUnderline = enabled.boolValue;
+            editor.string = @"text";
+            editor.selectedRange = NSMakeRange(0, editor.string.length);
+            [self.document toggleUnderline:nil];
+            XCTAssertEqualObjects(editor.string, enabled.boolValue ? @"_text_" : @"<u>text</u>");
+            [renderer parseMarkdown:editor.string];
+            XCTAssertTrue([renderer.currentHtml containsString:@"<u>text</u>"]);
+            XCTAssertFalse([renderer.currentHtml containsString:@"<em>"]);
+        }
+    } @finally {
+        preferences.extensionUnderline = original;
+    }
+}
+
+- (void)testBackspaceDeletesSelectionWithoutDeletingMatchingPairAroundIt
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL original = preferences.editorCompleteMatchingCharacters;
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    self.document.editor = editor;
+    editor.delegate = (id<NSTextViewDelegate>)self.document;
+    @try {
+        preferences.editorCompleteMatchingCharacters = YES;
+        editor.string = @"[]";
+        editor.selectedRange = NSMakeRange(1, 1);
+        [editor doCommandBySelector:@selector(deleteBackward:)];
+        XCTAssertEqualObjects(editor.string, @"[");
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(1, 0)));
+    } @finally {
+        preferences.editorCompleteMatchingCharacters = original;
+    }
+}
+
+- (void)testSmartHomeWithSurrogatePairMovesToFirstContentCharacter
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL original = preferences.editorSmartHome;
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    self.document.editor = editor;
+    @try {
+        preferences.editorSmartHome = YES;
+        editor.string = @"  😀";
+        editor.selectedRange = NSMakeRange(editor.string.length, 0);
+        XCTAssertFalse([self.document textViewShouldMoveToLeftEndOfLine:editor]);
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(2, 0)));
+    } @finally {
+        preferences.editorSmartHome = original;
+    }
+}
+
 
 @end
