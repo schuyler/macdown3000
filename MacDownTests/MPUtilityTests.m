@@ -692,4 +692,15 @@
     }
 }
 
+- (void)testJavaScriptJSONPreservesUnicode {
+    XCTAssertEqualObjects(MPGetObjectFromJavaScript(@"var value = {text:'é漢😀'};", @"value"),
+                          (@{@"text": @"é漢😀"}));
+}
+
+- (void)testJavaScriptMissingAndUnserializableValuesReturnNil {
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = 1;", @"missing"));
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = function() {};", @"value"));
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = {}; value.self = value;", @"value"));
+}
+
 @end
