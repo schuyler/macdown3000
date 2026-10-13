@@ -8,6 +8,8 @@
 
 #import <XCTest/XCTest.h>
 #import "MPUtilities.h"
+#import "MPEditorView.h"
+#import "NSTextView+Autocomplete.h"
 
 @interface MPUtilityTests : XCTestCase
 @property (strong) NSString *tempDir;
@@ -671,6 +673,82 @@
     NSArray *sorted = [themes sortedArrayUsingSelector:@selector(compare:)];
     XCTAssertEqualObjects(themes, sorted,
                           @"Themes should be sorted alphabetically");
+}
+
+- (void)testUnindentPreservesCursorInsideRemovedIndent {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"    content";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view unindentSelectedLines];
+    XCTAssertEqualObjects(view.string, @"content");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testUnindentRemovesWhitespaceOnlyLineAndPreservesSelection {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"    \n    text";
+    view.selectedRange = NSMakeRange(0, view.string.length);
+    [view unindentSelectedLines];
+    XCTAssertEqualObjects(view.string, @"\ntext");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, view.string.length)));
+}
+
+- (void)testHeaderRemovalKeepsCursorInsideMarkerInBounds {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"### heading";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view makeHeaderForSelectedLinesWithLevel:0];
+    XCTAssertEqualObjects(view.string, @"heading");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testOrderedBlockToggleRemovesEntireMarkerAndPreservesSelectedText {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"12. first\n123. second";
+    view.selectedRange = NSMakeRange(0, view.string.length);
+    [view toggleBlockWithPattern:@"^[0-9]+\\.[ \t]+" prefix:@"1. "];
+    XCTAssertEqualObjects(view.string, @"first\nsecond");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, view.string.length)));
+}
+
+- (void)testBlockToggleRemovesEmptyMarkerWithCursorInsideMarker {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"12. ";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view toggleBlockWithPattern:@"^[0-9]+\\.[ \t]+" prefix:@"1. "];
+    XCTAssertEqualObjects(view.string, @"");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testPastingURLPreservesBracketsAndUnbalancedURLParenthesis {
+    NSPasteboard *board = NSPasteboard.generalPasteboard;
+    NSMutableArray *savedItems = [NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy = [[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data = [item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [savedItems addObject:copy];
+    }
+    @try {
+        [board clearContents];
+        [board setString:@"https://example.com/a)" forType:NSPasteboardTypeString];
+        MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+        view.string = @"a]b";
+        view.selectedRange = NSMakeRange(0, 3);
+        [view paste:nil];
+        XCTAssertEqualObjects(view.string, @"[a\\]b](https://example.com/a%29)");
+    } @finally {
+        [board clearContents];
+        if (savedItems.count) [board writeObjects:savedItems];
+    }
+}
+
+- (void)testEditorGeometryAcceptsTrailingWhitespaceAfterSurrogatePairs {
+    MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 300)];
+    view.string = @"😀👨‍👩‍👧‍👦\n\n\n";
+    XCTAssertNoThrow([view performSelector:NSSelectorFromString(@"updateContentGeometry")]);
 }
 
 @end

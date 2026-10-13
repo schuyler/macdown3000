@@ -1782,7 +1782,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 - (BOOL)textViewShouldDeleteBackward:(NSTextView *)textView
 {
     NSRange selectedRange = textView.selectedRange;
-    if (self.preferences.editorCompleteMatchingCharacters)
+    if (self.preferences.editorCompleteMatchingCharacters && !selectedRange.length)
     {
         NSUInteger location = selectedRange.location;
         if ([textView deleteMatchingCharactersAround:location])
@@ -1814,10 +1814,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     NSLayoutManager *manager = textView.layoutManager;
     NSTextContainer *container = textView.textContainer;
     NSRect targetRect =
-        [manager boundingRectForGlyphRange:NSMakeRange(location, 1)
+        [manager boundingRectForGlyphRange:[manager glyphRangeForCharacterRange:NSMakeRange(location, 1) actualCharacterRange:NULL]
                            inTextContainer:container];
     NSRect currentRect =
-        [manager boundingRectForGlyphRange:NSMakeRange(cur, 1)
+        [manager boundingRectForGlyphRange:[manager glyphRangeForCharacterRange:NSMakeRange(cur, 1) actualCharacterRange:NULL]
                            inTextContainer:container];
     if (targetRect.origin.y != currentRect.origin.y)
         return YES;
@@ -2951,7 +2951,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)toggleUnderline:(id)sender
 {
-    [self.editor toggleForMarkupPrefix:@"_" suffix:@"_"];
+    // Underscores mean emphasis unless Hoedown's underline extension is enabled.
+    if (self.preferences.extensionUnderline)
+        [self.editor toggleForMarkupPrefix:@"_" suffix:@"_"];
+    else
+        [self.editor toggleForMarkupPrefix:@"<u>" suffix:@"</u>"];
 }
 
 - (IBAction)toggleHighlight:(id)sender
@@ -3124,18 +3128,18 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)toggleOrderedList:(id)sender
 {
-    [self.editor toggleBlockWithPattern:@"^[0-9]+ \\S" prefix:@"1. "];
+    [self.editor toggleBlockWithPattern:@"^[0-9]+\\.[ \t]+" prefix:@"1. "];
 }
 
 - (IBAction)toggleUnorderedList:(id)sender
 {
     NSString *marker = self.preferences.editorUnorderedListMarker;
-    [self.editor toggleBlockWithPattern:@"^[\\*\\+-] \\S" prefix:marker];
+    [self.editor toggleBlockWithPattern:@"^[\\*\\+-][ \t]+" prefix:marker];
 }
 
 - (IBAction)toggleBlockquote:(id)sender
 {
-    [self.editor toggleBlockWithPattern:@"^> \\S" prefix:@"> "];
+    [self.editor toggleBlockWithPattern:@"^>[ \t]?" prefix:@"> "];
 }
 
 - (IBAction)indent:(id)sender
@@ -3379,9 +3383,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
             || [changedKey isEqualToString:@"htmlMathJax"]
             || [changedKey isEqualToString:@"htmlMathJaxInlineDollar"])
     {
-        int extensions = pmh_EXT_NOTES;
+        int extensions = pmh_EXT_NONE;
         if (self.preferences.extensionFootnotes)
-            extensions = pmh_EXT_NONE;
+            extensions |= pmh_EXT_NOTES;
         if (self.preferences.htmlMathJax && self.preferences.htmlMathJaxInlineDollar)
             extensions |= pmh_EXT_MATH;
         self.highlighter.extensions = extensions;
@@ -3640,8 +3644,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (void)applyCurrentZoom
 {
-    [self applyEditorFontAndParagraphStyle];
-    [self scaleWebview];
+    // Highlighting stores the base font and builds theme fonts from it. Refresh
+    // both caches through the font setup path before the next edit can reapply
+    // the previous zoom. That path also updates the preview scale.
+    [self setupEditor:@"editorBaseFontInfo"];
 }
 
 /**
@@ -4727,6 +4733,7 @@ to link outside that scope.", \
 }
 
 
+// NSDocument's completion convention is (document, success, context), after self/_cmd.
 - (void)document:(NSDocument *)doc didPrint:(BOOL)ok context:(void *)context
 {
     if ([doc respondsToSelector:@selector(setPrinting:)])

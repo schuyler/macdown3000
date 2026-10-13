@@ -258,8 +258,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         if (f == cs[0] && b == cs[1])
         {
             NSRange range = NSMakeRange(location - 1, 2);
-            [self shouldChangeTextInRange:range replacementString:@""];
-            [self replaceCharactersInRange:range withString:@""];
+            [self insertText:@"" replacementRange:range];
             return YES;
         }
     }
@@ -292,8 +291,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         offset = whitespaceCount;
 
     NSRange range = NSMakeRange(location - offset, offset);
-    [self shouldChangeTextInRange:range replacementString:@""];
-    [self replaceCharactersInRange:range withString:@""];
+    [self insertText:@"" replacementRange:range];
     return YES;
 }
 
@@ -329,82 +327,47 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 - (void)toggleBlockWithPattern:(NSString *)pattern prefix:(NSString *)prefix
 {
-    NSRegularExpression *regex =
-        [[NSRegularExpression alloc] initWithPattern:pattern options:0
-                                               error:NULL];
+    NSRegularExpression *regex = [[NSRegularExpression alloc] initWithPattern:pattern options:0 error:NULL];
+    if (!regex || !prefix.length)
+        return;
     NSString *content = self.string;
-    NSRange selectedRange = self.selectedRange;
-    NSRange lineRange = [content lineRangeForRange:selectedRange];
-
+    NSRange selection = self.selectedRange;
+    NSRange lineRange = [content lineRangeForRange:selection];
     NSString *toProcess = [content substringWithRange:lineRange];
-    BOOL hasTrailingNewline = NO;
-    if ([toProcess hasSuffix:@"\n"])
-    {
-        toProcess = [toProcess substringToIndex:(toProcess.length - 1)];
-        hasTrailingNewline = YES;
+    BOOL trailingNewline = [toProcess hasSuffix:@"\n"];
+    if (trailingNewline)
+        toProcess = [toProcess substringToIndex:toProcess.length - 1];
+    NSArray<NSString *> *lines = [toProcess componentsSeparatedByString:@"\n"];
+    NSMutableArray<NSTextCheckingResult *> *matches = [NSMutableArray array];
+    BOOL marked = YES;
+    for (NSString *line in lines) {
+        NSTextCheckingResult *match = [regex firstMatchInString:line options:0 range:NSMakeRange(0, line.length)];
+        BOOL hasMarker = match && match.range.location == 0 && match.range.length > 0;
+        marked = marked && hasMarker;
+        [matches addObject:hasMarker ? (id)match : (id)NSNull.null];
     }
-
-    NSArray *lines = [toProcess componentsSeparatedByString:@"\n"];
-
-    BOOL isMarked = YES;
-    for (NSString *line in lines)
-    {
-        NSRange matchRange =
-            [regex rangeOfFirstMatchInString:line options:0
-                                       range:NSMakeRange(0, line.length)];
-        if (matchRange.location == NSNotFound)
-        {
-            isMarked = NO;
-            break;
-        }
+    NSMutableArray *processedLines = [NSMutableArray array];
+    NSUInteger sourceOffset = lineRange.location;
+    NSUInteger mappedStart = selection.location;
+    NSUInteger mappedEnd = NSMaxRange(selection);
+    NSUInteger originalEnd = mappedEnd;
+    for (NSUInteger i = 0; i < lines.count; i++) {
+        NSString *line = lines[i];
+        NSUInteger removed = marked ? matches[i].range.length : 0;
+        NSUInteger added = marked ? 0 : prefix.length;
+        [processedLines addObject:marked ? [line substringFromIndex:removed]
+                                         : [prefix stringByAppendingString:line]];
+        if (selection.location >= sourceOffset)
+            mappedStart = mappedStart - MIN(removed, selection.location - sourceOffset) + added;
+        if (originalEnd >= sourceOffset)
+            mappedEnd = mappedEnd - MIN(removed, originalEnd - sourceOffset) + added;
+        sourceOffset += line.length + 1;
     }
-
-    NSUInteger prefixLength = prefix.length;
-    NSMutableArray *modLines = [NSMutableArray arrayWithCapacity:lines.count];
-
-    __block NSUInteger totalShift = 0;
-    [lines enumerateObjectsUsingBlock:^(id obj, NSUInteger index, BOOL *stop) {
-        NSString *line = obj;
-        if (line.length)
-            totalShift += prefixLength;
-        if (!isMarked)
-            line = [prefix stringByAppendingString:line];
-        else
-            line = [line substringFromIndex:prefixLength];
-        [modLines addObject:line];
-    }];
-
-    NSString *processed = [modLines componentsJoinedByString:@"\n"];
-    if (hasTrailingNewline)
-        processed = [NSString stringWithFormat:@"%@\n", processed];
+    NSString *processed = [processedLines componentsJoinedByString:@"\n"];
+    if (trailingNewline)
+        processed = [processed stringByAppendingString:@"\n"];
     [self insertText:processed replacementRange:lineRange];
-
-    if (!isMarked)
-    {
-        selectedRange.location += prefixLength;
-        if (selectedRange.length + totalShift >= prefixLength)
-            selectedRange.length += totalShift - prefixLength;
-        else    // Underflow.
-            selectedRange.length = 0;
-    }
-    else
-    {
-        if (prefixLength <= selectedRange.location)
-            selectedRange.location -= prefixLength;
-        else    // Underflow.
-            selectedRange.location = 0;
-        if (totalShift - prefixLength <= selectedRange.length)
-            selectedRange.length -= totalShift - prefixLength;
-        else    // Underflow.
-            selectedRange.length = 0;
-
-        if (selectedRange.location < lineRange.location)
-        {
-            selectedRange.length -= lineRange.location - selectedRange.location;
-            selectedRange.location = lineRange.location;
-        }
-    }
-    self.selectedRange = selectedRange;
+    self.selectedRange = NSMakeRange(mappedStart, mappedEnd - mappedStart);
 }
 
 - (void)indentSelectedLinesWithPadding:(NSString *)padding
@@ -418,25 +381,25 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
     NSMutableArray *modLines = [NSMutableArray arrayWithCapacity:lines.count];
     NSUInteger paddingLength = padding.length;
 
-    __block NSUInteger totalShift = 0;
-    [lines enumerateObjectsUsingBlock:^(id obj, NSUInteger index, BOOL *stop) {
-        NSString *line = obj;
-        if (line.length)
-            totalShift += paddingLength;
-        [modLines addObject:[padding stringByAppendingString:line]];
-    }];
-    if ([modLines.lastObject isEqualToString:padding])
-    {
-        [modLines removeLastObject];
-        [modLines addObject:@""];
+    NSUInteger originalStart = selectedRange.location;
+    NSUInteger originalEnd = NSMaxRange(selectedRange);
+    NSUInteger mappedStart = originalStart;
+    NSUInteger mappedEnd = originalEnd;
+    NSUInteger offset = lineRange.location;
+    for (NSUInteger i = 0; i < lines.count; i++) {
+        NSString *line = lines[i];
+        // The trailing empty component after a newline is outside this block.
+        // Every other line receives padding, including an empty interior line.
+        NSUInteger added = (i == lines.count - 1 && !line.length) ? 0 : paddingLength;
+        [modLines addObject:added ? [padding stringByAppendingString:line] : line];
+        if (originalStart >= offset) mappedStart += added;
+        if (originalEnd >= offset) mappedEnd += added;
+        offset += line.length + 1;
     }
     NSString *processed = [modLines componentsJoinedByString:@"\n"];
     [self insertText:processed replacementRange:lineRange];
 
-    selectedRange.location += paddingLength;
-    selectedRange.length +=
-        (totalShift > paddingLength) ? totalShift - paddingLength : 0;
-    self.selectedRange = selectedRange;
+    self.selectedRange = NSMakeRange(mappedStart, mappedEnd - mappedStart);
 }
 
 - (void)unindentSelectedLines
@@ -473,7 +436,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         if (index == 0)
             firstShift += shift;
         totalShift += shift;
-        if (shift && shift < lineLength)
+        if (shift)
             line = [line substringFromIndex:shift];
         [modLines addObject:line];
     }];
@@ -484,8 +447,21 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
     // Modify the selection range so that the same text (minus removed spaces)
     // are selected.
-    selectedRange.location -= firstShift;
-    selectedRange.length -= totalShift - firstShift;
+    NSUInteger originalEnd = NSMaxRange(selectedRange);
+    NSUInteger removedBeforeStart = MIN(firstShift, selectedRange.location - lineRange.location);
+    NSUInteger removedBeforeEnd = 0;
+    NSUInteger originalOffset = lineRange.location;
+    for (NSUInteger i = 0; i < lines.count; i++)
+    {
+        NSString *originalLine = lines[i];
+        NSString *modifiedLine = modLines[i];
+        NSUInteger removed = originalLine.length - modifiedLine.length;
+        if (originalEnd > originalOffset)
+            removedBeforeEnd += MIN(removed, originalEnd - originalOffset);
+        originalOffset += originalLine.length + 1;
+    }
+    selectedRange.location -= removedBeforeStart;
+    selectedRange.length = originalEnd - removedBeforeEnd - selectedRange.location;
     self.selectedRange = selectedRange;
 }
 
@@ -559,8 +535,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         if (replaceRange.length)
         {
             replaceRange.location += start;
-            [self shouldChangeTextInRange:range replacementString:@""];
-            [self replaceCharactersInRange:range withString:@""];
+            [self insertText:@"" replacementRange:range];
         }
         t = @"";
     }
@@ -576,8 +551,12 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         range.length -= 1;      // Exclude trailing space.
         NSString *captured = [line substringWithRange:range];
         NSInteger i = captured.integerValue;
-        if (autoIncrement)
+        if (autoIncrement) {
+            // integerValue saturates out-of-range markers at NSIntegerMax.
+            // Refuse before changing text rather than wrapping to a negative list.
+            if (i == NSIntegerMax) return NO;
             i += 1;
+        }
         t = [NSString stringWithFormat:@"%ld.", i];
     }
     if (!t)
@@ -694,8 +673,8 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
     NSString *toProcess = [content substringWithRange:lineRange];
     NSArray *lines = [toProcess componentsSeparatedByString:@"\n"];
     NSUInteger lineCount = lines.count;
-    __block NSInteger firstShift = 0;
-    __block NSInteger totalShift = 0;
+    NSMutableArray<NSValue *> *markerRanges = [NSMutableArray array];
+    NSMutableArray<NSNumber *> *insertedLengths = [NSMutableArray array];
     [lines enumerateObjectsUsingBlock:^(id obj, NSUInteger index, BOOL *stop) {
         NSString *line = obj;
         NSTextCheckingResult *result =
@@ -711,6 +690,8 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
             if (sentinel == line.length)
             {
                 [processedLines addObject:line];
+                [markerRanges addObject:[NSValue valueWithRange:NSMakeRange(0, 0)]];
+                [insertedLengths addObject:@0];
                 return;
             }
         }
@@ -726,16 +707,27 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
         }
         [processedLines addObject:[header stringByAppendingString:lineContent]];
 
-        NSInteger shift = headerLength - headerRange.length;
-        if (index == 0)
-            firstShift += shift;
-        totalShift += shift;
+        [markerRanges addObject:[NSValue valueWithRange:headerRange]];
+        [insertedLengths addObject:@(headerLength)];
     }];
     NSString *processed = [processedLines componentsJoinedByString:@"\n"];
     [self insertText:processed replacementRange:lineRange];
 
-    selectedRange.location += firstShift;
-    selectedRange.length += totalShift - firstShift;
+    NSUInteger originalStart = selectedRange.location;
+    NSUInteger originalEnd = NSMaxRange(selectedRange);
+    NSUInteger mappedStart = originalStart;
+    NSUInteger mappedEnd = originalEnd;
+    NSUInteger offset = lineRange.location;
+    for (NSUInteger i = 0; i < lines.count; i++) {
+        NSUInteger removed = markerRanges[i].rangeValue.length;
+        NSUInteger added = insertedLengths[i].unsignedIntegerValue;
+        if (originalStart >= offset)
+            mappedStart = mappedStart - MIN(removed, originalStart - offset) + added;
+        if (originalEnd >= offset)
+            mappedEnd = mappedEnd - MIN(removed, originalEnd - offset) + added;
+        offset += [lines[i] length] + 1;
+    }
+    selectedRange = NSMakeRange(mappedStart, mappedEnd - mappedStart);
     self.selectedRange = selectedRange;
 }
 
