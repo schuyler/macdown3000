@@ -9,6 +9,24 @@
 #import <XCTest/XCTest.h>
 #import "MPPreferences.h"
 
+@interface MPPreferences (MigrationTesting)
++ (BOOL)migrateLegacyDomain:(NSString *)domain fromDefaults:(NSUserDefaults *)source
+                toDefaults:(NSUserDefaults *)destination timeout:(NSTimeInterval)seconds;
+@end
+
+@interface MPDelayedDomainDefaults : NSUserDefaults
+@property (nonatomic, strong) dispatch_semaphore_t releaseRead;
+@property (nonatomic, strong) dispatch_semaphore_t completedRead;
+@end
+@implementation MPDelayedDomainDefaults
+- (NSDictionary *)persistentDomainForName:(NSString *)name
+{
+    dispatch_semaphore_wait(self.releaseRead, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_signal(self.completedRead);
+    return @{@"htmlStyleName": @"late legacy"};
+}
+@end
+
 @interface MPPreferencesTests : XCTestCase
 @property MPPreferences *preferences;
 @property NSDictionary *oldFontInfo;
@@ -1055,6 +1073,9 @@
     XCTAssertTrue(prefs.extensionIntraEmphasis,
                   @"Future version should not apply any migrations");
 
+    XCTAssertEqual([defaults integerForKey:@"MPMigrationVersion"], 99,
+                   @"Downgrading must preserve the migration marker of a newer app");
+
     // Restore original values
     if (originalVersion)
         [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
@@ -1208,6 +1229,56 @@
         [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
     else
         [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+}
+
+- (void)testLegacyMigrationUsesOnlyPersistentDomainAndPreservesCurrentChoice
+{
+    NSString *legacy = [@"audit.legacy." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSString *current = [@"audit.current." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *source = [[NSUserDefaults alloc] initWithSuiteName:legacy];
+    NSUserDefaults *destination = [[NSUserDefaults alloc] initWithSuiteName:current];
+    @try
+    {
+        [source registerDefaults:@{@"auditInheritedKey": @"must not migrate"}];
+        [source setPersistentDomain:@{@"htmlStyleName": @"old", @"editorMaximumWidth": @800,
+                                      @"AppleIgnored": @YES} forName:legacy];
+        [destination setObject:@"chosen" forKey:@"htmlStyleName"];
+        XCTAssertTrue([MPPreferences migrateLegacyDomain:legacy fromDefaults:source
+                                             toDefaults:destination timeout:2]);
+        XCTAssertEqualObjects([destination objectForKey:@"htmlStyleName"], @"chosen");
+        XCTAssertEqualObjects([destination objectForKey:@"editorMaximumWidth"], @800);
+        XCTAssertNil([destination persistentDomainForName:current][@"auditInheritedKey"]);
+        XCTAssertNil([destination persistentDomainForName:current][@"AppleIgnored"]);
+    }
+    @finally
+    {
+        [source removePersistentDomainForName:legacy];
+        [destination removePersistentDomainForName:current];
+    }
+}
+
+- (void)testTimedOutMigrationNeverWritesLateResult
+{
+    NSString *suite = [@"audit.timeout." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *destination = [[NSUserDefaults alloc] initWithSuiteName:suite];
+    MPDelayedDomainDefaults *source = [[MPDelayedDomainDefaults alloc] initWithSuiteName:suite];
+    source.releaseRead = dispatch_semaphore_create(0);
+    source.completedRead = dispatch_semaphore_create(0);
+    @try
+    {
+        XCTAssertFalse([MPPreferences migrateLegacyDomain:suite fromDefaults:source
+                                              toDefaults:destination timeout:0.01]);
+        [destination setObject:@"chosen after timeout" forKey:@"htmlStyleName"];
+        dispatch_semaphore_signal(source.releaseRead);
+        XCTAssertEqual(dispatch_semaphore_wait(source.completedRead,
+                        dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0);
+        XCTAssertEqualObjects([destination objectForKey:@"htmlStyleName"], @"chosen after timeout");
+    }
+    @finally
+    {
+        dispatch_semaphore_signal(source.releaseRead);
+        [destination removePersistentDomainForName:suite];
+    }
 }
 
 @end

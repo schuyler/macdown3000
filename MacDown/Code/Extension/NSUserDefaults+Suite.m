@@ -21,10 +21,10 @@
 
 - (id)objectForKey:(NSString *)key inSuiteNamed:(NSString *)suiteName
 {
-    id value = (__bridge id)CFPreferencesCopyValue(
+    id value = CFBridgingRelease(CFPreferencesCopyValue(
                            (__bridge CFStringRef)key,
                            (__bridge CFStringRef)suiteName,
-                           kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+                           kCFPreferencesCurrentUser, kCFPreferencesAnyHost));
     return value;
 }
 
