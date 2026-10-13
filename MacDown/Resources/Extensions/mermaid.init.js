@@ -32,9 +32,13 @@
   // unnecessary re-renders once all .language-mermaid elements have been replaced
   // with SVGs. This flag is an additional belt-and-suspenders measure.
   var rendering = false;
+  var renderRequested = false;
 
   var init = async function() {
-    if (rendering) return;
+    if (rendering) {
+      renderRequested = true;
+      return;
+    }
 
     var domAll = document.querySelectorAll(".language-mermaid");
     if (domAll.length === 0) return;
@@ -54,6 +58,7 @@
         var pre = codeElement.parentElement;
         if (!pre || pre.tagName !== "PRE") {
           console.warn('Mermaid: unexpected DOM structure, skipping element');
+          codeElement.classList.remove('language-mermaid');
           continue;
         }
 
@@ -63,16 +68,22 @@
         try {
           // Mermaid 11.x uses Promise-based API
           var result = await mermaid.render(uniqueId, graphSource);
-          pre.outerHTML = result.svg;
+          if (document.body.contains(pre)) pre.outerHTML = result.svg;
         } catch (error) {
           console.error('Mermaid rendering error:', error);
           // Display error message in place of the <pre>
-          pre.outerHTML = '<pre style="color: red; padding: 10px; background: #fee;">' +
-            'Mermaid Error: ' + (error.message || error) + '</pre>';
+          var errorElement = document.createElement('pre');
+          errorElement.style.cssText = 'color: red; padding: 10px; background: #fee;';
+          errorElement.textContent = 'Mermaid Error: ' + (error.message || error);
+          if (document.body.contains(pre) && pre.parentNode) pre.parentNode.replaceChild(errorElement, pre);
         }
       }
     } finally {
       rendering = false;
+      if (renderRequested) {
+        renderRequested = false;
+        setTimeout(init, 0);
+      }
     }
   };
 
