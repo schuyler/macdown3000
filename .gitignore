@@ -198,3 +198,6 @@ bin/
 
 # Local environment variables (Apple credentials for release automation)
 .envrc
+
+# Installed CSS generator dependencies
+Tools/GitHub-style-generator/node_modules/
