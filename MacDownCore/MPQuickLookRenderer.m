@@ -414,6 +414,14 @@ static void mp_quicklook_render_blockcode(
     HOEDOWN_BUFPUTSL(ob, "</code></pre>\n");
 }
 
+// Emits nothing, used when the user has opted to hide horizontal rules.
+static void mp_quicklook_render_hrule(
+    hoedown_buffer *ob, const hoedown_renderer_data *data)
+{
+    (void)ob;
+    (void)data;
+}
+
 
 @interface MPQuickLookRenderer ()
 @property (nonatomic, strong) MPQuickLookPreferences *preferences;
@@ -512,6 +520,8 @@ static void mp_quicklook_render_blockcode(
     // Preserve Prism language classes, but Quick Look never executes Prism JS.
     renderer->blockcode = mp_quicklook_render_blockcode;
     renderer->header = mp_quicklook_render_header;
+    if ([self.preferences hideHorizontalRules])
+        renderer->hrule = mp_quicklook_render_hrule;
 
     // Create document
     hoedown_document *document = hoedown_document_new(
