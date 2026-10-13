@@ -47,6 +47,19 @@
             result.push({node: headers[i], type: 'header'});
         }
 
+        // Element.children ignores text nodes. A paragraph containing
+        // prose and one image must retain its own paragraph reference.
+        function containsOnly(container, content) {
+            if (!container) return false;
+            for (var child = container.firstChild; child; child = child.nextSibling) {
+                if (child === content) continue;
+                if (child.nodeType === 3 && !/\S/.test(child.nodeValue || '')) continue;
+                if (child.nodeType === 8) continue; // comments have no layout
+                return false;
+            }
+            return true;
+        }
+
         // Filter images to only include standalone images
         var standaloneImageParents = [];
         for (var i = 0; i < images.length; i++) {
@@ -54,35 +67,11 @@
             var parent = img.parentElement;
             var isStandalone = false;
 
-            if (!parent) {
-                isStandalone = false;
-            } else if (parent.tagName === 'P') {
-                // Count images in paragraph
-                var imgCount = 0;
-                for (var j = 0; j < parent.children.length; j++) {
-                    if (parent.children[j].tagName === 'IMG') imgCount++;
-                }
-                isStandalone = (imgCount === 1);
-            } else if (parent.children.length === 1) {
-                // Image is the only child
-                isStandalone = true;
-            } else if (parent.tagName === 'A' && parent.children.length === 1) {
-                // Image wrapped in link
-                var grandparent = parent.parentElement;
-                if (grandparent && grandparent.tagName === 'P') {
-                    // Count images/links-with-images in grandparent paragraph
-                    var imgCount = 0;
-                    for (var j = 0; j < grandparent.children.length; j++) {
-                        var node = grandparent.children[j];
-                        if (node.tagName === 'IMG' ||
-                            (node.tagName === 'A' && node.children.length === 1 && node.children[0].tagName === 'IMG')) {
-                            imgCount++;
-                        }
-                    }
-                    isStandalone = (imgCount === 1);
-                } else if (grandparent && grandparent.children.length === 1) {
-                    isStandalone = true;
-                }
+            if (parent && parent.tagName === 'A') {
+                isStandalone = containsOnly(parent, img) &&
+                    containsOnly(parent.parentElement, parent);
+            } else {
+                isStandalone = containsOnly(parent, img);
             }
 
             if (isStandalone) {
