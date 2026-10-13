@@ -324,7 +324,7 @@ Clicking a `[-]` checkbox in the preview marks it as done; to put a task back in
 
 ### Jekyll front-matter
 
-If you like, I can display Jekyll front-matter in a nice table. Just make sure you put the front-matter at the very beginning of the file, and fence it with `---`. For example:
+If front-matter detection is enabled, I exclude Jekyll front-matter from the rendered body. Put the front-matter at the very beginning of the file, and fence it with `---`. For example:
 
 ```yaml
 ---
