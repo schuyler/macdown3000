@@ -12,7 +12,6 @@
 @interface MPHomebrewSubprocessController (Testing)
 
 @property (readonly) NSTask *task;
-@property (readwrite) void(^completionHandler)(NSString *);
 
 - (NSString *)resolvedBrewPath;   // overridable
 
