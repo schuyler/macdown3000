@@ -72,15 +72,29 @@ static NSURL *MPCopyBundledFile(NSString *resource, NSString *extension, NSError
     return target;
 }
 
+// Remember the private copy while its document remains open. A subsequent
+// opening after close gets a fresh copy without overwriting a user's edits.
+static NSURL *MPBundledFileURL(NSString *resource, NSString *extension)
+{
+    static NSMutableDictionary<NSString *, NSURL *> *openedURLs;
+    if (!openedURLs) openedURLs = [NSMutableDictionary dictionary];
+    NSString *key = [resource stringByAppendingPathExtension:extension];
+    NSURL *existing = openedURLs[key];
+    if (existing && [[NSDocumentController sharedDocumentController] documentForURL:existing])
+        return existing;
+    NSURL *target = MPCopyBundledFile(resource, extension, NULL);
+    if (target) openedURLs[key] = target;
+    return target;
+}
+
 NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
 {
-    NSURL *target = MPCopyBundledFile(resource, extension, NULL);
-    if (!target)
-        return;
-    NSDocumentController *c = [NSDocumentController sharedDocumentController];
-    [c openDocumentWithContentsOfURL:target display:YES
-                   completionHandler:MPDocumentOpenCompletionEmpty];
+    NSURL *target = MPBundledFileURL(resource, extension);
+    if (!target) return;
+    [[NSDocumentController sharedDocumentController] openDocumentWithContentsOfURL:target display:YES
+        completionHandler:MPDocumentOpenCompletionEmpty];
 }
+
 
 NS_INLINE void treat()
 {
@@ -136,6 +150,11 @@ NS_INLINE void treat()
 + (NSURL *)copyBundledFile:(NSString *)resource extension:(NSString *)extension error:(NSError **)error
 {
     return MPCopyBundledFile(resource, extension, error);
+}
+
++ (NSURL *)bundledFileURL:(NSString *)resource extension:(NSString *)extension
+{
+    return MPBundledFileURL(resource, extension);
 }
 
 @synthesize preferencesWindowController = _preferencesWindowController;

@@ -8,6 +8,7 @@
 #import "MPDocument.h"
 
 @interface MPMainController (BundledFileTesting)
++ (NSURL *)bundledFileURL:(NSString *)resource extension:(NSString *)extension;
 + (NSURL *)copyBundledFile:(NSString *)resource extension:(NSString *)extension error:(NSError **)error;
 @end
 
@@ -152,6 +153,27 @@
     {
         if (first) [[NSFileManager defaultManager] removeItemAtURL:first.URLByDeletingLastPathComponent error:nil];
         if (second) [[NSFileManager defaultManager] removeItemAtURL:second.URLByDeletingLastPathComponent error:nil];
+    }
+}
+
+- (void)testBundledHelpReusesItsOpenDocumentButNotAClosedCopy
+{
+    NSDocumentController *controller = NSDocumentController.sharedDocumentController;
+    NSURL *first = [MPMainController bundledFileURL:@"help" extension:@"md"];
+    NSDocument *document = [NSDocument new];
+    document.fileURL = first;
+    [controller addDocument:document];
+    NSURL *next = nil;
+    @try {
+        XCTAssertEqualObjects([MPMainController bundledFileURL:@"help" extension:@"md"], first);
+        [controller removeDocument:document];
+        next = [MPMainController bundledFileURL:@"help" extension:@"md"];
+        XCTAssertNotEqualObjects(next, first);
+    } @finally {
+        [controller removeDocument:document];
+        [document close];
+        for (NSURL *url in @[first, next ?: first])
+            [NSFileManager.defaultManager removeItemAtURL:url.URLByDeletingLastPathComponent error:NULL];
     }
 }
 

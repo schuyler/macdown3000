@@ -83,6 +83,20 @@
 @end
 
 
+// Serialize the actual snapshot, then fail the write before any bytes commit.
+@interface MPFailingSaveDocument : MPDocument
+@property BOOL failSerialization;
+@end
+@implementation MPFailingSaveDocument
+- (NSData *)dataOfType:(NSString *)type error:(NSError **)error {
+    NSData *data = [super dataOfType:type error:error];
+    if (!self.failSerialization) return data;
+    if (error) *error = [NSError errorWithDomain:NSCocoaErrorDomain
+        code:NSFileWriteUnknownError userInfo:nil];
+    return nil;
+}
+@end
+
 // Renderer and highlighter stand-ins, so reloadFromLoadedString's
 // (editor && renderer && highlighter) guard is satisfied without kicking off
 // real background work.
@@ -593,17 +607,33 @@
     [doc close];
 }
 
+- (void)testIdenticalBytesWithOlderTimestampDoNotPromptForDirtyDocument
+{
+    NSURL *url = [self writeTempFileWithContents:@"unchanged\r\n"];
+    MPProcessSpyDocument *doc = [MPProcessSpyDocument new];
+    doc.fileURL = url;
+    doc.fileType = @"net.daringfireball.markdown";
+    XCTAssertTrue([doc readFromURL:url ofType:doc.fileType error:NULL]);
+    doc.fileModificationDate = [NSDate dateWithTimeIntervalSinceNow:3600];
+    doc.stubbedDocumentEdited = YES;
+    [doc processExternalFileChange];
+    XCTAssertEqual(doc.promptCount, 0u);
+    XCTAssertEqual(doc.reloadCount, 0u);
+    [doc close];
+}
+
 - (void)testDiskBaselineTracksSuccessfulSavesButNotRecoveryOrFailedSaves
 {
-    for (NSNumber *operation in @[@0, @1, @2, @3]) {
+    for (NSNumber *operation in @[@0, @1, @2, @3, @4]) {
         NSURL *url = [self writeTempFileWithContents:@"original\n"];
-        MPDocument *doc = [MPDocument new];
+        MPFailingSaveDocument *doc = [MPFailingSaveDocument new];
         [self wireEditorInto:doc];
         doc.fileURL = url;
         doc.fileType = @"net.daringfireball.markdown";
         XCTAssertTrue([doc readFromURL:url ofType:doc.fileType error:NULL]);
         self.editor.string = @"saved snapshot\n";
         NSURL *recovery = [self writeTempFileWithContents:@"recovery\n"];
+        doc.failSerialization = operation.integerValue >= 3;
         BOOL saved;
         if (operation.integerValue == 0)
             saved = [doc writeToURL:url ofType:doc.fileType error:NULL];
@@ -613,10 +643,12 @@
         else if (operation.integerValue == 2)
             saved = [doc writeSafelyToURL:recovery ofType:doc.fileType
                 forSaveOperation:NSAutosaveElsewhereOperation error:NULL];
+        else if (operation.integerValue == 3)
+            saved = [doc writeToURL:url ofType:doc.fileType error:NULL];
         else
-            saved = [doc writeToURL:[recovery URLByAppendingPathComponent:@"missing.md"]
-                ofType:doc.fileType error:NULL];
-        XCTAssertEqual(saved, operation.integerValue != 3);
+            saved = [doc writeSafelyToURL:url ofType:doc.fileType
+                forSaveOperation:NSSaveOperation error:NULL];
+        XCTAssertEqual(saved, operation.integerValue < 3);
         XCTAssertEqualObjects([NSString stringWithContentsOfURL:url
             encoding:NSUTF8StringEncoding error:NULL], operation.integerValue < 2
                 ? @"saved snapshot\n" : @"original\n");

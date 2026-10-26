@@ -1396,6 +1396,14 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return [super isDocumentEdited];
 }
 
+// A separate scheduling boundary lets tests advance save completions without
+// depending on wall-clock margins on a busy runner.
+- (void)scheduleSaveProtectionEnd:(dispatch_block_t)completion
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), completion);
+}
+
 - (BOOL)writeToURL:(NSURL *)url ofType:(NSString *)typeName
              error:(NSError *__autoreleasing *)outError
 {
@@ -1432,11 +1440,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
     // Issue #290: Clear save flag after a short delay to ensure
     // the file watcher doesn't trigger (events may be coalesced)
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(), ^{
+    [self scheduleSaveProtectionEnd:^{
         if (self.saveGeneration == saveGeneration)
             self.isSelfSaving = NO;
-    });
+    }];
 
     // If URL changed (Save As), restart watching the new file
     if (result && (!previousURL || ![url isEqual:previousURL]))
@@ -5207,7 +5214,7 @@ to link outside that scope.", \
     // Backup restores can preserve or decrease the timestamp. With the same
     // date, compare against the bytes actually read/saved, not the dirty editor.
     if (currentModDate && diskModDate &&
-        [diskModDate compare:currentModDate] == NSOrderedSame)
+        [diskModDate compare:currentModDate] != NSOrderedDescending)
     {
         if (!self.diskContentFingerprint) return;
         NSData *diskData = [NSData dataWithContentsOfURL:self.fileURL

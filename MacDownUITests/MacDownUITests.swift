@@ -101,6 +101,10 @@ final class MacDownUITests: XCTestCase {
         let restored = app.textViews.matching(identifier: "editor-text-view").matching(
             NSPredicate(format: "value CONTAINS %@", marker)).firstMatch
         XCTAssertTrue(restored.waitForExistence(timeout: 15))
+        // Close the restored fixture before its backing directory is removed.
+        restored.click()
+        restored.typeKey("s", modifierFlags: .command)
+        restored.typeKey("w", modifierFlags: .command)
     }
 
     /// Smoke test: App launches and shows at least one window.

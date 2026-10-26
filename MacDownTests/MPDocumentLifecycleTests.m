@@ -36,6 +36,19 @@
 - (void)processExternalFileChange;
 @end
 
+@interface MPDocument (SaveSchedulingTesting)
+- (void)scheduleSaveProtectionEnd:(dispatch_block_t)completion;
+@end
+@interface MPScheduledSaveDocument : MPDocument
+@property (strong) NSMutableArray<dispatch_block_t> *saveCompletions;
+@end
+@implementation MPScheduledSaveDocument
+- (void)scheduleSaveProtectionEnd:(dispatch_block_t)completion {
+    if (!self.saveCompletions) self.saveCompletions = [NSMutableArray array];
+    [self.saveCompletions addObject:[completion copy]];
+}
+@end
+
 @interface MPRenderer (LifecycleTesting)
 - (void)parseMarkdown:(NSString *)markdown;
 @end
@@ -1035,31 +1048,24 @@
 
 - (void)testAnEarlierSaveTimerCannotReloadWhileTheLatestSaveIsProtected
 {
-    MPDocument *document = [MPDocument new];
+    MPScheduledSaveDocument *document = [MPScheduledSaveDocument new];
     document.fileURL = self.testFileURL;
     document.fileType = @"net.daringfireball.markdown";
     document.markdown = @"first save";
     XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
-    XCTestExpectation *protected = [self expectationWithDescription:@"Latest save remains protected after first timer"];
-    XCTestExpectation *resumed = [self expectationWithDescription:@"External reload resumes after latest timer"];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        document.markdown = @"latest save";
-        XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
-        document.fileModificationDate = [NSDate distantPast];
-        XCTAssertTrue([@"external change" writeToURL:self.testFileURL atomically:YES
-            encoding:NSUTF8StringEncoding error:NULL]);
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [document processExternalFileChange];
-            XCTAssertEqualObjects(document.markdown, @"latest save");
-            [protected fulfill];
-        });
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [document processExternalFileChange];
-            XCTAssertEqualObjects(document.markdown, @"external change");
-            [resumed fulfill];
-        });
-    });
-    [self waitForExpectations:@[protected, resumed] timeout:5.0];
+    document.markdown = @"latest save";
+    XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
+    document.fileModificationDate = [NSDate distantPast];
+    XCTAssertTrue([@"external change" writeToURL:self.testFileURL atomically:YES
+        encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertEqual(document.saveCompletions.count, 2u);
+    document.saveCompletions[0]();
+    [document processExternalFileChange];
+    XCTAssertEqualObjects(document.markdown, @"latest save");
+    document.saveCompletions[1]();
+    [document processExternalFileChange];
+    XCTAssertEqualObjects(document.markdown, @"external change");
+    [document.saveCompletions removeAllObjects];
     [document close];
 }
 @end
