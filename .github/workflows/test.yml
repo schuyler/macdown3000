@@ -23,11 +23,11 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Test build number script on a plist without version keys
+      run: bash Tools/test_update_build_number.sh
+
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
-
-    - name: Verify YAML graph expansion limits
-      run: python3 MacDownTests/BuildTools/yaml_graph_tests.py
 
     # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
     # remaining steps, so the diagnostic steps below would never run, whereas a step-level
@@ -43,6 +43,10 @@ jobs:
           -test-timeouts-enabled YES \
           -maximum-test-execution-time-allowance 120 \
           2>&1 | tee xcodebuild.log
+
+    - name: Verify YAML graph expansion limits
+      if: success() || failure()
+      run: python3 MacDownTests/BuildTools/yaml_graph_tests.py
 
     # A hung host produces no failure message of its own, only silence, so name the test
     # that was running when the log stopped. The last test to start having completed means

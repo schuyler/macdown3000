@@ -347,4 +347,16 @@
                    @"Symlink escaping directory scope must be rejected after resolution");
 }
 
+- (void)testScopeRejectsFinalSymlinkToOutsideFile {
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSString *docs = [self.tempDir stringByAppendingPathComponent:@"docs"];
+    [manager createDirectoryAtPath:docs withIntermediateDirectories:YES attributes:nil error:NULL];
+    NSString *outside = [self.tempDir stringByAppendingPathComponent:@"outside.md"];
+    [@"outside" writeToFile:outside atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+    NSString *link = [docs stringByAppendingPathComponent:@"link.md"];
+    XCTAssertTrue([manager createSymbolicLinkAtPath:link withDestinationPath:outside error:NULL]);
+    XCTAssertFalse([MPURLSecurityPolicy url:[NSURL fileURLWithPath:link]
+        isWithinScopeOfBaseURL:[NSURL fileURLWithPath:[docs stringByAppendingPathComponent:@"document.md"]]]);
+}
+
 @end

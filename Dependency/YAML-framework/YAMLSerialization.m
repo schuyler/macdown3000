@@ -440,7 +440,7 @@ __YAMLSerializationAddObject (yaml_document_t *document, id value) {
             string = [value stringValue];
         }
         NSData *utf8 = [string dataUsingEncoding:NSUTF8StringEncoding];
-        result = yaml_document_add_scalar(document, NULL, (yaml_char_t *)utf8.bytes, (int)utf8.length, YAML_PLAIN_SCALAR_STYLE);
+        result = yaml_document_add_scalar(document, NULL, (yaml_char_t *)(utf8.length ? utf8.bytes : ""), (int)utf8.length, YAML_PLAIN_SCALAR_STYLE);
     }
     return (int) result;
 }
