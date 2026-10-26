@@ -318,6 +318,9 @@ or (in MathML)
     * [x] I support nesting
     * [x] I support ordered *and* unordered lists
 2. [x] I support clicking checkboxes directly in the preview window to toggle them
+3. [-] I can mark a task as partly done with `[-]`, which renders as a dash
+
+Clicking a `[-]` checkbox in the preview marks it as done; to put a task back into the partly-done state, type `[-]` in the source.
 
 ### Jekyll front-matter
 

@@ -362,6 +362,33 @@
 }
 
 
+#pragma mark - Presentation Without a Window
+
+// Every other test in this file installs externalChangePromptPresenter, so none of
+// them reach the real presentation path. This one deliberately does not: a headless
+// test host has no window to sheet from, and any test anywhere in the suite that
+// pairs a live document with an external write lands here. The branch must answer
+// the prompt itself — entering a modal session in a process with no one to dismiss
+// it blocks the main thread for the rest of the run.
+- (void)testPromptWithoutAWindowAnswersItselfInsteadOfBlocking
+{
+    MPPromptSpyDocument *doc = [[MPPromptSpyDocument alloc] init];
+    XCTAssertNil(doc.windowForSheet,
+                 @"Precondition: a headless document has no window to sheet from");
+    XCTAssertNil(doc.externalChangePromptPresenter,
+                 @"Precondition: the real presentation path must be under test");
+
+    [doc promptForReloadWithExternalChanges];
+
+    XCTAssertEqual(doc.reloadCount, 0u,
+                   @"With no one able to answer, unsaved edits must be kept rather "
+                    "than discarded");
+    XCTAssertFalse(doc.externalChangePromptVisible,
+                   @"The guard must be cleared, or every later external change on "
+                    "this document is silently dropped");
+}
+
+
 #pragma mark - Prompt vs. Silent Reload (Issue #543, point 2)
 
 // The regression this issue reports: Auto Save off used to force a dialog even

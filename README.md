@@ -50,7 +50,7 @@ MacDown 3000 uses Hoedown to convert Markdown to HTML with live preview as you t
 
 - **Fenced code blocks** with language identifiers
 - **GitHub Flavored Markdown** including tables, strikethrough (enabled by default), and autolinks
-- **Task lists** for GFM-style checkboxes
+- **Task lists** for GFM-style checkboxes, including the `[-]` partly-done (indeterminate) state
 - **Customizable rendering options** in Preferences
 
 ### Syntax Highlighting

@@ -20,6 +20,13 @@ window.macdownInitTaskList = function () {
       var input = inputs[j];
       // Enable the checkbox for interaction
       input.disabled = false;
+      // The indeterminate state is a DOM property, not an attribute, so the
+      // renderer tags the input with data-checkbox-state="indeterminate" and
+      // it has to be applied here. See
+      // https://github.com/orgs/community/discussions/19199
+      if (input.getAttribute('data-checkbox-state') === 'indeterminate') {
+        input.indeterminate = true;
+      }
       // Add click handler to toggle checkbox in source
       input.addEventListener('click', function(e) {
         e.preventDefault();

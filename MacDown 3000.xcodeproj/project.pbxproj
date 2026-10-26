@@ -108,6 +108,7 @@
 		53878B92ED0F95BE37209ECC /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 25948CF406215AF81C0EA4DA /* Cocoa.framework */; };
 		545BC1E3C5C9EC20E12575B3 /* MPDocumentTabReuseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = EC4903A09EAD86914984F6F1 /* MPDocumentTabReuseTests.m */; };
 		5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */; };
+		C185BB0F201C78DF6D946E1F /* MPEditorViewPasteboardTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 66A67CD2B90882C7F91B6251 /* MPEditorViewPasteboardTests.m */; };
 		632DE4286F689FB448FF9357 /* MPFileNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 8FE8D35A5366F9BE39227CEC /* MPFileNode.m */; };
 		75738FA5CDF1AA53FECC5495 /* MPFolderWatcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A01DF3116B648FB08F2D42B0 /* MPFolderWatcherTests.m */; };
 		770BB49E962A302D0715A6A5 /* libPods-MacDown.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */; };
@@ -133,6 +134,7 @@
 		B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */; };
 		B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8579778C7BF70F28920CE089 /* MPResourceWatcherSetTests.m */; };
 		BA2B9EC2E95175092A97B41E /* MPResourceWatcherSet.m in Sources */ = {isa = PBXBuildFile; fileRef = E6D070A6E080254A17B3B197 /* MPResourceWatcherSet.m */; };
+		BBF52A0B85B2FDE5B0A50275 /* MPDocumentDisposal.m in Sources */ = {isa = PBXBuildFile; fileRef = A43A8201B48EF79E36F0FC8A /* MPDocumentDisposal.m */; };
 		C53D672DA7E35889E7361FF3 /* MPFolderSidebarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F5475503E4264E68C149AA9E /* MPFolderSidebarViewController.m */; };
 		CCD97578A2886FFE73BD96F7 /* MPMathJaxRenderingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6811F39B13C649FC86C4CE5B /* MPMathJaxRenderingTests.m */; };
 		CD03CB15DD4AE325CBF3BEF3 /* MPSidebarSyncCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 53056C5D1D3F14882629B27C /* MPSidebarSyncCoordinator.m */; };
@@ -177,6 +179,7 @@
 		UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UITEST000001SWIFTFILE /* MacDownUITests.swift */; };
 		URLSECPOL0001BUILDFILE /* MPURLSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */; };
 		URLSECPOL0002BUILDFILE /* MPURLSecurityPolicyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */; };
+		AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -656,6 +659,7 @@
 		A1E2BE332F0A754F00DF65A1 /* FileURLInlining.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileURLInlining.m; sourceTree = "<group>"; };
 		A2310231000000000000IMAG /* Images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Images; path = Resources/Images; sourceTree = "<group>"; };
 		A30E1B2C2D3E4F5A6B7C8D9E /* MPHTMLExportTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHTMLExportTests.m; sourceTree = "<group>"; };
+		A43A8201B48EF79E36F0FC8A /* MPDocumentDisposal.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPDocumentDisposal.m; sourceTree = "<group>"; };
 		A50D9D0484B046D0B8BADDA6 /* MPQuickLookPreferences.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MacDownCore/MPQuickLookPreferences.m; sourceTree = SOURCE_ROOT; };
 		A81247E840EB5C07669FF165 /* MPFileWatcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPFileWatcher.m; sourceTree = "<group>"; };
 		A975F4E209243A57A0040072 /* MPSidebarSyncCoordinator.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = MPSidebarSyncCoordinator.h; path = MacDown/Code/Sidebar/MPSidebarSyncCoordinator.h; sourceTree = "<group>"; };
@@ -663,6 +667,7 @@
 		ADEEE219B17DDB468C3A7EBF /* Pods-MacDownQuickLook.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownQuickLook.release.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownQuickLook/Pods-MacDownQuickLook.release.xcconfig"; sourceTree = "<group>"; };
 		B2C3D4E5F67890ABCDEF1234 /* MPZoomTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPZoomTests.m; sourceTree = "<group>"; };
 		B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPEditorViewSubstitutionTests.m; sourceTree = "<group>"; };
+		66A67CD2B90882C7F91B6251 /* MPEditorViewPasteboardTests.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MPEditorViewPasteboardTests.m; sourceTree = "<group>"; };
 		C13407D1311EAF420CEE31C9 /* MPFileNode.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = MPFileNode.h; path = MacDown/Code/Sidebar/MPFileNode.h; sourceTree = "<group>"; };
 		C2B84BF8A8BC4F4B871646F8 /* MPScrollSyncTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPScrollSyncTests.m; sourceTree = "<group>"; };
 		C8D2C0415282E2600BD87E85 /* PreviewViewController.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = MacDownQuickLook/PreviewViewController.m; sourceTree = SOURCE_ROOT; };
@@ -761,6 +766,7 @@
 		URLSECPOLHDRFILEREFID /* MPURLSecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPURLSecurityPolicy.h; sourceTree = "<group>"; };
 		URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicy.m; sourceTree = "<group>"; };
 		URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicyTests.m; sourceTree = "<group>"; };
+		AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1132,6 +1138,7 @@
 		1FCDCA2F1944F96E00B1F966 /* MacDownTests */ = {
 			isa = PBXGroup;
 			children = (
+				AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */,
 				A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */,
 				URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */,
 				1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */,
@@ -1173,6 +1180,7 @@
 				ISSUE325MJSCRLFILEREF /* MPMathJaxScrollTests.m */,
 				1FCDCA371944F97800B1F966 /* Supporting Files */,
 				B3BD139B59E787FBB9F38228 /* MPEditorViewSubstitutionTests.m */,
+				66A67CD2B90882C7F91B6251 /* MPEditorViewPasteboardTests.m */,
 				ISSUE313TOOLBARFILEREF /* MPToolbarControllerTests.m */,
 				ISSUE318STYLERELFILEREF /* MPDocumentStyleUpdateTests.m */,
 				ISSUE331MRMDRNDRFILEREF /* MPMermaidRenderingTests.m */,
@@ -1193,6 +1201,7 @@
 				EC4903A09EAD86914984F6F1 /* MPDocumentTabReuseTests.m */,
 				4C695901868F7E76EAB0EBA6 /* MPMainControllerFolderTests.m */,
 				D17D80F3F55A027304992DED /* MPMainControllerMenuTests.m */,
+				A43A8201B48EF79E36F0FC8A /* MPDocumentDisposal.m */,
 			);
 			path = MacDownTests;
 			sourceTree = "<group>";
@@ -1890,6 +1899,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */,
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
@@ -1924,6 +1934,7 @@
 				ISSUE543EXTCHGBUILDFILE /* MPExternalChangeReloadTests.m in Sources */,
 				ISSUE325MJSCRLBUILDFILE /* MPMathJaxScrollTests.m in Sources */,
 				5AD88BF0766B938F9D61A831 /* MPEditorViewSubstitutionTests.m in Sources */,
+				C185BB0F201C78DF6D946E1F /* MPEditorViewPasteboardTests.m in Sources */,
 				ISSUE313TOOLBARBUILDFILE /* MPToolbarControllerTests.m in Sources */,
 				EA2D3FB9196BC4F7CA0235DC /* MPFileWatcherTests.m in Sources */,
 				B9A9E04CBEE140C3AF8880B9 /* MPResourceWatcherSetTests.m in Sources */,
@@ -1951,6 +1962,7 @@
 				545BC1E3C5C9EC20E12575B3 /* MPDocumentTabReuseTests.m in Sources */,
 				8F6598F79605DBA110909D3E /* MPMainControllerFolderTests.m in Sources */,
 				AD8A942CA7FEA4BD27C18A0E /* MPMainControllerMenuTests.m in Sources */,
+				BBF52A0B85B2FDE5B0A50275 /* MPDocumentDisposal.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

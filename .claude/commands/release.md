@@ -440,6 +440,9 @@ Summary:
 2. Apple notarizes the DMG (~5-15 minutes)
 3. You trigger stapling workflow when build completes
 4. Stapling workflow verifies notarization and publishes the release
+5. You publish the appcast item by hand, so installed copies are offered the
+   update — `plans/release-checklist.md` → "Step 4: Publish the Appcast".
+   Nothing automated does this.
 
 **Resources:**
 - Build workflow: https://github.com/schuyler/macdown3000/actions/workflows/release.yml
@@ -483,5 +486,5 @@ This is a manual review step, not run automatically as part of the tag/build/sta
    - Pushing the tag
 5. **No Co-authored-by trailers** - Never add "Co-authored-by:" to commits
 6. **Clear error messages** - When things fail, show the actual error and let the user decide next steps
-7. **Auto-update readiness** - Before the first real (non-prerelease) release meant to offer auto-updates, three blockers must be cleared: (a) `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value — Step 1 checks this mechanically and fails the release if it is; (b) the matching private key is backed up outside the maintainer's login Keychain — once a build ships carrying the public key, losing the private half strands every install permanently, and no check enforces this; (c) `appcast.xml` generation/hosting exists for `SUFeedURL` (issue #554). See `plans/release-checklist.md` → "Prerequisite (One-Time): Auto-Update Readiness". Sparkle's nested components are re-signed for notarization by the release workflow (`Tools/sign_sparkle.sh`, issue #553); no per-release action is needed.
+7. **Auto-update readiness** - Before the first real (non-prerelease) release meant to offer auto-updates, three blockers must be cleared: (a) `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value — Step 1 checks this mechanically and fails the release if it is; (b) the matching private key is backed up outside the maintainer's login Keychain — once a build ships carrying the public key, losing the private half strands every install permanently, and no check enforces this; (c) an item for the release is published to the appcast `SUFeedURL` names — that one is a per-release step, not a one-time one, run by hand with `Tools/update_appcast.py` after the release is published (`plans/release-checklist.md` → "Step 4: Publish the Appcast", issue #554). See `plans/release-checklist.md` → "Prerequisite (One-Time): Auto-Update Readiness". Sparkle's nested components are re-signed for notarization by the release workflow (`Tools/sign_sparkle.sh`, issue #553); no per-release action is needed.
 8. **Post-release issue triage doesn't wait on reporter confirmation** - Close milestone issues that the changelog/PRs show were fixed, even if the original submitter never replied to a test request.

@@ -96,6 +96,46 @@ NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
     return [NSString stringWithFormat:@"editor%@%@", first, rest];
 }
 
+NS_INLINE NSString *MPPreviewResourceHTML(NSString *html)
+{
+    if (!html.length)
+        return nil;
+
+    NSRange start = [html rangeOfString:@"<head>"];
+    if (start.location == NSNotFound)
+        return nil;
+
+    NSRange searchRange = NSMakeRange(NSMaxRange(start),
+                                      html.length - NSMaxRange(start));
+    NSRange end = [html rangeOfString:@"</head>"
+                              options:0
+                                range:searchRange];
+    if (end.location == NSNotFound)
+        return nil;
+
+    NSMutableString *resources = [[html substringWithRange:NSMakeRange(
+        start.location, NSMaxRange(end) - start.location)] mutableCopy];
+
+    // The default template places linked and embedded scripts at the end of
+    // <body>, so the head alone is not a complete resource signature.
+    static NSRegularExpression *scriptRegex = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        scriptRegex = [[NSRegularExpression alloc]
+            initWithPattern:@"<script\\b[^>]*>.*?</script>"
+                    options:(NSRegularExpressionCaseInsensitive |
+                             NSRegularExpressionDotMatchesLineSeparators)
+                      error:NULL];
+    });
+    NSRange fullRange = NSMakeRange(0, html.length);
+    for (NSTextCheckingResult *match in
+         [scriptRegex matchesInString:html options:0 range:fullRange])
+    {
+        [resources appendString:[html substringWithRange:match.range]];
+    }
+    return resources;
+}
+
 NS_INLINE NSDictionary *MPEditorKeysToObserve()
 {
     static NSDictionary *keys = nil;
@@ -325,8 +365,7 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (strong) NSURL *pdfExportURL;
 @property BOOL isPreviewReady;
 @property (strong) NSURL *currentBaseUrl;
-@property (copy) NSString *currentStyleName;
-@property (copy) NSString *currentHighlightingThemeName;
+@property (copy) NSString *currentPreviewResourceHTML;
 @property CGFloat lastPreviewScrollTop;
 @property (nonatomic, readonly) BOOL needsHtml;
 @property (nonatomic) NSUInteger totalWords;
@@ -515,7 +554,6 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
     };
 }
 
-
 /**
  * Issue #436: Scans a single line for a fenced-code-block marker (a run of 3+ backticks or
  * tildes, allowing 0-3 leading spaces). Returns YES and reports the marker character, its
@@ -676,7 +714,6 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     return _mathJaxRenderGeneration;
 }
-
 
 #pragma mark - Override
 
@@ -2122,19 +2159,23 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         [self.resourceWatcherSet updateWatchedPaths:paths];
     }
 
-    // Check if CSS style or highlighting theme has changed.
-    // If either changed, we must do a full reload to update <head> with new CSS links.
-    NSString *newStyleName = self.preferences.htmlStyleName;
-    NSString *newHighlightingTheme = self.preferences.htmlHighlightingThemeName;
-    BOOL stylesChanged = !MPAreNilableStringsEqual(self.currentStyleName, newStyleName) ||
-                         !MPAreNilableStringsEqual(self.currentHighlightingThemeName, newHighlightingTheme);
+    // Body-only replacement preserves scroll position, but it also preserves
+    // every script and stylesheet from the previous page. Compare the generated
+    // head plus script tags so newly required Prism language components (and any
+    // other page resource) trigger a full load. This matters during initial open when
+    // an empty render can finish before the render containing the file's fenced
+    // code blocks. Related to GitHub issue #594.
+    NSString *newPreviewResourceHTML = MPPreviewResourceHTML(html);
+    BOOL resourcesChanged =
+        !MPAreNilableStringsEqual(self.currentPreviewResourceHTML,
+                                  newPreviewResourceHTML);
 
     // Try DOM replacement to preserve scroll position.
     // MathJax re-typesetting is handled via MathJax.Hub.Queue, which serializes
     // the async typesetting correctly. Scroll is restored after typesetting completes.
-    // Skip DOM replacement if styles changed, since <head> CSS links need updating.
+    // Skip DOM replacement if generated page resources changed.
     // Related to issue #325.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !stylesChanged)
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !resourcesChanged)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -2169,6 +2210,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                     @"  body.innerHTML = html;"
                     @"  if(window.Prism){Prism.highlightAll();}"
                     @"  if(typeof window.macdownInitTaskList==='function'){window.macdownInitTaskList();}"
+                    @"  if(typeof window.macdownInitTableResize==='function'){window.macdownInitTableResize();}"
                     @"  if(window.MathJax&&MathJax.Hub){"
                     @"    MathJax.Hub.Queue(['Typeset',MathJax.Hub]);"
                     @"    MathJax.Hub.Queue(function(){"
@@ -2261,8 +2303,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // takes effect.
     [self applyPreviewZoom];
     self.currentBaseUrl = baseUrl;
-    self.currentStyleName = newStyleName;
-    self.currentHighlightingThemeName = newHighlightingTheme;
+    self.currentPreviewResourceHTML = newPreviewResourceHTML;
 }
 
 - (NSURL *)rendererBaseURL:(MPRenderer *)renderer
@@ -2356,10 +2397,20 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // preview's scroll position to follow it, on top of the usual viewport-based
     // sync. Runs independently of the word-count display preference below, since
     // it is unrelated to that gate.
-    if (self.preferences.editorSyncScrolling && _scrollOwner == MPScrollOwnerNeither)
-    {
-        [self syncScrollersToCursor];
-    }
+    //
+    // Deferred to the end of the turn: when typing, NSTextView posts this
+    // notification before -editorTextDidChange:, which claims Editor ownership.
+    // Checking ownership here would still see Neither and scroll the preview on
+    // every keystroke.
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        MPDocument *strongSelf = weakSelf;
+        if (strongSelf.preferences.editorSyncScrolling
+            && strongSelf->_scrollOwner == MPScrollOwnerNeither)
+        {
+            [strongSelf syncScrollersToCursor];
+        }
+    });
 
     if (!self.preferences.editorShowWordCount)
         return;
@@ -3206,11 +3257,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     if (themePath)
         [self.renderer setTimestamp:now forResourcePath:themePath];
 
-    // Issue #318: Reset cached names so renderer:didProduceHTMLOutput:
-    // sees a "change" (nil != currentPref) and takes the full HTML reload
-    // path instead of body-only DOM replacement.
-    self.currentStyleName = nil;
-    self.currentHighlightingThemeName = nil;
+    // Issue #318: Reset the cached resource signature so
+    // renderer:didProduceHTMLOutput: sees a change and takes the full HTML
+    // reload path instead of body-only DOM replacement.
+    self.currentPreviewResourceHTML = nil;
 }
 
 /**
@@ -4717,6 +4767,19 @@ to link outside that scope.", \
 
 #pragma mark - Interactive Checkbox Support (Issue #269)
 
+- (NSDictionary<NSString *, NSString *> *)queryItemsByNameForURL:(NSURL *)url
+{
+    NSURLComponents *components =
+        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSMutableDictionary *items = [NSMutableDictionary dictionary];
+    for (NSURLQueryItem *item in components.queryItems)
+    {
+        if (item.name.length && item.value)
+            items[item.name] = item.value;
+    }
+    return items;
+}
+
 /**
  * Handle the checkbox toggle URL from the preview.
  * URL format: x-macdown-checkbox://toggle/<index>
@@ -4726,17 +4789,7 @@ to link outside that scope.", \
     if (![url.host isEqualToString:@"toggle"])
         return;
 
-    NSURLComponents *components =
-        [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
-    NSString *token = nil;
-    for (NSURLQueryItem *item in components.queryItems)
-    {
-        if ([item.name isEqualToString:@"token"])
-        {
-            token = item.value;
-            break;
-        }
-    }
+    NSString *token = [self queryItemsByNameForURL:url][@"token"];
     if (!token.length
         || ![token isEqualToString:self.renderer.checkboxBridgeToken])
     {
@@ -4802,7 +4855,10 @@ to link outside that scope.", \
 
 /**
  * Toggle the checkbox at the specified index in the markdown source.
- * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
+ * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa. An
+ * indeterminate checkbox ([-], the partially-done state; see
+ * https://github.com/orgs/community/discussions/19199) becomes checked,
+ * matching how the platform treats a click on an indeterminate checkbox.
  * Returns the modified markdown, or the original if index is out of bounds.
  *
  * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
@@ -4814,10 +4870,10 @@ to link outside that scope.", \
     if (!markdown || markdown.length == 0)
         return markdown;
 
-    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], * [ ], etc.
+    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], - [-], etc.
     NSError *error = nil;
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX])\\]"
+        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX-])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX-])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
                                error:&error];
 
@@ -4923,11 +4979,12 @@ to link outside that scope.", \
     NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
 
     NSString *currentState = [markdown substringWithRange:checkboxContentRange];
-    NSString *newState;
-    if ([currentState isEqualToString:@" "])
-        newState = @"x";
-    else
-        newState = @" ";
+    // Open (" ") and indeterminate ("-") both resolve to done on a click, the
+    // way clicking an indeterminate checkbox behaves on macOS; "x"/"X" go
+    // back to open.
+    BOOL isOpen = [currentState isEqualToString:@"x"] ||
+                  [currentState isEqualToString:@"X"];
+    NSString *newState = isOpen ? @" " : @"x";
 
     NSMutableString *result = [markdown mutableCopy];
     [result replaceCharactersInRange:checkboxContentRange withString:newState];
@@ -5109,6 +5166,16 @@ to link outside that scope.", \
 
 - (void)presentExternalChangeAlertWithCompletion:(void (^)(BOOL shouldReload))completion
 {
+    // A process with no window has nobody to answer a prompt, so a modal session
+    // here would block the main thread for good. Answer it as "Keep": the one
+    // response that cannot lose unsaved work.
+    NSWindow *window = self.windowForSheet;
+    if (!window)
+    {
+        completion(NO);
+        return;
+    }
+
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = NSLocalizedString(
         @"File Modified Externally",
@@ -5120,20 +5187,10 @@ to link outside that scope.", \
     [alert addButtonWithTitle:NSLocalizedString(@"Discard", @"Discard changes button")];
     [alert addButtonWithTitle:NSLocalizedString(@"Keep", @"Keep local changes button")];
 
-    NSWindow *window = self.windowForSheet;
-    if (window)
-    {
-        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
-            // "Keep" reports NO, and the caller then leaves the editor alone.
-            completion(response == NSAlertFirstButtonReturn);
-        }];
-    }
-    else
-    {
-        // Fallback to modal if no window (shouldn't happen)
-        NSModalResponse response = [alert runModal];
+    [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+        // "Keep" reports NO, and the caller then leaves the editor alone.
         completion(response == NSAlertFirstButtonReturn);
-    }
+    }];
 }
 
 - (void)reloadFromDisk

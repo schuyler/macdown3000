@@ -447,6 +447,124 @@
                   @"Third checkbox should have index 2");
 }
 
+#pragma mark - Indeterminate Task List Tests
+
+/**
+ * Test that the [-] marker renders as a task-list item tagged for the
+ * indeterminate state, rather than as literal text.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testIndeterminateCheckboxRendersAsTaskListItem
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [-] Partly done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"<li class=\"task-list-item\">"],
+                  @"[-] should render as a task-list item");
+    XCTAssertTrue([html containsString:@"data-checkbox-state=\"indeterminate\""],
+                  @"[-] should be tagged for the indeterminate state");
+    XCTAssertFalse([html containsString:@"[-]"],
+                   @"The [-] marker should not appear as literal text");
+}
+
+/**
+ * Test that the indeterminate state is not confused with the checked state:
+ * no `checked` attribute may be emitted, since that is what tasklist.js keys
+ * the DOM `indeterminate` property off.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testIndeterminateCheckboxIsNotChecked
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [-] Partly done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertEqualObjects(html,
+                          @"<ul>\n"
+                          @"<li class=\"task-list-item\"><input type=\"checkbox\""
+                          @" data-checkbox-state=\"indeterminate\" data-checkbox-index=\"0\">"
+                          @" Partly done\n</li>\n</ul>\n",
+                          @"The indeterminate input must carry no checked attribute");
+}
+
+/**
+ * Test that an indeterminate checkbox occupies an index in the same
+ * depth-first index space as the other states, so preview clicks address the
+ * right source line.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testIndeterminateCheckboxSharesIndexSpace
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Open\n- [-] Partly done\n- [x] Done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"<input type=\"checkbox\" data-checkbox-index=\"0\">"],
+                  @"Unchecked task should have index 0");
+    XCTAssertTrue([html containsString:@"<input type=\"checkbox\" data-checkbox-state=\"indeterminate\" data-checkbox-index=\"1\">"],
+                  @"Indeterminate task should take index 1");
+    XCTAssertTrue([html containsString:@"<input type=\"checkbox\" checked data-checkbox-index=\"2\">"],
+                  @"Checked task should have index 2");
+}
+
+/**
+ * Test that an indented [-] is recognized as a marker, not left as literal
+ * text: the marker is matched at the start of the nested item's own text, so
+ * indentation must not change how it is treated.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testIndentedIndeterminateCheckboxRendersAsTaskListItem
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [ ] Parent\n  - [-] Partly done";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-state=\"indeterminate\""],
+                  @"An indented [-] should still render as an indeterminate task");
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"1\""],
+                  @"The nested indeterminate task should be the second checkbox");
+    XCTAssertFalse([html containsString:@"[-]"],
+                   @"An indented [-] should not survive as literal text");
+}
+
+/**
+ * Test that near-miss markers are not accepted, matching the existing [] /
+ * [x ] / [ x] edge cases: a dash with anything else in the brackets is not a
+ * task state and must stay literal text.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testMalformedIndeterminateMarkersStayLiteralText
+{
+    self.delegate.extensions = 0;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [- ] Trailing space\n- [--] Two dashes";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html = [self.renderer currentHtml];
+
+    XCTAssertFalse([html containsString:@"data-checkbox-state=\"indeterminate\""],
+                   @"[-] and [--] are not valid task states");
+    XCTAssertFalse([html containsString:@"data-checkbox-index"],
+                   @"A malformed marker must not be given a checkbox index");
+    XCTAssertTrue([html containsString:@"[- ] Trailing space"],
+                  @"[- ] should stay literal text");
+    XCTAssertTrue([html containsString:@"[--] Two dashes"],
+                  @"[--] should stay literal text");
+}
+
 - (void)testStrikethrough
 {
     // Strikethrough requires the STRIKETHROUGH extension
