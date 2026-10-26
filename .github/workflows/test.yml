@@ -44,6 +44,10 @@ jobs:
           -maximum-test-execution-time-allowance 120 \
           2>&1 | tee xcodebuild.log
 
+    - name: Verify YAML graph expansion limits
+      if: success() || failure()
+      run: python3 MacDownTests/BuildTools/yaml_graph_tests.py
+
     # A hung host produces no failure message of its own, only silence, so name the test
     # that was running when the log stopped. The last test to start having completed means
     # the failure was something other than a stall.
