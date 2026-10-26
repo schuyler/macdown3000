@@ -25,6 +25,9 @@
 /* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
 "GF9-Dm-IoB.title" = "Använd dollar-tecken ($) som inline delimiter";
 
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Dölj horisontella linjer";
+
 /* Class = "NSButtonCell"; title = "Task list syntax"; ObjectID = "kBf-iW-HlH"; */
 "kBf-iW-HlH.title" = "Checklist-syntax";
 

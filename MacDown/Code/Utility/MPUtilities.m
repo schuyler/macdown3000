@@ -189,7 +189,7 @@ NSDictionary *MPGetDataMap(NSString *name)
 
 id MPGetObjectFromJavaScript(NSString *code, NSString *variableName)
 {
-    if (!code.length)
+    if (!code.length || !variableName.length)
         return nil;
 
     id object = nil;
@@ -214,12 +214,14 @@ id MPGetObjectFromJavaScript(NSString *code, NSString *variableName)
         // JavaScript Object -> JSON -> Foundation Object.
         // Not the best way to do this, but enough for our purpose.
         jsonr = JSValueCreateJSONString(cxt, val, 0, &exc);
-        if (exc)
+        if (exc || !jsonr)
             break;
-        size_t sz = JSStringGetLength(jsonr) + 1;   // NULL terminated.
+        size_t sz = JSStringGetMaximumUTF8CStringSize(jsonr);   // NULL terminated.
         char *buffer = (char *)malloc(sz * sizeof(char));
-        JSStringGetUTF8CString(jsonr, buffer, sz);
-        NSData *data = [NSData dataWithBytesNoCopy:buffer length:sz - 1
+        if (!buffer)
+            break;
+        size_t written = JSStringGetUTF8CString(jsonr, buffer, sz);
+        NSData *data = [NSData dataWithBytesNoCopy:buffer length:written ? written - 1 : 0
                                       freeWhenDone:YES];
         object = [NSJSONSerialization JSONObjectWithData:data options:0
                                                    error:NULL];

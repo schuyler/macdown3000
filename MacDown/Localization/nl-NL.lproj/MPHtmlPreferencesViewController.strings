@@ -20,7 +20,7 @@
 "aWw-Wb-pBl.title" = "Schaal voorbeeld gebaseerd op lettertypegrootte van bewerker";
 
 /* Class = "NSButtonCell"; title = "Mermaid"; ObjectID = "bda-Ft-ecb"; */
-"bda-Ft-ecb.title" = "Zeemeermin";
+"bda-Ft-ecb.title" = "Mermaid";
 
 /* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
 "BuQ-02-oQB.title" = "Codeblok met gemarkeerde syntax";
@@ -30,6 +30,9 @@
 
 /* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
 "GF9-Dm-IoB.title" = "Gebruik dollarteken ($) als regelbeperking";
+
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Verberg horizontale lijnen";
 
 /* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
 "iXi-Pv-mFl.title" = "Hide YAML front matter";
