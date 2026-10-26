@@ -1397,4 +1397,41 @@
                   @"Empty heading with TOC enabled must render without crashing.");
 }
 
+- (void)testPastingURLPreservesRenderedInlineMarkdown
+{
+    NSPasteboard *board = NSPasteboard.generalPasteboard;
+    NSMutableArray *savedItems = [NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy = [[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data = [item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [savedItems addObject:copy];
+    }
+    @try {
+        [board clearContents];
+        [board setString:@"https://example.com/a)" forType:NSPasteboardTypeString];
+        NSArray *selections = @[@"![logo](logo.png)", @"my\\_var", @"`my\\_var`", @"**bold**"];
+        for (NSString *selection in selections) {
+            MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+            view.string = selection;
+            view.selectedRange = NSMakeRange(0, selection.length);
+            [view paste:nil];
+            NSString *expected = [NSString stringWithFormat:@"[%@](https://example.com/a%%29)", selection];
+            XCTAssertEqualObjects(view.string, expected);
+            NSString *html = [self renderMarkdown:view.string withExtensions:0 rendererFlags:0];
+            NSString *selectionHTML = [self renderMarkdown:selection withExtensions:0 rendererFlags:0];
+            NSString *contents = [selectionHTML stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            XCTAssertTrue([contents hasPrefix:@"<p>"] && [contents hasSuffix:@"</p>"]);
+            contents = [contents substringWithRange:NSMakeRange(3, contents.length - 7)];
+            NSString *expectedAnchor = [NSString stringWithFormat:@"<a href=\"https://example.com/a%%29\">%@</a>", contents];
+            XCTAssertTrue([html containsString:expectedAnchor], @"%@ rendered as %@", selection, html);
+        }
+    } @finally {
+        [board clearContents];
+        if (savedItems.count) [board writeObjects:savedItems];
+    }
+}
+
 @end

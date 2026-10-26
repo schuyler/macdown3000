@@ -29,6 +29,12 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    - name: Run editor indentation contracts
+      run: python3 MacDownTests/BuildTools/indent_selection_tests.py
+
+    - name: Run editor geometry regression
+      run: bash MacDownTests/UI/test_editor_geometry.sh
+
     # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
     # remaining steps, so the diagnostic steps below would never run, whereas a step-level
     # one leaves them to fire on failure(). Healthy runs finish in about 2-4 minutes.

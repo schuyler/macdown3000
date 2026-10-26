@@ -242,9 +242,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
 
     // Wrap selected text as markdown link
     NSString *selectedText = [self.string substringWithRange:selectedRange];
-    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"];
-    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"[" withString:@"\\["];
-    selectedText = [selectedText stringByReplacingOccurrencesOfString:@"]" withString:@"\\]"];
+    // Preserve inline Markdown, including images, code spans and existing escapes.
     NSString *destination = [pastedURL.absoluteString stringByReplacingOccurrencesOfString:@"(" withString:@"%28"];
     destination = [destination stringByReplacingOccurrencesOfString:@")" withString:@"%29"];
     NSString *markdownLink = [NSString stringWithFormat:@"[%@](%@)",

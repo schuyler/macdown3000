@@ -21,6 +21,30 @@
 #import <sys/stat.h>
 
 
+// Model a layout where a surrogate pair occupies one glyph. Font engines may
+// retain null placeholder glyphs, so relying on a particular font is not portable.
+@interface MPCompactGlyphLayoutManager : NSLayoutManager
+@end
+@implementation MPCompactGlyphLayoutManager
+- (NSRange)glyphRangeForCharacterRange:(NSRange)range actualCharacterRange:(NSRangePointer)actual
+{
+    if (actual) *actual = range;
+    return NSMakeRange(range.location > 1 ? range.location - 1 : 0, range.length);
+}
+- (NSRect)boundingRectForGlyphRange:(NSRange)range inTextContainer:(NSTextContainer *)container
+{
+    // Last content row spans glyphs 5...8; glyph 9 starts the following row.
+    return NSMakeRect(0, range.location <= 8 ? 20 : 40, 10, 20);
+}
+@end
+
+@interface MPCompactGlyphEditorView : MPEditorView
+@property (strong) NSLayoutManager *compactLayoutManager;
+@end
+@implementation MPCompactGlyphEditorView
+- (NSLayoutManager *)layoutManager { return self.compactLayoutManager ?: [super layoutManager]; }
+@end
+
 #pragma mark - Test Infrastructure for Issue #358
 
 // Expose private MPDocument properties needed by the reload tests.
@@ -1134,14 +1158,32 @@
     self.document.editor = editor;
     @try {
         preferences.editorSmartHome = YES;
-        editor.string = @"  😀";
+        editor.string = @"😀\nab\n  cd";
         editor.selectedRange = NSMakeRange(editor.string.length, 0);
         XCTAssertFalse([self.document textViewShouldMoveToLeftEndOfLine:editor]);
-        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(2, 0)));
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(8, 0)));
     } @finally {
         preferences.editorSmartHome = original;
     }
 }
 
+
+- (void)testSmartHomeUsesTheCurrentVisualRowWithCompactGlyphs
+{
+    MPPreferences *preferences = self.document.preferences;
+    BOOL original = preferences.editorSmartHome;
+    MPCompactGlyphEditorView *editor = [[MPCompactGlyphEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    editor.string = @"😀\nab\n  cd\nnext";
+    editor.compactLayoutManager = [[MPCompactGlyphLayoutManager alloc] init];
+    editor.selectedRange = NSMakeRange(9, 0);
+    self.document.editor = editor;
+    @try {
+        preferences.editorSmartHome = YES;
+        XCTAssertFalse([self.document textViewShouldMoveToLeftEndOfLine:editor]);
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(8, 0)));
+    } @finally {
+        preferences.editorSmartHome = original;
+    }
+}
 
 @end
