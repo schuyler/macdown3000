@@ -92,16 +92,3 @@ jobs:
     # the Sparkle framework binary skip when the pod is absent, as it is here.
     - name: Run appcast script tests
       run: python3 Tools/test_update_appcast.py
-
-  css-generation:
-    name: Stylesheet Generation Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Verify committed CSS and transactional regeneration
-      run: python3 MacDownTests/BuildTools/css_generation_tests.py

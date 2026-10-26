@@ -1,0 +1,23 @@
+name: Stylesheet Generation Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  css-generation:
+    name: Stylesheet Generation Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Verify committed CSS and transactional regeneration
+      run: python3 MacDownTests/BuildTools/css_generation_tests.py
