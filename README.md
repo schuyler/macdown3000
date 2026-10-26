@@ -17,7 +17,7 @@ This project honors the original intentions and contributions of both Mou and Ma
 
 ## Download & Install
 
-**Version 3000.0.6** - Available Now
+**Version 3000.0.7** - Available Now
 
 ### Homebrew
 
@@ -50,7 +50,7 @@ MacDown 3000 uses Hoedown to convert Markdown to HTML with live preview as you t
 
 - **Fenced code blocks** with language identifiers
 - **GitHub Flavored Markdown** including tables, strikethrough (enabled by default), and autolinks
-- **Task lists** for GFM-style checkboxes
+- **Task lists** for GFM-style checkboxes, including the `[-]` partly-done (indeterminate) state
 - **Customizable rendering options** in Preferences
 
 ### Syntax Highlighting
@@ -62,6 +62,10 @@ Code blocks get syntax highlighting via Prism, supporting numerous programming a
 - **Math notation** using TeX-like syntax ($$...$$, \[...\], \(...\), and optional $...$ blocks)
 - **Jekyll front-matter** for static site generators
 - **Export to HTML or PDF** with customizable styling
+
+### Folder Browsing
+
+Open an entire folder as a workspace with `macdown .` from the terminal or via **File › Open Folder…** in the menu. A sidebar lists subfolders and Markdown files in the chosen directory; double-click a file to open it as a tab in the same window, or, if it is already open elsewhere, to bring that window to the front. Press **⌘\\** to show or hide the sidebar. Right-click any item in the sidebar for quick access to **Reveal in Finder** or **Copy Path**.
 
 ### Editor Features
 

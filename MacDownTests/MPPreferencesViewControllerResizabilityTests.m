@@ -13,6 +13,7 @@
 #import "MPMarkdownPreferencesViewController.h"
 #import "MPEditorPreferencesViewController.h"
 #import "MPHtmlPreferencesViewController.h"
+#import "MPPreferences.h"
 #import "MPTerminalPreferencesViewController.h"
 
 #pragma mark - View-tree helpers
@@ -483,6 +484,33 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     }];
 }
 
+#pragma mark - Include pre-releases checkbox (Sparkle 2 migration, Issue #129)
+
+// Sparkle 1 had no channel concept, so the checkbox used to be permanently
+// force-disabled in -viewDidLoad (with an "(unavailable)" title suffix) until
+// Sparkle 2 landed. That override is gone now that channel-based pre-release
+// opt-in is implemented; this guards against it silently coming back and
+// re-disabling the control.
+- (void)testGeneralPanelIncludePreReleasesCheckboxIsNotForceDisabled
+{
+    MPGeneralPreferencesViewController *vc =
+        [[MPGeneralPreferencesViewController alloc] init];
+    MPContentView(vc);  // triggers loadView
+
+    // KVC, not dot syntax: includePreReleasesCheckbox is a private IBOutlet
+    // declared in a class extension, not the public header (same pattern as
+    // the updaterController/updater access in MPUpdaterTests.m).
+    NSButton *checkbox = [vc valueForKey:@"includePreReleasesCheckbox"];
+    XCTAssertNotNil(checkbox,
+        @"General pane: expected an 'Include pre-releases' checkbox");
+    XCTAssertTrue(checkbox.enabled,
+        @"Include pre-releases checkbox must not be force-disabled; its "
+        @"enabled state should be driven by normal AppKit defaults");
+    XCTAssertFalse([checkbox.title containsString:@"unavailable"],
+        @"Include pre-releases checkbox must not carry the retired "
+        @"'(unavailable)' title suffix");
+}
+
 #pragma mark - Toolbar tab highlight (Issue #499)
 
 // -viewDidAppear forces the toolbar to revalidate and the window to redraw
@@ -499,6 +527,42 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         XCTAssertNoThrow([vc viewDidAppear],
             @"%@ pane: viewDidAppear must not throw even without a window", name);
     }];
+}
+
+- (void)testDiagramPreferencesRemainEditableWithoutSyntaxHighlighting
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL highlighting = preferences.htmlSyntaxHighlighting;
+    BOOL graphviz = preferences.htmlGraphviz;
+    BOOL mermaid = preferences.htmlMermaid;
+    @try
+    {
+        preferences.htmlSyntaxHighlighting = NO;
+        preferences.htmlGraphviz = NO;
+        preferences.htmlMermaid = NO;
+        MPHtmlPreferencesViewController *controller =
+            [[MPHtmlPreferencesViewController alloc] init];
+        NSUInteger diagramCheckboxes = 0;
+        for (NSButton *button in MPCheckboxes(MPContentView(controller)))
+        {
+            NSString *keyPath = [button infoForBinding:NSValueBinding][NSObservedKeyPathKey];
+            if (![keyPath isEqualToString:@"self.preferences.htmlGraphviz"]
+                && ![keyPath isEqualToString:@"self.preferences.htmlMermaid"])
+                continue;
+            diagramCheckboxes++;
+            XCTAssertTrue(button.enabled);
+            [button performClick:nil];
+        }
+        XCTAssertEqual(diagramCheckboxes, 2U);
+        XCTAssertTrue(preferences.htmlGraphviz);
+        XCTAssertTrue(preferences.htmlMermaid);
+    }
+    @finally
+    {
+        preferences.htmlSyntaxHighlighting = highlighting;
+        preferences.htmlGraphviz = graphviz;
+        preferences.htmlMermaid = mermaid;
+    }
 }
 
 @end

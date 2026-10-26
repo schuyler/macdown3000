@@ -8,8 +8,7 @@
 
 #import "MPMainController.h"
 #import <MASPreferences/MASPreferencesWindowController.h>
-// Temporarily disabled - will upgrade Sparkle to 2.8.1 later
-// #import <Sparkle/SUUpdater.h>
+#import <Sparkle/Sparkle.h>
 #import "MPGlobals.h"
 #import "MPUtilities.h"
 #import "NSDocumentController+Document.h"
@@ -24,6 +23,22 @@
 
 
 static NSString * const kMPTreatLastSeenStampKey = @"treatLastSeenStamp";
+
+
+NS_INLINE BOOL MPUpdaterDisabled(void)
+{
+    // Unit tests run hosted inside this app, so XCTest is loaded into our
+    // process. Class lookup is robust across Xcode versions, unlike the
+    // XCTestConfigurationFilePath environment variable.
+    if (NSClassFromString(@"XCTestCase") != Nil)
+        return YES;
+    // UI tests can't be detected that way (XCTest lives in the XCUITest
+    // runner process, not in the app under test), so MacDownUITests passes
+    // "-MPDisableUpdater YES" as a launch argument, which NSUserDefaults'
+    // argument domain surfaces here. Doubles as a persistent power-user
+    // kill switch (defaults write ... MPDisableUpdater -bool YES).
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MPDisableUpdater"];
+}
 
 
 NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
@@ -97,8 +112,9 @@ NS_INLINE void treat()
 }
 
 
-@interface MPMainController ()
+@interface MPMainController () <SPUUpdaterDelegate>
 @property (readonly) NSWindowController *preferencesWindowController;
+@property (nonatomic, strong, readwrite) SPUStandardUpdaterController *updaterController;
 @end
 
 
@@ -112,6 +128,12 @@ NS_INLINE void treat()
         setEventHandler:self
             andSelector:@selector(openUrlSchemeAppleEvent:withReplyEvent:)
           forEventClass:kInternetEventClass andEventID:kAEGetURL];
+
+    // Deferred start (D2/D5): never start the updater in a test process --
+    // startUpdater schedules timers, may show the update-permission consent
+    // prompt, and on misconfiguration surfaces a modal error alert.
+    if (!MPUpdaterDisabled())
+        [self.updaterController startUpdater];
 }
 
 // Open a file from a browser with url of the form :
@@ -216,6 +238,20 @@ NS_INLINE void treat()
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
 
+- (IBAction)checkForUpdates:(id)sender
+{
+    [self.updaterController checkForUpdates:sender];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+{
+    if (menuItem.action == @selector(checkForUpdates:))
+        return self.updaterController.updater.canCheckForUpdates;
+    // Intentional blanket YES: preserves the always-enabled behavior of this
+    // delegate's other menu actions (and of any added in the future).
+    return YES;
+}
+
 
 #pragma mark - Override
 
@@ -229,6 +265,8 @@ NS_INLINE void treat()
     [center addObserver:self selector:@selector(showFirstLaunchTips)
                    name:MPDidDetectFreshInstallationNotification
                  object:self.preferences];
+    _updaterController = [[SPUStandardUpdaterController alloc]
+        initWithStartingUpdater:NO updaterDelegate:self userDriverDelegate:nil];
     [self copyFiles];
     return self;
 }
@@ -238,7 +276,9 @@ NS_INLINE void treat()
 
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    if (self.preferences.filesToOpen.count || self.preferences.pipedContentFileToOpen)
+    if (self.preferences.filesToOpen.count
+        || self.preferences.pipedContentFileToOpen
+        || self.preferences.foldersToOpen.count)
         return NO;
     return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
@@ -252,20 +292,21 @@ NS_INLINE void treat()
 {
     [self openPendingPipedContent];
     [self openPendingFiles];
+    [self openPendingFolders];
     treat();
 }
 
 
-#if 0  // Temporarily disabled - will upgrade Sparkle to 2.8.1 later
-#pragma mark - SUUpdaterDelegate
+#pragma mark - SPUUpdaterDelegate
 
-- (NSString *)feedURLStringForUpdater:(SUUpdater *)updater
+- (NSSet<NSString *> *)allowedChannelsForUpdater:(SPUUpdater *)updater
 {
+    // Pre-release builds are published on the "beta" channel of the single
+    // appcast at SUFeedURL. Items with no channel (stable) are always allowed.
     if (self.preferences.updateIncludesPreReleases)
-        return [NSBundle mainBundle].infoDictionary[@"SUBetaFeedURL"];
-    return [NSBundle mainBundle].infoDictionary[@"SUFeedURL"];
+        return [NSSet setWithObject:@"beta"];
+    return [NSSet set];
 }
-#endif
 
 
 #pragma mark - Private
@@ -280,8 +321,11 @@ NS_INLINE void treat()
            withIntermediateDirectories:YES attributes:nil error:NULL];
     }
 
+    MPPruneStockStylesheetsInDirectory(MPDataDirectory(kMPStylesDirectoryName),
+                                        MPKnownStockStyleHashesByName());
+
     NSBundle *bundle = [NSBundle mainBundle];
-    for (NSString *key in @[kMPStylesDirectoryName, kMPThemesDirectoryName])
+    for (NSString *key in @[kMPThemesDirectoryName])
     {
         NSURL *dirSource = [bundle URLForResource:key withExtension:@""];
         NSURL *dirTarget = [NSURL fileURLWithPath:MPDataDirectory(key)];
@@ -326,6 +370,41 @@ NS_INLINE void treat()
     }
 
     self.preferences.filesToOpen = nil;
+    [self.preferences synchronize];
+}
+
+- (IBAction)openFolder:(id)sender
+{
+    NSOpenPanel *panel = [NSOpenPanel openPanel];
+    panel.canChooseFiles = NO;
+    panel.canChooseDirectories = YES;
+    panel.allowsMultipleSelection = NO;
+    if ([panel runModal] == NSModalResponseOK && panel.URL)
+        [self openWorkspaceAtURL:panel.URL];
+}
+
+- (void)openWorkspaceAtURL:(NSURL *)url
+{
+    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    NSError *error = nil;
+    MPDocument *doc =
+        (MPDocument *)[c openUntitledDocumentAndDisplay:NO error:&error];
+    if (!doc)
+        return;
+    doc.workspaceRootURL = url;          // set BEFORE the nib loads the sidebar
+    [doc makeWindowControllers];
+    [doc showWindows];
+}
+
+- (void)openPendingFolders
+{
+    for (NSString *path in self.preferences.foldersToOpen)
+    {
+        NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+        if ([url checkResourceIsReachableAndReturnError:NULL])
+            [self openWorkspaceAtURL:url];
+    }
+    self.preferences.foldersToOpen = nil;
     [self.preferences synchronize];
 }
 

@@ -129,7 +129,7 @@
                    @"Should NOT include Graphviz init script when disabled");
 }
 
-- (void)testGraphvizScriptsExcludedWhenSyntaxHighlightingDisabled
+- (void)testGraphvizScriptsIncludedWhenSyntaxHighlightingDisabled
 {
     self.delegate.graphviz = YES;
     self.delegate.syntaxHighlighting = NO;
@@ -140,8 +140,10 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     [self.renderer render];
 
-    XCTAssertFalse([self.delegate.lastHTML containsString:@"viz.init.js"],
-                   @"Graphviz requires syntax highlighting to be enabled");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.js"],
+                  @"Should include Graphviz library");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.init.js"],
+                  @"Should include Graphviz init script");
 }
 
 
@@ -337,6 +339,34 @@
                   @"Should include graphviz init script");
     XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
                   @"Should include mermaid init script alongside graphviz");
+}
+
+- (void)testGraphvizAndMermaidScriptsIncludedWhenSyntaxHighlightingDisabled
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.delegate.syntaxHighlighting = NO;
+    self.delegate.graphviz = YES;
+    self.delegate.mermaid = YES;
+    self.dataSource.markdown =
+        @"```dot\ndigraph G { A -> B }\n```\n\n"
+        @"```mermaid\ngraph TD;\n    A-->B;\n```";
+
+    // Use render (MPAssetFullLink) for filename checks
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.js"],
+                  @"Should include Graphviz library even without syntax "
+                  @"highlighting");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.init.js"],
+                  @"Should include Graphviz init script even without "
+                  @"syntax highlighting");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
+                  @"Should include Mermaid library even without syntax "
+                  @"highlighting");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
+                  @"Should include Mermaid init script even without "
+                  @"syntax highlighting");
 }
 
 @end

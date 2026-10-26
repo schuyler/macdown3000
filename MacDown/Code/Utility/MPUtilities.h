@@ -42,6 +42,12 @@ NSURL *MPHighlightingThemeURLForNameInPaths(
 NSArray *MPListHighlightingThemesInPaths(
     NSString *userDataRoot, NSString *bundleResourceRoot);
 
+NSString     *MPStylePathForNameInPaths(NSString *name, NSString *userDataRoot, NSString *bundleResourceRoot);
+NSArray      *MPListStylesheetsInPaths(NSString *userDataRoot, NSString *bundleResourceRoot);
+NSString     *MPContentHashOfFileAtPath(NSString *path);
+NSDictionary *MPKnownStockStyleHashesByName(void);
+NSUInteger    MPPruneStockStylesheetsInDirectory(NSString *stylesDir, NSDictionary *stockHashesByName);
+
 NSDictionary *MPGetDataMap(NSString *name);
 
 id MPGetObjectFromJavaScript(NSString *code, NSString *variableName);

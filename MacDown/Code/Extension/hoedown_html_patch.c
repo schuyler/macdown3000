@@ -117,6 +117,13 @@ void hoedown_patch_render_blockcode(
 // Supports task list syntax if HOEDOWN_HTML_USE_TASK_LIST is on.
 // Implementation based on hoextdown, with interactive checkbox support.
 // Related to GitHub issue #269.
+//
+// Marker states: "[ ]" unchecked, "[x]"/"[X]" checked, "[-]" indeterminate
+// (the partially-done state used by GitHub and GitLab task lists; see
+// https://github.com/orgs/community/discussions/19199). The indeterminate
+// state is a DOM property rather than an attribute, so the input is tagged
+// with data-checkbox-state="indeterminate" for tasklist.js to apply, and no
+// `checked` attribute is emitted.
 void hoedown_patch_render_listitem(
     hoedown_buffer *ob, const hoedown_buffer *text, hoedown_list_flags flags,
     const hoedown_renderer_data *data)
@@ -128,28 +135,29 @@ void hoedown_patch_render_listitem(
         if (flags & HOEDOWN_LI_BLOCK)
             offset = 3;
 
-        // Do task list checkbox ([x], [X], or [ ]).
-        if (USE_TASK_LIST(state) && text->size >= 3)
+        // Do task list checkbox ([x], [X], [-], or [ ]). The marker is three
+        // bytes at `offset`, so the bound has to cover the offset too: a
+        // block-level item with fewer than three bytes of content would
+        // otherwise be read past its end.
+        if (USE_TASK_LIST(state) && text->size >= offset + 3)
         {
+            const char *stateAttributes = NULL;
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
-            {
-                HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
-                hoedown_buffer_put(ob, text->data, offset);
-                // Include data-checkbox-index for interactive checkbox support
-                hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
-				offset += 3;
-            }
+                stateAttributes = "";
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
                      strncmp((char *)(text->data + offset), "[X]", 3) == 0)
+                stateAttributes = " checked";
+            else if (strncmp((char *)(text->data + offset), "[-]", 3) == 0)
+                stateAttributes = " data-checkbox-state=\"indeterminate\"";
+
+            if (stateAttributes)
             {
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support
                 hoedown_buffer_printf(ob,
-                    "<input type=\"checkbox\" checked data-checkbox-index=\"%d\">",
-                    g_checkbox_index++);
+                    "<input type=\"checkbox\"%s data-checkbox-index=\"%d\">",
+                    stateAttributes, g_checkbox_index++);
 				offset += 3;
             }
             else
@@ -344,6 +352,169 @@ void hoedown_patch_render_header(
     hoedown_buffer_printf(ob, "</h%d>\n", level);
 
     hoedown_buffer_free(slug);
+}
+
+// Returns 1 if the tag starting at content->data[i] (the '<') is a replaced
+// element that always renders visible content of its own (e.g. <img>),
+// independent of any text nodes around it.
+static int is_replaced_element_tag(const hoedown_buffer *content, size_t i)
+{
+    static const char *replaced_tags[] = {
+        "img", "svg", "video", "audio", "iframe", "embed", "object", "canvas"
+    };
+
+    size_t j = i + 1;
+    if (j < content->size && content->data[j] == '/')
+        return 0; // closing tags never introduce new content
+
+    size_t start = j;
+    while (j < content->size && content->data[j] != '>' &&
+           content->data[j] != ' ' && content->data[j] != '\t' &&
+           content->data[j] != '\n' && content->data[j] != '\r' &&
+           content->data[j] != '/')
+        j++;
+
+    size_t len = j - start;
+    if (!len)
+        return 0;
+
+    for (size_t t = 0; t < sizeof(replaced_tags) / sizeof(replaced_tags[0]); t++)
+    {
+        size_t tag_len = strlen(replaced_tags[t]);
+        if (tag_len != len)
+            continue;
+
+        int match = 1;
+        for (size_t k = 0; k < len; k++)
+        {
+            uint8_t c = content->data[start + k];
+            if (c >= 'A' && c <= 'Z') c += 32;
+            if (c != (uint8_t)replaced_tags[t][k]) { match = 0; break; }
+        }
+        if (match)
+            return 1;
+    }
+    return 0;
+}
+
+// Returns 1 if the entity spelled out between content->data[amp] ('&') and
+// the following ';' is whitespace-only (e.g. &nbsp;) rather than a visible
+// glyph (e.g. &copy;).
+static int is_whitespace_entity(const hoedown_buffer *content, size_t amp,
+                                 size_t semi)
+{
+    size_t start = amp + 1;
+    size_t len = semi - start;
+    if (!len)
+        return 0;
+
+    if (content->data[start] == '#')
+    {
+        // Numeric reference: &#160; / &#xA0; (NBSP), &#8194; (ENSP), etc.
+        // Anything else counts as visible content. Parsed manually (not via
+        // strtol) since `content` is not NUL-terminated.
+        size_t k = start + 1;
+        int is_hex = (k < semi && (content->data[k] == 'x' ||
+                                    content->data[k] == 'X'));
+        if (is_hex) k++;
+        if (k >= semi)
+            return 0;
+
+        uint32_t value = 0;
+        for (; k < semi; k++)
+        {
+            uint8_t c = content->data[k];
+            int digit;
+            if (c >= '0' && c <= '9') digit = c - '0';
+            else if (is_hex && c >= 'a' && c <= 'f') digit = c - 'a' + 10;
+            else if (is_hex && c >= 'A' && c <= 'F') digit = c - 'A' + 10;
+            else return 0;
+            value = value * (is_hex ? 16 : 10) + (uint32_t)digit;
+        }
+        return value == 0x00A0 || value == 0x2002 || value == 0x2003 ||
+               value == 0x2009;
+    }
+
+    static const char *whitespace_entities[] = { "nbsp", "ensp", "emsp", "thinsp" };
+    for (size_t t = 0; t < sizeof(whitespace_entities) / sizeof(whitespace_entities[0]); t++)
+    {
+        size_t name_len = strlen(whitespace_entities[t]);
+        if (name_len != len)
+            continue;
+
+        int match = 1;
+        for (size_t k = 0; k < len; k++)
+        {
+            uint8_t c = content->data[start + k];
+            if (c >= 'A' && c <= 'Z') c += 32;
+            if (c != (uint8_t)whitespace_entities[t][k]) { match = 0; break; }
+        }
+        if (match)
+            return 1;
+    }
+    return 0;
+}
+
+// Returns 1 if the rendered row content contains no visible text once HTML
+// tags and entities are stripped out (i.e. every cell in the row is empty).
+// Tags that always render their own content (e.g. <img>) and entities that
+// decode to a visible glyph (e.g. &copy;) count as non-blank.
+static int is_row_content_blank(const hoedown_buffer *content)
+{
+    if (!content || !content->size)
+        return 1;
+
+    int in_tag = 0;
+    for (size_t i = 0; i < content->size; i++)
+    {
+        uint8_t c = content->data[i];
+
+        if (in_tag)
+        {
+            if (c == '>') in_tag = 0;
+            continue;
+        }
+        if (c == '<')
+        {
+            if (is_replaced_element_tag(content, i))
+                return 0;
+            in_tag = 1;
+            continue;
+        }
+        if (c == '&')
+        {
+            size_t semi = i + 1;
+            while (semi < content->size && content->data[semi] != ';')
+                semi++;
+            if (semi < content->size)
+            {
+                if (!is_whitespace_entity(content, i, semi))
+                    return 0;
+                i = semi;
+            }
+            continue;
+        }
+        if (c != ' ' && c != '\t' && c != '\n' && c != '\r')
+            return 0;
+    }
+    return 1;
+}
+
+// rndr_table_header replacement that omits the <thead> element entirely when
+// every header cell is empty, so a header row like `| | |` doesn't render as
+// a blank header line. Related to a MacDown 3000 table-rendering fix.
+void hoedown_patch_render_table_header(
+    hoedown_buffer *ob, const hoedown_buffer *content,
+    const hoedown_renderer_data *data)
+{
+    (void)data;
+    if (is_row_content_blank(content))
+        return;
+
+    if (ob->size) hoedown_buffer_putc(ob, '\n');
+    HOEDOWN_BUFPUTSL(ob, "<thead>\n");
+    hoedown_buffer_put(ob, content->data, content->size);
+    HOEDOWN_BUFPUTSL(ob, "</thead>\n");
 }
 
 // Adds a "toc" class to the outmost UL element to support TOC styling.

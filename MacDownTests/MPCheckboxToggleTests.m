@@ -415,6 +415,87 @@
                           @"Numbered list [X] checkbox should toggle correctly");
 }
 
+#pragma mark - Indeterminate Checkbox Tests
+
+/**
+ * Test that clicking an indeterminate [-] checkbox resolves it to done, the
+ * way a click on an indeterminate checkbox behaves on macOS.
+ * See https://github.com/orgs/community/discussions/19199.
+ */
+- (void)testToggleIndeterminateToChecked
+{
+    NSString *markdown = @"- [-] Partly done";
+    NSString *expected = @"- [x] Partly done";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"An indeterminate checkbox should toggle to checked");
+}
+
+/**
+ * Test that an indeterminate [-] occupies an index, keeping the checkboxes
+ * after it aligned with the indices the renderer emits. Without this, a click
+ * on the second preview checkbox would rewrite the wrong source line.
+ */
+- (void)testIndeterminateCheckboxOccupiesIndex
+{
+    NSString *markdown = @"- [-] First (partly)\n- [ ] Second\n- [x] Third";
+    NSString *expected = @"- [-] First (partly)\n- [x] Second\n- [x] Third";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:1 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"[-] should occupy index 0 so index 1 hits the second item");
+}
+
+/**
+ * Test toggling an indeterminate checkbox in a numbered list.
+ */
+- (void)testToggleIndeterminateNumberedListCheckbox
+{
+    NSString *markdown = @"1. [-] First numbered\n2. [ ] Second numbered";
+    NSString *expected = @"1. [x] First numbered\n2. [ ] Second numbered";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Numbered list [-] checkbox should toggle correctly");
+}
+
+/**
+ * Test that a nested [-] keeps the depth-first index order the renderer uses
+ * (children before their parent), so a click on the first preview checkbox
+ * addresses the right line. Depth-first order here: Partly done(0), Parent(1),
+ * Other parent(2).
+ */
+- (void)testNestedIndeterminateCheckboxIndexOrder
+{
+    NSString *markdown = @"- [ ] Parent\n  - [-] Partly done\n- [-] Other parent";
+    NSString *expected = @"- [ ] Parent\n  - [x] Partly done\n- [-] Other parent";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Index 0 is the nested [-] in depth-first order, not the parent");
+}
+
+/**
+ * Test that an indeterminate-looking marker inside a fenced code block is not
+ * treated as a checkbox, so the preview's indices stay aligned. Only fenced
+ * blocks are skipped, not indented ones.
+ */
+- (void)testIndeterminateCheckboxInFencedCodeBlockIsIgnored
+{
+    NSString *markdown = @"```\n- [-] Not a real checkbox\n```\n\n- [-] Real checkbox";
+    NSString *expected = @"```\n- [-] Not a real checkbox\n```\n\n- [x] Real checkbox";
+
+    NSString *result = [MPDocument toggleCheckboxAtIndex:0 inMarkdown:markdown];
+
+    XCTAssertEqualObjects(result, expected,
+                          @"Only real checkboxes outside code blocks should be counted");
+}
+
 #pragma mark - URL Scheme Tests
 
 /**

@@ -28,6 +28,13 @@ td, th {
     overflow-wrap: break-word;
 }
 
+/* Table headers - keep short labels such as "v1-A" on one line */
+th {
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
 /* Wide tables - give every theme a horizontal scroll container so columns keep
  * their natural width instead of compressing to the pane width (Issue #432).
  *
@@ -50,6 +57,44 @@ td, th {
         max-width: 100%;
         overflow-x: auto;
     }
+}
+
+.macdown-resizable-table {
+    display: table;
+    table-layout: fixed;
+    width: max-content;
+    max-width: none;
+}
+
+.macdown-table-resizable {
+    position: relative;
+    padding-right: 14px;
+}
+
+.macdown-table-resize-handle {
+    bottom: 0;
+    cursor: col-resize;
+    position: absolute;
+    right: -4px;
+    top: 0;
+    width: 8px;
+    z-index: 2;
+}
+
+.macdown-table-resize-handle::after {
+    background: currentColor;
+    bottom: 4px;
+    content: "";
+    opacity: 0.25;
+    position: absolute;
+    right: 3px;
+    top: 4px;
+    width: 1px;
+}
+
+.macdown-table-resize-handle:hover::after,
+.macdown-table-resizing .macdown-table-resize-handle::after {
+    opacity: 0.7;
 }
 
 /* Blockquotes - ensure quoted content wraps */

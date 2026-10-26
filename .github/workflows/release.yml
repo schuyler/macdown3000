@@ -167,14 +167,162 @@ jobs:
       - name: Setup MacDown build environment
         uses: ./.github/actions/setup-macdown
 
+      # Healthy runs finish in 2-4 minutes. The tight step timeout bounds the cost of a
+      # hung test host, and being step-level rather than job-level it leaves the report
+      # below to run.
       - name: Run tests before release
+        timeout-minutes: 8
         run: |
+          set -o pipefail
           echo "🧪 Running unit tests to ensure code quality before release..."
           xcodebuild test \
             -workspace "MacDown 3000.xcworkspace" \
             -scheme MacDown \
-            -derivedDataPath DerivedData
+            -derivedDataPath DerivedData \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120 \
+            2>&1 | tee xcodebuild.log
           echo "✅ All tests passed"
+
+      # A hung host produces no failure message of its own, only silence, so name the test
+      # that was running when the log stopped.
+      - name: Report blocked tests
+        if: failure()
+        run: |
+          log=xcodebuild.log
+          [ -f "$log" ] || exit 0
+          name=$(sed -n "s/.*Test Case '\(.*\)' started\..*/\1/p" "$log" | tail -1 || true)
+          if [ -z "$name" ]; then
+            echo "No test started; failed during setup or build." >> "$GITHUB_STEP_SUMMARY"
+          elif grep -qF "Test Case '$name' passed" "$log" \
+            || grep -qF "Test Case '$name' failed" "$log" \
+            || grep -qF "Test Case '$name' errored" "$log"; then
+            echo "Last test to start (\`$name\`) completed, so this was not a stall." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "\`$name\` started but never completed: it blocked." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          grep -oE "Test Case '[^']*' exceeded execution time allowance" "$log" \
+            | sed 's/^/- recovered by watchdog: /' >> "$GITHUB_STEP_SUMMARY" || true
+
+      # The step summary names the blocked test but nothing more; the log and any crash
+      # reports are what a diagnosis needs after that.
+      - name: Upload test results
+        if: failure()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-test-results
+          path: |
+            ~/Library/Logs/DiagnosticReports/
+            DerivedData/Logs/Test/
+            xcodebuild.log
+          retention-days: 7
+
+      # Keep in sync with the launch-test job in smoke-test.yml
+      - name: Smoke test app launch
+        timeout-minutes: 2
+        run: |
+          APP_PATH=$(find DerivedData -name "MacDown 3000.app" -type d | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Could not find built MacDown 3000.app"
+            exit 1
+          fi
+
+          # Fresh install scenario
+          defaults delete com.uranusjr.macdown 2>/dev/null || true
+          defaults delete app.macdown.macdown3000 2>/dev/null || true
+
+          open -W -n "$APP_PATH" &
+          APP_PID=$!
+          TIMEOUT=5
+          ELAPSED=0
+          TIMED_OUT=false
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            if ! kill -0 $APP_PID 2>/dev/null; then break; fi
+            sleep 1
+            ELAPSED=$((ELAPSED + 1))
+          done
+          if kill -0 $APP_PID 2>/dev/null; then
+            kill $APP_PID 2>/dev/null
+            TIMED_OUT=true
+          fi
+          EXIT_CODE=0
+          wait $APP_PID 2>/dev/null || EXIT_CODE=$?
+          if [ "$TIMED_OUT" = "true" ]; then
+            echo "App launched successfully (killed after timeout)"
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "App launched and exited cleanly"
+          else
+            echo "ERROR: App exited unexpectedly with code $EXIT_CODE - possible crash or hang"
+            exit 1
+          fi
+
+          # Migration scenario
+          defaults delete app.macdown.macdown3000 2>/dev/null || true
+          defaults write com.uranusjr.macdown testMigrationKey "testMigrationValue"
+          defaults write com.uranusjr.macdown editorBaseFontName "Monaco"
+
+          open -W -n -F "$APP_PATH" &
+          APP_PID=$!
+          ELAPSED=0
+          TIMED_OUT=false
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            if ! kill -0 $APP_PID 2>/dev/null; then break; fi
+            sleep 1
+            ELAPSED=$((ELAPSED + 1))
+          done
+          if kill -0 $APP_PID 2>/dev/null; then
+            kill $APP_PID 2>/dev/null
+            TIMED_OUT=true
+          fi
+          EXIT_CODE=0
+          wait $APP_PID 2>/dev/null || EXIT_CODE=$?
+          if [ "$TIMED_OUT" = "true" ]; then
+            echo "App launched successfully with migration (killed after timeout)"
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "App launched with migration and exited cleanly"
+          else
+            echo "ERROR: App exited unexpectedly during migration with code $EXIT_CODE"
+            exit 1
+          fi
+
+          MIGRATION_COMPLETE=$(defaults read app.macdown.macdown3000 MPDidMigrateFromLegacyBundleIdentifier 2>/dev/null || echo "0")
+          if [ "$MIGRATION_COMPLETE" = "1" ]; then
+            echo "Migration completed successfully"
+          else
+            echo "WARNING: Migration completed flag not set"
+          fi
+
+          defaults delete com.uranusjr.macdown 2>/dev/null || true
+          defaults delete app.macdown.macdown3000 2>/dev/null || true
+
+          echo "Smoke test passed"
+
+      # Keep in sync with the ui-test job in smoke-test.yml
+      - name: Run UI tests
+        id: ui-tests
+        timeout-minutes: 10
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace "MacDown 3000.xcworkspace" \
+            -scheme MacDownUITests \
+            -derivedDataPath DerivedData \
+            -resultBundlePath UITestResults.xcresult \
+            -test-timeouts-enabled YES \
+            -maximum-test-execution-time-allowance 120
+
+      - name: Upload UI test results
+        if: failure() && steps.ui-tests.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: |
+            UITestResults.xcresult
+            ~/Library/Logs/DiagnosticReports/
+          retention-days: 7
 
       - name: Install build tools
         run: brew install create-dmg jq
@@ -271,7 +419,7 @@ jobs:
           marketing-version: ${{ env.VERSION }}
           build-number: ${{ env.BUILD_NUMBER }}
 
-      - name: Sign CLI binary explicitly
+      - name: Sign nested components and re-seal app bundle
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
@@ -311,6 +459,13 @@ jobs:
 
           echo "✅ CLI binary signed successfully"
 
+          # Sparkle ships from CocoaPods ad-hoc signed, and the pod's embed
+          # phase re-signs only the framework's top level, without hardened
+          # runtime or a timestamp. Notarization rejects all of it (issue #553).
+          echo "🔐 Re-signing Sparkle's nested components..."
+          bash Tools/sign_sparkle.sh "$IDENTITY" \
+            "build/MacDown 3000.app/Contents/Frameworks/Sparkle.framework"
+
           # Re-sign nested components inside-out to preserve per-component
           # entitlements. Using --deep would apply the app's entitlements to
           # ALL nested components, stripping the QL extension's sandbox
@@ -334,6 +489,8 @@ jobs:
           echo "✅ App bundle re-signed successfully"
 
       - name: Verify code signature
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔍 Verifying code signature..."
           codesign -vvv --deep --strict build/"MacDown 3000.app"
@@ -373,6 +530,12 @@ jobs:
           # Show CLI binary signature details
           echo "📋 CLI binary signature details:"
           codesign -dvv "$CLI_BINARY" 2>&1 | head -20
+
+          # --deep --strict above checks structural validity, not the signer
+          # identity of nested code, so it passes on ad-hoc Sparkle components
+          # that notarization would reject (issue #553).
+          bash Tools/verify_sparkle_signature.sh \
+            "build/MacDown 3000.app" "$APPLE_TEAM_ID"
 
           # Verify the app bundle still carries the file-access entitlement.
           # The post-build re-sign previously stripped entitlements, shipping builds
@@ -441,6 +604,8 @@ jobs:
           echo "DMG size: $(du -h "build/MacDown-${VERSION}.dmg" | cut -f1)"
 
       - name: Verify app bundle inside DMG
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           echo "🔍 Verifying app bundle inside DMG..."
 
@@ -459,6 +624,13 @@ jobs:
           fi
 
           echo "✅ App bundle inside DMG is properly signed: $SIGNING_IDENTITY"
+
+          # Sparkle's nested components in the packaged app (issue #553)
+          if ! bash Tools/verify_sparkle_signature.sh \
+                 "/tmp/dmg-verify/MacDown 3000.app" "$APPLE_TEAM_ID"; then
+            hdiutil detach /tmp/dmg-verify
+            exit 1
+          fi
 
           # Verify the packaged app still carries the file-access entitlement (issue #302)
           echo "🔍 Verifying app entitlements inside DMG..."

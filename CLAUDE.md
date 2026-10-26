@@ -65,6 +65,34 @@ gh run view $RUN_ID --repo schuyler/macdown3000 --log
 - Must start with `claude/` and end with session ID
 - Example: `claude/fix-rendering-bug-01Y4ommV4yZoApvin8ddozbw`
 
+### Writing Style for PRs, Comments, and Documentation
+- Describe the factual state of the code: what it does, how it works, what changed, and why.
+- Never narrate history or development process. The past doesn't matter; only the current state and how it differs from what immediately came before it.
+- Be succinct. If a sentence doesn't help someone understand the code, cut it.
+
+## The Rule of Two
+
+This project's agent workflow is governed by the Rule of Two: no change reaches `main` without a different agent reviewing it. The coordinator may do work itself or dispatch subagents for it — that part is flexible. What is non-negotiable is that a subagent review happens before anything is committed or pushed.
+
+- **Core principle.** No change — no matter how small, mechanical, or explicitly specified by the user — may be committed or pushed until a subagent that did not make the change has reviewed and approved the current state of the branch.
+- **Two distinct review gates.** Design and implementation are reviewed separately, at two separate gates: a **design-review gate**, before implementation begins, and an **implementation-review gate**, after implementation is done. Each gate passes only when its review turns up no blocker/critical or important issues.
+- **Severity definitions.** State these verbatim in every review brief; a reviewer left to invent its own bar inflates style notes into gate failures and lets test-masking pass as a minor note.
+  - **critical** — it is broken.
+  - **important** — it doesn't meet requirements, *or* it changes tests to mask a bug, *or* it leaves behind a test that can't fail if the code it covers changed.
+  - **cosmetic** — everything else. Cosmetic findings never fail a gate.
+
+  A finding reaches critical or important only if it names a specific scenario in which the problem occurs: the concrete inputs or state, and the wrong behaviour that follows. A hypothetical problem with no such scenario is cosmetic no matter how plausible it sounds, and does not fail the gate.
+
+  For a test that cannot fail, that scenario is the change to the code under test that ought to break the test and does not. Name it and the finding stands: an empty or circular test proves nothing and is *important*.
+
+  A fix shaped as "stop presenting the failure" — suppressing an error, intercepting a dialog, swallowing an exception — is *important* under the test-masking clause unless the failure is genuinely absent afterwards.
+- **Requirements are outcomes, not design choices or constraints.** "CI stops hanging" is a requirement. "Keep the step timeout and drop the retry" is not — it is a mechanism, and mechanisms are answerable to a requirement rather than standing in for one. A requirements list whose entries are all mechanisms means the goal was never stated, and every downstream review inherits that gap. When a request names a mechanism and no goal, ask what the mechanism is for.
+- **Reviews must be performed by Opus subagents.**
+- **Full-branch re-review, always.** Any change — including a fix made to address a review finding — invalidates prior approval. The next review must cover the entire diff from `main`, not just the newest edits. Reviewing only the latest batch of changes lets small "obviously fine" fixes accumulate unreviewed; this is not allowed.
+- **Mandatory re-review loop.** Critical or important feedback requires a fix followed by a fresh full-branch review. No unilaterally deciding a fix is good enough to skip re-review, no matter how simple or mechanical it looks.
+- **Watch for the rationalization.** The rule most often breaks when an agent decides a change is "trivial" or "just what the user asked for" and skips review on that basis. That is exactly when review is most likely to be skipped, and most needed.
+- **Operational check.** If you're about to commit or push without a review subagent having approved the current state of the branch, stop. That's the signal you skipped a step.
+
 ## Network Retry Policy
 
 For git and GitHub API calls:

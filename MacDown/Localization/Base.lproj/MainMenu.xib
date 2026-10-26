@@ -25,8 +25,11 @@
                                     <action selector="orderFrontStandardAboutPanel:" target="-1" id="Exp-CZ-Vem"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Check for Updates… (unavailable)" enabled="NO" id="8xL-1V-VPX">
+                            <menuItem title="Check for Updates…" id="8xL-1V-VPX">
                                 <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="checkForUpdates:" target="eq0-c4-vgQ" id="upd-ck-Act"/>
+                                </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
@@ -78,6 +81,12 @@
                             <menuItem title="Open…" keyEquivalent="o" id="IAo-SY-fd9">
                                 <connections>
                                     <action selector="openDocument:" target="-1" id="bVn-NM-KNZ"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Open Folder…" id="F0l-dr-Op1">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="openFolder:" target="eq0-c4-vgQ" id="F0l-dr-ac1"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Open Recent" id="tXI-mr-wws">
@@ -367,6 +376,12 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="View" id="EQZ-Zp-VNE">
                         <items>
+                            <menuItem title="Show Sidebar" keyEquivalent="\" id="Sd1-br-Tg1">
+                                <connections>
+                                    <action selector="toggleFolderSidebar:" target="-1" id="Sd1-br-ac1"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="Sd1-br-Sep"/>
                             <menuItem title="Render Markdown" keyEquivalent="r" id="Vh1-jg-bbV">
                                 <connections>
                                     <action selector="render:" target="-1" id="rvl-Jx-Hji"/>
@@ -416,6 +431,25 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="QMZ-Ld-Nza"/>
+                            <menuItem title="Zoom In" keyEquivalent="+" id="zIn-01-ABC">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="zoomIn:" target="-1" id="zIn-02-DEF"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="zOt-01-GHI">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="zoomOut:" target="-1" id="zOt-02-JKL"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="zRs-01-PQR">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="resetZoom:" target="-1" id="zRs-02-STU"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zSp-01-MNO"/>
                             <menuItem title="Enter Full Screen" keyEquivalent="f" id="1gz-YB-DZE">
                                 <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
                                 <connections>
@@ -456,7 +490,7 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Strikethrough" keyEquivalent="-" id="9CN-Qi-Fln">
+                            <menuItem title="Strikethrough" keyEquivalent="X" id="9CN-Qi-Fln">
                                 <connections>
                                     <action selector="toggleStrikethrough:" target="-1" id="rUc-gb-x5q"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionStrikethough" id="kQ0-Wi-BPs">
@@ -466,7 +500,8 @@
                                     </binding>
                                 </connections>
                             </menuItem>
-                            <menuItem title="Highlight" keyEquivalent="=" id="2Os-ij-Aup">
+                            <menuItem title="Highlight" id="2Os-ij-Aup">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="toggleHighlight:" target="-1" id="Uda-cB-xYx"/>
                                     <binding destination="eq0-c4-vgQ" name="hidden" keyPath="self.preferences.extensionHighlight" id="9y2-h2-XrX">
@@ -522,6 +557,7 @@
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Paragraph" keyEquivalent="0" id="xN5-GU-ASF">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="convertToParagraph:" target="-1" id="4BU-GT-Qyv"/>
                                             </connections>

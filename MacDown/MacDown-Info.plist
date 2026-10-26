@@ -139,14 +139,17 @@ Copyright © 2025 Schuyler Erle.</string>
 	<string>NSApplication</string>
 	<key>OSAScriptingDefinition</key>
 	<string>MacDown.sdef</string>
-	<!-- Temporarily disabled - will upgrade Sparkle to 2.8.1 later
-	<key>SUBetaFeedURL</key>
-	<string>https://macdown.app/sparkle/macdown3000/testing/appcast.xml</string>
 	<key>SUFeedURL</key>
 	<string>https://macdown.app/sparkle/macdown3000/stable/appcast.xml</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>dsa_pub.pem</string>
-	-->
+	<!-- Public half of the EdDSA keypair Sparkle verifies updates against.
+	     Every shipped build carries this value, so changing it strands existing
+	     installs: they reject any update signed with a different key, and the
+	     replacement can only be delivered by manual download.
+	     The matching PRIVATE key must NEVER be committed to this repository.
+	     See plans/release-checklist.md for where it is stored and how the
+	     appcast is signed with it. -->
+	<key>SUPublicEDKey</key>
+	<string>dYc+fhKTMkIAQNFSmNbSMQTq2KMXgN9OqHiURc7oK1A=</string>
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>

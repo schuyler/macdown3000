@@ -133,7 +133,7 @@
                    @"Should NOT include Mermaid init script when disabled");
 }
 
-- (void)testMermaidScriptsExcludedWhenSyntaxHighlightingDisabled
+- (void)testMermaidScriptsIncludedWhenSyntaxHighlightingDisabled
 {
     self.delegate.mermaid = YES;
     self.delegate.syntaxHighlighting = NO;
@@ -144,8 +144,30 @@
     [self.renderer parseMarkdown:self.dataSource.markdown];
     [self.renderer render];
 
-    XCTAssertFalse([self.delegate.lastHTML containsString:@"mermaid.min.js"],
-                   @"Mermaid requires syntax highlighting to be enabled");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
+                  @"Should include Mermaid library");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
+                  @"Should include Mermaid init script");
+}
+
+- (void)testPrismScriptsExcludedWhenSyntaxHighlightingDisabledWithMermaidEnabled
+{
+    self.delegate.mermaid = YES;
+    self.delegate.syntaxHighlighting = NO;
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = @"```mermaid\ngraph TD;\n    A-->B;\n```";
+
+    // Use render (MPAssetFullLink) so script URLs contain filenames
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    [self.renderer render];
+
+    XCTAssertFalse([self.delegate.lastHTML containsString:@"prism-core.min.js"],
+                   @"Should NOT include Prism when syntax highlighting is "
+                   @"disabled, even though Mermaid is enabled");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.min.js"],
+                  @"Should still include Mermaid library");
+    XCTAssertTrue([self.delegate.lastHTML containsString:@"mermaid.init.js"],
+                  @"Should still include Mermaid init script");
 }
 
 

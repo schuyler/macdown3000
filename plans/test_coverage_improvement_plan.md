@@ -39,7 +39,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 | MPSmartQuoteTests.m | Smart quote substitution behavior | Good | (Issue #285) |
 | MPEditorViewSubstitutionTests.m | Text substitution preference getters, NSUserDefaults integration | Good | (Issue #263) |
 | MPWordCountUpdateTests.m | Word count update debouncing, queue cancellation | Good | (Issue #294) |
-| MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing, nil/bounds guards on `selectedToolbarItemGroupItem:` | Good | (Issue #313, Issue #394) |
+| MPToolbarControllerTests.m | Toolbar delegate methods, item identifiers, group testing, nil/bounds guards on `selectedToolbarItemGroupItem:`, grouped-item action dispatch | Good | (Issue #313, Issue #394, Issue #566) |
 | MPMermaidRenderingTests.m | Mermaid diagram rendering, MutationObserver re-rendering, SVG sizing | Good | (Issue #331) |
 | MPGraphvizRenderingTests.m | Graphviz diagram rendering, MutationObserver re-rendering, script inclusion | Good | (Issue #332) |
 | MPURLSecurityPolicyTests.m | URL security policy: executable/bundle detection, directory scope checking | Good | (Issue #351) |
@@ -64,7 +64,7 @@ MacDown currently has minimal test coverage (~7% test-to-code ratio) focused pri
 - Security policy (MPURLSecurityPolicy.m) - 16 tests covering executable/bundle detection and directory scope enforcement for CVE-2019-12138 and CVE-2019-12173 (Issue #351)
 - Editor text substitution settings (MPEditorView.m) - NSUserDefaults-backed getter overrides with 30 TDD tests (Issue #263)
 - Word count updates (MPDocument.m) - Tests for debounced word count updates during DOM replacement (Issue #294)
-- Toolbar controller (MPToolbarController.m) - 41 tests for NSToolbarDelegate methods, flexible space/separator support, item groups, nil-group and out-of-bounds crash guards on `selectedToolbarItemGroupItem:` (Issue #313, Issue #394)
+- Toolbar controller (MPToolbarController.m) - tests for NSToolbarDelegate methods, flexible space/separator support, item groups, nil-group and out-of-bounds crash guards on `selectedToolbarItemGroupItem:`, and grouped-item action dispatch (Issue #313, Issue #394, Issue #566)
 
 **Test Infrastructure:**
 - ✅ XCTest framework configured
@@ -157,6 +157,7 @@ GitHub Actions macOS runners are:
 - `MPScrollSyncTests.m` - ✅ COMPLETED (78 tests, scroll sync, header detection, JavaScript sort logic, horizontal rule regex edge cases, setext header detection, bidirectional scroll sync, editing-state-aware sync - Issue #39, Issue #143, Issue #144, Issue #258, Issue #282)
 - `MPDocumentLifecycleTests.m` - ✅ COMPLETED (Document dirty flags, revert behavior, encoding detection, file conflicts - Issue #234)
 - `MPNotificationTests.m` - ✅ COMPLETED (NSNotificationCenter observer patterns, preference change notifications, theme/font changes - Issue #234)
+- `MPExternalChangeReloadTests.m` - ✅ COMPLETED (30 tests, external-change coalescing, prompt re-entrancy guard, decision-path guards end-to-end, prompt-vs-silent decision, selection clamping, caret/scroll restoration - Issue #543)
 
 **Estimated Impact:**
 - Coverage: +3-5%
@@ -198,8 +199,9 @@ GitHub Actions macOS runners are:
 **Status:** ✅ **HTML EXPORT TESTS IMPLEMENTED** (Issue #30, Issue #234)
 - ✅ `MPHTMLExportTests.m` - Comprehensive HTML export testing (Issue #30)
 - ✅ `MPImageExportTests.m` - Base64 images, linked images, invalid URLs, alt text preservation (Issue #234)
+- ✅ `MPPDFAnchorInjectorTests.m` - Headless PDFKit annotation-injection engine for clickable internal anchor links (TOC → heading) in exported PDFs, 11 tests (Issue #504)
 - ⏳ `MPExportTests.m` - General export operations (planned)
-- ⏳ PDF export tests (planned)
+- ⏳ General PDF generation tests (basic/images/styles - planned; anchor-link injection is covered above)
 
 **Actual Impact (MPHTMLExportTests.m):**
 - Tests added: Comprehensive suite covering word-breaking, long lines, special characters, Unicode, tables, and export.css integration
@@ -439,6 +441,8 @@ MacDownTests/
 │   ├── MPNotificationTests.m (✅ implemented - Issue #234 - notification observers)
 │   ├── MPHTMLExportTests.m (✅ implemented - Issue #30 - HTML export)
 │   ├── MPImageExportTests.m (✅ implemented - Issue #234 - image export)
+│   ├── MPPDFAnchorInjectorTests.m (✅ implemented - Issue #504 - PDF anchor-link injection, 11 tests)
+│   ├── MPExternalChangeReloadTests.m (✅ implemented - Issue #543 - external-change coalescing, prompt guard, decision path, caret/scroll restoration, 30 tests)
 │   └── MPExportTests.m (planned - general export operations)
 ├── Utilities/ (existing)
 │   ├── MPUtilityTests.m
@@ -449,7 +453,7 @@ MacDownTests/
 │   ├── MPAssetTests.m
 │   ├── MPEditorViewSubstitutionTests.m (✅ implemented - Issue #263 - text substitution preferences)
 │   ├── MPFileIOTests.m (new - planned)
-│   ├── MPToolbarControllerTests.m (✅ implemented - Issue #313, Issue #394 - toolbar item identifiers, groups, delegate methods, nil/bounds crash guards)
+│   ├── MPToolbarControllerTests.m (✅ implemented - Issue #313, Issue #394, Issue #566 - toolbar item identifiers, groups, delegate methods, nil/bounds crash guards, grouped-item action dispatch)
 │   └── MPURLSecurityPolicyTests.m (✅ implemented - Issue #351 - CVE-2019-12138, CVE-2019-12173: executable/bundle detection, scope checks)
 ├── Integration/ (planned)
 │   ├── MPRendererIntegrationTests.m

@@ -1,10 +1,6 @@
 name: Verify Release Build
 
 on:
-  push:
-    branches: [ main ]
-    # Verify Release configuration builds successfully on every merge to main
-    # This catches build issues before attempting an actual release
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -50,7 +46,7 @@ jobs:
         run: echo "sha=$(git rev-parse --short=8 HEAD)" >> $GITHUB_OUTPUT
 
       - name: Archive app bundle
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         run: |
           cd build
           zip -r "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip" "MacDown 3000.app" || { echo "::error::Failed to create archive"; exit 1; }
@@ -58,7 +54,7 @@ jobs:
           ls -lh "MacDown-3000-build-${{ steps.commit.outputs.sha }}.zip"
 
       - name: Upload app archive artifact
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: MacDown-3000-build-${{ steps.commit.outputs.sha }}

@@ -1,5 +1,5 @@
 ---
-description: Semi-automated release workflow from changelog to stapling
+description: Semi-automated release workflow from changelog to stapling and post-release issue triage
 ---
 
 # Release Workflow
@@ -85,6 +85,20 @@ Verify tag doesn't exist:
 ```bash
 if git tag -l "v${VERSION}" | grep -q "v${VERSION}"; then
   # Offer to delete tag and retry, or use different version
+fi
+```
+
+Verify the Sparkle signing key is real (real releases only — skip for prereleases):
+```bash
+if [[ "$IS_PRERELEASE" == "false" ]]; then
+  PLACEHOLDER_KEY="AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA="
+  CURRENT_KEY=$(/usr/libexec/PlistBuddy -c "Print :SUPublicEDKey" MacDown/MacDown-Info.plist 2>/dev/null)
+  if [[ "$CURRENT_KEY" == "$PLACEHOLDER_KEY" ]]; then
+    echo "Error: SUPublicEDKey in MacDown/MacDown-Info.plist is still the placeholder value."
+    echo "This is a real (non-prerelease) release — Sparkle auto-updates will never verify with this key."
+    echo "See plans/release-checklist.md -> 'Prerequisite (One-Time): Auto-Update Readiness'."
+    exit 1
+  fi
 fi
 ```
 
@@ -426,6 +440,9 @@ Summary:
 2. Apple notarizes the DMG (~5-15 minutes)
 3. You trigger stapling workflow when build completes
 4. Stapling workflow verifies notarization and publishes the release
+5. You publish the appcast item by hand, so installed copies are offered the
+   update — `plans/release-checklist.md` → "Step 4: Publish the Appcast".
+   Nothing automated does this.
 
 **Resources:**
 - Build workflow: https://github.com/schuyler/macdown3000/actions/workflows/release.yml
@@ -433,6 +450,30 @@ Summary:
 
 See Step 5 above for stapling instructions.
 
+
+### Step 7: Post-Release Milestone Issue Triage
+
+Once the release is published, review the open issues in that version's milestone (e.g. the `v{VERSION}` milestone) and close any that were fully addressed by this release.
+
+1. **List open issues in the milestone:**
+   ```bash
+   gh issue list --repo schuyler/macdown3000 --milestone "v{VERSION}" --state open --json number,title,body,url
+   ```
+
+2. **Cross-reference each issue against the changelog and its linked PR(s).** Don't rely on title-matching alone — read the PR description (`gh pr view {PR} --repo schuyler/macdown3000 --json title,body,files`) to confirm the underlying reported behavior was actually fixed, not just a related symptom.
+
+3. **Close every issue that was fully addressed by this release, regardless of whether the original submitter has confirmed the fix.** Waiting for reporter confirmation is not a precondition for closing — the changelog and PR content are sufficient evidence.
+
+4. **Comment on each closed issue** identifying the release and the fixing PR(s):
+   ```bash
+   gh issue close {NUM} --repo schuyler/macdown3000 --comment "Addressed in v{VERSION} via #{PR} (\"{brief description}\")."
+   ```
+
+5. **For ambiguous cases** — a PR whose description doesn't clearly reproduce the original complaint, an opt-in fix that doesn't change reported default behavior, or a suspected duplicate — flag it and confirm with Schuyler before closing rather than guessing.
+
+6. **Issues not addressed by this release** (deferred, or moved to a later milestone) need no action — leave them as-is.
+
+This is a manual review step, not run automatically as part of the tag/build/staple pipeline above.
 
 
 ## Important Reminders
@@ -445,3 +486,5 @@ See Step 5 above for stapling instructions.
    - Pushing the tag
 5. **No Co-authored-by trailers** - Never add "Co-authored-by:" to commits
 6. **Clear error messages** - When things fail, show the actual error and let the user decide next steps
+7. **Auto-update readiness** - Before the first real (non-prerelease) release meant to offer auto-updates, three blockers must be cleared: (a) `SUPublicEDKey` in `MacDown/MacDown-Info.plist` isn't still the placeholder value — Step 1 checks this mechanically and fails the release if it is; (b) the matching private key is backed up outside the maintainer's login Keychain — once a build ships carrying the public key, losing the private half strands every install permanently, and no check enforces this; (c) an item for the release is published to the appcast `SUFeedURL` names — that one is a per-release step, not a one-time one, run by hand with `Tools/update_appcast.py` after the release is published (`plans/release-checklist.md` → "Step 4: Publish the Appcast", issue #554). See `plans/release-checklist.md` → "Prerequisite (One-Time): Auto-Update Readiness". Sparkle's nested components are re-signed for notarization by the release workflow (`Tools/sign_sparkle.sh`, issue #553); no per-release action is needed.
+8. **Post-release issue triage doesn't wait on reporter confirmation** - Close milestone issues that the changelog/PRs show were fixed, even if the original submitter never replied to a test request.

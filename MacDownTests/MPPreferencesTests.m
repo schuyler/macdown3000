@@ -133,6 +133,24 @@
     [self.preferences synchronize];
 }
 
+- (void)testUpdateIncludesPreReleasesToggle
+{
+    BOOL original = self.preferences.updateIncludesPreReleases;
+
+    self.preferences.updateIncludesPreReleases = YES;
+    [self.preferences synchronize];
+    XCTAssertTrue(self.preferences.updateIncludesPreReleases,
+                  @"Pre-release opt-in should be ON");
+
+    self.preferences.updateIncludesPreReleases = NO;
+    [self.preferences synchronize];
+    XCTAssertFalse(self.preferences.updateIncludesPreReleases,
+                   @"Pre-release opt-in should be OFF");
+
+    self.preferences.updateIncludesPreReleases = original;
+    [self.preferences synchronize];
+}
+
 - (void)testStartInPreviewModeToggle
 {
     BOOL original = self.preferences.editorStartInPreviewMode;
@@ -582,10 +600,10 @@
     // Create new preferences instance
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Fresh install should set migration version to current (5)
+    // Fresh install should set migration version to current (6)
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
-                   @"Fresh installation should set migration version to 5");
+    XCTAssertEqual(version, 6,
+                   @"Fresh installation should set migration version to 6");
 
     // Intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
@@ -639,10 +657,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 5
+    // Migration version should be updated to 6
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
-                   @"Migration version should be updated to 5");
+    XCTAssertEqual(version, 6,
+                   @"Migration version should be updated to 6");
 
     // Version 2 migration: task list should be enabled
     XCTAssertTrue(prefs.htmlTaskList,
@@ -703,10 +721,10 @@
     // Trigger initialization
     MPPreferences *prefs = [[MPPreferences alloc] init];
 
-    // Migration version should be updated to 5
+    // Migration version should be updated to 6
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
-                   @"Migration version should be updated to 5");
+    XCTAssertEqual(version, 6,
+                   @"Migration version should be updated to 6");
 
     // Version 3 migration: intra-emphasis should be disabled
     XCTAssertFalse(prefs.extensionIntraEmphasis,
@@ -847,10 +865,10 @@
     XCTAssertFalse(prefs.extensionIntraEmphasis,
                    @"Version 3 migration should disable intra-emphasis for existing users");
 
-    // Migration version should be updated to 5
+    // Migration version should be updated to 6
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
-                   @"Migration version should be updated to 5 after migration");
+    XCTAssertEqual(version, 6,
+                   @"Migration version should be updated to 6 after migration");
 
     // Restore original values
     if (originalVersion)
@@ -997,10 +1015,10 @@
     XCTAssertTrue(prefs.editorAutoSave,
                   @"Migration should default editorAutoSave to YES for existing users");
 
-    // Migration version should be updated to 5
+    // Migration version should be updated to 6
     NSInteger version = [defaults integerForKey:@"MPMigrationVersion"];
-    XCTAssertEqual(version, 5,
-                   @"Migration version should be updated to 5");
+    XCTAssertEqual(version, 6,
+                   @"Migration version should be updated to 6");
 
     // Restore original values
     if (originalVersion)
@@ -1047,6 +1065,29 @@
         [defaults setObject:originalIntraEmphasis forKey:@"extensionIntraEmphasis"];
     else
         [defaults removeObjectForKey:@"extensionIntraEmphasis"];
+}
+
+
+#pragma mark - Folders To Open Tests
+
+- (void)testFoldersToOpenRoundTripsThroughSharedSuite
+{
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    NSArray *saved = prefs.foldersToOpen;            // preserve
+    @try
+    {
+        prefs.foldersToOpen = @[@"/tmp/one", @"/tmp/two"];
+        [prefs synchronize];
+        XCTAssertEqualObjects(prefs.foldersToOpen, (@[@"/tmp/one", @"/tmp/two"]));
+        prefs.foldersToOpen = nil;
+        [prefs synchronize];
+        XCTAssertNil(prefs.foldersToOpen);
+    }
+    @finally
+    {
+        prefs.foldersToOpen = saved;
+        [prefs synchronize];
+    }
 }
 
 

@@ -59,6 +59,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (assign) NSInteger editorUnorderedListMarkerType;
 
 @property (assign) BOOL previewZoomRelativeToBaseFontSize;
+@property (assign) CGFloat documentZoomLevel;
 
 @property (assign) NSString *htmlTemplateName;
 @property (assign) NSString *htmlStyleName;
@@ -86,6 +87,7 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 
 // Convinience methods.
 @property (nonatomic, assign) NSArray *filesToOpen;
+@property (nonatomic, assign) NSArray *foldersToOpen;
 @property (nonatomic, assign) NSString *pipedContentFileToOpen;
 
 @end

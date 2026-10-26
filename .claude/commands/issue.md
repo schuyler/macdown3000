@@ -57,18 +57,18 @@ gh issue comment {number} --repo schuyler/macdown3000 --body "COMMENT_TEXT_HERE"
 
 Use TodoWrite to create detailed todo items for the entire workflow:
 - Create issue branch
-- Consult Groucho for architectural plan
+- Consult the Architect for architectural plan
 - Present implementation plan and get user confirmation
-- (If TDD) Consult Zeppo for test design
+- (If TDD) Consult the Tester for test design
 - (If TDD) Write failing tests
-- (If TDD) Validate tests with Zeppo
+- (If TDD) Validate tests with the Tester
 - Implement the feature
 - Commit changes and push to trigger CI
 - Monitor GitHub Actions workflow until completion
 - Verify tests pass in CI
-- Consult Chico for code review
-- (In parallel) Consult Harpo for documentation updates
-- (In parallel) Consult Zeppo for manual testing plan
+- Consult the Reviewer for code review
+- (In parallel) Consult the Documenter for documentation updates
+- (In parallel) Consult the Tester for manual testing plan
 - Fetch latest and rebase on main
 - Force push after rebase (if needed)
 - Re-verify tests pass after rebase
@@ -85,12 +85,12 @@ git checkout -b {branch-name}
 
 All subsequent work will be done on this branch.
 
-### Step 7: Consult Groucho (Architect)
+### Step 7: Consult the Architect
 
-Use the Task tool to launch the Groucho agent:
+Use the Task tool to launch the Architect subagent (general-purpose agent type):
 
 ```
-/dev:groucho
+Act as the Architect (architecture & design specialist).
 
 I need architectural guidance for implementing GitHub issue #{number}: {title}
 
@@ -106,12 +106,12 @@ Please analyze the codebase and recommend:
 6. Where testing gaps can be addressed for new _or_ existing functionality related to the work being done
 ```
 
-**Review Groucho's response with FRESH EYES:**
+**Review the Architect's response with FRESH EYES:**
 - Does the plan make sense given the requirements?
 - Are there any assumptions that need clarification?
 - Do you have new questions for the user?
 
-**If you have new questions:** Return to Step 2, ask the user, and when answered, return here to re-consult Groucho.
+**If you have new questions:** Return to Step 2, ask the user, and when answered, return here to re-consult the Architect.
 
 **If everything is clear:** Proceed to Step 7b to present the plan to the user.
 
@@ -123,9 +123,9 @@ Provide a clear summary including:
 
 1. **Overview:** Brief description of the implementation approach
 2. **Files to be Modified:** List all files that will be changed with a brief description of changes
-3. **Implementation Steps:** High-level outline of what will be done (from Groucho's guidance)
+3. **Implementation Steps:** High-level outline of what will be done (from the Architect's guidance)
 4. **Testing Approach:** How TDD will be applied, if so, and what will be tested
-5. **Potential Risks:** Any concerns or edge cases identified by Groucho
+5. **Potential Risks:** Any concerns or edge cases identified by the Architect
 
 **Format your summary clearly and ask:**
 > "Does this implementation plan look good to you? Should I proceed with [TDD/implementation]?"
@@ -138,20 +138,20 @@ Provide a clear summary including:
 
 **Only proceed with this step if:**
 - The user confirmed TDD should be used, OR
-- The user said to consult Zeppo about testing
+- The user said to consult the Tester about testing
 
-#### 8a. Consult Zeppo for Test Design
+#### 8a. Consult the Tester for Test Design
 
 ```
-/dev:zeppo
+Act as the Tester (testing specialist).
 
 I need to design tests for GitHub issue #{number}: {title}
 
 Requirements:
 {summarize requirements}
 
-Implementation plan (from Groucho):
-{summarize Groucho's recommendations}
+Implementation plan (from the Architect):
+{summarize the Architect's recommendations}
 
 Please recommend:
 1. What tests should be written
@@ -162,14 +162,14 @@ Please recommend:
 
 #### 8b. Write Failing Tests
 
-Implement the tests that Zeppo recommended. Ensure they fail (since the feature isn't implemented yet).
+Implement the tests that the Tester recommended. Ensure they fail (since the feature isn't implemented yet).
 
 Run the tests and verify they fail as expected.
 
-#### 8c. Validate Tests with Zeppo
+#### 8c. Validate Tests with the Tester
 
 ```
-/dev:zeppo
+Act as the Tester (testing specialist).
 
 I've written the tests you recommended. Please review:
 
@@ -183,11 +183,11 @@ Do these tests:
 Any feedback or improvements needed?
 ```
 
-**Iterate:** If Zeppo has feedback, update the tests and re-consult until Zeppo confirms the tests are good.
+**Iterate:** If the Tester has feedback, update the tests and re-consult until the Tester confirms the tests are good.
 
 ### Step 9: Implement the Feature
 
-Following Groucho's architectural guidance, implement the feature.
+Following the Architect's architectural guidance, implement the feature.
 
 **Review with FRESH EYES at each stage:**
 - Am I following the plan?
@@ -241,10 +241,10 @@ gh run list --repo schuyler/macdown3000 --branch {branch-name} --limit 1
 
 Note the run ID. **Do not wait for it to finish.** Proceed immediately to Steps 11 and 12.
 
-### Step 11: Consult Chico (Code Reviewer)
+### Step 11: Consult the Reviewer
 
 ```
-/dev:chico
+Act as the Reviewer (code review specialist).
 
 I've implemented GitHub issue #{number}: {title}
 
@@ -263,8 +263,8 @@ Please review:
 Focus on critical issues that would prevent this from being merged.
 ```
 
-**Evaluate Chico's feedback:**
-- If there are critical or important issues: Return to Step 9, address them, re-run tests (Step 10), and re-consult Chico
+**Evaluate the Reviewer's feedback:**
+- If there are critical or important issues: Return to Step 9, address them, re-run tests (Step 10), and re-consult the Reviewer
 - If only minor suggestions: Note them but proceed
 - If no issues: Proceed to Step 12
 
@@ -272,10 +272,10 @@ Focus on critical issues that would prevent this from being merged.
 
 **IMPORTANT:** Launch both consultations in parallel using multiple Task tool calls in a single message.
 
-#### 12a. Consult Harpo for Documentation Updates
+#### 12a. Consult the Documenter for Documentation Updates
 
 ```
-/dev:harpo
+Act as the Documenter (documentation specialist).
 
 I've completed work on GitHub issue #{number}: {title}
 
@@ -290,10 +290,10 @@ Please review all documents in the plans/ directory and update any content that 
 - Keep changes minimal and focused
 ```
 
-#### 12b. Consult Zeppo for Manual Testing Plan (If Relevant)
+#### 12b. Consult the Tester for Manual Testing Plan (If Relevant)
 
 ```
-/dev:zeppo
+Act as the Tester (testing specialist).
 
 I've completed GitHub issue #{number}: {title}
 
@@ -310,8 +310,8 @@ If manual testing is not relevant for this change, please say so.
 ```
 
 **Wait for both agents to complete**, then:
-- Apply any documentation updates from Harpo
-- Save Zeppo's manual testing plan (if provided) to include in the PR
+- Apply any documentation updates from the Documenter
+- Save the Tester's manual testing plan (if provided) to include in the PR
 
 ### Step 13: Fetch Latest and Rebase on Main
 
@@ -350,10 +350,10 @@ gh run view $RUN_ID --repo schuyler/macdown3000
 - **completed / success**: Tests passed. Proceed to Step 16.
 - **completed / failure**: Tests failed. You MUST enter a fix-review loop using subagents. NEVER diagnose or fix CI failures yourself:
   1. Fetch logs: `gh run view $RUN_ID --repo schuyler/macdown3000 --log`
-  2. Launch Zeppo (background) to diagnose: provide logs, ask for root cause and fix recommendation
-  3. Implement Zeppo's fix
-  4. Launch Chico (background) to review the fix
-  5. If Chico approves: commit, push, note the new run ID, loop back to step 1 of this list with the new run
+  2. Launch the Tester (background) to diagnose: provide logs, ask for root cause and fix recommendation
+  3. Implement the Tester's fix
+  4. Launch the Reviewer (background) to review the fix
+  5. If the Reviewer approves: commit, push, note the new run ID, loop back to step 1 of this list with the new run
   6. If the loop cycles more than twice without progress, stop and surface to the user
 - **in_progress / queued**: Do NOT wait. Proceed to Step 16 and create the PR. GitHub will show CI status on the PR. Monitor the run in the background and apply the fix-review loop above if it fails.
 
@@ -377,7 +377,7 @@ Related to #{number}
 
 ## Manual Testing Plan
 
-{include Zeppo's plan if provided, otherwise state "N/A"}
+{include the Tester's plan if provided, otherwise state "N/A"}
 
 ## Review Notes
 
@@ -401,10 +401,10 @@ Summary:
 - {bullet points of what was implemented}
 
 Agent Consultations:
-- Groucho: {brief summary of architectural guidance}
-- Zeppo: {summary of testing approach/plan}
-- Chico: {summary of review outcome}
-- Harpo: {summary of documentation updates}
+- Architect: {brief summary of architectural guidance}
+- Tester: {summary of testing approach/plan}
+- Reviewer: {summary of review outcome}
+- Documenter: {summary of documentation updates}
 
 Branch: {branch-name}
 Pull Request: {PR URL}
@@ -420,5 +420,5 @@ The pull request is ready for your review.
 4. **Document requirements** - Always post clarifications to GitHub issue
 5. **Iterate with agents** - If they have concerns, address them before proceeding
 6. **No auto-close** - Never use "Fixes #" or "Closes #" in commits or PR
-7. **Run in parallel** - Harpo and Zeppo consultations in Step 12 should run simultaneously
+7. **Run in parallel** - Documenter and Tester consultations in Step 12 should run simultaneously
 8. **No co-authored-by** - Do NOT add "Co-authored-by:" trailers to commits

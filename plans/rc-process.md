@@ -108,6 +108,63 @@ polluting the permanent changelog. The compromise:
   `main` so that `main`'s CHANGELOG carries the full release history. The release
   branch is deleted afterward — the release tag keeps its commits reachable.
 
+#### How to build the final changelog (get it complete)
+
+The final `## [X.Y.Z]` section must cover **everything** merged since the last
+stable — the whole `vLAST_STABLE..HEAD` range on the release branch — **not**
+just the fixes made during the last RC window. A release branch cut from `main`
+HEAD carries the entire batch (often ~50 changes across several RCs), so a
+section regenerated from only the recent RC-era commits **silently drops the
+bulk of the release**. This is the single easiest mistake to make here; it has
+happened.
+
+**Do this — start from the last RC snapshot, don't regenerate from scratch:**
+
+1. The authoritative complete list is the **last RC's `rc-temp` block** already
+   in the release branch's `CHANGELOG.md`. `/release-candidate` generated it
+   from the full `vLAST_STABLE..HEAD` range with reporter/contributor/tester
+   attribution across both repos. Reuse it — don't rebuild it.
+2. **Re-head** `## [X.Y.Z-rc.N] - <rc date>` → `## [X.Y.Z] - <release date>`.
+3. **Normalize** `(#ISSUE, PR #NNN)` → `(#ISSUE, #NNN)` — the published final
+   format uses bare numbers, no `PR` prefix (match the existing `[X.Y.(Z-1)]`
+   entry).
+4. **Rewrite the one-line summary** for the release as a whole (not "Nth release
+   candidate…"). Keep it lean — see below.
+5. **Add `### Known Issues`** if anything is shipping with a known defect (e.g. a
+   reported-but-not-fixed regression that isn't worth holding the train for).
+6. **Reflect reverts.** If any `rc-broken` commit was reverted on the branch,
+   drop its entry — the `rc-temp` snapshot predates the revert.
+
+**Verify before committing:** diff your final section's entries against
+`git log --oneline vLAST_STABLE..HEAD` (filtered to app-facing PRs). Every
+app-facing PR in the range should appear exactly once. If the section is much
+shorter than the range, you regenerated from a partial subset — start over from
+the `rc-temp` block.
+
+**Caveat for the _next_ cut's diff.** After graduation the stable tag lives on
+the (now-deleted) release branch, so `vX.Y.Z` is **not** an ancestor of `main`.
+The next `/release-candidate`'s "changes since last stable" diff
+(`git log vX.Y.Z..main`) therefore **over-reports**: it re-lists the previous
+release's fixes as their main-side (independently-merged) duplicate SHAs, and
+prints a `WARN: vX.Y.Z is not an ancestor of HEAD`. Filter those already-shipped
+PRs out — the genuinely new work is only the commits merged to `main` *after*
+the previous branch was cut. Ping only the new reporters, not the ones already
+credited last release.
+
+> **Keep the summary lean.** The one-paragraph summary states what changed —
+> nothing more. Do **not** tack on process boilerplate like "many reported and
+> validated by users during release-candidate testing": reporter validation is
+> how the train *always* works, so restating it every release is redundant
+> noise. Describe the changes, not the process that produced them.
+
+> **Reconcile `main` at graduation, don't just append.** Early cycles leaked
+> `rc-temp` snapshots onto `main`; graduation must strip any stale `rc-temp`
+> block there too. `main` is not maintained with a rolling `[Unreleased]`
+> section between releases — the changelog is written at release time — so the
+> graduation commit on `main` should leave a bare `# Changelog` header followed
+> directly by the new `## [X.Y.Z]` section, with **no** `## [Unreleased]`
+> placeholder carried forward.
+
 ## Lifecycle of a change
 
 ```
@@ -190,17 +247,37 @@ Every other Sunday, in order:
    commit range on the branch, reflecting any reverts), updates `README.md`,
    tags the final release from the branch, cherry-picks the graduation commit
    onto `main`, and deletes the release branch. Everything still aboard the
-   branch ships.
+   branch ships. Once that tag has built, been stapled and been published,
+   publish the final's appcast item by hand — `plans/release-checklist.md` →
+   "Step 4: Publish the Appcast" (`--release` derives the stable channel from
+   the version string). `/release` does not do this.
 4. **Clear graduated labels.** Remove `rc-pending` and `rc-validated` labels
    from issues whose changes shipped in this release. **Do not** remove
    `rc-broken` — those changes didn't ship and the label should stay until the
    fix is re-merged and re-enters a future RC.
-5. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
+5. **Delete the RC pre-releases.** Once the final is published, delete the
+   `vX.Y.Z-rc.*` GitHub **Releases** (they're superseded, and some ship
+   known-buggy DMGs users shouldn't be able to download). Delete only the
+   Release entries — **keep the git tags** (`gh release delete <tag> --yes`
+   *without* `--cleanup-tag`). The tags remain the permanent anchors for the RC
+   snapshots. The old validation-ping links to those RC downloads will 404;
+   that's fine, since graduated changes get re-pinged against the stable build.
+
+   **Delete each RC's `<item>` block from
+   `docs/sparkle/macdown3000/stable/appcast.xml`, and commit that alongside
+   deleting the Releases.** An appcast item lives exactly as long as the
+   Release it points at: deleting the Release kills the enclosure URL, so a
+   surviving item would offer beta-channel users a download that 404s. Stable
+   items are never deleted, because stable Releases never are.
+6. **Open the next RC.** Switch to `main`, then run **`/release-candidate`** to
    cut `vX.Y.(Z+1)-rc.1` from the new `main` HEAD. This creates a fresh `release/X.Y.(Z+1)` branch,
    tags + builds + staples the pre-release, and posts validation comments to the
-   new batch's reporters.
+   new batch's reporters. Then publish its appcast item by hand —
+   `plans/release-checklist.md` → "Step 4: Publish the Appcast" (`--release`
+   derives the `beta` channel from the `-rc.N` suffix, confining it to users
+   who opted into pre-releases). `/release-candidate` does not do this.
 
-Steps 3 and 5 are the two builds; everything else is bookkeeping the
+Steps 3 and 6 are the two builds; everything else is bookkeeping the
 `/release-candidate` and `/release` skills automate.
 
 ## Reporter validation comments

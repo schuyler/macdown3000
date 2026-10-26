@@ -15,6 +15,8 @@
 #import "MPRenderer.h"
 #import "MPEditorView.h"
 #import "HGMarkdownHighlighter.h"
+#import <JavaScriptCore/JavaScriptCore.h>
+#import <WebKit/WebKit.h>
 #import <sys/stat.h>
 
 
@@ -24,12 +26,17 @@
 @interface MPDocument (ReloadTesting)
 @property (strong) MPRenderer *renderer;
 @property (strong) HGMarkdownHighlighter *highlighter;
-@property (unsafe_unretained) MPEditorView *editor;
+@property (weak) MPEditorView *editor;
 @property (copy) NSString *loadedString;
 - (void)reloadFromLoadedString;
 @property (nonatomic) BOOL isPreviewReady;
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
+@property (weak) WebView *preview;
+@end
+
+@interface MPRenderer (LifecycleTesting)
+- (void)parseMarkdown:(NSString *)markdown;
 @end
 
 // Spy renderer: records whether parseAndRenderNow was called without
@@ -785,6 +792,93 @@
 }
 
 
+#pragma mark - Initial Preview Prism Tests (Issue #594)
+
+- (void)testLanguageAddedAfterEmptyInitialRenderLoadsPrismComponent
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalSyntaxHighlighting = preferences.htmlSyntaxHighlighting;
+    BOOL originalFencedCode = preferences.extensionFencedCode;
+    BOOL originalMathJax = preferences.htmlMathJax;
+    preferences.htmlSyntaxHighlighting = YES;
+    preferences.extensionFencedCode = YES;
+    preferences.htmlMathJax = NO;
+
+    WebView *webView = [[WebView alloc] initWithFrame:NSMakeRect(0, 0, 320, 240)];
+    webView.frameLoadDelegate = self.document;
+    self.document.preview = webView;
+
+    MPEditorView *editor = [[MPEditorView alloc]
+        initWithFrame:NSMakeRect(0, 0, 320, 240)];
+    MPRenderer *renderer = [[MPRenderer alloc] init];
+    renderer.dataSource = (id<MPRendererDataSource>)self.document;
+    renderer.delegate = (id<MPRendererDelegate>)self.document;
+    renderer.rendererFlags = 0;
+    self.document.editor = editor;
+    self.document.renderer = renderer;
+    self.document.isPreviewReady = NO;
+    self.document.alreadyRenderingInWeb = NO;
+
+    // Model the startup race: an empty render establishes a head containing
+    // Prism core but no language component.
+    editor.string = @"";
+    [renderer parseMarkdown:editor.string];
+    [renderer render];
+
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+    __block BOOL prismCoreLoaded = NO;
+    while ([deadline timeIntervalSinceNow] > 0)
+    {
+        JSContext *context = webView.mainFrame.javaScriptContext;
+        prismCoreLoaded = [[context evaluateScript:@"!!window.Prism"] toBool];
+        if (self.document.isPreviewReady &&
+            !self.document.alreadyRenderingInWeb && prismCoreLoaded)
+            break;
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                  beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+    XCTAssertTrue(prismCoreLoaded,
+                  @"The empty initial preview must finish loading Prism core");
+    XCTAssertFalse(self.document.alreadyRenderingInWeb,
+                   @"The empty initial preview render must be complete");
+
+    // The real file render needs prism-javascript in the head. A body-only
+    // replacement leaves that component absent and Prism cannot tokenize it.
+    editor.string = @"```javascript\nconst answer = 42;\n```";
+    [renderer parseMarkdown:editor.string];
+    [renderer render];
+
+    deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+    __block int tokenCount = 0;
+    __block BOOL javascriptGrammarLoaded = NO;
+    while ([deadline timeIntervalSinceNow] > 0)
+    {
+        JSContext *context = webView.mainFrame.javaScriptContext;
+        javascriptGrammarLoaded = [[context evaluateScript:
+            @"!!(window.Prism && Prism.languages.javascript)"] toBool];
+        tokenCount = [[context evaluateScript:
+            @"document.querySelectorAll('code.language-javascript span.token').length"]
+            toInt32];
+        if (!self.document.alreadyRenderingInWeb &&
+            javascriptGrammarLoaded && tokenCount > 0)
+            break;
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                  beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+
+    XCTAssertTrue(javascriptGrammarLoaded,
+                  @"The second render must load the JavaScript Prism grammar");
+    XCTAssertGreaterThan(tokenCount, 0,
+                         @"Adding a fenced-code language after the empty startup "
+                          "render must reload the head and run real Prism tokenization");
+
+    webView.frameLoadDelegate = nil;
+    preferences.htmlSyntaxHighlighting = originalSyntaxHighlighting;
+    preferences.extensionFencedCode = originalFencedCode;
+    preferences.htmlMathJax = originalMathJax;
+}
+
+
 #pragma mark - Preview Rendering Gate Tests (Issue #358 follow-up)
 
 // When isPreviewReady is NO, the alreadyRenderingInWeb flag must NOT block the
@@ -924,6 +1018,18 @@
          "resources and the security scope check are unchanged");
     XCTAssertFalse([self.fileManager fileExistsAtPath:base.path],
         @"The base URL must point at a non-existent sentinel, not a real file");
+}
+
+
+#pragma mark - Workspace Tests
+
+- (void)testWorkspaceRootURLDefaultsToNilAndIsSettable
+{
+    MPDocument *doc = [[MPDocument alloc] init];
+    XCTAssertNil(doc.workspaceRootURL);
+    NSURL *root = [NSURL fileURLWithPath:@"/tmp" isDirectory:YES];
+    doc.workspaceRootURL = root;
+    XCTAssertEqualObjects(doc.workspaceRootURL, root);
 }
 
 @end

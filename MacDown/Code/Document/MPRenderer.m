@@ -424,6 +424,7 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
     htmlRenderer->blockcode = hoedown_patch_render_blockcode;
     htmlRenderer->listitem = hoedown_patch_render_listitem;
     htmlRenderer->header = hoedown_patch_render_header;
+    htmlRenderer->table_header = hoedown_patch_render_table_header;
 
     hoedown_html_renderer_state_extra *extra =
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
@@ -511,11 +512,11 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
 NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
 {
     NSString *csp = MPEscapeHTMLAttribute(MPPreviewContentSecurityPolicy());
-    NSString *token = MPEscapeHTMLAttribute(checkboxBridgeToken);
+    NSString *checkboxToken = MPEscapeHTMLAttribute(checkboxBridgeToken);
     return [NSString stringWithFormat:
         @"<meta http-equiv=\"Content-Security-Policy\" content=\"%@\">\n"
          "<meta name=\"macdown-checkbox-token\" content=\"%@\">",
-        csp, token];
+        csp, checkboxToken];
 }
 
 
@@ -685,19 +686,25 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         NSURL *url = MPExtensionURL(@"tasklist", @"js");
         [scripts addObject:[MPScript javaScriptWithURL:url]];
     }
+    {
+        NSURL *url = MPExtensionURL(@"table-resize", @"js");
+        [scripts addObject:[MPScript javaScriptWithURL:url]];
+    }
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
-        // mermaid
-        if ([d rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
-        // graphviz
-        if ([d rendererHasGraphviz:self])
-        {
-            [scripts addObjectsFromArray:self.graphvizScripts];
-        }
+    }
+    // Mermaid and Graphviz render from the language-* class (always
+    // emitted) via their own init scripts; they do not depend on Prism.
+    // Keep them out of the syntax-highlighting gate so diagrams render
+    // even when syntax highlighting is off (GitHub issue #533).
+    if ([d rendererHasMermaid:self])
+    {
+        [scripts addObjectsFromArray:self.mermaidScripts];
+    }
+    if ([d rendererHasGraphviz:self])
+    {
+        [scripts addObjectsFromArray:self.graphvizScripts];
     }
     if ([d rendererHasMathJax:self])
         [scripts addObjectsFromArray:self.mathjaxScripts];
@@ -822,13 +829,15 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *body = self.currentHtml;
+    NSString *previewBody = body ?: @"";
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
     if (!self.checkboxBridgeToken.length)
         self.checkboxBridgeToken = NSUUID.UUID.UUIDString;
     NSString *headTags = MPPreviewHeadTags(self.checkboxBridgeToken);
     NSString *html = MPGetHTML(
-        title, headTags, body, self.stylesheets, MPAssetFullLink,
+        title, headTags, previewBody,
+        self.stylesheets, MPAssetFullLink,
         self.scripts, MPAssetFullLink);
 
     // Issue #110 / #318: Apply cache-busting version stamps to local resource
@@ -888,15 +897,20 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         scriptsOption = MPAssetEmbedded;
         [styles addObjectsFromArray:self.prismStylesheets];
         [scripts addObjectsFromArray:self.prismScripts];
-        if ([self.delegate rendererHasMermaid:self])
-        {
-            [scripts addObjectsFromArray:self.mermaidScripts];
-        }
-        if ([self.delegate rendererHasGraphviz:self])
-        {
-            [scripts addObjectsFromArray:self.graphvizScripts];
-        }
-
+    }
+    // Mermaid and Graphviz render from the language-* class (always
+    // emitted) via their own init scripts; they do not depend on Prism.
+    // Keep them out of the highlighting gate so diagrams export even
+    // when syntax highlighting is off (GitHub issue #541).
+    if ([self.delegate rendererHasMermaid:self])
+    {
+        scriptsOption = MPAssetEmbedded;
+        [scripts addObjectsFromArray:self.mermaidScripts];
+    }
+    if ([self.delegate rendererHasGraphviz:self])
+    {
+        scriptsOption = MPAssetEmbedded;
+        [scripts addObjectsFromArray:self.graphvizScripts];
     }
     if ([self.delegate rendererHasMathJax:self])
     {
