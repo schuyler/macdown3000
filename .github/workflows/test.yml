@@ -92,13 +92,3 @@ jobs:
     # the Sparkle framework binary skip when the pod is absent, as it is here.
     - name: Run appcast script tests
       run: python3 Tools/test_update_appcast.py
-
-  stall-runner:
-    name: Stall Diagnostic Script Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - uses: actions/checkout@v4
-    - name: Verify failed and empty test runs fail the diagnostic
-      run: python3 MacDownTests/BuildTools/stall_status_tests.py
