@@ -7,6 +7,8 @@
 //
 
 #import "MPGlobals.h"
+#import <unistd.h>
+#import <errno.h>
 #import "MPHomebrewSubprocessController.h"
 #import "MPPreferences.h"
 #import "MPTerminalPreferencesViewController.h"
@@ -187,12 +189,11 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
     }
 
     // Check if something already exists at link path
-    BOOL isDirectory = NO;
-    if ([fm fileExistsAtPath:linkPath isDirectory:&isDirectory])
+    NSDictionary *attributes = [fm attributesOfItemAtPath:linkPath error:nil];
+    if (attributes)
     {
         // Check if it's a symlink
-        NSDictionary *attributes = [fm attributesOfItemAtPath:linkPath error:nil];
-        if ([attributes fileType] == NSFileTypeSymbolicLink)
+        if ([[attributes fileType] isEqualToString:NSFileTypeSymbolicLink])
         {
             // It's a symlink - check if it points to the right place
             NSString *existingDestination = [fm destinationOfSymbolicLinkAtPath:linkPath error:nil];
@@ -203,12 +204,11 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
             }
 
             // Symlink exists but points to wrong place - remove and recreate
-            NSError *removeError = nil;
-            if (![fm removeItemAtPath:linkPath error:&removeError])
+            if (unlink(linkPath.fileSystemRepresentation) != 0)
             {
                 if (error)
                 {
-                    *error = removeError;
+                    *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
                 }
                 return NO;
             }
@@ -269,7 +269,10 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
 - (void)lookForShellUtility
 {
     __weak MPTerminalPreferencesViewController *weakSelf = self;
-    MPDetectHomebrewPrefixWithCompletionhandler(^(NSString *output) {
+    [self detectHomebrewPrefixWithCompletionHandler:^(NSString *output) {
+        MPTerminalPreferencesViewController *controller = weakSelf;
+        if (!controller)
+            return;
         NSString *macdownPath = MPCommandInstallationPath;
         if (output)
         {
@@ -280,18 +283,24 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
                 [prefix stringByAppendingPathComponent:@"bin/macdown"];
         }
 
-        if ([[NSFileManager defaultManager] fileExistsAtPath:macdownPath])
-            weakSelf.shellUtilityURL = [NSURL fileURLWithPath:macdownPath];
+        if ([controller isOwnedShellUtilityAtURL:[NSURL fileURLWithPath:macdownPath]])
+            controller.shellUtilityURL = [NSURL fileURLWithPath:macdownPath];
         else
         {
             // Also check user-local installation
-            NSString *userLocalPath = [[weakSelf userBinPath] stringByAppendingPathComponent:@"macdown"];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:userLocalPath])
-                weakSelf.shellUtilityURL = [NSURL fileURLWithPath:userLocalPath];
+            NSString *userLocalPath = [[controller userBinPath] stringByAppendingPathComponent:@"macdown"];
+            if ([controller isOwnedShellUtilityAtURL:[NSURL fileURLWithPath:userLocalPath]])
+                controller.shellUtilityURL = [NSURL fileURLWithPath:userLocalPath];
             else
-                weakSelf.shellUtilityURL = nil;  // Utility not found in any location
+                controller.shellUtilityURL = nil;  // Utility not found in any location
         }
-    });
+    }];
+}
+
+// Process discovery is a boundary; the lifetime-sensitive UI callback stays here.
+- (void)detectHomebrewPrefixWithCompletionHandler:(void (^)(NSString *))handler
+{
+    MPDetectHomebrewPrefixWithCompletionhandler(handler);
 }
 
 - (void)installShellUtility
@@ -390,6 +399,52 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
     }
 }
 
+// Never treat an arbitrary command or directory named macdown as ours.
+- (BOOL)isOwnedShellUtilityAtURL:(NSURL *)url
+{
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSDictionary *attributes = [fm attributesOfItemAtPath:url.path error:nil];
+    if (![[attributes fileType] isEqualToString:NSFileTypeSymbolicLink])
+        return NO;
+    NSString *target = [fm destinationOfSymbolicLinkAtPath:url.path error:nil];
+    if (!target.length)
+        return NO;
+    if (![target isAbsolutePath])
+        target = [url.URLByDeletingLastPathComponent.path stringByAppendingPathComponent:target];
+    target = target.stringByStandardizingPath;
+    NSString *ours = [[NSBundle mainBundle].sharedSupportURL
+                     URLByAppendingPathComponent:@"bin/macdown"].path.stringByStandardizingPath;
+    if ([target isEqualToString:ours])
+        return YES;
+    NSString *suffix = @"/Contents/SharedSupport/bin/macdown";
+    if (![target hasSuffix:suffix])
+        return NO;
+    NSString *appPath = [target substringToIndex:target.length - suffix.length];
+    NSDictionary *info = [NSDictionary dictionaryWithContentsOfFile:
+        [appPath stringByAppendingPathComponent:@"Contents/Info.plist"]];
+    return [@[@"app.macdown.macdown3000", @"app.macdown.macdown3000-debug", @"com.uranusjr.macdown"]
+              containsObject:info[@"CFBundleIdentifier"] ?: @""];
+}
+
+- (BOOL)removeOwnedShellUtilityAtURL:(NSURL *)url error:(NSError **)error
+{
+    if (![self isOwnedShellUtilityAtURL:url])
+    {
+        if (error)
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain
+                     code:NSFileWriteNoPermissionError
+                     userInfo:@{NSLocalizedDescriptionKey:
+                         @"The command at this location does not belong to MacDown."}];
+        return NO;
+    }
+    // Unlink the entry itself; never remove directories or follow the target.
+    if (unlink(url.path.fileSystemRepresentation) == 0)
+        return YES;
+    if (error)
+        *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+    return NO;
+}
+
 - (void)uninstallShellUtility
 {
     NSURL *url = self.shellUtilityURL;
@@ -397,7 +452,7 @@ NS_INLINE NSColor *MPGetInstallationIndicatorColor(BOOL installed)
         return;
 
     NSError *error = nil;
-    BOOL ok = [[NSFileManager defaultManager] removeItemAtURL:url error:&error];
+    BOOL ok = [self removeOwnedShellUtilityAtURL:url error:&error];
 
     if (ok)
     {

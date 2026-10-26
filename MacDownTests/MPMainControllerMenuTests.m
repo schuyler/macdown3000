@@ -87,7 +87,19 @@
     NSMenuItem *toggle = [self itemInMenu:viewMenu
                                withAction:@selector(toggleFolderSidebar:)];
     XCTAssertNotNil(toggle, @"Show Sidebar is missing from the View menu");
-    XCTAssertEqualObjects(toggle.keyEquivalent, @"\\");
+    // AppKit may adapt this shortcut to the active keyboard layout.
+    // Check the declared shortcut while preserving the user's runtime menu.
+    if (@available(macOS 12.0, *)) {
+        BOOL automatic = toggle.allowsAutomaticKeyEquivalentLocalization;
+        @try {
+            toggle.allowsAutomaticKeyEquivalentLocalization = NO;
+            XCTAssertEqualObjects(toggle.keyEquivalent, @"\\");
+        } @finally {
+            toggle.allowsAutomaticKeyEquivalentLocalization = automatic;
+        }
+    } else {
+        XCTAssertEqualObjects(toggle.keyEquivalent, @"\\");
+    }
     XCTAssertEqual(toggle.keyEquivalentModifierMask, NSEventModifierFlagCommand);
     XCTAssertNil(toggle.target,
                  @"the toggle must route through the responder chain to the "

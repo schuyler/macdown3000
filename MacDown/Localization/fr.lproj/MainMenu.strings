@@ -20,7 +20,7 @@
 "3IN-sU-3Bg.title" = "Orthographe";
 
 /* Class = "NSMenu"; title = "Speech"; ObjectID = "3rS-ZA-NoH"; */
-"3rS-ZA-NoH.title" = "Dictée";
+"3rS-ZA-NoH.title" = "Parole";
 
 /* Class = "NSMenuItem"; title = "Find"; ObjectID = "4EN-yA-p0u"; */
 "4EN-yA-p0u.title" = "Rechercher";
@@ -219,7 +219,7 @@
 "OY7-WF-poV.title" = "Réduire";
 
 /* Class = "NSMenuItem"; title = "Stop Speaking"; ObjectID = "Oyz-dy-DGm"; */
-"Oyz-dy-DGm.title" = "Arrêter la dictée";
+"Oyz-dy-DGm.title" = "Arrêter la lecture";
 
 /* Class = "NSMenuItem"; title = "Delete"; ObjectID = "pa3-QI-u2k"; */
 "pa3-QI-u2k.title" = "Supprimer";
@@ -238,7 +238,7 @@
 "R4o-n2-Eq4.title" = "Agrandir";
 
 /* Class = "NSMenuItem"; title = "Strong"; ObjectID = "Rb9-MG-IjX"; */
-"Rb9-MG-IjX.title" = "Fort";
+"Rb9-MG-IjX.title" = "Gras";
 
 /* Class = "NSMenuItem"; title = "Check Spelling While Typing"; ObjectID = "rbD-Rh-wIN"; */
 "rbD-Rh-wIN.title" = "Vérifier l’orthographe à la saisie";
@@ -328,7 +328,7 @@
 "xN5-GU-ASF.title" = "Paragraphe";
 
 /* Class = "NSMenuItem"; title = "Speech"; ObjectID = "xrE-MZ-jX0"; */
-"xrE-MZ-jX0.title" = "Dicter";
+"xrE-MZ-jX0.title" = "Parole";
 
 /* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
 "xSb-2f-W1r.title" = "Afficher";
@@ -340,7 +340,7 @@
 "YEy-JH-Tfz.title" = "Rechercher et remplacer…";
 
 /* Class = "NSMenuItem"; title = "Start Speaking"; ObjectID = "Ynk-f8-cLZ"; */
-"Ynk-f8-cLZ.title" = "Démarrer la dictée";
+"Ynk-f8-cLZ.title" = "Commencer la lecture";
 
 /* Class = "NSMenuItem"; title = "Show Substitutions"; ObjectID = "z6F-FW-3nz"; */
 "z6F-FW-3nz.title" = "Afficher les remplacements";

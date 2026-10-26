@@ -10,6 +10,9 @@
 #import "MPUtilities.h"
 #import "NSDocumentController+Document.h"
 
+#import "FileURLInlining.h"
+#import "NSPasteboard+Types.h"
+
 @interface MPUtilityTests : XCTestCase
 @property (strong) NSString *tempDir;
 @end
@@ -700,6 +703,34 @@
     XCTAssertNil(MPWriteDataToUniqueTemporaryFile(first, @"../document.md", NULL));
     [[NSFileManager defaultManager] removeItemAtPath:a.stringByDeletingLastPathComponent error:NULL];
     [[NSFileManager defaultManager] removeItemAtPath:b.stringByDeletingLastPathComponent error:NULL];
+}
+
+- (void)testEmptyPasteboardDoesNotProduceURL {
+    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
+    [pasteboard clearContents];
+    XCTAssertNil([pasteboard URLForType:NSPasteboardTypeString]);
+    [pasteboard releaseGlobally];
+}
+
+- (void)testMalformedTextClippingReturnsFilePath {
+    NSURL *url = [NSURL fileURLWithPath:[self.tempDir stringByAppendingPathComponent:@"bad.textClipping"]];
+    for (id value in @[@"invalid dictionary", @{@"public.utf8-plain-text": @42}]) {
+        NSData *data = [NSPropertyListSerialization dataWithPropertyList:@{@"UTI-Data": value}
+            format:NSPropertyListBinaryFormat_v1_0 options:0 error:NULL];
+        [data writeToURL:url atomically:YES];
+        XCTAssertEqualObjects([[FileURLInlining alloc] initWithURL:url].inlineContent, url.path);
+    }
+}
+
+- (void)testJavaScriptJSONPreservesUnicode {
+    XCTAssertEqualObjects(MPGetObjectFromJavaScript(@"var value = {text:'é漢😀'};", @"value"),
+                          (@{@"text": @"é漢😀"}));
+}
+
+- (void)testJavaScriptMissingAndUnserializableValuesReturnNil {
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = 1;", @"missing"));
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = function() {};", @"value"));
+    XCTAssertNil(MPGetObjectFromJavaScript(@"var value = {}; value.self = value;", @"value"));
 }
 
 @end
