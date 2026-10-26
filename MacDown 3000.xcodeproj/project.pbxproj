@@ -14,6 +14,7 @@
 		0A33AF1E979F50E868FEE7DC /* libPods-MacDownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F2375876A05ADEB6544CB4EB /* libPods-MacDownCore.a */; };
 		0F6EFB9168CB2E074C8EEE64 /* MPFolderWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ED6745ED95492186AF6E844 /* MPFolderWatcher.m */; };
 		1457815B1A710E4C40F07FCA /* MPPaneToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E44CF1BD72E49A99DA6A4C1 /* MPPaneToggleTests.m */; };
+		UKRLOC000004TESTBUILDFIL /* MPLocalizationContentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */; };
 		1882ADC14E60D20538509FCA /* MPSidebarSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B004FFBE8014E25420887FD /* MPSidebarSplitView.m */; };
 		197TESTS0B00000000197RSTB /* MPRendererStateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 197TESTS0F00000000197RSTF /* MPRendererStateTests.m */; };
 		1F002A23195B3DAE008B8D93 /* MPRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F002A22195B3DAE008B8D93 /* MPRenderer.m */; };
@@ -772,6 +773,9 @@
 		AUDIT00003LOCALIZE000003 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AUDIT00003LOCALIZE000004 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AUDIT00003LOCALIZE000005 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		UKRLOC000001MAINMENUSTRS /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MainMenu.strings; sourceTree = "<group>"; };
+		UKRLOC000002MPDOCUMENTST /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPDocument.strings; sourceTree = "<group>"; };
+		UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPLocalizationContentTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1195,6 +1199,7 @@
 				QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */,
 				QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */,
 				5E44CF1BD72E49A99DA6A4C1 /* MPPaneToggleTests.m */,
+				UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */,
 				504AC0000000000000000004 /* MPPDFAnchorInjectorTests.m */,
 				B2C3D4E5F67890ABCDEF1234 /* MPZoomTests.m */,
 				A0A5A0E543A6B3CE9E17EE7B /* MPFileNodeTests.m */,
@@ -1956,6 +1961,7 @@
 				QLBLD00005PREFTESTSRC /* MPQuickLookPreferencesTests.m in Sources */,
 				QLBLD00006PVCTESTSRC0 /* MPPreviewViewControllerTests.m in Sources */,
 				1457815B1A710E4C40F07FCA /* MPPaneToggleTests.m in Sources */,
+				UKRLOC000004TESTBUILDFIL /* MPLocalizationContentTests.m in Sources */,
 				504AC0000000000000000005 /* MPPDFAnchorInjectorTests.m in Sources */,
 				A1B2C3D4E5F67890ABCDEF12 /* MPZoomTests.m in Sources */,
 				00F6EAD22CA0765C131AA4EC /* MPFileNodeTests.m in Sources */,
@@ -2063,6 +2069,7 @@
 				1FB813A52099A228004EC5D7 /* et */,
 				E7D458CB241C933800411A36 /* fi */,
 				E70ECDD5241C933C00537A46 /* ru-RU */,
+				UKRLOC000001MAINMENUSTRS /* uk */,
 				E744518C241C934C00D9ABD9 /* cs */,
 				E77E5D6C241C935100699B5A /* da-DK */,
 				E7DD09F1241C9368008FBC25 /* da */,
@@ -2092,6 +2099,7 @@
 				1FBD43152099A1A200B348CD /* tr */,
 				1FB813AB2099A228004EC5D7 /* et */,
 				E70ECDD7241C933C00537A46 /* ru-RU */,
+				UKRLOC000002MPDOCUMENTST /* uk */,
 				E7445191241C934C00D9ABD9 /* cs */,
 				E77E5D72241C935100699B5A /* da-DK */,
 			);

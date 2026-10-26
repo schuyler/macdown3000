@@ -9,26 +9,27 @@ int main(int argc, const char *argv[])
         if (argc != 2) return 2;
         NSString *root = [NSString stringWithUTF8String:argv[1]];
         NSArray *locales = @[@"ru-RU", @"uk", @"cs", @"sk"];
-        NSArray *words = @[@[@"слово", @"слова", @"слов"],
+        NSArray *words = @[@[@"слово", @"слова", @"слів"],
                            @[@"слово", @"слова", @"слів"],
                            @[@"slovo", @"slova", @"slov"],
                            @[@"slovo", @"slová", @"slov"]];
-        NSArray *characters = @[@[@"символ", @"символа", @"символов"],
+        NSArray *characters = @[@[@"символ", @"символи", @"символів"],
                                 @[@"символ", @"символи", @"символів"],
                                 @[@"znak", @"znaky", @"znaků"],
                                 @[@"znak", @"znaky", @"znakov"]];
-        NSArray *selectedWords = @[@[@"выделенное слово", @"выделенных слова", @"выделенных слов"],
+        NSArray *selectedWords = @[@[@"виділене слово", @"виділені слова", @"виділених слів"],
                                    @[@"виділене слово", @"виділені слова", @"виділених слів"],
                                    @[@"vybrané slovo", @"vybraná slova", @"vybraných slov"],
                                    @[@"vybrané slovo", @"vybrané slová", @"vybraných slov"]];
-        NSArray *selectedCharacters = @[@[@"выделенный символ", @"выделенных символа", @"выделенных символов"],
+        NSArray *selectedCharacters = @[@[@"виділений символ", @"виділені символи", @"виділених символів"],
                                         @[@"виділений символ", @"виділені символи", @"виділених символів"],
                                         @[@"vybraný znak", @"vybrané znaky", @"vybraných znaků"],
                                         @[@"vybraný znak", @"vybrané znaky", @"vybraných znakov"]];
-        NSArray *suffixes = @[@" (без пробелов)", @" (без пробілів)", @" (bez mezer)", @" (bez medzier)"];
+        NSArray *suffixes = @[@" (без пробілів)", @" (без пробілів)", @" (bez mezer)", @" (bez medzier)"];
         NSArray *keys = @[@"WORDS_PLURAL_STRING", @"CHARACTERS_PLURAL_STRING",
                           @"CHARACTERS_NO_SPACES_PLURAL_STRING", @"WORDS_SELECTED_PLURAL_STRING",
                           @"CHARACTERS_SELECTED_PLURAL_STRING", @"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING"];
+        // ru-RU carries the Ukrainian strings.
         // Each row is count, Russian/Ukrainian expected form, Czech/Slovak form.
         NSArray *cases = @[@[@0,@2,@2], @[@1,@0,@0], @[@2,@1,@1], @[@4,@1,@1],
                            @[@5,@2,@2], @[@11,@2,@2], @[@12,@2,@2], @[@14,@2,@2],

@@ -164,3 +164,9 @@
 "A file already exists at the installation path" = "Файл вже існує за шляхом встановлення";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Shell-утиліту macdown встановлено в %@.\n\nЩоб використовувати її з Терміналу, додайте цей рядок до файлу конфігурації shell (~/.zshrc або ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
 
+
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Файл змінено ззовні";
+"This file has been changed by another application. Do you want to discard your changes?" = "Цей файл було змінено іншою програмою. Бажаєте відкинути свої зміни?";
+"Discard" = "Відкинути";
+"Keep" = "Залишити";
