@@ -33,6 +33,20 @@
 @property (nonatomic) BOOL alreadyRenderingInWeb;
 @property (nonatomic) BOOL renderToWebPending;
 @property (weak) WebView *preview;
+- (void)processExternalFileChange;
+@end
+
+@interface MPDocument (SaveSchedulingTesting)
+- (void)scheduleSaveProtectionEnd:(dispatch_block_t)completion;
+@end
+@interface MPScheduledSaveDocument : MPDocument
+@property (strong) NSMutableArray<dispatch_block_t> *saveCompletions;
+@end
+@implementation MPScheduledSaveDocument
+- (void)scheduleSaveProtectionEnd:(dispatch_block_t)completion {
+    if (!self.saveCompletions) self.saveCompletions = [NSMutableArray array];
+    [self.saveCompletions addObject:[completion copy]];
+}
 @end
 
 @interface MPRenderer (LifecycleTesting)
@@ -1032,4 +1046,26 @@
     XCTAssertEqualObjects(doc.workspaceRootURL, root);
 }
 
+- (void)testAnEarlierSaveTimerCannotReloadWhileTheLatestSaveIsProtected
+{
+    MPScheduledSaveDocument *document = [MPScheduledSaveDocument new];
+    document.fileURL = self.testFileURL;
+    document.fileType = @"net.daringfireball.markdown";
+    document.markdown = @"first save";
+    XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
+    document.markdown = @"latest save";
+    XCTAssertTrue([document writeToURL:self.testFileURL ofType:document.fileType error:NULL]);
+    document.fileModificationDate = [NSDate distantPast];
+    XCTAssertTrue([@"external change" writeToURL:self.testFileURL atomically:YES
+        encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertEqual(document.saveCompletions.count, 2u);
+    document.saveCompletions[0]();
+    [document processExternalFileChange];
+    XCTAssertEqualObjects(document.markdown, @"latest save");
+    document.saveCompletions[1]();
+    [document processExternalFileChange];
+    XCTAssertEqualObjects(document.markdown, @"external change");
+    [document.saveCompletions removeAllObjects];
+    [document close];
+}
 @end

@@ -41,35 +41,60 @@ NS_INLINE BOOL MPUpdaterDisabled(void)
 }
 
 
-NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
+// Keep help, contributing and their relative images in a private unique
+// directory. Reopening help must not remove or overwrite another document.
+static NSURL *MPCopyBundledFile(NSString *resource, NSString *extension, NSError **error)
 {
-    NSURL *source = [[NSBundle mainBundle] URLForResource:resource
-                                            withExtension:extension];
-    NSString *filename = source.absoluteString.lastPathComponent;
-    NSURL *target = [NSURL fileURLWithPathComponents:@[NSTemporaryDirectory(),
-                                                       filename]];
-    BOOL ok = NO;
-    NSFileManager *manager = [NSFileManager defaultManager];
-    [manager removeItemAtURL:target error:NULL];
-    ok = [manager copyItemAtURL:source toURL:target error:NULL];
-
-    if (!ok)
-        return;
-
-    // Copy bundled Images directory alongside the file for relative image paths
-    NSURL *imagesSource = [[NSBundle mainBundle] URLForResource:@"Images"
-                                                  withExtension:nil];
+    NSURL *source = [[NSBundle mainBundle] URLForResource:resource withExtension:extension];
+    if (!source)
+    {
+        if (error)
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:nil];
+        return nil;
+    }
+    NSData *contents = [NSData dataWithContentsOfURL:source options:0 error:error];
+    if (!contents)
+        return nil;
+    NSString *path = MPWriteDataToUniqueTemporaryFile(contents, source.lastPathComponent, error);
+    if (!path)
+        return nil;
+    NSURL *target = [NSURL fileURLWithPath:path];
+    NSURL *imagesSource = [[NSBundle mainBundle] URLForResource:@"Images" withExtension:nil];
     if (imagesSource)
     {
-        NSURL *imagesTarget = [NSURL fileURLWithPathComponents:@[NSTemporaryDirectory(),
-                                                                  @"Images"]];
-        [manager removeItemAtURL:imagesTarget error:NULL];
-        [manager copyItemAtURL:imagesSource toURL:imagesTarget error:NULL];
+        NSURL *imagesTarget = [target.URLByDeletingLastPathComponent URLByAppendingPathComponent:@"Images"];
+        if (![[NSFileManager defaultManager] copyItemAtURL:imagesSource toURL:imagesTarget error:error])
+        {
+            [[NSFileManager defaultManager] removeItemAtURL:target.URLByDeletingLastPathComponent error:nil];
+            return nil;
+        }
     }
-    NSDocumentController *c = [NSDocumentController sharedDocumentController];
-    [c openDocumentWithContentsOfURL:target display:YES
-                   completionHandler:MPDocumentOpenCompletionEmpty];
+    return target;
 }
+
+// Remember the private copy while its document remains open. A subsequent
+// opening after close gets a fresh copy without overwriting a user's edits.
+static NSURL *MPBundledFileURL(NSString *resource, NSString *extension)
+{
+    static NSMutableDictionary<NSString *, NSURL *> *openedURLs;
+    if (!openedURLs) openedURLs = [NSMutableDictionary dictionary];
+    NSString *key = [resource stringByAppendingPathExtension:extension];
+    NSURL *existing = openedURLs[key];
+    if (existing && [[NSDocumentController sharedDocumentController] documentForURL:existing])
+        return existing;
+    NSURL *target = MPCopyBundledFile(resource, extension, NULL);
+    if (target) openedURLs[key] = target;
+    return target;
+}
+
+NS_INLINE void MPOpenBundledFile(NSString *resource, NSString *extension)
+{
+    NSURL *target = MPBundledFileURL(resource, extension);
+    if (!target) return;
+    [[NSDocumentController sharedDocumentController] openDocumentWithContentsOfURL:target display:YES
+        completionHandler:MPDocumentOpenCompletionEmpty];
+}
+
 
 NS_INLINE void treat()
 {
@@ -98,10 +123,11 @@ NS_INLINE void treat()
     if ([[defaults objectForKey:kMPTreatLastSeenStampKey] isEqual:stamp])
         return;
 
+    NSString *path = MPWriteDataToUniqueTemporaryFile(data[key], key, NULL);
+    if (!path)
+        return;
+    NSURL *url = [NSURL fileURLWithPath:path];
     [defaults setObject:stamp forKey:kMPTreatLastSeenStampKey];
-    NSArray *components = @[NSTemporaryDirectory(), key];
-    NSURL *url = [NSURL fileURLWithPathComponents:components];
-    [data[key] writeToURL:url atomically:NO];
 
     // Make sure this is opened last and immediately visible.
     NSDocumentController *c = [NSDocumentController sharedDocumentController];
@@ -119,6 +145,17 @@ NS_INLINE void treat()
 
 
 @implementation MPMainController
+
+// Used by the Help menu and tests exercising the copied document/assets.
++ (NSURL *)copyBundledFile:(NSString *)resource extension:(NSString *)extension error:(NSError **)error
+{
+    return MPCopyBundledFile(resource, extension, error);
+}
+
++ (NSURL *)bundledFileURL:(NSString *)resource extension:(NSString *)extension
+{
+    return MPBundledFileURL(resource, extension);
+}
 
 @synthesize preferencesWindowController = _preferencesWindowController;
 

@@ -8,6 +8,8 @@
 
 #import <XCTest/XCTest.h>
 #import "MPUtilities.h"
+#import "NSDocumentController+Document.h"
+
 #import "FileURLInlining.h"
 #import "NSPasteboard+Types.h"
 
@@ -673,6 +675,34 @@
     NSArray *sorted = [themes sortedArrayUsingSelector:@selector(compare:)];
     XCTAssertEqualObjects(themes, sorted,
                           @"Themes should be sorted alphabetically");
+}
+
+- (void)testNewEmptyDocumentDoesNotOverwriteExistingFileAndReportsWriteFailure {
+    NSURL *url = [NSURL fileURLWithPath:[self.tempDir stringByAppendingPathComponent:@"existing.md"]];
+    NSData *content = [@"preserve me" dataUsingEncoding:NSUTF8StringEncoding];
+    [content writeToURL:url atomically:YES];
+    NSError *error = nil;
+    XCTAssertNil([[NSDocumentController sharedDocumentController]
+        createNewEmptyDocumentForURL:url display:NO error:&error]);
+    XCTAssertNotNil(error);
+    XCTAssertEqualObjects([NSData dataWithContentsOfURL:url], content);
+    error = nil;
+    NSURL *missingParent = [NSURL fileURLWithPath:[self.tempDir stringByAppendingPathComponent:@"missing/target.md"]];
+    XCTAssertNil([[NSDocumentController sharedDocumentController]
+        createNewEmptyDocumentForURL:missingParent display:NO error:&error]);
+    XCTAssertNotNil(error);
+}
+
+- (void)testUniqueTemporaryFilesDoNotOverwriteAndRejectTraversal {
+    NSData *first = [@"first" dataUsingEncoding:NSUTF8StringEncoding];
+    NSString *a = MPWriteDataToUniqueTemporaryFile(first, @"document.md", NULL);
+    NSString *b = MPWriteDataToUniqueTemporaryFile([@"second" dataUsingEncoding:NSUTF8StringEncoding], @"document.md", NULL);
+    XCTAssertNotNil(a);
+    XCTAssertNotEqualObjects(a, b);
+    XCTAssertEqualObjects([NSData dataWithContentsOfFile:a], first);
+    XCTAssertNil(MPWriteDataToUniqueTemporaryFile(first, @"../document.md", NULL));
+    [[NSFileManager defaultManager] removeItemAtPath:a.stringByDeletingLastPathComponent error:NULL];
+    [[NSFileManager defaultManager] removeItemAtPath:b.stringByDeletingLastPathComponent error:NULL];
 }
 
 - (void)testEmptyPasteboardDoesNotProduceURL {
