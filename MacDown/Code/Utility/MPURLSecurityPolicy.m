@@ -58,16 +58,14 @@
     if (!targetURL.isFileURL || !baseURL.isFileURL)
         return NO;
 
-    // Resolve symlinks on the parent directory of each URL, then re-append
-    // the last component. URLByResolvingSymlinksInPath uses realpath()
-    // internally, which fails when the final component doesn't exist —
-    // leaving intermediate symlinks unresolved. Resolving the parent
-    // separately catches symlink escapes like docs/evil-link/payload
-    // where evil-link points outside the document directory.
-    NSURL *targetParent = targetURL.URLByDeletingLastPathComponent
-                                   .URLByResolvingSymlinksInPath;
-    NSString *targetPath = [targetParent.path
-        stringByAppendingPathComponent:targetURL.lastPathComponent];
+    // Resolve the final component too: a symlink to an existing file can
+    // otherwise escape even when its parent is inside the document tree.
+    NSURL *resolvedTarget = targetURL.URLByStandardizingPath.URLByResolvingSymlinksInPath;
+    NSURL *targetParent = resolvedTarget.URLByDeletingLastPathComponent
+                                       .URLByResolvingSymlinksInPath;
+    NSString *targetPath = [[targetParent.path
+        stringByAppendingPathComponent:resolvedTarget.lastPathComponent]
+        stringByStandardizingPath];
 
     NSURL *baseParent = baseURL.URLByDeletingLastPathComponent
                                 .URLByResolvingSymlinksInPath;

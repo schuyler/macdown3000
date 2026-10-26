@@ -29,7 +29,8 @@
 
 -(instancetype)initWithURL:(NSURL *) url {
     if(! url.isFileURL) return nil;
-    if (! [super init]) return nil;
+    self = [super init];
+    if (!self) return nil;
     self.url = url;
     return self;
 }
@@ -165,10 +166,10 @@
 
     if (![plist isKindOfClass:[NSDictionary class]]) return nil;
     NSDictionary *utiData = [plist objectForKey:@"UTI-Data"];
-    if(! utiData) return nil;
+    if (![utiData isKindOfClass:[NSDictionary class]]) return nil;
     NSString *textData = [utiData objectForKey:@"public.utf8-plain-text"];
     
-    return textData;
+    return [textData isKindOfClass:[NSString class]] ? textData : nil;
 }
 
 @end
