@@ -29,6 +29,9 @@ jobs:
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 
+    - name: Verify command queue tests
+      run: python3 MacDownTests/BuildTools/command_queue_tests.py
+
     # The step timeout bounds the cost of a hung test host: a job-level timeout cancels the
     # remaining steps, so the diagnostic steps below would never run, whereas a step-level
     # one leaves them to fire on failure(). Healthy runs finish in about 2-4 minutes.
@@ -92,3 +95,14 @@ jobs:
     # the Sparkle framework binary skip when the pod is absent, as it is here.
     - name: Run appcast script tests
       run: python3 Tools/test_update_appcast.py
+
+  command-line-contracts:
+    name: Command Line Input and Queue Tests
+    runs-on: macos-14
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Run native input and concurrent queue contracts
+      run: python3 MacDownTests/BuildTools/command_queue_tests.py

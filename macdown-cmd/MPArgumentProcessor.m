@@ -16,6 +16,7 @@
 @property (strong) GBCommandLineParser *parser;
 @property (strong) GBOptionsHelper *options;
 @property (strong) GBSettings *settings;
+@property (copy) NSArray *stdinAndFollowingArguments;
 
 @end
 
@@ -39,7 +40,8 @@
     options.applicationName = ^{ return kMPApplicationName; };
     options.printHelpHeader = ^{
         NSString *fmt =
-            @"usage: %@ [file ...]\n\nOptions:";
+            @"usage: %@ [file ...] [-]\n"
+             "Read standard input when no files are given, or when - is specified.\n\nOptions:";
         return [NSString stringWithFormat:fmt, kMPCommandName];
     };
     [options registerOption:'v' long:kMPVersionKey
@@ -59,7 +61,19 @@
     [parser registerOptions:self.options];
     self.parser = parser;
 
-    [self.parser parseOptionsUsingDefaultArguments];
+    // GBCli treats a standalone dash as an unknown option. It is instead an
+    // input argument; options after the first input are already positional.
+    NSArray *arguments = [NSProcessInfo.processInfo.arguments subarrayWithRange:
+        NSMakeRange(1, NSProcessInfo.processInfo.arguments.count - 1)];
+    NSUInteger stdinIndex = [arguments indexOfObject:@"-"];
+    if (stdinIndex == NSNotFound) {
+        [self.parser parseOptionsUsingDefaultArguments];
+    } else {
+        self.stdinAndFollowingArguments = [arguments subarrayWithRange:
+            NSMakeRange(stdinIndex, arguments.count - stdinIndex)];
+        [self.parser parseOptionsWithArguments:[arguments subarrayWithRange:NSMakeRange(0, stdinIndex)]
+                                   commandLine:NSProcessInfo.processInfo.processName];
+    }
 
     return self;
 }
@@ -76,7 +90,7 @@
 
 - (NSArray *)arguments
 {
-    return self.parser.arguments;
+    return [self.parser.arguments arrayByAddingObjectsFromArray:self.stdinAndFollowingArguments ?: @[]];
 }
 
 - (void)printHelp:(BOOL)shouldExit

@@ -321,43 +321,6 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     }
 }
 
-- (NSArray *)filesToOpen
-{
-    return [self.userDefaults objectForKey:kMPFilesToOpenKey
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setFilesToOpen:(NSArray *)filesToOpen
-{
-    [self.userDefaults setObject:filesToOpen
-                          forKey:kMPFilesToOpenKey
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (NSArray *)foldersToOpen
-{
-    return [self.userDefaults objectForKey:kMPFoldersToOpenKey
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setFoldersToOpen:(NSArray *)foldersToOpen
-{
-    [self.userDefaults setObject:foldersToOpen forKey:kMPFoldersToOpenKey
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (NSString *)pipedContentFileToOpen {
-    return [self.userDefaults objectForKey:kMPPipedContentFileToOpen
-                              inSuiteNamed:kMPApplicationSuiteName];
-}
-
-- (void)setPipedContentFileToOpen:(NSString *)pipedContentFileToOpenPath {
-    [self.userDefaults setObject:pipedContentFileToOpenPath
-                          forKey:kMPPipedContentFileToOpen
-                    inSuiteNamed:kMPApplicationSuiteName];
-}
-
-
 #pragma mark - Private
 
 - (void)cleanupObsoleteAutosaveValues

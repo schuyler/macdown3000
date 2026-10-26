@@ -20,6 +20,7 @@
 #import "MPHtmlPreferencesViewController.h"
 #import "MPTerminalPreferencesViewController.h"
 #import "MPDocument.h"
+#import "../../../macdown-cmd/MPCommandQueue.h"
 
 
 static NSString * const kMPTreatLastSeenStampKey = @"treatLastSeenStamp";
@@ -114,6 +115,9 @@ NS_INLINE void treat()
 
 @interface MPMainController () <SPUUpdaterDelegate>
 @property (readonly) NSWindowController *preferencesWindowController;
+@property (readonly) NSURL *commandQueueDirectory;
+@property (readonly) NSString *commandPreferencesSuiteName;
+@property BOOL didMigrateLegacyCommands;
 @property (nonatomic, strong, readwrite) SPUStandardUpdaterController *updaterController;
 @end
 
@@ -274,11 +278,43 @@ NS_INLINE void treat()
 
 #pragma mark - NSApplicationDelegate
 
+- (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls
+{
+    NSDocumentController *controller =
+        [NSDocumentController sharedDocumentController];
+    for (NSURL *url in urls)
+    {
+        NSNumber *directory = nil, *package = nil;
+        if (url.isFileURL)
+        {
+            [url getResourceValue:&directory forKey:NSURLIsDirectoryKey
+                            error:NULL];
+            [url getResourceValue:&package forKey:NSURLIsPackageKey error:NULL];
+        }
+        if (directory.boolValue && !package.boolValue)
+        {
+            [self openWorkspaceAtURL:url];
+            continue;
+        }
+        [controller openDocumentWithContentsOfURL:url display:YES
+            completionHandler:^(NSDocument *document, BOOL alreadyOpen,
+                                NSError *error) {
+                if (error) [application presentError:error];
+            }];
+    }
+}
+
 - (BOOL)applicationShouldOpenUntitledFile:(NSApplication *)sender
 {
-    if (self.preferences.filesToOpen.count
-        || self.preferences.pipedContentFileToOpen
-        || self.preferences.foldersToOpen.count)
+    NSArray *pending = MPCommandQueueReadPending(self.commandQueueDirectory, NULL);
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    id legacyFiles = [defaults objectForKey:kMPFilesToOpenKey inSuiteNamed:self.commandPreferencesSuiteName];
+    id legacyFolders = [defaults objectForKey:kMPFoldersToOpenKey inSuiteNamed:self.commandPreferencesSuiteName];
+    if (pending.count
+        || (!self.didMigrateLegacyCommands &&
+            (([legacyFiles isKindOfClass:[NSArray class]] && [legacyFiles count])
+             || ([legacyFolders isKindOfClass:[NSArray class]] && [legacyFolders count])
+             || [defaults objectForKey:kMPPipedContentFileToOpen inSuiteNamed:self.commandPreferencesSuiteName])))
         return NO;
     return !self.preferences.supressesUntitledDocumentOnLaunch;
 }
@@ -290,12 +326,16 @@ NS_INLINE void treat()
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification
 {
-    [self openPendingPipedContent];
-    [self openPendingFiles];
-    [self openPendingFolders];
+    [self openPendingCommandRequests];
     treat();
 }
 
+
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)visible
+{
+    // Launching an already active application need not trigger didBecomeActive.
+    return ![self openPendingCommandRequests];
+}
 
 #pragma mark - SPUUpdaterDelegate
 
@@ -351,26 +391,108 @@ NS_INLINE void treat()
     }
 }
 
-- (void)openPendingFiles
+- (NSURL *)commandQueueDirectory
 {
-    NSDocumentController *c = [NSDocumentController sharedDocumentController];
+    return MPCommandQueueDirectoryForSuite(kMPApplicationSuiteName);
+}
 
-    for (NSString *path in self.preferences.filesToOpen)
-    {
-        NSURL *url = [NSURL fileURLWithPath:path];
-        if ([url checkResourceIsReachableAndReturnError:NULL])
-        {
-            [c openDocumentWithContentsOfURL:url display:YES
-                           completionHandler:MPDocumentOpenCompletionEmpty];
+- (NSString *)commandPreferencesSuiteName
+{
+    return kMPApplicationSuiteName;
+}
+
+- (BOOL)migrateLegacyCommandRequests:(NSError **)error
+{
+    if (self.didMigrateLegacyCommands)
+        return YES;
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *suite = self.commandPreferencesSuiteName;
+    id files = [defaults objectForKey:kMPFilesToOpenKey inSuiteNamed:suite];
+    id folders = [defaults objectForKey:kMPFoldersToOpenKey inSuiteNamed:suite];
+    id pipePath = [defaults objectForKey:kMPPipedContentFileToOpen inSuiteNamed:suite];
+    if (files || folders || pipePath) {
+        NSMutableDictionary *request = [@{@"files": files ?: @[], @"folders": folders ?: @[]} mutableCopy];
+        if (pipePath) {
+            if (!MPCommandQueuePathIsValid(pipePath))
+                return MPCommandQueueFail(error, @"Invalid legacy piped input path");
+            NSError *readError = nil;
+            NSData *data = [NSData dataWithContentsOfFile:pipePath options:0 error:&readError];
+            if (!data) {
+                if (error) *error = readError;
+                if ([readError.domain isEqual:NSCocoaErrorDomain] && readError.code == NSFileReadNoSuchFileError) {
+                    // Temporary legacy input can be purged by the OS. Clear only
+                    // that stale reference; retain file/folder requests for retry.
+                    [defaults setObject:nil forKey:kMPPipedContentFileToOpen inSuiteNamed:suite];
+                    CFPreferencesSynchronize((__bridge CFStringRef)suite,
+                        kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+                }
+                return NO;
+            }
+            request[@"pipedContent"] = data;
         }
-        else
-        {
-            [c createNewEmptyDocumentForURL:url display:YES error:NULL];
+        // Preserve old requests if conversion or persistence fails. From here
+        // on, both migrated and current invocations use the same consumer.
+        if (!MPCommandQueueEnqueue(self.commandQueueDirectory, request, error))
+            return NO;
+        for (NSString *key in @[kMPFilesToOpenKey, kMPFoldersToOpenKey, kMPPipedContentFileToOpen])
+            [defaults setObject:nil forKey:key inSuiteNamed:suite];
+        CFPreferencesSynchronize((__bridge CFStringRef)suite, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+    }
+    self.didMigrateLegacyCommands = YES;
+    return YES;
+}
+
+- (BOOL)openPendingCommandRequests
+{
+    NSError *error = nil;
+    if (![self migrateLegacyCommandRequests:&error]) {
+        [NSApp presentError:error];
+        return NO;
+    }
+    NSArray *requests = MPCommandQueueDrain(self.commandQueueDirectory, &error);
+    if (!requests) {
+        [NSApp presentError:error];
+        return NO;
+    }
+    NSDocumentController *controller = [NSDocumentController sharedDocumentController];
+    BOOL openedAny = NO;
+    for (NSDictionary *request in requests) {
+        NSData *pipedContent = request[@"pipedContent"];
+        if (pipedContent) {
+            NSString *markdown = [[NSString alloc] initWithData:pipedContent encoding:NSUTF8StringEncoding];
+            if (!markdown) {
+                [NSApp presentError:[NSError errorWithDomain:NSCocoaErrorDomain
+                    code:NSFileReadInapplicableStringEncodingError
+                    userInfo:@{NSLocalizedDescriptionKey: @"Command input is not valid UTF-8 text"}]];
+            } else {
+                NSError *documentError = nil;
+                MPDocument *document = (MPDocument *)[controller openUntitledDocumentAndDisplay:YES error:&documentError];
+                if (document) {
+                    document.markdown = markdown;
+                    openedAny = YES;
+                }
+                else if (documentError) [NSApp presentError:documentError];
+            }
+        }
+        for (NSString *path in request[@"files"]) {
+            openedAny = YES; // Opening an existing file can complete asynchronously.
+            NSURL *url = [NSURL fileURLWithPath:path];
+            if ([url checkResourceIsReachableAndReturnError:NULL]) {
+                [controller openDocumentWithContentsOfURL:url display:YES
+                                       completionHandler:MPDocumentOpenCompletionEmpty];
+            } else {
+                [controller createNewEmptyDocumentForURL:url display:YES error:NULL];
+            }
+        }
+        for (NSString *path in request[@"folders"]) {
+            NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
+            if ([url checkResourceIsReachableAndReturnError:NULL]) {
+                [self openWorkspaceAtURL:url];
+                openedAny = YES;
+            }
         }
     }
-
-    self.preferences.filesToOpen = nil;
-    [self.preferences synchronize];
+    return openedAny;
 }
 
 - (IBAction)openFolder:(id)sender
@@ -396,37 +518,6 @@ NS_INLINE void treat()
     [doc showWindows];
 }
 
-- (void)openPendingFolders
-{
-    for (NSString *path in self.preferences.foldersToOpen)
-    {
-        NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
-        if ([url checkResourceIsReachableAndReturnError:NULL])
-            [self openWorkspaceAtURL:url];
-    }
-    self.preferences.foldersToOpen = nil;
-    [self.preferences synchronize];
-}
-
-- (void)openPendingPipedContent {
-    NSDocumentController *c = [NSDocumentController sharedDocumentController];
-
-    if (self.preferences.pipedContentFileToOpen) {
-        NSURL *pipedContentFileToOpenURL = [NSURL fileURLWithPath:self.preferences.pipedContentFileToOpen];
-        NSError *readPipedContentError;
-        NSString *pipedContentString = [NSString stringWithContentsOfURL:pipedContentFileToOpenURL encoding:NSUTF8StringEncoding error:&readPipedContentError];
-
-        NSError *openDocumentError;
-        MPDocument *document = (MPDocument *)[c openUntitledDocumentAndDisplay:YES error:&openDocumentError];
-
-        if (document && openDocumentError == nil && readPipedContentError == nil) {
-            document.markdown = pipedContentString;
-        }
-
-        self.preferences.pipedContentFileToOpen = nil;
-        [self.preferences synchronize];
-    }
-}
 
 
 #pragma mark - Notification handler
