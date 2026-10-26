@@ -333,4 +333,28 @@
         @{@"/Users/test/docs": @1234}, self.baseURL), html);
 }
 
+- (void)testUnencodedResourcePathsAreNormalizedForWatchingAndCacheBusting
+{
+    for (NSString *tag in @[@"img", @"link"]) {
+        NSString *attribute = [tag isEqualToString:@"img"] ? @"src" : @"href";
+        for (NSString *name in @[@"my photo.png", @"été photo.png", @"my%20photo.png"]) {
+            NSString *html = [NSString stringWithFormat:
+                @"<%@ %@=\"%@?variant=dark&amp;t=old#frame\" alt=\"preserved\"/>", tag, attribute, name];
+            NSString *path = [@"/Users/test/docs" stringByAppendingPathComponent:name.stringByRemovingPercentEncoding];
+            XCTAssertEqualObjects(MPLocalFilePathsInHTML(html, self.baseURL), [NSSet setWithObject:path]);
+            NSString *result = MPApplyCacheBusting(html, @{path: @1234}, self.baseURL);
+            NSError *error = nil;
+            NSXMLDocument *document = [[NSXMLDocument alloc] initWithXMLString:result
+                options:NSXMLNodeLoadExternalEntitiesNever error:&error];
+            XCTAssertNotNil(document, @"%@", error);
+            NSString *resource = [document.rootElement attributeForName:attribute].stringValue;
+            XCTAssertTrue([resource containsString:@"%20photo.png?variant=dark&t=1234#frame"], @"%@", resource);
+            XCTAssertFalse([resource containsString:@"%2520"]);
+            XCTAssertEqualObjects([document.rootElement attributeForName:@"alt"].stringValue, @"preserved");
+            // Exercise the same lookup a subsequent renderer pass performs.
+            XCTAssertEqualObjects(MPLocalFilePathsInHTML(result, self.baseURL), [NSSet setWithObject:path]);
+        }
+    }
+}
+
 @end

@@ -25,19 +25,23 @@ static NSString *MPDecodeHTMLURL(NSString *url)
         stringByReplacingOccurrencesOfString:@"&amp;" withString:@"&"];
 }
 
+// Normalize before either Foundation parser sees the URL. Older macOS rejects
+// raw spaces and Unicode in NSURLComponents, even when path resolution recovers.
+// Keep URL delimiters and existing escapes so query/fragment semantics survive.
+static NSString *MPEncodedHTMLURL(NSString *url)
+{
+    NSMutableCharacterSet *allowed = [[NSCharacterSet URLFragmentAllowedCharacterSet] mutableCopy];
+    [allowed addCharactersInString:@"%?#"];
+    return [MPDecodeHTMLURL(url) stringByAddingPercentEncodingWithAllowedCharacters:allowed];
+}
+
 static NSString *MPResolveLocalPath(NSString *url, NSURL *baseURL)
 {
-    url = MPDecodeHTMLURL(url);
+    url = MPEncodedHTMLURL(url);
     if (!url.length || [url hasPrefix:@"#"] || [url hasPrefix:@"//"] || !baseURL.isFileURL)
         return nil;
     NSURL *baseDir = baseURL.hasDirectoryPath ? baseURL : baseURL.URLByDeletingLastPathComponent;
     NSURL *resolved = [NSURL URLWithString:url relativeToURL:baseDir];
-    if (!resolved) {
-        NSMutableCharacterSet *allowed = [[NSCharacterSet URLFragmentAllowedCharacterSet] mutableCopy];
-        [allowed addCharactersInString:@"%?#"];
-        resolved = [NSURL URLWithString:[url stringByAddingPercentEncodingWithAllowedCharacters:allowed]
-                         relativeToURL:baseDir];
-    }
     return resolved.isFileURL ? resolved.path.stringByStandardizingPath : nil;
 }
 
@@ -118,7 +122,7 @@ NSString *MPApplyCacheBusting(NSString *html, NSDictionary<NSString *, NSNumber 
         if (!timestamp)
             continue;
 
-        NSURLComponents *components = [NSURLComponents componentsWithString:MPDecodeHTMLURL(url)];
+        NSURLComponents *components = [NSURLComponents componentsWithString:MPEncodedHTMLURL(url)];
         if (!components)
             continue;
         NSMutableArray<NSURLQueryItem *> *items = [NSMutableArray array];
