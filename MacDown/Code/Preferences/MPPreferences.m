@@ -35,16 +35,51 @@ static NSString * const kMPDefaultEditorThemeName = @"Tomorrow+";
 static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 
+@interface MPPreferences ()
+@property (strong) NSUserDefaults *migrationDefaults;
+@property (copy) NSString *migrationDomainName;
+@end
+
 @implementation MPPreferences
 
 - (instancetype)init
+{
+    return [self initWithDefaults:nil domain:kMPApplicationSuiteName legacyReader:nil];
+}
+
+- (instancetype)initWithDefaults:(NSUserDefaults *)defaults domain:(NSString *)domain
+                   legacyReader:(NSDictionary *(^)(void))reader
 {
     self = [super init];
     if (!self)
         return nil;
 
-    [self migratePreferencesFromLegacyBundleIdentifierIfNeeded];
+    self.migrationDefaults = defaults;
+    self.migrationDomainName = domain;
+    // Until the legacy read resolves, use registration-domain fallbacks rather
+    // than persisting defaults that would hide the user's historical settings.
+    if ([self.userDefaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"])
+        [self finishLoadingPreferences];
+    else
+    {
+        [self.userDefaults registerDefaults:[[self class] pendingMigrationDefaults]];
+        [self beginLegacyMigrationWithReader:reader];
+    }
+    return self;
+}
 
+- (NSUserDefaults *)userDefaults
+{
+    return self.migrationDefaults ?: [super userDefaults];
+}
+
+- (NSString *)preferencesDomainName
+{
+    return self.migrationDomainName;
+}
+
+- (void)finishLoadingPreferences
+{
     NSString *version =
         [NSBundle mainBundle].infoDictionary[@"CFBundleVersion"];
 
@@ -69,60 +104,102 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // Run after migration and defaults are loaded so cleanup does not
     // remove keys that were just migrated or set as defaults.
     [self cleanupObsoleteAutosaveValues];
-
-    return self;
 }
 
-// Read only the legacy application's persistent domain. A timed-out worker
-// never writes preferences; startup is the sole owner of applying the result.
-+ (BOOL)migrateLegacyDomain:(NSString *)domain
-                 fromDefaults:(NSUserDefaults *)source
-                   toDefaults:(NSUserDefaults *)destination
-                      timeout:(NSTimeInterval)seconds
++ (dispatch_queue_t)legacyMigrationReadQueue
+{
+    static dispatch_queue_t queue;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        queue = dispatch_queue_create("app.macdown.legacy-preferences", DISPATCH_QUEUE_SERIAL);
+    });
+    return queue;
+}
+
+// The reader never writes. A timed-out read can finish later without changing
+// preferences; a serial queue also bounds outstanding blocked reads per process.
++ (NSDictionary *)readLegacyDomain:(NSString *)domain
+                     fromDefaults:(NSUserDefaults *)source timeout:(NSTimeInterval)seconds
 {
     dispatch_semaphore_t finished = dispatch_semaphore_create(0);
     __block NSDictionary *legacy = nil;
-    __block BOOL succeeded = NO;
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        @try
-        {
-            legacy = [[source persistentDomainForName:domain] copy];
-            succeeded = YES;
-        }
-        @catch (NSException *exception)
-        {
+    dispatch_async([self legacyMigrationReadQueue], ^{
+        @try { legacy = [[source persistentDomainForName:domain] copy] ?: @{}; }
+        @catch (NSException *exception) {
             NSLog(@"[MPPreferences] Legacy domain read failed: %@", exception.name);
         }
-        @finally
-        {
-            dispatch_semaphore_signal(finished);
-        }
+        @finally { dispatch_semaphore_signal(finished); }
     });
     if (dispatch_semaphore_wait(finished, dispatch_time(DISPATCH_TIME_NOW,
-                       (int64_t)(seconds * NSEC_PER_SEC))) != 0 || !succeeded)
-        return NO;
-
-    for (NSString *key in legacy)
-    {
-        if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"])
-            continue;
-        // Settings already chosen in MacDown 3000 take precedence.
-        if (![destination objectForKey:key])
-            [destination setObject:legacy[key] forKey:key];
+                       (int64_t)(seconds * NSEC_PER_SEC))) != 0) {
+        NSLog(@"[MPPreferences] Legacy domain read timed out; will retry on next launch");
+        return nil;
     }
+    return legacy;
+}
+
++ (void)applyLegacyPreferences:(NSDictionary *)legacy toDefaults:(NSUserDefaults *)destination
+                       domain:(NSString *)destinationDomain
+{
+    NSDictionary *explicitValues = [destination persistentDomainForName:destinationDomain];
+    NSUInteger count = 0;
+    for (NSString *key in legacy) {
+        if ([key hasPrefix:@"NS"] || [key hasPrefix:@"Apple"] || explicitValues[key]) continue;
+        [destination setObject:legacy[key] forKey:key];
+        count++;
+    }
+    NSLog(@"[MPPreferences] Legacy migration succeeded (%lu keys)", (unsigned long)count);
+}
+
++ (BOOL)migrateLegacyDomain:(NSString *)domain fromDefaults:(NSUserDefaults *)source
+                toDefaults:(NSUserDefaults *)destination domain:(NSString *)destinationDomain
+                   timeout:(NSTimeInterval)seconds
+{
+    NSDictionary *legacy = [self readLegacyDomain:domain fromDefaults:source timeout:seconds];
+    if (!legacy) return NO;
+    [self applyLegacyPreferences:legacy toDefaults:destination domain:destinationDomain];
     return YES;
 }
 
-- (void)migratePreferencesFromLegacyBundleIdentifierIfNeeded
+- (void)beginLegacyMigrationWithReader:(NSDictionary *(^)(void))reader
 {
-    NSString *completedKey = @"MPDidMigrateFromLegacyBundleIdentifier";
     NSUserDefaults *defaults = self.userDefaults;
-    if ([defaults boolForKey:completedKey])
-        return;
-    if ([[self class] migrateLegacyDomain:@"com.uranusjr.macdown"
-                            fromDefaults:defaults toDefaults:defaults timeout:2.0])
-        [defaults setBool:YES forKey:completedKey];
-    // A failed read remains retryable on the next launch.
+    if ([defaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"]) return;
+    // Neither the read nor its timeout blocks startup. Only the main queue
+    // applies a successful snapshot, after checking current explicit choices.
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSDictionary *legacy = reader ? reader() : [[self class]
+            readLegacyDomain:@"com.uranusjr.macdown" fromDefaults:defaults timeout:2.0];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (!legacy) return; // Fallbacks remain usable; retry next launch.
+            [[self class] applyLegacyPreferences:legacy toDefaults:defaults
+                                          domain:self.preferencesDomainName];
+            [defaults setBool:YES forKey:@"MPDidMigrateFromLegacyBundleIdentifier"];
+            [self finishLoadingPreferences];
+        });
+    });
+}
+
+// Modern fallbacks stay outside the persistent domain while migration is
+// pending. Explicit user changes are therefore distinguishable from defaults.
++ (NSDictionary *)pendingMigrationDefaults
+{
+    NSMutableDictionary *values = [[self freshInstallationDefaults] mutableCopy];
+    [values addEntriesFromDictionary:@{
+        @"editorMaximumWidth": @1000.0, @"editorAutoIncrementNumberedLists": @YES,
+        @"editorInsertPrefixInBlock": @YES, @"htmlTemplateName": @"Default",
+        @"extensionStrikethough": @YES, @"editorAutoSave": @YES,
+        @"editorAutomaticDashSubstitutionEnabled": @NO,
+        @"editorAutomaticQuoteSubstitutionEnabled": @NO,
+        @"editorAutomaticTextReplacementEnabled": @NO,
+        @"editorAutomaticSpellingCorrectionEnabled": @NO,
+        @"editorSmartInsertDeleteEnabled": @NO,
+        @"editorAutomaticDataDetectionEnabled": @NO,
+        @"editorContinuousSpellCheckingEnabled": @NO,
+        @"editorGrammarCheckingEnabled": @NO,
+        @"htmlTaskList": @YES, @"htmlDetectFrontMatter": @YES
+    }];
+    return values;
 }
 
 #pragma mark - Accessors
@@ -274,7 +351,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 - (void)cleanupObsoleteAutosaveValues
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = self.userDefaults;
     NSMutableArray *keysToRemove = [NSMutableArray array];
 
     NSDictionary *allDefaults = defaults.dictionaryRepresentation;
@@ -318,25 +395,29 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  *
  * @see -loadDefaultUserDefaults
  */
++ (NSDictionary *)freshInstallationDefaults
+{
+    return @{
+        @"extensionIntraEmphasis": @NO, @"extensionTables": @YES,
+        @"extensionFencedCode": @YES, @"extensionFootnotes": @YES,
+        @"editorBaseFontInfo": @{kMPDefaultEditorFontNameKey: kMPDefaultEditorFontName,
+                                 kMPDefaultEditorFontPointSizeKey: @(kMPDefaultEditorFontPointSize)},
+        @"editorStyleName": kMPDefaultEditorThemeName,
+        @"editorHorizontalInset": @(kMPDefaultEditorHorizontalInset),
+        @"editorVerticalInset": @(kMPDefaultEditorVerticalInset),
+        @"editorLineSpacing": @(kMPDefaultEditorLineSpacing),
+        @"editorSyncScrolling": @(kMPDefaultEditorSyncScrolling),
+        @"htmlStyleName": kMPDefaultHtmlStyleName,
+        @"htmlDefaultDirectoryUrl": NSHomeDirectory(), @"documentZoomLevel": @1.0
+    };
+}
+
 - (void)loadDefaultPreferences
 {
-    self.extensionIntraEmphasis = NO;
-    self.extensionTables = YES;
-    self.extensionFencedCode = YES;
-    self.extensionFootnotes = YES;
-    self.editorBaseFontInfo = @{
-        kMPDefaultEditorFontNameKey: kMPDefaultEditorFontName,
-        kMPDefaultEditorFontPointSizeKey: @(kMPDefaultEditorFontPointSize),
-    };
-    self.editorStyleName = kMPDefaultEditorThemeName;
-    self.editorHorizontalInset = kMPDefaultEditorHorizontalInset;
-    self.editorVerticalInset = kMPDefaultEditorVerticalInset;
-    self.editorLineSpacing = kMPDefaultEditorLineSpacing;
-    self.editorSyncScrolling = kMPDefaultEditorSyncScrolling;
-    self.htmlStyleName = kMPDefaultHtmlStyleName;
-    self.htmlDefaultDirectoryUrl = [NSURL fileURLWithPath:NSHomeDirectory()
-                                              isDirectory:YES];
-    self.documentZoomLevel = 1.0;
+    NSDictionary *existing = [self.userDefaults persistentDomainForName:self.preferencesDomainName];
+    NSDictionary *defaults = [[self class] freshInstallationDefaults];
+    for (NSString *key in defaults)
+        if (!existing[key]) [self.userDefaults setObject:defaults[key] forKey:key];
 }
 
 /** Load default preferences when the app launches.
@@ -352,7 +433,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (void)loadDefaultUserDefaults
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = self.userDefaults;
     if (![defaults objectForKey:@"editorMaximumWidth"])
         self.editorMaximumWidth = 1000.0;
     if (![defaults objectForKey:@"editorAutoIncrementNumberedLists"])
@@ -396,7 +477,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
  */
 - (NSInteger)effectiveMigrationVersion
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = self.userDefaults;
 
     // Check if new version key exists
     if ([defaults objectForKey:@"MPMigrationVersion"])
@@ -432,7 +513,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 - (void)applyPreferencesMigrations
 {
     static NSInteger const kMPCurrentMigrationVersion = 6;
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSUserDefaults *defaults = self.userDefaults;
 
     NSInteger currentVersion = [self effectiveMigrationVersion];
 
