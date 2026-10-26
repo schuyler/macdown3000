@@ -1,0 +1,17 @@
+name: Golden Regeneration Script Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golden-regeneration:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify fixture regeneration and failure cleanup
+      run: python3 MacDownTests/BuildTools/regenerate_golden_tests.py
