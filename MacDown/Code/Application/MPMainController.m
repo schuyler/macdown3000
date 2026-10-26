@@ -334,8 +334,7 @@ NS_INLINE void treat()
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)visible
 {
     // Launching an already active application need not trigger didBecomeActive.
-    [self openPendingCommandRequests];
-    return YES;
+    return ![self openPendingCommandRequests];
 }
 
 #pragma mark - SPUUpdaterDelegate
@@ -416,8 +415,19 @@ NS_INLINE void treat()
         if (pipePath) {
             if (!MPCommandQueuePathIsValid(pipePath))
                 return MPCommandQueueFail(error, @"Invalid legacy piped input path");
-            NSData *data = [NSData dataWithContentsOfFile:pipePath options:0 error:error];
-            if (!data) return NO;
+            NSError *readError = nil;
+            NSData *data = [NSData dataWithContentsOfFile:pipePath options:0 error:&readError];
+            if (!data) {
+                if (error) *error = readError;
+                if ([readError.domain isEqual:NSCocoaErrorDomain] && readError.code == NSFileReadNoSuchFileError) {
+                    // Temporary legacy input can be purged by the OS. Clear only
+                    // that stale reference; retain file/folder requests for retry.
+                    [defaults setObject:nil forKey:kMPPipedContentFileToOpen inSuiteNamed:suite];
+                    CFPreferencesSynchronize((__bridge CFStringRef)suite,
+                        kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+                }
+                return NO;
+            }
             request[@"pipedContent"] = data;
         }
         // Preserve old requests if conversion or persistence fails. From here
@@ -432,19 +442,20 @@ NS_INLINE void treat()
     return YES;
 }
 
-- (void)openPendingCommandRequests
+- (BOOL)openPendingCommandRequests
 {
     NSError *error = nil;
     if (![self migrateLegacyCommandRequests:&error]) {
         [NSApp presentError:error];
-        return;
+        return NO;
     }
     NSArray *requests = MPCommandQueueDrain(self.commandQueueDirectory, &error);
     if (!requests) {
         [NSApp presentError:error];
-        return;
+        return NO;
     }
     NSDocumentController *controller = [NSDocumentController sharedDocumentController];
+    BOOL openedAny = NO;
     for (NSDictionary *request in requests) {
         NSData *pipedContent = request[@"pipedContent"];
         if (pipedContent) {
@@ -456,11 +467,15 @@ NS_INLINE void treat()
             } else {
                 NSError *documentError = nil;
                 MPDocument *document = (MPDocument *)[controller openUntitledDocumentAndDisplay:YES error:&documentError];
-                if (document) document.markdown = markdown;
+                if (document) {
+                    document.markdown = markdown;
+                    openedAny = YES;
+                }
                 else if (documentError) [NSApp presentError:documentError];
             }
         }
         for (NSString *path in request[@"files"]) {
+            openedAny = YES; // Opening an existing file can complete asynchronously.
             NSURL *url = [NSURL fileURLWithPath:path];
             if ([url checkResourceIsReachableAndReturnError:NULL]) {
                 [controller openDocumentWithContentsOfURL:url display:YES
@@ -471,10 +486,13 @@ NS_INLINE void treat()
         }
         for (NSString *path in request[@"folders"]) {
             NSURL *url = [NSURL fileURLWithPath:path isDirectory:YES];
-            if ([url checkResourceIsReachableAndReturnError:NULL])
+            if ([url checkResourceIsReachableAndReturnError:NULL]) {
                 [self openWorkspaceAtURL:url];
+                openedAny = YES;
+            }
         }
     }
+    return openedAny;
 }
 
 - (IBAction)openFolder:(id)sender

@@ -154,6 +154,27 @@ static inline NSArray *MPCommandQueuePerform(NSURL *directory, NSDictionary *req
     @try {
         NSURL *file = [directory URLByAppendingPathComponent:@"requests.plist"];
         NSArray *pending = MPCommandQueueLoad(file, error);
+        if (!pending) {
+            // Preserve malformed data for recovery, but remove it from the live
+            // queue once. Never move symlinks, special files or another user's data.
+            struct stat status;
+            if ((request || drain) && lstat(file.fileSystemRepresentation, &status) == 0 && S_ISREG(status.st_mode)
+                && status.st_uid == getuid() && status.st_nlink == 1) {
+                NSURL *quarantined = [directory URLByAppendingPathComponent:
+                    [NSString stringWithFormat:@"requests.rejected.%@.plist", NSUUID.UUID.UUIDString]];
+                NSError *loadError = error ? *error : nil;
+                NSError *moveError = nil;
+                if ([manager moveItemAtURL:file toURL:quarantined error:&moveError]) {
+                    if (error) *error = [NSError errorWithDomain:MPCommandQueueErrorDomain code:2
+                        userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithFormat:
+                            @"Unreadable command requests were preserved at %@. New commands can now be received.",
+                            quarantined.path], NSFilePathErrorKey:quarantined.path,
+                            NSUnderlyingErrorKey:loadError ?: [NSError errorWithDomain:MPCommandQueueErrorDomain code:1 userInfo:nil]}];
+                } else if (error) {
+                    *error = moveError;
+                }
+            }
+        }
         if (pending) {
             if (request) {
                 NSMutableArray *updated = [pending mutableCopy];

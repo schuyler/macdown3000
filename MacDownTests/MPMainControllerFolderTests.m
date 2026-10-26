@@ -8,7 +8,7 @@
 #import "../macdown-cmd/MPCommandQueue.h"
 
 @interface MPMainController (CommandTesting)
-- (void)openPendingCommandRequests;
+- (BOOL)openPendingCommandRequests;
 - (BOOL)migrateLegacyCommandRequests:(NSError **)error;
 - (NSURL *)commandQueueDirectory;
 - (NSString *)commandPreferencesSuiteName;
@@ -133,6 +133,8 @@
     [self setLegacyValue:@[] key:kMPFilesToOpenKey];
     [self setLegacyValue:@[] key:kMPFoldersToOpenKey];
     XCTAssertTrue([self.controller applicationShouldOpenUntitledFile:NSApp]);
+    XCTAssertTrue([self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:NO],
+        @"An empty migrated request must still allow the normal Untitled document");
     self.controller.testPreferences.suppressUntitled = YES;
     XCTAssertFalse([self.controller applicationShouldOpenUntitledFile:NSApp]);
 }
@@ -158,7 +160,7 @@
     XCTAssertEqualObjects(texts, ([NSSet setWithArray:@[@"first pipe é\n", @"second pipe 日本語\n"]]));
     XCTAssertEqual(MPCommandQueueReadPending(self.controller.testQueueDirectory, NULL).count, 0u);
     [self enqueueFiles:@[] folders:@[] text:@"reopened while already active"];
-    XCTAssertTrue([self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:YES]);
+    XCTAssertFalse([self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:YES]);
     XCTAssertEqual(self.openedDocuments.count, 5u);
     XCTAssertTrue([[self.openedDocuments valueForKey:@"markdown"] containsObject:@"reopened while already active"]);
     [self.controller applicationDidBecomeActive:nil];
@@ -182,7 +184,8 @@
     NSURL *file = [self.temporaryDirectory URLByAppendingPathComponent:@"actual.md"];
     XCTAssertTrue([@"# actual file\n" writeToURL:file atomically:YES encoding:NSUTF8StringEncoding error:NULL]);
     [self enqueueFiles:@[file.path] folders:@[] text:nil];
-    [self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:NO];
+    XCTAssertFalse([self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:NO],
+        @"A consumed CLI request must suppress AppKit's extra Untitled document");
     NSPredicate *opened = [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
         for (MPDocument *document in self.openedDocuments)
             if ([document.fileURL.URLByResolvingSymlinksInPath isEqual:file.URLByResolvingSymlinksInPath]
@@ -258,7 +261,7 @@
         (@[folder.URLByResolvingSymlinksInPath]));
 }
 
-- (void)testFailedLegacyMigrationPreservesKeysAndCorruptQueue
+- (void)testFailedLegacyMigrationPreservesKeysAndQuarantinesCorruptQueue
 {
     [self setLegacyValue:@[[self folderNamed:@"retained"].path] key:kMPFoldersToOpenKey];
     XCTAssertNotNil(MPCommandQueueReadPending(self.controller.testQueueDirectory, NULL));
@@ -269,12 +272,32 @@
     XCTAssertFalse([self.controller migrateLegacyCommandRequests:&error]);
     XCTAssertNotNil(error);
     XCTAssertNotNil([self legacyValueForKey:kMPFoldersToOpenKey]);
-    XCTAssertEqualObjects([NSData dataWithContentsOfURL:file], corrupt);
+    NSString *preservedPath = error.userInfo[NSFilePathErrorKey];
+    XCTAssertEqualObjects([NSData dataWithContentsOfFile:preservedPath], corrupt);
+    XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:file.path]);
     XCTAssertEqual(self.openedDocuments.count, 0u);
-    // A failed attempt must not mark the per-process migration as completed.
-    XCTAssertTrue(MPCommandQueueSave(@[], file, &error));
+    // The corrupt queue has been preserved; the next activation can migrate.
+    error = nil;
     XCTAssertTrue([self.controller migrateLegacyCommandRequests:&error], @"%@", error);
     XCTAssertNil([self legacyValueForKey:kMPFoldersToOpenKey]);
     XCTAssertEqual(MPCommandQueueReadPending(self.controller.testQueueDirectory, NULL).count, 1u);
+}
+- (void)testPurgedLegacyPipeReportsOnceAndPreservesOtherRequests
+{
+    NSURL *folder = [self folderNamed:@"retained after purge"];
+    [self setLegacyValue:@[folder.path] key:kMPFoldersToOpenKey];
+    [self setLegacyValue:[self.temporaryDirectory.path stringByAppendingPathComponent:@"purged"]
+                    key:kMPPipedContentFileToOpen];
+    NSError *error = nil;
+    XCTAssertFalse([self.controller migrateLegacyCommandRequests:&error]);
+    XCTAssertEqual(error.code, NSFileReadNoSuchFileError);
+    XCTAssertNil([self legacyValueForKey:kMPPipedContentFileToOpen]);
+    XCTAssertNotNil([self legacyValueForKey:kMPFoldersToOpenKey]);
+    error = nil;
+    XCTAssertTrue([self.controller migrateLegacyCommandRequests:&error], @"%@", error);
+    XCTAssertNil(error);
+    NSArray *pending = MPCommandQueueDrain(self.controller.testQueueDirectory, &error);
+    XCTAssertEqualObjects(pending.firstObject[@"folders"], @[folder.path]);
+    XCTAssertTrue([self.controller applicationShouldHandleReopen:NSApp hasVisibleWindows:NO]);
 }
 @end

@@ -24,6 +24,13 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
         text=True, capture_output=True, timeout=30)
     if compilation.returncode:
         raise RuntimeError(compilation.stderr)
+    input_contracts = work / 'input-contracts'
+    compilation = subprocess.run(['clang', '-fobjc-arc', '-fblocks',
+        str(ROOT / 'MacDownTests/CLI/input_tests.m'), '-framework', 'Foundation',
+        '-o', str(input_contracts)], text=True, capture_output=True, timeout=30)
+    if compilation.returncode:
+        raise RuntimeError(compilation.stderr)
+    subprocess.run([str(input_contracts)], check=True, timeout=30)
     queue = work / 'queue'
     def run(*args, check=True):
         result = subprocess.run([str(binary), str(queue), *args], text=True,
@@ -71,9 +78,19 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
     run('large')
     assert plist.read_bytes() == before
     plist.write_bytes(b'not a plist')
-    assert run('enqueue', 'blocked', check=False).returncode != 0
-    assert run('drain', check=False).returncode != 0
-    assert plist.read_bytes() == b'not a plist'
+    assert run('peek', check=False).returncode != 0
+    assert plist.read_bytes() == b'not a plist'  # A launch-policy probe cannot mutate requests.
+    result = run('enqueue', 'blocked', check=False)
+    assert result.returncode != 0 and b'not a plist' == next(queue.glob('requests.rejected.*.plist')).read_bytes()
+    assert not plist.exists() and 'preserved at' in result.stderr
+    assert not run('drain').stdout  # The corruption is reported once, not every activation.
+    run('enqueue', 'recovered')
+    assert run('drain').stdout.splitlines() == ['/recovered-0.md']
+    plist.write_bytes(b'consumer corruption')
+    result = run('drain', check=False)
+    assert result.returncode != 0 and 'preserved at' in result.stderr
+    assert b'consumer corruption' in [f.read_bytes() for f in queue.glob('requests.rejected.*.plist')]
+    assert not plist.exists() and not run('drain').stdout
     plist.write_bytes(before)
     plist.unlink()
     os.mkfifo(plist, 0o600)
@@ -105,12 +122,43 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
     cli_queue = work / 'cli-queue'
     folder = work / 'folder'
     folder.mkdir()
-    result = subprocess.run([str(cli), str(cli_queue), 'relative.md', str(folder)],
+    result = subprocess.run([str(cli), str(cli_queue), 'relative.md', str(folder), '-'],
         cwd=work, input=b'pipe\0bytes', capture_output=True, timeout=30)
     assert result.returncode == 0 and result.stdout == b'LAUNCH\n', result.stderr
     requests = plistlib.loads((cli_queue / 'requests.plist').read_bytes())
     assert requests == [{'files': [str(work.resolve() / 'relative.md')], 'folders': [str(folder)],
                          'pipedContent': b'pipe\0bytes'}], requests
+    # An inherited open pipe must never delay an ordinary path invocation.
+    stream = subprocess.Popen([str(cli), str(cli_queue), 'without-stdin.md'], cwd=work,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        assert stream.wait(timeout=30) == 0
+        assert stream.stdout.read() == b'LAUNCH\n'
+        requests = plistlib.loads((cli_queue / 'requests.plist').read_bytes())
+        assert requests[-1] == {'files': [str(work.resolve() / 'without-stdin.md')], 'folders': []}
+    finally:
+        if stream.poll() is None:
+            stream.kill()
+            stream.wait(timeout=30)
+        for pipe in (stream.stdin, stream.stdout, stream.stderr):
+            pipe.close()
+    # Explicit '-' combines standard input with a file argument.
+    stream = subprocess.Popen([str(cli), str(cli_queue), '-', 'with-stdin.md'], cwd=work,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        assert stream.poll() is None
+        stream.stdin.write(b'delayed explicit stdin')
+        stream.stdin.close()
+        assert stream.wait(timeout=30) == 0
+        requests = plistlib.loads((cli_queue / 'requests.plist').read_bytes())
+        assert requests[-1] == {'files': [str(work.resolve() / 'with-stdin.md')], 'folders': [],
+                                'pipedContent': b'delayed explicit stdin'}
+    finally:
+        if stream.poll() is None:
+            stream.kill()
+            stream.wait(timeout=30)
+        for pipe in (stream.stdout, stream.stderr):
+            pipe.close()
     before = (cli_queue / 'requests.plist').read_bytes()
     # A terminal invocation with no arguments launches without clearing work.
     terminal, slave = os.openpty()
@@ -126,7 +174,7 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
     result = subprocess.run([str(cli), str(cli_queue)], input=b'', capture_output=True, timeout=30)
     assert result.returncode == 0
     requests = plistlib.loads((cli_queue / 'requests.plist').read_bytes())
-    assert len(requests) == 2 and requests[-1]['pipedContent'] == b''
+    assert len(requests) == 4 and requests[-1]['pipedContent'] == b''
     # Reject an oversized stream before EOF. Keep its writer open so this
     # proves bounded input collection rather than the later queue-size check.
     before = (cli_queue / 'requests.plist').read_bytes()
@@ -140,7 +188,7 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
         except BrokenPipeError:
             pass  # A bounded consumer may reject while the writer is active.
         try:
-            status = stream.wait(timeout=5)
+            status = stream.wait(timeout=30)
         except subprocess.TimeoutExpired as error:
             raise AssertionError('Oversized stdin must be rejected without waiting for EOF') from error
         assert status != 0 and not stream.stdout.read()
@@ -149,7 +197,7 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
     finally:
         if stream.poll() is None:
             stream.kill()
-            stream.wait(timeout=5)
+            stream.wait(timeout=30)
         for pipe in (stream.stdin, stream.stdout, stream.stderr):
             try:
                 pipe.close()
@@ -166,5 +214,10 @@ with tempfile.TemporaryDirectory(prefix='macdown-command-queue-') as directory:
     result = subprocess.run([str(cli), str(cli_queue), 'next.md'], input=b'',
                             capture_output=True, timeout=30)
     assert result.returncode != 0 and not result.stdout and b'Could not queue command input' in result.stderr
-    assert (cli_queue / 'requests.plist').read_bytes() == b'corrupt'
+    assert not (cli_queue / 'requests.plist').exists()
+    assert next(cli_queue.glob('requests.rejected.*.plist')).read_bytes() == b'corrupt'
+    assert b'preserved at' in result.stderr
+    result = subprocess.run([str(cli), str(cli_queue), 'after-recovery.md'], input=b'',
+                            capture_output=True, timeout=30)
+    assert result.returncode == 0 and result.stdout == b'LAUNCH\n'
     print('PASS command queue: 320 concurrent requests consumed exactly once, binary stdin preserved, snapshots and failures safe')

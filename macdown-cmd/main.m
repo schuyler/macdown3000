@@ -25,7 +25,10 @@ int main(int argc, const char * argv[])
             [argproc printVersion:YES];
 
         NSError *inputError = nil;
-        NSData *dataFromPipe = MPReadCommandInput(STDIN_FILENO, &inputError);
+        // File/folder invocations may inherit an open pipe from a launcher. Only
+        // consume stdin when it is the input source, or explicitly requested.
+        BOOL readsStdin = !argproc.arguments.count || [argproc.arguments containsObject:@"-"];
+        NSData *dataFromPipe = readsStdin ? MPReadCommandInput(STDIN_FILENO, &inputError) : nil;
         if (inputError) {
             fprintf(stderr, "Could not read standard input: %s\n", inputError.localizedDescription.UTF8String);
             return EXIT_FAILURE;
@@ -39,6 +42,7 @@ int main(int argc, const char * argv[])
         NSMutableOrderedSet<NSURL *> *folderURLs = [NSMutableOrderedSet orderedSet];
         for (NSString *arg in argproc.arguments)
         {
+            if ([arg isEqualToString:@"-"]) continue;
             NSURL *url = MPCommandFileURL(arg, pwd);
             BOOL isDir = NO;
             if ([fm fileExistsAtPath:url.path isDirectory:&isDir] && isDir)
