@@ -8,6 +8,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <WebKit/WebKit.h>
 #import "MPPreferences.h"
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
@@ -550,6 +551,242 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
                   @"Bundled print.css should still be linked");
     XCTAssertFalse([html containsString:@"print.css?t="],
                    @"Untracked bundled CSS must not be cache-busted");
+}
+
+
+#pragma mark - Heading Line Height (Issue #575)
+
+/**
+ * Every bundled preview style should give wrapped headings enough line height
+ * that descenders on one line don't run into the next.
+ * Issue #575: GitHub.css inherited a fixed 1.4em body line height, shorter
+ * than its enlarged h1 and h2 text.
+ */
+- (void)testBundledStylesGiveHeadingsReadableLineHeight
+{
+    NSArray<NSString *> *paths =
+        [[NSBundle mainBundle] pathsForResourcesOfType:kMPStyleFileExtension
+                                           inDirectory:kMPStylesDirectoryName];
+    XCTAssertGreaterThan(paths.count, 0u, @"Should find bundled preview styles");
+
+    for (NSString *path in paths)
+    {
+        NSString *name = path.lastPathComponent;
+        NSString *css = MPReadFileOfPath(path);
+        XCTAssertGreaterThan(css.length, 0u, @"%@ should be readable", name);
+
+        NSMutableString *html = [NSMutableString stringWithFormat:
+            @"<html><head><style>%@</style></head><body>", css];
+        for (NSUInteger level = 1; level <= 6; level++)
+            [html appendFormat:@"<h%lu>Lorem ipsum dolor sit amet, consectetur "
+                                @"adipiscing elit, sed do eiusmod tempor</h%lu>",
+                               (unsigned long)level, (unsigned long)level];
+        [html appendString:@"</body></html>"];
+
+        WebView *webView =
+            [[WebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 600)];
+        [webView.mainFrame loadHTMLString:html baseURL:nil];
+        NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+        while ((webView.isLoading || !webView.mainFrame.DOMDocument.body)
+               && deadline.timeIntervalSinceNow > 0)
+        {
+            [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+        }
+
+        NSString *json = [webView stringByEvaluatingJavaScriptFromString:
+            @"JSON.stringify(Array.prototype.map.call("
+             "document.querySelectorAll('h1,h2,h3,h4,h5,h6'), function (h) {"
+             "var s = getComputedStyle(h);"
+             "return {tag: h.tagName, font: parseFloat(s.fontSize),"
+             "line: parseFloat(s.lineHeight)};}))"];
+        NSArray<NSDictionary *> *metrics = [NSJSONSerialization
+            JSONObjectWithData:[json dataUsingEncoding:NSUTF8StringEncoding]
+                       options:0 error:NULL];
+        XCTAssertEqual(metrics.count, 6u,
+                       @"%@ should render six headings", name);
+
+        for (NSDictionary *metric in metrics)
+        {
+            // JSON.stringify writes NaN (a computed "normal") as null.
+            if (![metric[@"line"] isKindOfClass:[NSNumber class]])
+            {
+                XCTFail(@"%@ %@: line height is not a length", name, metric[@"tag"]);
+                continue;
+            }
+            double font = [metric[@"font"] doubleValue];
+            double line = [metric[@"line"] doubleValue];
+            XCTAssertGreaterThanOrEqual(line, font * 1.1,
+                @"%@ %@: line height %.2fpx is too tight for %.2fpx text",
+                name, metric[@"tag"], line, font);
+        }
+        [webView close];
+    }
+}
+
+
+#pragma mark - Custom Property Definitions (Issue #633)
+
+// Parses the var() whose name starts at css[*index] (just past "var("),
+// appends each name in its fallback chain to chain, and advances *index past
+// its closing parenthesis. Returns whether the chain reaches a name declared
+// in the stylesheet or a literal fallback.
+static BOOL MPCustomPropertyResolves(NSString *css, NSUInteger *index,
+                                     NSSet<NSString *> *declared,
+                                     NSMutableArray<NSString *> *chain)
+{
+    NSUInteger length = css.length;
+    NSUInteger i = *index;
+    NSUInteger start = i;
+    while (i < length && [css characterAtIndex:i] != ','
+           && [css characterAtIndex:i] != ')')
+        i++;
+    NSString *name = [[css substringWithRange:NSMakeRange(start, i - start)]
+        stringByTrimmingCharactersInSet:
+            [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    [chain addObject:name];
+    BOOL resolves = [declared containsObject:name];
+
+    if (i < length && [css characterAtIndex:i] == ',')
+    {
+        i++;
+        while (i < length && [[NSCharacterSet whitespaceAndNewlineCharacterSet]
+                                 characterIsMember:[css characterAtIndex:i]])
+            i++;
+        if ([css rangeOfString:@"var(" options:NSAnchoredSearch
+                         range:NSMakeRange(i, length - i)].location != NSNotFound)
+        {
+            i += 4;
+            if (MPCustomPropertyResolves(css, &i, declared, chain))
+                resolves = YES;
+        }
+        else if (i < length && [css characterAtIndex:i] != ')')
+        {
+            resolves = YES;
+        }
+    }
+
+    // Skip any remaining fallback text, including nested parentheses.
+    NSInteger depth = 0;
+    while (i < length && (depth > 0 || [css characterAtIndex:i] != ')'))
+    {
+        unichar c = [css characterAtIndex:i];
+        if (c == '(')
+            depth++;
+        else if (c == ')')
+            depth--;
+        i++;
+    }
+    *index = (i < length) ? i + 1 : i;
+    return resolves;
+}
+
+/**
+ * A var() with no declaration and no literal fallback makes its declaration
+ * invalid at computed-value time, so the property silently falls back to its
+ * initial value.
+ * Issue #633: GitHub-2020.css used Primer tokens it never declared, which
+ * zeroed block margins and made rules and borders transparent.
+ */
+- (void)testBundledStylesDeclareEveryCustomPropertyTheyUse
+{
+    NSArray<NSString *> *paths =
+        [[NSBundle mainBundle] pathsForResourcesOfType:kMPStyleFileExtension
+                                           inDirectory:kMPStylesDirectoryName];
+    XCTAssertGreaterThan(paths.count, 0u, @"Should find bundled preview styles");
+
+    NSRegularExpression *declaration = [NSRegularExpression
+        regularExpressionWithPattern:@"(--[A-Za-z0-9_-]+)\\s*:"
+                             options:0 error:NULL];
+    for (NSString *path in paths)
+    {
+        NSString *name = path.lastPathComponent;
+        NSString *css = MPReadFileOfPath(path);
+        XCTAssertGreaterThan(css.length, 0u, @"%@ should be readable", name);
+
+        NSMutableSet<NSString *> *declared = [NSMutableSet set];
+        for (NSTextCheckingResult *match in
+             [declaration matchesInString:css options:0
+                                    range:NSMakeRange(0, css.length)])
+            [declared addObject:[css substringWithRange:[match rangeAtIndex:1]]];
+
+        NSUInteger index = 0;
+        while (true)
+        {
+            NSRange found = [css rangeOfString:@"var("
+                                       options:0
+                                         range:NSMakeRange(index,
+                                                           css.length - index)];
+            if (found.location == NSNotFound)
+                break;
+            index = NSMaxRange(found);
+            NSMutableArray<NSString *> *chain = [NSMutableArray array];
+            if (!MPCustomPropertyResolves(css, &index, declared, chain))
+            {
+                XCTFail(@"%@: var(%@) has no declaration and no literal "
+                        @"fallback", name,
+                        [chain componentsJoinedByString:@" > "]);
+            }
+        }
+    }
+}
+
+/**
+ * GitHub-2020 should render with Primer's light-theme spacing and colors.
+ * Issue #633: without the token declarations these computed to zero margins,
+ * a transparent rule and default black text.
+ */
+- (void)testGitHub2020RendersPrimerSpacingAndColors
+{
+    NSString *path =
+        [[NSBundle mainBundle] pathForResource:@"GitHub-2020"
+                                        ofType:kMPStyleFileExtension
+                                   inDirectory:kMPStylesDirectoryName];
+    NSString *css = MPReadFileOfPath(path);
+    XCTAssertGreaterThan(css.length, 0u, @"GitHub-2020.css should be readable");
+
+    // The trailing paragraph keeps the measured elements from being the
+    // body's last child, whose bottom margin the style removes.
+    NSString *html = [NSString stringWithFormat:
+        @"<html><head><style>%@</style></head><body>"
+        @"<p>Paragraph</p><hr>"
+        @"<table><tr><td>Cell</td></tr></table>"
+        @"<blockquote><p>Quote</p></blockquote>"
+        @"<pre>code</pre><p>Last</p></body></html>", css];
+
+    WebView *webView = [[WebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 600)];
+    [webView.mainFrame loadHTMLString:html baseURL:nil];
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+    while ((webView.isLoading || !webView.mainFrame.DOMDocument.body)
+           && deadline.timeIntervalSinceNow > 0)
+    {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+            beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+
+    NSString *json = [webView stringByEvaluatingJavaScriptFromString:
+        @"JSON.stringify((function () {"
+         "function c(selector, property) {"
+         "return getComputedStyle(document.querySelector(selector))[property];}"
+         "return {p: c('p', 'marginBottom'),"
+         "hrBackground: c('hr', 'backgroundColor'), hrHeight: c('hr', 'height'),"
+         "td: c('td', 'borderTopColor'), pre: c('pre', 'color'),"
+         "blockquote: c('blockquote', 'color')};})())"];
+    NSDictionary *styles = [NSJSONSerialization
+        JSONObjectWithData:[json dataUsingEncoding:NSUTF8StringEncoding]
+                   options:0 error:NULL];
+
+    XCTAssertEqualObjects(styles[@"p"], @"16px", @"Paragraph bottom margin");
+    XCTAssertEqualObjects(styles[@"hrBackground"], @"rgb(209, 217, 224)",
+                          @"Horizontal rule color");
+    XCTAssertEqualObjects(styles[@"hrHeight"], @"1px", @"Horizontal rule height");
+    XCTAssertEqualObjects(styles[@"td"], @"rgb(209, 217, 224)",
+                          @"Table cell border color");
+    XCTAssertEqualObjects(styles[@"pre"], @"rgb(31, 35, 40)",
+                          @"Code block text color");
+    XCTAssertEqualObjects(styles[@"blockquote"], @"rgb(89, 99, 110)",
+                          @"Blockquote text color");
+    [webView close];
 }
 
 @end

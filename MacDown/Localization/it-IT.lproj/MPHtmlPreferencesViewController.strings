@@ -28,6 +28,9 @@
 /* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
 "GF9-Dm-IoB.title" = "Usa il simbolo dollaro ($) come delimitatore di linea";
 
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Nascondi linee orizzontali";
+
 /* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
 "Jmq-wq-Dux.title" = "Personalizzato";
 

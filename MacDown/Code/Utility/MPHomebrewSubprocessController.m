@@ -12,7 +12,6 @@
 @interface MPHomebrewSubprocessController ()
 
 @property (readonly) NSTask *task;
-@property (readwrite) void(^completionHandler)(NSString *);
 
 @end
 
@@ -63,67 +62,39 @@
 
 - (void)runWithCompletionHandler:(void(^)(NSString *))handler
 {
-    self.completionHandler = handler;
-
     NSString *brewPath = [self resolvedBrewPath];
-    if (!brewPath)     // Homebrew not installed.
-    {
+    if (!brewPath) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.completionHandler)
-                self.completionHandler(nil);
+            if (handler) handler(nil);
         });
         return;
     }
-    self.task.executableURL = [NSURL fileURLWithPath:brewPath];
-
-    // -readToEndOfFileInBackgroundAndNotify + NSNotificationCenter (the
-    // previous implementation) is a pre-GCD API whose background read and
-    // notification delivery run at a QoS the app doesn't control. Xcode's
-    // Thread Performance Checker flagged a priority-inversion "Hang Risk"
-    // where the main thread (user-interactive, switching Preferences
-    // panes) ended up waiting on a lock also touched by this machinery.
-    // NSTask.terminationHandler runs on a GCD-managed queue we don't have
-    // to fight with, and we explicitly hop back to the main queue
-    // ourselves before touching the completion handler (callers update
-    // KVO-observed/bound UI properties from it).
+    NSTask *task = self.task;
+    task.executableURL = [NSURL fileURLWithPath:brewPath];
     NSFileHandle *stdoutReadHandle =
-        ((NSPipe *)self.task.standardOutput).fileHandleForReading;
-
-    // self.task.terminationHandler = ^{ ...self... } is a genuine
-    // structural retain cycle (self -> _task -> terminationHandler ->
-    // block -> self), which the compiler correctly flags. It's
-    // deliberate: MPDetectHomebrewPrefixWithCompletionhandler() below
-    // only holds this controller in a local variable, so capturing self
-    // strongly is what keeps it alive long enough to report back once the
-    // task exits. The cycle is broken explicitly as the first thing the
-    // block does, so it never outlives a single invocation.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Warc-retain-cycles"
-    self.task.terminationHandler = ^(NSTask *task) {
-        task.terminationHandler = nil;   // Break the cycle immediately.
-        // Safe to read to EOF here (not a deadlock risk): this handler
-        // only fires after the task has already exited, so the pipe is
-        // closed and the read returns promptly.
-        NSData *outData = [stdoutReadHandle readDataToEndOfFile];
-        NSString *output = [[NSString alloc] initWithData:outData
-                                                   encoding:NSUTF8StringEncoding];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.completionHandler)
-                self.completionHandler(output);
-        });
-    };
-#pragma clang diagnostic pop
+        ((NSPipe *)task.standardOutput).fileHandleForReading;
 
     NSError *launchError = nil;
-    if (![self.task launchAndReturnError:&launchError])
-    {
-        self.task.terminationHandler = nil;   // Block will never fire; break the cycle.
+    if (![task launchAndReturnError:&launchError]) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.completionHandler)
-                self.completionHandler(nil);
+            if (handler) handler(nil);
         });
         return;
     }
+
+    // Drain while the child is running: waiting for termination before reading
+    // deadlocks when stdout fills the pipe. This block owns the task and reader,
+    // so the controller may be released without losing the result or creating
+    // a task -> terminationHandler -> controller retain cycle.
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSData *outData = [stdoutReadHandle readDataToEndOfFile];
+        [task waitUntilExit];
+        NSString *output = [[NSString alloc] initWithData:outData
+                                               encoding:NSUTF8StringEncoding];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (handler) handler(output);
+        });
+    });
 }
 
 @end

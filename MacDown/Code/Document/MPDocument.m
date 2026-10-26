@@ -281,6 +281,8 @@ NS_INLINE NSColor *MPGetWebViewBackgroundColor(WebView *webview)
         flags |= HOEDOWN_HTML_HARD_WRAP;
     if (self.htmlCodeBlockAccessory == MPCodeBlockAccessoryCustom)
         flags |= HOEDOWN_HTML_BLOCKCODE_INFORMATION;
+    if (self.htmlHideHorizontalRules)
+        flags |= HOEDOWN_HTML_HIDE_HORIZONTAL_RULES;
     return flags;
 }
 @end
@@ -3205,7 +3207,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)toggleEditorPane:(id)sender
 {
+    BOOL wasVisible = self.editorVisible;
     [self toggleSplitterCollapsingEditorPane:YES];
+    if (self.editorVisible != wasVisible)
+        self.preferences.editorStartInPreviewMode = !self.editorVisible;
 }
 
 - (IBAction)toggleAutoSave:(id)sender
