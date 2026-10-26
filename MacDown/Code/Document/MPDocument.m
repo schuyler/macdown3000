@@ -599,6 +599,71 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 
+// Hirschberg reconstruction keeps exact LCS anchors without a quadratic matrix.
+// The two score rows are reused after each split, including by recursive calls.
+static void MPAlignReferenceRange(const uint8_t *editor, NSRange er,
+                                 const uint8_t *preview, NSRange pr,
+                                 NSUInteger *forward, NSUInteger *reverse,
+                                 NSArray *editorYs, NSArray *previewYs,
+                                 NSMutableArray *alignedEditor, NSMutableArray *alignedPreview)
+{
+    while (er.length && pr.length && editor[er.location] == preview[pr.location]) {
+        [alignedEditor addObject:editorYs[er.location++]];
+        [alignedPreview addObject:previewYs[pr.location++]];
+        er.length--; pr.length--;
+    }
+    NSUInteger suffix = 0;
+    while (suffix < er.length && suffix < pr.length &&
+           editor[NSMaxRange(er) - suffix - 1] == preview[NSMaxRange(pr) - suffix - 1]) suffix++;
+    er.length -= suffix; pr.length -= suffix;
+    if (er.length == 1) {
+        for (NSUInteger j = pr.location; j < NSMaxRange(pr); j++) {
+            if (editor[er.location] == preview[j]) {
+                [alignedEditor addObject:editorYs[er.location]];
+                [alignedPreview addObject:previewYs[j]];
+                break;
+            }
+        }
+    } else if (er.length && pr.length) {
+        NSUInteger leftLength = er.length / 2;
+        memset(forward, 0, (pr.length + 1) * sizeof(NSUInteger));
+        memset(reverse, 0, (pr.length + 1) * sizeof(NSUInteger));
+        for (NSUInteger i = 0; i < leftLength; i++) {
+            NSUInteger diagonal = 0;
+            for (NSUInteger j = 1; j <= pr.length; j++) {
+                NSUInteger previous = forward[j];
+                forward[j] = editor[er.location + i] == preview[pr.location + j - 1] ?
+                    diagonal + 1 : MAX(forward[j], forward[j - 1]);
+                diagonal = previous;
+            }
+        }
+        for (NSUInteger i = NSMaxRange(er); i > er.location + leftLength; i--) {
+            NSUInteger diagonal = 0;
+            for (NSUInteger j = 1; j <= pr.length; j++) {
+                NSUInteger previous = reverse[j];
+                reverse[j] = editor[i - 1] == preview[NSMaxRange(pr) - j] ?
+                    diagonal + 1 : MAX(reverse[j], reverse[j - 1]);
+                diagonal = previous;
+            }
+        }
+        NSUInteger split = 0, best = 0;
+        for (NSUInteger j = 0; j <= pr.length; j++) {
+            NSUInteger score = forward[j] + reverse[pr.length - j];
+            if (score > best) { best = score; split = j; }
+        }
+        MPAlignReferenceRange(editor, NSMakeRange(er.location, leftLength),
+            preview, NSMakeRange(pr.location, split), forward, reverse,
+            editorYs, previewYs, alignedEditor, alignedPreview);
+        MPAlignReferenceRange(editor, NSMakeRange(er.location + leftLength, er.length - leftLength),
+            preview, NSMakeRange(pr.location + split, pr.length - split), forward, reverse,
+            editorYs, previewYs, alignedEditor, alignedPreview);
+    }
+    for (NSUInteger k = 0; k < suffix; k++) {
+        [alignedEditor addObject:editorYs[NSMaxRange(er) + k]];
+        [alignedPreview addObject:previewYs[NSMaxRange(pr) + k]];
+    }
+}
+
 @implementation MPDocument
 
 #pragma mark - Accessor
@@ -4069,8 +4134,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return;
     }
 
-    // Bound main-thread work and memory (at most 8 MiB). For larger documents,
-    // retain monotonic, class-compatible anchors with a linear greedy fallback.
+    // Use the simple matrix for small inputs (at most 8 MiB); larger inputs
+    // use exact linear-space LCS, trimming common edges before subdivision.
     const NSUInteger maxCells = 1024 * 1024;
     NSUInteger *dp = NULL;
     if (m < maxCells && n < maxCells && (m + 1) <= maxCells / (n + 1))
@@ -4101,23 +4166,15 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
     else
     {
-        NSMutableArray<NSMutableArray<NSNumber *> *> *positions = [NSMutableArray array];
-        for (NSUInteger k = 0; k < 4; k++) [positions addObject:[NSMutableArray array]];
-        for (NSUInteger j = 0; j < n; j++) [positions[classOf(previewTypes[j])] addObject:@(j)];
-        NSUInteger cursors[4] = {0};
-        NSUInteger nextPreview = 0;
-        for (NSUInteger i = 0; i < m; i++)
-        {
-            NSUInteger kind = (NSUInteger)classOf(editorTypes[i]);
-            NSArray<NSNumber *> *candidates = positions[kind];
-            while (cursors[kind] < candidates.count && candidates[cursors[kind]].unsignedIntegerValue < nextPreview)
-                cursors[kind]++;
-            if (cursors[kind] == candidates.count) continue;
-            NSUInteger j = candidates[cursors[kind]++].unsignedIntegerValue;
-            [alignedEditor addObject:editorYs[i]];
-            [alignedPreview addObject:previewYs[j]];
-            nextPreview = j + 1;
-        }
+        NSMutableData *editorClasses = [NSMutableData dataWithLength:m];
+        NSMutableData *previewClasses = [NSMutableData dataWithLength:n];
+        uint8_t *ec = editorClasses.mutableBytes, *pc = previewClasses.mutableBytes;
+        for (NSUInteger i = 0; i < m; i++) ec[i] = (uint8_t)classOf(editorTypes[i]);
+        for (NSUInteger j = 0; j < n; j++) pc[j] = (uint8_t)classOf(previewTypes[j]);
+        NSMutableData *forward = [NSMutableData dataWithLength:(n + 1) * sizeof(NSUInteger)];
+        NSMutableData *reverse = [NSMutableData dataWithLength:(n + 1) * sizeof(NSUInteger)];
+        MPAlignReferenceRange(ec, NSMakeRange(0, m), pc, NSMakeRange(0, n),
+            forward.mutableBytes, reverse.mutableBytes, editorYs, previewYs, alignedEditor, alignedPreview);
     }
 
     if (outEditorYs) *outEditorYs = alignedEditor;

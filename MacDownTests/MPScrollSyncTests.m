@@ -1907,6 +1907,23 @@ static const NSUInteger MPScrollOwnerNeither = 2;
 - (void)testSyncScrollersOverwritesLastPreviewScrollTop
 {
     MPDocument *doc = [[MPDocument alloc] init];
+    NSScrollView *editorScroll = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 1000)];
+    editorScroll.documentView = editor;
+    NSScrollView *previewScroll = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    WebView *preview = [[WebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 1000)];
+    previewScroll.documentView = preview;
+    doc.editor = editor; doc.preview = preview;
+    doc.webViewHeaderLocations = @[]; doc.editorHeaderLocations = @[];
+    doc.lastPreviewScrollTop = 999;
+    [doc syncScrollers];
+    XCTAssertEqualWithAccuracy(doc.lastPreviewScrollTop, 0, 0.01);
+    XCTAssertEqualWithAccuracy(previewScroll.contentView.bounds.origin.y, doc.lastPreviewScrollTop, 0.01);
+}
+
+- (void)testSyncScrollersPreservesLastPreviewScrollTopWithZeroViewport
+{
+    MPDocument *doc = [[MPDocument alloc] init];
     doc.lastPreviewScrollTop = 999.0;
     doc.webViewHeaderLocations = @[];
     doc.editorHeaderLocations  = @[];
@@ -3087,7 +3104,7 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         @"previewY must never scroll past the bottom of the preview's content");
 }
 
-- (void)testLargeAlignedDocumentAvoidsQuadraticMatrix
+- (void)testLargeAlignedDocumentPreservesEveryAnchor
 {
     NSMutableArray *ys = [NSMutableArray array];
     NSMutableArray *kinds = [NSMutableArray array];
@@ -3117,6 +3134,78 @@ static const NSUInteger MPScrollOwnerNeither = 2;
         XCTAssertEqualObjects(editorKinds[[editor[i] unsignedIntegerValue]], previewKinds[[preview[i] unsignedIntegerValue]]);
         if (i) { XCTAssertGreaterThan([editor[i] unsignedIntegerValue], [editor[i-1] unsignedIntegerValue]);
             XCTAssertGreaterThan([preview[i] unsignedIntegerValue], [preview[i-1] unsignedIntegerValue]); }
+    }
+}
+
+- (void)testLargeDocumentIgnoresUnmatchedLeadingParagraph
+{
+    NSMutableArray *editorYs = [NSMutableArray arrayWithObject:@0];
+    NSMutableArray *previewYs = [NSMutableArray array];
+    NSMutableArray *editorKinds = [NSMutableArray arrayWithObject:@7];
+    NSMutableArray *previewKinds = [NSMutableArray array];
+    for (NSUInteger i = 0; i < 1200; i++) {
+        [editorYs addObject:@(i + 1)]; [previewYs addObject:@(i)];
+        NSNumber *kind = @(i % 2 ? 7 : 1);
+        [editorKinds addObject:kind]; [previewKinds addObject:kind];
+    }
+    NSArray *editor = nil, *preview = nil;
+    [MPDocument alignEditorYs:editorYs editorTypes:editorKinds previewYs:previewYs previewTypes:previewKinds
+        alignedEditorYs:&editor alignedPreviewYs:&preview];
+    XCTAssertEqualObjects(editor, [editorYs subarrayWithRange:NSMakeRange(1, 1200)]);
+    XCTAssertEqualObjects(preview, previewYs);
+}
+
+- (void)testLargeDocumentFindsOptimalAnchorsWithoutCommonEdges
+{
+    // Distinct outer kinds prevent edge trimming. Greedy pairing would lose an anchor.
+    NSMutableArray *editorYs = [NSMutableArray arrayWithObject:@0];
+    NSMutableArray *previewYs = [NSMutableArray array];
+    NSMutableArray *ek = [NSMutableArray arrayWithObject:@7], *pk = [NSMutableArray array];
+    for (NSUInteger i = 0; i < 1200; i++) {
+        [editorYs addObject:@(i + 1)]; [previewYs addObject:@(i)];
+        [ek addObject:@(i % 2 ? 7 : 1)]; [pk addObject:@(i % 2 ? 7 : 1)];
+    }
+    [editorYs addObject:@1201]; [ek addObject:@8];
+    [previewYs addObject:@1200]; [pk addObject:@0];
+    NSArray *editor = nil, *preview = nil;
+    [MPDocument alignEditorYs:editorYs editorTypes:ek previewYs:previewYs previewTypes:pk
+        alignedEditorYs:&editor alignedPreviewYs:&preview];
+    XCTAssertEqualObjects(editor, [editorYs subarrayWithRange:NSMakeRange(1, 1200)]);
+    XCTAssertEqualObjects(preview, [previewYs subarrayWithRange:NSMakeRange(0, 1200)]);
+}
+
+- (void)testJSClassifiesInlineAndStandaloneImageReferences
+{
+    NSString *script = [self loadUpdateHeaderLocationsScript];
+    XCTAssertNotNil(script);
+    JSContext *context = [[JSContext alloc] init];
+    [context evaluateScript:
+        @"function element(tag,nodes) {"
+         "  nodes=nodes||[];"
+         "  var e={tagName:tag,nodeType:1,"
+         "    children:nodes.filter(function(n){return n.nodeType===1}),"
+         "    firstChild:nodes[0]||null,"
+         "    getBoundingClientRect:function(){return {top:10}},"
+         "    compareDocumentPosition:function(){return 0}};"
+         "  nodes.forEach(function(n,i){n.parentElement=e;n.nextSibling=nodes[i+1]||null});"
+         "  return e;"
+         "}"
+         "function text(s){return {nodeType:3,nodeValue:s}}"
+         "var window={scrollY:0},Node={DOCUMENT_POSITION_FOLLOWING:4,DOCUMENT_POSITION_PRECEDING:2};"
+         "var paragraph,image;"
+         "var document={body:{},querySelectorAll:function(s){"
+         "  return s==='img'?[image]:s==='p'?[paragraph]:[]"
+         "}};"];
+    NSArray *cases = @[@"image=element('IMG');paragraph=element('P',[text('before '),image]);",
+                       @"image=element('IMG');paragraph=element('P',[text(' '),image,text('\\n')]);",
+                       @"image=element('IMG');paragraph=element('P',[text('before '),element('A',[image])]);",
+                       @"image=element('IMG');paragraph=element('P',[element('A',[image])]);"];
+    NSArray *expected = @[@[@7], @[@0], @[@7], @[@0]];
+    for (NSUInteger i = 0; i < cases.count; i++) {
+        [context evaluateScript:cases[i]];
+        NSArray *kinds = [[[context evaluateScript:script] valueForProperty:@"kinds"] toArray];
+        XCTAssertNil(context.exception);
+        XCTAssertEqualObjects(kinds, expected[i]);
     }
 }
 
