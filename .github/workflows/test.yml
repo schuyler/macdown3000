@@ -92,3 +92,14 @@ jobs:
     # the Sparkle framework binary skip when the pod is absent, as it is here.
     - name: Run appcast script tests
       run: python3 Tools/test_update_appcast.py
+
+  packaging-versions:
+    name: Packaging Version Contracts
+    runs-on: macos-14
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Verify target-local versions and embedded signatures
+      run: python3 MacDownTests/BuildTools/packaging_version_tests.py
