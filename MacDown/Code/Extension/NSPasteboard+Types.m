@@ -14,6 +14,8 @@
 - (NSURL *)URLForType:(NSString *)dataType
 {
     NSString *string = [self stringForType:dataType];
+    if (!string.length)
+        return nil;
 
     static NSRegularExpression *schemeRegex = nil;
     static dispatch_once_t onceToken;

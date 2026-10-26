@@ -69,6 +69,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)extensionStrikethrough;
 
 /**
+ * Whether horizontal rules (`---`) should be hidden from rendered output.
+ */
+- (BOOL)hideHorizontalRules;
+
+/**
  * Returns the combined extension flags as a bitmask for Hoedown.
  */
 - (int)extensionFlags;

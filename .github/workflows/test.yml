@@ -23,6 +23,9 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Test build number script on a plist without version keys
+      run: bash Tools/test_update_build_number.sh
+
     - name: Setup MacDown build environment
       uses: ./.github/actions/setup-macdown
 

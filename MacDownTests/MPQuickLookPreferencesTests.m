@@ -16,6 +16,7 @@
 
 // Import from MacDownCore (add MacDownCore to header search paths in Xcode)
 #import "MPQuickLookPreferences.h"
+#import "MPQuickLookRenderer.h"
 
 
 @interface MPQuickLookPreferencesTests : XCTestCase
@@ -96,6 +97,43 @@
     BOOL strikethrough = [prefs extensionStrikethrough];
     XCTAssertTrue(strikethrough == YES || strikethrough == NO,
                   @"Extension strikethrough should return a boolean");
+}
+
+- (void)testHideHorizontalRulesFollowsAppPreference
+{
+    CFStringRef key = CFSTR("htmlHideHorizontalRules");
+    CFStringRef suite = CFSTR("app.macdown.macdown3000");
+    CFPropertyListRef original = CFPreferencesCopyValue(
+        key, suite, kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+
+    @try {
+        MPQuickLookPreferences *prefs = [MPQuickLookPreferences sharedPreferences];
+        MPQuickLookRenderer *renderer = [[MPQuickLookRenderer alloc] init];
+        NSString *markdown = @"Before.\n\n---\n\nAfter.";
+
+        CFPreferencesSetValue(key, NULL, suite,
+                              kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        XCTAssertFalse([prefs hideHorizontalRules],
+                       @"Horizontal rules should be shown when the preference is unset");
+        XCTAssertTrue([[renderer renderMarkdown:markdown] containsString:@"<hr"],
+                      @"Quick Look should render <hr> by default");
+
+        CFPreferencesSetValue(key, kCFBooleanTrue, suite,
+                              kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        XCTAssertTrue([prefs hideHorizontalRules],
+                      @"Quick Look should read the app's htmlHideHorizontalRules preference");
+        NSString *html = [renderer renderMarkdown:markdown];
+        XCTAssertFalse([html containsString:@"<hr"],
+                       @"Quick Look should omit <hr> when the preference is on");
+        XCTAssertTrue([html containsString:@"After."],
+                      @"Content around a hidden rule should still render");
+    }
+    @finally {
+        CFPreferencesSetValue(key, original, suite,
+                              kCFPreferencesCurrentUser, kCFPreferencesAnyHost);
+        if (original)
+            CFRelease(original);
+    }
 }
 
 

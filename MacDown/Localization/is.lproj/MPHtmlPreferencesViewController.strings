@@ -7,6 +7,9 @@
 /* Class = "NSTextFieldCell"; title = "Theme:"; ObjectID = "a6o-qD-AIp"; */
 "a6o-qD-AIp.title" = "Þema:";
 
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Fela láréttar línur";
+
 /* Class = "NSMenuItem"; title = "None"; ObjectID = "pWW-vM-8JK"; */
 "pWW-vM-8JK.title" = "Enginn";
 
