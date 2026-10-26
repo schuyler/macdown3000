@@ -599,6 +599,71 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 }
 
 
+// Hirschberg reconstruction keeps exact LCS anchors without a quadratic matrix.
+// The two score rows are reused after each split, including by recursive calls.
+static void MPAlignReferenceRange(const uint8_t *editor, NSRange er,
+                                 const uint8_t *preview, NSRange pr,
+                                 NSUInteger *forward, NSUInteger *reverse,
+                                 NSArray *editorYs, NSArray *previewYs,
+                                 NSMutableArray *alignedEditor, NSMutableArray *alignedPreview)
+{
+    while (er.length && pr.length && editor[er.location] == preview[pr.location]) {
+        [alignedEditor addObject:editorYs[er.location++]];
+        [alignedPreview addObject:previewYs[pr.location++]];
+        er.length--; pr.length--;
+    }
+    NSUInteger suffix = 0;
+    while (suffix < er.length && suffix < pr.length &&
+           editor[NSMaxRange(er) - suffix - 1] == preview[NSMaxRange(pr) - suffix - 1]) suffix++;
+    er.length -= suffix; pr.length -= suffix;
+    if (er.length == 1) {
+        for (NSUInteger j = pr.location; j < NSMaxRange(pr); j++) {
+            if (editor[er.location] == preview[j]) {
+                [alignedEditor addObject:editorYs[er.location]];
+                [alignedPreview addObject:previewYs[j]];
+                break;
+            }
+        }
+    } else if (er.length && pr.length) {
+        NSUInteger leftLength = er.length / 2;
+        memset(forward, 0, (pr.length + 1) * sizeof(NSUInteger));
+        memset(reverse, 0, (pr.length + 1) * sizeof(NSUInteger));
+        for (NSUInteger i = 0; i < leftLength; i++) {
+            NSUInteger diagonal = 0;
+            for (NSUInteger j = 1; j <= pr.length; j++) {
+                NSUInteger previous = forward[j];
+                forward[j] = editor[er.location + i] == preview[pr.location + j - 1] ?
+                    diagonal + 1 : MAX(forward[j], forward[j - 1]);
+                diagonal = previous;
+            }
+        }
+        for (NSUInteger i = NSMaxRange(er); i > er.location + leftLength; i--) {
+            NSUInteger diagonal = 0;
+            for (NSUInteger j = 1; j <= pr.length; j++) {
+                NSUInteger previous = reverse[j];
+                reverse[j] = editor[i - 1] == preview[NSMaxRange(pr) - j] ?
+                    diagonal + 1 : MAX(reverse[j], reverse[j - 1]);
+                diagonal = previous;
+            }
+        }
+        NSUInteger split = 0, best = 0;
+        for (NSUInteger j = 0; j <= pr.length; j++) {
+            NSUInteger score = forward[j] + reverse[pr.length - j];
+            if (score > best) { best = score; split = j; }
+        }
+        MPAlignReferenceRange(editor, NSMakeRange(er.location, leftLength),
+            preview, NSMakeRange(pr.location, split), forward, reverse,
+            editorYs, previewYs, alignedEditor, alignedPreview);
+        MPAlignReferenceRange(editor, NSMakeRange(er.location + leftLength, er.length - leftLength),
+            preview, NSMakeRange(pr.location + split, pr.length - split), forward, reverse,
+            editorYs, previewYs, alignedEditor, alignedPreview);
+    }
+    for (NSUInteger k = 0; k < suffix; k++) {
+        [alignedEditor addObject:editorYs[NSMaxRange(er) + k]];
+        [alignedPreview addObject:previewYs[NSMaxRange(pr) + k]];
+    }
+}
+
 @implementation MPDocument
 
 #pragma mark - Accessor
@@ -4054,41 +4119,63 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         return 1; // any header level h1-h6
     };
 
-    // LCS over the coarse class sequences. dp[i][j] = LCS length of editor[i..] / preview[j..].
     NSUInteger m = editorCount, n = previewCount;
-    NSUInteger **dp = calloc(m + 1, sizeof(NSUInteger *));
-    for (NSUInteger i = 0; i <= m; i++)
-        dp[i] = calloc(n + 1, sizeof(NSUInteger));
-
-    for (NSInteger i = (NSInteger)m - 1; i >= 0; i--) {
-        for (NSInteger j = (NSInteger)n - 1; j >= 0; j--) {
-            if (classOf(editorTypes[i]) == classOf(previewTypes[j]))
-                dp[i][j] = dp[i + 1][j + 1] + 1;
-            else
-                dp[i][j] = MAX(dp[i + 1][j], dp[i][j + 1]);
-        }
-    }
-
     NSMutableArray<NSNumber *> *alignedEditor = [NSMutableArray array];
     NSMutableArray<NSNumber *> *alignedPreview = [NSMutableArray array];
-    NSUInteger i = 0, j = 0;
-    while (i < m && j < n) {
-        if (classOf(editorTypes[i]) == classOf(previewTypes[j])) {
-            [alignedEditor addObject:editorYs[i]];
-            [alignedPreview addObject:previewYs[j]];
-            i++; j++;
-        } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-            // Drop the editor point (no preview counterpart).
-            i++;
-        } else {
-            // Drop the preview point (no editor counterpart).
-            j++;
-        }
+
+    // Most edits preserve the type sequence. Avoid building a quadratic matrix.
+    BOOL identical = m == n;
+    for (NSUInteger k = 0; identical && k < m; k++)
+        identical = classOf(editorTypes[k]) == classOf(previewTypes[k]);
+    if (identical)
+    {
+        if (outEditorYs) *outEditorYs = [editorYs copy];
+        if (outPreviewYs) *outPreviewYs = [previewYs copy];
+        return;
     }
 
-    for (NSUInteger k = 0; k <= m; k++)
-        free(dp[k]);
-    free(dp);
+    // Use the simple matrix for small inputs (at most 8 MiB); larger inputs
+    // use exact linear-space LCS, trimming common edges before subdivision.
+    const NSUInteger maxCells = 1024 * 1024;
+    NSUInteger *dp = NULL;
+    if (m < maxCells && n < maxCells && (m + 1) <= maxCells / (n + 1))
+        dp = calloc((m + 1) * (n + 1), sizeof(NSUInteger));
+    if (dp)
+    {
+        NSUInteger stride = n + 1;
+        for (NSUInteger ii = m; ii > 0; ii--)
+            for (NSUInteger jj = n; jj > 0; jj--)
+            {
+                NSUInteger i = ii - 1, j = jj - 1;
+                dp[i * stride + j] = classOf(editorTypes[i]) == classOf(previewTypes[j]) ?
+                    dp[(i + 1) * stride + j + 1] + 1 :
+                    MAX(dp[(i + 1) * stride + j], dp[i * stride + j + 1]);
+            }
+        NSUInteger i = 0, j = 0;
+        while (i < m && j < n)
+        {
+            if (classOf(editorTypes[i]) == classOf(previewTypes[j]))
+            {
+                [alignedEditor addObject:editorYs[i++]];
+                [alignedPreview addObject:previewYs[j++]];
+            }
+            else if (dp[(i + 1) * stride + j] >= dp[i * stride + j + 1]) i++;
+            else j++;
+        }
+        free(dp);
+    }
+    else
+    {
+        NSMutableData *editorClasses = [NSMutableData dataWithLength:m];
+        NSMutableData *previewClasses = [NSMutableData dataWithLength:n];
+        uint8_t *ec = editorClasses.mutableBytes, *pc = previewClasses.mutableBytes;
+        for (NSUInteger i = 0; i < m; i++) ec[i] = (uint8_t)classOf(editorTypes[i]);
+        for (NSUInteger j = 0; j < n; j++) pc[j] = (uint8_t)classOf(previewTypes[j]);
+        NSMutableData *forward = [NSMutableData dataWithLength:(n + 1) * sizeof(NSUInteger)];
+        NSMutableData *reverse = [NSMutableData dataWithLength:(n + 1) * sizeof(NSUInteger)];
+        MPAlignReferenceRange(ec, NSMakeRange(0, m), pc, NSMakeRange(0, n),
+            forward.mutableBytes, reverse.mutableBytes, editorYs, previewYs, alignedEditor, alignedPreview);
+    }
 
     if (outEditorYs) *outEditorYs = alignedEditor;
     if (outPreviewYs) *outPreviewYs = alignedPreview;
@@ -4142,6 +4229,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
     CGFloat previewContentHeight = ceilf(NSHeight(self.preview.enclosingScrollView.documentView.bounds));
     CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
+    if (editorVisibleHeight <= 0 || previewVisibleHeight <= 0) return;
     NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
     CGFloat currY = NSMinY(self.editor.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
@@ -4203,7 +4291,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     CGFloat bottomHeaderY = previewContentHeight - previewVisibleHeight;
     
     // Find the Y positions in the preview window that we're scrolling between
-    if ([_webViewHeaderLocations count] > relativeHeaderIndex)
+    if (relativeHeaderIndex >= 0 && [_webViewHeaderLocations count] > (NSUInteger)relativeHeaderIndex)
     {
         topHeaderY = floorf([_webViewHeaderLocations[relativeHeaderIndex] doubleValue]) - adjustmentForScroll;
     }
@@ -4216,6 +4304,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Now we scroll percentScrolledBetweenHeaders percent between those two positions in the webview
     CGFloat previewY = topHeaderY + (bottomHeaderY - topHeaderY) * percentScrolledBetweenHeaders;
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
+    previewY = MAX(0, MIN(previewY, MAX(0, NSHeight(self.preview.enclosingScrollView.documentView.bounds) - NSHeight(contentBounds))));
     contentBounds.origin.y = previewY;
 
     // Issue #342: No flag toggles needed — previewBoundsDidChange: is guarded
@@ -4285,6 +4374,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                                   webViewHeaderLocations:_webViewHeaderLocations];
 
     NSRect contentBounds = self.preview.enclosingScrollView.contentView.bounds;
+    previewY = MAX(0, MIN(previewY, MAX(0, NSHeight(self.preview.enclosingScrollView.documentView.bounds) - NSHeight(contentBounds))));
     contentBounds.origin.y = previewY;
 
     // Issue #342: No flag toggles needed — previewBoundsDidChange: is guarded
@@ -4356,7 +4446,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     CGFloat topHeaderY = 0;
     CGFloat bottomHeaderY = previewContentHeight;
 
-    if ([webViewHeaderLocations count] > relativeHeaderIndex)
+    if (relativeHeaderIndex >= 0 && [webViewHeaderLocations count] > (NSUInteger)relativeHeaderIndex)
     {
         topHeaderY = floorf([webViewHeaderLocations[relativeHeaderIndex] doubleValue]);
     }
@@ -4402,6 +4492,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     CGFloat previewVisibleHeight = ceilf(NSHeight(self.preview.enclosingScrollView.contentView.bounds));
     CGFloat editorContentHeight = ceilf(NSHeight(self.editor.enclosingScrollView.documentView.bounds));
     CGFloat editorVisibleHeight = ceilf(NSHeight(self.editor.enclosingScrollView.contentView.bounds));
+    if (editorVisibleHeight <= 0 || previewVisibleHeight <= 0) return;
     NSInteger relativeHeaderIndex = -1; // -1 is start of document, before any other header
     CGFloat currY = NSMinY(self.preview.enclosingScrollView.contentView.bounds);
     CGFloat minY = 0;
@@ -4462,7 +4553,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     CGFloat bottomHeaderY = editorContentHeight - editorVisibleHeight;
 
     // Find the Y positions in the editor that we're scrolling between
-    if ([_editorHeaderLocations count] > relativeHeaderIndex)
+    if (relativeHeaderIndex >= 0 && [_editorHeaderLocations count] > (NSUInteger)relativeHeaderIndex)
     {
         topHeaderY = floorf([_editorHeaderLocations[relativeHeaderIndex] doubleValue]) - adjustmentForScroll;
     }
@@ -4475,6 +4566,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Now we scroll percentScrolledBetweenHeaders percent between those two positions in the editor
     CGFloat editorY = topHeaderY + (bottomHeaderY - topHeaderY) * percentScrolledBetweenHeaders;
     NSRect contentBounds = self.editor.enclosingScrollView.contentView.bounds;
+    editorY = MAX(0, MIN(editorY, MAX(0, editorContentHeight - editorVisibleHeight)));
     contentBounds.origin.y = editorY;
 
     // Issue #342: No flag toggles needed — editorBoundsDidChange: is guarded
