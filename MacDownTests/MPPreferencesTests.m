@@ -10,6 +10,29 @@
 #import "MPPreferences.h"
 #import "hoedown_html_patch.h"
 
+@interface MPPreferences (MigrationTesting)
++ (BOOL)migrateLegacyDomain:(NSString *)domain fromDefaults:(NSUserDefaults *)source
+                toDefaults:(NSUserDefaults *)destination domain:(NSString *)destinationDomain timeout:(NSTimeInterval)seconds;
+- (instancetype)initWithDefaults:(NSUserDefaults *)defaults domain:(NSString *)domain
+                   legacyReader:(NSDictionary *(^)(void))reader;
+- (NSString *)preferencesDomainName;
++ (dispatch_queue_t)legacyMigrationReadQueue;
++ (NSDictionary *)pendingMigrationDefaults;
+@end
+
+@interface MPDelayedDomainDefaults : NSUserDefaults
+@property (nonatomic, strong) dispatch_semaphore_t releaseRead;
+@property (nonatomic, strong) dispatch_semaphore_t completedRead;
+@end
+@implementation MPDelayedDomainDefaults
+- (NSDictionary *)persistentDomainForName:(NSString *)name
+{
+    dispatch_semaphore_wait(self.releaseRead, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_signal(self.completedRead);
+    return @{@"htmlStyleName": @"late legacy", @"lateOnlyKey": @"must not be written"};
+}
+@end
+
 @interface MPPreferencesTests : XCTestCase
 @property MPPreferences *preferences;
 @property NSDictionary *oldFontInfo;
@@ -1072,6 +1095,9 @@
     XCTAssertTrue(prefs.extensionIntraEmphasis,
                   @"Future version should not apply any migrations");
 
+    XCTAssertEqual([defaults integerForKey:@"MPMigrationVersion"], 99,
+                   @"Downgrading must preserve the migration marker of a newer app");
+
     // Restore original values
     if (originalVersion)
         [defaults setObject:originalVersion forKey:@"MPMigrationVersion"];
@@ -1225,6 +1251,292 @@
         [defaults setObject:originalTaskListFlag forKey:@"MPDidApplyTaskListDefaultFix"];
     else
         [defaults removeObjectForKey:@"MPDidApplyTaskListDefaultFix"];
+}
+
+- (void)testLegacyMigrationUsesOnlyPersistentDomainAndPreservesCurrentChoice
+{
+    NSString *legacy = [@"audit.legacy." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSString *current = [@"audit.current." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *source = [[NSUserDefaults alloc] initWithSuiteName:legacy];
+    NSUserDefaults *destination = [[NSUserDefaults alloc] initWithSuiteName:current];
+    NSString *inherited = [@"audit.inherited." stringByAppendingString:NSUUID.UUID.UUIDString];
+    [source setPersistentDomain:@{@"auditInheritedKey": @"must not migrate"} forName:inherited];
+    [source addSuiteNamed:inherited];
+    @try
+    {
+        [source setPersistentDomain:@{@"htmlStyleName": @"old", @"editorMaximumWidth": @800,
+                                      @"AppleIgnored": @YES} forName:legacy];
+        [destination setObject:@"chosen" forKey:@"htmlStyleName"];
+        XCTAssertTrue([MPPreferences migrateLegacyDomain:legacy fromDefaults:source
+                                             toDefaults:destination domain:current timeout:2]);
+        XCTAssertEqualObjects([destination objectForKey:@"htmlStyleName"], @"chosen");
+        XCTAssertEqualObjects([destination objectForKey:@"editorMaximumWidth"], @800);
+        XCTAssertNil([destination persistentDomainForName:current][@"auditInheritedKey"]);
+        XCTAssertNil([destination persistentDomainForName:current][@"AppleIgnored"]);
+    }
+    @finally
+    {
+        [source removeSuiteNamed:inherited];
+        [source removePersistentDomainForName:inherited];
+        [source removePersistentDomainForName:legacy];
+        [destination removePersistentDomainForName:current];
+    }
+}
+
+- (void)testTimedOutMigrationNeverWritesLateResult
+{
+    NSString *suite = [@"audit.timeout." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *destination = [[NSUserDefaults alloc] initWithSuiteName:suite];
+    MPDelayedDomainDefaults *source = [[MPDelayedDomainDefaults alloc] initWithSuiteName:suite];
+    source.releaseRead = dispatch_semaphore_create(0);
+    source.completedRead = dispatch_semaphore_create(0);
+    @try
+    {
+        XCTAssertFalse([MPPreferences migrateLegacyDomain:suite fromDefaults:source
+                                              toDefaults:destination domain:suite timeout:0.01]);
+        [destination setObject:@"chosen after timeout" forKey:@"htmlStyleName"];
+        dispatch_semaphore_signal(source.releaseRead);
+        XCTAssertEqual(dispatch_semaphore_wait(source.completedRead,
+                        dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC)), 0);
+        XCTestExpectation *workerFinished = [self expectationWithDescription:@"Reader worker finished"];
+        dispatch_async([MPPreferences legacyMigrationReadQueue], ^{ [workerFinished fulfill]; });
+        [self waitForExpectations:@[workerFinished] timeout:2];
+        XCTAssertEqualObjects([destination objectForKey:@"htmlStyleName"], @"chosen after timeout");
+        XCTAssertNil([destination persistentDomainForName:suite][@"lateOnlyKey"]);
+    }
+    @finally
+    {
+        dispatch_semaphore_signal(source.releaseRead);
+        [destination removePersistentDomainForName:suite];
+    }
+}
+
+- (void)testPendingMigrationKeepsDefaultsTransientAndRestoresOnlyUnchosenSettings
+{
+    for (NSNumber *chooseDuringRead in @[@NO, @YES]) {
+        NSString *startupDomain = [@"migration.startup." stringByAppendingString:NSUUID.UUID.UUIDString];
+        NSUserDefaults *startupDefaults = [[NSUserDefaults alloc] initWithSuiteName:startupDomain];
+        NSDictionary *registration = [startupDefaults volatileDomainForName:NSRegistrationDomain];
+        dispatch_semaphore_t release = dispatch_semaphore_create(0);
+        XCTestExpectation *readEntered = [self expectationWithDescription:@"Startup read remains in background"];
+        @try {
+            if (!chooseDuringRead.boolValue) {
+                [startupDefaults setDouble:1.5 forKey:@"documentZoomLevel"];
+                [startupDefaults setBool:NO forKey:@"htmlTaskList"];
+                [startupDefaults setBool:NO forKey:@"editorAutoSave"];
+                [startupDefaults setBool:YES forKey:@"editorAutomaticDashSubstitutionEnabled"];
+            }
+            MPPreferences *preferences = [[MPPreferences alloc] initWithDefaults:startupDefaults
+                domain:startupDomain legacyReader:^NSDictionary *{
+                    [readEntered fulfill];
+                    dispatch_semaphore_wait(release, DISPATCH_TIME_FOREVER);
+                    return @{@"htmlStyleName": @"legacy preview", @"editorStyleName": @"legacy editor",
+                             @"editorBaseFontInfo": @{@"name": @"Menlo-Regular", @"size": @19},
+                             @"extensionTables": @NO, @"extensionIntraEmphasis": @YES,
+                             @"htmlDetectFrontMatter": @NO};
+                }];
+            [self waitForExpectations:@[readEntered] timeout:2];
+            XCTAssertEqualObjects(preferences.htmlStyleName, @"GitHub2");
+            XCTAssertEqualObjects(preferences.editorBaseFontName, @"Menlo-Regular");
+            XCTAssertNotNil(preferences.editorBaseFont);
+            XCTAssertNil([startupDefaults persistentDomainForName:startupDomain][@"htmlStyleName"]);
+            XCTAssertNil([startupDefaults persistentDomainForName:startupDomain][@"editorBaseFontInfo"]);
+            XCTAssertFalse([startupDefaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"]);
+            preferences.editorStyleName = @"explicit choice during migration";
+            if (chooseDuringRead.boolValue) {
+                preferences.documentZoomLevel = 1.5;
+                preferences.htmlTaskList = NO;
+                preferences.editorAutoSave = NO;
+                [startupDefaults setBool:YES forKey:@"editorAutomaticDashSubstitutionEnabled"];
+            }
+            dispatch_semaphore_signal(release);
+            NSPredicate *done = [NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+                return [startupDefaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"];
+            }];
+            XCTNSPredicateExpectation *completed = [[XCTNSPredicateExpectation alloc]
+                initWithPredicate:done object:nil];
+            [self waitForExpectations:@[completed] timeout:3];
+            XCTAssertEqualObjects(preferences.htmlStyleName, @"legacy preview");
+            XCTAssertEqualObjects(preferences.editorStyleName, @"explicit choice during migration");
+            XCTAssertEqual(preferences.editorBaseFontSize, 19.0);
+            XCTAssertFalse(preferences.extensionTables);
+            XCTAssertEqual(preferences.documentZoomLevel, 1.5);
+            XCTAssertFalse(preferences.htmlTaskList);
+            XCTAssertFalse(preferences.editorAutoSave);
+            XCTAssertTrue([startupDefaults boolForKey:@"editorAutomaticDashSubstitutionEnabled"]);
+            // Historical migrations still apply to imported settings, while their
+            // bookkeeping advances even when explicit current choices are protected.
+            XCTAssertFalse(preferences.extensionIntraEmphasis);
+            XCTAssertTrue(preferences.htmlDetectFrontMatter);
+            XCTAssertEqual([startupDefaults integerForKey:@"MPMigrationVersion"], 6);
+            XCTAssertTrue([startupDefaults boolForKey:@"MPDidApplyTaskListDefaultFix"]);
+        } @finally {
+            dispatch_semaphore_signal(release);
+            [startupDefaults removePersistentDomainForName:startupDomain];
+            [startupDefaults setVolatileDomain:registration forName:NSRegistrationDomain];
+        }
+    }
+}
+
+- (void)testRetryCanRestoreLegacyValuesDespiteRegisteredFallbacks
+{
+    NSString *legacy = [@"migration.retry.source." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSString *current = [@"migration.retry.target." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *source = [[NSUserDefaults alloc] initWithSuiteName:legacy];
+    NSUserDefaults *destination = [[NSUserDefaults alloc] initWithSuiteName:current];
+    NSDictionary *registration = [destination volatileDomainForName:NSRegistrationDomain];
+    @try {
+        [destination registerDefaults:[MPPreferences pendingMigrationDefaults]];
+        MPDelayedDomainDefaults *blocked = [[MPDelayedDomainDefaults alloc] initWithSuiteName:legacy];
+        blocked.releaseRead = dispatch_semaphore_create(0);
+        blocked.completedRead = dispatch_semaphore_create(0);
+        XCTAssertFalse([MPPreferences migrateLegacyDomain:legacy fromDefaults:blocked
+            toDefaults:destination domain:current timeout:0.01]);
+        dispatch_semaphore_signal(blocked.releaseRead);
+        XCTestExpectation *finished = [self expectationWithDescription:@"Failed attempt reader finished"];
+        dispatch_async([MPPreferences legacyMigrationReadQueue], ^{ [finished fulfill]; });
+        [self waitForExpectations:@[finished] timeout:2];
+        XCTAssertNil([destination persistentDomainForName:current][@"htmlStyleName"]);
+        XCTAssertNil([destination persistentDomainForName:current][@"lateOnlyKey"]);
+        [source setPersistentDomain:@{@"htmlStyleName": @"recovered theme",
+                                      @"editorBaseFontInfo": @{@"name": @"Menlo-Regular", @"size": @20},
+                                      @"extensionTables": @NO} forName:legacy];
+        XCTAssertTrue([MPPreferences migrateLegacyDomain:legacy fromDefaults:source
+            toDefaults:destination domain:current timeout:2]);
+        NSDictionary *persisted = [destination persistentDomainForName:current];
+        XCTAssertEqualObjects(persisted[@"htmlStyleName"], @"recovered theme");
+        XCTAssertEqualObjects(persisted[@"editorBaseFontInfo"][@"size"], @20);
+        XCTAssertEqualObjects(persisted[@"extensionTables"], @NO);
+    } @finally {
+        [source removePersistentDomainForName:legacy];
+        [destination removePersistentDomainForName:current];
+        [destination setVolatileDomain:registration forName:NSRegistrationDomain];
+    }
+}
+
+- (void)testNoThemeChoicesSurvivePendingMigrationCompletionAndNextLaunch
+{
+    for (NSNumber *choiceTime in @[@0, @1, @2]) {
+        NSString *domain = [@"migration.no-theme." stringByAppendingString:NSUUID.UUID.UUIDString];
+        NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:domain];
+        NSDictionary *registration = [defaults volatileDomainForName:NSRegistrationDomain];
+        dispatch_semaphore_t release = dispatch_semaphore_create(0);
+        XCTestExpectation *entered = [self expectationWithDescription:@"Read waits for theme choice"];
+        @try {
+            if (choiceTime.integerValue == 0)
+                [defaults setObject:@"existing installation" forKey:@"firstVersionInstalled"];
+            MPPreferences *preferences = [[MPPreferences alloc] initWithDefaults:defaults domain:domain
+                legacyReader:^NSDictionary *{
+                    [entered fulfill];
+                    dispatch_semaphore_wait(release, DISPATCH_TIME_FOREVER);
+                    return @{@"editorStyleName": @"legacy editor", @"htmlStyleName": @"legacy preview", @"MPMigrationVersion": @6};
+                }];
+            [self waitForExpectations:@[entered] timeout:2];
+            [defaults registerDefaults:@{@"otherComponentRegistration": @"preserve me"}];
+            if (choiceTime.integerValue == 1) {
+                preferences.editorStyleName = nil;
+                preferences.htmlStyleName = nil;
+            }
+            if (choiceTime.integerValue < 2) {
+                XCTAssertNil(preferences.editorStyleName);
+                XCTAssertNil(preferences.htmlStyleName);
+            }
+            dispatch_semaphore_signal(release);
+            XCTNSPredicateExpectation *finished = [[XCTNSPredicateExpectation alloc]
+                initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+                    return [defaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"];
+                }] object:nil];
+            [self waitForExpectations:@[finished] timeout:3];
+            if (choiceTime.integerValue == 2) {
+                XCTAssertEqualObjects(preferences.editorStyleName, @"legacy editor");
+                XCTAssertEqualObjects(preferences.htmlStyleName, @"legacy preview");
+                preferences.editorStyleName = nil;
+                preferences.htmlStyleName = nil;
+            }
+            XCTAssertNil(preferences.editorStyleName);
+            XCTAssertNil(preferences.htmlStyleName);
+            XCTAssertEqualObjects([defaults objectForKey:@"otherComponentRegistration"], @"preserve me");
+            NSDictionary *persisted = [defaults persistentDomainForName:domain];
+            XCTAssertEqualObjects(persisted[@"editorMaximumWidth"], @1000.0);
+            XCTAssertEqualObjects(persisted[@"editorAutoSave"], @YES);
+            XCTAssertNil(persisted[@"MPPendingLegacyPreferenceClears"]);
+            MPPreferences *nextLaunch = [[MPPreferences alloc] initWithDefaults:defaults domain:domain
+                legacyReader:^NSDictionary *{ XCTFail(@"Completed migration must not be retried"); return nil; }];
+            XCTAssertNil(nextLaunch.editorStyleName);
+            XCTAssertNil(nextLaunch.htmlStyleName);
+            XCTAssertTrue(nextLaunch.editorAutoSave);
+        } @finally {
+            dispatch_semaphore_signal(release);
+            [defaults removePersistentDomainForName:domain];
+            [defaults setVolatileDomain:registration forName:NSRegistrationDomain];
+        }
+    }
+}
+
+- (void)testPendingThemeClearSurvivesAFailedReadAndRetryOnNextLaunch
+{
+    NSString *domain = [@"migration.failed-clear." stringByAppendingString:NSUUID.UUID.UUIDString];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:domain];
+    NSDictionary *registration = [defaults volatileDomainForName:NSRegistrationDomain];
+    dispatch_semaphore_t release = dispatch_semaphore_create(0);
+    XCTestExpectation *entered = [self expectationWithDescription:@"First read remains pending"];
+    XCTestExpectation *failed = [self expectationWithDescription:@"First reader returns failure"];
+    @try {
+        MPPreferences *first = [[MPPreferences alloc] initWithDefaults:defaults domain:domain
+            legacyReader:^NSDictionary *{
+                [entered fulfill];
+                dispatch_semaphore_wait(release, DISPATCH_TIME_FOREVER);
+                dispatch_async(dispatch_get_main_queue(), ^{ [failed fulfill]; });
+                return nil;
+            }];
+        [self waitForExpectations:@[entered] timeout:2];
+        first.editorStyleName = nil;
+        first.htmlStyleName = nil;
+        dispatch_semaphore_signal(release);
+        [self waitForExpectations:@[failed] timeout:2];
+        XCTAssertFalse([defaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"]);
+        XCTAssertEqualObjects([NSSet setWithArray:[defaults arrayForKey:@"MPPendingLegacyPreferenceClears"]],
+            ([NSSet setWithArray:@[@"editorStyleName", @"htmlStyleName"]]));
+        // Simulate a process restart: registration values are not persisted.
+        [defaults setVolatileDomain:registration forName:NSRegistrationDomain];
+        MPPreferences *retry = [[MPPreferences alloc] initWithDefaults:defaults domain:domain
+            legacyReader:^NSDictionary *{
+                return @{@"editorStyleName": @"legacy editor", @"htmlStyleName": @"legacy preview", @"MPMigrationVersion": @6};
+            }];
+        XCTNSPredicateExpectation *completed = [[XCTNSPredicateExpectation alloc]
+            initWithPredicate:[NSPredicate predicateWithBlock:^BOOL(id object, NSDictionary *bindings) {
+                return [defaults boolForKey:@"MPDidMigrateFromLegacyBundleIdentifier"];
+            }] object:nil];
+        [self waitForExpectations:@[completed] timeout:3];
+        XCTAssertNil(retry.editorStyleName);
+        XCTAssertNil(retry.htmlStyleName);
+        XCTAssertNil([defaults objectForKey:@"MPPendingLegacyPreferenceClears"]);
+        XCTAssertEqualObjects([defaults persistentDomainForName:domain][@"editorAutoSave"], @YES);
+    } @finally {
+        dispatch_semaphore_signal(release);
+        [defaults removePersistentDomainForName:domain];
+        [defaults setVolatileDomain:registration forName:NSRegistrationDomain];
+    }
+}
+
+- (void)testProductionInitializerPairsStandardDefaultsWithTheRunningBundleDomain
+{
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    NSString *domain = NSBundle.mainBundle.bundleIdentifier;
+    NSDictionary *original = [defaults persistentDomainForName:domain];
+    @try {
+        [defaults setPersistentDomain:@{@"htmlStyleName": @"explicit running-app theme",
+            @"MPDidMigrateFromLegacyBundleIdentifier": @YES, @"MPMigrationVersion": @6}
+            forName:domain];
+        MPPreferences *preferences = [MPPreferences new];
+        XCTAssertEqualObjects(preferences.preferencesDomainName, domain);
+        XCTAssertEqualObjects(preferences.userDefaults, defaults);
+        XCTAssertEqualObjects(preferences.htmlStyleName, @"explicit running-app theme");
+        XCTAssertNotNil(preferences.firstVersionInstalled);
+    } @finally {
+        if (original) [defaults setPersistentDomain:original forName:domain];
+        else [defaults removePersistentDomainForName:domain];
+    }
 }
 
 @end
