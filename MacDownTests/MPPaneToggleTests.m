@@ -43,6 +43,7 @@
 
 @interface MPPaneToggleTests : XCTestCase
 @property (strong) MPDocument *document;
+@property BOOL originalStartInPreviewMode;
 @end
 
 
@@ -51,12 +52,17 @@
 - (void)setUp
 {
     [super setUp];
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    self.originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    preferences.editorStartInPreviewMode = NO;
     self.document = [[MPDocument alloc] init];
 }
 
 - (void)tearDown
 {
     self.document = nil;
+    [MPPreferences sharedInstance].editorStartInPreviewMode =
+        self.originalStartInPreviewMode;
     [super tearDown];
 }
 
@@ -81,6 +87,77 @@
 {
     XCTAssertNoThrow([self.document togglePreviewPane:nil],
                      @"togglePreviewPane: should not crash");
+}
+
+- (void)testEditorPaneChoiceIsRemembered
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc]
+            initWithFrame:NSMakeRect(0, 0, 800, 600)];
+        splitView.vertical = YES;
+        NSView *editor = [[NSView alloc]
+            initWithFrame:NSMakeRect(0, 0, 399, 600)];
+        WebView *preview = [[WebView alloc]
+            initWithFrame:NSMakeRect(400, 0, 400, 600)];
+        [splitView addSubview:editor];
+        [splitView addSubview:preview];
+
+        self.document.splitView = splitView;
+        self.document.editorContainer = editor;
+        self.document.preview = preview;
+        preferences.editorOnRight = NO;
+
+        [self.document toggleEditorPane:nil];
+        XCTAssertTrue(preferences.editorStartInPreviewMode,
+                      @"Hiding the editor should be remembered for the next window");
+
+        [self.document toggleEditorPane:nil];
+        XCTAssertFalse(preferences.editorStartInPreviewMode,
+                       @"Restoring the editor should update the remembered choice");
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+    }
+}
+
+- (void)testBlockedEditorHideLeavesRememberedChoiceAlone
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        // Editor-only layout: hiding the editor is refused because it would
+        // leave no visible pane, so the remembered choice must not change.
+        MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc]
+            initWithFrame:NSMakeRect(0, 0, 800, 600)];
+        splitView.vertical = YES;
+        NSView *editor = [[NSView alloc]
+            initWithFrame:NSMakeRect(0, 0, 800, 600)];
+        WebView *preview = [[WebView alloc]
+            initWithFrame:NSMakeRect(800, 0, 0, 600)];
+        [splitView addSubview:editor];
+        [splitView addSubview:preview];
+
+        self.document.splitView = splitView;
+        self.document.editorContainer = editor;
+        self.document.preview = preview;
+        preferences.editorOnRight = NO;
+        preferences.editorStartInPreviewMode = YES;
+
+        XCTAssertFalse(self.document.previewVisible,
+                       @"Precondition: the preview pane is collapsed");
+        [self.document toggleEditorPane:nil];
+        XCTAssertTrue(self.document.editorVisible,
+                      @"Hiding the only visible pane should be refused");
+        XCTAssertTrue(preferences.editorStartInPreviewMode,
+                      @"A refused hide should not change the remembered choice");
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+    }
 }
 
 
