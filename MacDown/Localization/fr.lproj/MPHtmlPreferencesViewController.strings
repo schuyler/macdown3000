@@ -31,6 +31,9 @@
 /* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
 "GF9-Dm-IoB.title" = "Utiliser le signe dollar ($) en tant que délimiteur en ligne";
 
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Masquer les lignes horizontales";
+
 /* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
 "iXi-Pv-mFl.title" = "Hide YAML front matter";
 

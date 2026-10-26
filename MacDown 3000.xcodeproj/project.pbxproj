@@ -14,6 +14,7 @@
 		0A33AF1E979F50E868FEE7DC /* libPods-MacDownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F2375876A05ADEB6544CB4EB /* libPods-MacDownCore.a */; };
 		0F6EFB9168CB2E074C8EEE64 /* MPFolderWatcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ED6745ED95492186AF6E844 /* MPFolderWatcher.m */; };
 		1457815B1A710E4C40F07FCA /* MPPaneToggleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E44CF1BD72E49A99DA6A4C1 /* MPPaneToggleTests.m */; };
+		UKRLOC000004TESTBUILDFIL /* MPLocalizationContentTests.m in Sources */ = {isa = PBXBuildFile; fileRef = UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */; };
 		1882ADC14E60D20538509FCA /* MPSidebarSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 9B004FFBE8014E25420887FD /* MPSidebarSplitView.m */; };
 		197TESTS0B00000000197RSTB /* MPRendererStateTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 197TESTS0F00000000197RSTF /* MPRendererStateTests.m */; };
 		1F002A23195B3DAE008B8D93 /* MPRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F002A22195B3DAE008B8D93 /* MPRenderer.m */; };
@@ -179,6 +180,7 @@
 		UITEST000004SWIFTSRC /* MacDownUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = UITEST000001SWIFTFILE /* MacDownUITests.swift */; };
 		URLSECPOL0001BUILDFILE /* MPURLSecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */; };
 		URLSECPOL0002BUILDFILE /* MPURLSecurityPolicyTests.m in Sources */ = {isa = PBXBuildFile; fileRef = URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */; };
+		AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -765,6 +767,15 @@
 		URLSECPOLHDRFILEREFID /* MPURLSecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MPURLSecurityPolicy.h; sourceTree = "<group>"; };
 		URLSECPOLIMPFILEREFID /* MPURLSecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicy.m; sourceTree = "<group>"; };
 		URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPURLSecurityPolicyTests.m; sourceTree = "<group>"; };
+		AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesTests.m; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000001 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = Localization/da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000002 /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = Localization/fi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000003 /* he */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = he; path = Localization/he.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000004 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = Localization/hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AUDIT00003LOCALIZE000005 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		UKRLOC000001MAINMENUSTRS /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MainMenu.strings; sourceTree = "<group>"; };
+		UKRLOC000002MPDOCUMENTST /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = Localization/uk.lproj/MPDocument.strings; sourceTree = "<group>"; };
+		UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPLocalizationContentTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1136,6 +1147,7 @@
 		1FCDCA2F1944F96E00B1F966 /* MacDownTests */ = {
 			isa = PBXGroup;
 			children = (
+				AUDIT00002TERMINALREF /* MPTerminalPreferencesTests.m */,
 				A1DDD7292F19A20300C407CD /* FileURLInliningTests.m */,
 				URLSECPOLTSTFILEREFID /* MPURLSecurityPolicyTests.m */,
 				1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */,
@@ -1187,6 +1199,7 @@
 				QLTST00002PREF00000M /* MPQuickLookPreferencesTests.m */,
 				QLTST00003PVCT00000M /* MPPreviewViewControllerTests.m */,
 				5E44CF1BD72E49A99DA6A4C1 /* MPPaneToggleTests.m */,
+				UKRLOC000003TESTFILEREF0 /* MPLocalizationContentTests.m */,
 				504AC0000000000000000004 /* MPPDFAnchorInjectorTests.m */,
 				B2C3D4E5F67890ABCDEF1234 /* MPZoomTests.m */,
 				A0A5A0E543A6B3CE9E17EE7B /* MPFileNodeTests.m */,
@@ -1896,6 +1909,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AUDIT00002TERMINALBUILD /* MPTerminalPreferencesTests.m in Sources */,
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				03224E1B02E36783D5307F4A /* MPDocumentIOTests.m in Sources */,
 				B9A8DE030E3748EB899BD45E /* MPScrollSyncTests.m in Sources */,
@@ -1947,6 +1961,7 @@
 				QLBLD00005PREFTESTSRC /* MPQuickLookPreferencesTests.m in Sources */,
 				QLBLD00006PVCTESTSRC0 /* MPPreviewViewControllerTests.m in Sources */,
 				1457815B1A710E4C40F07FCA /* MPPaneToggleTests.m in Sources */,
+				UKRLOC000004TESTBUILDFIL /* MPLocalizationContentTests.m in Sources */,
 				504AC0000000000000000005 /* MPPDFAnchorInjectorTests.m in Sources */,
 				A1B2C3D4E5F67890ABCDEF12 /* MPZoomTests.m in Sources */,
 				00F6EAD22CA0765C131AA4EC /* MPFileNodeTests.m in Sources */,
@@ -2054,6 +2069,7 @@
 				1FB813A52099A228004EC5D7 /* et */,
 				E7D458CB241C933800411A36 /* fi */,
 				E70ECDD5241C933C00537A46 /* ru-RU */,
+				UKRLOC000001MAINMENUSTRS /* uk */,
 				E744518C241C934C00D9ABD9 /* cs */,
 				E77E5D6C241C935100699B5A /* da-DK */,
 				E7DD09F1241C9368008FBC25 /* da */,
@@ -2083,6 +2099,7 @@
 				1FBD43152099A1A200B348CD /* tr */,
 				1FB813AB2099A228004EC5D7 /* et */,
 				E70ECDD7241C933C00537A46 /* ru-RU */,
+				UKRLOC000002MPDOCUMENTST /* uk */,
 				E7445191241C934C00D9ABD9 /* cs */,
 				E77E5D72241C935100699B5A /* da-DK */,
 			);
@@ -2232,6 +2249,11 @@
 		1F2789691973BEB100EE696A /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
+				AUDIT00003LOCALIZE000005 /* uk */,
+				AUDIT00003LOCALIZE000004 /* hi */,
+				AUDIT00003LOCALIZE000003 /* he */,
+				AUDIT00003LOCALIZE000002 /* fi */,
+				AUDIT00003LOCALIZE000001 /* da */,
 				1FA9196B1E4723A200850517 /* en */,
 				1FCBDF151E536C9F00C0F56B /* sv */,
 				1FCBDF1F1E536CAF00C0F56B /* zh-Hant */,

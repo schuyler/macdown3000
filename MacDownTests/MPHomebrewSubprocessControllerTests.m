@@ -128,77 +128,52 @@
                   @"background queue");
 }
 
-// T3: no lasting retain cycle. The terminationHandler block captures self
-// strongly (deliberately, to keep the controller alive until the task
-// exits), but must break the cycle as its first action -- `task.
-// terminationHandler = nil;` -- so the block (and its captured self) does
-// not outlive a single invocation.
-//
-// NSTask.h does not document that -terminationHandler is cleared after the
-// block is invoked, and empirically it IS cleared (verified separately, via
-// a standalone compiled test program) when NSTask invokes it itself on
-// real process exit -- but that's incidental behavior on this SDK, not a
-// documented contract, and it makes a naive "let the real process exit,
-// then check task.terminationHandler == nil (or that the controller
-// deallocates)" test pass regardless of whether the controller's own
-// cycle-break line is present.
-//
-// To exercise only the controller's own code, this test captures the
-// terminationHandler block into a local synchronously (right after
-// -runWithCompletionHandler: assigns it, before the real background
-// process necessarily exits) and invokes it MANUALLY, exactly as NSTask
-// would. Manual invocation does not go through NSTask's own invoke+clear
-// machinery at all, so `capturedTask.terminationHandler` reflects only
-// what the block's OWN body did to it -- specifically, whether its first
-// statement (`task.terminationHandler = nil;`) ran. This is checked
-// synchronously immediately after the manual call returns, sidestepping
-// any dependency on deallocation timing or NSTask's async internals.
-- (void)testNoRetainCycleControllerDeallocates
+// Completion survives release of the controller and does not depend on a
+// private termination callback or on NSTask's incidental block clearing.
+- (void)testCompletionSurvivesControllerRelease
 {
-    MPHomebrewStubController *controller =
-        [[MPHomebrewStubController alloc] initWithArguments:@[@"marker"]];
-    controller.stubBrewPath = @"/bin/echo";
-
-    // The real background process and our manual invocation below can
-    // both legitimately end up delivering completion (this test cares
-    // about the terminationHandler block's cycle-break behavior, not
-    // about completion being delivered exactly once), so don't fail on
-    // over-fulfillment.
     XCTestExpectation *expectation =
-        [self expectationWithDescription:@"completion handler fires"];
-    expectation.assertForOverFulfill = NO;
+        [self expectationWithDescription:@"completion survives controller release"];
+    __weak MPHomebrewStubController *weakController;
+    __block NSString *capturedOutput = nil;
+    __block BOOL wasMainThread = NO;
+    @autoreleasepool {
+        MPHomebrewStubController *controller =
+            [[MPHomebrewStubController alloc] initWithArguments:@[@"marker"]];
+        controller.stubBrewPath = @"/bin/echo";
+        weakController = controller;
+        [controller runWithCompletionHandler:^(NSString *output) {
+            capturedOutput = output;
+            wasMainThread = NSThread.isMainThread;
+            [expectation fulfill];
+        }];
+    }
+    [self waitForExpectationsWithTimeout:5 handler:nil];
+    XCTAssertEqualObjects(capturedOutput, @"marker\n");
+    XCTAssertTrue(wasMainThread);
+    XCTAssertNil(weakController);
+}
+
+- (void)testOutputLargerThanPipeCapacityCompletesOnMainThread
+{
+    MPHomebrewStubController *controller = [[MPHomebrewStubController alloc]
+        initWithArguments:@[@"BEGIN { for (i=0; i<1048576; i++) printf \"x\"; }"]];
+    controller.stubBrewPath = @"/usr/bin/awk";
+    XCTestExpectation *expectation =
+        [self expectationWithDescription:@"large stdout completes"];
+    __block NSString *capturedOutput = nil;
+    __block BOOL wasMainThread = NO;
     [controller runWithCompletionHandler:^(NSString *output) {
+        capturedOutput = output;
+        wasMainThread = NSThread.isMainThread;
         [expectation fulfill];
     }];
-
-    // Capture synchronously, right after assignment -- before the real
-    // background process necessarily exits and NSTask's own machinery has
-    // a chance to invoke (and auto-clear) it first.
-    void (^capturedTerminationHandler)(NSTask *) =
-        [controller.task.terminationHandler copy];
-    NSTask *task = controller.task;
-
-    XCTAssertNotNil(capturedTerminationHandler,
-                    @"sanity check: -runWithCompletionHandler: should have "
-                    @"assigned a terminationHandler block synchronously");
-
-    // Invoke manually -- this does NOT go through NSTask's own
-    // invoke-then-clear machinery, so `task.terminationHandler` afterward
-    // reflects only the block's own body, i.e. whether the controller's
-    // cycle-break line ran.
-    if (capturedTerminationHandler)
-        capturedTerminationHandler(task);
-
-    XCTAssertNil(task.terminationHandler,
-                @"task.terminationHandler should have been nil'd out by "
-                @"the block's own first statement -- if this is non-nil, "
-                @"the controller's cycle-break line did not run (or was "
-                @"removed), meaning the retain cycle was not broken");
-
-    // Let the real background process (still running independently) and
-    // the block's internal dispatch_async to main both settle, so nothing
-    // dangles after the test returns.
     [self waitForExpectationsWithTimeout:5 handler:nil];
+    // Clean up only this fixture if a regression leaves it blocked in write().
+    if (controller.task.running) [controller.task terminate];
+    XCTAssertEqualObjects(capturedOutput,
+        [@"" stringByPaddingToLength:1048576 withString:@"x" startingAtIndex:0]);
+    XCTAssertTrue(wasMainThread);
 }
 
 @end

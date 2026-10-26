@@ -8,17 +8,17 @@
 "Blockquote" = "Цитата";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символів (без пробілів)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ символ (без пробілів);%@ символи (без пробілів);%@ символів (без пробілів)";
 
 /* Selection counts (Issue #452) */
-"WORDS_SELECTED_PLURAL_STRING" = "%@ виділене слово;%@ виділених слів";
+"WORDS_SELECTED_PLURAL_STRING" = "%@ виділене слово;%@ виділені слова;%@ виділених слів";
 
-"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ виділений символ;%@ виділених символів";
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ виділений символ;%@ виділені символи;%@ виділених символів";
 
-"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ виділений символ (без пробілів);%@ виділених символів (без пробілів)";
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ виділений символ (без пробілів);%@ виділені символи (без пробілів);%@ виділених символів (без пробілів)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символів";
+"CHARACTERS_PLURAL_STRING" = "%@ символ;%@ символи;%@ символів";
 
 /* Comment toolbar button */
 "Comment" = "Коментар";
@@ -73,7 +73,7 @@
 
   Created by Tzu-ping Chung  on 14/7.
   Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "7";
 
 /* Layout toolbar button */
 "Layout" = "Макет";
@@ -145,7 +145,7 @@
 "Untitled" = "Без назви";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ слово;%@ слів";
+"WORDS_PLURAL_STRING" = "%@ слово;%@ слова;%@ слів";
 
 /* Shell utility installation (Issue #38) */
 "Installation Failed" = "Помилка встановлення";
@@ -164,3 +164,9 @@
 "A file already exists at the installation path" = "Файл вже існує за шляхом встановлення";
 "The macdown shell utility has been installed to %@.\n\nTo use it from Terminal, add this line to your shell configuration file (~/.zshrc or ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"" = "Shell-утиліту macdown встановлено в %@.\n\nЩоб використовувати її з Терміналу, додайте цей рядок до файлу конфігурації shell (~/.zshrc або ~/.bash_profile):\n\n    export PATH=\"$HOME/.local/bin:$PATH\"";
 
+
+/* External file change detection (Issue #290) */
+"File Modified Externally" = "Файл змінено ззовні";
+"This file has been changed by another application. Do you want to discard your changes?" = "Цей файл було змінено іншою програмою. Бажаєте відкинути свої зміни?";
+"Discard" = "Відкинути";
+"Keep" = "Залишити";

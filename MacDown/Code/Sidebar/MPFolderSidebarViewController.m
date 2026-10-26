@@ -333,7 +333,7 @@
     if (row < 0)
         return NO;
     MPFileNode *node = [self.outlineView itemAtRow:row];
-    if (!node || ![MPFileNode isMarkdownFileURL:node.URL])
+    if (!node || node.isDirectory || ![MPFileNode isMarkdownFileURL:node.URL])
         return NO;
     [self.sidebarDelegate folderSidebar:self
                      didActivateFileURL:node.resolvedURL];

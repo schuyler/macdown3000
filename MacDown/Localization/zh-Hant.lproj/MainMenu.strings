@@ -238,7 +238,7 @@
 "R4o-n2-Eq4.title" = "放大";
 
 /* Class = "NSMenuItem"; title = "Strong"; ObjectID = "Rb9-MG-IjX"; */
-"Rb9-MG-IjX.title" = "粗替";
+"Rb9-MG-IjX.title" = "粗體";
 
 /* Class = "NSMenuItem"; title = "Check Spelling While Typing"; ObjectID = "rbD-Rh-wIN"; */
 "rbD-Rh-wIN.title" = "在輸入時同步檢查拼字";

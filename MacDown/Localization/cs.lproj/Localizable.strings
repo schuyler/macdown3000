@@ -8,17 +8,17 @@
 "Blockquote" = "Citace";
 
 /* (No Comment) */
-"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ znak (bez mezer);%@ znaků (bez mezer)";
+"CHARACTERS_NO_SPACES_PLURAL_STRING" = "%@ znak (bez mezer);%@ znaky (bez mezer);%@ znaků (bez mezer)";
 
 /* Selection counts (Issue #452) */
-"WORDS_SELECTED_PLURAL_STRING" = "%@ vybrané slovo;%@ vybraných slov";
+"WORDS_SELECTED_PLURAL_STRING" = "%@ vybrané slovo;%@ vybraná slova;%@ vybraných slov";
 
-"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ vybraný znak;%@ vybraných znaků";
+"CHARACTERS_SELECTED_PLURAL_STRING" = "%@ vybraný znak;%@ vybrané znaky;%@ vybraných znaků";
 
-"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ vybraný znak (bez mezer);%@ vybraných znaků (bez mezer)";
+"CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING" = "%@ vybraný znak (bez mezer);%@ vybrané znaky (bez mezer);%@ vybraných znaků (bez mezer)";
 
 /* (No Comment) */
-"CHARACTERS_PLURAL_STRING" = "%@ znak;%@ znaků";
+"CHARACTERS_PLURAL_STRING" = "%@ znak;%@ znaky;%@ znaků";
 
 /* Comment toolbar button */
 "Comment" = "Komentář";
@@ -73,7 +73,7 @@
 
   Created by Tzu-ping Chung  on 14/7.
   Copyright (c) 2014 Tzu-ping Chung . All rights reserved. */
-"JJ_PLURAL_FORM_RULE" = "1";
+"JJ_PLURAL_FORM_RULE" = "8";
 
 /* Layout toolbar button */
 "Layout" = "Vzhled";
@@ -145,7 +145,7 @@
 "Untitled" = "Bez názvu";
 
 /* (No Comment) */
-"WORDS_PLURAL_STRING" = "%@ slovo;%@ slov";
+"WORDS_PLURAL_STRING" = "%@ slovo;%@ slova;%@ slov";
 
 /* External file change detection (Issue #290) */
 "File Modified Externally" = "Soubor byl externě změněn";
