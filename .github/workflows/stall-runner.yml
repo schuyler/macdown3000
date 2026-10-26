@@ -1,0 +1,20 @@
+name: Stall Diagnostic Script Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stall-runner:
+    name: Stall Diagnostic Script Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify failed and empty test runs fail the diagnostic
+      run: python3 MacDownTests/BuildTools/stall_status_tests.py
