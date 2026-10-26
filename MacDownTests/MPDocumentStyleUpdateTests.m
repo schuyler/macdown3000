@@ -8,6 +8,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <WebKit/WebKit.h>
 #import "MPPreferences.h"
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
@@ -550,6 +551,77 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
                   @"Bundled print.css should still be linked");
     XCTAssertFalse([html containsString:@"print.css?t="],
                    @"Untracked bundled CSS must not be cache-busted");
+}
+
+
+#pragma mark - Heading Line Height (Issue #575)
+
+/**
+ * Every bundled preview style should give wrapped headings enough line height
+ * that descenders on one line don't run into the next.
+ * Issue #575: GitHub.css inherited a fixed 1.4em body line height, shorter
+ * than its enlarged h1 and h2 text.
+ */
+- (void)testBundledStylesGiveHeadingsReadableLineHeight
+{
+    NSArray<NSString *> *paths =
+        [[NSBundle mainBundle] pathsForResourcesOfType:kMPStyleFileExtension
+                                           inDirectory:kMPStylesDirectoryName];
+    XCTAssertGreaterThan(paths.count, 0u, @"Should find bundled preview styles");
+
+    for (NSString *path in paths)
+    {
+        NSString *name = path.lastPathComponent;
+        NSString *css = MPReadFileOfPath(path);
+        XCTAssertGreaterThan(css.length, 0u, @"%@ should be readable", name);
+
+        NSMutableString *html = [NSMutableString stringWithFormat:
+            @"<html><head><style>%@</style></head><body>", css];
+        for (NSUInteger level = 1; level <= 6; level++)
+            [html appendFormat:@"<h%lu>Lorem ipsum dolor sit amet, consectetur "
+                                @"adipiscing elit, sed do eiusmod tempor</h%lu>",
+                               (unsigned long)level, (unsigned long)level];
+        [html appendString:@"</body></html>"];
+
+        WebView *webView =
+            [[WebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 600)];
+        [webView.mainFrame loadHTMLString:html baseURL:nil];
+        NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:5.0];
+        while ((webView.isLoading || !webView.mainFrame.DOMDocument.body)
+               && deadline.timeIntervalSinceNow > 0)
+        {
+            [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+        }
+
+        NSString *json = [webView stringByEvaluatingJavaScriptFromString:
+            @"JSON.stringify(Array.prototype.map.call("
+             "document.querySelectorAll('h1,h2,h3,h4,h5,h6'), function (h) {"
+             "var s = getComputedStyle(h);"
+             "return {tag: h.tagName, font: parseFloat(s.fontSize),"
+             "line: parseFloat(s.lineHeight)};}))"];
+        NSArray<NSDictionary *> *metrics = [NSJSONSerialization
+            JSONObjectWithData:[json dataUsingEncoding:NSUTF8StringEncoding]
+                       options:0 error:NULL];
+        XCTAssertEqual(metrics.count, 6u,
+                       @"%@ should render six headings", name);
+
+        for (NSDictionary *metric in metrics)
+        {
+            // JSON.stringify writes NaN (a computed "normal") as null.
+            if (![metric[@"line"] isKindOfClass:[NSNumber class]])
+            {
+                XCTFail(@"%@ %@: line height is not a length", name, metric[@"tag"]);
+                continue;
+            }
+            double font = [metric[@"font"] doubleValue];
+            double line = [metric[@"line"] doubleValue];
+            XCTAssertGreaterThanOrEqual(line, font * 1.1,
+                @"%@ %@: line height %.2fpx is too tight for %.2fpx text",
+                name, metric[@"tag"], line, font);
+        }
+        [webView close];
+    }
 }
 
 @end
