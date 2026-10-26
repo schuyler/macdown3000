@@ -2,7 +2,7 @@ body {
   font-family: var(--fontStack-sansSerif, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji");
   font-size: 16px;
   line-height: 1.5;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 body::before {
   display: table;
@@ -47,7 +47,7 @@ body details {
   margin-bottom: var(--base-size-16);
 }
 body hr {
-  height: 0.25em;
+  height: 1px;
   padding: 0;
   margin: var(--base-size-24) 0;
   background-color: var(--borderColor-default, var(--color-border-default));
@@ -212,6 +212,9 @@ body dl dt {
   font-style: italic;
   font-weight: var(--base-text-weight-semibold, 600);
 }
+body dl dt + dt {
+  margin-top: 0;
+}
 body dl dd {
   padding: 0 var(--base-size-16);
   margin-bottom: var(--base-size-16);
@@ -219,9 +222,10 @@ body dl dd {
 
 body table {
   display: block;
+  width: 100%;
   width: max-content;
-  min-width: 100%;
-  overflow-x: auto;
+  max-width: 100%;
+  overflow: auto;
   font-variant: tabular-nums;
 }
 body table th {
@@ -356,7 +360,7 @@ body samp {
   font-size: 85%;
 }
 body pre {
-  word-wrap: normal;
+  overflow-wrap: normal;
 }
 body pre code {
   font-size: 100%;
@@ -393,7 +397,7 @@ body pre tt {
   margin: 0;
   overflow: visible;
   line-height: inherit;
-  word-wrap: normal;
+  overflow-wrap: normal;
   background-color: transparent;
   border: 0;
 }
