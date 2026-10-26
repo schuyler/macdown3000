@@ -290,4 +290,31 @@
         @"Expected replacementRange.length == 0.");
 }
 
+// Use the real AppKit text storage: refusing completion must not mutate it.
+- (void)testOrderedListCompletionRefusesAnUnrepresentableNextNumber
+{
+    for (NSString *number in @[[NSString stringWithFormat:@"%ld", (long)NSIntegerMax],
+                               @"999999999999999999999999999999"]) {
+        NSTextView *view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 500, 300)];
+        NSString *source = [number stringByAppendingString:@". item"];
+        view.string = source;
+        view.selectedRange = NSMakeRange(source.length, 0);
+        XCTAssertFalse([view completeNextListItem:YES]);
+        XCTAssertEqualObjects(view.string, source);
+        XCTAssertEqual(view.selectedRange.location, source.length);
+    }
+}
+
+- (void)testOrderedListCompletionCanReachTheLargestRepresentableNumber
+{
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 500, 300)];
+    NSString *source = [NSString stringWithFormat:@"%ld. item", (long)(NSIntegerMax - 1)];
+    view.string = source;
+    view.selectedRange = NSMakeRange(source.length, 0);
+    XCTAssertTrue([view completeNextListItem:YES]);
+    NSString *expected = [source stringByAppendingFormat:@"\n%ld. ", (long)NSIntegerMax];
+    XCTAssertEqualObjects(view.string, expected);
+    XCTAssertEqual(view.selectedRange.location, expected.length);
+}
+
 @end

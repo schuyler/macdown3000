@@ -8,8 +8,39 @@
 
 #import <XCTest/XCTest.h>
 #import "MPUtilities.h"
+#import "MPEditorView.h"
+#import "NSTextView+Autocomplete.h"
 #import "FileURLInlining.h"
 #import "NSPasteboard+Types.h"
+
+// A compact layout gives the emoji one glyph rather than retaining a null
+// placeholder. This tests the character/glyph contract independent of fonts.
+@interface MPTrailingCompactLayoutManager : NSLayoutManager
+@end
+@implementation MPTrailingCompactLayoutManager
+- (NSRange)glyphRangeForCharacterRange:(NSRange)range actualCharacterRange:(NSRangePointer)actual
+{
+    if (actual) *actual = range;
+    return NSMakeRange(range.location > 1 ? range.location - 1 : 0, range.length);
+}
+- (NSRect)usedRectForTextContainer:(NSTextContainer *)container
+{
+    return NSMakeRect(0, 0, 100, 80);
+}
+- (NSRect)boundingRectForGlyphRange:(NSRange)range inTextContainer:(NSTextContainer *)container
+{
+    // "😀\n\n\n" has four compact glyphs. Clamp at the last glyph.
+    NSUInteger count = range.location < 4 ? MIN(range.length, 4 - range.location) : 0;
+    return NSMakeRect(0, range.location * 20, 100, count * 20);
+}
+@end
+
+@interface MPTrailingCompactEditorView : MPEditorView
+@property (strong) NSLayoutManager *compactLayoutManager;
+@end
+@implementation MPTrailingCompactEditorView
+- (NSLayoutManager *)layoutManager { return self.compactLayoutManager ?: [super layoutManager]; }
+@end
 
 @interface MPUtilityTests : XCTestCase
 @property (strong) NSString *tempDir;
@@ -675,6 +706,92 @@
                           @"Themes should be sorted alphabetically");
 }
 
+- (void)testUnindentPreservesCursorInsideRemovedIndent {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"    content";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view unindentSelectedLines];
+    XCTAssertEqualObjects(view.string, @"content");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testUnindentRemovesWhitespaceOnlyLineAndPreservesSelection {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"    \n    text";
+    view.selectedRange = NSMakeRange(0, view.string.length);
+    [view unindentSelectedLines];
+    XCTAssertEqualObjects(view.string, @"\ntext");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, view.string.length)));
+}
+
+- (void)testHeaderRemovalKeepsCursorInsideMarkerInBounds {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"### heading";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view makeHeaderForSelectedLinesWithLevel:0];
+    XCTAssertEqualObjects(view.string, @"heading");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testOrderedBlockToggleRemovesEntireMarkerAndPreservesSelectedText {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"12. first\n123. second";
+    view.selectedRange = NSMakeRange(0, view.string.length);
+    [view toggleBlockWithPattern:@"^[0-9]+\\.[ \t]+" prefix:@"1. "];
+    XCTAssertEqualObjects(view.string, @"first\nsecond");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, view.string.length)));
+}
+
+- (void)testBlockToggleRemovesEmptyMarkerWithCursorInsideMarker {
+    NSTextView *view = [[NSTextView alloc] initWithFrame:NSZeroRect];
+    view.string = @"12. ";
+    view.selectedRange = NSMakeRange(0, 0);
+    [view toggleBlockWithPattern:@"^[0-9]+\\.[ \t]+" prefix:@"1. "];
+    XCTAssertEqualObjects(view.string, @"");
+    XCTAssertTrue(NSEqualRanges(view.selectedRange, NSMakeRange(0, 0)));
+}
+
+- (void)testPastingURLPreservesInlineMarkdownAndEncodesURLParenthesis {
+    NSPasteboard *board = NSPasteboard.generalPasteboard;
+    NSMutableArray *savedItems = [NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy = [[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data = [item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [savedItems addObject:copy];
+    }
+    @try {
+        [board clearContents];
+        [board setString:@"https://example.com/a)" forType:NSPasteboardTypeString];
+        MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+        view.string = @"![logo](logo.png)";
+        view.selectedRange = NSMakeRange(0, view.string.length);
+        [view paste:nil];
+        XCTAssertEqualObjects(view.string, @"[![logo](logo.png)](https://example.com/a%29)");
+    } @finally {
+        [board clearContents];
+        if (savedItems.count) [board writeObjects:savedItems];
+    }
+}
+
+- (void)testEditorGeometryMeasuresTrailingWhitespaceAfterSurrogatePairs {
+    MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 300)];
+    view.scrollsPastEnd = YES;
+    view.string = @"😀👨‍👩‍👧‍👦\n\n\n";
+    [view.layoutManager ensureLayoutForTextContainer:view.textContainer];
+    NSRange trailingCharacters = [view.string rangeOfString:@"\n\n\n"];
+    NSRange trailingGlyphs = [view.layoutManager glyphRangeForCharacterRange:trailingCharacters
+                                                     actualCharacterRange:NULL];
+    NSRect trailingRect = [view.layoutManager boundingRectForGlyphRange:trailingGlyphs
+                                                       inTextContainer:view.textContainer];
+    [view performSelector:NSSelectorFromString(@"updateContentGeometry")];
+    XCTAssertGreaterThan(NSHeight(trailingRect), 0.0);
+    XCTAssertEqualWithAccuracy([[view valueForKey:@"trailingHeight"] doubleValue],
+                              NSHeight(trailingRect), 0.01);
+}
+
 - (void)testEmptyPasteboardDoesNotProduceURL {
     NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
     [pasteboard clearContents];
@@ -701,6 +818,16 @@
     XCTAssertNil(MPGetObjectFromJavaScript(@"var value = 1;", @"missing"));
     XCTAssertNil(MPGetObjectFromJavaScript(@"var value = function() {};", @"value"));
     XCTAssertNil(MPGetObjectFromJavaScript(@"var value = {}; value.self = value;", @"value"));
+}
+
+- (void)testTrailingWhitespaceHeightUsesCompactGlyphCoordinates
+{
+    MPTrailingCompactEditorView *view = [[MPTrailingCompactEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 300)];
+    view.string = @"😀\n\n\n";
+    view.compactLayoutManager = [[MPTrailingCompactLayoutManager alloc] init];
+    view.scrollsPastEnd = YES;
+    [view performSelector:NSSelectorFromString(@"updateContentGeometry")];
+    XCTAssertEqualWithAccuracy([[view valueForKey:@"trailingHeight"] doubleValue], 60.0, 0.01);
 }
 
 @end

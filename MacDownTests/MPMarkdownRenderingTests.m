@@ -10,6 +10,14 @@
 #import <hoedown/document.h>
 #import "MPRendererTestHelpers.h"
 #import "hoedown_html_patch.h"
+#import "MPDocument.h"
+#import "MPPreferences.h"
+#import "MPEditorView.h"
+
+@interface MPDocument (UnderlineTesting)
+@property (nonatomic, weak) MPEditorView *editor;
+- (IBAction)toggleUnderline:(id)sender;
+@end
 
 // Uncomment to regenerate golden files
 // #define REGENERATE_GOLDEN_FILES
@@ -1328,6 +1336,55 @@
                   @"Got: %@", html);
 }
 
+- (void)assertUnderlineActionWithExtensionEnabled:(BOOL)enabled
+{
+    MPDocument *document = [[MPDocument alloc] init];
+    MPEditorView *editor = [[MPEditorView alloc] initWithFrame:NSMakeRect(0, 0, 400, 200)];
+    document.editor = editor;
+    BOOL previous = document.preferences.extensionUnderline;
+    @try {
+        document.preferences.extensionUnderline = enabled;
+        editor.string = @"avant azerqzs après";
+        editor.selectedRange = NSMakeRange(6, 7);
+        [document toggleUnderline:nil];
+        XCTAssertEqualObjects(editor.string, enabled
+                              ? @"avant _azerqzs_ après"
+                              : @"avant <u>azerqzs</u> après");
+        XCTAssertEqualObjects([editor.string substringWithRange:editor.selectedRange], @"azerqzs");
+        NSString *html = [self renderMarkdown:editor.string
+                               withExtensions:enabled ? HOEDOWN_EXT_UNDERLINE : 0
+                                rendererFlags:0];
+        XCTAssertTrue([html containsString:@"<u>azerqzs</u>"], @"%@", html);
+        XCTAssertFalse([html containsString:@"<em>azerqzs</em>"], @"%@", html);
+        [document toggleUnderline:nil];
+        XCTAssertEqualObjects(editor.string, @"avant azerqzs après");
+        XCTAssertTrue(NSEqualRanges(editor.selectedRange, NSMakeRange(6, 7)));
+    } @finally {
+        document.preferences.extensionUnderline = previous;
+        [document close];
+    }
+}
+
+- (void)testUnderlineActionWithoutExtensionRendersUnderlineAndTogglesOff
+{
+    [self assertUnderlineActionWithExtensionEnabled:NO];
+}
+
+- (void)testUnderlineActionWithExtensionRendersUnderlineAndTogglesOff
+{
+    [self assertUnderlineActionWithExtensionEnabled:YES];
+}
+
+- (void)testAsterisksRemainItalicWithUnderlineExtension
+{
+    for (NSNumber *enabled in @[@NO, @YES]) {
+        NSString *html = [self renderMarkdown:@"*azerqzs*"
+                               withExtensions:enabled.boolValue ? HOEDOWN_EXT_UNDERLINE : 0
+                                rendererFlags:0];
+        XCTAssertTrue([html containsString:@"<em>azerqzs</em>"], @"%@", html);
+    }
+}
+
 - (void)testEmptyHeadingWithTOCDoesNotCrash
 {
     // The TOC header renderer has the same buffer-creation pattern and must
@@ -1338,6 +1395,43 @@
                             rendererFlags:0];
     XCTAssertNotNil(html,
                   @"Empty heading with TOC enabled must render without crashing.");
+}
+
+- (void)testPastingURLPreservesRenderedInlineMarkdown
+{
+    NSPasteboard *board = NSPasteboard.generalPasteboard;
+    NSMutableArray *savedItems = [NSMutableArray array];
+    for (NSPasteboardItem *item in board.pasteboardItems) {
+        NSPasteboardItem *copy = [[NSPasteboardItem alloc] init];
+        for (NSString *type in item.types) {
+            NSData *data = [item dataForType:type];
+            if (data) [copy setData:data forType:type];
+        }
+        [savedItems addObject:copy];
+    }
+    @try {
+        [board clearContents];
+        [board setString:@"https://example.com/a)" forType:NSPasteboardTypeString];
+        NSArray *selections = @[@"![logo](logo.png)", @"my\\_var", @"`my\\_var`", @"**bold**"];
+        for (NSString *selection in selections) {
+            MPEditorView *view = [[MPEditorView alloc] initWithFrame:NSZeroRect];
+            view.string = selection;
+            view.selectedRange = NSMakeRange(0, selection.length);
+            [view paste:nil];
+            NSString *expected = [NSString stringWithFormat:@"[%@](https://example.com/a%%29)", selection];
+            XCTAssertEqualObjects(view.string, expected);
+            NSString *html = [self renderMarkdown:view.string withExtensions:0 rendererFlags:0];
+            NSString *selectionHTML = [self renderMarkdown:selection withExtensions:0 rendererFlags:0];
+            NSString *contents = [selectionHTML stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+            XCTAssertTrue([contents hasPrefix:@"<p>"] && [contents hasSuffix:@"</p>"]);
+            contents = [contents substringWithRange:NSMakeRange(3, contents.length - 7)];
+            NSString *expectedAnchor = [NSString stringWithFormat:@"<a href=\"https://example.com/a%%29\">%@</a>", contents];
+            XCTAssertTrue([html containsString:expectedAnchor], @"%@ rendered as %@", selection, html);
+        }
+    } @finally {
+        [board clearContents];
+        if (savedItems.count) [board writeObjects:savedItems];
+    }
 }
 
 @end
