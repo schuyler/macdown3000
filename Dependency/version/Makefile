@@ -1,9 +1,11 @@
 ALL: version.h
 
-version.h:
+version.h: FORCE
 	bash ../../Tools/generate_version_header.sh
 
-.PHONY: install clean distclean
+.PHONY: install clean distclean FORCE
+
+FORCE:
 
 install: ALL
 

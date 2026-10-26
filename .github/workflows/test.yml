@@ -92,3 +92,16 @@ jobs:
     # the Sparkle framework binary skip when the pod is absent, as it is here.
     - name: Run appcast script tests
       run: python3 Tools/test_update_appcast.py
+
+  version-scripts:
+    name: Version Script Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify Git-derived version headers
+      run: python3 MacDownTests/BuildTools/version_tests.py

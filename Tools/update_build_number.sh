@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$CI" == "true" ]; then
+if [ "${CI:-}" == "true" ]; then
     echo "Skipping build number update script under CI."
     exit 0
 fi
@@ -16,9 +16,7 @@ fi
 set -o errexit
 set -o nounset
 
-pushd `dirname $0` > /dev/null
-source $(pwd -P)/utils.sh
-popd > /dev/null
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/utils.sh"
 
 BUILD_VERSION=$(get_build_version)
 SHORT_VERSION=$(get_short_version)
@@ -31,13 +29,17 @@ BUNDLE_VERSION=$(get_bundle_version)
 # Run Script build phases that operate on product files of the target that defines them should use the value of this build setting [TARGET_BUILD_DIR]. But Run Script build phases that operate on product files of other targets should use “BUILT_PRODUCTS_DIR” instead.
 INFO_PLIST="${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
 
-# A clean build can run this before the processed plist has the version keys,
-# so add each key when setting it fails.
+# All three values may be absent in a fresh processed Info.plist. Try Set
+# first, then Add; missing files and failed writes still stop the build.
+[[ -f "$INFO_PLIST" ]] || { echo "Processed Info.plist missing: $INFO_PLIST" >&2; exit 1; }
 set_plist_string() {
-    /usr/libexec/PlistBuddy -c "Set :$1 $2" "$INFO_PLIST" 2>/dev/null ||
-        /usr/libexec/PlistBuddy -c "Add :$1 string $2" "$INFO_PLIST"
+    local key="$1" value="$2"
+    # PlistBuddy parses its own command language after shell argument quoting.
+    value=${value//\\/\\\\}
+    value=${value//\"/\\\"}
+    /usr/libexec/PlistBuddy -c "Set :$key \"$value\"" "$INFO_PLIST" 2>/dev/null ||
+        /usr/libexec/PlistBuddy -c "Add :$key string \"$value\"" "$INFO_PLIST"
 }
-
 set_plist_string CFBundleBuildVersion "$BUILD_VERSION"
 set_plist_string CFBundleShortVersionString "$SHORT_VERSION"
 set_plist_string CFBundleVersion "$BUNDLE_VERSION"
