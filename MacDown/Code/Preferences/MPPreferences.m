@@ -38,13 +38,17 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 @interface MPPreferences ()
 @property (strong) NSUserDefaults *migrationDefaults;
 @property (copy) NSString *migrationDomainName;
+@property (copy) NSSet<NSString *> *migrationProtectedKeys;
+@property (copy) NSDictionary *migrationRegistrationBefore;
+@property (copy) NSDictionary *migrationRegistrationFallbacks;
+@property (strong) id migrationChangesObserver;
 @end
 
 @implementation MPPreferences
 
 - (instancetype)init
 {
-    return [self initWithDefaults:nil domain:kMPApplicationSuiteName legacyReader:nil];
+    return [self initWithDefaults:nil domain:NSBundle.mainBundle.bundleIdentifier legacyReader:nil];
 }
 
 - (instancetype)initWithDefaults:(NSUserDefaults *)defaults domain:(NSString *)domain
@@ -62,7 +66,7 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         [self finishLoadingPreferences];
     else
     {
-        [self.userDefaults registerDefaults:[[self class] pendingMigrationDefaults]];
+        [self installMigrationFallbacks];
         [self beginLegacyMigrationWithReader:reader];
     }
     return self;
@@ -75,7 +79,76 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
 
 - (NSString *)preferencesDomainName
 {
-    return self.migrationDomainName;
+    return self.migrationDomainName ?: NSBundle.mainBundle.bundleIdentifier;
+}
+
+- (void)dealloc
+{
+    if (_migrationChangesObserver)
+        [NSNotificationCenter.defaultCenter removeObserver:_migrationChangesObserver];
+}
+
+- (NSSet<NSString *> *)explicitlyClearedMigrationKeys
+{
+    NSMutableSet *keys = [NSMutableSet setWithArray:
+        [self.userDefaults arrayForKey:@"MPPendingLegacyPreferenceClears"] ?: @[]];
+    NSDictionary *current = [self.userDefaults persistentDomainForName:self.preferencesDomainName];
+    // Once this installation has been initialized, an absent theme means the
+    // existing "no theme" choice; it must not expose an interim fallback.
+    if (current[@"firstVersionInstalled"])
+        for (NSString *key in @[@"editorStyleName", @"htmlStyleName"])
+            if (!current[key]) [keys addObject:key];
+    return keys;
+}
+
+- (void)installMigrationFallbacks
+{
+    NSUserDefaults *defaults = self.userDefaults;
+    self.migrationRegistrationBefore = [defaults volatileDomainForName:NSRegistrationDomain];
+    NSMutableDictionary *fallbacks = [[[self class] pendingMigrationDefaults] mutableCopy];
+    [fallbacks removeObjectsForKeys:self.explicitlyClearedMigrationKeys.allObjects];
+    self.migrationRegistrationFallbacks = fallbacks;
+    [defaults registerDefaults:fallbacks];
+    __weak MPPreferences *weakSelf = self;
+    self.migrationChangesObserver = [NSNotificationCenter.defaultCenter
+        addObserverForName:PAPreferencesDidChangeNotification object:self queue:nil
+        usingBlock:^(NSNotification *notification) {
+            MPPreferences *preferences = weakSelf;
+            if (!preferences) return;
+            NSString *key = notification.userInfo[PAPreferencesChangedPropertyKey];
+            if (!key) return;
+            NSMutableSet *cleared = [NSMutableSet setWithArray:
+                [defaults arrayForKey:@"MPPendingLegacyPreferenceClears"] ?: @[]];
+            NSDictionary *persisted = [defaults persistentDomainForName:preferences.preferencesDomainName];
+            if (persisted[key]) [cleared removeObject:key];
+            else {
+                [cleared addObject:key];
+                // A nil choice must become visible immediately, even while a
+                // stalled read is still using the remaining registered defaults.
+                [preferences restoreMigrationRegistrationForKeys:@[key]];
+            }
+            if (cleared.count) [defaults setObject:cleared.allObjects forKey:@"MPPendingLegacyPreferenceClears"];
+            else [defaults removeObjectForKey:@"MPPendingLegacyPreferenceClears"];
+        }];
+}
+
+- (void)restoreMigrationRegistrationForKeys:(NSArray<NSString *> *)keys
+{
+    NSMutableDictionary *current = [[self.userDefaults volatileDomainForName:NSRegistrationDomain] mutableCopy];
+    for (NSString *key in keys) {
+        id fallback = self.migrationRegistrationFallbacks[key];
+        if (!fallback || ![current[key] isEqual:fallback]) continue;
+        // Preserve registrations installed by another component during the read.
+        id previous = self.migrationRegistrationBefore[key];
+        if (previous) current[key] = previous;
+        else [current removeObjectForKey:key];
+    }
+    [self.userDefaults setVolatileDomain:current forName:NSRegistrationDomain];
+}
+
+- (BOOL)mayApplyMigrationDefaultForKey:(NSString *)key
+{
+    return ![self.migrationProtectedKeys containsObject:key];
 }
 
 - (void)finishLoadingPreferences
@@ -172,10 +245,23 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
             readLegacyDomain:@"com.uranusjr.macdown" fromDefaults:defaults timeout:2.0];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!legacy) return; // Fallbacks remain usable; retry next launch.
-            [[self class] applyLegacyPreferences:legacy toDefaults:defaults
+            NSDictionary *explicitValues = [defaults persistentDomainForName:self.preferencesDomainName];
+            NSMutableSet *protected = [NSMutableSet setWithArray:explicitValues.allKeys ?: @[]];
+            [protected unionSet:self.explicitlyClearedMigrationKeys];
+            self.migrationProtectedKeys = protected;
+            NSMutableDictionary *imported = [legacy mutableCopy];
+            [imported removeObjectsForKeys:protected.allObjects];
+            [[self class] applyLegacyPreferences:imported toDefaults:defaults
                                           domain:self.preferencesDomainName];
+            [NSNotificationCenter.defaultCenter removeObserver:self.migrationChangesObserver];
+            self.migrationChangesObserver = nil;
+            // Remove interim registrations first, so the ordinary missing-value
+            // initialization can persist real defaults for the next launch.
+            [self restoreMigrationRegistrationForKeys:self.migrationRegistrationFallbacks.allKeys];
             [defaults setBool:YES forKey:@"MPDidMigrateFromLegacyBundleIdentifier"];
-            [self finishLoadingPreferences];
+            @try { [self finishLoadingPreferences]; }
+            @finally { self.migrationProtectedKeys = nil; }
+            [defaults removeObjectForKey:@"MPPendingLegacyPreferenceClears"];
         });
     });
 }
@@ -417,7 +503,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     NSDictionary *existing = [self.userDefaults persistentDomainForName:self.preferencesDomainName];
     NSDictionary *defaults = [[self class] freshInstallationDefaults];
     for (NSString *key in defaults)
-        if (!existing[key]) [self.userDefaults setObject:defaults[key] forKey:key];
+        if (!existing[key] && [self mayApplyMigrationDefaultForKey:key])
+            [self.userDefaults setObject:defaults[key] forKey:key];
 }
 
 /** Load default preferences when the app launches.
@@ -522,14 +609,22 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // and should be OFF by default.
     if (currentVersion < 1)
     {
-        [defaults setBool:NO forKey:@"editorAutomaticDashSubstitutionEnabled"];
-        [defaults setBool:NO forKey:@"editorAutomaticQuoteSubstitutionEnabled"];
-        [defaults setBool:NO forKey:@"editorAutomaticTextReplacementEnabled"];
-        [defaults setBool:NO forKey:@"editorAutomaticSpellingCorrectionEnabled"];
-        [defaults setBool:NO forKey:@"editorSmartInsertDeleteEnabled"];
-        [defaults setBool:NO forKey:@"editorAutomaticDataDetectionEnabled"];
-        [defaults setBool:NO forKey:@"editorContinuousSpellCheckingEnabled"];
-        [defaults setBool:NO forKey:@"editorGrammarCheckingEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutomaticDashSubstitutionEnabled"])
+            [defaults setBool:NO forKey:@"editorAutomaticDashSubstitutionEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutomaticQuoteSubstitutionEnabled"])
+            [defaults setBool:NO forKey:@"editorAutomaticQuoteSubstitutionEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutomaticTextReplacementEnabled"])
+            [defaults setBool:NO forKey:@"editorAutomaticTextReplacementEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutomaticSpellingCorrectionEnabled"])
+            [defaults setBool:NO forKey:@"editorAutomaticSpellingCorrectionEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorSmartInsertDeleteEnabled"])
+            [defaults setBool:NO forKey:@"editorSmartInsertDeleteEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutomaticDataDetectionEnabled"])
+            [defaults setBool:NO forKey:@"editorAutomaticDataDetectionEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorContinuousSpellCheckingEnabled"])
+            [defaults setBool:NO forKey:@"editorContinuousSpellCheckingEnabled"];
+        if ([self mayApplyMigrationDefaultForKey:@"editorGrammarCheckingEnabled"])
+            [defaults setBool:NO forKey:@"editorGrammarCheckingEnabled"];
         // Also set legacy flag for backward compatibility detection
         [defaults setBool:YES forKey:@"MPDidApplySubstitutionDefaultsFix"];
     }
@@ -538,7 +633,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // Enable checkbox/task list support by default.
     if (currentVersion < 2)
     {
-        self.htmlTaskList = YES;
+        if ([self mayApplyMigrationDefaultForKey:@"htmlTaskList"])
+            self.htmlTaskList = YES;
         // Also set legacy flag for backward compatibility detection
         [defaults setBool:YES forKey:@"MPDidApplyTaskListDefaultFix"];
     }
@@ -548,8 +644,10 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // Also enable front matter detection to hide YAML front matter (Issue #307).
     if (currentVersion < 3)
     {
-        self.extensionIntraEmphasis = NO;
-        self.htmlDetectFrontMatter = YES;
+        if ([self mayApplyMigrationDefaultForKey:@"extensionIntraEmphasis"])
+            self.extensionIntraEmphasis = NO;
+        if ([self mayApplyMigrationDefaultForKey:@"htmlDetectFrontMatter"])
+            self.htmlDetectFrontMatter = YES;
     }
 
     // Migration Version 4: Clear stale split view autosave (Issue #309)
@@ -566,7 +664,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // Ensure existing users get editorAutoSave = YES to preserve existing behavior.
     if (currentVersion < 5)
     {
-        self.editorAutoSave = YES;
+        if ([self mayApplyMigrationDefaultForKey:@"editorAutoSave"])
+            self.editorAutoSave = YES;
     }
 
     // Migration Version 6: Document zoom level default
@@ -576,7 +675,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     // preview on first launch after upgrade.
     if (currentVersion < 6)
     {
-        self.documentZoomLevel = 1.0;
+        if ([self mayApplyMigrationDefaultForKey:@"documentZoomLevel"])
+            self.documentZoomLevel = 1.0;
     }
 
     // Update to current version
