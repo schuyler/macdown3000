@@ -87,6 +87,21 @@ static NSString * const kMPTestCDNBase =
     XCTAssertTrue([result.path hasSuffix:@"jax/output/HTML-CSS/jax.js"]);
 }
 
+- (void)testPathOutsideMathJaxDirectoryPassesThroughToCDN
+{
+    // Both resolve to Resources/MathJax/../../Info.plist, the app's
+    // Contents/Info.plist, which exists in the bundle but outside MathJax/.
+    for (NSString *suffix in @[@"..%2F..%2FInfo.plist", @"../../Info.plist"])
+    {
+        NSURL *result = [self resolvedURLForSuffix:suffix];
+
+        XCTAssertFalse(result.isFileURL,
+                       @"%@ must not be redirected outside the MathJax "
+                       @"directory, got %@", suffix, result);
+        XCTAssertEqualObjects(result.host, @"cdnjs.cloudflare.com");
+    }
+}
+
 - (void)testMathJaxLoaderStillRedirectsWithConfigQuery
 {
     // Regression guard for the behaviour the generalised redirect replaces.

@@ -1825,8 +1825,13 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
             NSString *subpath = [url.path substringFromIndex:prefix.length];
             NSURL *mathJaxDir =
                 [[NSBundle mainBundle].resourceURL URLByAppendingPathComponent:@"MathJax"];
-            NSURL *local = [mathJaxDir URLByAppendingPathComponent:subpath];
-            if (subpath.length &&
+            NSURL *local = [mathJaxDir URLByAppendingPathComponent:subpath]
+                .URLByStandardizingPath;
+            // NSURL.path decodes "%2F", so a "..%2F" in the request path
+            // becomes "../" here. Only serve files that stay under MathJax/.
+            NSString *dirPath = [mathJaxDir.URLByStandardizingPath.path
+                                 stringByAppendingString:@"/"];
+            if (subpath.length && [local.path hasPrefix:dirPath] &&
                 [[NSFileManager defaultManager] fileExistsAtPath:local.path])
             {
                 request = [NSURLRequest requestWithURL:local];

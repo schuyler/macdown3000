@@ -21,8 +21,9 @@
 
 // Warning: If the version of MathJax is ever updated, please check the status
 // of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
-// in to MathJax, then the WebResourceLoadDelegate can be removed from MPDocument
-// and MathJax.js can be removed from this project.
+// in to MathJax, then the MathJax.js redirect can be removed from MPDocument's
+// WebResourceLoadDelegate and MathJax.js can be removed from this project. The
+// delegate's font redirect still serves the bundled TeX fonts.
 NSString * const kMPMathJaxCDN =
     @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js"
     @"?config=TeX-AMS-MML_HTMLorMML";
@@ -520,9 +521,10 @@ NS_INLINE NSString *MPPreviewContentSecurityPolicy(void)
     // if you tighten the policy.
     //
     // font-src carries the MathJax origin for the same reason script-src does:
-    // the TeX faces are fetched from it, and blocking them makes the HTML-CSS
-    // output jax stall for its web-font timeout and then fall back to bitmap
-    // image fonts.
+    // MathJax requests the TeX faces from it. MPDocument serves the bundled
+    // faces from file:; the origin covers any face the bundle lacks, which
+    // blocked would make the HTML-CSS output jax stall for its web-font timeout
+    // and then fall back to bitmap image fonts.
     NSString *mathJax = MPMathJaxCDNOrigin();
     return [NSString stringWithFormat:
             @"default-src 'none'; "

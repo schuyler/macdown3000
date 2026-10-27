@@ -3,17 +3,17 @@
 ## Problem (root cause, confirmed by instrumentation)
 
 Preview math renders as **bitmap image fonts** — pixelated on zoom — instead of
-crisp vector text. Commit `472e2a1` set the HTML-CSS output jax's
-`availableFonts: []` / `preferredFont: null` (init.js) to stop it typesetting in
-macOS's system STIX faces, forcing MathJax's own **TeX web fonts**. But the app
-ships *no* fonts: `Resources/MathJax/` holds only the 63 KB `MathJax.js` loader
-and `init.js`. So the TeX woff fonts are fetched from the CDN at render time, and
+crisp vector text. The HTML-CSS output jax's `availableFonts: []` /
+`preferredFont: null` (init.js) stop it typesetting in macOS's system STIX faces,
+forcing MathJax's own **TeX web fonts**. Without bundled fonts,
+`Resources/MathJax/` holds only the 63 KB `MathJax.js` loader and `init.js`, so
+the TeX woff fonts are fetched from the CDN at render time, and
 when they don't arrive in time (web-font timeout, cold cache, slow/offline link)
 HTML-CSS falls back to bitmap image fonts.
 
 A resource-load probe on a live render confirmed it. Of the requests the preview
 issues, `MathJax.js` is already served from the bundle (the existing redirect in
-`-webView:resource:willSendRequest:…`, `MPDocument.m:1796`), while these come from
+`-[MPDocument webView:resource:willSendRequest:…]`), while these come from
 `https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/…` at runtime:
 
 ```
@@ -89,18 +89,18 @@ unchanged.
 ### 3. Form as implemented
 
 The `MathJax.js` redirect is kept **verbatim** (early return, `URLForResource` +
-`setQueryItems`) and the font redirect is added as a second branch. This was
-chosen over folding `MathJax.js` into the general rule because the general
+`setQueryItems`) and the font redirect is a second branch. `MathJax.js` is not
+folded into the general rule because the general
 path-mapping builds the local URL with `resourceURL/URLByAppendingPathComponent`,
 and re-attaching `MathJax.js`'s `?config=` query to *that* `file:` URL via
 `NSURLComponents` yielded a non-`file:` URL — the loader would not load from the
 bundle. The original `URLForResource`-based construction re-attaches the query
-correctly and is already proven in production, so the working path is left
-untouched. The two branches share nothing but intent; the font branch carries no
+correctly. The two branches share nothing but intent; the font branch carries no
 query, so there is no query-handling duplication to drift.
-- **Point MathJax's font path at the bundle via init.js config:** more fragile —
-  it depends on MathJax's root/path resolution, which the redirect already
-  side-steps. The redirect is the mechanism the app already trusts for `MathJax.js`.
+
+Pointing MathJax's font path at the bundle via init.js config is the alternative.
+It is more fragile: it depends on MathJax's root/path resolution, which the
+redirect side-steps.
 
 ## Tests
 
@@ -116,6 +116,9 @@ query, so there is no query-handling duplication to drift.
     passes through unchanged (the returned request's URL is still the CDN URL).
   - `MathJax.js` still redirects to the bundle with `?config=…` preserved
     (regression guard for the existing behaviour the generalisation replaces).
+  - A request whose path climbs out of the MathJax directory (`..%2F..%2FInfo.plist`
+    and `../../Info.plist`, both resolving to the bundle's `Contents/Info.plist`)
+    passes through to the CDN instead of being served from the bundle.
   - Every file in an **authoritative, hard-coded list** of the MathJax 2.7.3
     HTML-CSS TeX woff filenames is present in the bundle. The list is a fixed copy
     of the real 2.7.3 `fonts/HTML-CSS/TeX/woff/` directory checked into the test —
@@ -128,8 +131,10 @@ query, so there is no query-handling duplication to drift.
   string/JS-level. The redirect + presence tests are the guard; manual
   verification (below) covers the rendered result.
 
-Manual: open a math document offline (or with the CDN blocked) on a cold cache —
-math renders vector, not pixelated, and stays selectable.
+Manual: online, on a cold cache, with requests to the CDN's
+`fonts/HTML-CSS/TeX/woff/` path blocked — math renders in vector TeX faces, not
+pixelated, and stays selectable. (Fully offline, math does not render at all; see
+Non-goals.)
 
 ## Risk
 
@@ -140,7 +145,9 @@ math renders vector, not pixelated, and stays selectable.
   the remote fetch it replaces. If WebKit1 turns out to need otf, bundle otf too.
 - **Redirect generality.** The new rule only ever redirects to a file that exists
   in the bundle; anything else is passed through, so it cannot break loads for
-  un-bundled resources.
+  un-bundled resources. The mapped path is standardised and must stay under
+  `Resources/MathJax/`, so a `..` segment (including a decoded `..%2F`) cannot
+  reach another bundle file.
 - **Version coupling.** The rule maps paths under `…/mathjax/<version>/`, and the
   bundled woff are 2.7.3 bytes. Bumping `kMPMathJaxCDN` without refreshing the
   bundled fonts would map a new version's font path to stale local bytes. This is

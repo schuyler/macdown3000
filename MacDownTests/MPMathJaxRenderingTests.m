@@ -316,10 +316,10 @@
  * With font-src blocking that origin the output jax stalls for its web-font
  * timeout and then falls back to bitmap image fonts.
  *
- * The origin is spelled out rather than derived from kMPMathJaxCDN, which is
- * file-static and unreachable from here. Since the policy derives both
- * directives from that constant, pointing it at another host fails this
- * assertion rather than silently passing while the policy moves.
+ * The origin is spelled out rather than derived from kMPMathJaxCDN. Since the
+ * policy derives both directives from that constant, pointing it at another
+ * host fails this assertion rather than silently passing while the policy
+ * moves.
  */
 - (void)testPreviewCSPAllowsMathJaxFontsFromCDN
 {
