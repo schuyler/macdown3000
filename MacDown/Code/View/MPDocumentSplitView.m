@@ -67,6 +67,14 @@
     NSView *left = parts[0];
     NSView *right = parts[1];
 
+    // Issue #649: NSSplitView collapses a subview by hiding it. A divider
+    // location strictly inside the split shows both panes, so un-hide them.
+    if (ratio > 0.0 && ratio < 1.0)
+    {
+        left.hidden = NO;
+        right.hidden = NO;
+    }
+
     left.frame = NSMakeRect(0.0, 0.0, leftWidth, left.frame.size.height);
     right.frame = NSMakeRect(leftWidth + dividerThickness, 0.0,
                              rightWidth, right.frame.size.height);

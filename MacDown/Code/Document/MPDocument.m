@@ -354,6 +354,9 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
 @property (strong) MPRenderer *renderer;
 @property CGFloat previousSplitRatio;
 @property CGFloat lastNonCollapsedRatio;
+// Issue #649: whether the preview was visible at the last split-view resize,
+// so a divider drag that brings a collapsed preview back can re-render it.
+@property BOOL previewVisibleAtLastResize;
 @property BOOL manualRender;
 @property BOOL printing;
 // Issue #504: Single-slot stash so the shared print-completion callback
@@ -628,14 +631,27 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     return self.windowForSheet.toolbar.visible;
 }
 
+// Issue #649: NSSplitView collapses a subview by hiding it and keeping its
+// frame, so a pane is visible only if it is not hidden, not collapsed, and at
+// least a point wide.
+- (BOOL)isSplitPaneVisible:(NSView *)pane
+{
+    if (pane.hidden)
+        return NO;
+    NSSplitView *splitView = self.splitView;
+    if (pane.superview == splitView && [splitView isSubviewCollapsed:pane])
+        return NO;
+    return pane.frame.size.width >= 1.0;
+}
+
 - (BOOL)previewVisible
 {
-    return (self.preview.frame.size.width != 0.0);
+    return [self isSplitPaneVisible:self.preview];
 }
 
 - (BOOL)editorVisible
 {
-    return (self.editorContainer.frame.size.width != 0.0);
+    return [self isSplitPaneVisible:self.editorContainer];
 }
 
 - (BOOL)needsHtml
@@ -781,6 +797,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // delegate, and -userDefaultsDidChange: only pushes it on a defaults change.
     // Seed it here so the first render honours the current preferences.
     self.renderer.rendererFlags = self.preferences.rendererFlags;
+    self.previewVisibleAtLastResize = self.previewVisible;
 
     [self registerSharedPreferenceObservers];
     for (NSString *key in MPEditorKeysToObserve())
@@ -1600,7 +1617,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     else if (action == @selector(togglePreviewPane:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
-        it.hidden = (!self.previewVisible && self.previousSplitRatio < 0.0);
+        // Issue #649: hidden only when neither pane shows and there is no
+        // ratio to restore. A pane collapsed in a restored layout leaves
+        // previousSplitRatio unset, and Restore must still be offered.
+        it.hidden = (!self.previewVisible && !self.editorVisible
+                     && self.previousSplitRatio < 0.0);
         it.title = self.previewVisible ?
             NSLocalizedString(@"Hide Preview Pane",
                               @"Toggle preview pane menu item") :
@@ -1617,7 +1638,8 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     else if (action == @selector(toggleEditorPane:))
     {
         NSMenuItem *it = ((NSMenuItem *)item);
-        it.hidden = (!self.editorVisible && self.previousSplitRatio < 0.0);
+        it.hidden = (!self.editorVisible && !self.previewVisible
+                     && self.previousSplitRatio < 0.0);
         it.title = self.editorVisible ?
             NSLocalizedString(@"Hide Editor Pane",
                               @"Toggle editor pane menu item") :
@@ -1668,6 +1690,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 {
     [self redrawDivider];
     self.editor.editable = self.editorVisible;
+    [self renderIfPreviewBecameVisible];
     // Issue #377: Track divider-drag collapses. When the ratio transitions from
     // a non-collapsed value to 0 or 1, save the pre-collapse ratio to
     // previousSplitRatio so the menu item remains visible (not hidden).
@@ -3321,6 +3344,17 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
 }
 
+// Issue #649: the preview is not rendered while it is collapsed, so render it
+// when it comes back, including by a divider drag.
+- (void)renderIfPreviewBecameVisible
+{
+    BOOL visible = self.previewVisible;
+    if (visible && !self.previewVisibleAtLastResize
+            && !self.preferences.markdownManualRender)
+        [self.renderer parseAndRenderNow];
+    self.previewVisibleAtLastResize = visible;
+}
+
 - (void)toggleSplitterCollapsingEditorPane:(BOOL)forEditorPane
 {
     BOOL isVisible = forEditorPane ? self.editorVisible : self.previewVisible;
@@ -3350,9 +3384,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
     else
     {
-        // We have an inconsistency here, let's just go back to 0.5,
-        // otherwise nothing will happen
-        if (self.previousSplitRatio < 0.0)
+        // Issue #649: with no saved ratio, or one that would bring the pane
+        // back as a sliver, restore an even split.
+        if (self.previousSplitRatio < 0.1 || self.previousSplitRatio > 0.9)
             self.previousSplitRatio = 0.5;
 
         [self setSplitViewDividerLocation:self.previousSplitRatio];
@@ -4512,6 +4546,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     }
 
     [self setupEditor:NSStringFromSelector(@selector(editorHorizontalInset))];
+    self.previewVisibleAtLastResize = self.previewVisible;
 }
 
 - (NSString *)presumedFileName
