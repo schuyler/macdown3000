@@ -1375,11 +1375,11 @@
 				1FF16580199A6C950080D9A5 /* Fetch Prism Resources */,
 				E7FD807B2106CA8F0087F0A8 /* Transpile Styles */,
 				1FA6DE1F1941CC9E000409FB /* Resources */,
-				1F8A82A81952F19B00B6BF69 /* Update Build Number */,
 				905EF1B6196164E300FC3CE9 /* Copy Command Line Utility */,
 				1E02F0A95AAEBCEF65493F5F /* [CP] Copy Pods Resources */,
 				8DD02CA85834426992769538 /* Embed App Extensions */,
 				73EFC3524EF2D5CB67F18A48 /* [CP] Embed Pods Frameworks */,
+				1F8A82A81952F19B00B6BF69 /* Update Build Number */,
 			);
 			buildRules = (
 			);
@@ -1421,6 +1421,7 @@
 				3198B1CA77107FD17C448E9F /* Frameworks */,
 				A8CD48055430F29166E66E0E /* Resources */,
 				7A0A130FF5F3E5EA4F8952E7 /* Embed Frameworks */,
+				9F1A9CDE94B449C4A9970E01 /* Update Build Number */,
 			);
 			buildRules = (
 			);
@@ -1662,6 +1663,24 @@
 			files = (
 			);
 			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Update Build Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "bash Tools/update_build_number.sh\n";
+			showEnvVarsInLog = 0;
+		};
+		9F1A9CDE94B449C4A9970E01 /* Update Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "Update Build Number";
 			outputPaths = (

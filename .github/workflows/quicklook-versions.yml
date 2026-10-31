@@ -1,0 +1,18 @@
+name: Packaging Version Contracts
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  packaging-versions:
+    runs-on: macos-14
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Verify target-local versions and embedded signatures
+      run: python3 MacDownTests/BuildTools/packaging_version_tests.py
