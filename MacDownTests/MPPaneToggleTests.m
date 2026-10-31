@@ -11,6 +11,7 @@
 #import "MPDocument.h"
 #import "MPDocumentSplitView.h"
 #import "MPPreferences.h"
+#import "MPRenderer.h"
 
 #pragma mark - Testing Category
 
@@ -20,10 +21,26 @@
 @property (weak) WebView *preview;
 @property CGFloat previousSplitRatio;
 @property CGFloat lastNonCollapsedRatio;
+@property (strong) MPRenderer *renderer;
+@property BOOL previewVisibleAtLastResize;
+- (void)splitViewDidResizeSubviews:(NSNotification *)notification;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
 - (void)setupEditor:(NSString *)changedKey;
+@end
+
+#pragma mark - Spy Renderer
+
+@interface MP649SpyRenderer : MPRenderer
+@property (nonatomic) BOOL parseAndRenderNowCalled;
+@end
+
+@implementation MP649SpyRenderer
+- (void)parseAndRenderNow
+{
+    self.parseAndRenderNowCalled = YES;
+}
 @end
 
 #pragma mark - Mock Menu Item
@@ -1012,5 +1029,214 @@
         [preferences synchronize];
     }
 }
+
+#pragma mark - Issue #649: Restore Pane From Collapsed State
+
+- (MPDocumentSplitView *)attachSplitViewWithEditorFrame:(NSRect)editorFrame
+                                           previewFrame:(NSRect)previewFrame
+                                                 editor:(NSView **)editorOut
+                                                preview:(WebView **)previewOut
+{
+    MPDocumentSplitView *splitView = [[MPDocumentSplitView alloc]
+        initWithFrame:NSMakeRect(0, 0, 800, 600)];
+    splitView.vertical = YES;
+    NSView *editor = [[NSView alloc] initWithFrame:editorFrame];
+    WebView *preview = [[WebView alloc] initWithFrame:previewFrame];
+    [splitView addSubview:editor];
+    [splitView addSubview:preview];
+    self.document.splitView = splitView;
+    self.document.editorContainer = editor;
+    self.document.preview = preview;
+    *editorOut = editor;
+    *previewOut = preview;
+    return splitView;
+}
+
+// A hidden (collapsed) editor with a non-zero frame width reads as not
+// visible, offers "Restore Editor Pane" even with no saved ratio, and
+// toggling restores it at a usable width.
+- (void)testHiddenEditorOffersRestoreAndRestoresAtUsableWidth
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        preferences.editorOnRight = NO;
+        NSView *editor = nil;
+        WebView *preview = nil;
+        MPDocumentSplitView *splitView = [self
+            attachSplitViewWithEditorFrame:NSMakeRect(0, 0, 399, 600)
+                              previewFrame:NSMakeRect(400, 0, 400, 600)
+                                    editor:&editor
+                                   preview:&preview];
+        editor.hidden = YES;
+
+        XCTAssertFalse(self.document.editorVisible,
+                       @"A hidden editor container is not visible");
+        XCTAssertTrue(self.document.previewVisible);
+        XCTAssertLessThan(self.document.previousSplitRatio, 0.0,
+                          @"Precondition: no saved split ratio");
+
+        MockMenuItem *item = [[MockMenuItem alloc]
+            initWithTitle:@"Hide Editor Pane"
+                   action:@selector(toggleEditorPane:)
+            keyEquivalent:@""];
+        [self.document validateUserInterfaceItem:item];
+        XCTAssertEqualObjects(item.title,
+            NSLocalizedString(@"Restore Editor Pane", @"Toggle editor pane menu item"));
+        XCTAssertFalse(item.hidden,
+                       @"Restore item must stay visible with no saved ratio");
+
+        [self.document toggleEditorPane:nil];
+        XCTAssertFalse(editor.hidden, @"Restore un-hides the editor");
+        CGFloat total = splitView.frame.size.width - splitView.dividerThickness;
+        XCTAssertGreaterThanOrEqual(editor.frame.size.width, 0.1 * total);
+        XCTAssertTrue(self.document.editorVisible);
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+    }
+}
+
+// A hidden (collapsed) preview with a non-zero frame width reads as not
+// visible, offers "Restore Preview Pane", and toggling restores it.
+- (void)testHiddenPreviewOffersRestoreAndRestoresAtUsableWidth
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        preferences.editorOnRight = NO;
+        NSView *editor = nil;
+        WebView *preview = nil;
+        MPDocumentSplitView *splitView = [self
+            attachSplitViewWithEditorFrame:NSMakeRect(0, 0, 399, 600)
+                              previewFrame:NSMakeRect(400, 0, 400, 600)
+                                    editor:&editor
+                                   preview:&preview];
+        preview.hidden = YES;
+
+        XCTAssertFalse(self.document.previewVisible,
+                       @"A hidden preview is not visible");
+        XCTAssertTrue(self.document.editorVisible);
+        XCTAssertLessThan(self.document.previousSplitRatio, 0.0,
+                          @"Precondition: no saved split ratio");
+
+        MockMenuItem *item = [[MockMenuItem alloc]
+            initWithTitle:@"Hide Preview Pane"
+                   action:@selector(togglePreviewPane:)
+            keyEquivalent:@""];
+        [self.document validateUserInterfaceItem:item];
+        XCTAssertEqualObjects(item.title,
+            NSLocalizedString(@"Restore Preview Pane", @"Toggle preview pane menu item"));
+        XCTAssertFalse(item.hidden,
+                       @"Restore item must stay visible with no saved ratio");
+
+        [self.document togglePreviewPane:nil];
+        XCTAssertFalse(preview.hidden, @"Restore un-hides the preview");
+        CGFloat total = splitView.frame.size.width - splitView.dividerThickness;
+        XCTAssertGreaterThanOrEqual(preview.frame.size.width, 0.1 * total);
+        XCTAssertTrue(self.document.previewVisible);
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+    }
+}
+
+// A saved near-edge ratio (0.003) is not used for restoring a zero-width
+// editor; the restore falls back to a usable width.
+- (void)testRestoreEditorFromNearEdgeSavedRatioIsUsable
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+
+    @try {
+        preferences.editorOnRight = NO;
+        NSView *editor = nil;
+        WebView *preview = nil;
+        MPDocumentSplitView *splitView = [self
+            attachSplitViewWithEditorFrame:NSMakeRect(0, 0, 0, 600)
+                              previewFrame:NSMakeRect(1, 0, 799, 600)
+                                    editor:&editor
+                                   preview:&preview];
+        self.document.previousSplitRatio = 0.003;
+
+        XCTAssertFalse(self.document.editorVisible);
+
+        [self.document toggleEditorPane:nil];
+        CGFloat total = splitView.frame.size.width - splitView.dividerThickness;
+        XCTAssertGreaterThanOrEqual(editor.frame.size.width, 0.1 * total,
+                                    @"Restored editor must be at least 10%% wide");
+        XCTAssertTrue(self.document.editorVisible);
+    }
+    @finally {
+        preferences.editorOnRight = originalEditorOnRight;
+    }
+}
+
+// Bringing a collapsed preview back (e.g. by a divider drag) renders the
+// preview once, on the not-visible -> visible transition only.
+- (void)testPreviewUncollapseTriggersRenderOnTransitionOnly
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalManualRender = preferences.markdownManualRender;
+
+    @try {
+        preferences.markdownManualRender = NO;
+        NSView *editor = nil;
+        WebView *preview = nil;
+        [self attachSplitViewWithEditorFrame:NSMakeRect(0, 0, 399, 600)
+                                previewFrame:NSMakeRect(400, 0, 400, 600)
+                                      editor:&editor
+                                     preview:&preview];
+        preview.hidden = YES;
+        MP649SpyRenderer *spy = [[MP649SpyRenderer alloc] init];
+        self.document.renderer = spy;
+        self.document.previewVisibleAtLastResize = NO;
+
+        preview.hidden = NO;
+        [self.document splitViewDidResizeSubviews:nil];
+        XCTAssertTrue(spy.parseAndRenderNowCalled,
+                      @"Uncollapsing the preview should render it");
+
+        spy.parseAndRenderNowCalled = NO;
+        [self.document splitViewDidResizeSubviews:nil];
+        XCTAssertFalse(spy.parseAndRenderNowCalled,
+                       @"No render without a visibility transition");
+    }
+    @finally {
+        preferences.markdownManualRender = originalManualRender;
+    }
+}
+
+// With manual rendering on, uncollapsing the preview does not render.
+- (void)testPreviewUncollapseDoesNotRenderInManualRenderMode
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalManualRender = preferences.markdownManualRender;
+
+    @try {
+        preferences.markdownManualRender = YES;
+        NSView *editor = nil;
+        WebView *preview = nil;
+        [self attachSplitViewWithEditorFrame:NSMakeRect(0, 0, 399, 600)
+                                previewFrame:NSMakeRect(400, 0, 400, 600)
+                                      editor:&editor
+                                     preview:&preview];
+        preview.hidden = YES;
+        MP649SpyRenderer *spy = [[MP649SpyRenderer alloc] init];
+        self.document.renderer = spy;
+        self.document.previewVisibleAtLastResize = NO;
+
+        preview.hidden = NO;
+        [self.document splitViewDidResizeSubviews:nil];
+        XCTAssertFalse(spy.parseAndRenderNowCalled,
+                       @"Manual render mode must not auto-render on uncollapse");
+    }
+    @finally {
+        preferences.markdownManualRender = originalManualRender;
+    }
+}
+
 
 @end
