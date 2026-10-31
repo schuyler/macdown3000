@@ -101,6 +101,100 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
 
 @end
 
+#pragma mark - Localized General and Rendering panes (Issues #397, #579)
+
+/// Replaces English control text under @c view with the localized text that
+/// @c map gives for it: button titles, label strings, box titles, segment
+/// labels and pop-up menu item titles.
+static void MPApplyLocalizedText(NSView *view, NSDictionary<NSString *, NSString *> *map)
+{
+    if ([view isKindOfClass:[NSPopUpButton class]])
+    {
+        for (NSMenuItem *item in ((NSPopUpButton *)view).itemArray)
+        {
+            NSString *localized = map[item.title];
+            if (localized)
+                item.title = localized;
+        }
+    }
+    else if ([view isKindOfClass:[NSSegmentedControl class]])
+    {
+        NSSegmentedControl *control = (NSSegmentedControl *)view;
+        for (NSInteger i = 0; i < control.segmentCount; i++)
+        {
+            NSString *localized = map[[control labelForSegment:i]];
+            if (localized)
+                [control setLabel:localized forSegment:i];
+        }
+    }
+    else if ([view isKindOfClass:[NSButton class]])
+    {
+        NSButton *button = (NSButton *)view;
+        NSString *localized = map[button.title];
+        if (localized)
+            button.title = localized;
+    }
+    else if ([view isKindOfClass:[NSTextField class]])
+    {
+        NSTextField *field = (NSTextField *)view;
+        NSString *localized = map[field.stringValue];
+        if (localized)
+            field.stringValue = localized;
+    }
+    else if ([view isKindOfClass:[NSBox class]])
+    {
+        NSBox *box = (NSBox *)view;
+        NSString *localized = map[box.title];
+        if (localized)
+            box.title = localized;
+    }
+    for (NSView *sub in view.subviews)
+        MPApplyLocalizedText(sub, map);
+}
+
+/// General pane controller that applies localized text as the NIB's root view
+/// is connected, before MPPreferencesViewController's -loadView sizes it.
+@interface MPLocalizedGeneralPreferencesViewController : MPGeneralPreferencesViewController
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *textMap;
+@property (nonatomic, assign) BOOL textApplied;
+@end
+
+@implementation MPLocalizedGeneralPreferencesViewController
+
+- (void)setView:(NSView *)view
+{
+    // First call is the NIB connecting its root view; later calls install
+    // the sizing wrapper.
+    if (!self.textApplied && view && self.textMap)
+    {
+        self.textApplied = YES;
+        MPApplyLocalizedText(view, self.textMap);
+    }
+    [super setView:view];
+}
+
+@end
+
+/// Rendering pane counterpart of MPLocalizedGeneralPreferencesViewController.
+@interface MPLocalizedHtmlPreferencesViewController : MPHtmlPreferencesViewController
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *textMap;
+@property (nonatomic, assign) BOOL textApplied;
+@end
+
+@implementation MPLocalizedHtmlPreferencesViewController
+
+- (void)setView:(NSView *)view
+{
+    if (!self.textApplied && view && self.textMap)
+    {
+        self.textApplied = YES;
+        MPApplyLocalizedText(view, self.textMap);
+    }
+    [super setView:view];
+}
+
+@end
+
 @interface MPPreferencesViewControllerResizabilityTests : XCTestCase
 @end
 
@@ -732,6 +826,225 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     // 23 bundled locales ship MPEditorPreferencesViewController.strings.
     XCTAssertGreaterThanOrEqual(localesTested, 23U,
         @"expected every bundled localization of the Editor pane to be tested");
+}
+
+#pragma mark - Localized General and Rendering layout (Issues #397, #579)
+
+/// Maps each English string in the Base XIB named @c nibName to its entry in
+/// the localized @c table. Titled objects use "<id>.title" keys; segment labels
+/// use "<segmentedCell id>.ibShadowedLabels[<index>]". Strings the table lacks
+/// or leaves empty are omitted, so they stay English.
+- (NSDictionary<NSString *, NSString *> *)localizedTextMapForNib:(NSString *)nibName
+                                                           table:(NSDictionary *)table
+{
+    NSString *repoRoot = [[@__FILE__ stringByDeletingLastPathComponent]
+                          stringByDeletingLastPathComponent];
+    NSString *xibPath = [repoRoot stringByAppendingPathComponent:
+        [NSString stringWithFormat:@"MacDown/Localization/Base.lproj/%@.xib", nibName]];
+    NSError *error = nil;
+    NSXMLDocument *xib = [[NSXMLDocument alloc]
+        initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
+    XCTAssertNotNil(xib, @"cannot parse %@: %@", xibPath, error);
+
+    NSMutableDictionary<NSString *, NSString *> *map = [NSMutableDictionary dictionary];
+    void (^add)(NSString *, NSString *) = ^(NSString *english, NSString *key) {
+        NSString *localized = table[key];
+        if (english.length && localized.length)
+            map[english] = localized;
+    };
+    for (NSXMLElement *element in [xib nodesForXPath:@"//*[@id and @title]" error:nil])
+    {
+        add([[element attributeForName:@"title"] stringValue],
+            [[[element attributeForName:@"id"] stringValue] stringByAppendingString:@".title"]);
+    }
+    for (NSXMLElement *cell in [xib nodesForXPath:@"//segmentedCell[@id]" error:nil])
+    {
+        NSString *cellID = [[cell attributeForName:@"id"] stringValue];
+        NSArray<NSXMLNode *> *segments = [cell nodesForXPath:@"segments/segment" error:nil];
+        [segments enumerateObjectsUsingBlock:^(NSXMLNode *node, NSUInteger i, BOOL *stop) {
+            add([[(NSXMLElement *)node attributeForName:@"label"] stringValue],
+                [NSString stringWithFormat:@"%@.ibShadowedLabels[%lu]", cellID, (unsigned long)i]);
+        }];
+    }
+    return map;
+}
+
+/// Checks that no two visible controls in @c content overlap, that every
+/// checkbox and label has room for its whole text, and that every control lies
+/// inside @c content. @c label prefixes failure messages.
+- (void)checkControlsInContent:(NSView *)content
+                       wrapper:(NSView *)wrapper
+                         label:(NSString *)label
+{
+    NSMutableArray<NSControl *> *all = [NSMutableArray array];
+    MPCollectViews(content, [NSControl class], all);
+    NSMutableArray<NSControl *> *controls = [NSMutableArray array];
+    for (NSControl *control in all)
+    {
+        if (!control.isHiddenOrHasHiddenAncestor)
+            [controls addObject:control];
+    }
+    XCTAssertGreaterThan(controls.count, 1U, @"[%@] expected the pane's controls", label);
+
+    NSRect contentInWrapper = [content convertRect:content.bounds toView:wrapper];
+    NSString *(^describe)(NSControl *) = ^NSString *(NSControl *control) {
+        NSString *text = control.stringValue;
+        if (!text.length && [control isKindOfClass:[NSButton class]])
+            text = ((NSButton *)control).title;
+        return [NSString stringWithFormat:@"%@ \"%@\" at %@",
+                NSStringFromClass(control.class), text,
+                NSStringFromRect([control convertRect:control.bounds toView:wrapper])];
+    };
+
+    for (NSUInteger i = 0; i < controls.count; i++)
+    {
+        NSControl *control = controls[i];
+        NSRect inPane = [control convertRect:control.bounds toView:wrapper];
+        XCTAssertTrue(NSContainsRect(NSInsetRect(contentInWrapper, -1, -1), inPane),
+            @"[%@] control lies outside the pane %@: %@", label,
+            NSStringFromRect(contentInWrapper), describe(control));
+
+        // Overlap is judged on alignment rects, which exclude the padding
+        // AppKit draws around bezels.
+        NSRect alignment = [control.superview
+            convertRect:[control alignmentRectForFrame:control.frame] toView:wrapper];
+        for (NSUInteger j = i + 1; j < controls.count; j++)
+        {
+            NSControl *other = controls[j];
+            if ([other isDescendantOf:control] || [control isDescendantOf:other])
+                continue;
+            NSRect otherAlignment = [other.superview
+                convertRect:[other alignmentRectForFrame:other.frame] toView:wrapper];
+            NSRect overlap = NSIntersectionRect(alignment, otherAlignment);
+            XCTAssertFalse(NSWidth(overlap) > 1 && NSHeight(overlap) > 1,
+                @"[%@] controls overlap by %@: %@ and %@", label,
+                NSStringFromSize(overlap.size), describe(control), describe(other));
+        }
+
+        // Checkboxes and labels must have room for their whole text.
+        BOOL isCheckbox = ([control isKindOfClass:[NSButton class]]
+            && ![control isKindOfClass:[NSPopUpButton class]]
+            && ((NSButton *)control).bezelStyle == NSBezelStyleRegularSquare);
+        BOOL isLabel = ([control isKindOfClass:[NSTextField class]]
+            && !((NSTextField *)control).editable
+            && !((NSTextField *)control).bezeled);
+        if (!isCheckbox && !isLabel)
+            continue;
+        NSRect bounds = control.bounds;
+        NSSize needed = [control.cell cellSizeForBounds:
+                         NSMakeRect(0, 0, NSWidth(bounds), 10000)];
+        XCTAssertLessThanOrEqual(needed.width, NSWidth(bounds) + 1,
+            @"[%@] text needs %@: %@", label, NSStringFromSize(needed), describe(control));
+        XCTAssertLessThanOrEqual(needed.height, NSHeight(bounds) + 1,
+            @"[%@] text needs %@: %@", label, NSStringFromSize(needed), describe(control));
+    }
+}
+
+/// Lays out the pane in English and in every bundled localization that has a
+/// strings table for @c nibName, with the localized text applied before
+/// -loadView sizes the pane, and runs -checkControlsInContent:wrapper:label:
+/// at the height -loadView chose and at the content's fitting height. Returns the number of localizations checked,
+/// not counting English.
+- (NSUInteger)checkLocalizedLayoutOfNib:(NSString *)nibName
+                        controllerClass:(Class)controllerClass
+{
+    NSString *resources = [NSBundle mainBundle].resourcePath;
+    NSArray<NSString *> *entries = [[[NSFileManager defaultManager]
+        contentsOfDirectoryAtPath:resources error:nil]
+        sortedArrayUsingSelector:@selector(compare:)];
+    NSMutableArray<NSString *> *locales = [NSMutableArray arrayWithObject:@"English"];
+    NSMutableDictionary<NSString *, NSDictionary *> *tables = [NSMutableDictionary dictionary];
+    for (NSString *entry in entries)
+    {
+        if (![entry hasSuffix:@".lproj"])
+            continue;
+        NSString *tablePath = [[resources stringByAppendingPathComponent:entry]
+            stringByAppendingPathComponent:[nibName stringByAppendingPathExtension:@"strings"]];
+        NSDictionary *table = [NSDictionary dictionaryWithContentsOfFile:tablePath];
+        if (!table)
+            continue;
+        NSString *locale = [entry stringByDeletingPathExtension];
+        [locales addObject:locale];
+        tables[locale] = table;
+    }
+
+    for (NSString *locale in locales)
+    {
+        NSDictionary<NSString *, NSString *> *map =
+            [self localizedTextMapForNib:nibName table:tables[locale] ?: @{}];
+        if (tables[locale])
+            XCTAssertGreaterThan(map.count, 0U, @"[%@] no localized strings applied", locale);
+
+        // -init names the nib after the class; these subclasses use their parent's.
+        id vc = [[controllerClass alloc] initWithNibName:nibName
+                                                  bundle:[NSBundle mainBundle]];
+        [vc setValue:map forKey:@"textMap"];
+        NSView *wrapper = [vc view];   // loadView: text applied, then sizing
+        XCTAssertTrue([[vc valueForKey:@"textApplied"] boolValue],
+                      @"[%@] localized text was not applied", locale);
+
+        NSWindow *window = [[NSWindow alloc]
+            initWithContentRect:NSMakeRect(0, 0, NSWidth(wrapper.frame), NSHeight(wrapper.frame))
+                      styleMask:NSWindowStyleMaskTitled
+                        backing:NSBackingStoreBuffered
+                          defer:YES];
+        window.contentView = wrapper;
+        [wrapper layoutSubtreeIfNeeded];
+
+        NSView *content = wrapper.subviews.firstObject;
+        NSLayoutConstraint *heightPin = nil;
+        for (NSLayoutConstraint *c in content.constraints)
+        {
+            if (c.firstItem == content && c.secondItem == nil && c.active
+                && c.relation == NSLayoutRelationEqual
+                && c.firstAttribute == NSLayoutAttributeHeight)
+                heightPin = c;
+        }
+        XCTAssertNotNil(heightPin, @"[%@] loadView should pin the content height", locale);
+
+        // Check at the height -loadView chose, then at the content's own
+        // fitting height. -loadView never goes below the English design
+        // height, so a row whose vertical position is not tied to the rows
+        // above it keeps its room there and only collides once the content
+        // needs more height than the design gave it; the fitting height
+        // exposes that without waiting for a translation long enough to wrap.
+        [self checkControlsInContent:content wrapper:wrapper
+                               label:[NSString stringWithFormat:@"%@ %@", nibName, locale]];
+        heightPin.active = NO;
+        [wrapper layoutSubtreeIfNeeded];
+        heightPin.constant = content.fittingSize.height;
+        heightPin.active = YES;
+        [wrapper layoutSubtreeIfNeeded];
+        [self checkControlsInContent:content wrapper:wrapper
+                               label:[NSString stringWithFormat:@"%@ %@ at fitting height %g",
+                                      nibName, locale, heightPin.constant]];
+
+        window.contentView = [[NSView alloc] init];   // detach before vc deallocates
+    }
+    return tables.count;
+}
+
+// Issue #397 (French General tab): wrapped checkbox titles overflowed and two
+// checkboxes overlapped.
+- (void)testGeneralPaneControlsFitWithoutOverlapInEveryLocalization
+{
+    NSUInteger tested = [self checkLocalizedLayoutOfNib:@"MPGeneralPreferencesViewController"
+                                        controllerClass:[MPLocalizedGeneralPreferencesViewController class]];
+    // 25 bundled locales ship MPGeneralPreferencesViewController.strings.
+    XCTAssertGreaterThanOrEqual(tested, 25U,
+        @"expected every bundled localization of the General pane to be tested");
+}
+
+// Issues #397 and #579: in the Rendering pane the Theme row overlapped the CSS
+// row, and the "Syntax highlighted code block" checkbox, anchored only from
+// below, rose into the CSS row once localized rows wrapped.
+- (void)testHtmlPaneControlsFitWithoutOverlapInEveryLocalization
+{
+    NSUInteger tested = [self checkLocalizedLayoutOfNib:@"MPHtmlPreferencesViewController"
+                                        controllerClass:[MPLocalizedHtmlPreferencesViewController class]];
+    // 25 bundled locales ship MPHtmlPreferencesViewController.strings.
+    XCTAssertGreaterThanOrEqual(tested, 25U,
+        @"expected every bundled localization of the Rendering pane to be tested");
 }
 
 @end
