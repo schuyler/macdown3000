@@ -37,3 +37,36 @@
 /* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
 "WZa-V6-vvf.title" = "Satır sayılarını göster";
 
+
+/* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
+"BuQ-02-oQB.title" = "Sözdizimi vurgulu kod bloğu";
+
+/* Class = "NSButtonCell"; title = "Mermaid"; ObjectID = "bda-Ft-ecb"; */
+"bda-Ft-ecb.title" = "Mermaid";
+
+/* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
+"GF9-Dm-IoB.title" = "Satır içi ayırıcı olarak dolar işareti ($) kullan";
+
+/* Class = "NSButtonCell"; title = "Task list syntax"; ObjectID = "kBf-iW-HlH"; */
+"kBf-iW-HlH.title" = "Görev listesi sözdizimi";
+
+/* Class = "NSButtonCell"; title = "Detect table of contents token"; ObjectID = "nvS-dZ-eHT"; */
+"nvS-dZ-eHT.title" = "İçindekiler belirtecini algıla";
+
+/* Class = "NSButtonCell"; title = "Render newline literally"; ObjectID = "Sty-qG-J6K"; */
+"Sty-qG-J6K.title" = "Satır sonlarını olduğu gibi işle";
+
+/* Class = "NSButtonCell"; title = "Scale preview based on editor font size"; ObjectID = "aWw-Wb-pBl"; */
+"aWw-Wb-pBl.title" = "Önizlemeyi düzenleyici yazı tipi boyutuna göre ölçekle";
+
+/* Class = "NSTextFieldCell"; title = "Accessory:"; ObjectID = "wNy-ka-IZm"; */
+"wNy-ka-IZm.title" = "Ek:";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[0] = "Reveal"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[0]" = "Göster";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[1] = "Reload"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[1]" = "Yeniden Yükle";
+
+/* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "YAML ön bilgisini gizle";

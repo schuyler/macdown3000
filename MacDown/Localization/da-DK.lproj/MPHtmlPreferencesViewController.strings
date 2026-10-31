@@ -35,7 +35,7 @@
 "hR2-le-Hru.title" = "Skjul vandrette linjer";
 
 /* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
-"iXi-Pv-mFl.title" = "Hide YAML front matter";
+"iXi-Pv-mFl.title" = "Skjul YAML-metadata øverst";
 
 /* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
 "Jmq-wq-Dux.title" = "Brugerdefineret";
@@ -64,3 +64,9 @@
 /* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
 "WZa-V6-vvf.title" = "Vis linjenumre";
 
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[0] = "Reveal"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[0]" = "Vis";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[1] = "Reload"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[1]" = "Genindlæs";

@@ -19,3 +19,54 @@
 /* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
 "WZa-V6-vvf.title" = "Sýna línunúmer";
 
+
+/* Class = "NSTextFieldCell"; title = "Default path:"; ObjectID = "e1A-Mm-svq"; */
+"e1A-Mm-svq.title" = "Sjálfgefin slóð:";
+
+/* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
+"BuQ-02-oQB.title" = "Kóðablokk með málskipunarlitun";
+
+/* Class = "NSButtonCell"; title = "Graphviz"; ObjectID = "Lnj-HG-QHi"; */
+"Lnj-HG-QHi.title" = "Graphviz";
+
+/* Class = "NSButtonCell"; title = "Mermaid"; ObjectID = "bda-Ft-ecb"; */
+"bda-Ft-ecb.title" = "Mermaid";
+
+/* Class = "NSButtonCell"; title = "TeX-like math syntax"; ObjectID = "6vg-3f-KWk"; */
+"6vg-3f-KWk.title" = "TeX-lík stærðfræðiritun";
+
+/* Class = "NSTextFieldCell"; title = "Math support requires Internet connection."; ObjectID = "5Ch-dG-juL"; */
+"5Ch-dG-juL.title" = "Stærðfræðistuðningur krefst nettengingar.";
+
+/* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
+"GF9-Dm-IoB.title" = "Nota dollaramerki ($) sem afmörkun í línu";
+
+/* Class = "NSButtonCell"; title = "Task list syntax"; ObjectID = "kBf-iW-HlH"; */
+"kBf-iW-HlH.title" = "Ritháttur verkefnalista";
+
+/* Class = "NSButtonCell"; title = "Detect table of contents token"; ObjectID = "nvS-dZ-eHT"; */
+"nvS-dZ-eHT.title" = "Greina efnisyfirlitsmerki";
+
+/* Class = "NSButtonCell"; title = "Render newline literally"; ObjectID = "Sty-qG-J6K"; */
+"Sty-qG-J6K.title" = "Birta línuskil eins og þau eru";
+
+/* Class = "NSButtonCell"; title = "Scale preview based on editor font size"; ObjectID = "aWw-Wb-pBl"; */
+"aWw-Wb-pBl.title" = "Kvarða forskoðun eftir leturstærð ritils";
+
+/* Class = "NSMenuItem"; title = "Language name"; ObjectID = "qFd-cs-OtZ"; */
+"qFd-cs-OtZ.title" = "Heiti forritunarmáls";
+
+/* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
+"Jmq-wq-Dux.title" = "Sérsniðið";
+
+/* Class = "NSSegmentedCell"; 0rH-I9-Dxr.ibShadowedLabels[0] = "Reveal"; ObjectID = "0rH-I9-Dxr"; */
+"0rH-I9-Dxr.ibShadowedLabels[0]" = "Sýna";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[0] = "Reveal"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[0]" = "Sýna";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[1] = "Reload"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[1]" = "Endurhlaða";
+
+/* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "Fela YAML-lýsigögn efst";

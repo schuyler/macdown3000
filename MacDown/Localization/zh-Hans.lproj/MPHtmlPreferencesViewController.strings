@@ -35,7 +35,7 @@
 "hR2-le-Hru.title" = "隐藏水平线";
 
 /* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
-"iXi-Pv-mFl.title" = "Hide YAML front matter";
+"iXi-Pv-mFl.title" = "隐藏 YAML 前置元数据";
 
 /* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
 "Jmq-wq-Dux.title" = "自定义";
@@ -64,3 +64,9 @@
 /* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
 "WZa-V6-vvf.title" = "显示行数";
 
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[0] = "Reveal"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[0]" = "显示";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[1] = "Reload"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[1]" = "重新载入";
