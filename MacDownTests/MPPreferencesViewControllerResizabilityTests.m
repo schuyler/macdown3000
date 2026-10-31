@@ -677,6 +677,12 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         NSArray<NSButton *> *checkboxes = MPCheckboxes(wrapper);
         XCTAssertGreaterThanOrEqual(checkboxes.count, 8U,
             @"%@: expected the Editor pane's checkboxes", locale);
+        // Checkboxes that stretch with the pane share its trailing edge; their
+        // width comes from the width pinned when the pane was sized.
+        CGFloat paneTrailing = 0;
+        for (NSButton *button in checkboxes)
+            paneTrailing = MAX(paneTrailing,
+                NSMaxX([button convertRect:button.bounds toView:wrapper]));
         for (NSButton *button in checkboxes)
         {
             NSButtonCell *cell = button.cell;
@@ -704,9 +710,14 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
                 @"button lies outside the pane: %@", detail);
 
             // Text can measure slightly wider at draw time than when the pane
-            // was sized, so the title must still fit on the same number of
-            // lines if it measures 3% wider: the cell, given 3% of the
-            // title's width less room, must not need more height.
+            // was sized, so a checkbox whose width comes from the pinned pane
+            // width must still fit its title on the same number of lines if
+            // it measures 3% wider: the cell, given 3% of the title's width
+            // less room, must not need more height. A checkbox sized to its
+            // own content (one followed by a field on the same row) takes its
+            // width from Auto Layout's intrinsic size instead.
+            if (NSMaxX(inPane) < paneTrailing - 0.5)
+                continue;
             CGFloat squeeze = ceil(needed.size.width * 0.03);
             NSSize tight = [cell cellSizeForBounds:
                 NSMakeRect(0, 0, bounds.size.width - squeeze, 10000)];
