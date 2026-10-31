@@ -704,17 +704,16 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
                 @"button lies outside the pane: %@", detail);
 
             // Text can measure slightly wider at draw time than when the pane
-            // was sized, so the title must still fit if it measures 3% wider:
-            // the same number of lines at the title rect's width / 1.03.
-            NSRect wider = [button.attributedTitle
-                boundingRectWithSize:NSMakeSize(floor(titleRect.size.width / 1.03),
-                                                CGFLOAT_MAX)
-                             options:NSStringDrawingUsesLineFragmentOrigin
-                                     | NSStringDrawingUsesFontLeading];
-            XCTAssertLessThanOrEqual(ceil(wider.size.height),
-                                     ceil(titleRect.size.height) + 1,
-                @"title would not fit if it measured 3%% wider: %@ needed at "
-                 "width/1.03=%@", detail, NSStringFromSize(wider.size));
+            // was sized, so the title must still fit on the same number of
+            // lines if it measures 3% wider: the cell, given 3% of the
+            // title's width less room, must not need more height.
+            CGFloat squeeze = ceil(needed.size.width * 0.03);
+            NSSize tight = [cell cellSizeForBounds:
+                NSMakeRect(0, 0, bounds.size.width - squeeze, 10000)];
+            XCTAssertLessThanOrEqual(tight.height, cellSize.height + 1,
+                @"title would not fit if it measured 3%% wider: %@ cellSize "
+                 "with %gpt less width=%@", detail, squeeze,
+                NSStringFromSize(tight));
         }
         window.contentView = [[NSView alloc] init];   // detach before vc deallocates
     }
