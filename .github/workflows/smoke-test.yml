@@ -10,7 +10,7 @@ jobs:
     name: App Launch Test
     strategy:
       matrix:
-        os: [macos-14, macos-26]
+        os: [macos-15, macos-26]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10

@@ -16,7 +16,7 @@ permissions:
 jobs:
   release:
     name: Build, Sign, Notarize, and Release
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       # ==================== SETUP ====================
