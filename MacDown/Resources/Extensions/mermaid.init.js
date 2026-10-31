@@ -15,8 +15,12 @@
   mermaid.initialize({
     startOnLoad: false,
     theme: 'forest',
+    // Root-level, because Mermaid 11's node-label code ignores the deprecated
+    // flowchart.htmlLabels (GitHub issue #35). HTML labels are sized from
+    // getBoundingClientRect(), which disagrees with SVG units when the
+    // preview is zoomed, and the text is clipped; SVG text labels are not.
+    htmlLabels: false,
     flowchart: {
-      htmlLabels: false,
       useMaxWidth: true
     },
     securityLevel: 'antiscript',
