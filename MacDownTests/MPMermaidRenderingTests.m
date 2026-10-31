@@ -14,6 +14,8 @@
 #import "MPRenderer.h"
 #import "MPRendererTestHelpers.h"
 #import "hoedown/document.h"
+#import <WebKit/WebKit.h>
+#import "WebView+WebViewPrivateHeaders.h"
 
 
 #pragma mark - Test Class
@@ -403,6 +405,122 @@
                   @"Should include mermaid init script");
     XCTAssertTrue([self.delegate.lastHTML containsString:@"viz.init.js"],
                   @"Should include graphviz init script alongside mermaid");
+}
+
+#pragma mark - Node Label Fit (Issue #35)
+
+// Spins the main run loop until condition returns YES or timeout elapses.
+static BOOL MPMermaidSpinUntil(NSTimeInterval timeout, BOOL (^condition)(void))
+{
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:timeout];
+    while (!condition() && deadline.timeIntervalSinceNow > 0)
+    {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+            beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+    return condition();
+}
+
+// Renders the issue's flowchart with the bundled Mermaid and mermaid.init.js
+// at the given page zoom and checks that every node label fits the box that
+// clips it: the foreignObject when labels are HTML, and the node shape.
+- (void)assertFlowchartLabelsFitAtPageSizeMultiplier:(float)multiplier
+{
+    NSURL *mermaidURL = [[NSBundle mainBundle] URLForResource:@"mermaid.min"
+                                                withExtension:@"js"
+                                                 subdirectory:@"Extensions"];
+    XCTAssertNotNil(mermaidURL, @"The bundled Mermaid library is missing");
+    if (!mermaidURL)
+        return;
+    NSURL *baseURL = mermaidURL.URLByDeletingLastPathComponent;
+
+    NSWindow *window = [[NSWindow alloc]
+        initWithContentRect:NSMakeRect(0, 0, 800, 600)
+                  styleMask:NSWindowStyleMaskBorderless
+                    backing:NSBackingStoreBuffered defer:NO];
+    window.releasedWhenClosed = NO;  // ARC owns the window.
+    WebView *webView = [[WebView alloc]
+        initWithFrame:NSMakeRect(0, 0, 800, 600)];
+    window.contentView = webView;
+
+    NSString *html =
+        @"<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+         "<script src=\"mermaid.min.js\"></script>"
+         "<script src=\"mermaid.init.js\"></script>"
+         "</head><body></body></html>";
+    [webView.mainFrame loadHTMLString:html baseURL:baseURL];
+    BOOL loaded = MPMermaidSpinUntil(20.0, ^{
+        return (BOOL)(!webView.isLoading && [[webView
+            stringByEvaluatingJavaScriptFromString:
+                @"String(document.readyState === 'complete' && "
+                 "typeof mermaid !== 'undefined')"] isEqualToString:@"true"]);
+    });
+    XCTAssertTrue(loaded, @"The page with Mermaid did not finish loading");
+
+    // A fresh load resets the multiplier, so apply it after loading and
+    // before the diagram exists, so Mermaid measures labels at this zoom.
+    [webView setPageSizeMultiplier:multiplier];
+    double clientWidth = [[webView stringByEvaluatingJavaScriptFromString:
+        @"document.documentElement.clientWidth"] doubleValue];
+    XCTAssertEqualWithAccuracy(clientWidth, 800.0 / multiplier, 2.0,
+                               @"Page zoom %.2f did not take effect",
+                               multiplier);
+
+    [webView stringByEvaluatingJavaScriptFromString:
+        @"var pre = document.createElement('pre');"
+         "var code = document.createElement('code');"
+         "code.className = 'language-mermaid';"
+         "code.textContent = 'graph TD\\n    A[Start] --> B[Process]\\n"
+         "    B --> C[End]';"
+         "pre.appendChild(code); document.body.appendChild(pre);"];
+    NSString *countJS =
+        @"String(document.querySelectorAll('svg[id^=\"mermaid_\"] g.node').length)";
+    BOOL rendered = MPMermaidSpinUntil(20.0, ^{
+        return [[webView stringByEvaluatingJavaScriptFromString:countJS]
+                isEqualToString:@"3"];
+    });
+    XCTAssertTrue(rendered, @"The flowchart did not render three nodes at "
+                             "zoom %.2f", multiplier);
+
+    NSString *json = [webView stringByEvaluatingJavaScriptFromString:
+        @"JSON.stringify(Array.prototype.map.call("
+         "document.querySelectorAll('svg[id^=\"mermaid_\"] g.node'),"
+         "function (n) {"
+         "var shape = n.querySelector('rect, path, polygon, circle, ellipse');"
+         "var fo = n.querySelector('g.label foreignObject');"
+         "var content = fo ? (fo.querySelector('.nodeLabel') || fo.firstElementChild)"
+         " : n.querySelector('g.label text');"
+         "var c = content.getBoundingClientRect(), s = shape.getBoundingClientRect();"
+         "var box = fo ? Math.min(fo.getBoundingClientRect().width, s.width) : s.width;"
+         "return {text: content.textContent, label: c.width, box: box, html: !!fo};"
+         "}))"];
+    NSArray<NSDictionary *> *nodes = [NSJSONSerialization
+        JSONObjectWithData:[json ?: @"[]" dataUsingEncoding:NSUTF8StringEncoding]
+                   options:0 error:NULL];
+    XCTAssertEqual(nodes.count, 3u, @"Expected three measured nodes; got %@",
+                   json);
+    for (NSDictionary *node in nodes)
+    {
+        double label = [node[@"label"] doubleValue];
+        double box = [node[@"box"] doubleValue];
+        XCTAssertLessThanOrEqual(label, box + 0.5,
+            @"At zoom %.2f the label \"%@\" (%.2f wide, HTML label: %@) is "
+             "clipped by its %.2f-wide box",
+            multiplier, node[@"text"], label, node[@"html"], box);
+    }
+
+    [webView close];
+    [window close];
+}
+
+- (void)testFlowchartNodeLabelsFitAtFullSize
+{
+    [self assertFlowchartLabelsFitAtPageSizeMultiplier:1.0];
+}
+
+- (void)testFlowchartNodeLabelsFitWhenPreviewIsScaledDown
+{
+    [self assertFlowchartLabelsFitAtPageSizeMultiplier:0.8];
 }
 
 @end
