@@ -703,12 +703,6 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
             XCTAssertTrue(NSContainsRect(NSInsetRect(wrapper.bounds, -1, -1), inPane),
                 @"button lies outside the pane: %@", detail);
 
-            if ([english isEqualToString:@"Automatically insert line prefix for the current block"]
-                && ([locale isEqualToString:@"fr"] || [locale isEqualToString:@"it-IT"]))
-            {
-                NSLog(@"#530 diag %@ contentViewWidth=%g windowWidth=%g",
-                      detail, NSWidth(window.contentView.frame), NSWidth(window.frame));
-            }
         }
         window.contentView = [[NSView alloc] init];   // detach before vc deallocates
     }
