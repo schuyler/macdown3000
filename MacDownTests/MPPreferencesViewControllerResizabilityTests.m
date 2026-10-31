@@ -68,6 +68,39 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
     return checkboxes;
 }
 
+#pragma mark - Localized Editor pane (Issue #530)
+
+/// Editor pane controller that swaps in localized checkbox titles as the NIB's
+/// root view is connected, i.e. before MPPreferencesViewController's -loadView
+/// runs its sizing passes. @c titleMap maps English title to localized title.
+@interface MPLocalizedEditorPreferencesViewController : MPEditorPreferencesViewController
+@property (nonatomic, copy) NSDictionary<NSString *, NSString *> *titleMap;
+@property (nonatomic, assign) BOOL titlesApplied;
+@end
+
+@implementation MPLocalizedEditorPreferencesViewController
+
+- (void)setView:(NSView *)view
+{
+    if (!self.titlesApplied && view && self.titleMap)
+    {
+        // First call is the NIB connecting its root view; later calls install
+        // the sizing wrapper.
+        self.titlesApplied = YES;
+        NSMutableArray<NSButton *> *buttons = [NSMutableArray array];
+        MPCollectViews(view, [NSButton class], buttons);
+        for (NSButton *button in buttons)
+        {
+            NSString *localized = self.titleMap[button.title];
+            if (localized)
+                button.title = localized;
+        }
+    }
+    [super setView:view];
+}
+
+@end
+
 @interface MPPreferencesViewControllerResizabilityTests : XCTestCase
 @end
 
@@ -563,6 +596,123 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
         preferences.htmlGraphviz = graphviz;
         preferences.htmlMermaid = mermaid;
     }
+}
+
+#pragma mark - Localized checkbox fit (Issue #530)
+
+// Every checkbox label in the Editor pane must be shown in full in every
+// bundled localization. For each locale the localized titles are applied as
+// the NIB loads (before loadView's sizing passes), the pane is laid out in a
+// window, and each checkbox's title must fit its cell's title rect and the
+// button must lie within the pane.
+- (void)testEditorPaneCheckboxTitlesFitInEveryLocalization
+{
+    // Checkbox cell id -> English title, from the source Base XIB (object IDs
+    // are not exposed at runtime).
+    NSString *repoRoot = [[@__FILE__ stringByDeletingLastPathComponent]
+                          stringByDeletingLastPathComponent];
+    NSString *xibPath = [repoRoot stringByAppendingPathComponent:
+        @"MacDown/Localization/Base.lproj/MPEditorPreferencesViewController.xib"];
+    NSError *error = nil;
+    NSXMLDocument *xib = [[NSXMLDocument alloc]
+        initWithContentsOfURL:[NSURL fileURLWithPath:xibPath] options:0 error:&error];
+    XCTAssertNotNil(xib, @"cannot parse %@: %@", xibPath, error);
+    NSArray<NSXMLNode *> *cells = [xib nodesForXPath:@"//buttonCell[@type='check']" error:&error];
+    XCTAssertGreaterThanOrEqual(cells.count, 8U, @"expected checkbox cells in the XIB");
+    NSMutableDictionary<NSString *, NSString *> *englishByID = [NSMutableDictionary dictionary];
+    for (NSXMLElement *cell in cells)
+    {
+        NSString *cellID = [[cell attributeForName:@"id"] stringValue];
+        NSString *title = [[cell attributeForName:@"title"] stringValue];
+        if (cellID && title)
+            englishByID[cellID] = title;
+    }
+
+    NSString *resources = [NSBundle mainBundle].resourcePath;
+    NSArray<NSString *> *entries =
+        [[NSFileManager defaultManager] contentsOfDirectoryAtPath:resources error:nil];
+    NSUInteger localesTested = 0;
+    for (NSString *entry in [entries sortedArrayUsingSelector:@selector(compare:)])
+    {
+        if (![entry hasSuffix:@".lproj"])
+            continue;
+        NSString *locale = [entry stringByDeletingPathExtension];
+        NSString *tablePath = [[resources stringByAppendingPathComponent:entry]
+            stringByAppendingPathComponent:@"MPEditorPreferencesViewController.strings"];
+        NSDictionary *table = [NSDictionary dictionaryWithContentsOfFile:tablePath];
+        if (!table)
+            continue;
+        localesTested++;
+
+        NSMutableDictionary<NSString *, NSString *> *titleMap = [NSMutableDictionary dictionary];
+        [englishByID enumerateKeysAndObjectsUsingBlock:^(NSString *cellID, NSString *english, BOOL *stop) {
+            NSString *localized = table[[cellID stringByAppendingString:@".title"]];
+            if (localized.length)
+                titleMap[english] = localized;
+        }];
+
+        MPLocalizedEditorPreferencesViewController *vc =
+            [[MPLocalizedEditorPreferencesViewController alloc] init];
+        vc.titleMap = titleMap;
+        NSView *wrapper = vc.view;   // loadView: titles applied, then sizing
+        XCTAssertTrue(vc.titlesApplied, @"%@: localized titles were not applied", locale);
+
+        NSWindow *window = [[NSWindow alloc]
+            initWithContentRect:NSMakeRect(0, 0, NSWidth(wrapper.frame), NSHeight(wrapper.frame))
+                      styleMask:NSWindowStyleMaskTitled
+                        backing:NSBackingStoreBuffered
+                          defer:YES];
+        window.contentView = wrapper;
+        [wrapper layoutSubtreeIfNeeded];
+
+        // Resolve the English title for each laid-out checkbox for messages.
+        NSMutableDictionary<NSString *, NSString *> *englishByLocalized = [NSMutableDictionary dictionary];
+        [titleMap enumerateKeysAndObjectsUsingBlock:^(NSString *en, NSString *loc, BOOL *stop) {
+            englishByLocalized[loc] = en;
+        }];
+
+        NSArray<NSButton *> *checkboxes = MPCheckboxes(wrapper);
+        XCTAssertGreaterThanOrEqual(checkboxes.count, 8U,
+            @"%@: expected the Editor pane's checkboxes", locale);
+        for (NSButton *button in checkboxes)
+        {
+            NSButtonCell *cell = button.cell;
+            NSString *english = englishByLocalized[button.title] ?: button.title;
+            NSRect bounds = button.bounds;
+            NSRect titleRect = [cell titleRectForBounds:bounds];
+            NSRect needed = [button.attributedTitle
+                boundingRectWithSize:NSMakeSize(titleRect.size.width, CGFLOAT_MAX)
+                             options:NSStringDrawingUsesLineFragmentOrigin
+                                     | NSStringDrawingUsesFontLeading];
+            NSSize cellSize = [cell cellSizeForBounds:
+                               NSMakeRect(0, 0, bounds.size.width, 10000)];
+            NSRect inPane = [button convertRect:bounds toView:wrapper];
+            NSString *detail = [NSString stringWithFormat:
+                @"[%@] \"%@\" -> \"%@\": frame=%@ titleRect=%@ needed=%@ cellSize=%@ pane=%@",
+                locale, english, button.title, NSStringFromRect(button.frame),
+                NSStringFromRect(titleRect), NSStringFromSize(needed.size),
+                NSStringFromSize(cellSize), NSStringFromRect(wrapper.bounds)];
+
+            XCTAssertLessThanOrEqual(ceil(needed.size.height), ceil(titleRect.size.height) + 1,
+                @"title does not fit title rect: %@", detail);
+            XCTAssertLessThanOrEqual(cellSize.height, bounds.size.height + 1,
+                @"cell needs more height than the button has: %@", detail);
+            XCTAssertTrue(NSContainsRect(NSInsetRect(wrapper.bounds, -1, -1), inPane),
+                @"button lies outside the pane: %@", detail);
+
+            if ([english isEqualToString:@"Automatically insert line prefix for the current block"]
+                && ([locale isEqualToString:@"fr"] || [locale isEqualToString:@"it-IT"]))
+            {
+                NSLog(@"#530 diag %@ contentViewWidth=%g windowWidth=%g",
+                      detail, NSWidth(window.contentView.frame), NSWidth(window.frame));
+            }
+        }
+        window.contentView = [[NSView alloc] init];   // detach before vc deallocates
+    }
+
+    // 23 bundled locales ship MPEditorPreferencesViewController.strings.
+    XCTAssertGreaterThanOrEqual(localesTested, 23U,
+        @"expected every bundled localization of the Editor pane to be tested");
 }
 
 @end
