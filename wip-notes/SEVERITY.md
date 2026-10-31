@@ -1,0 +1,6 @@
+Severity definitions (verbatim, binding):
+- critical — it is broken.
+- important — it doesn't meet requirements, or it changes tests to mask a bug, or it leaves behind a test that can't fail if the code it covers changed.
+- cosmetic — everything else. Cosmetic findings never fail a gate.
+A finding reaches critical or important only if it names a specific scenario in which the problem occurs: the concrete inputs or state, and the wrong behaviour that follows. A hypothetical problem with no such scenario is cosmetic no matter how plausible it sounds, and does not fail the gate. For a test that cannot fail, that scenario is the change to the code under test that ought to break the test and does not. A fix shaped as "stop presenting the failure" — suppressing an error, intercepting a dialog, swallowing an exception — is important unless the failure is genuinely absent afterwards. Work not traceable to an approved requirement is important. The requirements in the design doc are settled premises: report disagreements with them as "upstream concerns", which never fail the gate.
+Return: verdict PASS/FAIL, findings (severity, file:line, scenario), upstream concerns separately. Under 500 words.

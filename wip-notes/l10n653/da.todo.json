@@ -1,0 +1,904 @@
+{
+ "locale": "da",
+ "missing": {
+  "MainMenu::AYu-sK-qS6.title": {
+   "english": "Main Menu",
+   "class": "NSMenu",
+   "id": "AYu-sK-qS6",
+   "context": "Main Menu",
+   "table": "MainMenu"
+  },
+  "MainMenu::uQy-DD-JDr.title": {
+   "english": "MacDown 3000",
+   "class": "NSMenu",
+   "id": "uQy-DD-JDr",
+   "context": "MacDown 3000 > MacDown 3000",
+   "table": "MainMenu",
+   "same_as": "1Xt-HY-uBw.title",
+   "note": "Submenu title with the same English as its menu item 1Xt-HY-uBw.title: use exactly the same translation as that item."
+  },
+  "MainMenu::5kV-Vb-QxS.title": {
+   "english": "About MacDown 3000",
+   "class": "NSMenuItem",
+   "id": "5kV-Vb-QxS",
+   "context": "MacDown 3000 > About MacDown 3000",
+   "table": "MainMenu"
+  },
+  "MainMenu::8xL-1V-VPX.title": {
+   "english": "Check for Updates…",
+   "class": "NSMenuItem",
+   "id": "8xL-1V-VPX",
+   "context": "MacDown 3000 > Check for Updates…",
+   "table": "MainMenu"
+  },
+  "MainMenu::BOF-NM-1cW.title": {
+   "english": "Preferences…",
+   "class": "NSMenuItem",
+   "id": "BOF-NM-1cW",
+   "context": "MacDown 3000 > Preferences…",
+   "table": "MainMenu"
+  },
+  "MainMenu::NMo-om-nkz.title": {
+   "english": "Services",
+   "class": "NSMenuItem",
+   "id": "NMo-om-nkz",
+   "context": "MacDown 3000 > Services",
+   "table": "MainMenu"
+  },
+  "MainMenu::hz9-B4-Xy5.title": {
+   "english": "Services",
+   "class": "NSMenu",
+   "id": "hz9-B4-Xy5",
+   "context": "MacDown 3000 > Services > Services",
+   "table": "MainMenu",
+   "same_as": "NMo-om-nkz.title",
+   "note": "Submenu title with the same English as its menu item NMo-om-nkz.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Olw-nP-bQN.title": {
+   "english": "Hide MacDown 3000",
+   "class": "NSMenuItem",
+   "id": "Olw-nP-bQN",
+   "context": "MacDown 3000 > Hide MacDown 3000",
+   "table": "MainMenu"
+  },
+  "MainMenu::Vdr-fp-XzO.title": {
+   "english": "Hide Others",
+   "class": "NSMenuItem",
+   "id": "Vdr-fp-XzO",
+   "context": "MacDown 3000 > Hide Others",
+   "table": "MainMenu"
+  },
+  "MainMenu::4sb-4s-VLi.title": {
+   "english": "Quit MacDown 3000",
+   "class": "NSMenuItem",
+   "id": "4sb-4s-VLi",
+   "context": "MacDown 3000 > Quit MacDown 3000",
+   "table": "MainMenu"
+  },
+  "MainMenu::dMs-cI-mzQ.title": {
+   "english": "File",
+   "class": "NSMenuItem",
+   "id": "dMs-cI-mzQ",
+   "context": "File",
+   "table": "MainMenu"
+  },
+  "MainMenu::bib-Uj-vzu.title": {
+   "english": "File",
+   "class": "NSMenu",
+   "id": "bib-Uj-vzu",
+   "context": "File > File",
+   "table": "MainMenu",
+   "same_as": "dMs-cI-mzQ.title",
+   "note": "Submenu title with the same English as its menu item dMs-cI-mzQ.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Was-JA-tGl.title": {
+   "english": "New",
+   "class": "NSMenuItem",
+   "id": "Was-JA-tGl",
+   "context": "File > New",
+   "table": "MainMenu"
+  },
+  "MainMenu::F0l-dr-Op1.title": {
+   "english": "Open Folder…",
+   "class": "NSMenuItem",
+   "id": "F0l-dr-Op1",
+   "context": "File > Open Folder…",
+   "table": "MainMenu"
+  },
+  "MainMenu::tXI-mr-wws.title": {
+   "english": "Open Recent",
+   "class": "NSMenuItem",
+   "id": "tXI-mr-wws",
+   "context": "File > Open Recent",
+   "table": "MainMenu"
+  },
+  "MainMenu::oas-Oc-fiZ.title": {
+   "english": "Open Recent",
+   "class": "NSMenu",
+   "id": "oas-Oc-fiZ",
+   "context": "File > Open Recent > Open Recent",
+   "table": "MainMenu",
+   "same_as": "tXI-mr-wws.title",
+   "note": "Submenu title with the same English as its menu item tXI-mr-wws.title: use exactly the same translation as that item."
+  },
+  "MainMenu::vNY-rz-j42.title": {
+   "english": "Clear Menu",
+   "class": "NSMenuItem",
+   "id": "vNY-rz-j42",
+   "context": "File > Open Recent > Clear Menu",
+   "table": "MainMenu"
+  },
+  "MainMenu::pxx-59-PXV.title": {
+   "english": "Save…",
+   "class": "NSMenuItem",
+   "id": "pxx-59-PXV",
+   "context": "File > Save…",
+   "table": "MainMenu"
+  },
+  "MainMenu::Bw7-FT-i3A.title": {
+   "english": "Save As…",
+   "class": "NSMenuItem",
+   "id": "Bw7-FT-i3A",
+   "context": "File > Save As…",
+   "table": "MainMenu"
+  },
+  "MainMenu::KaW-ft-85H.title": {
+   "english": "Revert to Saved",
+   "class": "NSMenuItem",
+   "id": "KaW-ft-85H",
+   "context": "File > Revert to Saved",
+   "table": "MainMenu"
+  },
+  "MainMenu::aSv-FL-tgl.title": {
+   "english": "Auto Save",
+   "class": "NSMenuItem",
+   "id": "aSv-FL-tgl",
+   "context": "File > Auto Save",
+   "table": "MainMenu"
+  },
+  "MainMenu::5mp-ev-1el.title": {
+   "english": "Export",
+   "class": "NSMenuItem",
+   "id": "5mp-ev-1el",
+   "context": "File > Export",
+   "table": "MainMenu"
+  },
+  "MainMenu::SJM-Pp-ywb.title": {
+   "english": "Export",
+   "class": "NSMenu",
+   "id": "SJM-Pp-ywb",
+   "context": "File > Export > Export",
+   "table": "MainMenu",
+   "same_as": "5mp-ev-1el.title",
+   "note": "Submenu title with the same English as its menu item 5mp-ev-1el.title: use exactly the same translation as that item."
+  },
+  "MainMenu::dGm-Yl-i3Z.title": {
+   "english": "HTML…",
+   "class": "NSMenuItem",
+   "id": "dGm-Yl-i3Z",
+   "context": "File > Export > HTML…",
+   "table": "MainMenu"
+  },
+  "MainMenu::XFN-MJ-RrW.title": {
+   "english": "PDF…",
+   "class": "NSMenuItem",
+   "id": "XFN-MJ-RrW",
+   "context": "File > Export > PDF…",
+   "table": "MainMenu"
+  },
+  "MainMenu::qIS-W8-SiK.title": {
+   "english": "Page Setup…",
+   "class": "NSMenuItem",
+   "id": "qIS-W8-SiK",
+   "context": "File > Page Setup…",
+   "table": "MainMenu"
+  },
+  "MainMenu::aTl-1u-JFS.title": {
+   "english": "Print…",
+   "class": "NSMenuItem",
+   "id": "aTl-1u-JFS",
+   "context": "File > Print…",
+   "table": "MainMenu"
+  },
+  "MainMenu::5QF-Oa-p0T.title": {
+   "english": "Edit",
+   "class": "NSMenuItem",
+   "id": "5QF-Oa-p0T",
+   "context": "Edit",
+   "table": "MainMenu"
+  },
+  "MainMenu::W48-6f-4Dl.title": {
+   "english": "Edit",
+   "class": "NSMenu",
+   "id": "W48-6f-4Dl",
+   "context": "Edit > Edit",
+   "table": "MainMenu",
+   "same_as": "5QF-Oa-p0T.title",
+   "note": "Submenu title with the same English as its menu item 5QF-Oa-p0T.title: use exactly the same translation as that item."
+  },
+  "MainMenu::dRJ-4n-Yzg.title": {
+   "english": "Undo",
+   "class": "NSMenuItem",
+   "id": "dRJ-4n-Yzg",
+   "context": "Edit > Undo",
+   "table": "MainMenu"
+  },
+  "MainMenu::6dh-zS-Vam.title": {
+   "english": "Redo",
+   "class": "NSMenuItem",
+   "id": "6dh-zS-Vam",
+   "context": "Edit > Redo",
+   "table": "MainMenu"
+  },
+  "MainMenu::uRl-iY-unG.title": {
+   "english": "Cut",
+   "class": "NSMenuItem",
+   "id": "uRl-iY-unG",
+   "context": "Edit > Cut",
+   "table": "MainMenu"
+  },
+  "MainMenu::x3v-GG-iWU.title": {
+   "english": "Copy",
+   "class": "NSMenuItem",
+   "id": "x3v-GG-iWU",
+   "context": "Edit > Copy",
+   "table": "MainMenu"
+  },
+  "MainMenu::gVA-U4-sdL.title": {
+   "english": "Paste",
+   "class": "NSMenuItem",
+   "id": "gVA-U4-sdL",
+   "context": "Edit > Paste",
+   "table": "MainMenu"
+  },
+  "MainMenu::pa3-QI-u2k.title": {
+   "english": "Delete",
+   "class": "NSMenuItem",
+   "id": "pa3-QI-u2k",
+   "context": "Edit > Delete",
+   "table": "MainMenu"
+  },
+  "MainMenu::Ruw-6m-B2m.title": {
+   "english": "Select All",
+   "class": "NSMenuItem",
+   "id": "Ruw-6m-B2m",
+   "context": "Edit > Select All",
+   "table": "MainMenu"
+  },
+  "MainMenu::4EN-yA-p0u.title": {
+   "english": "Find",
+   "class": "NSMenuItem",
+   "id": "4EN-yA-p0u",
+   "context": "Edit > Find",
+   "table": "MainMenu"
+  },
+  "MainMenu::1b7-l0-nxx.title": {
+   "english": "Find",
+   "class": "NSMenu",
+   "id": "1b7-l0-nxx",
+   "context": "Edit > Find > Find",
+   "table": "MainMenu",
+   "same_as": "4EN-yA-p0u.title",
+   "note": "Submenu title with the same English as its menu item 4EN-yA-p0u.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Xz5-n4-O0W.title": {
+   "english": "Find…",
+   "class": "NSMenuItem",
+   "id": "Xz5-n4-O0W",
+   "context": "Edit > Find > Find…",
+   "table": "MainMenu"
+  },
+  "MainMenu::YEy-JH-Tfz.title": {
+   "english": "Find and Replace…",
+   "class": "NSMenuItem",
+   "id": "YEy-JH-Tfz",
+   "context": "Edit > Find > Find and Replace…",
+   "table": "MainMenu"
+  },
+  "MainMenu::q09-fT-Sye.title": {
+   "english": "Find Next",
+   "class": "NSMenuItem",
+   "id": "q09-fT-Sye",
+   "context": "Edit > Find > Find Next",
+   "table": "MainMenu"
+  },
+  "MainMenu::OwM-mh-QMV.title": {
+   "english": "Find Previous",
+   "class": "NSMenuItem",
+   "id": "OwM-mh-QMV",
+   "context": "Edit > Find > Find Previous",
+   "table": "MainMenu"
+  },
+  "MainMenu::buJ-ug-pKt.title": {
+   "english": "Use Selection for Find",
+   "class": "NSMenuItem",
+   "id": "buJ-ug-pKt",
+   "context": "Edit > Find > Use Selection for Find",
+   "table": "MainMenu"
+  },
+  "MainMenu::S0p-oC-mLd.title": {
+   "english": "Jump to Selection",
+   "class": "NSMenuItem",
+   "id": "S0p-oC-mLd",
+   "context": "Edit > Find > Jump to Selection",
+   "table": "MainMenu"
+  },
+  "MainMenu::Dv1-io-Yv7.title": {
+   "english": "Spelling and Grammar",
+   "class": "NSMenuItem",
+   "id": "Dv1-io-Yv7",
+   "context": "Edit > Spelling and Grammar",
+   "table": "MainMenu"
+  },
+  "MainMenu::3IN-sU-3Bg.title": {
+   "english": "Spelling",
+   "class": "NSMenu",
+   "id": "3IN-sU-3Bg",
+   "context": "Edit > Spelling and Grammar > Spelling",
+   "table": "MainMenu"
+  },
+  "MainMenu::HFo-cy-zxI.title": {
+   "english": "Show Spelling and Grammar",
+   "class": "NSMenuItem",
+   "id": "HFo-cy-zxI",
+   "context": "Edit > Spelling and Grammar > Show Spelling and Grammar",
+   "table": "MainMenu"
+  },
+  "MainMenu::hz2-CU-CR7.title": {
+   "english": "Check Document Now",
+   "class": "NSMenuItem",
+   "id": "hz2-CU-CR7",
+   "context": "Edit > Spelling and Grammar > Check Document Now",
+   "table": "MainMenu"
+  },
+  "MainMenu::rbD-Rh-wIN.title": {
+   "english": "Check Spelling While Typing",
+   "class": "NSMenuItem",
+   "id": "rbD-Rh-wIN",
+   "context": "Edit > Spelling and Grammar > Check Spelling While Typing",
+   "table": "MainMenu"
+  },
+  "MainMenu::mK6-2p-4JG.title": {
+   "english": "Check Grammar With Spelling",
+   "class": "NSMenuItem",
+   "id": "mK6-2p-4JG",
+   "context": "Edit > Spelling and Grammar > Check Grammar With Spelling",
+   "table": "MainMenu"
+  },
+  "MainMenu::78Y-hA-62v.title": {
+   "english": "Correct Spelling Automatically",
+   "class": "NSMenuItem",
+   "id": "78Y-hA-62v",
+   "context": "Edit > Spelling and Grammar > Correct Spelling Automatically",
+   "table": "MainMenu"
+  },
+  "MainMenu::9ic-FL-obx.title": {
+   "english": "Substitutions",
+   "class": "NSMenuItem",
+   "id": "9ic-FL-obx",
+   "context": "Edit > Substitutions",
+   "table": "MainMenu"
+  },
+  "MainMenu::FeM-D8-WVr.title": {
+   "english": "Substitutions",
+   "class": "NSMenu",
+   "id": "FeM-D8-WVr",
+   "context": "Edit > Substitutions > Substitutions",
+   "table": "MainMenu",
+   "same_as": "9ic-FL-obx.title",
+   "note": "Submenu title with the same English as its menu item 9ic-FL-obx.title: use exactly the same translation as that item."
+  },
+  "MainMenu::z6F-FW-3nz.title": {
+   "english": "Show Substitutions",
+   "class": "NSMenuItem",
+   "id": "z6F-FW-3nz",
+   "context": "Edit > Substitutions > Show Substitutions",
+   "table": "MainMenu"
+  },
+  "MainMenu::9yt-4B-nSM.title": {
+   "english": "Smart Copy/Paste",
+   "class": "NSMenuItem",
+   "id": "9yt-4B-nSM",
+   "context": "Edit > Substitutions > Smart Copy/Paste",
+   "table": "MainMenu"
+  },
+  "MainMenu::hQb-2v-fYv.title": {
+   "english": "Smart Quotes",
+   "class": "NSMenuItem",
+   "id": "hQb-2v-fYv",
+   "context": "Edit > Substitutions > Smart Quotes",
+   "table": "MainMenu"
+  },
+  "MainMenu::rgM-f4-ycn.title": {
+   "english": "Smart Dashes",
+   "class": "NSMenuItem",
+   "id": "rgM-f4-ycn",
+   "context": "Edit > Substitutions > Smart Dashes",
+   "table": "MainMenu"
+  },
+  "MainMenu::tRr-pd-1PS.title": {
+   "english": "Data Detectors",
+   "class": "NSMenuItem",
+   "id": "tRr-pd-1PS",
+   "context": "Edit > Substitutions > Data Detectors",
+   "table": "MainMenu"
+  },
+  "MainMenu::HFQ-gK-NFA.title": {
+   "english": "Text Replacement",
+   "class": "NSMenuItem",
+   "id": "HFQ-gK-NFA",
+   "context": "Edit > Substitutions > Text Replacement",
+   "table": "MainMenu"
+  },
+  "MainMenu::2oI-Rn-ZJC.title": {
+   "english": "Transformations",
+   "class": "NSMenuItem",
+   "id": "2oI-Rn-ZJC",
+   "context": "Edit > Transformations",
+   "table": "MainMenu"
+  },
+  "MainMenu::c8a-y6-VQd.title": {
+   "english": "Transformations",
+   "class": "NSMenu",
+   "id": "c8a-y6-VQd",
+   "context": "Edit > Transformations > Transformations",
+   "table": "MainMenu",
+   "same_as": "2oI-Rn-ZJC.title",
+   "note": "Submenu title with the same English as its menu item 2oI-Rn-ZJC.title: use exactly the same translation as that item."
+  },
+  "MainMenu::vmV-6d-7jI.title": {
+   "english": "Make Upper Case",
+   "class": "NSMenuItem",
+   "id": "vmV-6d-7jI",
+   "context": "Edit > Transformations > Make Upper Case",
+   "table": "MainMenu"
+  },
+  "MainMenu::d9M-CD-aMd.title": {
+   "english": "Make Lower Case",
+   "class": "NSMenuItem",
+   "id": "d9M-CD-aMd",
+   "context": "Edit > Transformations > Make Lower Case",
+   "table": "MainMenu"
+  },
+  "MainMenu::UEZ-Bs-lqG.title": {
+   "english": "Capitalize",
+   "class": "NSMenuItem",
+   "id": "UEZ-Bs-lqG",
+   "context": "Edit > Transformations > Capitalize",
+   "table": "MainMenu"
+  },
+  "MainMenu::xrE-MZ-jX0.title": {
+   "english": "Speech",
+   "class": "NSMenuItem",
+   "id": "xrE-MZ-jX0",
+   "context": "Edit > Speech",
+   "table": "MainMenu"
+  },
+  "MainMenu::3rS-ZA-NoH.title": {
+   "english": "Speech",
+   "class": "NSMenu",
+   "id": "3rS-ZA-NoH",
+   "context": "Edit > Speech > Speech",
+   "table": "MainMenu",
+   "same_as": "xrE-MZ-jX0.title",
+   "note": "Submenu title with the same English as its menu item xrE-MZ-jX0.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Ynk-f8-cLZ.title": {
+   "english": "Start Speaking",
+   "class": "NSMenuItem",
+   "id": "Ynk-f8-cLZ",
+   "context": "Edit > Speech > Start Speaking",
+   "table": "MainMenu"
+  },
+  "MainMenu::Oyz-dy-DGm.title": {
+   "english": "Stop Speaking",
+   "class": "NSMenuItem",
+   "id": "Oyz-dy-DGm",
+   "context": "Edit > Speech > Stop Speaking",
+   "table": "MainMenu"
+  },
+  "MainMenu::xSb-2f-W1r.title": {
+   "english": "View",
+   "class": "NSMenuItem",
+   "id": "xSb-2f-W1r",
+   "context": "View",
+   "table": "MainMenu"
+  },
+  "MainMenu::Sd1-br-Tg1.title": {
+   "english": "Show Sidebar",
+   "class": "NSMenuItem",
+   "id": "Sd1-br-Tg1",
+   "context": "View > Show Sidebar",
+   "table": "MainMenu"
+  },
+  "MainMenu::Vh1-jg-bbV.title": {
+   "english": "Render Markdown",
+   "class": "NSMenuItem",
+   "id": "Vh1-jg-bbV",
+   "context": "View > Render Markdown",
+   "table": "MainMenu"
+  },
+  "MainMenu::TQb-x5-V3x.title": {
+   "english": "Show Invisible Characters",
+   "class": "NSMenuItem",
+   "id": "TQb-x5-V3x",
+   "context": "View > Show Invisible Characters",
+   "table": "MainMenu"
+  },
+  "MainMenu::VW7-VH-9yl.title": {
+   "english": "Left 1:3 Right",
+   "class": "NSMenuItem",
+   "id": "VW7-VH-9yl",
+   "context": "View > Left 1:3 Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::hOV-YQ-vzy.title": {
+   "english": "Left 1:1 Right",
+   "class": "NSMenuItem",
+   "id": "hOV-YQ-vzy",
+   "context": "View > Left 1:1 Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::T74-vt-YUA.title": {
+   "english": "Hide Preview Pane",
+   "class": "NSMenuItem",
+   "id": "T74-vt-YUA",
+   "context": "View > Hide Preview Pane",
+   "table": "MainMenu"
+  },
+  "MainMenu::wHk-AQ-iOQ.title": {
+   "english": "Hide Editor Pane",
+   "class": "NSMenuItem",
+   "id": "wHk-AQ-iOQ",
+   "context": "View > Hide Editor Pane",
+   "table": "MainMenu"
+  },
+  "MainMenu::fKI-yk-0lv.title": {
+   "english": "Show Toolbar",
+   "class": "NSMenuItem",
+   "id": "fKI-yk-0lv",
+   "context": "View > Show Toolbar",
+   "table": "MainMenu"
+  },
+  "MainMenu::zIn-01-ABC.title": {
+   "english": "Zoom In",
+   "class": "NSMenuItem",
+   "id": "zIn-01-ABC",
+   "context": "View > Zoom In",
+   "table": "MainMenu"
+  },
+  "MainMenu::zOt-01-GHI.title": {
+   "english": "Zoom Out",
+   "class": "NSMenuItem",
+   "id": "zOt-01-GHI",
+   "context": "View > Zoom Out",
+   "table": "MainMenu"
+  },
+  "MainMenu::zRs-01-PQR.title": {
+   "english": "Actual Size",
+   "class": "NSMenuItem",
+   "id": "zRs-01-PQR",
+   "context": "View > Actual Size",
+   "table": "MainMenu"
+  },
+  "MainMenu::1gz-YB-DZE.title": {
+   "english": "Enter Full Screen",
+   "class": "NSMenuItem",
+   "id": "1gz-YB-DZE",
+   "context": "View > Enter Full Screen",
+   "table": "MainMenu"
+  },
+  "MainMenu::jxT-CU-nIS.title": {
+   "english": "Format",
+   "class": "NSMenuItem",
+   "id": "jxT-CU-nIS",
+   "context": "Format",
+   "table": "MainMenu"
+  },
+  "MainMenu::N43-55-MPb.title": {
+   "english": "Format",
+   "class": "NSMenu",
+   "id": "N43-55-MPb",
+   "context": "Format > Format",
+   "table": "MainMenu",
+   "same_as": "jxT-CU-nIS.title",
+   "note": "Submenu title with the same English as its menu item jxT-CU-nIS.title: use exactly the same translation as that item."
+  },
+  "MainMenu::ts7-v5-Htm.title": {
+   "english": "Copy HTML",
+   "class": "NSMenuItem",
+   "id": "ts7-v5-Htm",
+   "context": "Format > Copy HTML",
+   "table": "MainMenu"
+  },
+  "MainMenu::Rb9-MG-IjX.title": {
+   "english": "Strong",
+   "class": "NSMenuItem",
+   "id": "Rb9-MG-IjX",
+   "context": "Format > Strong",
+   "table": "MainMenu"
+  },
+  "MainMenu::4UH-k2-fgy.title": {
+   "english": "Emphasize",
+   "class": "NSMenuItem",
+   "id": "4UH-k2-fgy",
+   "context": "Format > Emphasize",
+   "table": "MainMenu"
+  },
+  "MainMenu::98U-cK-P7J.title": {
+   "english": "Underline",
+   "class": "NSMenuItem",
+   "id": "98U-cK-P7J",
+   "context": "Format > Underline",
+   "table": "MainMenu"
+  },
+  "MainMenu::9CN-Qi-Fln.title": {
+   "english": "Strikethrough",
+   "class": "NSMenuItem",
+   "id": "9CN-Qi-Fln",
+   "context": "Format > Strikethrough",
+   "table": "MainMenu"
+  },
+  "MainMenu::2Os-ij-Aup.title": {
+   "english": "Highlight",
+   "class": "NSMenuItem",
+   "id": "2Os-ij-Aup",
+   "context": "Format > Highlight",
+   "table": "MainMenu"
+  },
+  "MainMenu::iRQ-Q6-N4K.title": {
+   "english": "Inline Code",
+   "class": "NSMenuItem",
+   "id": "iRQ-Q6-N4K",
+   "context": "Format > Inline Code",
+   "table": "MainMenu"
+  },
+  "MainMenu::i8c-gf-w29.title": {
+   "english": "Comment",
+   "class": "NSMenuItem",
+   "id": "i8c-gf-w29",
+   "context": "Format > Comment",
+   "table": "MainMenu"
+  },
+  "MainMenu::e8h-vX-NQb.title": {
+   "english": "Convert To",
+   "class": "NSMenuItem",
+   "id": "e8h-vX-NQb",
+   "context": "Format > Convert To",
+   "table": "MainMenu"
+  },
+  "MainMenu::I8Y-e8-XDx.title": {
+   "english": "Convert To",
+   "class": "NSMenu",
+   "id": "I8Y-e8-XDx",
+   "context": "Format > Convert To > Convert To",
+   "table": "MainMenu",
+   "same_as": "e8h-vX-NQb.title",
+   "note": "Submenu title with the same English as its menu item e8h-vX-NQb.title: use exactly the same translation as that item."
+  },
+  "MainMenu::kSO-QG-dHa.title": {
+   "english": "Header 3",
+   "class": "NSMenuItem",
+   "id": "kSO-QG-dHa",
+   "context": "Format > Convert To > Header 3",
+   "table": "MainMenu"
+  },
+  "MainMenu::B98-b8-che.title": {
+   "english": "Header 4",
+   "class": "NSMenuItem",
+   "id": "B98-b8-che",
+   "context": "Format > Convert To > Header 4",
+   "table": "MainMenu"
+  },
+  "MainMenu::wlq-BA-PKH.title": {
+   "english": "Header 5",
+   "class": "NSMenuItem",
+   "id": "wlq-BA-PKH",
+   "context": "Format > Convert To > Header 5",
+   "table": "MainMenu"
+  },
+  "MainMenu::D4C-PE-qJi.title": {
+   "english": "Header 6",
+   "class": "NSMenuItem",
+   "id": "D4C-PE-qJi",
+   "context": "Format > Convert To > Header 6",
+   "table": "MainMenu"
+  },
+  "MainMenu::xN5-GU-ASF.title": {
+   "english": "Paragraph",
+   "class": "NSMenuItem",
+   "id": "xN5-GU-ASF",
+   "context": "Format > Convert To > Paragraph",
+   "table": "MainMenu"
+  },
+  "MainMenu::jn0-Kb-yH7.title": {
+   "english": "Ordered List",
+   "class": "NSMenuItem",
+   "id": "jn0-Kb-yH7",
+   "context": "Format > Ordered List",
+   "table": "MainMenu"
+  },
+  "MainMenu::jn0-Kb-yH6.title": {
+   "english": "Unordered List",
+   "class": "NSMenuItem",
+   "id": "jn0-Kb-yH6",
+   "context": "Format > Unordered List",
+   "table": "MainMenu"
+  },
+  "MainMenu::twd-Mb-qNx.title": {
+   "english": "Blockquote",
+   "class": "NSMenuItem",
+   "id": "twd-Mb-qNx",
+   "context": "Format > Blockquote",
+   "table": "MainMenu"
+  },
+  "MainMenu::g9Y-GM-gdh.title": {
+   "english": "Shift Right",
+   "class": "NSMenuItem",
+   "id": "g9Y-GM-gdh",
+   "context": "Format > Shift Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::Jzs-tR-jkL.title": {
+   "english": "Shift Left",
+   "class": "NSMenuItem",
+   "id": "Jzs-tR-jkL",
+   "context": "Format > Shift Left",
+   "table": "MainMenu"
+  },
+  "MainMenu::GIg-Wo-P8m.title": {
+   "english": "Link",
+   "class": "NSMenuItem",
+   "id": "GIg-Wo-P8m",
+   "context": "Format > Link",
+   "table": "MainMenu"
+  },
+  "MainMenu::VkR-aw-5AU.title": {
+   "english": "Image",
+   "class": "NSMenuItem",
+   "id": "VkR-aw-5AU",
+   "context": "Format > Image",
+   "table": "MainMenu"
+  },
+  "MainMenu::zHE-JL-8eu.title": {
+   "english": "New Paragraph",
+   "class": "NSMenuItem",
+   "id": "zHE-JL-8eu",
+   "context": "Format > New Paragraph",
+   "table": "MainMenu"
+  },
+  "MainMenu::aUF-d1-5bR.title": {
+   "english": "Window",
+   "class": "NSMenuItem",
+   "id": "aUF-d1-5bR",
+   "context": "Window",
+   "table": "MainMenu"
+  },
+  "MainMenu::Td7-aD-5lo.title": {
+   "english": "Window",
+   "class": "NSMenu",
+   "id": "Td7-aD-5lo",
+   "context": "Window > Window",
+   "table": "MainMenu",
+   "same_as": "aUF-d1-5bR.title",
+   "note": "Submenu title with the same English as its menu item aUF-d1-5bR.title: use exactly the same translation as that item."
+  },
+  "MainMenu::OY7-WF-poV.title": {
+   "english": "Minimize",
+   "class": "NSMenuItem",
+   "id": "OY7-WF-poV",
+   "context": "Window > Minimize",
+   "table": "MainMenu"
+  },
+  "MainMenu::R4o-n2-Eq4.title": {
+   "english": "Zoom",
+   "class": "NSMenuItem",
+   "id": "R4o-n2-Eq4",
+   "context": "Window > Zoom",
+   "table": "MainMenu"
+  },
+  "MainMenu::LE2-aR-0XJ.title": {
+   "english": "Bring All to Front",
+   "class": "NSMenuItem",
+   "id": "LE2-aR-0XJ",
+   "context": "Window > Bring All to Front",
+   "table": "MainMenu"
+  },
+  "MainMenu::wpr-3q-Mcd.title": {
+   "english": "Help",
+   "class": "NSMenuItem",
+   "id": "wpr-3q-Mcd",
+   "context": "Help",
+   "table": "MainMenu"
+  },
+  "MainMenu::ugx-EN-xKu.title": {
+   "english": "MacDown 3000 Help",
+   "class": "NSMenuItem",
+   "id": "ugx-EN-xKu",
+   "context": "Help > MacDown 3000 Help",
+   "table": "MainMenu"
+  },
+  "MainMenu::K3J-v5-s91.title": {
+   "english": "Contributing to MacDown 3000",
+   "class": "NSMenuItem",
+   "id": "K3J-v5-s91",
+   "context": "Help > Contributing to MacDown 3000",
+   "table": "MainMenu"
+  },
+  "MainMenu::pLw-9G-hNv.title": {
+   "english": "MacDown 3000 on GitHub",
+   "class": "NSMenuItem",
+   "id": "pLw-9G-hNv",
+   "context": "Help > MacDown 3000 on GitHub",
+   "table": "MainMenu"
+  }
+ },
+ "glossary": {
+  "Show All": "Vis Alle",
+  "Open…": "Åben...",
+  "Close": "Luk",
+  "View": "Vis",
+  "Left 3:1 Right": "Venstre 3:1 Højre",
+  "Header 1": "Overskrift 1",
+  "Header 2": "Overskrift 2",
+  "Help": "Hjælp",
+  "(Default)": "(Standard)",
+  "<Not installed>": "<Ikke installeret>",
+  "Blockquote": "Citatblok",
+  "CHARACTERS_NO_SPACES_PLURAL_STRING": "%@ tegn (uden mellemrum);%@ tegn (uden mellemrum)",
+  "WORDS_SELECTED_PLURAL_STRING": "%@ ord markeret;%@ ord markeret",
+  "CHARACTERS_SELECTED_PLURAL_STRING": "%@ tegn markeret;%@ tegn markeret",
+  "CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING": "%@ tegn (uden mellemrum) markeret;%@ tegn (uden mellemrum) markeret",
+  "CHARACTERS_PLURAL_STRING": "%@ tegn;%@ tegn",
+  "Comment": "Kommentar",
+  "Copy HTML": "Kopiér HTML",
+  "Emphasize": "Kursiv",
+  "General": "Generelt",
+  "Heading 1": "Overskrift 1",
+  "Heading 2": "Overskrift 2",
+  "Heading 3": "Overskrift 3",
+  "Headings": "Overskrifter",
+  "Hide Editor Pane": "Skjul editorpanel",
+  "Hide Preview Pane": "Skjul forhåndsvisningspanel",
+  "Hide Toolbar": "Skjul værktøjslinje",
+  "Highlight": "Fremhæv",
+  "Image": "Billede",
+  "Inline Code": "Inline kode",
+  "Install": "Installér",
+  "JJ_PLURAL_FORM_RULE": "1",
+  "Ordered List": "Nummereret liste",
+  "Ordered/Unordered List": "Nummereret/Unummereret liste",
+  "Preferences": "Indstillinger",
+  "Rendering": "Gengivelse",
+  "Restore Editor Pane": "Gendan editorpanel",
+  "Restore Preview Pane": "Gendan forhåndsvisningspanel",
+  "Shell utility installed": "Shell-værktøj installeret",
+  "Shell utility not installed": "Shell-værktøj ikke installeret",
+  "Shift Left": "Ryk til venstre",
+  "Shift Left/Right": "Ryk venstre/højre",
+  "Shift Right": "Ryk til højre",
+  "Show Toolbar": "Vis værktøjslinje",
+  "Strikethrough": "Gennemstreget",
+  "Strong": "Fed",
+  "Text Styles": "Tekststile",
+  "Underline": "Understregning",
+  "Uninstall": "Afinstallér",
+  "Unordered List": "Unummereret liste",
+  "Untitled": "Uden titel",
+  "WORDS_PLURAL_STRING": "%@ ord;%@ ord",
+  "Installation Failed": "Installation mislykkedes",
+  "Installation Successful": "Installation gennemført",
+  "Installation Successful - PATH Setup Required": "Installation gennemført - PATH-opsætning påkrævet",
+  "Uninstallation Failed": "Afinstallation mislykkedes",
+  "Uninstallation Successful": "Afinstallation gennemført",
+  "The shell utility could not be found in the application bundle.": "Shell-værktøjet kunne ikke findes i programpakken.",
+  "The macdown shell utility has been installed successfully.": "Macdown shell-værktøjet er blevet installeret.",
+  "The shell utility could not be installed: %@": "Shell-værktøjet kunne ikke installeres: %@",
+  "The macdown shell utility has been removed successfully.": "Macdown shell-værktøjet er blevet fjernet.",
+  "The shell utility could not be removed: %@": "Shell-værktøjet kunne ikke fjernes: %@",
+  "Could not create directory %@: %@": "Kunne ikke oprette mappe %@: %@",
+  "A file exists at this location": "Der findes allerede en fil på denne placering",
+  "Source file does not exist": "Kildefilen findes ikke",
+  "A file already exists at the installation path": "Der findes allerede en fil på installationsstien"
+ }
+}

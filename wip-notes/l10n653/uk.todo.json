@@ -1,0 +1,739 @@
+{
+ "locale": "uk",
+ "missing": {
+  "MPDocument::H5W-Wu-gPZ.title": {
+   "english": "H1",
+   "class": "NSButtonCell",
+   "id": "H5W-Wu-gPZ",
+   "context": "H1",
+   "table": "MPDocument"
+  },
+  "MPDocument::rdq-e7-ugg.title": {
+   "english": "H2",
+   "class": "NSButtonCell",
+   "id": "rdq-e7-ugg",
+   "context": "H2",
+   "table": "MPDocument"
+  },
+  "MPDocument::xRF-se-t13.title": {
+   "english": "H3",
+   "class": "NSButtonCell",
+   "id": "xRF-se-t13",
+   "context": "H3",
+   "table": "MPDocument"
+  },
+  "MPDocument::QiC-vC-KbR.title": {
+   "english": "H4",
+   "class": "NSButtonCell",
+   "id": "QiC-vC-KbR",
+   "context": "H4",
+   "table": "MPDocument"
+  },
+  "MPDocument::KTn-mr-UBa.title": {
+   "english": "H5",
+   "class": "NSButtonCell",
+   "id": "KTn-mr-UBa",
+   "context": "H5",
+   "table": "MPDocument"
+  },
+  "MPDocument::r5a-yJ-MY2.title": {
+   "english": "H6",
+   "class": "NSButtonCell",
+   "id": "r5a-yJ-MY2",
+   "context": "H6",
+   "table": "MPDocument"
+  },
+  "MPGeneralPreferencesViewController::aYQ-0c-EOQ.title": {
+   "english": "Start in preview mode",
+   "class": "NSButtonCell",
+   "id": "aYQ-0c-EOQ",
+   "context": "Start in preview mode",
+   "table": "MPGeneralPreferencesViewController"
+  },
+  "MPGeneralPreferencesViewController::aSv-Bc-cel.title": {
+   "english": "Auto-save and auto-reload documents",
+   "class": "NSButtonCell",
+   "id": "aSv-Bc-cel",
+   "context": "Auto-save and auto-reload documents",
+   "table": "MPGeneralPreferencesViewController"
+  },
+  "MainMenu::uQy-DD-JDr.title": {
+   "english": "MacDown 3000",
+   "class": "NSMenu",
+   "id": "uQy-DD-JDr",
+   "context": "MacDown 3000 > MacDown 3000",
+   "table": "MainMenu",
+   "same_as": "1Xt-HY-uBw.title",
+   "note": "Submenu title with the same English as its menu item 1Xt-HY-uBw.title: use exactly the same translation as that item."
+  },
+  "MainMenu::NMo-om-nkz.title": {
+   "english": "Services",
+   "class": "NSMenuItem",
+   "id": "NMo-om-nkz",
+   "context": "MacDown 3000 > Services",
+   "table": "MainMenu"
+  },
+  "MainMenu::hz9-B4-Xy5.title": {
+   "english": "Services",
+   "class": "NSMenu",
+   "id": "hz9-B4-Xy5",
+   "context": "MacDown 3000 > Services > Services",
+   "table": "MainMenu",
+   "same_as": "NMo-om-nkz.title",
+   "note": "Submenu title with the same English as its menu item NMo-om-nkz.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Vdr-fp-XzO.title": {
+   "english": "Hide Others",
+   "class": "NSMenuItem",
+   "id": "Vdr-fp-XzO",
+   "context": "MacDown 3000 > Hide Others",
+   "table": "MainMenu"
+  },
+  "MainMenu::F0l-dr-Op1.title": {
+   "english": "Open Folder…",
+   "class": "NSMenuItem",
+   "id": "F0l-dr-Op1",
+   "context": "File > Open Folder…",
+   "table": "MainMenu"
+  },
+  "MainMenu::tXI-mr-wws.title": {
+   "english": "Open Recent",
+   "class": "NSMenuItem",
+   "id": "tXI-mr-wws",
+   "context": "File > Open Recent",
+   "table": "MainMenu"
+  },
+  "MainMenu::oas-Oc-fiZ.title": {
+   "english": "Open Recent",
+   "class": "NSMenu",
+   "id": "oas-Oc-fiZ",
+   "context": "File > Open Recent > Open Recent",
+   "table": "MainMenu",
+   "same_as": "tXI-mr-wws.title",
+   "note": "Submenu title with the same English as its menu item tXI-mr-wws.title: use exactly the same translation as that item."
+  },
+  "MainMenu::vNY-rz-j42.title": {
+   "english": "Clear Menu",
+   "class": "NSMenuItem",
+   "id": "vNY-rz-j42",
+   "context": "File > Open Recent > Clear Menu",
+   "table": "MainMenu"
+  },
+  "MainMenu::KaW-ft-85H.title": {
+   "english": "Revert to Saved",
+   "class": "NSMenuItem",
+   "id": "KaW-ft-85H",
+   "context": "File > Revert to Saved",
+   "table": "MainMenu"
+  },
+  "MainMenu::aSv-FL-tgl.title": {
+   "english": "Auto Save",
+   "class": "NSMenuItem",
+   "id": "aSv-FL-tgl",
+   "context": "File > Auto Save",
+   "table": "MainMenu"
+  },
+  "MainMenu::qIS-W8-SiK.title": {
+   "english": "Page Setup…",
+   "class": "NSMenuItem",
+   "id": "qIS-W8-SiK",
+   "context": "File > Page Setup…",
+   "table": "MainMenu"
+  },
+  "MainMenu::uRl-iY-unG.title": {
+   "english": "Cut",
+   "class": "NSMenuItem",
+   "id": "uRl-iY-unG",
+   "context": "Edit > Cut",
+   "table": "MainMenu"
+  },
+  "MainMenu::gVA-U4-sdL.title": {
+   "english": "Paste",
+   "class": "NSMenuItem",
+   "id": "gVA-U4-sdL",
+   "context": "Edit > Paste",
+   "table": "MainMenu"
+  },
+  "MainMenu::q09-fT-Sye.title": {
+   "english": "Find Next",
+   "class": "NSMenuItem",
+   "id": "q09-fT-Sye",
+   "context": "Edit > Find > Find Next",
+   "table": "MainMenu"
+  },
+  "MainMenu::OwM-mh-QMV.title": {
+   "english": "Find Previous",
+   "class": "NSMenuItem",
+   "id": "OwM-mh-QMV",
+   "context": "Edit > Find > Find Previous",
+   "table": "MainMenu"
+  },
+  "MainMenu::buJ-ug-pKt.title": {
+   "english": "Use Selection for Find",
+   "class": "NSMenuItem",
+   "id": "buJ-ug-pKt",
+   "context": "Edit > Find > Use Selection for Find",
+   "table": "MainMenu"
+  },
+  "MainMenu::S0p-oC-mLd.title": {
+   "english": "Jump to Selection",
+   "class": "NSMenuItem",
+   "id": "S0p-oC-mLd",
+   "context": "Edit > Find > Jump to Selection",
+   "table": "MainMenu"
+  },
+  "MainMenu::HFo-cy-zxI.title": {
+   "english": "Show Spelling and Grammar",
+   "class": "NSMenuItem",
+   "id": "HFo-cy-zxI",
+   "context": "Edit > Spelling and Grammar > Show Spelling and Grammar",
+   "table": "MainMenu"
+  },
+  "MainMenu::hz2-CU-CR7.title": {
+   "english": "Check Document Now",
+   "class": "NSMenuItem",
+   "id": "hz2-CU-CR7",
+   "context": "Edit > Spelling and Grammar > Check Document Now",
+   "table": "MainMenu"
+  },
+  "MainMenu::rbD-Rh-wIN.title": {
+   "english": "Check Spelling While Typing",
+   "class": "NSMenuItem",
+   "id": "rbD-Rh-wIN",
+   "context": "Edit > Spelling and Grammar > Check Spelling While Typing",
+   "table": "MainMenu"
+  },
+  "MainMenu::mK6-2p-4JG.title": {
+   "english": "Check Grammar With Spelling",
+   "class": "NSMenuItem",
+   "id": "mK6-2p-4JG",
+   "context": "Edit > Spelling and Grammar > Check Grammar With Spelling",
+   "table": "MainMenu"
+  },
+  "MainMenu::9ic-FL-obx.title": {
+   "english": "Substitutions",
+   "class": "NSMenuItem",
+   "id": "9ic-FL-obx",
+   "context": "Edit > Substitutions",
+   "table": "MainMenu"
+  },
+  "MainMenu::FeM-D8-WVr.title": {
+   "english": "Substitutions",
+   "class": "NSMenu",
+   "id": "FeM-D8-WVr",
+   "context": "Edit > Substitutions > Substitutions",
+   "table": "MainMenu",
+   "same_as": "9ic-FL-obx.title",
+   "note": "Submenu title with the same English as its menu item 9ic-FL-obx.title: use exactly the same translation as that item."
+  },
+  "MainMenu::z6F-FW-3nz.title": {
+   "english": "Show Substitutions",
+   "class": "NSMenuItem",
+   "id": "z6F-FW-3nz",
+   "context": "Edit > Substitutions > Show Substitutions",
+   "table": "MainMenu"
+  },
+  "MainMenu::9yt-4B-nSM.title": {
+   "english": "Smart Copy/Paste",
+   "class": "NSMenuItem",
+   "id": "9yt-4B-nSM",
+   "context": "Edit > Substitutions > Smart Copy/Paste",
+   "table": "MainMenu"
+  },
+  "MainMenu::hQb-2v-fYv.title": {
+   "english": "Smart Quotes",
+   "class": "NSMenuItem",
+   "id": "hQb-2v-fYv",
+   "context": "Edit > Substitutions > Smart Quotes",
+   "table": "MainMenu"
+  },
+  "MainMenu::rgM-f4-ycn.title": {
+   "english": "Smart Dashes",
+   "class": "NSMenuItem",
+   "id": "rgM-f4-ycn",
+   "context": "Edit > Substitutions > Smart Dashes",
+   "table": "MainMenu"
+  },
+  "MainMenu::tRr-pd-1PS.title": {
+   "english": "Data Detectors",
+   "class": "NSMenuItem",
+   "id": "tRr-pd-1PS",
+   "context": "Edit > Substitutions > Data Detectors",
+   "table": "MainMenu"
+  },
+  "MainMenu::HFQ-gK-NFA.title": {
+   "english": "Text Replacement",
+   "class": "NSMenuItem",
+   "id": "HFQ-gK-NFA",
+   "context": "Edit > Substitutions > Text Replacement",
+   "table": "MainMenu"
+  },
+  "MainMenu::c8a-y6-VQd.title": {
+   "english": "Transformations",
+   "class": "NSMenu",
+   "id": "c8a-y6-VQd",
+   "context": "Edit > Transformations > Transformations",
+   "table": "MainMenu",
+   "same_as": "2oI-Rn-ZJC.title",
+   "note": "Submenu title with the same English as its menu item 2oI-Rn-ZJC.title: use exactly the same translation as that item."
+  },
+  "MainMenu::vmV-6d-7jI.title": {
+   "english": "Make Upper Case",
+   "class": "NSMenuItem",
+   "id": "vmV-6d-7jI",
+   "context": "Edit > Transformations > Make Upper Case",
+   "table": "MainMenu"
+  },
+  "MainMenu::d9M-CD-aMd.title": {
+   "english": "Make Lower Case",
+   "class": "NSMenuItem",
+   "id": "d9M-CD-aMd",
+   "context": "Edit > Transformations > Make Lower Case",
+   "table": "MainMenu"
+  },
+  "MainMenu::UEZ-Bs-lqG.title": {
+   "english": "Capitalize",
+   "class": "NSMenuItem",
+   "id": "UEZ-Bs-lqG",
+   "context": "Edit > Transformations > Capitalize",
+   "table": "MainMenu"
+  },
+  "MainMenu::xrE-MZ-jX0.title": {
+   "english": "Speech",
+   "class": "NSMenuItem",
+   "id": "xrE-MZ-jX0",
+   "context": "Edit > Speech",
+   "table": "MainMenu"
+  },
+  "MainMenu::3rS-ZA-NoH.title": {
+   "english": "Speech",
+   "class": "NSMenu",
+   "id": "3rS-ZA-NoH",
+   "context": "Edit > Speech > Speech",
+   "table": "MainMenu",
+   "same_as": "xrE-MZ-jX0.title",
+   "note": "Submenu title with the same English as its menu item xrE-MZ-jX0.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Ynk-f8-cLZ.title": {
+   "english": "Start Speaking",
+   "class": "NSMenuItem",
+   "id": "Ynk-f8-cLZ",
+   "context": "Edit > Speech > Start Speaking",
+   "table": "MainMenu"
+  },
+  "MainMenu::Oyz-dy-DGm.title": {
+   "english": "Stop Speaking",
+   "class": "NSMenuItem",
+   "id": "Oyz-dy-DGm",
+   "context": "Edit > Speech > Stop Speaking",
+   "table": "MainMenu"
+  },
+  "MainMenu::xSb-2f-W1r.title": {
+   "english": "View",
+   "class": "NSMenuItem",
+   "id": "xSb-2f-W1r",
+   "context": "View",
+   "table": "MainMenu"
+  },
+  "MainMenu::EQZ-Zp-VNE.title": {
+   "english": "View",
+   "class": "NSMenu",
+   "id": "EQZ-Zp-VNE",
+   "context": "View > View",
+   "table": "MainMenu",
+   "same_as": "xSb-2f-W1r.title",
+   "note": "Submenu title with the same English as its menu item xSb-2f-W1r.title: use exactly the same translation as that item."
+  },
+  "MainMenu::Sd1-br-Tg1.title": {
+   "english": "Show Sidebar",
+   "class": "NSMenuItem",
+   "id": "Sd1-br-Tg1",
+   "context": "View > Show Sidebar",
+   "table": "MainMenu"
+  },
+  "MainMenu::Vh1-jg-bbV.title": {
+   "english": "Render Markdown",
+   "class": "NSMenuItem",
+   "id": "Vh1-jg-bbV",
+   "context": "View > Render Markdown",
+   "table": "MainMenu"
+  },
+  "MainMenu::TQb-x5-V3x.title": {
+   "english": "Show Invisible Characters",
+   "class": "NSMenuItem",
+   "id": "TQb-x5-V3x",
+   "context": "View > Show Invisible Characters",
+   "table": "MainMenu"
+  },
+  "MainMenu::VW7-VH-9yl.title": {
+   "english": "Left 1:3 Right",
+   "class": "NSMenuItem",
+   "id": "VW7-VH-9yl",
+   "context": "View > Left 1:3 Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::hOV-YQ-vzy.title": {
+   "english": "Left 1:1 Right",
+   "class": "NSMenuItem",
+   "id": "hOV-YQ-vzy",
+   "context": "View > Left 1:1 Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::NZX-Ev-sWt.title": {
+   "english": "Left 3:1 Right",
+   "class": "NSMenuItem",
+   "id": "NZX-Ev-sWt",
+   "context": "View > Left 3:1 Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::T74-vt-YUA.title": {
+   "english": "Hide Preview Pane",
+   "class": "NSMenuItem",
+   "id": "T74-vt-YUA",
+   "context": "View > Hide Preview Pane",
+   "table": "MainMenu"
+  },
+  "MainMenu::wHk-AQ-iOQ.title": {
+   "english": "Hide Editor Pane",
+   "class": "NSMenuItem",
+   "id": "wHk-AQ-iOQ",
+   "context": "View > Hide Editor Pane",
+   "table": "MainMenu"
+  },
+  "MainMenu::fKI-yk-0lv.title": {
+   "english": "Show Toolbar",
+   "class": "NSMenuItem",
+   "id": "fKI-yk-0lv",
+   "context": "View > Show Toolbar",
+   "table": "MainMenu"
+  },
+  "MainMenu::zIn-01-ABC.title": {
+   "english": "Zoom In",
+   "class": "NSMenuItem",
+   "id": "zIn-01-ABC",
+   "context": "View > Zoom In",
+   "table": "MainMenu"
+  },
+  "MainMenu::zOt-01-GHI.title": {
+   "english": "Zoom Out",
+   "class": "NSMenuItem",
+   "id": "zOt-01-GHI",
+   "context": "View > Zoom Out",
+   "table": "MainMenu"
+  },
+  "MainMenu::zRs-01-PQR.title": {
+   "english": "Actual Size",
+   "class": "NSMenuItem",
+   "id": "zRs-01-PQR",
+   "context": "View > Actual Size",
+   "table": "MainMenu"
+  },
+  "MainMenu::jxT-CU-nIS.title": {
+   "english": "Format",
+   "class": "NSMenuItem",
+   "id": "jxT-CU-nIS",
+   "context": "Format",
+   "table": "MainMenu"
+  },
+  "MainMenu::N43-55-MPb.title": {
+   "english": "Format",
+   "class": "NSMenu",
+   "id": "N43-55-MPb",
+   "context": "Format > Format",
+   "table": "MainMenu",
+   "same_as": "jxT-CU-nIS.title",
+   "note": "Submenu title with the same English as its menu item jxT-CU-nIS.title: use exactly the same translation as that item."
+  },
+  "MainMenu::ts7-v5-Htm.title": {
+   "english": "Copy HTML",
+   "class": "NSMenuItem",
+   "id": "ts7-v5-Htm",
+   "context": "Format > Copy HTML",
+   "table": "MainMenu"
+  },
+  "MainMenu::Rb9-MG-IjX.title": {
+   "english": "Strong",
+   "class": "NSMenuItem",
+   "id": "Rb9-MG-IjX",
+   "context": "Format > Strong",
+   "table": "MainMenu"
+  },
+  "MainMenu::4UH-k2-fgy.title": {
+   "english": "Emphasize",
+   "class": "NSMenuItem",
+   "id": "4UH-k2-fgy",
+   "context": "Format > Emphasize",
+   "table": "MainMenu"
+  },
+  "MainMenu::iRQ-Q6-N4K.title": {
+   "english": "Inline Code",
+   "class": "NSMenuItem",
+   "id": "iRQ-Q6-N4K",
+   "context": "Format > Inline Code",
+   "table": "MainMenu"
+  },
+  "MainMenu::i8c-gf-w29.title": {
+   "english": "Comment",
+   "class": "NSMenuItem",
+   "id": "i8c-gf-w29",
+   "context": "Format > Comment",
+   "table": "MainMenu"
+  },
+  "MainMenu::e8h-vX-NQb.title": {
+   "english": "Convert To",
+   "class": "NSMenuItem",
+   "id": "e8h-vX-NQb",
+   "context": "Format > Convert To",
+   "table": "MainMenu"
+  },
+  "MainMenu::I8Y-e8-XDx.title": {
+   "english": "Convert To",
+   "class": "NSMenu",
+   "id": "I8Y-e8-XDx",
+   "context": "Format > Convert To > Convert To",
+   "table": "MainMenu",
+   "same_as": "e8h-vX-NQb.title",
+   "note": "Submenu title with the same English as its menu item e8h-vX-NQb.title: use exactly the same translation as that item."
+  },
+  "MainMenu::xN5-GU-ASF.title": {
+   "english": "Paragraph",
+   "class": "NSMenuItem",
+   "id": "xN5-GU-ASF",
+   "context": "Format > Convert To > Paragraph",
+   "table": "MainMenu"
+  },
+  "MainMenu::jn0-Kb-yH7.title": {
+   "english": "Ordered List",
+   "class": "NSMenuItem",
+   "id": "jn0-Kb-yH7",
+   "context": "Format > Ordered List",
+   "table": "MainMenu"
+  },
+  "MainMenu::jn0-Kb-yH6.title": {
+   "english": "Unordered List",
+   "class": "NSMenuItem",
+   "id": "jn0-Kb-yH6",
+   "context": "Format > Unordered List",
+   "table": "MainMenu"
+  },
+  "MainMenu::twd-Mb-qNx.title": {
+   "english": "Blockquote",
+   "class": "NSMenuItem",
+   "id": "twd-Mb-qNx",
+   "context": "Format > Blockquote",
+   "table": "MainMenu"
+  },
+  "MainMenu::g9Y-GM-gdh.title": {
+   "english": "Shift Right",
+   "class": "NSMenuItem",
+   "id": "g9Y-GM-gdh",
+   "context": "Format > Shift Right",
+   "table": "MainMenu"
+  },
+  "MainMenu::zHE-JL-8eu.title": {
+   "english": "New Paragraph",
+   "class": "NSMenuItem",
+   "id": "zHE-JL-8eu",
+   "context": "Format > New Paragraph",
+   "table": "MainMenu"
+  },
+  "MainMenu::R4o-n2-Eq4.title": {
+   "english": "Zoom",
+   "class": "NSMenuItem",
+   "id": "R4o-n2-Eq4",
+   "context": "Window > Zoom",
+   "table": "MainMenu"
+  },
+  "MainMenu::LE2-aR-0XJ.title": {
+   "english": "Bring All to Front",
+   "class": "NSMenuItem",
+   "id": "LE2-aR-0XJ",
+   "context": "Window > Bring All to Front",
+   "table": "MainMenu"
+  },
+  "MainMenu::ugx-EN-xKu.title": {
+   "english": "MacDown 3000 Help",
+   "class": "NSMenuItem",
+   "id": "ugx-EN-xKu",
+   "context": "Help > MacDown 3000 Help",
+   "table": "MainMenu"
+  },
+  "MainMenu::K3J-v5-s91.title": {
+   "english": "Contributing to MacDown 3000",
+   "class": "NSMenuItem",
+   "id": "K3J-v5-s91",
+   "context": "Help > Contributing to MacDown 3000",
+   "table": "MainMenu"
+  },
+  "MainMenu::pLw-9G-hNv.title": {
+   "english": "MacDown 3000 on GitHub",
+   "class": "NSMenuItem",
+   "id": "pLw-9G-hNv",
+   "context": "Help > MacDown 3000 on GitHub",
+   "table": "MainMenu"
+  }
+ },
+ "glossary": {
+  "Block formatting": "Блокове форматування",
+  "Table": "Таблиця",
+  "Fenced code block": "Огороджений блок коду",
+  "Inline formatting": "Вбудоване форматування",
+  "Strikethrough": "Закреслений",
+  "Underline": "Підкреслений",
+  "Quote": "Цитата",
+  "Intra-word emphasis": "Виділення всередині слова",
+  "Superscript": "Верхній індекс",
+  "Highlight": "Виділення",
+  "Autolink": "Автопосилання",
+  "Footnote": "Виноска",
+  "Document formatting": "Форматування документа",
+  "Base font:": "Основний шрифт:",
+  "Theme:": "Тема:",
+  "Text insets:": "Відступи тексту:",
+  "Change…": "Змінити…",
+  "Reveal": "Показати",
+  "Reload": "Перезавантажити",
+  "Line spacing:": "Міжрядковий інтервал:",
+  "Limit editor width to": "Обмежити ширину редактора до",
+  "* (Asterisk)": "* (Зірочка)",
+  "+ (Plus sign)": "+ (Плюс)",
+  "- (Minus sign)": "- (Мінус)",
+  "List marker:": "Маркер списку:",
+  "Behavior": "Поведінка",
+  "Insert spaces instead of tabs": "Вставляти пробіли замість табуляції",
+  "Auto-complete matching characters": "Автодоповнення парних символів",
+  "⌘← jumps to first non-whitespace character in line": "⌘← переходить до першого непробільного символу в рядку",
+  "Scroll past end": "Прокрутка за кінець",
+  "Ensure newline at end of file on save": "Забезпечити переведення рядка в кінці файлу при збереженні",
+  "Auto-increment numbering in ordered lists": "Автоінкремент нумерації в упорядкованих списках",
+  "Automatically insert line prefix for the current block": "Автоматично вставляти префікс рядка для поточного блоку",
+  "Default path:": "Шлях за замовчуванням:",
+  "Syntax highlighted code block": "Підсвічування синтаксису в блоках коду",
+  "Show line numbers": "Показувати номери рядків",
+  "TeX-like math syntax": "Синтаксис формул у стилі TeX",
+  "Math support requires Internet connection.": "Для підтримки формул потрібне підключення до Інтернету.",
+  "Use dollar sign ($) as inline delimiter": "Використовувати знак долара ($) як вбудований роздільник",
+  "Task list syntax": "Синтаксис списку завдань",
+  "Hide YAML front matter": "Приховати YAML-заголовок",
+  "Detect table of contents token": "Визначати маркер змісту",
+  "Render newline literally": "Обробляти переведення рядка буквально",
+  "Hide horizontal rules": "Приховувати горизонтальні лінії",
+  "Scale preview based on editor font size": "Масштабувати попередній перегляд залежно від розміру шрифту редактора",
+  "Accessory:": "Аксесуар:",
+  "None": "Немає",
+  "Language name": "Назва мови",
+  "Custom": "Власна",
+  "Text": "Текст",
+  "Shell support not installed": "Підтримку командного рядка не встановлено",
+  "By activating shell support you can use the macdown utility to open MacDown and documents from a shell.": "Активувавши підтримку командного рядка, Ви зможете використовувати утиліту macdown для відкриття MacDown і документів з оболонки.",
+  "Location:": "Розташування:",
+  "Install": "Встановити",
+  "Main Menu": "Головне меню",
+  "About MacDown 3000": "Про MacDown 3000",
+  "Check for Updates…": "Перевірити наявність оновлень…",
+  "Preferences…": "Налаштування…",
+  "Hide MacDown 3000": "Сховати MacDown 3000",
+  "Show All": "Показати всі",
+  "Quit MacDown 3000": "Вийти з MacDown 3000",
+  "File": "Файл",
+  "New": "Новий",
+  "Open…": "Відкрити…",
+  "Close": "Закрити",
+  "Save…": "Зберегти…",
+  "Save As…": "Зберегти як…",
+  "Export": "Експортувати",
+  "Print…": "Друкувати…",
+  "Edit": "Редагування",
+  "Undo": "Відмінити",
+  "Redo": "Повторити",
+  "Copy": "Копіювати",
+  "Delete": "Видалити",
+  "Select All": "Вибрати все",
+  "Find": "Знайти",
+  "Find…": "Знайти…",
+  "Find and Replace…": "Знайти і замінити…",
+  "Spelling and Grammar": "Правопис і граматика",
+  "Spelling": "Правопис",
+  "Correct Spelling Automatically": "Автоматично виправляти правопис",
+  "Transformations": "Перетворення",
+  "Enter Full Screen": "Увімкнути повноекранний режим",
+  "Header 1": "Заголовок 1",
+  "Header 2": "Заголовок 2",
+  "Header 3": "Заголовок 3",
+  "Header 4": "Заголовок 4",
+  "Header 5": "Заголовок 5",
+  "Header 6": "Заголовок 6",
+  "Shift Left": "Зсунути вліво",
+  "Link": "Посилання",
+  "Image": "Зображення",
+  "Window": "Вікно",
+  "Minimize": "Згорнути",
+  "Help": "Довідка",
+  "Update": "Оновлення",
+  "Include pre-releases": "Включати попередні версії",
+  "Update preview automatically as you type": "Автоматично оновлювати попередній перегляд при введенні",
+  "Sync preview scrollbar when editor scrolls": "Синхронізувати прокрутку попереднього перегляду з редактором",
+  "Put editor on the right": "Розмістити редактор праворуч",
+  "Show word count": "Показувати кількість слів",
+  "Ensure open document on launch": "Обов'язково відкривати документ при запуску",
+  "Automatically create files for link targets": "Автоматично створювати файли для цілей посилань",
+  "(Default)": "(За замовчуванням)",
+  "<Not installed>": "<Не встановлено>",
+  "Blockquote": "Цитата",
+  "CHARACTERS_NO_SPACES_PLURAL_STRING": "%@ символ (без пробілів);%@ символи (без пробілів);%@ символів (без пробілів)",
+  "WORDS_SELECTED_PLURAL_STRING": "%@ виділене слово;%@ виділені слова;%@ виділених слів",
+  "CHARACTERS_SELECTED_PLURAL_STRING": "%@ виділений символ;%@ виділені символи;%@ виділених символів",
+  "CHARACTERS_NO_SPACES_SELECTED_PLURAL_STRING": "%@ виділений символ (без пробілів);%@ виділені символи (без пробілів);%@ виділених символів (без пробілів)",
+  "CHARACTERS_PLURAL_STRING": "%@ символ;%@ символи;%@ символів",
+  "Comment": "Коментар",
+  "Copy HTML": "Копіювати HTML",
+  "Editor": "Редактор",
+  "Emphasize": "Курсив",
+  "General": "Загальні",
+  "Heading 1": "Заголовок 1",
+  "Heading 2": "Заголовок 2",
+  "Heading 3": "Заголовок 3",
+  "Headings": "Заголовки",
+  "Hide Editor Pane": "Сховати панель редактора",
+  "Hide Preview Pane": "Сховати панель попереднього перегляду",
+  "Hide Toolbar": "Сховати панель інструментів",
+  "Inline Code": "Вбудований код",
+  "JJ_PLURAL_FORM_RULE": "7",
+  "Layout": "Макет",
+  "Ordered List": "Нумерований список",
+  "Ordered/Unordered List": "Нумерований/маркований список",
+  "Preferences": "Налаштування",
+  "Rendering": "Рендеринг",
+  "Restore Editor Pane": "Відновити панель редактора",
+  "Restore Preview Pane": "Відновити панель попереднього перегляду",
+  "Shell utility installed": "Shell-утиліту встановлено",
+  "Shell utility not installed": "Shell-утиліту не встановлено",
+  "Shift Left/Right": "Зсунути вліво/вправо",
+  "Shift Right": "Зсунути вправо",
+  "Show Toolbar": "Показати панель інструментів",
+  "Strong": "Жирний",
+  "Terminal": "Термінал",
+  "Text Styles": "Стилі тексту",
+  "Uninstall": "Видалити",
+  "Unordered List": "Маркований список",
+  "Untitled": "Без назви",
+  "WORDS_PLURAL_STRING": "%@ слово;%@ слова;%@ слів",
+  "Installation Failed": "Помилка встановлення",
+  "Installation Successful": "Встановлення успішне",
+  "Installation Successful - PATH Setup Required": "Встановлення успішне - потрібне налаштування PATH",
+  "Uninstallation Failed": "Помилка видалення",
+  "Uninstallation Successful": "Видалення успішне",
+  "The shell utility could not be found in the application bundle.": "Shell-утиліту не знайдено в пакеті програми.",
+  "The macdown shell utility has been installed successfully.": "Shell-утиліту macdown успішно встановлено.",
+  "The shell utility could not be installed: %@": "Не вдалося встановити shell-утиліту: %@",
+  "The macdown shell utility has been removed successfully.": "Shell-утиліту macdown успішно видалено.",
+  "The shell utility could not be removed: %@": "Не вдалося видалити shell-утиліту: %@",
+  "Could not create directory %@: %@": "Не вдалося створити каталог %@: %@",
+  "A file exists at this location": "У цьому місці вже існує файл",
+  "Source file does not exist": "Вихідний файл не існує",
+  "A file already exists at the installation path": "Файл вже існує за шляхом встановлення",
+  "File Modified Externally": "Файл змінено ззовні",
+  "Discard": "Відкинути",
+  "Keep": "Залишити"
+ }
+}
