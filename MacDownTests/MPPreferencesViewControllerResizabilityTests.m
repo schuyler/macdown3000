@@ -651,8 +651,11 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
                 titleMap[english] = localized;
         }];
 
+        // -init names the nib after the class; this subclass uses its parent's.
         MPLocalizedEditorPreferencesViewController *vc =
-            [[MPLocalizedEditorPreferencesViewController alloc] init];
+            [[MPLocalizedEditorPreferencesViewController alloc]
+                initWithNibName:@"MPEditorPreferencesViewController"
+                         bundle:[NSBundle mainBundle]];
         vc.titleMap = titleMap;
         NSView *wrapper = vc.view;   // loadView: titles applied, then sizing
         XCTAssertTrue(vc.titlesApplied, @"%@: localized titles were not applied", locale);
