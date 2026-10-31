@@ -1114,5 +1114,29 @@
                    @"No action should be dispatched for nil representedObject");
 }
 
+#pragma mark - Table Icon (Issue #497)
+
+// The Insert Table button must use its own grid icon so it cannot be mistaken
+// for the Unordered List button.
+- (void)testTableButtonUsesDistinctTableIcon
+{
+    NSToolbarItem *item = [self.controller toolbar:nil
+                             itemForItemIdentifier:@"table"
+                         willBeInsertedIntoToolbar:YES];
+    NSImage *image = ((NSButton *)item.view).image;
+    XCTAssertNotNil(image, @"The Table button must have an image");
+    XCTAssertEqualObjects(image.name, @"ToolbarIconTable",
+                          @"The Table button must use the ToolbarIconTable asset");
+    XCTAssertTrue(image.isTemplate,
+                  @"The Table icon must be a template image so it follows "
+                   "the toolbar's appearance");
+
+    NSImage *unorderedList = [NSImage imageNamed:@"ToolbarIconUnorderedList"];
+    XCTAssertNotNil(unorderedList);
+    XCTAssertNotEqualObjects(image.TIFFRepresentation,
+                             unorderedList.TIFFRepresentation,
+                             @"The Table icon must differ from the Unordered "
+                              "List icon");
+}
 
 @end
