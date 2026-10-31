@@ -16,3 +16,18 @@
 /* Class = "NSButtonCell"; title = "Show word count"; ObjectID = "oeW-bF-ybW"; */
 "oeW-bF-ybW.title" = "Kelime sayısını göster";
 
+
+/* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
+"vbz-fv-8BX.title" = "Ön sürümleri dahil et";
+
+/* Class = "NSButtonCell"; title = "Start in preview mode"; ObjectID = "aYQ-0c-EOQ"; */
+"aYQ-0c-EOQ.title" = "Önizleme modunda başlat";
+
+/* Class = "NSButtonCell"; title = "Ensure open document on launch"; ObjectID = "l9N-wk-WRY"; */
+"l9N-wk-WRY.title" = "Açılışta bir belge açık olsun";
+
+/* Class = "NSButtonCell"; title = "Automatically create files for link targets"; ObjectID = "hpF-zP-3cM"; */
+"hpF-zP-3cM.title" = "Bağlantı hedefleri için dosyaları otomatik oluştur";
+
+/* Class = "NSButtonCell"; title = "Auto-save and auto-reload documents"; ObjectID = "aSv-Bc-cel"; */
+"aSv-Bc-cel.title" = "Belgeleri otomatik kaydet ve yeniden yükle";

@@ -16,3 +16,18 @@
 /* Class = "NSButtonCell"; title = "Show word count"; ObjectID = "oeW-bF-ybW"; */
 "oeW-bF-ybW.title" = "Sýna orðafjölda";
 
+
+/* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
+"vbz-fv-8BX.title" = "Hafa forútgáfur með";
+
+/* Class = "NSButtonCell"; title = "Sync preview scrollbar when editor scrolls"; ObjectID = "2Uj-Sx-FjV"; */
+"2Uj-Sx-FjV.title" = "Samstilla skrunstiku forskoðunar við ritil";
+
+/* Class = "NSButtonCell"; title = "Start in preview mode"; ObjectID = "aYQ-0c-EOQ"; */
+"aYQ-0c-EOQ.title" = "Ræsa í forskoðunarham";
+
+/* Class = "NSButtonCell"; title = "Automatically create files for link targets"; ObjectID = "hpF-zP-3cM"; */
+"hpF-zP-3cM.title" = "Búa sjálfkrafa til skrár fyrir tengla";
+
+/* Class = "NSButtonCell"; title = "Auto-save and auto-reload documents"; ObjectID = "aSv-Bc-cel"; */
+"aSv-Bc-cel.title" = "Vista og endurhlaða skjöl sjálfkrafa";

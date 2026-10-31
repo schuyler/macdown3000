@@ -13,3 +13,6 @@
 /* Class = "NSButtonCell"; title = "Install"; ObjectID = "XiC-FP-TWZ"; */
 "XiC-FP-TWZ.title" = "Setja upp";
 
+
+/* Class = "NSTextFieldCell"; title = "By activating shell support you can use the macdown utility to open MacDown and documents from a shell."; ObjectID = "W5n-x2-ygz"; */
+"W5n-x2-ygz.title" = "Með því að virkja skeljarstuðning geturðu notað macdown-tólið til að opna MacDown og skjöl úr skel.";

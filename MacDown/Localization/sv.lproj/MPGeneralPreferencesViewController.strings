@@ -19,3 +19,15 @@
 /* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
 "vbz-fv-8BX.title" = "Inkludera förhands-versioner";
 
+
+/* Class = "NSBox"; title = "Behavior"; ObjectID = "Nma-PL-ZvX"; */
+"Nma-PL-ZvX.title" = "Beteende";
+
+/* Class = "NSButtonCell"; title = "Start in preview mode"; ObjectID = "aYQ-0c-EOQ"; */
+"aYQ-0c-EOQ.title" = "Starta i förhandsvisningsläge";
+
+/* Class = "NSButtonCell"; title = "Automatically create files for link targets"; ObjectID = "hpF-zP-3cM"; */
+"hpF-zP-3cM.title" = "Skapa filer för länkmål automatiskt";
+
+/* Class = "NSButtonCell"; title = "Auto-save and auto-reload documents"; ObjectID = "aSv-Bc-cel"; */
+"aSv-Bc-cel.title" = "Spara och ladda om dokument automatiskt";

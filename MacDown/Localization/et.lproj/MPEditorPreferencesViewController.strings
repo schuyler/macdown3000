@@ -40,3 +40,24 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (pluss märk)";
 
+
+/* Class = "NSTextFieldCell"; title = "Base font:"; ObjectID = "eXF-SL-hBq"; */
+"eXF-SL-hBq.title" = "Põhifont:";
+
+/* Class = "NSButtonCell"; title = "Limit editor width to"; ObjectID = "bhL-NA-9No"; */
+"bhL-NA-9No.title" = "Piira redaktori laius:";
+
+/* Class = "NSButtonCell"; title = "Insert spaces instead of tabs"; ObjectID = "XSN-mi-gbk"; */
+"XSN-mi-gbk.title" = "Lisa tabulaatorite asemel tühikud";
+
+/* Class = "NSButtonCell"; title = "Auto-complete matching characters"; ObjectID = "o4K-iG-sGA"; */
+"o4K-iG-sGA.title" = "Lõpeta sobivad märgid automaatselt";
+
+/* Class = "NSButtonCell"; title = "Scroll past end"; ObjectID = "nBR-LK-G9a"; */
+"nBR-LK-G9a.title" = "Kerimine üle lõpu";
+
+/* Class = "NSButtonCell"; title = "Auto-increment numbering in ordered lists"; ObjectID = "UPm-G1-Bc6"; */
+"UPm-G1-Bc6.title" = "Nummerdatud loendite automaatne nummerdamine";
+
+/* Class = "NSButtonCell"; title = "Automatically insert line prefix for the current block"; ObjectID = "zGb-kg-2CJ"; */
+"zGb-kg-2CJ.title" = "Lisa praeguse ploki reaprefiks automaatselt";

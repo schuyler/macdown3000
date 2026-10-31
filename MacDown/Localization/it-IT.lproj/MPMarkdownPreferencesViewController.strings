@@ -37,3 +37,6 @@
 /* Class = "NSButtonCell"; title = "Table"; ObjectID = "z8g-3M-hbc"; */
 "z8g-3M-hbc.title" = "Tabella";
 
+
+/* Class = "NSButtonCell"; title = "Smartypants"; ObjectID = "aSK-nR-xMr"; */
+"aSK-nR-xMr.title" = "Smartypants";

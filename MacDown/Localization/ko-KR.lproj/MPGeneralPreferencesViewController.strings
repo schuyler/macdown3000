@@ -25,3 +25,9 @@
 /* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
 "vbz-fv-8BX.title" = "프리릴리스 포함";
 
+
+/* Class = "NSButtonCell"; title = "Start in preview mode"; ObjectID = "aYQ-0c-EOQ"; */
+"aYQ-0c-EOQ.title" = "미리보기 모드로 시작";
+
+/* Class = "NSButtonCell"; title = "Auto-save and auto-reload documents"; ObjectID = "aSv-Bc-cel"; */
+"aSv-Bc-cel.title" = "문서 자동 저장 및 자동 다시 읽기";

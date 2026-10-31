@@ -348,3 +348,27 @@
 /* Class = "NSMenuItem"; title = "New Paragraph"; ObjectID = "zHE-JL-8eu"; */
 "zHE-JL-8eu.title" = "新しい段落";
 
+
+/* Class = "NSMenuItem"; title = "Open Folder…"; ObjectID = "F0l-dr-Op1"; */
+"F0l-dr-Op1.title" = "フォルダを開く…";
+
+/* Class = "NSMenuItem"; title = "Auto Save"; ObjectID = "aSv-FL-tgl"; */
+"aSv-FL-tgl.title" = "自動保存";
+
+/* Class = "NSMenuItem"; title = "Show Sidebar"; ObjectID = "Sd1-br-Tg1"; */
+"Sd1-br-Tg1.title" = "サイドバーを表示";
+
+/* Class = "NSMenuItem"; title = "Show Invisible Characters"; ObjectID = "TQb-x5-V3x"; */
+"TQb-x5-V3x.title" = "不可視文字を表示";
+
+/* Class = "NSMenuItem"; title = "Zoom In"; ObjectID = "zIn-01-ABC"; */
+"zIn-01-ABC.title" = "拡大";
+
+/* Class = "NSMenuItem"; title = "Zoom Out"; ObjectID = "zOt-01-GHI"; */
+"zOt-01-GHI.title" = "縮小";
+
+/* Class = "NSMenuItem"; title = "Actual Size"; ObjectID = "zRs-01-PQR"; */
+"zRs-01-PQR.title" = "実際のサイズ";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 on GitHub"; ObjectID = "pLw-9G-hNv"; */
+"pLw-9G-hNv.title" = "GitHub の MacDown 3000";

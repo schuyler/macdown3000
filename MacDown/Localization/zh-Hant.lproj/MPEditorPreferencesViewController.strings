@@ -58,3 +58,6 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (加號)";
 
+
+/* Class = "NSTextFieldCell"; title = "Text insets:"; ObjectID = "Ee6-Cj-SWW"; */
+"Ee6-Cj-SWW.title" = "文字邊距：";

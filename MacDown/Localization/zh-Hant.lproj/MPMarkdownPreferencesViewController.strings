@@ -37,3 +37,6 @@
 /* Class = "NSButtonCell"; title = "Table"; ObjectID = "z8g-3M-hbc"; */
 "z8g-3M-hbc.title" = "表格";
 
+
+/* Class = "NSButtonCell"; title = "Intra-word emphasis"; ObjectID = "D7l-nP-P0y"; */
+"D7l-nP-P0y.title" = "單字內強調";

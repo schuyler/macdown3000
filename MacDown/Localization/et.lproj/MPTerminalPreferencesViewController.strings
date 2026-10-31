@@ -10,3 +10,9 @@
 /* Class = "NSButtonCell"; title = "Install"; ObjectID = "XiC-FP-TWZ"; */
 "XiC-FP-TWZ.title" = "Paigalda";
 
+
+/* Class = "NSTextFieldCell"; title = "Shell support not installed"; ObjectID = "g7m-Fr-pUo"; */
+"g7m-Fr-pUo.title" = "Shelli tuge pole paigaldatud";
+
+/* Class = "NSTextFieldCell"; title = "By activating shell support you can use the macdown utility to open MacDown and documents from a shell."; ObjectID = "W5n-x2-ygz"; */
+"W5n-x2-ygz.title" = "Shelli toe aktiveerimisega saad kasutada macdown-utiliiti MacDowni ja dokumentide avamiseks shellist.";

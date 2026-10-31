@@ -300,3 +300,75 @@
 /* Class = "NSMenuItem"; title = "New Paragraph"; ObjectID = "zHE-JL-8eu"; */
 "zHE-JL-8eu.title" = "Ný málsgrein";
 
+
+/* Class = "NSMenuItem"; title = "Open Folder…"; ObjectID = "F0l-dr-Op1"; */
+"F0l-dr-Op1.title" = "Opna möppu…";
+
+/* Class = "NSMenuItem"; title = "Auto Save"; ObjectID = "aSv-FL-tgl"; */
+"aSv-FL-tgl.title" = "Vista sjálfkrafa";
+
+/* Class = "NSMenuItem"; title = "Use Selection for Find"; ObjectID = "buJ-ug-pKt"; */
+"buJ-ug-pKt.title" = "Nota val til leitar";
+
+/* Class = "NSMenuItem"; title = "Jump to Selection"; ObjectID = "S0p-oC-mLd"; */
+"S0p-oC-mLd.title" = "Fara í val";
+
+/* Class = "NSMenuItem"; title = "Show Spelling and Grammar"; ObjectID = "HFo-cy-zxI"; */
+"HFo-cy-zxI.title" = "Sýna stafsetningu og málfar";
+
+/* Class = "NSMenuItem"; title = "Check Document Now"; ObjectID = "hz2-CU-CR7"; */
+"hz2-CU-CR7.title" = "Fara yfir skjal núna";
+
+/* Class = "NSMenuItem"; title = "Substitutions"; ObjectID = "9ic-FL-obx"; */
+"9ic-FL-obx.title" = "Útskiptingar";
+
+/* Class = "NSMenu"; title = "Substitutions"; ObjectID = "FeM-D8-WVr"; */
+"FeM-D8-WVr.title" = "Útskiptingar";
+
+/* Class = "NSMenuItem"; title = "Text Replacement"; ObjectID = "HFQ-gK-NFA"; */
+"HFQ-gK-NFA.title" = "Textaskipti";
+
+/* Class = "NSMenu"; title = "Transformations"; ObjectID = "c8a-y6-VQd"; */
+"c8a-y6-VQd.title" = "Umbreytingar";
+
+/* Class = "NSMenuItem"; title = "Capitalize"; ObjectID = "UEZ-Bs-lqG"; */
+"UEZ-Bs-lqG.title" = "Stór upphafsstafur";
+
+/* Class = "NSMenuItem"; title = "Show Sidebar"; ObjectID = "Sd1-br-Tg1"; */
+"Sd1-br-Tg1.title" = "Sýna hliðarstiku";
+
+/* Class = "NSMenuItem"; title = "Show Invisible Characters"; ObjectID = "TQb-x5-V3x"; */
+"TQb-x5-V3x.title" = "Sýna ósýnilega stafi";
+
+/* Class = "NSMenuItem"; title = "Show Toolbar"; ObjectID = "fKI-yk-0lv"; */
+"fKI-yk-0lv.title" = "Sýna tækjastiku";
+
+/* Class = "NSMenuItem"; title = "Zoom In"; ObjectID = "zIn-01-ABC"; */
+"zIn-01-ABC.title" = "Stækka";
+
+/* Class = "NSMenuItem"; title = "Zoom Out"; ObjectID = "zOt-01-GHI"; */
+"zOt-01-GHI.title" = "Minnka";
+
+/* Class = "NSMenuItem"; title = "Actual Size"; ObjectID = "zRs-01-PQR"; */
+"zRs-01-PQR.title" = "Raunstærð";
+
+/* Class = "NSMenuItem"; title = "Inline Code"; ObjectID = "iRQ-Q6-N4K"; */
+"iRQ-Q6-N4K.title" = "Kóði í línu";
+
+/* Class = "NSMenuItem"; title = "Shift Right"; ObjectID = "g9Y-GM-gdh"; */
+"g9Y-GM-gdh.title" = "Færa til hægri";
+
+/* Class = "NSMenuItem"; title = "Shift Left"; ObjectID = "Jzs-tR-jkL"; */
+"Jzs-tR-jkL.title" = "Færa til vinstri";
+
+/* Class = "NSMenuItem"; title = "Minimize"; ObjectID = "OY7-WF-poV"; */
+"OY7-WF-poV.title" = "Hafa í lágmarki";
+
+/* Class = "NSMenuItem"; title = "Bring All to Front"; ObjectID = "LE2-aR-0XJ"; */
+"LE2-aR-0XJ.title" = "Hækka alla";
+
+/* Class = "NSMenuItem"; title = "Contributing to MacDown 3000"; ObjectID = "K3J-v5-s91"; */
+"K3J-v5-s91.title" = "Taka þátt í MacDown 3000";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 on GitHub"; ObjectID = "pLw-9G-hNv"; */
+"pLw-9G-hNv.title" = "MacDown 3000 á GitHub";

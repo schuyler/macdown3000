@@ -46,3 +46,327 @@
 /* Class = "NSMenuItem"; title = "Check for Updates…"; ObjectID = "8xL-1V-VPX"; */
 "8xL-1V-VPX.title" = "Tarkista päivitykset…";
 
+
+/* Class = "NSMenu"; title = "Main Menu"; ObjectID = "AYu-sK-qS6"; */
+"AYu-sK-qS6.title" = "Päävalikko";
+
+/* Class = "NSMenu"; title = "MacDown 3000"; ObjectID = "uQy-DD-JDr"; */
+"uQy-DD-JDr.title" = "MacDown 3000";
+
+/* Class = "NSMenuItem"; title = "Preferences…"; ObjectID = "BOF-NM-1cW"; */
+"BOF-NM-1cW.title" = "Asetukset…";
+
+/* Class = "NSMenuItem"; title = "Services"; ObjectID = "NMo-om-nkz"; */
+"NMo-om-nkz.title" = "Palvelut";
+
+/* Class = "NSMenu"; title = "Services"; ObjectID = "hz9-B4-Xy5"; */
+"hz9-B4-Xy5.title" = "Palvelut";
+
+/* Class = "NSMenuItem"; title = "Hide MacDown 3000"; ObjectID = "Olw-nP-bQN"; */
+"Olw-nP-bQN.title" = "Piilota MacDown 3000";
+
+/* Class = "NSMenuItem"; title = "Hide Others"; ObjectID = "Vdr-fp-XzO"; */
+"Vdr-fp-XzO.title" = "Piilota muut";
+
+/* Class = "NSMenuItem"; title = "Show All"; ObjectID = "Kd2-mp-pUS"; */
+"Kd2-mp-pUS.title" = "Näytä kaikki";
+
+/* Class = "NSMenuItem"; title = "File"; ObjectID = "dMs-cI-mzQ"; */
+"dMs-cI-mzQ.title" = "Arkisto";
+
+/* Class = "NSMenu"; title = "File"; ObjectID = "bib-Uj-vzu"; */
+"bib-Uj-vzu.title" = "Arkisto";
+
+/* Class = "NSMenuItem"; title = "New"; ObjectID = "Was-JA-tGl"; */
+"Was-JA-tGl.title" = "Uusi";
+
+/* Class = "NSMenuItem"; title = "Open…"; ObjectID = "IAo-SY-fd9"; */
+"IAo-SY-fd9.title" = "Avaa…";
+
+/* Class = "NSMenuItem"; title = "Open Folder…"; ObjectID = "F0l-dr-Op1"; */
+"F0l-dr-Op1.title" = "Avaa kansio…";
+
+/* Class = "NSMenuItem"; title = "Open Recent"; ObjectID = "tXI-mr-wws"; */
+"tXI-mr-wws.title" = "Avaa viimeisimmät";
+
+/* Class = "NSMenu"; title = "Open Recent"; ObjectID = "oas-Oc-fiZ"; */
+"oas-Oc-fiZ.title" = "Avaa viimeisimmät";
+
+/* Class = "NSMenuItem"; title = "Clear Menu"; ObjectID = "vNY-rz-j42"; */
+"vNY-rz-j42.title" = "Tyhjennä valikko";
+
+/* Class = "NSMenuItem"; title = "Close"; ObjectID = "DVo-aG-piG"; */
+"DVo-aG-piG.title" = "Sulje";
+
+/* Class = "NSMenuItem"; title = "Save…"; ObjectID = "pxx-59-PXV"; */
+"pxx-59-PXV.title" = "Tallenna…";
+
+/* Class = "NSMenuItem"; title = "Save As…"; ObjectID = "Bw7-FT-i3A"; */
+"Bw7-FT-i3A.title" = "Tallenna nimellä…";
+
+/* Class = "NSMenuItem"; title = "Revert to Saved"; ObjectID = "KaW-ft-85H"; */
+"KaW-ft-85H.title" = "Palauta tallennettu";
+
+/* Class = "NSMenuItem"; title = "Auto Save"; ObjectID = "aSv-FL-tgl"; */
+"aSv-FL-tgl.title" = "Automaattinen tallennus";
+
+/* Class = "NSMenu"; title = "Export"; ObjectID = "SJM-Pp-ywb"; */
+"SJM-Pp-ywb.title" = "Vie";
+
+/* Class = "NSMenuItem"; title = "HTML…"; ObjectID = "dGm-Yl-i3Z"; */
+"dGm-Yl-i3Z.title" = "HTML…";
+
+/* Class = "NSMenuItem"; title = "PDF…"; ObjectID = "XFN-MJ-RrW"; */
+"XFN-MJ-RrW.title" = "PDF…";
+
+/* Class = "NSMenuItem"; title = "Page Setup…"; ObjectID = "qIS-W8-SiK"; */
+"qIS-W8-SiK.title" = "Sivun asetukset…";
+
+/* Class = "NSMenuItem"; title = "Print…"; ObjectID = "aTl-1u-JFS"; */
+"aTl-1u-JFS.title" = "Tulosta…";
+
+/* Class = "NSMenu"; title = "Edit"; ObjectID = "W48-6f-4Dl"; */
+"W48-6f-4Dl.title" = "Muokkaa";
+
+/* Class = "NSMenuItem"; title = "Undo"; ObjectID = "dRJ-4n-Yzg"; */
+"dRJ-4n-Yzg.title" = "Kumoa";
+
+/* Class = "NSMenuItem"; title = "Cut"; ObjectID = "uRl-iY-unG"; */
+"uRl-iY-unG.title" = "Leikkaa";
+
+/* Class = "NSMenuItem"; title = "Copy"; ObjectID = "x3v-GG-iWU"; */
+"x3v-GG-iWU.title" = "Kopioi";
+
+/* Class = "NSMenuItem"; title = "Paste"; ObjectID = "gVA-U4-sdL"; */
+"gVA-U4-sdL.title" = "Liitä";
+
+/* Class = "NSMenuItem"; title = "Delete"; ObjectID = "pa3-QI-u2k"; */
+"pa3-QI-u2k.title" = "Poista";
+
+/* Class = "NSMenuItem"; title = "Select All"; ObjectID = "Ruw-6m-B2m"; */
+"Ruw-6m-B2m.title" = "Valitse kaikki";
+
+/* Class = "NSMenuItem"; title = "Find…"; ObjectID = "Xz5-n4-O0W"; */
+"Xz5-n4-O0W.title" = "Etsi…";
+
+/* Class = "NSMenuItem"; title = "Find and Replace…"; ObjectID = "YEy-JH-Tfz"; */
+"YEy-JH-Tfz.title" = "Etsi ja korvaa…";
+
+/* Class = "NSMenuItem"; title = "Find Next"; ObjectID = "q09-fT-Sye"; */
+"q09-fT-Sye.title" = "Etsi seuraava";
+
+/* Class = "NSMenuItem"; title = "Find Previous"; ObjectID = "OwM-mh-QMV"; */
+"OwM-mh-QMV.title" = "Etsi edellinen";
+
+/* Class = "NSMenuItem"; title = "Use Selection for Find"; ObjectID = "buJ-ug-pKt"; */
+"buJ-ug-pKt.title" = "Käytä valintaa hakuun";
+
+/* Class = "NSMenuItem"; title = "Jump to Selection"; ObjectID = "S0p-oC-mLd"; */
+"S0p-oC-mLd.title" = "Siirry valintaan";
+
+/* Class = "NSMenuItem"; title = "Spelling and Grammar"; ObjectID = "Dv1-io-Yv7"; */
+"Dv1-io-Yv7.title" = "Oikeinkirjoitus ja kielioppi";
+
+/* Class = "NSMenuItem"; title = "Show Spelling and Grammar"; ObjectID = "HFo-cy-zxI"; */
+"HFo-cy-zxI.title" = "Näytä oikeinkirjoitus ja kielioppi";
+
+/* Class = "NSMenuItem"; title = "Check Document Now"; ObjectID = "hz2-CU-CR7"; */
+"hz2-CU-CR7.title" = "Tarkista dokumentti nyt";
+
+/* Class = "NSMenuItem"; title = "Check Spelling While Typing"; ObjectID = "rbD-Rh-wIN"; */
+"rbD-Rh-wIN.title" = "Tarkista oikeinkirjoitus kirjoitettaessa";
+
+/* Class = "NSMenuItem"; title = "Check Grammar With Spelling"; ObjectID = "mK6-2p-4JG"; */
+"mK6-2p-4JG.title" = "Tarkista kielioppi oikeinkirjoituksen kanssa";
+
+/* Class = "NSMenuItem"; title = "Correct Spelling Automatically"; ObjectID = "78Y-hA-62v"; */
+"78Y-hA-62v.title" = "Korjaa oikeinkirjoitus automaattisesti";
+
+/* Class = "NSMenuItem"; title = "Substitutions"; ObjectID = "9ic-FL-obx"; */
+"9ic-FL-obx.title" = "Korvaukset";
+
+/* Class = "NSMenu"; title = "Substitutions"; ObjectID = "FeM-D8-WVr"; */
+"FeM-D8-WVr.title" = "Korvaukset";
+
+/* Class = "NSMenuItem"; title = "Show Substitutions"; ObjectID = "z6F-FW-3nz"; */
+"z6F-FW-3nz.title" = "Näytä korvaukset";
+
+/* Class = "NSMenuItem"; title = "Smart Copy/Paste"; ObjectID = "9yt-4B-nSM"; */
+"9yt-4B-nSM.title" = "Älykäs kopiointi/liittäminen";
+
+/* Class = "NSMenuItem"; title = "Smart Quotes"; ObjectID = "hQb-2v-fYv"; */
+"hQb-2v-fYv.title" = "Älykkäät lainausmerkit";
+
+/* Class = "NSMenuItem"; title = "Smart Dashes"; ObjectID = "rgM-f4-ycn"; */
+"rgM-f4-ycn.title" = "Älykkäät ajatusviivat";
+
+/* Class = "NSMenuItem"; title = "Data Detectors"; ObjectID = "tRr-pd-1PS"; */
+"tRr-pd-1PS.title" = "Tietojen tunnistus";
+
+/* Class = "NSMenuItem"; title = "Text Replacement"; ObjectID = "HFQ-gK-NFA"; */
+"HFQ-gK-NFA.title" = "Tekstin korvaus";
+
+/* Class = "NSMenu"; title = "Transformations"; ObjectID = "c8a-y6-VQd"; */
+"c8a-y6-VQd.title" = "Muunnokset";
+
+/* Class = "NSMenuItem"; title = "Make Upper Case"; ObjectID = "vmV-6d-7jI"; */
+"vmV-6d-7jI.title" = "Muuta isoiksi kirjaimiksi";
+
+/* Class = "NSMenuItem"; title = "Make Lower Case"; ObjectID = "d9M-CD-aMd"; */
+"d9M-CD-aMd.title" = "Muuta pieniksi kirjaimiksi";
+
+/* Class = "NSMenuItem"; title = "Capitalize"; ObjectID = "UEZ-Bs-lqG"; */
+"UEZ-Bs-lqG.title" = "Isot alkukirjaimet";
+
+/* Class = "NSMenuItem"; title = "Speech"; ObjectID = "xrE-MZ-jX0"; */
+"xrE-MZ-jX0.title" = "Puhe";
+
+/* Class = "NSMenuItem"; title = "Start Speaking"; ObjectID = "Ynk-f8-cLZ"; */
+"Ynk-f8-cLZ.title" = "Aloita puhuminen";
+
+/* Class = "NSMenuItem"; title = "Stop Speaking"; ObjectID = "Oyz-dy-DGm"; */
+"Oyz-dy-DGm.title" = "Lopeta puhuminen";
+
+/* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
+"xSb-2f-W1r.title" = "Näytä";
+
+/* Class = "NSMenu"; title = "View"; ObjectID = "EQZ-Zp-VNE"; */
+"EQZ-Zp-VNE.title" = "Näytä";
+
+/* Class = "NSMenuItem"; title = "Show Sidebar"; ObjectID = "Sd1-br-Tg1"; */
+"Sd1-br-Tg1.title" = "Näytä sivupalkki";
+
+/* Class = "NSMenuItem"; title = "Render Markdown"; ObjectID = "Vh1-jg-bbV"; */
+"Vh1-jg-bbV.title" = "Renderöi Markdown";
+
+/* Class = "NSMenuItem"; title = "Show Invisible Characters"; ObjectID = "TQb-x5-V3x"; */
+"TQb-x5-V3x.title" = "Näytä näkymättömät merkit";
+
+/* Class = "NSMenuItem"; title = "Left 1:3 Right"; ObjectID = "VW7-VH-9yl"; */
+"VW7-VH-9yl.title" = "Vasen 1:3 Oikea";
+
+/* Class = "NSMenuItem"; title = "Left 1:1 Right"; ObjectID = "hOV-YQ-vzy"; */
+"hOV-YQ-vzy.title" = "Vasen 1:1 Oikea";
+
+/* Class = "NSMenuItem"; title = "Left 3:1 Right"; ObjectID = "NZX-Ev-sWt"; */
+"NZX-Ev-sWt.title" = "Vasen 3:1 Oikea";
+
+/* Class = "NSMenuItem"; title = "Hide Preview Pane"; ObjectID = "T74-vt-YUA"; */
+"T74-vt-YUA.title" = "Piilota esikatselupaneeli";
+
+/* Class = "NSMenuItem"; title = "Hide Editor Pane"; ObjectID = "wHk-AQ-iOQ"; */
+"wHk-AQ-iOQ.title" = "Piilota editoripaneeli";
+
+/* Class = "NSMenuItem"; title = "Show Toolbar"; ObjectID = "fKI-yk-0lv"; */
+"fKI-yk-0lv.title" = "Näytä työkalurivi";
+
+/* Class = "NSMenuItem"; title = "Zoom In"; ObjectID = "zIn-01-ABC"; */
+"zIn-01-ABC.title" = "Suurenna";
+
+/* Class = "NSMenuItem"; title = "Zoom Out"; ObjectID = "zOt-01-GHI"; */
+"zOt-01-GHI.title" = "Pienennä";
+
+/* Class = "NSMenuItem"; title = "Actual Size"; ObjectID = "zRs-01-PQR"; */
+"zRs-01-PQR.title" = "Todellinen koko";
+
+/* Class = "NSMenuItem"; title = "Format"; ObjectID = "jxT-CU-nIS"; */
+"jxT-CU-nIS.title" = "Muotoile";
+
+/* Class = "NSMenu"; title = "Format"; ObjectID = "N43-55-MPb"; */
+"N43-55-MPb.title" = "Muotoile";
+
+/* Class = "NSMenuItem"; title = "Copy HTML"; ObjectID = "ts7-v5-Htm"; */
+"ts7-v5-Htm.title" = "Kopioi HTML";
+
+/* Class = "NSMenuItem"; title = "Strong"; ObjectID = "Rb9-MG-IjX"; */
+"Rb9-MG-IjX.title" = "Lihavointi";
+
+/* Class = "NSMenuItem"; title = "Underline"; ObjectID = "98U-cK-P7J"; */
+"98U-cK-P7J.title" = "Alleviivaus";
+
+/* Class = "NSMenuItem"; title = "Strikethrough"; ObjectID = "9CN-Qi-Fln"; */
+"9CN-Qi-Fln.title" = "Yliviivaus";
+
+/* Class = "NSMenuItem"; title = "Inline Code"; ObjectID = "iRQ-Q6-N4K"; */
+"iRQ-Q6-N4K.title" = "Tekstinsisäinen koodi";
+
+/* Class = "NSMenuItem"; title = "Comment"; ObjectID = "i8c-gf-w29"; */
+"i8c-gf-w29.title" = "Kommentti";
+
+/* Class = "NSMenuItem"; title = "Convert To"; ObjectID = "e8h-vX-NQb"; */
+"e8h-vX-NQb.title" = "Muunna muotoon";
+
+/* Class = "NSMenu"; title = "Convert To"; ObjectID = "I8Y-e8-XDx"; */
+"I8Y-e8-XDx.title" = "Muunna muotoon";
+
+/* Class = "NSMenuItem"; title = "Header 1"; ObjectID = "NLm-rz-EyT"; */
+"NLm-rz-EyT.title" = "Otsikko 1";
+
+/* Class = "NSMenuItem"; title = "Header 3"; ObjectID = "kSO-QG-dHa"; */
+"kSO-QG-dHa.title" = "Otsikko 3";
+
+/* Class = "NSMenuItem"; title = "Header 4"; ObjectID = "B98-b8-che"; */
+"B98-b8-che.title" = "Otsikko 4";
+
+/* Class = "NSMenuItem"; title = "Header 5"; ObjectID = "wlq-BA-PKH"; */
+"wlq-BA-PKH.title" = "Otsikko 5";
+
+/* Class = "NSMenuItem"; title = "Header 6"; ObjectID = "D4C-PE-qJi"; */
+"D4C-PE-qJi.title" = "Otsikko 6";
+
+/* Class = "NSMenuItem"; title = "Paragraph"; ObjectID = "xN5-GU-ASF"; */
+"xN5-GU-ASF.title" = "Kappale";
+
+/* Class = "NSMenuItem"; title = "Ordered List"; ObjectID = "jn0-Kb-yH7"; */
+"jn0-Kb-yH7.title" = "Numeroitu lista";
+
+/* Class = "NSMenuItem"; title = "Unordered List"; ObjectID = "jn0-Kb-yH6"; */
+"jn0-Kb-yH6.title" = "Numeroimaton lista";
+
+/* Class = "NSMenuItem"; title = "Blockquote"; ObjectID = "twd-Mb-qNx"; */
+"twd-Mb-qNx.title" = "Lainaus";
+
+/* Class = "NSMenuItem"; title = "Shift Right"; ObjectID = "g9Y-GM-gdh"; */
+"g9Y-GM-gdh.title" = "Siirrä oikealle";
+
+/* Class = "NSMenuItem"; title = "Shift Left"; ObjectID = "Jzs-tR-jkL"; */
+"Jzs-tR-jkL.title" = "Siirrä vasemmalle";
+
+/* Class = "NSMenuItem"; title = "Link"; ObjectID = "GIg-Wo-P8m"; */
+"GIg-Wo-P8m.title" = "Linkki";
+
+/* Class = "NSMenuItem"; title = "Image"; ObjectID = "VkR-aw-5AU"; */
+"VkR-aw-5AU.title" = "Kuva";
+
+/* Class = "NSMenuItem"; title = "New Paragraph"; ObjectID = "zHE-JL-8eu"; */
+"zHE-JL-8eu.title" = "Uusi kappale";
+
+/* Class = "NSMenuItem"; title = "Window"; ObjectID = "aUF-d1-5bR"; */
+"aUF-d1-5bR.title" = "Ikkuna";
+
+/* Class = "NSMenu"; title = "Window"; ObjectID = "Td7-aD-5lo"; */
+"Td7-aD-5lo.title" = "Ikkuna";
+
+/* Class = "NSMenuItem"; title = "Minimize"; ObjectID = "OY7-WF-poV"; */
+"OY7-WF-poV.title" = "Minimoi";
+
+/* Class = "NSMenuItem"; title = "Zoom"; ObjectID = "R4o-n2-Eq4"; */
+"R4o-n2-Eq4.title" = "Zoomaa";
+
+/* Class = "NSMenuItem"; title = "Bring All to Front"; ObjectID = "LE2-aR-0XJ"; */
+"LE2-aR-0XJ.title" = "Tuo kaikki eteen";
+
+/* Class = "NSMenuItem"; title = "Help"; ObjectID = "wpr-3q-Mcd"; */
+"wpr-3q-Mcd.title" = "Ohje";
+
+/* Class = "NSMenu"; title = "Help"; ObjectID = "F2S-fz-NVQ"; */
+"F2S-fz-NVQ.title" = "Ohje";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 Help"; ObjectID = "ugx-EN-xKu"; */
+"ugx-EN-xKu.title" = "MacDown 3000 -ohje";
+
+/* Class = "NSMenuItem"; title = "Contributing to MacDown 3000"; ObjectID = "K3J-v5-s91"; */
+"K3J-v5-s91.title" = "Osallistuminen MacDown 3000 -projektiin";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 on GitHub"; ObjectID = "pLw-9G-hNv"; */
+"pLw-9G-hNv.title" = "MacDown 3000 GitHubissa";
