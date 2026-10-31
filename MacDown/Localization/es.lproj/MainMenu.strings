@@ -114,7 +114,7 @@
 "e8h-vX-NQb.title" = "Convertir a";
 
 /* Class = "NSMenu"; title = "View"; ObjectID = "EQZ-Zp-VNE"; */
-"EQZ-Zp-VNE.title" = "Ver";
+"EQZ-Zp-VNE.title" = "Visualización";
 
 /* Class = "NSMenu"; title = "Help"; ObjectID = "F2S-fz-NVQ"; */
 "F2S-fz-NVQ.title" = "Ayuda";
@@ -331,7 +331,7 @@
 "xrE-MZ-jX0.title" = "Habla";
 
 /* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
-"xSb-2f-W1r.title" = "Vista";
+"xSb-2f-W1r.title" = "Visualización";
 
 /* Class = "NSMenuItem"; title = "Find…"; ObjectID = "Xz5-n4-O0W"; */
 "Xz5-n4-O0W.title" = "Buscar...";

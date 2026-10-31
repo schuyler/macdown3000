@@ -277,6 +277,68 @@ static NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *
 MPReviewedEnglishEntries(void)
 {
     return @{
+        @"cs": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Czech word",
+        },
+        @"da": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Danish term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Danish Window menu \"Zoom\"",
+        },
+        @"da-DK": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Danish term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Danish Window menu \"Zoom\"",
+        },
+        @"de": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the German word",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the German term",
+            @"MainMenu jxT-CU-nIS.title": @"macOS German menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS German menu \"Format\"",
+        },
+        @"es": @{
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Spanish Window menu \"Zoom\"",
+        },
+        @"et": @{
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Estonian term",
+        },
+        @"fr": @{
+            @"MainMenu 2oI-Rn-ZJC.title": @"macOS French Edit menu \"Transformations\"",
+            @"MainMenu c8a-y6-VQd.title": @"macOS French Edit menu \"Transformations\"",
+            @"MainMenu 9ic-FL-obx.title": @"macOS French Edit menu \"Substitutions\"",
+            @"MainMenu FeM-D8-WVr.title": @"macOS French Edit menu \"Substitutions\"",
+            @"MainMenu hz9-B4-Xy5.title": @"\"Services\" is the French word",
+            @"MainMenu NMo-om-nkz.title": @"\"Services\" is the French word",
+            @"MainMenu jxT-CU-nIS.title": @"macOS French menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS French menu \"Format\"",
+            @"MainMenu VkR-aw-5AU.title": @"\"Image\" is the French word",
+        },
+        @"it-IT": @{
+            @"MainMenu bib-Uj-vzu.title": @"macOS Italian menu \"File\"",
+            @"MainMenu dMs-cI-mzQ.title": @"macOS Italian menu \"File\"",
+        },
+        @"nb-NO": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Norwegian menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Norwegian menu \"Format\"",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Norwegian Window menu \"Zoom\"",
+        },
+        @"nl-NL": @{
+            @"MPMarkdownPreferencesViewController k2n-VN-cKT.title": @"\"Superscript\" is the Dutch term",
+            @"MainMenu 3IN-sU-3Bg.title": @"macOS Dutch menu \"Spelling\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Dutch term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Dutch Window menu \"Zoom\"",
+        },
+        @"pt-BR": @{
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Brazilian Portuguese term",
+        },
+        @"sk": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Slovak word",
+        },
+        @"sv": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Swedish word",
+        },
     };
 }
 

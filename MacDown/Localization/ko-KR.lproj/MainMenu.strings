@@ -32,7 +32,7 @@
 "5mp-ev-1el.title" = "내보내기";
 
 /* Class = "NSMenuItem"; title = "Edit"; ObjectID = "5QF-Oa-p0T"; */
-"5QF-Oa-p0T.title" = "수정";
+"5QF-Oa-p0T.title" = "편집";
 
 /* Class = "NSMenuItem"; title = "Redo"; ObjectID = "6dh-zS-Vam"; */
 "6dh-zS-Vam.title" = "다시실행";
@@ -244,7 +244,7 @@
 "xN5-GU-ASF.title" = "본문";
 
 /* Class = "NSMenuItem"; title = "Speech"; ObjectID = "xrE-MZ-jX0"; */
-"xrE-MZ-jX0.title" = "말하기";
+"xrE-MZ-jX0.title" = "음성";
 
 /* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
 "xSb-2f-W1r.title" = "보기";
