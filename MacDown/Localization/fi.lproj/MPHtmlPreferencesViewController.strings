@@ -1,0 +1,71 @@
+/* Class = "NSTextFieldCell"; title = "CSS:"; ObjectID = "9I3-I7-HLu"; */
+"9I3-I7-HLu.title" = "CSS:";
+
+/* Class = "NSSegmentedCell"; 0rH-I9-Dxr.ibShadowedLabels[0] = "Reveal"; ObjectID = "0rH-I9-Dxr"; */
+"0rH-I9-Dxr.ibShadowedLabels[0]" = "Näytä";
+
+/* Class = "NSSegmentedCell"; 0rH-I9-Dxr.ibShadowedLabels[1] = "Reload"; ObjectID = "0rH-I9-Dxr"; */
+"0rH-I9-Dxr.ibShadowedLabels[1]" = "Lataa uudelleen";
+
+/* Class = "NSTextFieldCell"; title = "Default path:"; ObjectID = "e1A-Mm-svq"; */
+"e1A-Mm-svq.title" = "Oletuspolku:";
+
+/* Class = "NSButtonCell"; title = "Syntax highlighted code block"; ObjectID = "BuQ-02-oQB"; */
+"BuQ-02-oQB.title" = "Koodilohkojen syntaksikorostus";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[0] = "Reveal"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[0]" = "Näytä";
+
+/* Class = "NSSegmentedCell"; 311-HC-cel.ibShadowedLabels[1] = "Reload"; ObjectID = "311-HC-cel"; */
+"311-HC-cel.ibShadowedLabels[1]" = "Lataa uudelleen";
+
+/* Class = "NSTextFieldCell"; title = "Theme:"; ObjectID = "a6o-qD-AIp"; */
+"a6o-qD-AIp.title" = "Teema:";
+
+/* Class = "NSButtonCell"; title = "Show line numbers"; ObjectID = "WZa-V6-vvf"; */
+"WZa-V6-vvf.title" = "Näytä rivinumerot";
+
+/* Class = "NSButtonCell"; title = "Graphviz"; ObjectID = "Lnj-HG-QHi"; */
+"Lnj-HG-QHi.title" = "Graphviz";
+
+/* Class = "NSButtonCell"; title = "Mermaid"; ObjectID = "bda-Ft-ecb"; */
+"bda-Ft-ecb.title" = "Mermaid";
+
+/* Class = "NSButtonCell"; title = "TeX-like math syntax"; ObjectID = "6vg-3f-KWk"; */
+"6vg-3f-KWk.title" = "TeX-tyylinen matematiikkasyntaksi";
+
+/* Class = "NSTextFieldCell"; title = "Math support requires Internet connection."; ObjectID = "5Ch-dG-juL"; */
+"5Ch-dG-juL.title" = "Matematiikan tuki vaatii internetyhteyden.";
+
+/* Class = "NSButtonCell"; title = "Use dollar sign ($) as inline delimiter"; ObjectID = "GF9-Dm-IoB"; */
+"GF9-Dm-IoB.title" = "Käytä dollarimerkkiä ($) tekstinsisäisenä erottimena";
+
+/* Class = "NSButtonCell"; title = "Task list syntax"; ObjectID = "kBf-iW-HlH"; */
+"kBf-iW-HlH.title" = "Tehtävälistasyntaksi";
+
+/* Class = "NSButtonCell"; title = "Hide YAML front matter"; ObjectID = "iXi-Pv-mFl"; */
+"iXi-Pv-mFl.title" = "Piilota YAML-alkutiedot";
+
+/* Class = "NSButtonCell"; title = "Detect table of contents token"; ObjectID = "nvS-dZ-eHT"; */
+"nvS-dZ-eHT.title" = "Tunnista sisällysluettelotunniste";
+
+/* Class = "NSButtonCell"; title = "Render newline literally"; ObjectID = "Sty-qG-J6K"; */
+"Sty-qG-J6K.title" = "Näytä rivinvaihdot sellaisenaan";
+
+/* Class = "NSButtonCell"; title = "Hide horizontal rules"; ObjectID = "hR2-le-Hru"; */
+"hR2-le-Hru.title" = "Piilota vaakaviivat";
+
+/* Class = "NSButtonCell"; title = "Scale preview based on editor font size"; ObjectID = "aWw-Wb-pBl"; */
+"aWw-Wb-pBl.title" = "Skaalaa esikatselu editorin fonttikoon mukaan";
+
+/* Class = "NSTextFieldCell"; title = "Accessory:"; ObjectID = "wNy-ka-IZm"; */
+"wNy-ka-IZm.title" = "Lisäke:";
+
+/* Class = "NSMenuItem"; title = "None"; ObjectID = "pWW-vM-8JK"; */
+"pWW-vM-8JK.title" = "Ei mitään";
+
+/* Class = "NSMenuItem"; title = "Language name"; ObjectID = "qFd-cs-OtZ"; */
+"qFd-cs-OtZ.title" = "Kielen nimi";
+
+/* Class = "NSMenuItem"; title = "Custom"; ObjectID = "Jmq-wq-Dux"; */
+"Jmq-wq-Dux.title" = "Mukautettu";
