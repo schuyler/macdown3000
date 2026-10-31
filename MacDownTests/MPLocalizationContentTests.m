@@ -105,4 +105,86 @@ static NSString * const kMPSlavaUkrainiLine = @"Слава Україні! 🇺�
     XCTAssertEqualObjects(strings[@"Keep"], @"Залишити");
 }
 
+// Issue #639: every titled control in Settings › Rendering has an entry in
+// each bundled MPHtmlPreferencesViewController.strings table. The keys come
+// from the Base xib in the source tree, so a control added without
+// translations fails here.
+- (NSDictionary<NSString *, NSString *> *)titledKeysInBaseXIB:(NSString *)name
+{
+    NSString *testsDir = [@__FILE__ stringByDeletingLastPathComponent];
+    NSString *path = [[testsDir stringByDeletingLastPathComponent]
+        stringByAppendingPathComponent:[NSString stringWithFormat:
+            @"MacDown/Localization/Base.lproj/%@.xib", name]];
+    NSError *error = nil;
+    NSXMLDocument *xib = [[NSXMLDocument alloc]
+        initWithContentsOfURL:[NSURL fileURLWithPath:path] options:0
+                        error:&error];
+    XCTAssertNotNil(xib, @"Cannot read %@: %@", path, error);
+
+    NSMutableDictionary *keys = [NSMutableDictionary dictionary];
+    for (NSXMLElement *element in [xib nodesForXPath:@"//*[@id and @title]"
+                                               error:NULL])
+    {
+        NSString *title = [element attributeForName:@"title"].stringValue;
+        if (!title.length)
+            continue;
+        NSString *identifier = [element attributeForName:@"id"].stringValue;
+        keys[[identifier stringByAppendingString:@".title"]] = title;
+    }
+    for (NSXMLElement *cell in [xib nodesForXPath:@"//segmentedCell[@id]"
+                                            error:NULL])
+    {
+        NSString *identifier = [cell attributeForName:@"id"].stringValue;
+        NSArray *segments = [cell nodesForXPath:@"segments/segment" error:NULL];
+        for (NSUInteger i = 0; i < segments.count; i++)
+        {
+            NSString *label =
+                [segments[i] attributeForName:@"label"].stringValue;
+            if (!label.length)
+                continue;
+            NSString *key = [NSString stringWithFormat:
+                @"%@.ibShadowedLabels[%lu]", identifier, (unsigned long)i];
+            keys[key] = label;
+        }
+    }
+    return keys;
+}
+
+- (void)testRenderingPaneTablesCoverEveryTitledControl
+{
+    NSString *table = @"MPHtmlPreferencesViewController";
+    NSDictionary *english = [self titledKeysInBaseXIB:table];
+    XCTAssertGreaterThan(english.count, 0u, @"No titled controls found");
+
+    NSArray *mustTranslate = @[@"iXi-Pv-mFl.title",
+                               @"311-HC-cel.ibShadowedLabels[0]",
+                               @"311-HC-cel.ibShadowedLabels[1]"];
+    for (NSString *key in mustTranslate)
+        XCTAssertNotNil(english[key], @"%@ is not in the Base xib", key);
+
+    NSString *resources = [NSBundle mainBundle].resourcePath;
+    NSArray *entries = [[NSFileManager defaultManager]
+        contentsOfDirectoryAtPath:resources error:NULL];
+    NSUInteger tableCount = 0;
+    for (NSString *entry in entries)
+    {
+        if (![entry.pathExtension isEqualToString:@"lproj"])
+            continue;
+        NSString *locale = entry.stringByDeletingPathExtension;
+        NSDictionary *strings = [self table:table locale:locale];
+        if (!strings)
+            continue;
+        tableCount++;
+        for (NSString *key in english)
+            XCTAssertNotNil(strings[key], @"%@ %@ has no entry for %@ (\"%@\")",
+                            locale, table, key, english[key]);
+        for (NSString *key in mustTranslate)
+            XCTAssertNotEqualObjects(strings[key], english[key],
+                                     @"%@ %@ leaves %@ in English",
+                                     locale, table, key);
+    }
+    XCTAssertGreaterThanOrEqual(tableCount, 23u,
+                                @"Expected the 23 localized %@ tables", table);
+}
+
 @end
