@@ -1032,4 +1032,39 @@
     XCTAssertEqualObjects(doc.workspaceRootURL, root);
 }
 
+#pragma mark - Initial Renderer Flags (Issue #21)
+
+// A document's renderer must carry the preference-derived renderer flags from
+// its first render, without waiting for an NSUserDefaultsDidChangeNotification.
+- (void)testNewDocumentRendererStartsWithPreferenceFlags
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalHardWrap = preferences.htmlHardWrap;
+    BOOL originalTaskList = preferences.htmlTaskList;
+    preferences.htmlHardWrap = YES;
+    preferences.htmlTaskList = YES;
+
+    MPDocument *document = [[MPDocument alloc] init];
+    [document makeWindowControllers];
+    (void)document.windowControllers.firstObject.window;  // Load the nib.
+
+    // No run-loop turn between nib loading and these assertions, so no queued
+    // defaults notification can copy the flags in first.
+    MPRenderer *renderer = document.renderer;
+    XCTAssertNotNil(renderer, @"Loading the nib must create the renderer");
+    XCTAssertNotEqual(preferences.rendererFlags, 0,
+                      @"Precondition: preferences report non-zero flags");
+    XCTAssertEqual(renderer.rendererFlags, preferences.rendererFlags,
+                   @"The renderer must start with the preference flags");
+
+    [renderer parseMarkdown:@"a\nb"];
+    XCTAssertTrue([[renderer currentHtml] containsString:@"<br"],
+                  @"Render newline literally must apply on the first render; "
+                   "got %@", [renderer currentHtml]);
+
+    [document close];
+    preferences.htmlHardWrap = originalHardWrap;
+    preferences.htmlTaskList = originalTaskList;
+}
+
 @end

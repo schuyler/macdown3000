@@ -777,6 +777,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     self.renderer = [[MPRenderer alloc] init];
     self.renderer.dataSource = self;
     self.renderer.delegate = self;
+    // Issue #21: rendererFlags is pushed rather than pulled from the
+    // delegate, and -userDefaultsDidChange: only pushes it on a defaults change.
+    // Seed it here so the first render honours the current preferences.
+    self.renderer.rendererFlags = self.preferences.rendererFlags;
 
     [self registerSharedPreferenceObservers];
     for (NSString *key in MPEditorKeysToObserve())
