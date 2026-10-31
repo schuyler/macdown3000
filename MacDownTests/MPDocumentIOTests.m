@@ -9,6 +9,7 @@
 #import "MPDocument.h"
 #import "MPPreferences.h"
 #import <sys/stat.h>
+#import "MPEditorView.h"
 
 @interface MPDocument (LinkTargetTesting)
 @property (strong) NSURL *currentBaseUrl;
@@ -17,6 +18,11 @@
 - (IBAction)toggleAutoSave:(id)sender;
 - (BOOL)shouldBypassSafeSaveForURL:(NSURL *)url;
 @property (nonatomic, copy) BOOL (^volumeLocalityChecker)(NSString *path);
+@end
+
+// Issue #586: the editor outlet, private in MPDocument.m.
+@interface MPDocument (UntitledDraftTesting)
+@property (weak) MPEditorView *editor;
 @end
 
 @interface MPDocumentIOTests : XCTestCase
@@ -706,5 +712,117 @@
 // "changed by another application" dialog and the "couldn't be saved in
 // folder tmp" failure, which require manual verification against a real
 // SSHFS/SMB/NFS mount. Related to #371.
+
+#pragma mark - Untitled Draft Restoration (Issue #586)
+
+// Spins the main run loop until condition returns YES or timeout elapses.
+static BOOL MPSpinUntil(NSTimeInterval timeout, BOOL (^condition)(void))
+{
+    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:timeout];
+    while (!condition() && deadline.timeIntervalSinceNow > 0)
+    {
+        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+            beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.01]];
+    }
+    return condition();
+}
+
+// A never-saved document is restored after relaunch by reopening its
+// autosaved draft. The reopened document reads the draft before its window
+// and editor exist, and must still report the draft's text and unsaved state.
+- (void)testUntitledDraftReopensWithItsContents
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalAutoSave = preferences.editorAutoSave;
+    preferences.editorAutoSave = YES;
+    NSString *type = @"net.daringfireball.markdown";
+    NSString *text = @"# Draft\n\nNever saved.\n";
+    MPDocument *draft = nil;
+    __block MPDocument *reopened = nil;
+
+    @try {
+        NSError *error = nil;
+        draft = [[MPDocument alloc] initWithType:type error:&error];
+        XCTAssertNotNil(draft, @"%@", error);
+        [draft makeWindowControllers];
+        (void)draft.windowControllers.firstObject.window;  // Load the nib.
+        XCTAssertNotNil(draft.editor, @"Loading the nib must create the editor");
+        draft.editor.string = text;
+        [draft updateChangeCount:NSChangeDone];
+
+        __block BOOL autosaveDone = NO;
+        __block NSError *autosaveError = nil;
+        [draft autosaveWithImplicitCancellability:NO
+                                completionHandler:^(NSError *e) {
+            autosaveError = e;
+            autosaveDone = YES;
+        }];
+        XCTAssertTrue(MPSpinUntil(10.0, ^{ return autosaveDone; }),
+                      @"Autosave did not finish");
+        XCTAssertNil(autosaveError);
+        NSURL *autosaved = draft.autosavedContentsFileURL;
+        XCTAssertNotNil(autosaved, @"An untitled draft must be autosaved");
+        if (!autosaved)
+            return;
+        XCTAssertEqualObjects([NSString stringWithContentsOfURL:autosaved
+                                   encoding:NSUTF8StringEncoding error:NULL],
+                              text, @"The autosaved draft must hold the text");
+
+        // Closing an untitled document deletes its draft, so reopen a copy
+        // (with the same extension, from which the type is inferred).
+        NSURL *copy = [[NSURL fileURLWithPath:self.testDirectory]
+            URLByAppendingPathComponent:autosaved.lastPathComponent];
+        XCTAssertTrue([self.fileManager copyItemAtURL:autosaved toURL:copy
+                                                error:&error], @"%@", error);
+        [draft close];
+        draft = nil;
+
+        __block BOOL reopenDone = NO;
+        __block NSError *reopenError = nil;
+        [[NSDocumentController sharedDocumentController]
+            reopenDocumentForURL:nil withContentsOfURL:copy display:NO
+               completionHandler:^(NSDocument *document, BOOL wasOpen,
+                                   NSError *e) {
+            reopened = (MPDocument *)document;
+            reopenError = e;
+            reopenDone = YES;
+        }];
+        XCTAssertTrue(MPSpinUntil(10.0, ^{ return reopenDone; }),
+                      @"Reopen did not finish");
+        XCTAssertNotNil(reopened, @"%@", reopenError);
+        if (!reopened)
+            return;
+
+        // Before the window exists.
+        XCTAssertNil(reopened.fileURL, @"A restored draft stays untitled");
+        XCTAssertEqualObjects(reopened.markdown, text,
+                              @"A restored draft must report its text before "
+                               "its editor exists");
+        XCTAssertTrue(reopened.isDocumentEdited,
+                      @"A restored draft must report unsaved changes");
+        NSData *data = [reopened dataOfType:type error:NULL];
+        XCTAssertEqualObjects([[NSString alloc] initWithData:data
+                                   encoding:NSUTF8StringEncoding], text,
+                              @"Saving a restored draft before its editor "
+                               "exists must write its text");
+
+        // After the window loads, the editor shows the text.
+        [reopened makeWindowControllers];
+        (void)reopened.windowControllers.firstObject.window;
+        MPDocument *restored = reopened;
+        XCTAssertTrue(MPSpinUntil(10.0, ^{
+            return [restored.editor.string isEqualToString:text];
+        }), @"The restored draft's editor must show its text; got %@",
+            restored.editor.string);
+        XCTAssertTrue(reopened.isDocumentEdited,
+                      @"A restored draft must still report unsaved changes "
+                       "once its editor shows the text");
+    }
+    @finally {
+        [draft close];
+        [reopened close];
+        preferences.editorAutoSave = originalAutoSave;
+    }
+}
 
 @end
