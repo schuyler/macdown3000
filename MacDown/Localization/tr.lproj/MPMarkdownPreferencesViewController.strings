@@ -19,3 +19,24 @@
 /* Class = "NSButtonCell"; title = "Table"; ObjectID = "z8g-3M-hbc"; */
 "z8g-3M-hbc.title" = "Tablo";
 
+
+/* Class = "NSBox"; title = "Block formatting"; ObjectID = "TXy-fD-S4Y"; */
+"TXy-fD-S4Y.title" = "Blok biçimlendirme";
+
+/* Class = "NSButtonCell"; title = "Fenced code block"; ObjectID = "ELg-sx-vIf"; */
+"ELg-sx-vIf.title" = "Çitli kod bloğu";
+
+/* Class = "NSBox"; title = "Inline formatting"; ObjectID = "Ycc-Px-jbu"; */
+"Ycc-Px-jbu.title" = "Satır içi biçimlendirme";
+
+/* Class = "NSButtonCell"; title = "Superscript"; ObjectID = "k2n-VN-cKT"; */
+"k2n-VN-cKT.title" = "Üst simge";
+
+/* Class = "NSButtonCell"; title = "Highlight"; ObjectID = "8kI-gm-5Lo"; */
+"8kI-gm-5Lo.title" = "Vurgu";
+
+/* Class = "NSButtonCell"; title = "Autolink"; ObjectID = "Roe-rh-8f9"; */
+"Roe-rh-8f9.title" = "Otomatik bağlantı";
+
+/* Class = "NSButtonCell"; title = "Smartypants"; ObjectID = "aSK-nR-xMr"; */
+"aSK-nR-xMr.title" = "Smartypants";

@@ -348,3 +348,27 @@
 /* Class = "NSMenuItem"; title = "New Paragraph"; ObjectID = "zHE-JL-8eu"; */
 "zHE-JL-8eu.title" = "Nový odstavec";
 
+
+/* Class = "NSMenuItem"; title = "Open Folder…"; ObjectID = "F0l-dr-Op1"; */
+"F0l-dr-Op1.title" = "Otevřít složku…";
+
+/* Class = "NSMenuItem"; title = "Auto Save"; ObjectID = "aSv-FL-tgl"; */
+"aSv-FL-tgl.title" = "Automatické ukládání";
+
+/* Class = "NSMenuItem"; title = "Show Sidebar"; ObjectID = "Sd1-br-Tg1"; */
+"Sd1-br-Tg1.title" = "Zobrazit postranní panel";
+
+/* Class = "NSMenuItem"; title = "Show Invisible Characters"; ObjectID = "TQb-x5-V3x"; */
+"TQb-x5-V3x.title" = "Zobrazit neviditelné znaky";
+
+/* Class = "NSMenuItem"; title = "Zoom In"; ObjectID = "zIn-01-ABC"; */
+"zIn-01-ABC.title" = "Přiblížit";
+
+/* Class = "NSMenuItem"; title = "Zoom Out"; ObjectID = "zOt-01-GHI"; */
+"zOt-01-GHI.title" = "Oddálit";
+
+/* Class = "NSMenuItem"; title = "Actual Size"; ObjectID = "zRs-01-PQR"; */
+"zRs-01-PQR.title" = "Skutečná velikost";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 on GitHub"; ObjectID = "pLw-9G-hNv"; */
+"pLw-9G-hNv.title" = "MacDown 3000 na GitHubu";

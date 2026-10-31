@@ -327,3 +327,48 @@
 /* Class = "NSMenuItem"; title = "New Paragraph"; ObjectID = "zHE-JL-8eu"; */
 "zHE-JL-8eu.title" = "Uus lõik";
 
+
+/* Class = "NSMenuItem"; title = "Open Folder…"; ObjectID = "F0l-dr-Op1"; */
+"F0l-dr-Op1.title" = "Ava kaust…";
+
+/* Class = "NSMenuItem"; title = "Auto Save"; ObjectID = "aSv-FL-tgl"; */
+"aSv-FL-tgl.title" = "Automaatne salvestamine";
+
+/* Class = "NSMenuItem"; title = "Substitutions"; ObjectID = "9ic-FL-obx"; */
+"9ic-FL-obx.title" = "Asendused";
+
+/* Class = "NSMenuItem"; title = "Transformations"; ObjectID = "2oI-Rn-ZJC"; */
+"2oI-Rn-ZJC.title" = "Teisendused";
+
+/* Class = "NSMenu"; title = "Transformations"; ObjectID = "c8a-y6-VQd"; */
+"c8a-y6-VQd.title" = "Teisendused";
+
+/* Class = "NSMenuItem"; title = "Show Sidebar"; ObjectID = "Sd1-br-Tg1"; */
+"Sd1-br-Tg1.title" = "Näita külgriba";
+
+/* Class = "NSMenuItem"; title = "Render Markdown"; ObjectID = "Vh1-jg-bbV"; */
+"Vh1-jg-bbV.title" = "Renderda Markdown";
+
+/* Class = "NSMenuItem"; title = "Show Invisible Characters"; ObjectID = "TQb-x5-V3x"; */
+"TQb-x5-V3x.title" = "Näita nähtamatuid märke";
+
+/* Class = "NSMenuItem"; title = "Zoom In"; ObjectID = "zIn-01-ABC"; */
+"zIn-01-ABC.title" = "Suurenda";
+
+/* Class = "NSMenuItem"; title = "Zoom Out"; ObjectID = "zOt-01-GHI"; */
+"zOt-01-GHI.title" = "Vähenda";
+
+/* Class = "NSMenuItem"; title = "Actual Size"; ObjectID = "zRs-01-PQR"; */
+"zRs-01-PQR.title" = "Tegelik suurus";
+
+/* Class = "NSMenuItem"; title = "Blockquote"; ObjectID = "twd-Mb-qNx"; */
+"twd-Mb-qNx.title" = "Plokktsitaat";
+
+/* Class = "NSMenuItem"; title = "Shift Right"; ObjectID = "g9Y-GM-gdh"; */
+"g9Y-GM-gdh.title" = "Nihuta paremale";
+
+/* Class = "NSMenuItem"; title = "Shift Left"; ObjectID = "Jzs-tR-jkL"; */
+"Jzs-tR-jkL.title" = "Nihuta vasakule";
+
+/* Class = "NSMenuItem"; title = "MacDown 3000 on GitHub"; ObjectID = "pLw-9G-hNv"; */
+"pLw-9G-hNv.title" = "MacDown 3000 GitHubis";

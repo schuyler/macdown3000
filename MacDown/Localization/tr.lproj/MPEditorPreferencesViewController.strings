@@ -46,3 +46,18 @@
 /* Class = "NSMenuItem"; title = "+ (Plus sign)"; ObjectID = "zX4-JY-wTT"; */
 "zX4-JY-wTT.title" = "+ (Artı işareti)";
 
+
+/* Class = "NSTextFieldCell"; title = "Text insets:"; ObjectID = "Ee6-Cj-SWW"; */
+"Ee6-Cj-SWW.title" = "Metin girintileri:";
+
+/* Class = "NSMenuItem"; title = "* (Asterisk)"; ObjectID = "bnJ-BQ-mHV"; */
+"bnJ-BQ-mHV.title" = "* (Yıldız)";
+
+/* Class = "NSButtonCell"; title = "Ensure newline at end of file on save"; ObjectID = "9Wp-5V-GeQ"; */
+"9Wp-5V-GeQ.title" = "Kaydederken dosya sonuna satır sonu ekle";
+
+/* Class = "NSButtonCell"; title = "Auto-increment numbering in ordered lists"; ObjectID = "UPm-G1-Bc6"; */
+"UPm-G1-Bc6.title" = "Sıralı listelerde numaralandırmayı otomatik artır";
+
+/* Class = "NSButtonCell"; title = "Automatically insert line prefix for the current block"; ObjectID = "zGb-kg-2CJ"; */
+"zGb-kg-2CJ.title" = "Geçerli blok için satır önekini otomatik ekle";

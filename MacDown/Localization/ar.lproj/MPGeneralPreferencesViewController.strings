@@ -25,3 +25,9 @@
 /* Class = "NSButtonCell"; title = "Include pre-releases"; ObjectID = "vbz-fv-8BX"; */
 "vbz-fv-8BX.title" = "تضمين الإصدارات التجريبية";
 
+
+/* Class = "NSButtonCell"; title = "Start in preview mode"; ObjectID = "aYQ-0c-EOQ"; */
+"aYQ-0c-EOQ.title" = "البدء في وضع المعاينة";
+
+/* Class = "NSButtonCell"; title = "Auto-save and auto-reload documents"; ObjectID = "aSv-Bc-cel"; */
+"aSv-Bc-cel.title" = "حفظ وإعادة تحميل المستندات تلقائياً";

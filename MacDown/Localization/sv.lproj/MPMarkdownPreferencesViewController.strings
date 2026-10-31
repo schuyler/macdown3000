@@ -28,3 +28,15 @@
 /* Class = "NSButtonCell"; title = "Table"; ObjectID = "z8g-3M-hbc"; */
 "z8g-3M-hbc.title" = "Tabell";
 
+
+/* Class = "NSButtonCell"; title = "Fenced code block"; ObjectID = "ELg-sx-vIf"; */
+"ELg-sx-vIf.title" = "Inhägnat kodblock";
+
+/* Class = "NSButtonCell"; title = "Intra-word emphasis"; ObjectID = "D7l-nP-P0y"; */
+"D7l-nP-P0y.title" = "Betoning inuti ord";
+
+/* Class = "NSButtonCell"; title = "Highlight"; ObjectID = "8kI-gm-5Lo"; */
+"8kI-gm-5Lo.title" = "Markera";
+
+/* Class = "NSButtonCell"; title = "Autolink"; ObjectID = "Roe-rh-8f9"; */
+"Roe-rh-8f9.title" = "Autolänkar";

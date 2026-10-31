@@ -10,3 +10,9 @@
 /* Class = "NSButtonCell"; title = "Install"; ObjectID = "XiC-FP-TWZ"; */
 "XiC-FP-TWZ.title" = "Inštalovať";
 
+
+/* Class = "NSTextFieldCell"; title = "By activating shell support you can use the macdown utility to open MacDown and documents from a shell."; ObjectID = "W5n-x2-ygz"; */
+"W5n-x2-ygz.title" = "Aktiváciou podpory shellu môžete pomocou nástroja macdown otvárať MacDown a dokumenty z príkazového riadka.";
+
+/* Class = "NSTextFieldCell"; title = "<binary location>"; ObjectID = "0H2-qZ-OjP"; */
+"0H2-qZ-OjP.title" = "<umiestnenie binárneho súboru>";

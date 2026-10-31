@@ -28,3 +28,15 @@
 /* Class = "NSButtonCell"; title = "Table"; ObjectID = "z8g-3M-hbc"; */
 "z8g-3M-hbc.title" = "Tabel";
 
+
+/* Class = "NSBox"; title = "Block formatting"; ObjectID = "TXy-fD-S4Y"; */
+"TXy-fD-S4Y.title" = "Ploki vormindus";
+
+/* Class = "NSButtonCell"; title = "Fenced code block"; ObjectID = "ELg-sx-vIf"; */
+"ELg-sx-vIf.title" = "Piiratud koodiplokk";
+
+/* Class = "NSBox"; title = "Inline formatting"; ObjectID = "Ycc-Px-jbu"; */
+"Ycc-Px-jbu.title" = "Reasisene vormindus";
+
+/* Class = "NSButtonCell"; title = "Smartypants"; ObjectID = "aSK-nR-xMr"; */
+"aSK-nR-xMr.title" = "Smartypants";
