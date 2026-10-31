@@ -703,6 +703,18 @@ static NSArray<NSButton *> *MPCheckboxes(NSView *content)
             XCTAssertTrue(NSContainsRect(NSInsetRect(wrapper.bounds, -1, -1), inPane),
                 @"button lies outside the pane: %@", detail);
 
+            // Text can measure slightly wider at draw time than when the pane
+            // was sized, so the title must still fit if it measures 3% wider:
+            // the same number of lines at the title rect's width / 1.03.
+            NSRect wider = [button.attributedTitle
+                boundingRectWithSize:NSMakeSize(floor(titleRect.size.width / 1.03),
+                                                CGFLOAT_MAX)
+                             options:NSStringDrawingUsesLineFragmentOrigin
+                                     | NSStringDrawingUsesFontLeading];
+            XCTAssertLessThanOrEqual(ceil(wider.size.height),
+                                     ceil(titleRect.size.height) + 1,
+                @"title would not fit if it measured 3%% wider: %@ needed at "
+                 "width/1.03=%@", detail, NSStringFromSize(wider.size));
         }
         window.contentView = [[NSView alloc] init];   // detach before vc deallocates
     }
