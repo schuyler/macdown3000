@@ -49,7 +49,11 @@ NSString * const MPDidRequestEditorSetupNotification =
         [contentView.widthAnchor constraintGreaterThanOrEqualToConstant:englishDesignWidth];
     widthFloor.active = YES;
     [wrapper layoutSubtreeIfNeeded];
-    CGFloat width = MAX(contentView.fittingSize.width, englishDesignWidth);
+    // Issue #530: fittingSize is the exact measured fit, which leaves a
+    // wrapping label no room if its text measures slightly wider at draw time
+    // (it then wraps into a height sized for one line). Add 3% slack.
+    CGFloat width = MAX(ceil(contentView.fittingSize.width * 1.03),
+                        englishDesignWidth);
     widthFloor.active = NO;
 
     // Pin the resolved width with an = constraint for the height pass.
