@@ -610,7 +610,10 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (NSString *)markdown
 {
-    return self.editor.string;
+    // Issue #586: text read before the editor exists (a reopened untitled
+    // draft, for example) waits in loadedString until the block queued in
+    // -windowControllerDidLoadNib: applies it, which clears loadedString.
+    return self.loadedString ?: self.editor.string;
 }
 
 - (void)setMarkdown:(NSString *)markdown
@@ -1335,7 +1338,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Prevent save dialog on an unnamed, empty document. The file will still
     // show as modified (because it is), but no save dialog will be presented
     // when the user closes it.
-    if (!self.presentedItemURL && !self.editor.string.length)
+    if (!self.presentedItemURL && !self.markdown.length)
         return NO;
     return [super isDocumentEdited];
 }
@@ -1449,7 +1452,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
 {
-    return [self.editor.string dataUsingEncoding:NSUTF8StringEncoding];
+    return [self.markdown dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 - (BOOL)readFromData:(NSData *)data ofType:(NSString *)typeName
