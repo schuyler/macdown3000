@@ -332,6 +332,8 @@
                 <constraint firstItem="lxX-Pm-dhn" firstAttribute="top" secondItem="6BB-rh-ZwZ" secondAttribute="bottom" constant="6" id="vhB-Js-Nn0"/>
                 <constraint firstItem="ysT-Br-eSf" firstAttribute="top" secondItem="M0W-YD-Ouk" secondAttribute="bottom" constant="8" id="ynM-S2-BhS"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="top" secondItem="Zna-RM-nBO" secondAttribute="bottom" constant="8" id="ywP-o9-FOM"/>
+                <!-- Syntax highlighted checkbox positioned below the CSS row; without this it has no vertical anchor and overlaps the CSS popup -->
+                <constraint firstItem="Zna-RM-nBO" firstAttribute="top" secondItem="Wgm-Sy-7mr" secondAttribute="bottom" constant="10" id="9wX-tp-CSS"/>
                 <constraint firstItem="hfI-Rf-3Cr" firstAttribute="leading" secondItem="RCL-iK-kgx" secondAttribute="leading" id="zdZ-q9-Rav"/>
             </constraints>
             <point key="canvasLocation" x="178.5" y="463.5"/>
