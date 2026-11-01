@@ -525,8 +525,7 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
 
     NSURL *themeURL =
         MPHighlightingThemeURLForName(self.delegate.highlightingThemeName);
-    if (!themeURL)
-        return;     // Theme unavailable in this environment; nothing to assert.
+    XCTSkipUnless(themeURL, @"bundled highlighting theme 'tomorrow' not found");
 
     NSString *themeFile = themeURL.lastPathComponent;
     [self.renderer setTimestamp:1750000001 forResourcePath:themeURL.path];

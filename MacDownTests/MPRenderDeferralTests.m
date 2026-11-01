@@ -10,6 +10,8 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import "MPDocumentWindowTestSupport.h"
+#import "MPPreferences.h"
 
 #pragma mark - Test Category to Expose Private Methods
 
@@ -32,6 +34,9 @@
 @property (assign) BOOL handlerWasInvoked;
 @property (assign) NSInteger handlerInvocationCount;
 @property (strong) NSMutableArray *handlerInvocationOrder;
+@property BOOL originalManualRender;
+@property BOOL originalShowWordCount;
+@property BOOL originalStartInPreviewMode;
 @end
 
 
@@ -40,6 +45,15 @@
 - (void)setUp
 {
     [super setUp];
+    // needsHtml = !manualRender && (previewVisible || showWordCount); pin the
+    // preferences so it tracks preview visibility only.
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    self.originalManualRender = preferences.markdownManualRender;
+    self.originalShowWordCount = preferences.editorShowWordCount;
+    self.originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    preferences.markdownManualRender = NO;
+    preferences.editorShowWordCount = NO;
+    preferences.editorStartInPreviewMode = NO;
     self.document = [[MPDocument alloc] init];
     self.handlerWasInvoked = NO;
     self.handlerInvocationCount = 0;
@@ -50,6 +64,10 @@
 {
     self.document = nil;
     self.handlerInvocationOrder = nil;
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    preferences.markdownManualRender = self.originalManualRender;
+    preferences.editorShowWordCount = self.originalShowWordCount;
+    preferences.editorStartInPreviewMode = self.originalStartInPreviewMode;
     [super tearDown];
 }
 
@@ -125,13 +143,12 @@
  */
 - (void)testPerformAfterRenderExecutesImmediatelyWhenPreviewVisible
 {
-    [self.document makeWindowControllers];
-
-    // In headless CI, preview may not be visible
-    if (!self.document.needsHtml) {
-        NSLog(@"Skipping testPerformAfterRenderExecutesImmediatelyWhenPreviewVisible - needsHtml is NO (headless mode)");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
+    XCTAssertTrue(self.document.needsHtml,
+                  @"needsHtml should be YES while the preview is visible");
 
     [self.document performAfterRender:[self testHandlerBlock]];
 
@@ -147,12 +164,12 @@
  */
 - (void)testNoQueueingWhenPreviewVisible
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.needsHtml) {
-        NSLog(@"Skipping testNoQueueingWhenPreviewVisible - needsHtml is NO (headless mode)");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
+    XCTAssertTrue(self.document.needsHtml,
+                  @"needsHtml should be YES while the preview is visible");
 
     [self.document performAfterRender:[self testHandlerBlock]];
 
@@ -214,55 +231,31 @@
  * Test that queued handlers are all invoked when render completes.
  * Issue #16: All queued handlers must execute.
  *
- * NOTE: This test requires actual WebView rendering, which doesn't happen
- * in headless CI. Skip gracefully in that environment.
+ * Loads the document window, hides the preview so handlers queue, then shows
+ * the preview again and waits for the render to complete them.
  */
 - (void)testAllQueuedHandlersAreInvoked
 {
-    [self.document makeWindowControllers];
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
-    // In headless CI, preview visibility manipulation doesn't trigger actual
-    // WebView rendering, so we can't test the full integration.
-    // Skip this test - the mechanism is tested via other tests that manually
-    // invoke handlers.
-    BOOL initialEditorVisible = self.document.editorVisible;
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    if (!initialEditorVisible && !initialPreviewVisible) {
-        NSLog(@"Skipping testAllQueuedHandlersAreInvoked - headless mode (no display)");
-        return;
-    }
-
-    if (!initialPreviewVisible) {
-        NSLog(@"Skipping testAllQueuedHandlersAreInvoked - preview not initially visible");
-        return;
-    }
-
-    // Try to hide preview
+    // Hide preview
     [self.document togglePreviewPane:nil];
-
-    // If preview is still visible (needsHtml = YES), we can't test deferral
-    if (self.document.needsHtml) {
-        NSLog(@"Skipping testAllQueuedHandlersAreInvoked - cannot hide preview");
-        return;
-    }
+    XCTAssertFalse(self.document.needsHtml,
+                   @"Hiding the preview should make needsHtml NO");
 
     // Queue multiple handlers
     [self.document performAfterRender:[self testHandlerBlockWithIdentifier:1]];
     [self.document performAfterRender:[self testHandlerBlockWithIdentifier:2]];
 
-    // Try to trigger render by showing preview again
+    // Show the preview again, which triggers a render
     [self.document togglePreviewPane:nil];
 
-    // Give time for render to complete
-    [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-
-    // In headless CI, handlers may not be invoked because WebView doesn't render.
-    // Only assert if we got results.
-    if (self.handlerInvocationOrder.count == 0) {
-        NSLog(@"Skipping testAllQueuedHandlersAreInvoked - WebView did not render in CI");
-        return;
-    }
+    MPRunLoopUntil(10.0, ^BOOL{
+        return self.handlerInvocationOrder.count == 2;
+    });
 
     // Both handlers should have been invoked
     XCTAssertEqual(self.handlerInvocationOrder.count, 2,
