@@ -9,6 +9,7 @@
 #import <XCTest/XCTest.h>
 #import <WebKit/WebKit.h>
 #import "MPDocument.h"
+#import "MPDocumentWindowTestSupport.h"
 #import "MPDocumentSplitView.h"
 #import "MPPreferences.h"
 #import "MPRenderer.h"
@@ -28,6 +29,7 @@
 - (IBAction)togglePreviewPane:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
 - (void)setupEditor:(NSString *)changedKey;
+- (void)setSplitViewDividerLocation:(CGFloat)ratio;
 @end
 
 #pragma mark - Spy Renderer
@@ -61,6 +63,7 @@
 @interface MPPaneToggleTests : XCTestCase
 @property (strong) MPDocument *document;
 @property BOOL originalStartInPreviewMode;
+@property BOOL originalEditorOnRight;
 @end
 
 
@@ -71,7 +74,9 @@
     [super setUp];
     MPPreferences *preferences = [MPPreferences sharedInstance];
     self.originalStartInPreviewMode = preferences.editorStartInPreviewMode;
+    self.originalEditorOnRight = preferences.editorOnRight;
     preferences.editorStartInPreviewMode = NO;
+    preferences.editorOnRight = NO;
     self.document = [[MPDocument alloc] init];
 }
 
@@ -80,6 +85,7 @@
     self.document = nil;
     [MPPreferences sharedInstance].editorStartInPreviewMode =
         self.originalStartInPreviewMode;
+    [MPPreferences sharedInstance].editorOnRight = self.originalEditorOnRight;
     [super tearDown];
 }
 
@@ -282,18 +288,19 @@
     BOOL originalEditorOnRight = preferences.editorOnRight;
 
     @try {
-        [self.document makeWindowControllers];
+        XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                      @"no document window can be loaded here");
+        XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                      @"a loaded document window shows both panes");
 
-        if (!self.document.editorVisible || !self.document.previewVisible) {
-            NSLog(@"Skipping testStartInPreviewModeRestoresPreviewFromEditorOnlyLayout - panes not initialized");
-            return;
-        }
+        // Build the editor-only layout: editor on the left, preview collapsed.
+        preferences.editorOnRight = NO;
+        [self.document setSplitViewDividerLocation:1.0];
+        self.document.previousSplitRatio = -1.0;
+        XCTAssertTrue(self.document.editorVisible && !self.document.previewVisible,
+                      @"Precondition: the layout is editor-only");
 
         preferences.editorStartInPreviewMode = YES;
-        preferences.editorOnRight = NO;
-        CGFloat oldRatio = self.document.splitView.dividerLocation;
-        self.document.previousSplitRatio = -1.0;
-
         [self.document applyEditorStartInPreviewModePreference];
 
         XCTAssertFalse(self.document.editorVisible,
@@ -302,8 +309,8 @@
                       @"Startup preview mode should make the preview visible");
         XCTAssertEqualWithAccuracy(self.document.splitView.dividerLocation, 0.0, 0.001,
                                    @"Startup preview mode should collapse the divider to the preview-only edge");
-        XCTAssertGreaterThan(oldRatio, 0.0,
-                             @"The precondition for this test is a visible editor split");
+        XCTAssertEqualWithAccuracy(self.document.previousSplitRatio, 0.5, 0.001,
+                                   @"Startup preview mode from an editor-only layout should save the default split ratio");
     }
     @finally {
         preferences.editorStartInPreviewMode = originalStartInPreviewMode;
@@ -388,12 +395,10 @@
  */
 - (void)testValidateReturnYesWhenBothPanesVisible
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testValidateReturnYesWhenBothPanesVisible - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     MockMenuItem *editorItem = [[MockMenuItem alloc] initWithTitle:@"Test"
                                                             action:@selector(toggleEditorPane:)
@@ -418,28 +423,13 @@
  */
 - (void)testHideEditorMenuDisabledWhenOnlyEditorVisible
 {
-    [self.document makeWindowControllers];
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
-    // First, hide the preview pane so only editor is visible
-    // In initial state, both panes should be visible
-    // After hiding preview, only editor should be visible
-
-    // Get initial state
-    BOOL initialEditorVisible = self.document.editorVisible;
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    // Skip if we can't get proper initial state (headless without display)
-    if (!initialEditorVisible && !initialPreviewVisible) {
-        // In headless mode, we can't properly test this
-        // Log and skip
-        NSLog(@"Skipping testHideEditorMenuDisabledWhenOnlyEditorVisible - headless mode");
-        return;
-    }
-
-    // Hide preview pane
-    if (initialPreviewVisible) {
-        [self.document togglePreviewPane:nil];
-    }
+    // Hide preview pane so only editor is visible
+    [self.document togglePreviewPane:nil];
 
     // Now only editor should be visible
     BOOL editorVisibleAfterHidePreview = self.document.editorVisible;
@@ -467,22 +457,13 @@
  */
 - (void)testHidePreviewMenuDisabledWhenOnlyPreviewVisible
 {
-    [self.document makeWindowControllers];
-
-    // Get initial state
-    BOOL initialEditorVisible = self.document.editorVisible;
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    // Skip if we can't get proper initial state (headless without display)
-    if (!initialEditorVisible && !initialPreviewVisible) {
-        NSLog(@"Skipping testHidePreviewMenuDisabledWhenOnlyPreviewVisible - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide editor pane so only preview is visible
-    if (initialEditorVisible) {
-        [self.document toggleEditorPane:nil];
-    }
+    [self.document toggleEditorPane:nil];
 
     // Now only preview should be visible
     BOOL editorVisibleAfterHideEditor = self.document.editorVisible;
@@ -509,20 +490,13 @@
  */
 - (void)testToggleEditorIsNoOpWhenOnlyEditorVisible
 {
-    [self.document makeWindowControllers];
-
-    BOOL initialEditorVisible = self.document.editorVisible;
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    if (!initialEditorVisible && !initialPreviewVisible) {
-        NSLog(@"Skipping testToggleEditorIsNoOpWhenOnlyEditorVisible - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide preview so only editor is visible
-    if (initialPreviewVisible) {
-        [self.document togglePreviewPane:nil];
-    }
+    [self.document togglePreviewPane:nil];
 
     XCTAssertTrue(self.document.editorVisible, @"Editor should be visible");
     XCTAssertFalse(self.document.previewVisible, @"Preview should be hidden");
@@ -541,20 +515,13 @@
  */
 - (void)testTogglePreviewIsNoOpWhenOnlyPreviewVisible
 {
-    [self.document makeWindowControllers];
-
-    BOOL initialEditorVisible = self.document.editorVisible;
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    if (!initialEditorVisible && !initialPreviewVisible) {
-        NSLog(@"Skipping testTogglePreviewIsNoOpWhenOnlyPreviewVisible - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide editor so only preview is visible
-    if (initialEditorVisible) {
-        [self.document toggleEditorPane:nil];
-    }
+    [self.document toggleEditorPane:nil];
 
     XCTAssertFalse(self.document.editorVisible, @"Editor should be hidden");
     XCTAssertTrue(self.document.previewVisible, @"Preview should be visible");
@@ -576,23 +543,15 @@
  */
 - (void)testRestoreEditorAlwaysWorks
 {
-    [self.document makeWindowControllers];
-
-    BOOL initialEditorVisible = self.document.editorVisible;
-
-    if (!initialEditorVisible) {
-        NSLog(@"Skipping testRestoreEditorAlwaysWorks - editor not visible initially");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide editor
     [self.document toggleEditorPane:nil];
-
-    // Skip if toggle had no effect (headless)
-    if (self.document.editorVisible) {
-        NSLog(@"Skipping testRestoreEditorAlwaysWorks - toggle had no effect");
-        return;
-    }
+    XCTAssertFalse(self.document.editorVisible,
+                   @"Hiding the editor should collapse it");
 
     // Restore editor - this should always work
     [self.document toggleEditorPane:nil];
@@ -607,23 +566,15 @@
  */
 - (void)testRestorePreviewAlwaysWorks
 {
-    [self.document makeWindowControllers];
-
-    BOOL initialPreviewVisible = self.document.previewVisible;
-
-    if (!initialPreviewVisible) {
-        NSLog(@"Skipping testRestorePreviewAlwaysWorks - preview not visible initially");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide preview
     [self.document togglePreviewPane:nil];
-
-    // Skip if toggle had no effect (headless)
-    if (self.document.previewVisible) {
-        NSLog(@"Skipping testRestorePreviewAlwaysWorks - toggle had no effect");
-        return;
-    }
+    XCTAssertFalse(self.document.previewVisible,
+                   @"Hiding the preview should collapse it");
 
     // Restore preview - this should always work
     [self.document togglePreviewPane:nil];
@@ -638,23 +589,15 @@
  */
 - (void)testRestoreMenuItemEnabledWhenPaneHidden
 {
-    [self.document makeWindowControllers];
-
-    BOOL initialEditorVisible = self.document.editorVisible;
-
-    if (!initialEditorVisible) {
-        NSLog(@"Skipping testRestoreMenuItemEnabledWhenPaneHidden - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide editor
     [self.document toggleEditorPane:nil];
-
-    // Skip if toggle had no effect
-    if (self.document.editorVisible) {
-        NSLog(@"Skipping testRestoreMenuItemEnabledWhenPaneHidden - toggle had no effect");
-        return;
-    }
+    XCTAssertFalse(self.document.editorVisible,
+                   @"Hiding the editor should collapse it");
 
     // Now editor is hidden. "Restore Editor" menu item should be ENABLED.
     MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Restore Editor Pane"
@@ -728,15 +671,15 @@
  */
 - (void)testEditorMenuItemNotHiddenAfterToggle
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testEditorMenuItemNotHiddenAfterToggle - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Toggle editor pane to save a previousSplitRatio
     [self.document toggleEditorPane:nil];
+    XCTAssertGreaterThanOrEqual(self.document.previousSplitRatio, 0.0,
+                                @"Hiding the editor should save the split ratio");
 
     MockMenuItem *item = [[MockMenuItem alloc] initWithTitle:@"Restore Editor Pane"
                                                       action:@selector(toggleEditorPane:)
@@ -756,12 +699,10 @@
  */
 - (void)testEditorMenuTitleTogglesAfterHide
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testEditorMenuTitleTogglesAfterHide - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide the editor pane
     [self.document toggleEditorPane:nil];
@@ -788,12 +729,10 @@
  */
 - (void)testEditorMenuTitleTogglesAfterRestore
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testEditorMenuTitleTogglesAfterRestore - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     // Hide and then restore the editor pane
     [self.document toggleEditorPane:nil];
@@ -916,22 +855,23 @@
  */
 - (void)testPreviousSplitRatioSetOnDividerDragCollapse
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testPreviousSplitRatioSetOnDividerDragCollapse - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     MPDocumentSplitView *splitView = self.document.splitView;
-    if (!splitView) {
-        NSLog(@"Skipping testPreviousSplitRatioSetOnDividerDragCollapse - no split view");
-        return;
-    }
+    XCTAssertNotNil(splitView, @"A loaded document window has a split view");
 
     // Verify initial state: previousSplitRatio should be -1.0 (sentinel)
     XCTAssertLessThan(self.document.previousSplitRatio, 0.0,
                       @"previousSplitRatio should start at sentinel value (-1.0)");
+
+    // Post the notification at the loaded (non-collapsed) split first, as the
+    // start of a real drag does, so the document records the last open ratio.
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
 
     // Simulate a divider drag by manually collapsing the left subview to zero width
     // and posting the resize notification (as NSSplitView does during a real drag).
@@ -963,18 +903,19 @@
  */
 - (void)testEditorMenuItemVisibleAfterDividerDragCollapse
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editorVisible || !self.document.previewVisible) {
-        NSLog(@"Skipping testEditorMenuItemVisibleAfterDividerDragCollapse - headless mode");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertTrue(self.document.editorVisible && self.document.previewVisible,
+                  @"a loaded document window shows both panes");
 
     MPDocumentSplitView *splitView = self.document.splitView;
-    if (!splitView) {
-        NSLog(@"Skipping testEditorMenuItemVisibleAfterDividerDragCollapse - no split view");
-        return;
-    }
+    XCTAssertNotNil(splitView, @"A loaded document window has a split view");
+
+    // Post the notification at the loaded (non-collapsed) split first, as the
+    // start of a real drag does, so the document records the last open ratio.
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:NSSplitViewDidResizeSubviewsNotification
+                      object:splitView];
 
     // Simulate divider drag to collapse editor (left pane)
     NSView *left = splitView.subviews[0];
@@ -995,6 +936,13 @@
 
     XCTAssertFalse(item.hidden,
                    @"Issue #377: Editor menu item should NOT be hidden after divider-drag collapse");
+    XCTAssertGreaterThanOrEqual(self.document.previousSplitRatio, 0.0,
+                                @"Issue #377: the collapse should record the previous split ratio");
+    NSString *expectedTitle = NSLocalizedString(@"Restore Editor Pane",
+                                                @"Toggle editor pane menu item");
+    XCTAssertEqualObjects(item.title, expectedTitle,
+                          @"Issue #377: Menu title should be 'Restore Editor Pane' "
+                          @"after the editor is collapsed by a divider drag");
 }
 
 - (void)testEditorOnRightMirrorsLastNonCollapsedRatio

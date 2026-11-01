@@ -9,6 +9,7 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import "MPDocumentWindowTestSupport.h"
 #import "MPEditorView.h"
 #import "MPPreferences.h"
 
@@ -77,6 +78,7 @@
 @interface MPZoomTests : XCTestCase
 @property (strong) MPDocument *document;
 @property (assign) CGFloat originalZoomLevel;
+@property (assign) BOOL originalStartInPreviewMode;
 @end
 
 @implementation MPZoomTests
@@ -86,12 +88,17 @@
     [super setUp];
     self.originalZoomLevel = [MPPreferences sharedInstance].documentZoomLevel;
     [MPPreferences sharedInstance].documentZoomLevel = 1.0;
+    self.originalStartInPreviewMode =
+        [MPPreferences sharedInstance].editorStartInPreviewMode;
+    [MPPreferences sharedInstance].editorStartInPreviewMode = NO;
     self.document = [[MPDocument alloc] init];
 }
 
 - (void)tearDown
 {
     [MPPreferences sharedInstance].documentZoomLevel = self.originalZoomLevel;
+    [MPPreferences sharedInstance].editorStartInPreviewMode =
+        self.originalStartInPreviewMode;
     self.document = nil;
     [super tearDown];
 }
@@ -337,22 +344,24 @@
  * setupEditor:editorBaseFontInfo must not revert the editor font to the
  * unzoomed base size.
  *
- * Skips in headless environments where the editor outlet is nil.
+ * Skips if no document window can be loaded.
  */
 - (void)testSetupEditorPreservesZoomedFontSize
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editor) {
-        NSLog(@"Skipping testSetupEditorPreservesZoomedFontSize - editor outlet is nil (headless)");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertNotNil(self.document.editor,
+                    @"a loaded document window has an editor");
 
     // Zoom to 1.5x and apply.
     self.document.zoomMultiplier = 1.5;
     [self.document applyCurrentZoom];
 
     CGFloat zoomedPointSize = self.document.editor.font.pointSize;
+    XCTAssertNotEqualWithAccuracy(zoomedPointSize,
+                                  [MPPreferences sharedInstance].editorBaseFontSize,
+                                  0.1,
+                                  @"Zooming to 1.5x should change the editor font size");
 
     // Simulate a preference change that triggers font re-application.
     [self.document setupEditor:@"editorBaseFontInfo"];
@@ -498,21 +507,14 @@
  * After zooming to 2.0 and applying, the first tab stop should match the
  * tab interval computed from the zoomed font, not the base font.
  *
- * Skips in headless environments where the editor outlet is nil.
+ * Skips if no document window can be loaded.
  */
 - (void)testTabStopsReflectZoomedFontSize
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editor) {
-        NSLog(@"Skipping testTabStopsReflectZoomedFontSize - editor outlet is nil (headless)");
-        return;
-    }
-
-    if (self.document.editor.defaultParagraphStyle.tabStops.count == 0) {
-        NSLog(@"Skipping testTabStopsReflectZoomedFontSize - no tab stops (headless)");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertNotNil(self.document.editor,
+                    @"a loaded document window has an editor");
 
     // Zoom to 2.0 and apply.
     self.document.zoomMultiplier = 2.0;
@@ -544,21 +546,14 @@
  * computed from the base font.  This is a green test that verifies the baseline
  * behaviour is correct before any zoom is applied.
  *
- * Skips in headless environments where the editor outlet is nil.
+ * Skips if no document window can be loaded.
  */
 - (void)testTabStopsAtDefaultZoomMatchBaseFont
 {
-    [self.document makeWindowControllers];
-
-    if (!self.document.editor) {
-        NSLog(@"Skipping testTabStopsAtDefaultZoomMatchBaseFont - editor outlet is nil (headless)");
-        return;
-    }
-
-    if (self.document.editor.defaultParagraphStyle.tabStops.count == 0) {
-        NSLog(@"Skipping testTabStopsAtDefaultZoomMatchBaseFont - no tab stops (headless)");
-        return;
-    }
+    XCTSkipUnless(MPLoadDocumentWindow(self.document),
+                  @"no document window can be loaded here");
+    XCTAssertNotNil(self.document.editor,
+                    @"a loaded document window has an editor");
 
     // Ensure default zoom.
     self.document.zoomMultiplier = 1.0;
@@ -637,11 +632,8 @@
         prefs.previewZoomRelativeToBaseFontSize = YES;
 
         NSFont *font21 = [NSFont fontWithName:savedFont.fontName size:21.0];
-        if (!font21) {
-            NSLog(@"Skipping testPreviewScaleCombinesFontRatioAndZoomWhenPreferenceOn"
-                  @" - cannot construct 21pt variant of base font.");
-            return;
-        }
+        XCTSkipUnless(font21,
+                      @"cannot construct 21pt variant of base font");
         prefs.editorBaseFont = font21;
 
         self.document.zoomMultiplier = 2.0;
