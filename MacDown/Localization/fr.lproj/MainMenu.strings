@@ -50,7 +50,7 @@
 "9CN-Qi-Fln.title" = "Barré";
 
 /* Class = "NSMenuItem"; title = "Substitutions"; ObjectID = "9ic-FL-obx"; */
-"9ic-FL-obx.title" = "Remplacements";
+"9ic-FL-obx.title" = "Substitutions";
 
 /* Class = "NSMenuItem"; title = "Smart Copy/Paste"; ObjectID = "9yt-4B-nSM"; */
 "9yt-4B-nSM.title" = "Copier/Coller intelligent";
@@ -331,7 +331,7 @@
 "xrE-MZ-jX0.title" = "Parole";
 
 /* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
-"xSb-2f-W1r.title" = "Afficher";
+"xSb-2f-W1r.title" = "Présentation";
 
 /* Class = "NSMenuItem"; title = "Find…"; ObjectID = "Xz5-n4-O0W"; */
 "Xz5-n4-O0W.title" = "Rechercher…";

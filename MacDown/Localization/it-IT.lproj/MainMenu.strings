@@ -20,7 +20,7 @@
 "3IN-sU-3Bg.title" = "Ortografia";
 
 /* Class = "NSMenu"; title = "Speech"; ObjectID = "3rS-ZA-NoH"; */
-"3rS-ZA-NoH.title" = "Comandi vocali";
+"3rS-ZA-NoH.title" = "Voce";
 
 /* Class = "NSMenuItem"; title = "Find"; ObjectID = "4EN-yA-p0u"; */
 "4EN-yA-p0u.title" = "Trova";
@@ -168,7 +168,7 @@
 "jn0-Kb-yH7.title" = "Elenco Numerato";
 
 /* Class = "NSMenuItem"; title = "Format"; ObjectID = "jxT-CU-nIS"; */
-"jxT-CU-nIS.title" = "Formatta";
+"jxT-CU-nIS.title" = "Formato";
 
 /* Class = "NSMenuItem"; title = "Contributing to MacDown"; ObjectID = "K3J-v5-s91"; */
 "K3J-v5-s91.title" = "Contribuisci allo sviluppo di MacDown 3000";
@@ -319,7 +319,7 @@
 "xN5-GU-ASF.title" = "Paragrafo";
 
 /* Class = "NSMenuItem"; title = "Speech"; ObjectID = "xrE-MZ-jX0"; */
-"xrE-MZ-jX0.title" = "Dettatura";
+"xrE-MZ-jX0.title" = "Voce";
 
 /* Class = "NSMenuItem"; title = "View"; ObjectID = "xSb-2f-W1r"; */
 "xSb-2f-W1r.title" = "Vista";

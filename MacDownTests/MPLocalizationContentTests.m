@@ -258,4 +258,218 @@ static NSString * const kMPSlavaUkrainiLine = @"Слава Україні! 🇺�
                                 @"Expected every localized xib to be checked");
 }
 
+#pragma mark - English and mismatched entries (Issue #662)
+
+/// English values that stay English in every locale: the product name,
+/// product and format names, and heading-level labels.
+static NSSet<NSString *> *MPUniversalEnglishValues(void)
+{
+    return [NSSet setWithArray:@[
+        @"MacDown 3000", @"Graphviz", @"Mermaid", @"Smartypants", @"CSS:",
+        @"H1", @"H2", @"H3", @"H4", @"H5", @"H6",
+        @"<binary location>", @"HTML…", @"PDF…",
+    ]];
+}
+
+/// Localized entries reviewed and kept identical to the English, keyed by
+/// locale, then by "<table> <key>", with the reason as the value.
+static NSDictionary<NSString *, NSDictionary<NSString *, NSString *> *> *
+MPReviewedEnglishEntries(void)
+{
+    return @{
+        @"cs": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Czech word",
+        },
+        @"da": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Danish term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Danish Window menu \"Zoom\"",
+        },
+        @"da-DK": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Danish menu \"Format\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Danish term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Danish Window menu \"Zoom\"",
+        },
+        @"de": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the German word",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the German term",
+            @"MainMenu jxT-CU-nIS.title": @"macOS German menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS German menu \"Format\"",
+        },
+        @"es": @{
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Spanish Window menu \"Zoom\"",
+        },
+        @"et": @{
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Estonian term",
+        },
+        @"fr": @{
+            @"MainMenu 2oI-Rn-ZJC.title": @"macOS French Edit menu \"Transformations\"",
+            @"MainMenu c8a-y6-VQd.title": @"macOS French Edit menu \"Transformations\"",
+            @"MainMenu 9ic-FL-obx.title": @"macOS French Edit menu \"Substitutions\"",
+            @"MainMenu FeM-D8-WVr.title": @"macOS French Edit menu \"Substitutions\"",
+            @"MainMenu hz9-B4-Xy5.title": @"\"Services\" is the French word",
+            @"MainMenu NMo-om-nkz.title": @"\"Services\" is the French word",
+            @"MainMenu jxT-CU-nIS.title": @"macOS French menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS French menu \"Format\"",
+            @"MainMenu VkR-aw-5AU.title": @"\"Image\" is the French word",
+        },
+        @"it-IT": @{
+            @"MainMenu bib-Uj-vzu.title": @"macOS Italian menu \"File\"",
+            @"MainMenu dMs-cI-mzQ.title": @"macOS Italian menu \"File\"",
+        },
+        @"nb-NO": @{
+            @"MainMenu jxT-CU-nIS.title": @"macOS Norwegian menu \"Format\"",
+            @"MainMenu N43-55-MPb.title": @"macOS Norwegian menu \"Format\"",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Norwegian Window menu \"Zoom\"",
+        },
+        @"nl-NL": @{
+            @"MPMarkdownPreferencesViewController k2n-VN-cKT.title": @"\"Superscript\" is the Dutch term",
+            @"MainMenu 3IN-sU-3Bg.title": @"macOS Dutch menu \"Spelling\"",
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Dutch term",
+            @"MainMenu R4o-n2-Eq4.title": @"macOS Dutch Window menu \"Zoom\"",
+        },
+        @"pt-BR": @{
+            @"MainMenu GIg-Wo-P8m.title": @"\"Link\" is the Brazilian Portuguese term",
+        },
+        @"sk": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Slovak word",
+        },
+        @"sv": @{
+            @"MPDocument dPo-OZ-Hdz.title": @"\"Text\" is the Swedish word",
+        },
+    };
+}
+
+/// The bundled locales that ship @c file, excluding English.
+- (NSArray<NSString *> *)localesBundlingFile:(NSString *)file
+{
+    NSString *resources = [NSBundle mainBundle].resourcePath;
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSMutableArray *locales = [NSMutableArray array];
+    for (NSString *dir in [manager contentsOfDirectoryAtPath:resources error:NULL])
+    {
+        if (![dir.pathExtension isEqualToString:@"lproj"])
+            continue;
+        NSString *locale = dir.stringByDeletingPathExtension;
+        if ([locale isEqualToString:@"en"] || [locale isEqualToString:@"Base"])
+            continue;
+        if ([manager fileExistsAtPath:[[resources stringByAppendingPathComponent:dir]
+                                       stringByAppendingPathComponent:file]])
+            [locales addObject:locale];
+    }
+    return [locales sortedArrayUsingSelector:@selector(compare:)];
+}
+
+/// The names of the Base xibs in the source tree.
+- (NSArray<NSString *> *)baseXIBNames
+{
+    NSString *repo = [[@__FILE__ stringByDeletingLastPathComponent]
+                      stringByDeletingLastPathComponent];
+    NSString *base = [repo stringByAppendingPathComponent:
+                      @"MacDown/Localization/Base.lproj"];
+    NSMutableArray *names = [NSMutableArray array];
+    for (NSString *entry in [[NSFileManager defaultManager]
+                             contentsOfDirectoryAtPath:base error:NULL])
+    {
+        if ([entry.pathExtension isEqualToString:@"xib"])
+            [names addObject:entry.stringByDeletingPathExtension];
+    }
+    return names;
+}
+
+// Issue #662: a localized xib entry whose value is the English text is
+// untranslated unless it is a value every locale keeps in English or one
+// reviewed as correct for that locale.
+- (void)testNoLocalizedXIBEntryIsLeftInEnglish
+{
+    NSSet *universal = MPUniversalEnglishValues();
+    NSDictionary *reviewed = MPReviewedEnglishEntries();
+    NSCharacterSet *letters = [NSCharacterSet letterCharacterSet];
+    NSUInteger checked = 0;
+    for (NSString *table in [self baseXIBNames])
+    {
+        NSDictionary *english = [self titledKeysInBaseXIB:table];
+        NSString *file = [table stringByAppendingPathExtension:@"strings"];
+        for (NSString *locale in [self localesBundlingFile:file])
+        {
+            NSDictionary *strings = [self table:table locale:locale];
+            for (NSString *key in english)
+            {
+                NSString *value = strings[key];
+                if (!value)
+                    continue;
+                checked++;
+                if (![value isEqualToString:english[key]]
+                    || [value rangeOfCharacterFromSet:letters].location == NSNotFound
+                    || [universal containsObject:value])
+                    continue;
+                NSString *entry = [NSString stringWithFormat:@"%@ %@", table, key];
+                XCTAssertNotNil(reviewed[locale][entry],
+                                @"%@ %@ leaves %@ in English (\"%@\")",
+                                locale, table, key, value);
+            }
+        }
+    }
+    XCTAssertGreaterThan(checked, 1000u, @"Expected the localized xib tables to be checked");
+
+    // Every reviewed entry must still be English; a stale one hides nothing.
+    [reviewed enumerateKeysAndObjectsUsingBlock:
+     ^(NSString *locale, NSDictionary *entries, BOOL *stop) {
+        for (NSString *entry in entries)
+        {
+            NSArray *parts = [entry componentsSeparatedByString:@" "];
+            NSString *table = parts.firstObject, *key = parts.lastObject;
+            NSString *englishValue = [self titledKeysInBaseXIB:table][key];
+            XCTAssertNotNil(englishValue, @"%@ reviewed entry %@ is not in the Base xib",
+                            locale, entry);
+            XCTAssertEqualObjects([self table:table locale:locale][key], englishValue,
+                                  @"%@ reviewed entry %@ is no longer English", locale, entry);
+        }
+    }];
+}
+
+// Issue #662: a submenu's own title and the menu item that opens it show the
+// same text when their English is the same.
+- (void)testSubmenuTitlesMatchTheirParentItem
+{
+    NSString *repo = [[@__FILE__ stringByDeletingLastPathComponent]
+                      stringByDeletingLastPathComponent];
+    NSUInteger pairs = 0;
+    for (NSString *table in [self baseXIBNames])
+    {
+        NSString *path = [repo stringByAppendingPathComponent:[NSString stringWithFormat:
+            @"MacDown/Localization/Base.lproj/%@.xib", table]];
+        NSXMLDocument *xib = [[NSXMLDocument alloc]
+            initWithContentsOfURL:[NSURL fileURLWithPath:path] options:0 error:NULL];
+        XCTAssertNotNil(xib, @"Cannot read %@", path);
+        NSString *file = [table stringByAppendingPathExtension:@"strings"];
+        NSArray *locales = [self localesBundlingFile:file];
+        for (NSXMLElement *menu in [xib nodesForXPath:
+                 @"//menuItem[@id and @title]/menu[@id and @title]" error:NULL])
+        {
+            NSXMLElement *item = (NSXMLElement *)menu.parent;
+            NSString *title = [menu attributeForName:@"title"].stringValue;
+            if (![title isEqualToString:[item attributeForName:@"title"].stringValue])
+                continue;
+            pairs++;
+            NSString *itemKey = [[item attributeForName:@"id"].stringValue
+                                 stringByAppendingString:@".title"];
+            NSString *menuKey = [[menu attributeForName:@"id"].stringValue
+                                 stringByAppendingString:@".title"];
+            for (NSString *locale in locales)
+            {
+                NSDictionary *strings = [self table:table locale:locale];
+                if (!strings[itemKey] || !strings[menuKey])
+                    continue;
+                XCTAssertEqualObjects(strings[menuKey], strings[itemKey],
+                    @"%@ %@: submenu \"%@\" (%@) and its menu item (%@) differ",
+                    locale, table, title, menuKey, itemKey);
+            }
+        }
+    }
+    XCTAssertGreaterThan(pairs, 10u, @"Expected submenus titled like their menu item");
+}
+
 @end

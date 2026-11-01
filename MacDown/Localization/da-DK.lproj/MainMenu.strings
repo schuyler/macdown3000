@@ -2,7 +2,7 @@
 "0WP-T5-QxP.title" = "Overskrift 2";
 
 /* Class = "NSMenu"; title = "Find"; ObjectID = "1b7-l0-nxx"; */
-"1b7-l0-nxx.title" = "Find";
+"1b7-l0-nxx.title" = "Søg";
 
 /* Class = "NSMenuItem"; title = "Enter Full Screen"; ObjectID = "1gz-YB-DZE"; */
 "1gz-YB-DZE.title" = "Start fuld skærm";
@@ -23,7 +23,7 @@
 "3rS-ZA-NoH.title" = "Tale";
 
 /* Class = "NSMenuItem"; title = "Find"; ObjectID = "4EN-yA-p0u"; */
-"4EN-yA-p0u.title" = "Find";
+"4EN-yA-p0u.title" = "Søg";
 
 /* Class = "NSMenuItem"; title = "Quit MacDown"; ObjectID = "4sb-4s-VLi"; */
 "4sb-4s-VLi.title" = "Slut MacDown 3000";
@@ -274,7 +274,7 @@
 "tXI-mr-wws.title" = "Åbn seneste";
 
 /* Class = "NSMenuItem"; title = "Capitalize"; ObjectID = "UEZ-Bs-lqG"; */
-"UEZ-Bs-lqG.title" = "Til store bogstaver";
+"UEZ-Bs-lqG.title" = "Stort begyndelsesbogstav";
 
 /* Class = "NSMenuItem"; title = "MacDown Help"; ObjectID = "ugx-EN-xKu"; */
 "ugx-EN-xKu.title" = "Hjælp til MacDown 3000";
@@ -289,7 +289,7 @@
 "Vdr-fp-XzO.title" = "Skjul andre";
 
 /* Class = "NSMenuItem"; title = "Render Markdown"; ObjectID = "Vh1-jg-bbV"; */
-"Vh1-jg-bbV.title" = "Generer Markdown";
+"Vh1-jg-bbV.title" = "Gengiv Markdown";
 
 /* Class = "NSMenuItem"; title = "Image"; ObjectID = "VkR-aw-5AU"; */
 "VkR-aw-5AU.title" = "Billede";

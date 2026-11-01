@@ -35,7 +35,7 @@
 "5kV-Vb-QxS.title" = "关于 MacDown 3000";
 
 /* Class = "NSMenuItem"; title = "Export"; ObjectID = "5mp-ev-1el"; */
-"5mp-ev-1el.title" = "导出到";
+"5mp-ev-1el.title" = "导出";
 
 /* Class = "NSMenuItem"; title = "Edit"; ObjectID = "5QF-Oa-p0T"; */
 "5QF-Oa-p0T.title" = "编辑";
