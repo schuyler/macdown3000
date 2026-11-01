@@ -157,6 +157,7 @@
                         <constraint firstAttribute="trailing" secondItem="UZT-HE-EaK" secondAttribute="trailing" constant="16" id="72H-A1-Jxe"/>
                         <constraint firstItem="WVd-hz-Dcr" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="CHN-Yp-0Ff"/>
                         <constraint firstAttribute="bottom" secondItem="UZT-HE-EaK" secondAttribute="bottom" constant="11" id="Jkz-15-VH9"/>
+                        <constraint firstItem="UZT-HE-EaK" firstAttribute="top" relation="greaterThanOrEqual" secondItem="WVd-hz-Dcr" secondAttribute="bottom" constant="6" id="UZT-Tp-WVd"/>
                         <constraint firstItem="6Nz-Ft-FbR" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="Orz-1j-PcM"/>
                         <constraint firstAttribute="trailing" secondItem="Vab-4T-IU5" secondAttribute="trailing" constant="16" id="SSy-nb-3Jk"/>
                         <constraint firstItem="hqr-gd-6gi" firstAttribute="leading" secondItem="Nma-PL-ZvX" secondAttribute="leading" constant="16" id="al2-wQ-QB5"/>
