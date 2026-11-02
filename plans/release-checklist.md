@@ -35,7 +35,7 @@ redone — the per-release work they unlock is Step 4.
   Every shipped build carries it, so it cannot be changed without stranding
   existing installs — they reject updates signed by any other key.
 
-- [x] **The private key is backed up in 1Password**, as a Password item titled
+- [x] **The private key is backed up in 1Password**, as a Secure Note titled
   `MacDown Sparkle EdDSA` in the `Personal` vault. This has to stay true before
   any release that ships the public key above: if the private half is lost, no
   existing install can ever be updated again. Nothing in the build or the
@@ -200,7 +200,7 @@ as a workaround.
   a missing `sign_update`, or an unstapled DMG surfaces here rather than after
   a real publish.
   ```bash
-  op read "op://Personal/MacDown Sparkle EdDSA/password" \
+  op read "op://Personal/MacDown Sparkle EdDSA/notesPlain" | tr -d '[:space:]' \
     | python3 Tools/update_appcast.py --release 3000.1.0 --dry-run
   ```
 

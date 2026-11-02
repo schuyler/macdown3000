@@ -337,7 +337,7 @@ locally and `bundle exec pod install` done:
 1. Dry-run and read the output — the bytes the real run will write:
 
 ```bash
-op read "op://Personal/MacDown Sparkle EdDSA/password" \
+op read "op://Personal/MacDown Sparkle EdDSA/notesPlain" | tr -d '[:space:]' \
   | python3 Tools/update_appcast.py --release 3000.1.0 --dry-run
 ```
 

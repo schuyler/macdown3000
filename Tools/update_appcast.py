@@ -692,8 +692,9 @@ def run(argv):
     # get an error, not a process that waits forever.
     if sys.stdin.isatty():
         raise Failure('the signing key must be piped in on stdin, e.g. '
-                      'op read "op://Personal/MacDown Sparkle EdDSA/password" '
-                      '| %s ...' % os.path.basename(sys.argv[0]))
+                      'op read "op://Personal/MacDown Sparkle EdDSA/notesPlain" '
+                      '| tr -d \'[:space:]\' | %s ...'
+                      % os.path.basename(sys.argv[0]))
 
     if args.release is not None:
         check_release_conflicts(args)
