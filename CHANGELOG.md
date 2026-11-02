@@ -1,5 +1,47 @@
 # Changelog
 
+<!-- rc-temp -->
+## [3000.0.9-rc.1] - 2026-11-01
+
+This release candidate adds a preference to hide horizontal rules, the `[-]` indeterminate task state, and Danish and Finnish preference-pane translations. It fixes a batch of preview, Mermaid, split-pane, document-restore and localization-layout bugs, and tightens preview navigation and several file-handling paths.
+
+### Added
+
+- Add a "Hide horizontal rules" preference in Settings > Rendering that suppresses `<hr>` output in the preview, HTML export, copy-as-HTML and Quick Look; off by default. Also fixes the Rendering pane's "Syntax highlighted" row overlapping the CSS popup (#560, #579, PR #631) -- thanks @macnotes for the report and the contribution! thanks @DominikDeak for the report!
+- Support the `[-]` indeterminate task list state, rendered as a dash checkbox; clicking it in the preview resolves it to `[x]` (PR #591) -- thanks @AlexanderWillner for the contribution!
+- Give the Insert Table toolbar button its own grid icon, distinct from Unordered List (#497, PR #652)
+- Add Danish (`da`) and Finnish (`fi`) translations for the five preference panes (#654, PR #665)
+
+### Changed
+
+- Remember editor pane visibility across new windows: View > Hide/Restore Editor Pane now updates the "Start in preview mode" preference (#407, PR #630) -- thanks @taotao365s for the report! thanks @leevi2010-cursor for the contribution!
+- Upgrade Mermaid to 11.17.2 so ER-diagram relationship labels are readable (PR #625) -- thanks @scizo for the contribution!
+- The current president of the Russian Federation stated in June 2025 that "I have said many times that I consider the Russian and Ukrainian peoples to be one people". We do not believe that the Ukrainian people would agree, but we assume that Russian-speaking users of MacDown 3000 won't mind us replacing the Russian language support with the Ukrainian version. Slava Ukraini. (PR #640)
+- Fill missing localized strings and translate entries that were still English across the preference panes, menus and dialogs, and align submenu titles with their parent menu items (#639, #653, #662, PR #638, PR #651, PR #664, PR #666)
+
+### Fixed
+
+- Fix fenced code blocks staying unhighlighted when the first preview render is empty: the preview now reloads fully when its head or scripts change (#594, PR #601) -- thanks @pudonghot for the report and the contribution!
+- Fix "Render newline literally" (and the task-list, line-number, code-information and hide-rule flags) not applying to a newly opened document until an unrelated preference changed (#21, PR #650) -- thanks @sgon00 for the report!
+- Fix Mermaid flowchart node labels being clipped when the preview is zoomed below 100% (#35, PR #657) -- thanks @besi and @rcuisnier for the report!
+- Fix a reopened never-saved document reporting no text and no unsaved changes before its editor exists, so it no longer saves empty (#586, PR #656) -- thanks @fpservant for the report!
+- Fix "Restore Editor Pane" never appearing, and the pane staying hidden, after a split pane was collapsed by a divider drag or a restored layout (#649, PR #658) -- thanks @rjoz for the report!
+- Give GitHub-theme headings a line height proportional to their size so wrapped heading lines no longer collide (#575, PR #634) -- thanks @richb-hanover for the report! thanks @zydon69 for the contribution!
+- Fix the GitHub-2020 preview style rendering with no paragraph spacing, invisible horizontal rules, uncoloured table and blockquote borders, and black code and blockquote text, by declaring the Primer color and spacing tokens the stylesheet references; tables in that style now size to their content (#633, PR #637)
+- Fix preference-pane checkbox titles clipping in French and Italian by giving each pane 3% width slack, and fix the General pane's last Behavior row overlapping the row above it (#530, #397, #579, PR #663, PR #667) -- thanks @rcuisnier for the report!
+- Fix an exception when importing malformed `.textClipping` files, and validate empty pasteboard input (#603, PR #606) -- thanks @zydon69 for the report and the contribution!
+- Fix Mermaid renders requested while another render is in progress being dropped, and show render errors as text; the Graphviz and Mermaid checkboxes in Settings > Rendering are no longer disabled when syntax highlighting is off (PR #616) -- thanks @zydon69 for the contribution!
+- Fix terminal launcher installation and removal failing on filesystem errors, existing links and invalid target paths (PR #614) -- thanks @zydon69 for the contribution!
+- Fix a hang in Homebrew detection when the subprocess writes more output than the pipe buffer holds (PR #621) -- thanks @zydon69 for the contribution!
+- Ignore Return on directories with Markdown-like names in the folder sidebar (PR #615) -- thanks @zydon69 for the contribution!
+- Correct several localized labels and the plural rules for the word/character counters in Czech, Ukrainian and Slovak (PR #636) -- thanks @zydon69 for the contribution!
+
+### Security
+
+- Resolve symlinks in the final path component when checking whether a preview navigation stays within the document's folder (PR #610) -- thanks @zydon69 for the contribution!
+
+<!-- /rc-temp -->
+
 ## [3000.0.8] - 2026-11-01
 
 This release adds folder workspaces, unified document zoom, and draggable table-column resizing, restores automatic update checks, and fixes a batch of preview-rendering, toolbar, export, and scroll-sync bugs.
