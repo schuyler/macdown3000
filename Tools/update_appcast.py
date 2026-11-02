@@ -530,7 +530,7 @@ def download_dmg(url):
             raise Failure('GET %s failed: HTTP %d' % (url, response.status))
         data = response.read()
 
-    handle = tempfile.NamedTemporaryFile(delete=False)
+    handle = tempfile.NamedTemporaryFile(suffix='.dmg', delete=False)
     try:
         handle.write(data)
     finally:

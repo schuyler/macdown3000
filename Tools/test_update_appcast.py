@@ -1699,6 +1699,21 @@ class TestStaplingCheck(ReleaseModeTestCase):
             recorded_digest, hashlib.sha256(dmg_bytes).hexdigest(),
             'stapler was not run against the downloaded DMG bytes')
 
+    def test_stapler_is_handed_a_path_ending_in_dmg(self):
+        """The real stapler picks the file type from the extension and
+        refuses a suffixless path ("incapable of working with Document
+        files", exit 66), which the stub can't reproduce on its own."""
+        version = '3000.1.0'
+        tag, kwargs = self.full_release_fixture(version=version)
+        proc = self.run_release(**kwargs)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+
+        with open(os.path.join(self.tmp, 'stapler.argv'),
+                  encoding='utf-8') as f:
+            parts = f.read().split()
+        self.assertEqual(parts[0], 'validate')
+        self.assertTrue(parts[1].endswith('.dmg'), parts[1])
+
     def test_zero_exit_proceeds(self):
         version = '3000.1.0'
         tag, kwargs = self.full_release_fixture(version=version)
