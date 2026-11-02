@@ -1,23 +1,13 @@
 {
   "stable": {
-    "version": "3000.0.7",
-    "tagName": "v3000.0.7",
-    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.7",
-    "publishedAt": "2026-07-13T19:10:30Z",
-    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.7/MacDown-3000.0.7.dmg",
-    "dmgName": "MacDown-3000.0.7.dmg",
-    "dmgSizeMB": "7.8",
-    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.7/MacDown-3000.0.7.dmg.sha256"
-  },
-  "prerelease": {
-    "version": "3000.0.8-rc.2",
-    "tagName": "v3000.0.8-rc.2",
-    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.8-rc.2",
-    "publishedAt": "2026-10-11T20:54:45Z",
-    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.8-rc.2/MacDown-3000.0.8-rc.2.dmg",
-    "dmgName": "MacDown-3000.0.8-rc.2.dmg",
+    "version": "3000.0.8",
+    "tagName": "v3000.0.8",
+    "releaseUrl": "https://github.com/schuyler/macdown3000/releases/tag/v3000.0.8",
+    "publishedAt": "2026-11-02T04:30:50Z",
+    "downloadUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.8/MacDown-3000.0.8.dmg",
+    "dmgName": "MacDown-3000.0.8.dmg",
     "dmgSizeMB": "8.8",
-    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.8-rc.2/MacDown-3000.0.8-rc.2.dmg.sha256"
+    "checksumUrl": "https://github.com/schuyler/macdown3000/releases/download/v3000.0.8/MacDown-3000.0.8.dmg.sha256"
   },
-  "updatedAt": "2026-10-11T20:54:58Z"
+  "updatedAt": "2026-11-02T04:31:04Z"
 }
