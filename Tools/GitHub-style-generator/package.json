@@ -9,7 +9,7 @@
   "author": "Franklin Yu",
   "license": "MIT",
   "dependencies": {
-    "@primer/css": "^22.3.2",
+    "@primer/css": "^22.3.3",
     "@primer/primitives": "^11.3.1",
     "sass": "^1.105.1"
   }
