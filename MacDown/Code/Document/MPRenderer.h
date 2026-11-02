@@ -10,6 +10,11 @@
 @protocol MPRendererDataSource;
 @protocol MPRendererDelegate;
 
+// The MathJax loader URL the preview requests. The bundle serves this and the
+// TeX fonts locally (see -[MPDocument webView:resource:willSendRequest:…]), so
+// MPDocument matches requests against this origin.
+extern NSString * const kMPMathJaxCDN;
+
 
 typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 {
