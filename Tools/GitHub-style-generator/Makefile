@@ -6,14 +6,27 @@ target = ../../MacDown/Resources/Styles/GitHub-2020.css
 
 all: $(target)
 
-$(target): index.sass tokens.js package-lock.json
-	$(SASS) --load-path node_modules $< > build.css
-	sed s/.markdown-body/body/ build.css > build.body.css
-	node tokens.js $(TOKENS) < build.body.css > build.out.css
-	mv build.out.css $@
-	$(RM) build.css build.body.css
+# Xcode consumes the reviewed, committed stylesheet without requiring Node.
+$(target):
+	@test -f "$@" || { \
+		echo "Missing committed stylesheet: $@. Run make regenerate explicitly." >&2; \
+		exit 1; }
+
+# Regeneration is a developer action, never an implicit side effect of a build.
+regenerate: index.sass tokens.js package-lock.json $(SASS) $(TOKENS)
+	@set -e; raw=; body=; css=; \
+	trap 'rm -f "$$raw" "$$body" "$$css"' EXIT; \
+	trap 'exit 1' HUP INT TERM; \
+	raw=$$(mktemp "$(target).sass.XXXXXX"); \
+	body=$$(mktemp "$(target).body.XXXXXX"); \
+	css=$$(mktemp "$(target).css.XXXXXX"); \
+	$(SASS) --load-path node_modules index.sass > "$$raw"; \
+	sed 's/\.markdown-body/body/g' "$$raw" > "$$body"; \
+	node tokens.js $(TOKENS) < "$$body" > "$$css"; \
+	chmod 644 "$$css"; \
+	mv "$$css" "$(target)"
 
 clean:
-	$(RM) $(target) build.css build.body.css build.out.css
+	$(RM) build.css build.body.css build.out.css
 
-.PHONY: all clean
+.PHONY: all regenerate clean
