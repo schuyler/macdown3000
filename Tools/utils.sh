@@ -1,5 +1,5 @@
 # First, check for git in $PATH
-hash git 2>/dev/null || { echo >&2 "Git required, not installed.  Aborting build number update script."; exit 0; }
+hash git 2>/dev/null || { echo >&2 "Git required, not installed.  Aborting build number update script."; exit 1; }
 
 # Build version (closest-tag-or-branch "-" commits-since-tag "-" short-hash dirty-flag)
 # Uses standard git describe format
@@ -14,18 +14,21 @@ function get_build_version() {
 #   5 commits after tag         → "3000.0.0-beta.1.post5"
 #   No tags yet                 → "0.0.0.dev<commit-count>"
 function get_short_version() {
-    local LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null)
+    local LATEST_TAG
+    LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null) || LATEST_TAG=""
 
     if [ -z "$LATEST_TAG" ]; then
         # No tags exist yet - use commit count as development version
-        local COMMIT_COUNT=$(git rev-list --count HEAD)
+        local COMMIT_COUNT
+        COMMIT_COUNT=$(git rev-list --count HEAD) || return
         echo "0.0.0.dev${COMMIT_COUNT}"
     else
         # Remove 'v' prefix from tag
         local VERSION="${LATEST_TAG#v}"
-        local COMMIT_COUNT_SINCE_TAG=$(git rev-list --count ${LATEST_TAG}..HEAD)
+        local COMMIT_COUNT_SINCE_TAG
+        COMMIT_COUNT_SINCE_TAG=$(git rev-list --count "${LATEST_TAG}..HEAD") || return
 
-        if [ $COMMIT_COUNT_SINCE_TAG -eq 0 ]; then
+        if [ "$COMMIT_COUNT_SINCE_TAG" -eq 0 ]; then
             # Exactly on a release tag
             echo "$VERSION"
         else

@@ -1,0 +1,23 @@
+name: Version Script Tests
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  version-scripts:
+    name: Version Script Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Verify Git-derived version headers
+      run: python3 MacDownTests/BuildTools/version_tests.py
