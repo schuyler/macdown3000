@@ -1,0 +1,90 @@
+editor
+foreground: f8f8f2
+background: 2e3440
+caret: 81a1c1
+
+editor-selection
+background: 565b64
+
+H1
+foreground: ebcb8b
+font-style: bold
+font-size: 24px
+
+H2
+foreground: ebcb8b
+font-style: bold
+font-size: 20px
+
+H3
+foreground: ebcb8b
+font-style: bold
+font-size: 17px
+
+H4
+foreground: ebcb8b
+font-style: bold
+font-size: 15px
+
+H5
+foreground: ebcb8b
+font-style: bold
+font-size: 13px
+
+H6
+foreground: ebcb8b
+font-style: bold
+font-size: 11px
+
+EMPH
+foreground: 88c0d0
+font-style: italic
+
+STRONG
+foreground: b48ead
+font-style: bold
+
+HRULE
+foreground: 81a1c1
+
+LIST_BULLET
+foreground: b48ead
+
+LIST_ENUMERATOR
+foreground: b48ead
+
+LINK
+foreground: 81a1c1
+
+AUTO_LINK_URL
+foreground: 81a1c1
+
+AUTO_LINK_EMAIL
+foreground: 81a1c1
+
+REFERENCE
+foreground: 81a1c1
+
+IMAGE
+foreground: 81a1c1
+
+CODE
+foreground: a3be8c
+
+VERBATIM
+foreground: a3be8c
+
+HTML
+foreground: 81a1c1
+
+HTMLBLOCK
+foreground: 81a1c1
+
+HTML_ENTITY
+foreground: 81a1c1
+
+COMMENT
+foreground: 636f88
+
+BLOCKQUOTE
+foreground: 636f88
