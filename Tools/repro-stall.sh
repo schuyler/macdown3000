@@ -25,6 +25,7 @@
 # Each run is classified:
 #   ok     tests executed, no wedge
 #   WEDGE  watchdog fired and/or the host restarted; the victim is named
+#   FAIL   test/build command failed after running tests
 #   NORUN  no tests executed at all (usually a build failure — run `bundle exec pod install`).
 #          This case exists because a build failure produces no wedge markers and would
 #          otherwise be scored as a pass.
@@ -36,8 +37,8 @@ cd "$REPO" || exit 1
 
 ITER=${1:-12}
 ALLOW=${2:-60}
-OUT=${TMPDIR:-/tmp}/macdown-repro-stall
-mkdir -p "$OUT"
+[[ "$ITER" =~ ^[1-9][0-9]*$ && "$ALLOW" =~ ^[1-9][0-9]*$ ]] || { echo "Arguments must be positive integers" >&2; exit 2; }
+OUT=$(mktemp -d "${TMPDIR:-/tmp}/macdown-repro-stall.XXXXXX") || exit 1
 
 echo "repo=$REPO"
 echo "iterations=$ITER allowance=${ALLOW}s  (background QoS via taskpolicy -b)"
@@ -46,6 +47,7 @@ echo "start $(date +%H:%M:%S)"
 
 wedges=0
 noruns=0
+failures=0
 for i in $(seq 1 "$ITER"); do
   log="$OUT/run-$i.log"
   start=$(date +%s)
@@ -56,13 +58,14 @@ for i in $(seq 1 "$ITER"); do
     -test-timeouts-enabled YES \
     -maximum-test-execution-time-allowance "$ALLOW" \
     > "$log" 2>&1
+  status=$?
   dur=$(( $(date +%s) - start ))
 
   hung=$(grep -c "exceeded execution time allowance" "$log")
   restart=$(grep -c "Restarting after" "$log")
   total=$(grep -oE "Executed [0-9]+ tests, with [0-9]+ failures \([0-9]+ unexpected\)" "$log" | tail -1)
 
-  if [ -z "$total" ] && [ "$hung" -eq 0 ] && [ "$restart" -eq 0 ]; then
+  if { [ -z "$total" ] || [[ "$total" == "Executed 0 tests,"* ]]; } && [ "$hung" -eq 0 ] && [ "$restart" -eq 0 ]; then
     noruns=$((noruns + 1))
     reason=$(grep -aoE "error: .{0,90}" "$log" | head -1)
     printf "run %-3s %4ss  NORUN  %s\n" "$i" "$dur" "${reason:-no tests executed, cause unknown}"
@@ -71,11 +74,14 @@ for i in $(seq 1 "$ITER"); do
     victim=$(grep -oE "Test Case '[^']*' exceeded execution time allowance" "$log" \
              | sed "s/Test Case '//;s/' exceeded.*//" | sort -u | tr '\n' ' ')
     printf "run %-3s %4ss  WEDGE  %s\n" "$i" "$dur" "${victim:-victim not named; see $log}"
+  elif [ "$status" -ne 0 ]; then
+    failures=$((failures + 1))
+    printf "run %-3s %4ss  FAIL   status=%s %s\n" "$i" "$dur" "$status" "$total"
   else
     printf "run %-3s %4ss  ok     %s\n" "$i" "$dur" "$total"
   fi
 done
 
-echo "done $(date +%H:%M:%S) — $wedges/$ITER wedged, $noruns/$ITER did not run"
-[ "$wedges" -gt 0 ] && exit 1
+echo "done $(date +%H:%M:%S) — $wedges/$ITER wedged, $noruns/$ITER did not run, $failures/$ITER failed"
+[ "$wedges" -gt 0 ] || [ "$noruns" -gt 0 ] || [ "$failures" -gt 0 ] && exit 1
 exit 0
