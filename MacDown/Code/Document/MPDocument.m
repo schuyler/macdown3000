@@ -1369,7 +1369,9 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // Issue #290: Capture previous URL before super updates it (for Save As detection)
     NSURL *previousURL = self.fileURL;
 
-    if (self.preferences.editorEnsuresNewlineAtEndOfFile)
+    // Inserting the newline would commit a pending input method composition.
+    if (self.preferences.editorEnsuresNewlineAtEndOfFile
+        && !self.editor.hasMarkedText)
     {
         NSCharacterSet *newline = [NSCharacterSet newlineCharacterSet];
         NSString *text = self.editor.string;
@@ -3127,6 +3129,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)insertTable:(id)sender
 {
+    [self.editor commitMarkedText];
     NSString *content = self.editor.string ?: @"";
     NSRange replacementRange = NSMakeRange(0, 0);
     NSUInteger caretLocation = 0;
@@ -3185,6 +3188,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
 - (IBAction)insertNewParagraph:(id)sender
 {
+    [self.editor commitMarkedText];
     NSRange range = self.editor.selectedRange;
     NSUInteger location = range.location;
     NSUInteger length = range.length;

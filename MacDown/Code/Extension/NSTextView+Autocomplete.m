@@ -56,6 +56,22 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 @implementation NSTextView (Autocomplete)
 
+/** Commits text an input method has marked, as confirming it would.
+ *
+ * Called before a command edits the text, so the edit works on committed
+ * text. The input context hears that the composition ended only when this
+ * view is the key window's first responder, the only time it is active.
+ */
+- (void)commitMarkedText
+{
+    if (!self.hasMarkedText)
+        return;
+    [self unmarkText];
+    NSWindow *window = self.window;
+    if (window.isKeyWindow && window.firstResponder == self)
+        [self.inputContext discardMarkedText];
+}
+
 - (BOOL)substringInRange:(NSRange)range isSurroundedByPrefix:(NSString *)prefix
                   suffix:(NSString *)suffix
 {
@@ -299,6 +315,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 - (BOOL)toggleForMarkupPrefix:(NSString *)prefix suffix:(NSString *)suffix
 {
+    [self commitMarkedText];
     NSRange range = self.selectedRange;
     NSString *selection = [self.string substringWithRange:range];
     BOOL isOn = NO;
@@ -329,6 +346,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 - (void)toggleBlockWithPattern:(NSString *)pattern prefix:(NSString *)prefix
 {
+    [self commitMarkedText];
     NSRegularExpression *regex =
         [[NSRegularExpression alloc] initWithPattern:pattern options:0
                                                error:NULL];
@@ -409,6 +427,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 - (void)indentSelectedLinesWithPadding:(NSString *)padding
 {
+    [self commitMarkedText];
     NSString *content = self.string;
     NSRange selectedRange = self.selectedRange;
     NSRange lineRange = [content lineRangeForRange:selectedRange];
@@ -441,6 +460,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 
 - (void)unindentSelectedLines
 {
+    [self commitMarkedText];
     NSString *content = self.string;
     NSRange selectedRange = self.selectedRange;
     NSRange lineRange = [content lineRangeForRange:selectedRange];
@@ -677,6 +697,7 @@ static NSString * const kMPBlockquoteLinePattern = @"^((?:\\> ?)+).*$";
 - (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level
 {
     NSAssert(level <= 6, @"Should be 1-6, or 0 (convert to paragraph).");
+    [self commitMarkedText];
     NSString *content = self.string;
     NSRange selectedRange = self.selectedRange;
     NSRange lineRange = [content lineRangeForRange:selectedRange];

@@ -34,5 +34,6 @@
 - (BOOL)completeNextBlockquoteLine;
 - (BOOL)completeNextIndentedLine;
 - (void)makeHeaderForSelectedLinesWithLevel:(NSUInteger)level;
+- (void)commitMarkedText;
 
 @end

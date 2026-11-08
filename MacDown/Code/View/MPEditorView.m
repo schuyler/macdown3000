@@ -8,6 +8,7 @@
 
 #import "MPEditorView.h"
 #import "NSPasteboard+Types.h"
+#import "NSTextView+Autocomplete.h"
 #import "FileURLInlining.h"
 #import <CoreServices/CoreServices.h>
 
@@ -213,6 +214,7 @@ NS_INLINE BOOL MPAreRectsEqual(NSRect r1, NSRect r2)
  */
 - (void)paste:(id)sender
 {
+    [self commitMarkedText];
     NSRange selectedRange = self.selectedRange;
 
     // Only linkify if text is selected
