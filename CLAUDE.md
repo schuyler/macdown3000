@@ -8,7 +8,7 @@ This document provides essential information for Claude Code when working on the
 
 ### Key Technologies
 - **Language:** Objective-C
-- **Platform:** macOS (10.14+)
+- **Platform:** macOS (11.0+)
 - **Dependencies:** Hoedown (Markdown rendering), Prism (syntax highlighting), PEG Markdown Highlight (editor highlighting)
 - **Build System:** Xcode, CocoaPods (managed via Bundler)
 
