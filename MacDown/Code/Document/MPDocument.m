@@ -4851,51 +4851,82 @@ to link outside that scope.", \
     if (index < 0)
         return;
 
+    NSString *markdown = self.editor.string;
     NSString *newMarkdown = [MPDocument toggleCheckboxAtIndex:(NSUInteger)index
-                                                   inMarkdown:self.editor.string];
-    if (![newMarkdown isEqualToString:self.editor.string])
+                                                   inMarkdown:markdown];
+
+    // A toggle replaces one character, the checkbox's state. Find it.
+    NSUInteger location = 0;
+    while (location < markdown.length
+           && [markdown characterAtIndex:location]
+               == [newMarkdown characterAtIndex:location])
     {
-        // Preserve cursor position
-        NSRange selectedRange = self.editor.selectedRange;
-
-        // Replace the editor content
-        [self.editor.textStorage beginEditing];
-        [self.editor.textStorage replaceCharactersInRange:NSMakeRange(0, self.editor.string.length)
-                                               withString:newMarkdown];
-        [self.editor.textStorage endEditing];
-
-        // Issue #376: replaceCharactersInRange:withString: leaves the inserted
-        // text carrying character 0's attributes (e.g. a leading heading's font
-        // and color smeared across the whole document). The highlighter only
-        // re-parses on NSTextDidChangeNotification, which this direct textStorage
-        // edit deliberately does not fire ("Gap 10" below) — so re-highlight
-        // explicitly, following -reloadFromLoadedString's programmatic-swap recipe.
-        // (We intentionally skip that path's -readClearTextStylesFromTextView: a
-        // checkbox toggle leaves the font, theme, and default color unchanged, so
-        // the highlighter's clear baselines are still valid.)
-        //
-        // The full-range -clearHighlighting is load-bearing: -parseAndHighlightNow
-        // ultimately calls -applyVisibleRangeHighlighting, which clears and restyles
-        // only the on-screen range. Without a full-document clear first, the heading
-        // smear would persist on any content scrolled off-screen until it next
-        // re-entered the viewport.
-        [self.highlighter clearHighlighting];
-        [self.highlighter parseAndHighlightNow];
-
-        // Gap 10: textStorage editing doesn't fire NSTextDidChangeNotification.
-        // Mirror editorTextDidChange: — trigger render and claim ownership.
-        if (self.needsHtml)
-        {
-            [self.renderer parseAndRenderLater];
-            _scrollOwner = MPScrollOwnerEditor;
-        }
-
-        // Restore cursor position (adjust if needed)
-        if (selectedRange.location <= newMarkdown.length)
-        {
-            self.editor.selectedRange = selectedRange;
-        }
+        location++;
     }
+    if (location < markdown.length)
+    {
+        NSRange range = NSMakeRange(location, 1);
+        [self replaceEditorCharactersInRange:range
+                                  withString:[newMarkdown
+                                                 substringWithRange:range]];
+    }
+}
+
+/**
+ * Replace characters in the editor as an undoable change of the document,
+ * for an edit that does not come from the editor.
+ *
+ * The text storage is edited directly: the editor refuses changes while its
+ * pane is collapsed (-splitViewDidResizeSubviews: makes it non-editable),
+ * which is when the preview is the only way to change the document. The
+ * inverse edit goes to the document's undo manager, which is also the
+ * editor's. That registration is what marks the document edited, and what
+ * keeps the edited state in step with the text through undo and redo, so
+ * there is no -updateChangeCount: here.
+ */
+- (void)replaceEditorCharactersInRange:(NSRange)range
+                            withString:(NSString *)string
+{
+    NSTextStorage *textStorage = self.editor.textStorage;
+    if (NSMaxRange(range) > textStorage.length)
+        return;
+
+    NSString *replaced = [textStorage.string substringWithRange:range];
+    NSRange inverseRange = NSMakeRange(range.location, string.length);
+    // Typing that follows must not join the undo step of typing before
+    // this edit, which is now further down the undo stack.
+    [self.editor breakUndoCoalescing];
+    [[self.undoManager prepareWithInvocationTarget:self]
+        replaceEditorCharactersInRange:inverseRange withString:replaced];
+
+    // Preserve cursor position
+    NSRange selectedRange = self.editor.selectedRange;
+
+    [textStorage beginEditing];
+    [textStorage replaceCharactersInRange:range withString:string];
+    [textStorage endEditing];
+
+    // Issue #376: the highlighter only re-parses on
+    // NSTextDidChangeNotification, which a direct textStorage edit does not
+    // fire ("Gap 10" below), so re-highlight explicitly, following
+    // -reloadFromLoadedString's programmatic-swap recipe. (That path's
+    // -readClearTextStylesFromTextView is skipped: the edit leaves the font,
+    // theme, and default color unchanged, so the highlighter's clear
+    // baselines are still valid.)
+    [self.highlighter clearHighlighting];
+    [self.highlighter parseAndHighlightNow];
+
+    // Gap 10: textStorage editing doesn't fire NSTextDidChangeNotification.
+    // Mirror editorTextDidChange: — trigger render and claim ownership.
+    if (self.needsHtml)
+    {
+        [self.renderer parseAndRenderLater];
+        _scrollOwner = MPScrollOwnerEditor;
+    }
+
+    // Restore cursor position, if it is still inside the text
+    if (selectedRange.location <= textStorage.length)
+        self.editor.selectedRange = selectedRange;
 }
 
 /**
