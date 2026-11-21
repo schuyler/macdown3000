@@ -15,6 +15,7 @@
 #import "MPRenderer.h"
 #import "MPEditorView.h"
 #import "HGMarkdownHighlighter.h"
+#import "MPDocumentWindowTestSupport.h"
 
 
 #pragma mark - Test Infrastructure
@@ -696,6 +697,261 @@
                     "viewport");
 
     [self spinRunLoopForInterval:0.05];    // drain both blocks; only the last acts
+}
+
+#pragma mark - Undo History Across Reload
+
+// The undo and redo stacks hold ranges into the text they were recorded
+// against. A reload replaces that text without going through them, so these
+// use a document whose nib is loaded: only there does the editor register its
+// edits with the document's undo manager.
+
+- (MPDocument *)openDocumentWithContents:(NSString *)contents
+{
+    // A document that starts in preview mode hides its editor, and a hidden
+    // editor is not editable.
+    MPPreferences *prefs = [MPPreferences sharedInstance];
+    BOOL original = prefs.editorStartInPreviewMode;
+    [self addTeardownBlock:^{ prefs.editorStartInPreviewMode = original; }];
+    prefs.editorStartInPreviewMode = NO;
+
+    NSURL *url = [self writeTempFileWithContents:contents];
+    NSError *error = nil;
+    MPDocument *doc = [[MPDocument alloc]
+        initWithContentsOfURL:url ofType:@"net.daringfireball.markdown"
+                        error:&error];
+    XCTAssertNotNil(doc, @"%@", error);
+    // Registered after the file's removal, so it runs before it.
+    [self addTeardownBlock:^{ [doc close]; }];
+    MPLoadDocumentWindow(doc);
+    XCTAssertTrue(MPRunLoopUntil(10.0, ^BOOL{
+        return [doc.editor.string isEqualToString:contents];
+    }), @"Precondition: the editor shows the file's text");
+    XCTAssertTrue(doc.editor.isEditable,
+                  @"Precondition: the editor accepts typing");
+    XCTAssertEqual(doc.editor.undoManager, doc.undoManager,
+                   @"Precondition: the editor's edits are recorded in the "
+                    "document's undo manager");
+    return doc;
+}
+
+- (void)type:(NSString *)text at:(NSUInteger)location in:(MPDocument *)doc
+{
+    doc.editor.selectedRange = NSMakeRange(location, 0);
+    [doc.editor insertText:text replacementRange:NSMakeRange(location, 0)];
+}
+
+- (void)save:(MPDocument *)doc
+{
+    __block BOOL finished = NO;
+    __block NSError *saveError = nil;
+    [doc saveToURL:doc.fileURL ofType:@"net.daringfireball.markdown"
+        forSaveOperation:NSSaveOperation
+       completionHandler:^(NSError *error) {
+        saveError = error;
+        finished = YES;
+    }];
+    XCTAssertTrue(MPRunLoopUntil(10.0, ^BOOL{ return finished; }),
+                  @"Precondition: the save finished");
+    XCTAssertNil(saveError);
+    XCTAssertFalse(doc.isDocumentEdited,
+                   @"Precondition: a saved document is clean");
+}
+
+// What another application's write looks like to the document: new contents
+// with a modification date after the one the document last saw.
+- (void)replaceFileOf:(MPDocument *)doc withContents:(NSString *)contents
+{
+    [contents writeToURL:doc.fileURL atomically:YES
+                encoding:NSUTF8StringEncoding error:NULL];
+    NSDate *later = [doc.fileModificationDate dateByAddingTimeInterval:5.0];
+    [[NSFileManager defaultManager]
+        setAttributes:@{NSFileModificationDate: later}
+         ofItemAtPath:doc.fileURL.path error:NULL];
+}
+
+// Undo and Redo as the Edit menu sends them, then the main-queue turn in which
+// NSDocument records the change they made, if they made one.
+- (void)assertUndo:(BOOL)undo leavesDocument:(MPDocument *)doc
+           showing:(NSString *)contents
+{
+    NSUndoManager *manager = doc.undoManager;
+    if (undo)
+        XCTAssertNoThrow([manager undo]);
+    else
+        XCTAssertNoThrow([manager redo]);
+    [self spinRunLoopForInterval:0.05];
+
+    XCTAssertEqualObjects(doc.editor.string, contents,
+                          @"The reloaded text must be left as it was read");
+    XCTAssertFalse(doc.isDocumentEdited,
+                   @"A document that matches its file must stay clean");
+}
+
+// Type at the end of a long document and save; another application rewrites
+// the file shorter; the clean document reloads without asking. The typing was
+// recorded at a range past the end of the new text.
+- (void)testUndoAfterSilentReloadOfAShorterFileDoesNothing
+{
+    NSMutableString *original = [NSMutableString string];
+    for (NSUInteger i = 0; i < 40; i++)
+        [original appendFormat:@"Line %lu of the original document.\n", i];
+    MPDocument *doc = [self openDocumentWithContents:original];
+    [self type:@"typed at the end" at:original.length in:doc];
+    [self save:doc];
+
+    __block NSUInteger promptCount = 0;
+    doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+        promptCount++;
+        completion(NO);
+    };
+    NSString *external = @"Short.\n";
+    [self replaceFileOf:doc withContents:external];
+    doc.isSelfSaving = NO;      // the save's own protection window has passed
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(promptCount, 0u,
+                   @"Precondition: a clean document reloads without asking");
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Precondition: the file was reloaded");
+    XCTAssertFalse(doc.undoManager.canUndo,
+                   @"A reload must leave nothing to undo");
+    XCTAssertFalse(doc.undoManager.canRedo,
+                   @"A reload must leave nothing to redo");
+    [self assertUndo:YES leavesDocument:doc showing:external];
+}
+
+// The same, with the typing recorded at a range that still exists in the
+// reloaded text: undoing it would delete five characters the other application
+// wrote, and mark the document edited.
+- (void)testUndoAfterReloadDoesNotEditTheReloadedText
+{
+    MPDocument *doc = [self openDocumentWithContents:@"0123456789\n"];
+    [self type:@"ABCDE" at:3 in:doc];
+    [self save:doc];
+
+    NSString *external = @"abcdefghijklmnopqrstuvwxyz\n";
+    [self replaceFileOf:doc withContents:external];
+    [doc reloadFromDisk];
+
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Precondition: the file was reloaded");
+    XCTAssertFalse(doc.undoManager.canUndo,
+                   @"A reload must leave nothing to undo");
+    [self assertUndo:YES leavesDocument:doc showing:external];
+}
+
+// Typing that was undone leaves the document clean, so it too reloads without
+// asking; Redo would then insert the typed text into the reloaded text.
+- (void)testRedoAfterSilentReloadDoesNothing
+{
+    MPDocument *doc = [self openDocumentWithContents:@"0123456789\n"];
+    [self type:@"ABCDE" at:3 in:doc];
+    [doc.undoManager undo];
+    [self spinRunLoopForInterval:0.05];
+    XCTAssertEqualObjects(doc.editor.string, @"0123456789\n",
+                          @"Precondition: the typing was undone");
+    XCTAssertTrue(doc.undoManager.canRedo,
+                  @"Precondition: the typing can be redone");
+    XCTAssertFalse(doc.isDocumentEdited,
+                   @"Precondition: undoing the only edit leaves the "
+                    "document clean");
+
+    __block NSUInteger promptCount = 0;
+    doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+        promptCount++;
+        completion(NO);
+    };
+    NSString *external = @"abcdefghijklmnopqrstuvwxyz\n";
+    [self replaceFileOf:doc withContents:external];
+    [doc processExternalFileChange];
+
+    XCTAssertEqual(promptCount, 0u,
+                   @"Precondition: a clean document reloads without asking");
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Precondition: the file was reloaded");
+    XCTAssertFalse(doc.undoManager.canRedo,
+                   @"A reload must leave nothing to redo");
+    [self assertUndo:NO leavesDocument:doc showing:external];
+}
+
+// Choosing Discard at the keep/discard prompt reloads through the same method,
+// with the discarded typing still on the undo stack.
+- (void)testUndoAfterDiscardingLocalEditsDoesNothing
+{
+    MPDocument *doc = [self openDocumentWithContents:@"0123456789\n"];
+    [self type:@"ABCDE" at:3 in:doc];
+
+    NSString *external = @"abcdefghijklmnopqrstuvwxyz\n";
+    [self replaceFileOf:doc withContents:external];
+    doc.externalChangePromptPresenter = ^(void (^completion)(BOOL)) {
+        completion(YES);                         // user chose "Discard"
+    };
+    [doc promptForReloadWithExternalChanges];
+
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Precondition: the file was reloaded");
+    XCTAssertFalse(doc.undoManager.canUndo,
+                   @"A reload must leave nothing to undo");
+    [self assertUndo:YES leavesDocument:doc showing:external];
+}
+
+// A file rewritten with the text it already had (a formatter with nothing to
+// change, a touch) is reloaded too, because only its date is compared. The
+// history still describes that text, and stays.
+- (void)testReloadOfUnchangedTextKeepsTheUndoHistory
+{
+    MPDocument *doc = [self openDocumentWithContents:@"0123456789\n"];
+    [self type:@"ABCDE" at:3 in:doc];
+    [self save:doc];
+
+    NSString *saved = @"012ABCDE3456789\n";
+    [self replaceFileOf:doc withContents:saved];
+    NSDate *written = [[NSFileManager defaultManager]
+        attributesOfItemAtPath:doc.fileURL.path
+                         error:NULL][NSFileModificationDate];
+    [doc reloadFromDisk];
+    XCTAssertEqualObjects(doc.fileModificationDate, written,
+                          @"Precondition: the file was reloaded");
+    XCTAssertEqualObjects(doc.editor.string, saved);
+
+    XCTAssertTrue(doc.undoManager.canUndo,
+                  @"Reloading the same text must keep the undo history");
+    [doc.undoManager undo];
+    XCTAssertEqualObjects(doc.editor.string, @"0123456789\n",
+                          @"Undo must still take the typing back out");
+}
+
+// The history a reload starts is a working one: an edit made afterwards is
+// recorded as its own step, and undoing it gives back exactly the reloaded
+// text.
+- (void)testTypingAfterReloadCanBeUndone
+{
+    MPDocument *doc = [self openDocumentWithContents:@"0123456789"];
+    [self type:@"AB" at:10 in:doc];
+    [self save:doc];
+
+    // As long as the saved text, so the caret stays where the last typing
+    // stopped: the place a typing run would otherwise continue from.
+    NSString *external = @"abcdefghijkl";
+    [self replaceFileOf:doc withContents:external];
+    [doc reloadFromDisk];
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Precondition: the file was reloaded");
+    XCTAssertEqual(doc.editor.selectedRange.location, 12u,
+                   @"Precondition: the caret is where the typing stopped");
+
+    [self type:@"C" at:12 in:doc];
+    XCTAssertEqualObjects(doc.editor.string, @"abcdefghijklC",
+                          @"Precondition: the editor took the typing");
+    XCTAssertTrue(doc.undoManager.canUndo,
+                  @"Typing after a reload must be undoable");
+
+    [doc.undoManager undo];
+    XCTAssertEqualObjects(doc.editor.string, external,
+                          @"Undoing it must give back the reloaded text");
+    XCTAssertFalse(doc.undoManager.canUndo,
+                   @"Nothing from before the reload may remain to undo");
 }
 
 @end
