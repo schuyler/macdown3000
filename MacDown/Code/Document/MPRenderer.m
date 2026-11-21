@@ -31,6 +31,7 @@ static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
 static size_t kMPRendererNestingLevel = SIZE_MAX;
 static int kMPRendererTOCLevel = 6;  // h1 to h6.
+static const NSTimeInterval kMPRendererLoadingPollInterval = 0.01;
 
 
 NS_INLINE NSURL *MPExtensionURL(NSString *name, NSString *extension)
@@ -727,14 +728,20 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         // Parse in backgound
         [self parseMarkdown:markdown];
         
-        // Wait untils is renderer has finished loading OR until the maxDelay has passed
-        // This should result in overall faster update times
-        NSDate *start = [NSDate date];
-        __block BOOL rendererIsLoading = true;
-        while (rendererIsLoading || [start timeIntervalSinceNow] >= maxDelay) {
+        // Wait until the preview has finished loading, or until maxDelay
+        // has passed, whichever comes first.
+        NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:maxDelay];
+        NSTimeInterval remaining;
+        while ((remaining = [deadline timeIntervalSinceNow]) > 0)
+        {
+            __block BOOL rendererIsLoading = NO;
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
             });
+            if (!rendererIsLoading)
+                break;
+            [NSThread sleepForTimeInterval:
+                MIN(kMPRendererLoadingPollInterval, remaining)];
         }
         
         // Render on main thread

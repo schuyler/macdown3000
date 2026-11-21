@@ -24,6 +24,7 @@
 @property (nonatomic) NSInteger syntaxHighlightingCallCount;
 @property (nonatomic) NSInteger htmlOutputCallCount;
 @property (nonatomic, copy) NSString *lastReceivedHTML;
+@property (nonatomic, copy) void (^htmlOutputHandler)(void);
 @end
 
 @implementation MPTrackingRendererDelegate
@@ -63,6 +64,8 @@
     self.htmlOutputCallCount++;
     self.lastReceivedHTML = html;
     [super renderer:renderer didProduceHTMLOutput:html];
+    if (self.htmlOutputHandler)
+        self.htmlOutputHandler();
 }
 
 @end
@@ -94,6 +97,29 @@
 {
     self.loadingCallCount++;
     return [super rendererLoading];
+}
+
+@end
+
+
+#pragma mark - Loading Data Source
+
+// Reports the preview as loading. The load ends when a test clears
+// `loading`, or by itself on poll number `loadingPollLimit` when that is set.
+@interface MPLoadingRendererDataSource : MPTrackingRendererDataSource
+@property (nonatomic) BOOL loading;
+@property (nonatomic) NSInteger loadingPollLimit;
+@end
+
+@implementation MPLoadingRendererDataSource
+
+- (BOOL)rendererLoading
+{
+    [super rendererLoading];
+    if (self.loadingPollLimit > 0
+            && self.loadingCallCount >= self.loadingPollLimit)
+        self.loading = NO;
+    return self.loading;
 }
 
 @end
@@ -166,6 +192,97 @@
                   @"HTML should contain heading text");
 }
 
+
+
+#pragma mark - Waiting for a Loading Preview Tests
+
+- (MPLoadingRendererDataSource *)useLoadingDataSource
+{
+    MPLoadingRendererDataSource *source =
+        [[MPLoadingRendererDataSource alloc] init];
+    source.markdown = @"# Test";
+    source.loading = YES;
+    self.dataSource = source;
+    self.renderer.dataSource = source;
+    return source;
+}
+
+- (XCTestExpectation *)expectHTMLOutput
+{
+    XCTestExpectation *expectation =
+        [[XCTestExpectation alloc] initWithDescription:@"HTML output"];
+    expectation.assertForOverFulfill = NO;
+    self.delegate.htmlOutputHandler = ^{
+        [expectation fulfill];
+    };
+    return expectation;
+}
+
+// Whether the HTML arrived while the preview was still loading. Ends the
+// load afterwards and waits for a render that was held back by it, so that
+// no parse operation outlives the test.
+- (BOOL)didRenderDuringLoad:(MPLoadingRendererDataSource *)source
+                     output:(XCTestExpectation *)output
+{
+    XCTWaiterResult result = [XCTWaiter waitForExpectations:@[output]
+                                                    timeout:5.0];
+    BOOL rendered = (result == XCTWaiterResultCompleted);
+    if (!rendered)
+        output = [self expectHTMLOutput];
+    source.loading = NO;
+    if (!rendered)
+        [XCTWaiter waitForExpectations:@[output] timeout:5.0];
+    return rendered;
+}
+
+- (void)testParseAndRenderLaterStopsWaitingForLoadingPreview
+{
+    MPLoadingRendererDataSource *source = [self useLoadingDataSource];
+    XCTestExpectation *output = [self expectHTMLOutput];
+
+    [self.renderer parseAndRenderLater];
+    BOOL rendered = [self didRenderDuringLoad:source output:output];
+    NSInteger polls = source.loadingCallCount;
+
+    XCTAssertTrue(rendered,
+                  @"Should render once the delay has passed, even though "
+                  @"the preview is still loading");
+    XCTAssertLessThanOrEqual(polls, 100,
+                             @"Should poll the loading state at an "
+                             @"interval, not continuously");
+}
+
+- (void)testParseAndRenderNowDoesNotWaitForLoadingPreview
+{
+    MPLoadingRendererDataSource *source = [self useLoadingDataSource];
+    XCTestExpectation *output = [self expectHTMLOutput];
+
+    [self.renderer parseAndRenderNow];
+    BOOL rendered = [self didRenderDuringLoad:source output:output];
+    NSInteger polls = source.loadingCallCount;
+
+    XCTAssertTrue(rendered,
+                  @"Should render while the preview is still loading");
+    XCTAssertLessThanOrEqual(polls, 1,
+                             @"Should not wait for the preview to load");
+}
+
+- (void)testParseAndRenderLaterRendersWhenPreviewFinishesLoading
+{
+    MPLoadingRendererDataSource *source = [self useLoadingDataSource];
+    source.loadingPollLimit = 2;
+    XCTestExpectation *output = [self expectHTMLOutput];
+
+    [self.renderer parseAndRenderLater];
+    XCTWaiterResult result = [XCTWaiter waitForExpectations:@[output]
+                                                    timeout:5.0];
+
+    XCTAssertEqual(result, XCTWaiterResultCompleted,
+                   @"Should render after the preview finishes loading");
+    XCTAssertEqual(source.loadingCallCount, 2,
+                   @"Should wait while the preview is loading, and stop "
+                   @"polling when it has finished");
+}
 
 
 #pragma mark - Extension Configuration Tests
