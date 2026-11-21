@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 @class MPPreferences;
+@class MPRenderer;
 
 
 @interface MPDocument : NSDocument
@@ -32,12 +33,15 @@
 @property (nonatomic, copy) NSURL *workspaceRootURL;
 
 /**
- * Toggle the checkbox at the specified index in the markdown source.
+ * Toggle the checkbox the renderer gives the specified data-checkbox-index.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa.
- * Returns the modified markdown, or the original if index is out of bounds.
+ * Returns the modified markdown, or the original if it has no such checkbox
+ * or the checkbox's place in the source cannot be established.
  * Related to GitHub issue #269.
  */
-+ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown;
++ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index
+                         inMarkdown:(NSString *)markdown
+                           renderer:(MPRenderer *)renderer;
 
 /**
  * Set the shared document zoom to the level represented by the sender's

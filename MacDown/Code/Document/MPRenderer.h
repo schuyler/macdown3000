@@ -33,6 +33,19 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (void)render;
 
 - (NSString *)currentHtml;
+
+/**
+ * Renders the Markdown the way a parse does, with the delegate's current
+ * options, but writes every task list checkbox without its state. The states
+ * come back in *states, in the order of data-checkbox-index: one character
+ * each, ' ' unchecked, 'x' checked, '-' indeterminate. Two texts that differ
+ * only in the states of their checkboxes therefore give equal HTML.
+ *
+ * The renderer's own state (current HTML, languages) is left alone, and
+ * checkboxes are looked for whether or not task lists are turned on.
+ */
+- (NSString *)checkboxProbeHTMLForMarkdown:(NSString *)markdown
+                                    states:(NSString **)states;
 - (NSString *)HTMLForExportWithStyles:(BOOL)withStyles
                          highlighting:(BOOL)withHighlighting;
 

@@ -17,17 +17,6 @@
     (opt->flags & HOEDOWN_HTML_BLOCKCODE_INFORMATION)
 #define USE_TASK_LIST(opt) (opt->flags & HOEDOWN_HTML_USE_TASK_LIST)
 
-// Global checkbox index counter for interactive checkbox support.
-// NOTE: This counter is NOT thread-safe. Markdown rendering must be serialized
-// on a single thread (which MacDown does via the main thread).
-// Related to GitHub issue #269.
-static int g_checkbox_index = 0;
-
-void hoedown_patch_reset_checkbox_index(void)
-{
-    g_checkbox_index = 0;
-}
-
 // hoedown_buffer_new() stores its argument as the buffer's growth "unit", and
 // hoedown_buffer_grow() asserts that unit is non-zero. Passing a size hint of 0
 // (e.g. when a heading or code-fence info string is empty) therefore produces a
@@ -36,11 +25,6 @@ void hoedown_patch_reset_checkbox_index(void)
 static hoedown_buffer *new_growable_buffer(size_t size_hint)
 {
     return hoedown_buffer_new(size_hint ? size_hint : 16);
-}
-
-int hoedown_patch_get_checkbox_index(void)
-{
-    return g_checkbox_index;
 }
 
 // rndr_blockcode from HEAD. The "language-" prefix in class in needed to make
@@ -131,6 +115,7 @@ void hoedown_patch_render_listitem(
 	if (text)
     {
         hoedown_html_renderer_state *state = data->opaque;
+        hoedown_html_renderer_state_extra *extra = state->opaque;
         size_t offset = 0;
         if (flags & HOEDOWN_LI_BLOCK)
             offset = 3;
@@ -142,22 +127,35 @@ void hoedown_patch_render_listitem(
         if (USE_TASK_LIST(state) && text->size >= offset + 3)
         {
             const char *stateAttributes = NULL;
+            uint8_t stateCharacter = ' ';
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
                 stateAttributes = "";
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
                      strncmp((char *)(text->data + offset), "[X]", 3) == 0)
+            {
                 stateAttributes = " checked";
+                stateCharacter = 'x';
+            }
             else if (strncmp((char *)(text->data + offset), "[-]", 3) == 0)
+            {
                 stateAttributes = " data-checkbox-state=\"indeterminate\"";
+                stateCharacter = '-';
+            }
 
             if (stateAttributes)
             {
+                if (extra->checkbox_states)
+                {
+                    hoedown_buffer_putc(extra->checkbox_states,
+                                        stateCharacter);
+                    stateAttributes = "";
+                }
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support
                 hoedown_buffer_printf(ob,
                     "<input type=\"checkbox\"%s data-checkbox-index=\"%d\">",
-                    stateAttributes, g_checkbox_index++);
+                    stateAttributes, extra->checkbox_index++);
 				offset += 3;
             }
             else

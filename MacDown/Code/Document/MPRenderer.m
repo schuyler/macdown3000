@@ -432,6 +432,8 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
     extra->language_addition = language_addition;
     extra->owner = (__bridge void *)renderer;
+    extra->checkbox_index = 0;
+    extra->checkbox_states = NULL;
 
     ((hoedown_html_renderer_state *)htmlRenderer->opaque)->opaque = extra;
     return htmlRenderer;
@@ -769,10 +771,6 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
 - (void)parseMarkdown:(NSString *)markdown {
     [self.currentLanguages removeAllObjects];
 
-    // Reset checkbox index counter for interactive checkbox support.
-    // Related to GitHub issue #269.
-    hoedown_patch_reset_checkbox_index();
-    
     id<MPRendererDelegate> delegate = self.delegate;
     int extensions = [delegate rendererExtensions:self];
     BOOL smartypants = [delegate rendererHasSmartyPants:self];
@@ -801,6 +799,44 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
     self.smartypants = smartypants;
     self.TOC = hasTOC;
     self.frontMatter = hasFrontMatter;
+}
+
+- (NSString *)checkboxProbeHTMLForMarkdown:(NSString *)markdown
+                                    states:(NSString **)states
+{
+    id<MPRendererDelegate> delegate = self.delegate;
+    if ([delegate rendererDetectsFrontMatter:self])
+    {
+        NSUInteger offset = 0;
+        [markdown frontMatter:&offset];
+        markdown = [markdown substringFromIndex:offset];
+    }
+
+    hoedown_renderer *htmlRenderer = MPCreateHTMLRenderer(self, 0);
+    hoedown_html_renderer_state *state = htmlRenderer->opaque;
+    hoedown_html_renderer_state_extra *extra = state->opaque;
+    state->flags |= HOEDOWN_HTML_USE_TASK_LIST;
+    // Without this the block code callback adds to currentLanguages, which
+    // a parse on the queue may be using.
+    extra->language_addition = NULL;
+    extra->checkbox_states = hoedown_buffer_new(16);
+
+    // No TOC and no SmartyPants: both are made from this same parse, and
+    // neither changes which list items are checkboxes.
+    NSString *html = MPHTMLFromMarkdown(
+        markdown, [delegate rendererExtensions:self], NO, nil,
+        htmlRenderer, NULL);
+    if (states)
+    {
+        *states = [[NSString alloc]
+            initWithBytes:extra->checkbox_states->data
+                   length:extra->checkbox_states->size
+                 encoding:NSASCIIStringEncoding];
+    }
+
+    hoedown_buffer_free(extra->checkbox_states);
+    MPFreeHTMLRenderer(htmlRenderer);
+    return html;
 }
 
 - (void)renderIfPreferencesChanged

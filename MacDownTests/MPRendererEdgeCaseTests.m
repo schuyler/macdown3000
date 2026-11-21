@@ -223,6 +223,76 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
 }
 
 
+#pragma mark - Checkbox Probe Tests
+
+- (void)testCheckboxProbeReportsStatesAndLeavesThemOutOfTheHTML
+{
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+
+    NSString *states = nil;
+    NSString *html = [self.renderer
+        checkboxProbeHTMLForMarkdown:@"- [ ] a\n    - [x] b\n- [-] c\n"
+                              states:&states];
+
+    XCTAssertEqualObjects(states, @"x -",
+                          @"States come in data-checkbox-index order: the "
+                          @"nested item first");
+    for (NSString *index in @[@"0", @"1", @"2"])
+    {
+        NSString *input = [NSString stringWithFormat:
+            @"<input type=\"checkbox\" data-checkbox-index=\"%@\">", index];
+        XCTAssertTrue([html containsString:input],
+                      @"Checkbox %@ should be written without a state: %@",
+                      index, html);
+    }
+
+    NSString *otherStates = nil;
+    NSString *otherHTML = [self.renderer
+        checkboxProbeHTMLForMarkdown:@"- [x] a\n    - [ ] b\n- [X] c\n"
+                              states:&otherStates];
+    XCTAssertEqualObjects(otherStates, @" xx");
+    XCTAssertEqualObjects(otherHTML, html,
+                          @"Texts that differ only in checkbox states should "
+                          @"give equal probe HTML");
+}
+
+- (void)testCheckboxProbeFindsCheckboxesWithTaskListsOff
+{
+    self.renderer.rendererFlags = 0;
+
+    NSString *states = nil;
+    [self.renderer checkboxProbeHTMLForMarkdown:@"- [x] a\n- [ ] b\n"
+                                         states:&states];
+
+    XCTAssertEqualObjects(states, @"x ");
+}
+
+- (void)testCheckboxProbeLeavesTheRendererStateAlone
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [x] parsed\n";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *parsedHTML = [self.renderer.currentHtml copy];
+    XCTAssertTrue([parsedHTML containsString:
+                      @"<input type=\"checkbox\" checked "],
+                  @"A parse writes checkbox states: %@", parsedHTML);
+    XCTAssertEqualObjects([self.renderer valueForKey:@"currentLanguages"],
+                          @[], @"Precondition: the parse met no code block");
+
+    NSString *states = nil;
+    [self.renderer
+        checkboxProbeHTMLForMarkdown:@"```ruby\nputs 1\n```\n\n- [ ] probed\n"
+                              states:&states];
+
+    XCTAssertEqualObjects(states, @" ");
+    XCTAssertEqualObjects(self.renderer.currentHtml, parsedHTML,
+                          @"A probe should not replace the parsed HTML");
+    XCTAssertEqualObjects([self.renderer valueForKey:@"currentLanguages"],
+                          @[], @"A probe should not record languages");
+}
+
+
 #pragma mark - Extension Combination Tests
 
 - (void)testRendererExtensionTablesOnly
@@ -600,6 +670,66 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
     self.dataSource.markdown = @"# After Concurrent";
     XCTAssertNoThrow([self.renderer parseMarkdown:self.dataSource.markdown],
                      @"Renderer should be usable after concurrent access");
+}
+
+/**
+ * Each document parses on its own queue, so two documents can render at the
+ * same moment. Every render must number its own checkboxes from 0 in order:
+ * the preview sends that number back when a checkbox is clicked.
+ */
+- (void)testConcurrentRendersNumberCheckboxesIndependently
+{
+    const NSUInteger checkboxCount = 300;
+    NSMutableString *markdown = [NSMutableString string];
+    for (NSUInteger i = 0; i < checkboxCount; i++)
+        [markdown appendFormat:@"- [ ] Task %lu\n", i];
+
+    NSRegularExpression *regex = [NSRegularExpression
+        regularExpressionWithPattern:@"data-checkbox-index=\"(\\d+)\""
+                             options:0 error:NULL];
+
+    const size_t renderCount = 40;
+    __block NSUInteger misnumberedRenders = 0;
+    NSLock *lock = [[NSLock alloc] init];
+    dispatch_queue_t queue =
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_apply(renderCount, queue, ^(size_t iteration) {
+        @autoreleasepool
+        {
+            MPRenderer *renderer = [[MPRenderer alloc] init];
+            MPMockRendererDataSource *dataSource =
+                [[MPMockRendererDataSource alloc] init];
+            MPMockRendererDelegate *delegate =
+                [[MPMockRendererDelegate alloc] init];
+            renderer.dataSource = dataSource;
+            renderer.delegate = delegate;
+            renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+            dataSource.markdown = markdown;
+            [renderer parseMarkdown:markdown];
+
+            NSString *html = renderer.currentHtml;
+            NSArray<NSTextCheckingResult *> *matches =
+                [regex matchesInString:html options:0
+                                 range:NSMakeRange(0, html.length)];
+            BOOL numbered = matches.count == checkboxCount;
+            for (NSUInteger i = 0; numbered && i < matches.count; i++)
+            {
+                NSRange range = [matches[i] rangeAtIndex:1];
+                NSString *index = [html substringWithRange:range];
+                numbered = index.integerValue == (NSInteger)i;
+            }
+
+            [lock lock];
+            if (!numbered)
+                misnumberedRenders++;
+            [lock unlock];
+        }
+    });
+
+    XCTAssertEqual(misnumberedRenders, 0,
+                   @"%lu of %zu concurrent renders did not number their "
+                   @"checkboxes 0..%lu in order",
+                   misnumberedRenders, renderCount, checkboxCount - 1);
 }
 
 

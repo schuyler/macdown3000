@@ -4852,7 +4852,8 @@ to link outside that scope.", \
         return;
 
     NSString *newMarkdown = [MPDocument toggleCheckboxAtIndex:(NSUInteger)index
-                                                   inMarkdown:self.editor.string];
+                                                   inMarkdown:self.editor.string
+                                                     renderer:self.renderer];
     if (![newMarkdown isEqualToString:self.editor.string])
     {
         // Preserve cursor position
@@ -4899,140 +4900,99 @@ to link outside that scope.", \
 }
 
 /**
- * Toggle the checkbox at the specified index in the markdown source.
+ * Toggle the checkbox the renderer gives the specified data-checkbox-index.
  * Unchecked checkboxes ([ ]) become checked ([x]), and vice versa. An
  * indeterminate checkbox ([-], the partially-done state; see
  * https://github.com/orgs/community/discussions/19199) becomes checked,
  * matching how the platform treats a click on an indeterminate checkbox.
- * Returns the modified markdown, or the original if index is out of bounds.
  *
- * IMPORTANT: Indices are assigned in depth-first order to match hoedown's
- * rendering behavior. Nested list items get lower indices than their parent.
+ * Only the renderer knows which list items are checkboxes and in what order
+ * it numbered them, and it cannot say where in the source each came from.
+ * So the text is rendered a few more times with the state characters of the
+ * lines that may be task items set to a pattern, and the line is read back
+ * from the states the checkbox shows. The answer is used only if rendering
+ * it gives the same HTML with that one checkbox toggled; otherwise the
+ * original markdown is returned.
  * Related to GitHub issue #269.
  */
-+ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index inMarkdown:(NSString *)markdown
++ (NSString *)toggleCheckboxAtIndex:(NSUInteger)index
+                         inMarkdown:(NSString *)markdown
+                           renderer:(MPRenderer *)renderer
 {
     if (!markdown || markdown.length == 0)
         return markdown;
 
-    // Regex pattern to match checkbox syntax: - [ ], - [x], - [X], - [-], etc.
-    NSError *error = nil;
+    // Lines that may be task items: indentation and blockquote markers, a
+    // list marker, and the checkbox syntax: - [ ], - [x], - [X], - [-], etc.
     NSRegularExpression *regex = [NSRegularExpression
-        regularExpressionWithPattern:@"^([ \\t]*)[-*+][ \\t]+\\[([ xX-])\\]|^([ \\t]*)\\d+\\.[ \\t]+\\[([ xX-])\\]"
+        regularExpressionWithPattern:
+            @"^[ \\t>]*(?:[-*+]|\\d+\\.)[ \\t]+\\[([ xX-])\\]"
                              options:NSRegularExpressionAnchorsMatchLines
-                               error:&error];
-
-    if (error)
+                               error:NULL];
+    NSArray<NSTextCheckingResult *> *candidates =
+        [regex matchesInString:markdown options:0
+                         range:NSMakeRange(0, markdown.length)];
+    NSUInteger count = candidates.count;
+    if (count == 0)
         return markdown;
 
-    // We need to skip checkboxes inside code blocks.
-    NSMutableIndexSet *codeBlockRanges = [NSMutableIndexSet indexSet];
-
-    // Find fenced code blocks (``` or ~~~)
-    NSRegularExpression *fencedCodeRegex = [NSRegularExpression
-        regularExpressionWithPattern:@"^[ \\t]*(```|~~~).*?\\n[\\s\\S]*?^[ \\t]*\\1[ \\t]*$"
-                             options:NSRegularExpressionAnchorsMatchLines
-                               error:nil];
-    NSArray *fencedMatches = [fencedCodeRegex matchesInString:markdown
-                                                      options:0
-                                                        range:NSMakeRange(0, markdown.length)];
-    for (NSTextCheckingResult *match in fencedMatches)
-    {
-        [codeBlockRanges addIndexesInRange:match.range];
-    }
-
-    // Find all checkbox matches in document order
-    NSArray *matches = [regex matchesInString:markdown
-                                      options:0
-                                        range:NSMakeRange(0, markdown.length)];
-
-    // Build list of valid checkboxes with their indentation levels
-    NSMutableArray *checkboxes = [NSMutableArray array];
-    for (NSTextCheckingResult *match in matches)
-    {
-        // Skip if this match is inside a code block
-        if ([codeBlockRanges containsIndex:match.range.location])
-            continue;
-
-        // Get indentation level (capture group 1 or 3)
-        NSRange indentRange = [match rangeAtIndex:1];
-        if (indentRange.location == NSNotFound)
-            indentRange = [match rangeAtIndex:3];
-        NSUInteger indentLevel = (indentRange.location != NSNotFound) ? indentRange.length : 0;
-
-        // Get checkbox content range (capture group 2 or 4)
-        NSRange contentRange = [match rangeAtIndex:2];
-        if (contentRange.location == NSNotFound)
-            contentRange = [match rangeAtIndex:4];
-
-        if (contentRange.location != NSNotFound)
-        {
-            [checkboxes addObject:@{
-                @"match": match,
-                @"indent": @(indentLevel),
-                @"contentRange": [NSValue valueWithRange:contentRange]
-            }];
-        }
-    }
-
-    if (checkboxes.count == 0)
+    NSString *states = nil;
+    NSString *html = [renderer checkboxProbeHTMLForMarkdown:markdown
+                                                     states:&states];
+    if (index >= states.length)
         return markdown;
 
-    // Compute depth-first order using a stack-based algorithm.
-    // This matches hoedown's behavior where nested items are rendered before their parent.
-    // Algorithm: For each checkbox, pop stack items with indent >= current indent, then push.
-    NSMutableArray *stack = [NSMutableArray array];
-    NSMutableArray *depthFirstOrder = [NSMutableArray array];
-
-    for (NSUInteger i = 0; i < checkboxes.count; i++)
+    // Number the candidates from 1 and render once per bit of those numbers,
+    // with each candidate checked where its number has that bit set. The
+    // states the checkbox shows across the renders spell its candidate's
+    // number, or 0 when it is none of them.
+    NSUInteger number = 0;
+    for (NSUInteger bit = 0; (count >> bit) != 0; bit++)
     {
-        NSDictionary *current = checkboxes[i];
-        NSUInteger currentIndent = [current[@"indent"] unsignedIntegerValue];
-
-        // Pop items from stack that are NOT parents of this item
-        while (stack.count > 0)
+        NSMutableString *probe = [markdown mutableCopy];
+        for (NSUInteger i = 0; i < count; i++)
         {
-            NSDictionary *top = stack.lastObject;
-            NSUInteger topIndent = [top[@"indent"] unsignedIntegerValue];
-            if (topIndent >= currentIndent)
-            {
-                [depthFirstOrder addObject:top];
-                [stack removeLastObject];
-            }
-            else
-            {
-                break;
-            }
+            BOOL checked = (((i + 1) >> bit) & 1) != 0;
+            [probe replaceCharactersInRange:[candidates[i] rangeAtIndex:1]
+                                 withString:checked ? @"x" : @" "];
         }
 
-        [stack addObject:current];
+        NSString *probeStates = nil;
+        [renderer checkboxProbeHTMLForMarkdown:probe states:&probeStates];
+        if (index >= probeStates.length)
+            return markdown;
+        if ([probeStates characterAtIndex:index] == 'x')
+            number |= (NSUInteger)1 << bit;
     }
-
-    // Pop remaining items from stack
-    while (stack.count > 0)
-    {
-        [depthFirstOrder addObject:stack.lastObject];
-        [stack removeLastObject];
-    }
-
-    // Check if index is valid
-    if (index >= depthFirstOrder.count)
+    if (number == 0 || number > count)
         return markdown;
 
-    // Find the target checkbox in depth-first order
-    NSDictionary *target = depthFirstOrder[index];
-    NSRange checkboxContentRange = [target[@"contentRange"] rangeValue];
-
-    NSString *currentState = [markdown substringWithRange:checkboxContentRange];
     // Open (" ") and indeterminate ("-") both resolve to done on a click, the
     // way clicking an indeterminate checkbox behaves on macOS; "x"/"X" go
     // back to open.
-    BOOL isOpen = [currentState isEqualToString:@"x"] ||
+    NSRange stateRange = [candidates[number - 1] rangeAtIndex:1];
+    NSString *currentState = [markdown substringWithRange:stateRange];
+    BOOL isDone = [currentState isEqualToString:@"x"] ||
                   [currentState isEqualToString:@"X"];
-    NSString *newState = isOpen ? @" " : @"x";
-
     NSMutableString *result = [markdown mutableCopy];
-    [result replaceCharactersInRange:checkboxContentRange withString:newState];
+    [result replaceCharactersInRange:stateRange
+                          withString:isDone ? @" " : @"x"];
+
+    // The probes can be misled, by a checkbox that is not a candidate or by
+    // a state character that changes how the text parses. Keep the result
+    // only if it renders as the original does, with this checkbox toggled.
+    BOOL wasChecked = [states characterAtIndex:index] == 'x';
+    NSMutableString *expectedStates = [states mutableCopy];
+    [expectedStates replaceCharactersInRange:NSMakeRange(index, 1)
+                                  withString:wasChecked ? @" " : @"x"];
+    NSString *resultStates = nil;
+    NSString *resultHTML =
+        [renderer checkboxProbeHTMLForMarkdown:result states:&resultStates];
+    if (![resultHTML isEqualToString:html]
+        || ![resultStates isEqualToString:expectedStates])
+    {
+        return markdown;
+    }
     return result;
 }
 
