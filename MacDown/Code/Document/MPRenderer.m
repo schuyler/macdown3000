@@ -875,6 +875,19 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
         self.resourceTimestamps[path] = @(timestamp);
 }
 
+- (NSTimeInterval)bumpTimestampForResourcePath:(NSString *)path
+{
+    // A timestamp reaches the URL as whole seconds, so a second one recorded
+    // in the same second would leave the URL, and the cached resource, as
+    // they were.
+    NSTimeInterval timestamp = floor([[NSDate date] timeIntervalSince1970]);
+    NSNumber *previous = path ? self.resourceTimestamps[path] : nil;
+    if (previous && timestamp <= floor(previous.doubleValue))
+        timestamp = floor(previous.doubleValue) + 1;
+    [self setTimestamp:timestamp forResourcePath:path];
+    return timestamp;
+}
+
 - (void)clearResourceTimestamps
 {
     [self.resourceTimestamps removeAllObjects];

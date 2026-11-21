@@ -538,6 +538,44 @@ NS_INLINE BOOL MPAreNilableStringsEqual(NSString *s1, NSString *s2)
                   @"the preview <head> (issue #318)");
 }
 
+// A bumped timestamp must differ from the one the path already has, even when
+// that one is not in the past: timestamps reach the URL as whole seconds.
+- (void)testBumpedTimestampNeverRepeatsThePreviousOne
+{
+    NSString *stylePath = MPStylePathForName(self.delegate.styleName);
+    XCTAssertNotNil(stylePath, @"Active style should resolve to a path");
+
+    NSTimeInterval ahead =
+        floor([[NSDate date] timeIntervalSince1970]) + 100;
+    [self.renderer setTimestamp:ahead + 0.5 forResourcePath:stylePath];
+    NSTimeInterval bumped =
+        [self.renderer bumpTimestampForResourcePath:stylePath];
+    XCTAssertEqual(bumped, ahead + 1,
+                   @"A timestamp ahead of the clock advances by one second");
+
+    NSString *html = [self renderMarkdown:@"# Hello"];
+    NSString *expected =
+        [NSString stringWithFormat:@"GitHub2.css?t=%ld", (long)bumped];
+    XCTAssertTrue([html containsString:expected],
+                  @"The bumped timestamp must reach the <link>; expected %@",
+                  expected);
+}
+
+- (void)testBumpedTimestampIsCurrentTimeWhenPreviousIsOlder
+{
+    NSString *stylePath = MPStylePathForName(self.delegate.styleName);
+    XCTAssertNotNil(stylePath, @"Active style should resolve to a path");
+
+    [self.renderer setTimestamp:1750000000 forResourcePath:stylePath];
+    NSTimeInterval before = floor([[NSDate date] timeIntervalSince1970]);
+    NSTimeInterval bumped =
+        [self.renderer bumpTimestampForResourcePath:stylePath];
+    NSTimeInterval after = floor([[NSDate date] timeIntervalSince1970]);
+
+    XCTAssertGreaterThanOrEqual(bumped, before);
+    XCTAssertLessThanOrEqual(bumped, after);
+}
+
 - (void)testUntrackedBundledStylesheetsAreNotStamped
 {
     // Stamping only the active style must not stamp print.css/export.css.
