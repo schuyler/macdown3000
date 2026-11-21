@@ -8,6 +8,19 @@
 
 #import <XCTest/XCTest.h>
 #import "MPDocument.h"
+#import "MPDocumentWindowTestSupport.h"
+#import "MPEditorView.h"
+#import "MPPreferences.h"
+#import "MPRenderer.h"
+
+// Expose the private MPDocument surface the change tracking tests drive.
+@interface MPDocument (CheckboxToggleTesting)
+@property (weak) MPEditorView *editor;
+@property (strong) MPRenderer *renderer;
+- (void)handleCheckboxToggle:(NSURL *)url;
+- (BOOL)shouldPromptBeforeReloadingExternalChanges;
+- (void)setSplitViewDividerLocation:(CGFloat)ratio;
+@end
 
 @interface MPCheckboxToggleTests : XCTestCase
 @end
@@ -535,6 +548,201 @@
     NSInteger index = [[path substringFromIndex:1] integerValue];
 
     XCTAssertEqual(index, 0, @"Should extract index 0 from URL path");
+}
+
+#pragma mark - Document Change Tracking
+
+/**
+ * Returns a document whose window is loaded and whose editor holds the given
+ * Markdown, with no unsaved changes and no undo history; nil if no window can
+ * be loaded.
+ */
+- (MPDocument *)loadedDocumentWithMarkdown:(NSString *)markdown
+{
+    MPDocument *document = [[MPDocument alloc] init];
+    if (!MPLoadDocumentWindow(document))
+        return nil;
+    [self addTeardownBlock:^{
+        [document updateChangeCount:NSChangeCleared];
+        [document close];
+    }];
+
+    document.editor.string = markdown;
+    [document.renderer setValue:@"token" forKey:@"checkboxBridgeToken"];
+    [document.undoManager removeAllActions];
+    [document updateChangeCount:NSChangeCleared];
+    return document;
+}
+
+/**
+ * Delivers the preview's click on a checkbox as one event.
+ *
+ * AppKit opens an undo group for the undo registrations an event makes, if
+ * it makes any, and closes it at the end of that run loop pass. A hosted
+ * test never gets there, so the group is closed here. It is not opened
+ * here: a group that closes counts as a change even when it is empty, which
+ * would hide a click that registers nothing. The undo manager opens a group
+ * by itself only once in a hosted test, so the click has to be the test's
+ * first undoable action.
+ */
+- (void)clickCheckboxAtIndex:(NSUInteger)index inDocument:(MPDocument *)document
+{
+    NSString *string = [NSString stringWithFormat:
+        @"x-macdown-checkbox://toggle/%lu?token=token", index];
+    [document handleCheckboxToggle:[NSURL URLWithString:string]];
+
+    NSUndoManager *undoManager = document.undoManager;
+    while (undoManager.groupingLevel > 0)
+        [undoManager endUndoGrouping];
+}
+
+/** Types text at the end of the document as one event, in its own group. */
+- (void)typeText:(NSString *)text inDocument:(MPDocument *)document
+{
+    NSUndoManager *undoManager = document.undoManager;
+    undoManager.groupsByEvent = NO;
+    NSRange end = NSMakeRange(document.editor.string.length, 0);
+    [undoManager beginUndoGrouping];
+    [document.editor insertText:text replacementRange:end];
+    [undoManager endUndoGrouping];
+}
+
+/**
+ * Waits for the document to report the given unsaved-changes state, and
+ * returns whether it did. NSDocument counts an undo group's change on a run
+ * loop pass after the group closes, not when it closes.
+ */
+- (BOOL)document:(MPDocument *)document becomesEdited:(BOOL)edited
+{
+    return MPRunLoopUntil(2.0, ^BOOL {
+        return document.isDocumentEdited == edited;
+    });
+}
+
+/**
+ * Test that a checkbox click in the preview leaves the document with unsaved
+ * changes, so that closing it prompts and an external change does not
+ * silently replace the toggled text.
+ */
+- (void)testCheckboxToggleMarksDocumentEdited
+{
+    MPDocument *document = [self loadedDocumentWithMarkdown:@"- [ ] Task\n"];
+    XCTSkipUnless(document, @"no document window can be loaded here");
+    XCTAssertFalse(document.isDocumentEdited,
+                   @"Precondition: the document has no unsaved changes");
+
+    [self clickCheckboxAtIndex:0 inDocument:document];
+
+    XCTAssertEqualObjects(document.editor.string, @"- [x] Task\n",
+                          @"The click should toggle the checkbox");
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A toggled checkbox is an unsaved change");
+    XCTAssertTrue([document shouldPromptBeforeReloadingExternalChanges],
+                  @"An external change must not silently replace the toggle");
+}
+
+/**
+ * Test the same with the editor pane collapsed, where the editor is not
+ * editable and the preview is the only way to change the document.
+ */
+- (void)testCheckboxToggleMarksDocumentEditedWithEditorPaneCollapsed
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEditorOnRight = preferences.editorOnRight;
+    [self addTeardownBlock:^{
+        preferences.editorOnRight = originalEditorOnRight;
+    }];
+    preferences.editorOnRight = NO;
+
+    MPDocument *document = [self loadedDocumentWithMarkdown:@"- [ ] Task\n"];
+    XCTSkipUnless(document, @"no document window can be loaded here");
+    [document setSplitViewDividerLocation:0.0];
+    XCTAssertFalse(document.editor.editable,
+                   @"Precondition: a collapsed editor is not editable");
+
+    [self clickCheckboxAtIndex:0 inDocument:document];
+
+    XCTAssertEqualObjects(document.editor.string, @"- [x] Task\n",
+                          @"The click should toggle the checkbox");
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A toggled checkbox is an unsaved change");
+}
+
+/**
+ * Test that undo reverts a checkbox toggle and redo applies it again, each
+ * leaving the unsaved-changes state that matches the text.
+ */
+- (void)testUndoAndRedoCheckboxToggle
+{
+    MPDocument *document = [self loadedDocumentWithMarkdown:@"- [ ] Task\n"];
+    XCTSkipUnless(document, @"no document window can be loaded here");
+
+    [self clickCheckboxAtIndex:0 inDocument:document];
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A toggled checkbox is an unsaved change");
+
+    [document.undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"- [ ] Task\n",
+                          @"Undo should revert the toggle");
+    XCTAssertTrue([self document:document becomesEdited:NO],
+                  @"Undoing the only change leaves nothing unsaved");
+
+    [document.undoManager redo];
+    XCTAssertEqualObjects(document.editor.string, @"- [x] Task\n",
+                          @"Redo should apply the toggle again");
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A redone toggle is an unsaved change");
+}
+
+/**
+ * Test that a checkbox toggle takes its place in the undo history before a
+ * later typed edit, and that undoing past the last save reports unsaved
+ * changes.
+ */
+- (void)testCheckboxToggleUndoesInOrderWithTyping
+{
+    MPDocument *document = [self loadedDocumentWithMarkdown:@"- [ ] Task\n"];
+    XCTSkipUnless(document, @"no document window can be loaded here");
+
+    [self clickCheckboxAtIndex:0 inDocument:document];
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A toggled checkbox is an unsaved change");
+    // Stand in for a save: the saved text now has the checkbox checked.
+    [document updateChangeCount:NSChangeCleared];
+
+    [self typeText:@"typed" inDocument:document];
+    XCTAssertEqualObjects(document.editor.string, @"- [x] Task\ntyped");
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"A typed edit is an unsaved change");
+
+    [document.undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"- [x] Task\n",
+                          @"The first undo should revert only the typing");
+    XCTAssertTrue([self document:document becomesEdited:NO],
+                  @"The text matches the saved text again");
+
+    [document.undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"- [ ] Task\n",
+                          @"The second undo should revert the toggle");
+    XCTAssertTrue([self document:document becomesEdited:YES],
+                  @"The text no longer matches the saved text");
+}
+
+/**
+ * Test that undoing a toggle changes nothing when the text has since been
+ * replaced by a shorter one that no longer has the toggled character.
+ */
+- (void)testUndoOfCheckboxToggleIgnoresRangeBeyondText
+{
+    MPDocument *document =
+        [self loadedDocumentWithMarkdown:@"Text\n\n- [ ] Task\n"];
+    XCTSkipUnless(document, @"no document window can be loaded here");
+
+    [self clickCheckboxAtIndex:0 inDocument:document];
+    document.editor.string = @"New";
+
+    XCTAssertNoThrow([document.undoManager undo]);
+    XCTAssertEqualObjects(document.editor.string, @"New");
 }
 
 @end
