@@ -432,6 +432,7 @@ NS_INLINE hoedown_renderer *MPCreateHTMLRenderer(MPRenderer *renderer, int tocLe
         hoedown_malloc(sizeof(hoedown_html_renderer_state_extra));
     extra->language_addition = language_addition;
     extra->owner = (__bridge void *)renderer;
+    extra->checkbox_index = 0;
 
     ((hoedown_html_renderer_state *)htmlRenderer->opaque)->opaque = extra;
     return htmlRenderer;
@@ -769,10 +770,6 @@ NS_INLINE NSString *MPPreviewHeadTags(NSString *checkboxBridgeToken)
 - (void)parseMarkdown:(NSString *)markdown {
     [self.currentLanguages removeAllObjects];
 
-    // Reset checkbox index counter for interactive checkbox support.
-    // Related to GitHub issue #269.
-    hoedown_patch_reset_checkbox_index();
-    
     id<MPRendererDelegate> delegate = self.delegate;
     int extensions = [delegate rendererExtensions:self];
     BOOL smartypants = [delegate rendererHasSmartyPants:self];
