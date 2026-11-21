@@ -127,16 +127,29 @@ void hoedown_patch_render_listitem(
         if (USE_TASK_LIST(state) && text->size >= offset + 3)
         {
             const char *stateAttributes = NULL;
+            uint8_t stateCharacter = ' ';
             if (strncmp((char *)(text->data + offset), "[ ]", 3) == 0)
                 stateAttributes = "";
             else if (strncmp((char *)(text->data + offset), "[x]", 3) == 0 ||
                      strncmp((char *)(text->data + offset), "[X]", 3) == 0)
+            {
                 stateAttributes = " checked";
+                stateCharacter = 'x';
+            }
             else if (strncmp((char *)(text->data + offset), "[-]", 3) == 0)
+            {
                 stateAttributes = " data-checkbox-state=\"indeterminate\"";
+                stateCharacter = '-';
+            }
 
             if (stateAttributes)
             {
+                if (extra->checkbox_states)
+                {
+                    hoedown_buffer_putc(extra->checkbox_states,
+                                        stateCharacter);
+                    stateAttributes = "";
+                }
                 HOEDOWN_BUFPUTSL(ob, "<li class=\"task-list-item\">");
                 hoedown_buffer_put(ob, text->data, offset);
                 // Include data-checkbox-index for interactive checkbox support

@@ -29,6 +29,11 @@ typedef struct hoedown_html_renderer_state_extra {
      * has its own state, so each numbers its checkboxes from 0. */
     int checkbox_index;
 
+    /* When set, receives one character per task list checkbox, in the order
+     * of data-checkbox-index (' ' unchecked, 'x' checked, '-' indeterminate),
+     * and the checkboxes are written without their state. */
+    hoedown_buffer *checkbox_states;
+
 } hoedown_html_renderer_state_extra;
 
 void hoedown_patch_render_blockcode(

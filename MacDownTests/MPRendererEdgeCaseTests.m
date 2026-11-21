@@ -223,6 +223,76 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
 }
 
 
+#pragma mark - Checkbox Probe Tests
+
+- (void)testCheckboxProbeReportsStatesAndLeavesThemOutOfTheHTML
+{
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+
+    NSString *states = nil;
+    NSString *html = [self.renderer
+        checkboxProbeHTMLForMarkdown:@"- [ ] a\n    - [x] b\n- [-] c\n"
+                              states:&states];
+
+    XCTAssertEqualObjects(states, @"x -",
+                          @"States come in data-checkbox-index order: the "
+                          @"nested item first");
+    for (NSString *index in @[@"0", @"1", @"2"])
+    {
+        NSString *input = [NSString stringWithFormat:
+            @"<input type=\"checkbox\" data-checkbox-index=\"%@\">", index];
+        XCTAssertTrue([html containsString:input],
+                      @"Checkbox %@ should be written without a state: %@",
+                      index, html);
+    }
+
+    NSString *otherStates = nil;
+    NSString *otherHTML = [self.renderer
+        checkboxProbeHTMLForMarkdown:@"- [x] a\n    - [ ] b\n- [X] c\n"
+                              states:&otherStates];
+    XCTAssertEqualObjects(otherStates, @" xx");
+    XCTAssertEqualObjects(otherHTML, html,
+                          @"Texts that differ only in checkbox states should "
+                          @"give equal probe HTML");
+}
+
+- (void)testCheckboxProbeFindsCheckboxesWithTaskListsOff
+{
+    self.renderer.rendererFlags = 0;
+
+    NSString *states = nil;
+    [self.renderer checkboxProbeHTMLForMarkdown:@"- [x] a\n- [ ] b\n"
+                                         states:&states];
+
+    XCTAssertEqualObjects(states, @"x ");
+}
+
+- (void)testCheckboxProbeLeavesTheRendererStateAlone
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+    self.dataSource.markdown = @"- [x] parsed\n";
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *parsedHTML = [self.renderer.currentHtml copy];
+    XCTAssertTrue([parsedHTML containsString:
+                      @"<input type=\"checkbox\" checked "],
+                  @"A parse writes checkbox states: %@", parsedHTML);
+    XCTAssertEqualObjects([self.renderer valueForKey:@"currentLanguages"],
+                          @[], @"Precondition: the parse met no code block");
+
+    NSString *states = nil;
+    [self.renderer
+        checkboxProbeHTMLForMarkdown:@"```ruby\nputs 1\n```\n\n- [ ] probed\n"
+                              states:&states];
+
+    XCTAssertEqualObjects(states, @" ");
+    XCTAssertEqualObjects(self.renderer.currentHtml, parsedHTML,
+                          @"A probe should not replace the parsed HTML");
+    XCTAssertEqualObjects([self.renderer valueForKey:@"currentLanguages"],
+                          @[], @"A probe should not record languages");
+}
+
+
 #pragma mark - Extension Combination Tests
 
 - (void)testRendererExtensionTablesOnly
