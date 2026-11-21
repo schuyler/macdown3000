@@ -11,6 +11,7 @@
 #import "MPDocument.h"
 #import "MPDocumentWindowTestSupport.h"
 #import "MPDocumentSplitView.h"
+#import "MPEditorView.h"
 #import "MPPreferences.h"
 #import "MPRenderer.h"
 
@@ -20,6 +21,7 @@
 @property (weak) MPDocumentSplitView *splitView;
 @property (weak) NSView *editorContainer;
 @property (weak) WebView *preview;
+@property (weak) MPEditorView *editor;
 @property CGFloat previousSplitRatio;
 @property CGFloat lastNonCollapsedRatio;
 @property (strong) MPRenderer *renderer;
@@ -1184,6 +1186,146 @@
     @finally {
         preferences.markdownManualRender = originalManualRender;
     }
+}
+
+
+#pragma mark - Saving With the Editor Pane Hidden
+
+// Saves `text` from a new document with "Ensure newline at end of file" on,
+// after hiding the editor pane when `hidden`, and reports what the save wrote,
+// what it left in the editor, and what Undo then does once the editor pane is
+// showing. The selection covers characters 2-6.
+- (NSDictionary<NSString *, id> *)outcomeOfSavingText:(NSString *)text
+                                     withEditorHidden:(BOOL)hidden
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalEnsuresNewline = preferences.editorEnsuresNewlineAtEndOfFile;
+    NSString *name = [NSString stringWithFormat:@"MPPaneToggle-%@.md",
+                      [NSUUID UUID].UUIDString];
+    NSURL *url = [NSURL fileURLWithPath:
+        [NSTemporaryDirectory() stringByAppendingPathComponent:name]];
+    MPDocument *document = [[MPDocument alloc] init];
+    NSMutableDictionary<NSString *, id> *outcome =
+        [NSMutableDictionary dictionary];
+
+    @try
+    {
+        preferences.editorEnsuresNewlineAtEndOfFile = YES;
+        if (!MPLoadDocumentWindow(document))
+            return nil;
+        // The document finishes setting up its editor and panes in a block it
+        // queues when the nib loads; let that run first.
+        __block BOOL ready = NO;
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{ ready = YES; }];
+        MPRunLoopUntil(10.0, ^BOOL{ return ready; });
+
+        MPEditorView *editor = document.editor;
+        editor.string = text;
+        editor.selectedRange = NSMakeRange(2, 5);
+        if (hidden)
+            [document toggleEditorPane:nil];
+        XCTAssertEqual(document.editorVisible, !hidden,
+                       @"Precondition: the editor pane is %@",
+                       hidden ? @"hidden" : @"showing");
+        XCTAssertTrue(document.previewVisible,
+                      @"Precondition: the preview pane is showing");
+        XCTAssertEqual(editor.isEditable, !hidden,
+                       @"Precondition: the editor is editable only while "
+                        "its pane is showing");
+
+        NSError *error = nil;
+        XCTAssertTrue([document writeToURL:url
+                                    ofType:@"net.daringfireball.markdown"
+                                     error:&error], @"%@", error);
+        outcome[@"written"] = [NSString stringWithContentsOfURL:url
+            encoding:NSUTF8StringEncoding error:NULL] ?: [NSNull null];
+        outcome[@"text"] = [editor.string copy];
+        outcome[@"selection"] = NSStringFromRange(editor.selectedRange);
+        outcome[@"editable"] = @(editor.isEditable);
+        outcome[@"editorVisible"] = @(document.editorVisible);
+        outcome[@"canUndo"] = @(document.undoManager.canUndo);
+
+        // Undo with the editor showing again: a text view that is not
+        // editable discards an undo step instead of applying it.
+        if (hidden)
+            [document toggleEditorPane:nil];
+        XCTAssertTrue(document.editorVisible,
+                      @"Precondition: the editor pane is showing");
+        [document.undoManager undo];
+        outcome[@"textAfterUndo"] = [editor.string copy];
+        outcome[@"canUndoAfterUndo"] = @(document.undoManager.canUndo);
+    }
+    @finally
+    {
+        [document close];
+        preferences.editorEnsuresNewlineAtEndOfFile = originalEnsuresNewline;
+        [[NSFileManager defaultManager] removeItemAtURL:url error:NULL];
+    }
+    return outcome;
+}
+
+// The editor is not editable while its pane is hidden. A save must still give
+// the file its newline, and leave the pane hidden and the editor uneditable.
+- (void)testSaveWithEditorHiddenEnsuresNewlineAtEndOfFile
+{
+    NSString *text = @"# Title\n\nNo newline at the end";
+    NSDictionary *outcome = [self outcomeOfSavingText:text
+                                     withEditorHidden:YES];
+    XCTSkipUnless(outcome, @"no document window can be loaded here");
+
+    NSString *terminated = [text stringByAppendingString:@"\n"];
+    XCTAssertEqualObjects(outcome[@"written"], terminated,
+                          @"The saved file must end with a newline");
+    XCTAssertEqualObjects(outcome[@"text"], terminated,
+                          @"The editor must hold what was saved");
+    XCTAssertEqualObjects(outcome[@"selection"],
+                          NSStringFromRange(NSMakeRange(2, 5)),
+                          @"The save must not move the selection");
+    XCTAssertEqualObjects(outcome[@"editorVisible"], @NO,
+                          @"The save must not bring the editor pane back");
+    XCTAssertEqualObjects(outcome[@"editable"], @NO,
+                          @"The hidden editor must be left uneditable");
+}
+
+// Hiding the editor pane must not change what a save does to the document:
+// the same file, the same text, and the same single undo step that takes the
+// newline back out.
+- (void)testSaveWithEditorHiddenMatchesSaveWithEditorShowing
+{
+    NSString *text = @"# Title\n\nNo newline at the end";
+    NSDictionary *showing = [self outcomeOfSavingText:text
+                                     withEditorHidden:NO];
+    NSDictionary *hidden = [self outcomeOfSavingText:text
+                                    withEditorHidden:YES];
+    XCTSkipUnless(showing && hidden,
+                  @"no document window can be loaded here");
+
+    XCTAssertEqualObjects(showing[@"canUndo"], @YES,
+                          @"Precondition: the added newline can be undone");
+    XCTAssertEqualObjects(showing[@"textAfterUndo"], text,
+                          @"Precondition: undoing it restores the text");
+    XCTAssertEqualObjects(showing[@"canUndoAfterUndo"], @NO,
+                          @"Precondition: the newline was one undo step");
+    for (NSString *key in @[@"written", @"text", @"selection", @"canUndo",
+                            @"textAfterUndo", @"canUndoAfterUndo"])
+        XCTAssertEqualObjects(hidden[key], showing[key],
+                              @"\"%@\" must not depend on whether the "
+                               "editor pane is showing", key);
+}
+
+// Text that already ends with a newline is saved as it is, with nothing added
+// to the undo history.
+- (void)testSaveWithEditorHiddenLeavesTerminatedTextAlone
+{
+    NSString *text = @"# Title\n\nA newline at the end\n";
+    NSDictionary *outcome = [self outcomeOfSavingText:text
+                                     withEditorHidden:YES];
+    XCTSkipUnless(outcome, @"no document window can be loaded here");
+
+    XCTAssertEqualObjects(outcome[@"written"], text);
+    XCTAssertEqualObjects(outcome[@"text"], text);
+    XCTAssertEqualObjects(outcome[@"canUndo"], @NO);
+    XCTAssertEqualObjects(outcome[@"editable"], @NO);
 }
 
 

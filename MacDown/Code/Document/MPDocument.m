@@ -1377,7 +1377,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
         if (end && ![newline characterIsMember:[text characterAtIndex:end - 1]])
         {
             NSRange selection = self.editor.selectedRange;
+            // The editor is not editable while its pane is hidden (see
+            // -splitViewDidResizeSubviews:), and would refuse the insert.
+            BOOL editable = self.editor.editable;
+            self.editor.editable = YES;
             [self.editor insertText:@"\n" replacementRange:NSMakeRange(end, 0)];
+            self.editor.editable = editable;
             self.editor.selectedRange = selection;
         }
     }
