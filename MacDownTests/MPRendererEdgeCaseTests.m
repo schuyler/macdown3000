@@ -602,6 +602,66 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                      @"Renderer should be usable after concurrent access");
 }
 
+/**
+ * Each document parses on its own queue, so two documents can render at the
+ * same moment. Every render must number its own checkboxes from 0 in order:
+ * the preview sends that number back when a checkbox is clicked.
+ */
+- (void)testConcurrentRendersNumberCheckboxesIndependently
+{
+    const NSUInteger checkboxCount = 300;
+    NSMutableString *markdown = [NSMutableString string];
+    for (NSUInteger i = 0; i < checkboxCount; i++)
+        [markdown appendFormat:@"- [ ] Task %lu\n", i];
+
+    NSRegularExpression *regex = [NSRegularExpression
+        regularExpressionWithPattern:@"data-checkbox-index=\"(\\d+)\""
+                             options:0 error:NULL];
+
+    const size_t renderCount = 40;
+    __block NSUInteger misnumberedRenders = 0;
+    NSLock *lock = [[NSLock alloc] init];
+    dispatch_queue_t queue =
+        dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_apply(renderCount, queue, ^(size_t iteration) {
+        @autoreleasepool
+        {
+            MPRenderer *renderer = [[MPRenderer alloc] init];
+            MPMockRendererDataSource *dataSource =
+                [[MPMockRendererDataSource alloc] init];
+            MPMockRendererDelegate *delegate =
+                [[MPMockRendererDelegate alloc] init];
+            renderer.dataSource = dataSource;
+            renderer.delegate = delegate;
+            renderer.rendererFlags = HOEDOWN_HTML_USE_TASK_LIST;
+            dataSource.markdown = markdown;
+            [renderer parseMarkdown:markdown];
+
+            NSString *html = renderer.currentHtml;
+            NSArray<NSTextCheckingResult *> *matches =
+                [regex matchesInString:html options:0
+                                 range:NSMakeRange(0, html.length)];
+            BOOL numbered = matches.count == checkboxCount;
+            for (NSUInteger i = 0; numbered && i < matches.count; i++)
+            {
+                NSRange range = [matches[i] rangeAtIndex:1];
+                NSString *index = [html substringWithRange:range];
+                numbered = index.integerValue == (NSInteger)i;
+            }
+
+            [lock lock];
+            if (!numbered)
+                misnumberedRenders++;
+            [lock unlock];
+        }
+    });
+
+    XCTAssertEqual(misnumberedRenders, 0,
+                   @"%lu of %zu concurrent renders did not number their "
+                   @"checkboxes 0..%lu in order",
+                   misnumberedRenders, renderCount, checkboxCount - 1);
+}
+
 
 #pragma mark - Special Content Tests
 
