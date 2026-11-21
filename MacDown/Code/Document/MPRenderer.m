@@ -93,6 +93,78 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
     return urls;
 }
 
+// Lowercases a link reference label and collapses each run of whitespace
+// in it, so that labels Hoedown treats as the same label compare equal.
+NS_INLINE NSString *MPNormalizedLinkLabel(NSString *label)
+{
+    static NSRegularExpression *spaceRegex = nil;
+    static dispatch_once_t spaceToken;
+    dispatch_once(&spaceToken, ^{
+        spaceRegex = [[NSRegularExpression alloc] initWithPattern:@"\\s+"
+                                                          options:0
+                                                            error:NULL];
+    });
+    NSRange range = NSMakeRange(0, label.length);
+    label = [spaceRegex stringByReplacingMatchesInString:label options:0
+                                                   range:range
+                                            withTemplate:@" "];
+    return label.lowercaseString;
+}
+
+// The normalized labels of the link reference definitions ("[label]: url")
+// in text. With footnotes on, "[^label]:" defines a footnote instead.
+NS_INLINE NSSet *MPLinkReferenceLabels(NSString *text, BOOL footnotes)
+{
+    static NSRegularExpression *labelRegex = nil;
+    static dispatch_once_t labelToken;
+    dispatch_once(&labelToken, ^{
+        NSString *pattern = @"^\\x{FEFF}? {0,3}\\[([^\\]\\n]+)\\]:";
+        NSRegularExpressionOptions ops =
+            NSRegularExpressionAnchorsMatchLines;
+        labelRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                          options:ops
+                                                            error:NULL];
+    });
+
+    NSMutableSet *labels = [NSMutableSet set];
+    NSArray *matches = [labelRegex matchesInString:text options:0
+                                             range:NSMakeRange(0, text.length)];
+    for (NSTextCheckingResult *match in matches)
+    {
+        NSString *label = [text substringWithRange:[match rangeAtIndex:1]];
+        if (footnotes && [label hasPrefix:@"^"])
+            continue;
+        [labels addObject:MPNormalizedLinkLabel(label)];
+    }
+    return labels;
+}
+
+// Whether the nearest bracket before location, within its paragraph, is an
+// opening one. A blank line ends the paragraph.
+NS_INLINE BOOL MPFollowsOpenBracket(NSString *text, NSUInteger location)
+{
+    BOOL blankSoFar = NO;   // The line being scanned has only spaces or tabs.
+    for (NSUInteger i = location; i > 0; i--)
+    {
+        unichar c = [text characterAtIndex:i - 1];
+        if (c == '[')
+            return YES;
+        if (c == ']')
+            return NO;
+        if (c == '\n')
+        {
+            if (blankSoFar)
+                return NO;
+            blankSoFar = YES;
+        }
+        else if (c != ' ' && c != '\t')
+        {
+            blankSoFar = NO;
+        }
+    }
+    return NO;
+}
+
 /**
  * Preprocess markdown to work around Hoedown parser limitations.
  *
@@ -106,7 +178,7 @@ NS_INLINE NSArray *MPPrismScriptURLsForLanguage(NSString *language)
  * - Block elements inside existing code blocks may be incorrectly modified
  * - Blockquotes may need special handling
  */
-NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
+NS_INLINE NSString *MPPreprocessMarkdown(NSString *text, int flags)
 {
     if (!text.length)
         return text;
@@ -154,10 +226,13 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
     // Requires whitespace to avoid matching [text][ref] (explicit reference links).
     // Uses negative lookbehind (?<!\]) to avoid matching the ref part of [text][ref]
     // when it appears before another [ on a different line.
+    // The text holds no bracket. The lookahead captures the text of the
+    // bracket that follows, when that bracket closes.
     static NSRegularExpression *shortcutRegex = nil;
     static dispatch_once_t shortcutToken;
     dispatch_once(&shortcutToken, ^{
-        NSString *pattern = @"(?<!\\])\\[([^\\]]+)\\](\\s+)(?=\\[)";
+        NSString *pattern = @"(?<!\\])\\[([^\\[\\]]+)\\](\\s+)"
+                            @"(?=\\[(?:([^\\]]*)\\])?)";
         shortcutRegex = [[NSRegularExpression alloc] initWithPattern:pattern
                                                              options:0
                                                                error:NULL];
@@ -172,9 +247,35 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
                                              withTemplate:@"$1\n\n$2"];
 
     // Issue #25: Convert shortcut links to explicit form when followed by [
-    result = [shortcutRegex stringByReplacingMatchesInString:result options:0
-                                                       range:NSMakeRange(0, result.length)
-                                                withTemplate:@"[$1][]$2"];
+    // A match is left as typed when no link reference is involved: its text
+    // is on one line and is not a reference label, neither is the text of
+    // the bracket that follows, and no bracket is open before it. Hoedown
+    // would render the [] as text there.
+    NSSet *labels = MPLinkReferenceLabels(
+        result, (flags & HOEDOWN_EXT_FOOTNOTES) != 0);
+    NSMutableString *rewritten = [result mutableCopy];
+    NSArray *shortcuts =
+        [shortcutRegex matchesInString:result options:0
+                                 range:NSMakeRange(0, result.length)];
+    for (NSTextCheckingResult *match in [shortcuts reverseObjectEnumerator])
+    {
+        NSRange textRange = [match rangeAtIndex:1];
+        NSRange nextRange = [match rangeAtIndex:3];
+        NSString *label = [result substringWithRange:textRange];
+        NSString *next = nil;
+        if (nextRange.location != NSNotFound)
+            next = [result substringWithRange:nextRange];
+
+        BOOL isReference =
+            [labels containsObject:MPNormalizedLinkLabel(label)]
+            || (next && [labels containsObject:MPNormalizedLinkLabel(next)]);
+        if (!isReference
+                && [label rangeOfString:@"\n"].location == NSNotFound
+                && !MPFollowsOpenBracket(result, match.range.location))
+            continue;
+        [rewritten insertString:@"[]" atIndex:NSMaxRange(textRange) + 1];
+    }
+    result = rewritten;
 
     // Issue #37: Break reference link pattern inside fenced code blocks.
     // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
@@ -197,7 +298,7 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
     hoedown_renderer *htmlRenderer, hoedown_renderer *tocRenderer)
 {
     // Preprocess markdown for Hoedown compatibility (Issues #254, #36, #37)
-    text = MPPreprocessMarkdown(text);
+    text = MPPreprocessMarkdown(text, flags);
 
     NSData *inputData = [text dataUsingEncoding:NSUTF8StringEncoding];
     hoedown_document *document = hoedown_document_new(

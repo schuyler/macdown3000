@@ -766,6 +766,256 @@
              rendererFlags:rendFlags];
 }
 
+/**
+ * The Issue #25 workaround appends "[]" to bracketed text that is followed
+ * by whitespace and "[". It applies only where a link reference is involved:
+ * where neither that text nor the bracket after it is the label of a
+ * reference definition, Hoedown would render the "[]" as text.
+ */
+- (void)testTaskItemStartingWithLinkHasNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:
+                          @"- [ ] [Open](https://example.com/1)\n"
+                          @"- [x] [Done](https://example.com/2)\n"
+                          @"- [-] [Partly](https://example.com/3)\n"
+                          @"- [ ] [Reference][ref]\n"
+                          @"\n"
+                          @"[ref]: https://example.com/4\n"
+                           withExtensions:0
+                            rendererFlags:HOEDOWN_HTML_USE_TASK_LIST];
+
+    XCTAssertFalse([html containsString:@"[]"],
+                   @"No empty brackets should be rendered. Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"data-checkbox-index=\"0\"> "
+                      @"<a href=\"https://example.com/1\">Open</a>"],
+                  @"Unchecked item: checkbox, then link. Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"checked data-checkbox-index=\"1\"> "
+                      @"<a href=\"https://example.com/2\">Done</a>"],
+                  @"Checked item: checkbox, then link. Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"data-checkbox-index=\"2\"> "
+                      @"<a href=\"https://example.com/3\">Partly</a>"],
+                  @"Indeterminate item: checkbox, then link. Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"data-checkbox-index=\"3\"> "
+                      @"<a href=\"https://example.com/4\">Reference</a>"],
+                  @"Reference link item: checkbox, then link. Got: %@", html);
+}
+
+- (void)testTaskItemAfterUnclosedBracketHasNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:
+                          @"Range [0, 1) is half-open.\n"
+                          @"\n"
+                          @"- [ ] [Issue](https://example.com/1)\n"
+                           withExtensions:0
+                            rendererFlags:HOEDOWN_HTML_USE_TASK_LIST];
+
+    XCTAssertFalse([html containsString:@"[]"],
+                   @"No empty brackets should be rendered. Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"data-checkbox-index=\"0\"> "
+                      @"<a href=\"https://example.com/1\">Issue</a>"],
+                  @"A bracket left open in an earlier paragraph should not "
+                  @"matter. Got: %@", html);
+}
+
+- (void)testBracketedTextBeforeLinkHasNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:
+                          @"[WIP] [Fix the bug](https://example.com/1)\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<p>[WIP] "
+                      @"<a href=\"https://example.com/1\">Fix the bug</a></p>"],
+                  @"Bracketed text before a link should stay as typed. "
+                  @"Got: %@", html);
+}
+
+- (void)testBracketedTextBeforeBracketedTextHasNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:@"See [1] [2] for details\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@"<p>See [1] [2] for details</p>"],
+                  @"Bracketed text should stay as typed. Got: %@", html);
+}
+
+- (void)testCodeSpanBracketsHaveNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:@"Use `a[0] [1]` here\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@"<code>a[0] [1]</code>"],
+                  @"Code span should stay as typed. Got: %@", html);
+}
+
+- (void)testFootnoteReferencesHaveNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:
+                          @"One[^1] [^2]\n"
+                          @"\n"
+                          @"[^1]: first\n"
+                          @"[^2]: second\n"
+                           withExtensions:HOEDOWN_EXT_FOOTNOTES
+                            rendererFlags:0];
+
+    XCTAssertFalse([html containsString:@"[]"],
+                   @"No empty brackets should be rendered. Got: %@", html);
+    XCTAssertTrue([html containsString:@"id=\"fnref1\""]
+                      && [html containsString:@"id=\"fnref2\""],
+                  @"Both footnote references should render. Got: %@", html);
+}
+
+- (void)testBracketedTextBeforeFootnoteReferenceHasNoEmptyBrackets
+{
+    NSString *html = [self renderMarkdown:
+                          @"Text [sic] [^1]\n"
+                          @"\n"
+                          @"[^1]: note\n"
+                           withExtensions:HOEDOWN_EXT_FOOTNOTES
+                            rendererFlags:0];
+
+    XCTAssertFalse([html containsString:@"[]"],
+                   @"No empty brackets should be rendered. Got: %@", html);
+    XCTAssertTrue([html containsString:@"Text [sic] <sup id=\"fnref1\""],
+                  @"Text and footnote reference should render. Got: %@",
+                  html);
+}
+
+// The cases below render the same with and without the checks that leave
+// text as typed; each one fails if a part of those checks is wrong.
+
+- (void)testShortcutLinkLabelIsMatchedCaseInsensitively
+{
+    NSString *html = [self renderMarkdown:
+                          @"[Foo] [bar] here\n"
+                          @"\n"
+                          @"[foo]: https://example.com/foo\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"https://example.com/foo\">Foo</a> "
+                      @"[bar] here"],
+                  @"A shortcut link before other brackets should render. "
+                  @"Got: %@", html);
+}
+
+- (void)testBracketedTextIsNotPairedWithFollowingLabel
+{
+    NSString *html = [self renderMarkdown:
+                          @"[x] [Bar] here\n"
+                          @"\n"
+                          @"[bar]: https://example.com/bar\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@"[x]"],
+                  @"Bracketed text should stay text. Got: %@", html);
+    XCTAssertFalse([html containsString:@">x</a>"],
+                   @"Bracketed text should not become a link to the "
+                   @"reference after it. Got: %@", html);
+}
+
+- (void)testAdjacentCaretLabelsAreShortcutLinksWithoutFootnotes
+{
+    NSString *html = [self renderMarkdown:
+                          @"[^a] [^b]\n"
+                          @"\n"
+                          @"[^a]: https://example.com/a\n"
+                          @"[^b]: https://example.com/b\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"https://example.com/a\">^a</a> "
+                      @"<a href=\"https://example.com/b\">^b</a>"],
+                  @"With footnotes off, \"[^a]\" is an ordinary link "
+                  @"reference. Got: %@", html);
+}
+
+- (void)testShortcutLinkWrappedInBlockQuoteStillRenders
+{
+    NSString *html = [self renderMarkdown:
+                          @"> Read the [user\n"
+                          @"> guide] [sic] carefully.\n"
+                          @"\n"
+                          @"[user guide]: https://example.com/guide\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"https://example.com/guide\">user\nguide</a>"],
+                  @"A label wrapped inside a block quote should still "
+                  @"link. Got: %@", html);
+}
+
+- (void)testShortcutLinkInsideOpenBracketStillRenders
+{
+    NSString *html = [self renderMarkdown:
+                          @"[x [y] [z] end\n"
+                          @"\n"
+                          @"[y]: https://example.com/y\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"https://example.com/y\">y</a>"],
+                  @"A shortcut link after an open bracket should still "
+                  @"link. Got: %@", html);
+}
+
+- (void)testShortcutLinkWithEscapedBracketInLabelStillRenders
+{
+    NSString *html = [self renderMarkdown:
+                          @"\\][O \\[y] [z] end\n"
+                          @"\n"
+                          @"[O \\[y]: https://example.com/o\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"https://example.com/o\">O [y</a>"],
+                  @"A label containing an escaped bracket should still "
+                  @"link. Got: %@", html);
+}
+
+- (void)testShortcutLinkLabelWithTabStillRenders
+{
+    NSString *html = [self renderMarkdown:
+                          @"[a\tb] [c] end\n"
+                          @"\n"
+                          @"[a  b]: https://example.com/ab\n"
+                           withExtensions:0
+                            rendererFlags:0];
+
+    XCTAssertTrue([html containsString:@"href=\"https://example.com/ab\""],
+                  @"A label whose tab Hoedown expands should still link. "
+                  @"Got: %@", html);
+}
+
+- (void)testTaskItemsBeforeShortcutLinkKeepTheirCheckboxes
+{
+    NSString *html = [self renderMarkdown:
+                          @"- [ ] [foo]\n"
+                          @"- [ ] bar\n"
+                          @"\n"
+                          @"[foo]: https://example.com/foo\n"
+                           withExtensions:0
+                            rendererFlags:HOEDOWN_HTML_USE_TASK_LIST];
+
+    XCTAssertTrue([html containsString:@"data-checkbox-index=\"0\""]
+                      && [html containsString:@"data-checkbox-index=\"1\""],
+                  @"Both items should keep their checkboxes. Got: %@", html);
+}
+
 #pragma mark - Edge Case Tests
 
 /**
