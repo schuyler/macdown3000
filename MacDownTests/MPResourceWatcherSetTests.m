@@ -165,7 +165,7 @@
     XCTAssertNoThrow([self.watcherSet stopAll]);
 }
 
-// Tests for GitHub issue #349: atomic-save recovery and initial timestamp seeding.
+// Tests for GitHub issue #349: atomic-save recovery.
 
 - (void)testDelegateCalledOnAtomicSave
 {
@@ -228,22 +228,48 @@
         @"Watcher should have fired at least twice — once on recovery, once on subsequent write");
 }
 
-- (void)testDelegateSeededOnNewWatcher
+// Beginning to watch is reported to the caller, not to the delegate.
+
+- (void)testUpdateReturnsNewlyWatchedPaths
 {
-    // Create the file BEFORE setting up any watcher.
-    NSString *path = [self createTestFileWithName:@"seed.png"];
+    NSString *path1 = [self createTestFileWithName:@"first.png"];
+    NSString *path2 = [self createTestFileWithName:@"second.png"];
+    NSString *missing =
+        [self.testDirectory stringByAppendingPathComponent:@"nope.png"];
 
-    // Expect the delegate to be called when the watcher is first installed,
-    // seeding the initial timestamp without waiting for a file change.
-    self.changeExpectation = [self expectationWithDescription:@"delegate seeded on watcher installation"];
+    NSSet *added = [self.watcherSet updateWatchedPaths:
+                    [NSSet setWithArray:@[path1, missing, @""]]];
+    XCTAssertEqualObjects(added, [NSSet setWithObject:path1],
+                          @"Only paths whose watcher started are returned");
 
-    [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path]];
+    added = [self.watcherSet updateWatchedPaths:
+             [NSSet setWithArray:@[path1, path2, missing]]];
+    XCTAssertEqualObjects(added, [NSSet setWithObject:path2],
+                          @"A path already watched is not returned again");
 
-    // Notification should be synchronous or near-immediate — 1.0s is generous.
-    [self waitForExpectationsWithTimeout:1.0 handler:nil];
+    added = [self.watcherSet updateWatchedPaths:
+             [NSSet setWithArray:@[path1, path2]]];
+    XCTAssertEqualObjects(added, [NSSet set],
+                          @"Nothing is returned when nothing was added");
 
-    XCTAssertTrue([self.changedPaths containsObject:path],
-                  @"Delegate should be called immediately when a new watcher is installed");
+    [self.watcherSet stopAll];
+    added = [self.watcherSet updateWatchedPaths:[NSSet setWithObject:path1]];
+    XCTAssertEqualObjects(added, [NSSet setWithObject:path1],
+                          @"A path watched again after stopAll is returned");
+}
+
+- (void)testInstallingWatchersDoesNotNotifyDelegate
+{
+    NSString *path1 = [self createTestFileWithName:@"quiet-1.png"];
+    NSString *path2 = [self createTestFileWithName:@"quiet-2.png"];
+    [self.watcherSet updateWatchedPaths:[NSSet setWithArray:@[path1, path2]]];
+
+    // Let any deferred notification arrive before checking.
+    [[NSRunLoop currentRunLoop]
+        runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.2]];
+
+    XCTAssertEqualObjects(self.changedPaths, @[],
+                          @"Beginning to watch a file is not a change to it");
 }
 
 @end

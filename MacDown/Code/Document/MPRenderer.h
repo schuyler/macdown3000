@@ -40,6 +40,12 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 /// The timestamp will be appended as ?t=<value> on the next render.
 - (void)setTimestamp:(NSTimeInterval)timestamp forResourcePath:(NSString *)path;
 
+/// Give a local resource path a cache-busting timestamp it has not had: the
+/// current time in whole seconds, or one second past the path's previous
+/// timestamp when the current second is not later than it. Returns the
+/// timestamp.
+- (NSTimeInterval)bumpTimestampForResourcePath:(NSString *)path;
+
 /// Clear all cache-busting timestamps.
 - (void)clearResourceTimestamps;
 

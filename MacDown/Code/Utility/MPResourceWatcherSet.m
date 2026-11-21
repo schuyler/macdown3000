@@ -33,7 +33,7 @@
     return [NSSet setWithArray:self.watchers.allKeys];
 }
 
-- (void)updateWatchedPaths:(NSSet<NSString *> *)paths
+- (NSSet<NSString *> *)updateWatchedPaths:(NSSet<NSString *> *)paths
 {
     NSSet *currentPaths = [NSSet setWithArray:self.watchers.allKeys];
 
@@ -49,19 +49,23 @@
     // Add watchers for new paths
     NSMutableSet *toAdd = [paths mutableCopy];
     [toAdd minusSet:currentPaths];
+    NSMutableSet *added = [NSMutableSet set];
     for (NSString *path in toAdd)
     {
-        [self addWatcherForPath:path];
+        if ([self addWatcherForPath:path])
+            [added addObject:path];
     }
+    return added;
 }
 
-- (void)addWatcherForPath:(NSString *)path
+// Returns YES if a watcher for the path started and was stored.
+- (BOOL)addWatcherForPath:(NSString *)path
 {
     // Skip paths that cannot receive vnode watchers (nil/empty or on a remote
     // volume) before constructing a watcher, mirroring the guard in
     // -[MPDocument startFileWatching]. Related to #478.
     if (![MPFileWatcher canWatchPath:path])
-        return;
+        return NO;
 
     __weak MPResourceWatcherSet *weakSelf = self;
     NSString *watchedPath = [path copy];
@@ -80,8 +84,8 @@
             [cancelSelf.watchers removeObjectForKey:watchedPath];
             // File was deleted or renamed (e.g. atomic save by external editor).
             // Wait briefly for the rename to complete, then restart watching the
-            // new inode at the same path. addWatcherForPath: will notify the
-            // delegate, which updates the timestamp and triggers a re-render.
+            // new inode at the same path and notify the delegate, which updates
+            // the timestamp and triggers a re-render.
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)),
                            dispatch_get_main_queue(), ^{
                 MPResourceWatcherSet *strongSelf = weakSelf;
@@ -89,17 +93,17 @@
                     return;
                 if (![[NSFileManager defaultManager] fileExistsAtPath:watchedPath])
                     return;
-                [strongSelf addWatcherForPath:watchedPath];
+                if ([strongSelf addWatcherForPath:watchedPath])
+                    [strongSelf.delegate resourceWatcherSet:strongSelf
+                                      didDetectChangeAtPath:watchedPath];
             });
         }];
 
     // Only store if watcher successfully started
-    if (watcher.isWatching)
-    {
-        self.watchers[path] = watcher;
-        if (self.delegate)
-            [self.delegate resourceWatcherSet:self didDetectChangeAtPath:path];
-    }
+    if (!watcher.isWatching)
+        return NO;
+    self.watchers[path] = watcher;
+    return YES;
 }
 
 - (void)stopAll

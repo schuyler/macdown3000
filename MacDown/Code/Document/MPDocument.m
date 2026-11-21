@@ -2186,7 +2186,21 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     if (self.resourceWatcherSet && baseUrl)
     {
         NSSet *paths = MPLocalFilePathsInHTML(html, baseUrl);
-        [self.resourceWatcherSet updateWatchedPaths:paths];
+        NSSet<NSString *> *newPaths =
+            [self.resourceWatcherSet updateWatchedPaths:paths];
+
+        // Issue #349: This HTML was generated before these files' stamps
+        // were recorded. Stamp them here, so the page never shows a copy
+        // the WebView cached before they were watched.
+        if (newPaths.count)
+        {
+            NSMutableDictionary<NSString *, NSNumber *> *stamps =
+                [NSMutableDictionary dictionary];
+            for (NSString *path in newPaths)
+                stamps[path] =
+                    @([self.renderer bumpTimestampForResourcePath:path]);
+            html = MPApplyCacheBusting(html, stamps, baseUrl);
+        }
     }
 
     // Body-only replacement preserves scroll position, but it also preserves
@@ -2390,8 +2404,7 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 - (void)resourceWatcherSet:(MPResourceWatcherSet *)set
      didDetectChangeAtPath:(NSString *)path
 {
-    [self.renderer setTimestamp:[[NSDate date] timeIntervalSince1970]
-               forResourcePath:path];
+    [self.renderer bumpTimestampForResourcePath:path];
     [self.renderer render];
 }
 
@@ -3280,15 +3293,14 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // MPRenderer.render), which the WebView has not cached. This is the same
     // trick used for edited local images (issue #110), and it also forces a
     // refresh even when no file-watcher change event preceded the reload.
-    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
     NSString *stylePath = MPStylePathForName(self.preferences.htmlStyleName);
     if (stylePath)
-        [self.renderer setTimestamp:now forResourcePath:stylePath];
+        [self.renderer bumpTimestampForResourcePath:stylePath];
     NSString *themePath =
         MPHighlightingThemeURLForName(
             self.preferences.htmlHighlightingThemeName).path;
     if (themePath)
-        [self.renderer setTimestamp:now forResourcePath:themePath];
+        [self.renderer bumpTimestampForResourcePath:themePath];
 
     // Issue #318: Reset the cached resource signature so
     // renderer:didProduceHTMLOutput: sees a change and takes the full HTML
