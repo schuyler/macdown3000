@@ -466,6 +466,7 @@ typedef NS_ENUM(NSInteger, MPReferenceKind) {
       alignedEditorYs:(NSArray<NSNumber *> **)outEditorYs
      alignedPreviewYs:(NSArray<NSNumber *> **)outPreviewYs;
 - (void)invokeRenderCompletionHandlers;
+- (void)invokeRenderCompletionHandlersAfterTypesetting;
 - (void)willStartPreviewLiveScroll:(NSNotification *)notification;
 - (void)didEndPreviewLiveScroll:(NSNotification *)notification;
 // Commit 6 (gaps 1+3): layout-change sync
@@ -548,12 +549,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         // This closes the stuck-ownership gap on the full-reload path: if reloadFromLoadedString
         // set ownership to Editor, this handler restores quiescent state after rendering
         // completes, allowing forward sync to resume on the next user-initiated scroll.
-        // Placed before invokeRenderCompletionHandlers so completion handlers see reset state.
         strongObj.scrollOwner = MPScrollOwnerNeither;
-
-        // Issue #16: Invoke deferred operation handlers after render completes
-        // (This is called for MathJax rendering completion path)
-        [strongObj invokeRenderCompletionHandlers];
     };
 }
 
@@ -1924,8 +1920,11 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
 
     self.renderToWebPending = NO;
 
-    // Issue #16: Invoke deferred operation handlers after render completes
-    [self invokeRenderCompletionHandlers];
+    // Issue #16: Invoke deferred operation handlers after render completes.
+    // Only the main frame counts: a subframe finishes before the main frame's
+    // own resources have loaded.
+    if (frame == sender.mainFrame)
+        [self invokeRenderCompletionHandlersAfterTypesetting];
 
     // Re-apply the preview pane page-size multiplier. WebKit resets the
     // multiplier when a new document loads, so each finished mainFrame load
@@ -2205,7 +2204,12 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // the async typesetting correctly. Scroll is restored after typesetting completes.
     // Skip DOM replacement if generated page resources changed.
     // Related to issue #325.
-    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl] && !resourcesChanged)
+    // Issue #16: Also skip it while -performAfterRender: handlers are waiting.
+    // They are invoked when a full load finishes, which is after the page's
+    // images and other resources have loaded.
+    BOOL handlersWaiting = self.renderCompletionHandlers.count > 0;
+    if (self.isPreviewReady && [self.currentBaseUrl isEqualTo:baseUrl]
+            && !resourcesChanged && !handlersWaiting)
     {
         DOMDocument *doc = self.preview.mainFrame.DOMDocument;
         DOMNodeList *bodyNodes = [doc getElementsByTagName:@"body"];
@@ -3345,6 +3349,42 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     {
         handler();
     }
+}
+
+/**
+ * Invokes the queued render completion handlers once the loaded preview has
+ * nothing left to typeset. Called when the main frame finishes loading.
+ */
+- (void)invokeRenderCompletionHandlersAfterTypesetting
+{
+    if (!self.renderCompletionHandlers.count)
+        return;
+    if (!self.preferences.htmlMathJax)
+    {
+        [self invokeRenderCompletionHandlers];
+        return;
+    }
+
+    // MathJax typesets after the page has loaded. Its queue runs the callback
+    // once that is done, or at once when it is idle. A page without MathJax
+    // has nothing to wait for.
+    __weak MPDocument *weakSelf = self;
+    JSContext *context = self.preview.mainFrame.javaScriptContext;
+    context[@"window"][@"__macdownRenderDone"] = ^{
+        [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+            [weakSelf invokeRenderCompletionHandlers];
+        }];
+    };
+    [context evaluateScript:
+        @"(function(){"
+        @"  var done = window.__macdownRenderDone;"
+        @"  delete window.__macdownRenderDone;"
+        @"  if(window.MathJax&&MathJax.Hub){"
+        @"    MathJax.Hub.Queue(function(){done();});"
+        @"  } else {"
+        @"    done();"
+        @"  }"
+        @"})();"];
 }
 
 // Issue #649: the preview is not rendered while it is collapsed, so render it

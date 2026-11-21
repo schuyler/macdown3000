@@ -9,6 +9,8 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <JavaScriptCore/JavaScriptCore.h>
+#import <WebKit/WebKit.h>
 #import "MPDocument.h"
 #import "MPDocumentWindowTestSupport.h"
 #import "MPPreferences.h"
@@ -18,12 +20,56 @@
 @interface MPDocument (RenderDeferralTesting)
 @property (nonatomic, strong) NSMutableArray *renderCompletionHandlers;
 @property (nonatomic, readonly) BOOL needsHtml;
+@property (nonatomic) BOOL isPreviewReady;
+@property (nonatomic) BOOL alreadyRenderingInWeb;
+@property (weak) WebView *preview;
+@property (unsafe_unretained) NSTextView *editor;
 - (void)performAfterRender:(void (^)(void))handler;
+- (void)webView:(WebView *)sender didFinishLoadForFrame:(WebFrame *)frame;
+- (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier
+          willSendRequest:(NSURLRequest *)request
+         redirectResponse:(NSURLResponse *)redirectResponse
+           fromDataSource:(WebDataSource *)dataSource;
 // IBActions used in tests
 - (IBAction)togglePreviewPane:(id)sender;
+- (IBAction)render:(id)sender;
 - (IBAction)copyHtml:(id)sender;
 - (IBAction)exportHtml:(id)sender;
 - (IBAction)exportPdf:(id)sender;
+@end
+
+
+#pragma mark - Test Document
+
+// Keeps the preview off the network. The page's MathJax script comes from the
+// app bundle, and MathJax then asks its CDN for everything else; those
+// requests are sent to a file that does not exist. With mathJaxMissing set the
+// bundled script is refused as well, so the page has no MathJax object.
+@interface MPRenderDeferralTestDocument : MPDocument
+@property BOOL mathJaxMissing;
+@end
+
+@implementation MPRenderDeferralTestDocument
+
+- (NSURLRequest *)webView:(WebView *)sender resource:(id)identifier
+          willSendRequest:(NSURLRequest *)request
+         redirectResponse:(NSURLResponse *)redirectResponse
+           fromDataSource:(WebDataSource *)dataSource
+{
+    request = [super webView:sender resource:identifier
+             willSendRequest:request redirectResponse:redirectResponse
+              fromDataSource:dataSource];
+    NSURL *url = request.URL;
+    BOOL isMathJax = [url.lastPathComponent isEqualToString:@"MathJax.js"];
+    if ([url.scheme hasPrefix:@"http"] || (self.mathJaxMissing && isMathJax))
+    {
+        NSURL *missing =
+            [NSURL fileURLWithPath:@"/var/empty/MPRenderDeferralTests.js"];
+        return [NSURLRequest requestWithURL:missing];
+    }
+    return request;
+}
+
 @end
 
 
@@ -37,6 +83,8 @@
 @property BOOL originalManualRender;
 @property BOOL originalShowWordCount;
 @property BOOL originalStartInPreviewMode;
+@property BOOL originalMathJax;
+@property (copy) NSString *pageStateAtHandler;
 @end
 
 
@@ -54,6 +102,8 @@
     preferences.markdownManualRender = NO;
     preferences.editorShowWordCount = NO;
     preferences.editorStartInPreviewMode = NO;
+    self.originalMathJax = preferences.htmlMathJax;
+    preferences.htmlMathJax = NO;
     self.document = [[MPDocument alloc] init];
     self.handlerWasInvoked = NO;
     self.handlerInvocationCount = 0;
@@ -68,6 +118,7 @@
     preferences.markdownManualRender = self.originalManualRender;
     preferences.editorShowWordCount = self.originalShowWordCount;
     preferences.editorStartInPreviewMode = self.originalStartInPreviewMode;
+    preferences.htmlMathJax = self.originalMathJax;
     [super tearDown];
 }
 
@@ -435,6 +486,264 @@
     // exportPdf: opens a save panel, so just verify it doesn't crash
     XCTAssertNoThrow([self.document exportPdf:nil],
                      @"exportPdf: should not crash");
+}
+
+#pragma mark - Handlers Queued After The Preview Has Loaded
+
+- (NSString *)previewStringFromScript:(NSString *)script
+{
+    JSContext *context = self.document.preview.mainFrame.javaScriptContext;
+    return [[context evaluateScript:script] toString];
+}
+
+- (void)drainMainQueue
+{
+    __block BOOL drained = NO;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        drained = YES;
+    }];
+    MPRunLoopUntil(5.0, ^BOOL{
+        return drained;
+    });
+}
+
+/// Waits until the preview shows `text` with no load or MathJax startup still
+/// going on, and whatever the load left on the main queue has run.
+- (BOOL)waitForPreviewShowing:(NSString *)text
+{
+    NSString *script = [NSString stringWithFormat:
+        @"(function(){"
+        @"  if(!document.body||document.body.innerHTML.indexOf('%@')<0)"
+        @"    return 'no';"
+        @"  if(!window.MathJax||!MathJax.Hub)"
+        @"    return 'yes';"
+        @"  var posted = MathJax.Hub.Startup.signal.posted;"
+        @"  return posted.indexOf('End')<0 ? 'no' : 'yes';"
+        @"})()", text];
+    BOOL shown = MPRunLoopUntil(10.0, ^BOOL{
+        return self.document.isPreviewReady
+            && !self.document.alreadyRenderingInWeb
+            && !self.document.preview.loading
+            && [[self previewStringFromScript:script] isEqualToString:@"yes"];
+    });
+    [self drainMainQueue];
+    return shown;
+}
+
+/// Loads a window for a document that stays off the network and waits for its
+/// first preview load. Returns NO if no window can be loaded here.
+- (BOOL)loadWindowShowing:(NSString *)text mathJaxMissing:(BOOL)missing
+{
+    MPRenderDeferralTestDocument *document =
+        [[MPRenderDeferralTestDocument alloc] init];
+    document.mathJaxMissing = missing;
+    self.document = document;
+    if (!MPLoadDocumentWindow(document))
+        return NO;
+    document.editor.string = text;
+    XCTAssertTrue([self waitForPreviewShowing:text],
+                  @"the first preview load should show the editor's text");
+    return YES;
+}
+
+/// An ordinary render, with no handler waiting, replaces the page's body and
+/// keeps the page. A property set on its window tells the two apart.
+- (void)assertRenderUpdatesInPlaceShowing:(NSString *)text
+{
+    [self previewStringFromScript:@"window.__renderDeferralPage = 'kept'"];
+    self.document.editor.string = text;
+    [self.document render:nil];
+    XCTAssertTrue([self waitForPreviewShowing:text],
+                  @"an ordinary render should show the new text");
+    XCTAssertEqualObjects(
+        [self previewStringFromScript:@"String(window.__renderDeferralPage)"],
+        @"kept", @"an ordinary render should update the page in place");
+}
+
+/// Queues a handler that records what `script` returns in the preview at the
+/// moment it runs, and waits for it. Returns whether the handler ran.
+- (BOOL)performAfterRenderRecording:(NSString *)script
+{
+    __weak MPRenderDeferralTests *weakSelf = self;
+    [self.document performAfterRender:^{
+        weakSelf.pageStateAtHandler =
+            [weakSelf previewStringFromScript:script];
+        weakSelf.handlerInvocationCount++;
+    }];
+    return MPRunLoopUntil(10.0, ^BOOL{
+        return self.handlerInvocationCount > 0;
+    });
+}
+
+- (void)hidePreview
+{
+    [self.document togglePreviewPane:nil];
+    XCTAssertFalse(self.document.needsHtml,
+                   @"Hiding the preview should make needsHtml NO");
+}
+
+/**
+ * Print, Export and Copy HTML with the preview pane hidden: the handler runs
+ * once the preview shows the current text.
+ */
+- (void)testQueuedHandlerRunsWithPreviewHidden
+{
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:NO],
+                  @"no document window can be loaded here");
+    [self assertRenderUpdatesInPlaceShowing:@"second"];
+
+    [self hidePreview];
+    self.document.editor.string = @"third";
+    BOOL ran = [self performAfterRenderRecording:@"document.body.innerHTML"];
+
+    XCTAssertTrue(ran, @"the handler should run when the render finishes");
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+    XCTAssertTrue([self.pageStateAtHandler containsString:@"third"],
+                  @"the preview should show the current text by then");
+
+    // With nothing waiting any more, renders update the page in place again.
+    XCTAssertTrue([self waitForPreviewShowing:@"third"]);
+    [self assertRenderUpdatesInPlaceShowing:@"fourth"];
+}
+
+/**
+ * The same with Manual Render on and the preview visible.
+ */
+- (void)testQueuedHandlerRunsWithManualRender
+{
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:NO],
+                  @"no document window can be loaded here");
+    [self assertRenderUpdatesInPlaceShowing:@"second"];
+
+    [MPPreferences sharedInstance].markdownManualRender = YES;
+    [self drainMainQueue];
+    XCTAssertTrue(self.document.previewVisible);
+    XCTAssertFalse(self.document.needsHtml,
+                   @"Manual Render should make needsHtml NO");
+    self.document.editor.string = @"third";
+    BOOL ran = [self performAfterRenderRecording:@"document.body.innerHTML"];
+
+    XCTAssertTrue(ran, @"the handler should run when the render finishes");
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+    XCTAssertTrue([self.pageStateAtHandler containsString:@"third"],
+                  @"the preview should show the current text by then");
+}
+
+/**
+ * Print and Export PDF print the preview, so an image added since the last
+ * render has to be loaded when the handler runs.
+ */
+- (void)testQueuedHandlerRunsAfterImagesLoad
+{
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:NO],
+                  @"no document window can be loaded here");
+    [self assertRenderUpdatesInPlaceShowing:@"second"];
+
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc]
+        initWithBitmapDataPlanes:NULL pixelsWide:40 pixelsHigh:30
+                   bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO
+                  colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0
+                    bitsPerPixel:0];
+    NSData *png = [bitmap representationUsingType:NSBitmapImageFileTypePNG
+                                       properties:@{}];
+    [self hidePreview];
+    self.document.editor.string = [NSString stringWithFormat:
+        @"third ![](data:image/png;base64,%@)",
+        [png base64EncodedStringWithOptions:0]];
+    BOOL ran = [self performAfterRenderRecording:
+        @"(function(){"
+        @"  var image = document.querySelector('img');"
+        @"  if(!image) return 'no image';"
+        @"  return image.complete + ' ' + image.naturalWidth;"
+        @"})()"];
+
+    XCTAssertTrue(ran, @"the handler should run when the render finishes");
+    XCTAssertEqualObjects(self.pageStateAtHandler, @"true 40",
+                          @"the new image should be loaded by then");
+}
+
+/**
+ * With MathJax on, the handler waits until MathJax has finished with the page.
+ */
+- (void)testQueuedHandlerWaitsForMathJax
+{
+    [MPPreferences sharedInstance].htmlMathJax = YES;
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:NO],
+                  @"no document window can be loaded here");
+    XCTAssertEqualObjects(
+        [self previewStringFromScript:@"String(!!window.MathJax)"], @"true",
+        @"the page should have loaded the bundled MathJax");
+    [self assertRenderUpdatesInPlaceShowing:@"second"];
+
+    [self hidePreview];
+    self.document.editor.string = @"third";
+    BOOL ran = [self performAfterRenderRecording:
+        @"(function(){"
+        @"  var text = document.body.innerHTML.indexOf('third') >= 0;"
+        @"  var posted = MathJax.Hub.Startup.signal.posted;"
+        @"  return 'text ' + text + ', MathJax done ' +"
+        @"      (posted.indexOf('End') >= 0);"
+        @"})()"];
+
+    XCTAssertTrue(ran, @"the handler should run when the render finishes");
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+    XCTAssertEqualObjects(self.pageStateAtHandler,
+                          @"text true, MathJax done true");
+}
+
+/**
+ * With MathJax on but not in the page, there is nothing to wait for.
+ */
+- (void)testQueuedHandlerRunsWhenMathJaxIsMissing
+{
+    [MPPreferences sharedInstance].htmlMathJax = YES;
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:YES],
+                  @"no document window can be loaded here");
+    XCTAssertEqualObjects(
+        [self previewStringFromScript:@"String(!!window.MathJax)"], @"false",
+        @"the page should have no MathJax");
+    [self assertRenderUpdatesInPlaceShowing:@"second"];
+
+    [self hidePreview];
+    self.document.editor.string = @"third";
+    BOOL ran = [self performAfterRenderRecording:@"document.body.innerHTML"];
+
+    XCTAssertTrue(ran, @"the handler should run when the render finishes");
+    XCTAssertEqual(self.handlerInvocationCount, 1);
+    XCTAssertTrue([self.pageStateAtHandler containsString:@"third"],
+                  @"the preview should show the current text by then");
+
+    XCTAssertTrue([self waitForPreviewShowing:@"third"]);
+    [self assertRenderUpdatesInPlaceShowing:@"fourth"];
+}
+
+/**
+ * A subframe finishes loading before the page around it has, so it must not
+ * run the handlers. The main frame finishing does.
+ */
+- (void)testSubframeLoadDoesNotRunQueuedHandlers
+{
+    XCTSkipUnless([self loadWindowShowing:@"first" mathJaxMissing:NO],
+                  @"no document window can be loaded here");
+    self.document.editor.string =
+        @"second\n\n<iframe src=\"about:blank\"></iframe>";
+    [self.document render:nil];
+    XCTAssertTrue([self waitForPreviewShowing:@"second"]);
+    WebView *preview = self.document.preview;
+    WebFrame *subframe = preview.mainFrame.childFrames.firstObject;
+    XCTAssertNotNil(subframe, @"the page should have a subframe");
+
+    self.document.renderCompletionHandlers =
+        [NSMutableArray arrayWithObject:[self testHandlerBlock]];
+
+    [self.document webView:preview didFinishLoadForFrame:subframe];
+    [self drainMainQueue];
+    XCTAssertEqual(self.handlerInvocationCount, 0,
+                   @"a subframe finishing should not run the handlers");
+
+    [self.document webView:preview didFinishLoadForFrame:preview.mainFrame];
+    XCTAssertEqual(self.handlerInvocationCount, 1,
+                   @"the main frame finishing should run the handlers");
 }
 
 @end
