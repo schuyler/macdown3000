@@ -234,9 +234,11 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
                                                               error:NULL];
         });
         NSRange replaceRange = NSMakeRange(0, result.length);
+        NSString *tocTemplate =
+            [NSRegularExpression escapedTemplateForString:toc];
         result = [tocRegex stringByReplacingMatchesInString:result options:0
                                                       range:replaceRange
-                                               withTemplate:toc];
+                                               withTemplate:tocTemplate];
         hoedown_document_free(document);
         hoedown_buffer_free(ob);
     }

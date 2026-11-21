@@ -888,6 +888,42 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
     XCTAssertNotNil(html, @"Should handle TOC with no headings");
 }
 
+// The generated list replaces the [TOC] paragraph as literal text: "$" and
+// "\" in a heading are not regular expression template syntax.
+- (void)testRendererTOCKeepsDollarSignsInHeadings
+{
+    self.delegate.renderTOC = YES;
+    self.dataSource.markdown =
+        @"[TOC]\n\n## Budget: $500\n\n## Cost $0 and $1";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"#budget-500\">Budget: $500</a>"],
+                  @"TOC entry should keep \"$500\". Got: %@", html);
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"#cost-0-and-1\">Cost $0 and $1</a>"],
+                  @"TOC entry should keep \"$0\" and \"$1\". Got: %@", html);
+    XCTAssertFalse([html containsString:@"[TOC]"],
+                   @"The [TOC] paragraph should be replaced. Got: %@", html);
+}
+
+- (void)testRendererTOCKeepsBackslashesInHeadings
+{
+    self.delegate.renderTOC = YES;
+    self.dataSource.markdown = @"[TOC]\n\n## C:\\Temp\\new";
+
+    [self.renderer parseMarkdown:self.dataSource.markdown];
+    NSString *html =
+        [self.renderer HTMLForExportWithStyles:NO highlighting:NO];
+
+    XCTAssertTrue([html containsString:
+                      @"<a href=\"#ctempnew\">C:\\Temp\\new</a>"],
+                  @"TOC entry should keep the backslashes. Got: %@", html);
+}
+
 
 #pragma mark - Front Matter Tests
 
