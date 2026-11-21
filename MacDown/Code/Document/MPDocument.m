@@ -1580,13 +1580,17 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
                 [printDelegate methodSignatureForSelector:printSelector];
             invocation = [NSInvocation invocationWithMethodSignature:signature];
             invocation.target = printDelegate;
-            if (context)
-                [invocation setArgument:&context atIndex:2];
+            invocation.selector = printSelector;
+            // The selector is -document:didPrint:contextInfo:. The document
+            // and the result are filled in when printing finishes.
+            [invocation setArgument:&context atIndex:4];
+            [invocation retainArguments];
         }
+        // -document:didPrint:context: releases the invocation.
         [super printDocumentWithSettings:settings
                           showPrintPanel:showPanel delegate:self
                         didPrintSelector:@selector(document:didPrint:context:)
-                             contextInfo:(void *)invocation];
+                             contextInfo:(__bridge_retained void *)invocation];
     }];
 }
 
@@ -4797,16 +4801,13 @@ to link outside that scope.", \
         }
     }
 
-    if (context)
-    {
-        NSInvocation *invocation = (__bridge NSInvocation *)context;
-        if ([invocation isKindOfClass:[NSInvocation class]])
-        {
-            [invocation setArgument:&doc atIndex:0];
-            [invocation setArgument:&ok atIndex:1];
-            [invocation invoke];
-        }
-    }
+    // The context is the invocation retained for this callback in
+    // -printDocumentWithSettings:showPrintPanel:delegate:didPrintSelector:
+    // contextInfo:, or NULL when the caller gave no delegate.
+    NSInvocation *invocation = (__bridge_transfer NSInvocation *)context;
+    [invocation setArgument:&doc atIndex:2];
+    [invocation setArgument:&ok atIndex:3];
+    [invocation invoke];
 }
 
 
