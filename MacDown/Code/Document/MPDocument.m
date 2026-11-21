@@ -5246,6 +5246,7 @@ to link outside that scope.", \
         return;
 
     // Read the new content
+    NSString *previousText = [self.markdown copy];
     if (![self readFromData:data ofType:self.fileType error:&error])
         return;
 
@@ -5257,6 +5258,12 @@ to link outside that scope.", \
 
     // Clear the dirty state since we just loaded fresh content
     [self updateChangeCount:NSChangeCleared];
+
+    // The undo and redo stacks hold ranges into the text that was replaced,
+    // so start a fresh history, as -revertToContentsOfURL:ofType:error:
+    // does. A file rewritten with the same text keeps its history.
+    if (![self.markdown isEqualToString:previousText])
+        [self.undoManager removeAllActions];
 
     // Restart file watching (descriptor may have become stale)
     [self startFileWatching];
