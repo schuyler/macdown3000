@@ -1085,4 +1085,57 @@ static NSString * const kMPTestPrismAbsenceMarker = @"Prism.highlightAll";
                   @"Should render list after paragraph without colon");
 }
 
+#pragma mark - Issue #37: Zero-Width Space in Fenced Code
+
+/**
+ * The Issue #37 workaround puts a zero-width space between "]" and ": " on
+ * fenced code lines that Hoedown could take for a reference definition:
+ * those that start, after at most three spaces, with "[id]: ". Other code
+ * must be rendered as written.
+ */
+
+- (NSString *)fencedCodeHTMLForMarkdown:(NSString *)markdown
+{
+    self.delegate.extensions = HOEDOWN_EXT_FENCED_CODE;
+    self.dataSource.markdown = markdown;
+    [self.renderer parseMarkdown:markdown];
+    return [self.renderer currentHtml];
+}
+
+- (void)testFencedCodeHasNoZeroWidthSpaceAfterSubscript
+{
+    NSString *html = [self fencedCodeHTMLForMarkdown:
+        @"```python\nif a[0]: x\nd = {k[1]: v}\n```\n"];
+
+    XCTAssertTrue([html containsString:@">if a[0]: x\nd = {k[1]: v}</code>"],
+                  @"Code should be rendered as written. Got: %@", html);
+    XCTAssertFalse([html containsString:@"\u200B"],
+                   @"Code should gain no zero-width space. Got: %@", html);
+}
+
+- (void)testFencedCodeHasNoZeroWidthSpaceInIndentedBracketLine
+{
+    // Four leading spaces: Hoedown does not read a reference definition.
+    NSString *html = [self fencedCodeHTMLForMarkdown:
+        @"```\n    [nested: string]: boolean;\n```\n"];
+
+    XCTAssertTrue([html containsString:
+                      @">    [nested: string]: boolean;</code>"],
+                  @"Code should be rendered as written. Got: %@", html);
+}
+
+- (void)testFencedCodeKeepsLinesThatLookLikeReferenceDefinitions
+{
+    NSString *html = [self fencedCodeHTMLForMarkdown:
+        @"```ts\n[key: string]: any;\n   [id: number]: string;\n```\n"];
+
+    XCTAssertTrue([html containsString:@"[key: string]"]
+                      && [html containsString:@": any;"],
+                  @"Line at the margin should be rendered. Got: %@", html);
+    XCTAssertTrue([html containsString:@"   [id: number]"]
+                      && [html containsString:@": string;"],
+                  @"Line indented by three spaces should be rendered. "
+                  @"Got: %@", html);
+}
+
 @end

@@ -163,6 +163,20 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
                                                                error:NULL];
     });
 
+    // Reference-like lines (Issue #37)
+    // Matches a line Hoedown's is_ref() or is_footnote() could take for a
+    // definition: at most three spaces, then [id] and ": ".
+    static NSRegularExpression *referenceRegex = nil;
+    static dispatch_once_t referenceToken;
+    dispatch_once(&referenceToken, ^{
+        NSString *pattern = @"^( {0,3}\\[[^\\]\\n]*\\]): ";
+        NSRegularExpressionOptions ops =
+            NSRegularExpressionAnchorsMatchLines;
+        referenceRegex = [[NSRegularExpression alloc] initWithPattern:pattern
+                                                              options:ops
+                                                                error:NULL];
+    });
+
     NSString *result = text;
     result = [listRegex stringByReplacingMatchesInString:result options:0
                                                    range:NSMakeRange(0, result.length)
@@ -178,15 +192,17 @@ NS_INLINE NSString *MPPreprocessMarkdown(NSString *text)
 
     // Issue #37: Break reference link pattern inside fenced code blocks.
     // Hoedown's is_ref() matches [id]: patterns before code blocks are parsed.
-    // Insert zero-width space between ] and : to prevent matching.
+    // Insert zero-width space between ] and : on the lines it could match.
     NSMutableString *mut = [result mutableCopy];
     NSArray *blocks = [blockRegex matchesInString:mut options:0
                                             range:NSMakeRange(0, mut.length)];
     for (NSTextCheckingResult *match in [blocks reverseObjectEnumerator]) {
         NSRange contentRange = [match rangeAtIndex:3];
         NSString *content = [mut substringWithRange:contentRange];
-        content = [content stringByReplacingOccurrencesOfString:@"]: "
-                                                     withString:@"]\u200B: "];
+        NSRange range = NSMakeRange(0, content.length);
+        content = [referenceRegex
+            stringByReplacingMatchesInString:content options:0 range:range
+                                withTemplate:@"$1\u200B: "];
         [mut replaceCharactersInRange:contentRange withString:content];
     }
     return mut;
