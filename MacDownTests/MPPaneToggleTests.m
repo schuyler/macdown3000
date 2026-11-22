@@ -11,6 +11,7 @@
 #import "MPDocument.h"
 #import "MPDocumentWindowTestSupport.h"
 #import "MPDocumentSplitView.h"
+#import "MPEditorView.h"
 #import "MPPreferences.h"
 #import "MPRenderer.h"
 
@@ -20,6 +21,7 @@
 @property (weak) MPDocumentSplitView *splitView;
 @property (weak) NSView *editorContainer;
 @property (weak) WebView *preview;
+@property (weak) MPEditorView *editor;
 @property CGFloat previousSplitRatio;
 @property CGFloat lastNonCollapsedRatio;
 @property (strong) MPRenderer *renderer;
@@ -27,6 +29,7 @@
 - (void)splitViewDidResizeSubviews:(NSNotification *)notification;
 - (IBAction)toggleEditorPane:(id)sender;
 - (IBAction)togglePreviewPane:(id)sender;
+- (IBAction)insertTable:(id)sender;
 - (void)applyEditorStartInPreviewModePreference;
 - (void)setupEditor:(NSString *)changedKey;
 - (void)setSplitViewDividerLocation:(CGFloat)ratio;
@@ -976,6 +979,323 @@
         preferences.editorOnRight = originalEditorOnRight;
         [preferences synchronize];
     }
+}
+
+#pragma mark - Undo and Redo With the Editor Pane Hidden
+
+// Loads the document's window, gives the editor `text` as its starting
+// content, and makes every later change an undo step of its own. Returns NO
+// where no document window can be loaded.
+- (BOOL)loadDocumentWindowWithText:(NSString *)text
+{
+    if (!MPLoadDocumentWindow(self.document))
+        return NO;
+    // The document finishes setting up its editor and panes in a block it
+    // queues when the nib loads; let that run first.
+    __block BOOL ready = NO;
+    [[NSOperationQueue mainQueue] addOperationWithBlock:^{ ready = YES; }];
+    MPRunLoopUntil(10.0, ^BOOL{ return ready; });
+
+    self.document.editor.string = text;
+    // A test has no event loop to close the undo manager's by-event groups,
+    // so each edit below gets a group of its own.
+    self.document.undoManager.groupsByEvent = NO;
+    return YES;
+}
+
+// Types `text` at the end of the document, as one undo step.
+- (void)typeText:(NSString *)text
+{
+    MPEditorView *editor = self.document.editor;
+    NSUndoManager *undoManager = self.document.undoManager;
+    [undoManager beginUndoGrouping];
+    [editor insertText:text
+      replacementRange:NSMakeRange(editor.string.length, 0)];
+    [undoManager endUndoGrouping];
+}
+
+- (void)hideEditorPane
+{
+    [self.document toggleEditorPane:nil];
+    XCTAssertFalse(self.document.editorVisible,
+                   @"Precondition: the editor pane is hidden");
+    XCTAssertTrue(self.document.previewVisible,
+                  @"Precondition: the preview pane is showing");
+    XCTAssertFalse(self.document.editor.isEditable,
+                   @"Precondition: a hidden editor is not editable");
+}
+
+// NSDocument counts an undo manager's changes on a later pass of the run
+// loop, so wait for the edited state instead of reading it once.
+- (BOOL)waitForDocumentEdited:(BOOL)edited
+{
+    MPDocument *document = self.document;
+    return MPRunLoopUntil(5.0, ^BOOL{
+        return document.isDocumentEdited == edited;
+    });
+}
+
+// Whether typing changes the text. With its pane hidden the editor must
+// refuse it.
+- (BOOL)editorTakesTyping
+{
+    MPEditorView *editor = self.document.editor;
+    NSString *before = [editor.string copy];
+    [editor insertText:@"!" replacementRange:NSMakeRange(0, 0)];
+    return ![editor.string isEqualToString:before];
+}
+
+- (NSString *)previewText
+{
+    return [self.document.preview stringByEvaluatingJavaScriptFromString:
+        @"document.body ? document.body.innerText : ''"];
+}
+
+// Undo with the editor pane hidden takes the typing back out, leaves it
+// redoable, and leaves the document unedited, the pane hidden and the
+// editor uneditable.
+- (void)testUndoWithEditorHiddenRevertsTyping
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    NSUndoManager *undoManager = document.undoManager;
+
+    [self typeText:@" typed"];
+    XCTAssertEqualObjects(document.editor.string, @"Before typed");
+    XCTAssertTrue([self waitForDocumentEdited:YES],
+                  @"Precondition: typing marks the document edited");
+    [self hideEditorPane];
+    XCTAssertTrue(undoManager.canUndo, @"Precondition: Undo is available");
+
+    [undoManager undo];
+
+    XCTAssertEqualObjects(document.editor.string, @"Before",
+                          @"Undo must take the typing back out");
+    XCTAssertFalse(undoManager.canUndo, @"The typing was the only step");
+    XCTAssertTrue(undoManager.canRedo, @"The undone typing must be redoable");
+    XCTAssertTrue([self waitForDocumentEdited:NO],
+                  @"The document is back at its unedited text");
+    XCTAssertFalse(document.editorVisible,
+                   @"Undo must not bring the editor pane back");
+    XCTAssertFalse(document.editor.isEditable,
+                   @"The hidden editor must be left uneditable");
+    XCTAssertFalse([self editorTakesTyping],
+                   @"The hidden editor must still refuse typing");
+}
+
+// Redo with the editor pane hidden puts undone typing back, as an edit that
+// can be undone again.
+- (void)testRedoWithEditorHiddenReappliesTyping
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    NSUndoManager *undoManager = document.undoManager;
+
+    [self typeText:@" typed"];
+    XCTAssertTrue([self waitForDocumentEdited:YES]);
+    [undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"Before",
+                          @"Precondition: Undo works with the pane showing");
+    XCTAssertTrue([self waitForDocumentEdited:NO]);
+    [self hideEditorPane];
+    XCTAssertTrue(undoManager.canRedo, @"Precondition: Redo is available");
+
+    [undoManager redo];
+
+    XCTAssertEqualObjects(document.editor.string, @"Before typed",
+                          @"Redo must put the typing back");
+    XCTAssertFalse(undoManager.canRedo, @"The typing was the only step");
+    XCTAssertTrue(undoManager.canUndo, @"The redone typing must be undoable");
+    XCTAssertTrue([self waitForDocumentEdited:YES],
+                  @"The document differs from its unedited text again");
+    XCTAssertFalse(document.editor.isEditable,
+                   @"The hidden editor must be left uneditable");
+    XCTAssertFalse([self editorTakesTyping],
+                   @"The hidden editor must still refuse typing");
+
+    [undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"Before",
+                          @"The redone typing must undo again");
+    XCTAssertTrue([self waitForDocumentEdited:NO],
+                  @"The document is back at its unedited text");
+}
+
+// Each step is undone and redone in turn with the editor pane hidden,
+// whether it was typed or made by a command (Insert Table).
+- (void)testUndoAndRedoWithEditorHiddenWalkEveryStep
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    MPEditorView *editor = document.editor;
+    NSUndoManager *undoManager = document.undoManager;
+
+    [self typeText:@" typed"];
+    editor.selectedRange = NSMakeRange(editor.string.length, 0);
+    [undoManager beginUndoGrouping];
+    [document insertTable:nil];
+    [undoManager endUndoGrouping];
+    NSString *withTable = [editor.string copy];
+    XCTAssertTrue([withTable hasPrefix:@"Before typed"]
+                  && [withTable containsString:@"| --- |"],
+                  @"Precondition: Insert Table added a table: %@", withTable);
+    [self typeText:@"last"];
+    NSString *complete = [editor.string copy];
+    XCTAssertTrue([self waitForDocumentEdited:YES]);
+    [self hideEditorPane];
+
+    [undoManager undo];
+    XCTAssertEqualObjects(editor.string, withTable);
+    [undoManager undo];
+    XCTAssertEqualObjects(editor.string, @"Before typed");
+    [undoManager undo];
+    XCTAssertEqualObjects(editor.string, @"Before");
+    XCTAssertFalse(undoManager.canUndo);
+    XCTAssertTrue([self waitForDocumentEdited:NO],
+                  @"Every step undone leaves the unedited text");
+
+    [undoManager redo];
+    XCTAssertEqualObjects(editor.string, @"Before typed");
+    [undoManager redo];
+    XCTAssertEqualObjects(editor.string, withTable);
+    [undoManager redo];
+    XCTAssertEqualObjects(editor.string, complete);
+    XCTAssertFalse(undoManager.canRedo);
+    XCTAssertTrue([self waitForDocumentEdited:YES],
+                  @"Every step redone leaves the edited text");
+}
+
+// The Edit menu's Undo and Redo travel up the responder chain from the first
+// responder to the window, which validates them against the document's undo
+// manager and sends them to it. With the editor pane hidden, an item the
+// window offers must change the text. Here the hidden editor is the first
+// responder, and an Undo or Redo must leave it so.
+- (void)testUndoAndRedoMenuActionsWithEditorHidden
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    MPEditorView *editor = document.editor;
+    NSWindow *window = document.windowControllers.firstObject.window;
+    NSMenuItem *undoItem = [[NSMenuItem alloc] initWithTitle:@"Undo"
+                                                      action:@selector(undo:)
+                                               keyEquivalent:@""];
+    NSMenuItem *redoItem = [[NSMenuItem alloc] initWithTitle:@"Redo"
+                                                      action:@selector(redo:)
+                                               keyEquivalent:@""];
+
+    [self typeText:@" typed"];
+    [self hideEditorPane];
+    [window makeFirstResponder:editor];
+    XCTAssertEqual(window.firstResponder, editor,
+                   @"Precondition: the hidden editor is first responder");
+
+    XCTAssertTrue([window validateUserInterfaceItem:undoItem],
+                  @"The window offers Undo with the editor pane hidden");
+    XCTAssertTrue([window.firstResponder tryToPerform:@selector(undo:)
+                                                 with:undoItem]);
+    XCTAssertEqualObjects(editor.string, @"Before",
+                          @"An Undo the window offers must change the text");
+    XCTAssertEqual(window.firstResponder, editor);
+
+    XCTAssertTrue([window validateUserInterfaceItem:redoItem],
+                  @"After an Undo the window must offer Redo");
+    XCTAssertTrue([window.firstResponder tryToPerform:@selector(redo:)
+                                                 with:redoItem]);
+    XCTAssertEqualObjects(editor.string, @"Before typed",
+                          @"A Redo the window offers must change the text");
+    XCTAssertEqual(window.firstResponder, editor);
+    XCTAssertFalse([self editorTakesTyping],
+                   @"The hidden editor must still refuse typing");
+}
+
+// The preview, the only pane showing, follows an Undo and a Redo.
+- (void)testPreviewFollowsUndoAndRedoWithEditorHidden
+{
+    MPPreferences *preferences = [MPPreferences sharedInstance];
+    BOOL originalManualRender = preferences.markdownManualRender;
+
+    @try
+    {
+        preferences.markdownManualRender = NO;
+        XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                      @"no document window can be loaded here");
+        NSUndoManager *undoManager = self.document.undoManager;
+
+        [self typeText:@" typed"];
+        XCTAssertTrue(MPRunLoopUntil(10.0, ^BOOL{
+            return [[self previewText] containsString:@"Before typed"];
+        }), @"Precondition: the preview shows the typing");
+        [self hideEditorPane];
+
+        [undoManager undo];
+        XCTAssertTrue(MPRunLoopUntil(10.0, ^BOOL{
+            NSString *shown = [self previewText];
+            return [shown containsString:@"Before"]
+                && ![shown containsString:@"typed"];
+        }), @"The preview must show the text without the typing: %@",
+            [self previewText]);
+
+        [undoManager redo];
+        XCTAssertTrue(MPRunLoopUntil(10.0, ^BOOL{
+            return [[self previewText] containsString:@"Before typed"];
+        }), @"The preview must show the typing again: %@",
+            [self previewText]);
+    }
+    @finally
+    {
+        preferences.markdownManualRender = originalManualRender;
+    }
+}
+
+// An undo that raises ends without NSUndoManagerDidUndoChangeNotification.
+// The hidden editor must not be left editable by it.
+- (void)testUndoThatRaisesWithEditorHiddenLeavesEditorUneditable
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    NSUndoManager *undoManager = document.undoManager;
+
+    [undoManager beginUndoGrouping];
+    [undoManager registerUndoWithTarget:self handler:^(id target) {
+        [NSException raise:NSRangeException format:@"A step that raises"];
+    }];
+    [undoManager endUndoGrouping];
+    [self hideEditorPane];
+
+    XCTAssertThrows([undoManager undo]);
+
+    // The document restores the editor at the end of the event.
+    XCTAssertTrue(MPRunLoopUntil(5.0, ^BOOL{
+        return !document.editor.isEditable;
+    }), @"The hidden editor must not be left editable");
+    XCTAssertFalse([self editorTakesTyping],
+                   @"The hidden editor must still refuse typing");
+}
+
+// With the editor pane showing, Undo and Redo work as before and leave the
+// editor editable.
+- (void)testUndoAndRedoWithEditorShowingLeaveEditorEditable
+{
+    XCTSkipUnless([self loadDocumentWindowWithText:@"Before"],
+                  @"no document window can be loaded here");
+    MPDocument *document = self.document;
+    NSUndoManager *undoManager = document.undoManager;
+
+    [self typeText:@" typed"];
+    XCTAssertTrue(document.editorVisible,
+                  @"Precondition: the editor pane is showing");
+
+    [undoManager undo];
+    XCTAssertEqualObjects(document.editor.string, @"Before");
+    XCTAssertTrue(document.editor.isEditable);
+
+    [undoManager redo];
+    XCTAssertEqualObjects(document.editor.string, @"Before typed");
+    XCTAssertTrue(document.editor.isEditable);
 }
 
 #pragma mark - Issue #649: Restore Pane From Collapsed State

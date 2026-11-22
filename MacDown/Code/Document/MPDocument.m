@@ -823,6 +823,23 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     [center addObserver:self selector:@selector(editorSelectionDidChange:)
                    name:NSTextViewDidChangeSelectionNotification
                  object:self.editor];
+    // The editor is not editable while its pane is hidden (see
+    // -splitViewDidResizeSubviews:). An undo or redo replayed through a text
+    // view that is not editable is refused and dropped, so the editor takes
+    // changes for as long as one runs.
+    NSUndoManager *undoManager = self.undoManager;
+    [center addObserver:self selector:@selector(undoManagerWillUndoOrRedo:)
+                   name:NSUndoManagerWillUndoChangeNotification
+                 object:undoManager];
+    [center addObserver:self selector:@selector(undoManagerWillUndoOrRedo:)
+                   name:NSUndoManagerWillRedoChangeNotification
+                 object:undoManager];
+    [center addObserver:self selector:@selector(undoManagerDidUndoOrRedo:)
+                   name:NSUndoManagerDidUndoChangeNotification
+                 object:undoManager];
+    [center addObserver:self selector:@selector(undoManagerDidUndoOrRedo:)
+                   name:NSUndoManagerDidRedoChangeNotification
+                 object:undoManager];
     // Issue #320: Use block-based observer with mainQueue to guarantee
     // main-thread delivery of NSUserDefaultsDidChangeNotification.
     __weak typeof(self) weakSelf = self;
@@ -2416,6 +2433,24 @@ static BOOL MPScanFenceMarker(NSString *line, unichar *outChar, NSUInteger *outL
     // notifications from DOM replacement do not trigger syncScrollersReverse
     // while typing. Sync calls are separately gated by the pref.
     _scrollOwner = MPScrollOwnerEditor;
+}
+
+- (void)undoManagerWillUndoOrRedo:(NSNotification *)notification
+{
+    self.editor.editable = YES;
+
+    // An undo or redo that raises ends without its "did" notification.
+    // Restore at the end of the event as well, so a hidden editor is not
+    // left editable past it.
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf undoManagerDidUndoOrRedo:nil];
+    });
+}
+
+- (void)undoManagerDidUndoOrRedo:(NSNotification *)notification
+{
+    self.editor.editable = self.editorVisible;
 }
 
 // Issue #452: When the editor has a non-empty selection, show the selection's
